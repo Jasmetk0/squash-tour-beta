@@ -29,14 +29,22 @@ function ResultPanels({ data }: { data: PlayerLabResult }): JSX.Element {
     </SectionCard>
 
     <SectionCard title="Compare variant outcomes">
-      <p className="status">All saved Lab variants are included. Filters below change only the displayed timelines.</p>
+      <p className="status">All Lab variants are included. Changes compare first and last recorded snapshots, not the initial player state. Filters below change only the displayed timelines.</p>
       {data.variants.length > 0 ? <table aria-label="Player Lab variant comparison">
-        <thead><tr><th>Variant</th><th>Snapshots</th><th>Final OVR</th><th>Final sharpness</th><th>Final fatigue</th><th>Final state</th></tr></thead>
+        <thead><tr><th>Variant</th><th>Snapshots</th><th>Final OVR</th><th>OVR change</th><th>Final sharpness</th><th>Sharpness change</th><th>Final fatigue</th><th>Final state</th></tr></thead>
         <tbody>{data.variants.map(variant => {
+          const first = variant.snapshots[0]
           const last = variant.snapshots[variant.snapshots.length - 1]
+          const change = (finalValue: number, firstValue: number) => {
+            const delta = finalValue - firstValue
+            return delta > 0 ? `+${delta}` : String(delta)
+          }
           return <tr key={variant.variant_id}>
             <td>{variant.display_name}</td><td>{variant.snapshots.length}</td>
-            <td>{last?.ovr ?? '—'}</td><td>{last?.match_sharpness ?? '—'}</td>
+            <td>{last?.ovr ?? '—'}</td>
+            <td>{variant.snapshots.length > 1 ? change(last.ovr, first.ovr) : '—'}</td>
+            <td>{last?.match_sharpness ?? '—'}</td>
+            <td>{variant.snapshots.length > 1 ? change(last.match_sharpness, first.match_sharpness) : '—'}</td>
             <td>{last?.long_term_fatigue ?? '—'}</td>
             <td><code>{variant.final_state_fingerprint.slice(0, 12)}</code></td>
           </tr>

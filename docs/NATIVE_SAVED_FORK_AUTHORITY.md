@@ -1,6 +1,7 @@
 # Native Saved fork: historical source authority
 
-This implements source authority and **target-baseline preparation**, not independent target continuation. Native
+This implements source authority, target-baseline preparation and **internal atomic
+baseline persistence**, not independent target continuation. Native
 creation still returns its existing blockers. The original MatchEngine inputs,
 results, rally anchors, lifecycle admissions, Health and prospect epochs retain
 their original Branch identities. A new source reference never authorizes writes
@@ -60,15 +61,58 @@ requires its declared fork origin to match. Neither operation reserves IDs,
 creates Branch/draft/runtime rows, grants creation permission, saves or simulates.
 
 This is an internal preparation service. It is not wired into the public create
-writer yet, and its JSON round trip is not evidence of a persisted new Branch.
+writer. Persistence is a separate internal kernel described below; preparation's
+JSON round trip alone is not evidence of a persisted new Branch.
 The actual-source HTTP/SQLite scenario reuses real pre/post-birth and post-match
 Saved states and source epochs, rather than creating a second large fixture.
 Pure tests separately cover W7/W52/W61/W80, retained injury facts, compatible
 horizon extension and malformed populations/time scopes.
 
+## Atomic baseline persistence (internal staging only)
+
+`NativeForkBaselineInstallationService` opens `BEGIN IMMEDIATE` and invokes the
+session-owned installation kernel. It reauthenticates the actual original source
+and every projected fact, checks the expected source head/Viewer and reserves
+the target identifiers/name. It atomically inserts five rows: Branch metadata,
+Branch state metadata, a clean Working Draft, a target-owned Saved root and its
+audit/installation receipt. There are no nested commits or source-row updates.
+Failure at the final audit insertion rolls back all five rows. Exact concurrent
+retries return the authenticated original result; conflicting receipt arguments
+or an already changed target are rejected without overwriting anything.
+
+The Saved schema is `native_fork_saved_root.v1`. Its only content component is
+the typed baseline plus its fingerprint. Its parent is the actual selected
+original revision, with the next contiguous sequence. Original native components
+are read through authenticated ancestry; they are not copied under a new owner.
+The root retains the selected Saved calendar, including an older compatible
+horizon. This staging snapshot does not rebase or execute a current-calendar task.
+
+Ordinary Saved detail, list, history, hash and revision-state reads reauthenticate
+the root and its actual source dependencies. A target-byte cache cannot certify
+unchanged external source rows, so these roots are not retained as independent
+cached proofs. Source resolution happens outside revision stripe locks, with a
+context-local cycle guard. The affected detail/list/history/revision-state/draft reads use explicit SQLite
+snapshots.
+The pure component parser alone does not grant database/source authority.
+
+The target is deliberately `preparing_native_fork` and read-only, with no live
+sporting/lifecycle/Health/Tour runtime rows. Existing active-Branch, read-only and
+unsupported-content guards prevent execution, Manual Save, restore and Viewer
+selection. Public native creation stays blocked; no endpoint exposes this staging
+installer. A stored root is **not** evidence of independent simulation readiness.
+
+The real installation scenario uses a production HTTP/MatchEngine source, then
+tests late failure rollback, two concurrent first attempts, exact/conflicting
+retries, original-history preservation, ordinary HTTP history and server restart.
+It also forces all revision work locks onto one stripe and rejects changed source
+bytes, fully rehashed baseline facts, schema/component downgrades and cross-Branch
+source cycles. The separate
+acceptance job runs in parallel with the longer birth/epoch scenario; neither is
+added to Draft Fast CI.
+
 ## Required next boundary
 
-The target baseline must be atomically installed with its continuation authority
+The pending target baseline must be activated atomically with its continuation authority
 for sporting, lifecycle, Health, Entry and Tour. New execution adapters must
 reference this authenticated original root while giving every **new** command a
 target-owned predecessor. Do not insert the baseline into old same-owner history

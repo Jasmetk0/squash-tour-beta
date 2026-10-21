@@ -1,8 +1,9 @@
 """Read-only preparation and reauthentication of target-owned native baselines.
 
-This adapter neither reserves an identifier nor installs runtime rows. The final
-Branch writer must install the baseline and all continuation authorities in one
-transaction before enabling native creation. Existing create guards stay intact.
+This adapter neither reserves an identifier nor installs runtime rows. The
+separate staging kernel persists a pending root; the final public Branch writer
+must install all continuation authorities before enabling native creation.
+Existing create guards stay intact.
 """
 
 from beta_engine.domain.calendar.run_calendar import RunCalendar

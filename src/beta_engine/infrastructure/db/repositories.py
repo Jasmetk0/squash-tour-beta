@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from threading import Lock
 from typing import Callable, Literal
@@ -11,6 +12,13 @@ from typing import Callable, Literal
 from sqlalchemy import Engine, Select, func, select, text, update
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import Session, sessionmaker
+
+from beta_engine.infrastructure.db.native_fork_saved_root import (
+    PAYLOAD_SCHEMA as NATIVE_FORK_PAYLOAD_SCHEMA,
+    PENDING_STATUS as NATIVE_FORK_PENDING_STATUS,
+    load_native_fork_saved_root,
+    verify_native_fork_saved_root,
+)
 
 from beta_engine.infrastructure.db.saved_revision_branch_review import (
     request_fingerprint as branch_creation_request_fingerprint,
@@ -323,6 +331,10 @@ from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_KIND_SEASON_ROLLOVER,
     BRANCH_CHECKPOINT_KIND_BOOTSTRAP_START,
     BRANCH_CHECKPOINT_KIND_WEEK_COMPLETED,
+)
+
+_active_saved_revision_proofs: ContextVar[frozenset[tuple[int, str]]] = ContextVar(
+    "active_saved_revision_proofs", default=frozenset()
 )
 
 SnapshotKind = Literal["tournament", "week"]
@@ -2515,12 +2527,34 @@ class SimulationPersistenceRepository:
         work_lock = self._revision_validation_work_locks[
             hash(signature) % len(self._revision_validation_work_locks)
         ]
-        with work_lock:
-            return self._validate_saved_revision_once(
-                session=session, model=model, signature=signature,
-                materialize_payload=materialize_payload,
-                sporting_component_proofs=sporting_component_proofs,
+        key = (id(self), model.revision_id)
+        active = _active_saved_revision_proofs.get()
+        if key in active:
+            raise BranchRevisionStateConflictError(
+                "Saved Revision source authority contains a cycle"
             )
+        token = _active_saved_revision_proofs.set(active | {key})
+        try:
+            with work_lock:
+                revision = self._validate_saved_revision_once(
+                    session=session, model=model, signature=signature,
+                    materialize_payload=materialize_payload,
+                    sporting_component_proofs=sporting_component_proofs,
+                )
+            # Source resolution can validate other revisions. Never hold a stripe
+            # lock here: unrelated source/target signatures may share that lock.
+            baseline = load_native_fork_saved_root(revision)
+            if baseline is not None:
+                verify_native_fork_saved_root(
+                    self, session, revision=revision, baseline=baseline
+                )
+                if not materialize_payload:
+                    return replace(revision, payload={}, change_summary={})
+            return revision
+        except (TypeError, ValueError) as exc:
+            raise BranchRevisionStateConflictError(str(exc)) from exc
+        finally:
+            _active_saved_revision_proofs.reset(token)
 
     def _validate_saved_revision_once(
         self, *, session, model, signature, materialize_payload,
@@ -2539,6 +2573,12 @@ class SimulationPersistenceRepository:
         if owner is None or owner.run_id != revision.run_id:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {revision.revision_id} has no coherent owning Branch"
+            )
+        if owner.status == NATIVE_FORK_PENDING_STATUS and (
+            revision.payload_schema_version != NATIVE_FORK_PAYLOAD_SCHEMA
+        ):
+            raise BranchRevisionStateConflictError(
+                "Pending native fork has no authenticated baseline root"
             )
         if verified is not None:
             return revision
@@ -2564,12 +2604,18 @@ class SimulationPersistenceRepository:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {revision.revision_id} failed content integrity validation"
             )
+        # This root depends on other physical rows. Its own bytes alone cannot
+        # certify source integrity; reauthenticate outside the work lock each time.
+        if load_native_fork_saved_root(revision) is not None:
+            return revision
         metadata = self._remember_validated_revision(signature, revision)
         return revision if materialize_payload else metadata
 
     def _remember_validated_revision(self, signature, revision):
         """Retain only proof metadata after all source and identity checks pass."""
         metadata = replace(revision, payload={}, change_summary={})
+        if load_native_fork_saved_root(revision) is not None:
+            return metadata
         with self._revision_validation_lock:
             self._revision_validation_cache[signature] = metadata
             if len(self._revision_validation_cache) > 128:
@@ -3938,7 +3984,7 @@ class SimulationPersistenceRepository:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {model.revision_id} has invalid ranking content: {exc}"
             ) from exc
-        return BranchSavedRevisionRecord(
+        revision = BranchSavedRevisionRecord(
             revision_id=model.revision_id,
             run_id=model.run_id,
             branch_id=model.branch_id,
@@ -3952,6 +3998,11 @@ class SimulationPersistenceRepository:
             change_summary=change_summary,
             created_at=model.created_at,
         )
+        try:
+            load_native_fork_saved_root(revision)
+        except (TypeError, ValueError) as exc:
+            raise BranchRevisionStateConflictError(str(exc)) from exc
+        return revision
 
     @staticmethod
     def _to_branch_working_draft(
@@ -3984,19 +4035,27 @@ class SimulationPersistenceRepository:
         self, *, revision_id: str
     ) -> BranchSavedRevisionRecord | None:
         with self._session_factory() as session:
+            session.execute(text("BEGIN"))
             model = session.get(BranchSavedRevisionModel, revision_id)
-            return self._to_branch_saved_revision(model) if model is not None else None
+            return (
+                self._validated_saved_revision_in_session(session=session, model=model)
+                if model is not None else None
+            )
 
     def list_branch_saved_revisions(
         self, *, branch_id: str
     ) -> list[BranchSavedRevisionRecord]:
         with self._session_factory() as session:
+            session.execute(text("BEGIN"))
             models = session.execute(
                 select(BranchSavedRevisionModel)
                 .where(BranchSavedRevisionModel.branch_id == branch_id)
                 .order_by(BranchSavedRevisionModel.sequence)
             ).scalars()
-            return [self._to_branch_saved_revision(model) for model in models]
+            return [
+                self._validated_saved_revision_in_session(session=session, model=model)
+                for model in models
+            ]
 
     def get_branch_saved_revision_history(
         self, *, run_id: str, branch_id: str
@@ -4004,6 +4063,7 @@ class SimulationPersistenceRepository:
         """Return the complete reachable lineage after validating every revision."""
 
         with self._session_factory() as session:
+            session.execute(text("BEGIN"))
             run = session.get(RunContainerModel, run_id)
             if run is None:
                 raise SavedRevisionHistoryNotFoundError(f"Run {run_id!r} was not found")
@@ -4058,6 +4118,7 @@ class SimulationPersistenceRepository:
         """Load the coherent Saved Revision/Working Draft boundary for a Branch."""
 
         with self._session_factory() as session:
+            session.execute(text("BEGIN"))
             branch = session.get(RunBranchModel, branch_id)
             if branch is None:
                 raise BranchRevisionStateNotFoundError(
@@ -4208,6 +4269,7 @@ class SimulationPersistenceRepository:
         self, *, run_id: str, branch_id: str
     ) -> ViewerBranchWorkingDraftRecord:
         with self._session_factory() as session:
+            session.execute(text("BEGIN"))
             return self._viewer_branch_working_draft_in_session(
                 session=session, run_id=run_id, branch_id=branch_id
             )

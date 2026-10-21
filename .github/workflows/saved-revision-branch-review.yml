@@ -10,7 +10,10 @@ on:
       - 'src/beta_engine/domain/native_fork_source.py'
       - 'src/beta_engine/domain/native_fork_baseline.py'
       - 'src/beta_engine/application/native_fork_baseline_preparation.py'
+      - 'src/beta_engine/application/native_fork_baseline_installation.py'
       - 'src/beta_engine/infrastructure/db/native_fork_baseline.py'
+      - 'src/beta_engine/infrastructure/db/native_fork_installation.py'
+      - 'src/beta_engine/infrastructure/db/native_fork_saved_root.py'
       - 'src/beta_engine/infrastructure/db/native_fork_source.py'
       - 'src/beta_engine/infrastructure/db/calendar_tour.py'
       - 'src/beta_engine/infrastructure/db/repositories.py'
@@ -26,6 +29,8 @@ on:
       - 'tests/domain/test_native_fork_source.py'
       - 'tests/domain/test_native_fork_baseline.py'
       - 'tests/api/test_native_fork_baseline_preparation.py'
+      - 'tests/api/test_native_fork_baseline_installation.py'
+      - 'tests/infrastructure/test_native_fork_saved_root.py'
       - 'tests/support/native_fork_baseline.py'
       - 'scripts/saved_revision_branch_review_browser.py'
   workflow_dispatch:
@@ -56,7 +61,25 @@ jobs:
             python -m pytest tests/api/test_saved_revision_branch_review_api.py \
               tests/api/test_native_saved_branch_review.py \
               tests/api/test_native_fork_baseline_preparation.py \
-              tests/domain/test_native_fork_baseline.py -vv --maxfail=1 --durations=5
+              tests/domain/test_native_fork_baseline.py \
+              tests/infrastructure/test_native_fork_saved_root.py -vv --maxfail=1 --durations=5
+
+  native-baseline-installation:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: Native fork baseline / atomic SQLite staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e . pytest
+      - name: Real native source, rollback, concurrent retry, restart and tamper
+        run: |
+          GITHUB_EVENT_NAME=saved_branch_review_acceptance \
+            python -m pytest tests/api/test_native_fork_baseline_installation.py \
+              -vv --maxfail=1 --durations=5
 
   chromium:
     # Draft work gets Fast CI; review/manual runs retain full acceptance.

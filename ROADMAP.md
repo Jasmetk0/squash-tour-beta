@@ -1,3 +1,18 @@
+# Native fork pending root persisted — 21 October 2026
+
+The internal kernel now atomically installs the authenticated native baseline,
+target Saved root, clean draft and audit/receipt. Normal Saved detail/history
+reads validate actual original sources on warm/cold reads; rollback, concurrent
+first attempts, retry, restart, source tamper and downgrade protection have real
+SQLite coverage. Source history and Viewer remain unchanged.
+
+Targets stay pending/read-only, with no public staging endpoint or continuation
+runtime. Next is versioned independent continuation plus atomic activation,
+then actual separate play/Save/restart/restore and native Chromium creation.
+Public native creation remains blocked. [Contract](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+
+---
+
 # Native target baseline preparation — 21 October 2026
 
 Typed target current facts now have a deterministic preparation/reverification

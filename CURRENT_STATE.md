@@ -1,3 +1,36 @@
+# Native fork atomic baseline persistence — 21 October 2026
+
+The internal installer now persists an authenticated, target-owned Saved root,
+clean Working Draft, Branch/state metadata and audit/receipt in one SQLite
+transaction. It retains the original source ancestry and exact current facts;
+it does not rewrite historical matches, admissions, Health or ranking owners.
+Normal Saved reads reauthenticate actual source dependencies outside stripe
+locks. Exact concurrent retries are durable; conflicting retries, source cycles,
+changed source bytes, rehashed facts and schema/component downgrades fail closed.
+See [the persistence contract](docs/NATIVE_SAVED_FORK_AUTHORITY.md).
+
+The persisted target is deliberately pending (`preparing_native_fork`) and
+read-only. There are no live continuation rows and no public staging endpoint.
+Existing guards still prevent native creation, execution, Manual Save/restore
+and Viewer selection. This is real baseline persistence, not a functioning
+independently simulated fork or merge readiness.
+
+**Local evidence:** 124 focused regression cases passed in 40.29 seconds. The
+real HTTP/MatchEngine-source installation and 14 structural cases passed in
+52.70 seconds, including final-audit rollback, two concurrent first attempts,
+retry, restart, ordinary history, shared-lock/cycle and tamper checks. Only five
+new rows are added; every existing SQLite dump statement remains unchanged.
+The original real native birth/post-birth-match/epoch scenario also passed in
+354.63 seconds (126 distinct cases across the three selections).
+The separate acceptance job runs alongside the longer native birth/epoch gate
+on Ready/manual execution; Draft Fast CI stays focused. Draft skips are not passes.
+
+**Next:** versioned independent sporting/lifecycle/Health/Entry/Tour continuation
+and atomic activation, followed by real two-Branch play/Save/restart/restore and
+successful native browser creation. The original PR remains incomplete.
+
+---
+
 # Native fork target baseline preparation — 21 October 2026
 
 The same PR now prepares a typed, target-owned current baseline from authenticated

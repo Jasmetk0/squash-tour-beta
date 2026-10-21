@@ -27,8 +27,10 @@ import { newCommandId } from '../admin/branchSimulation'
 function parseSeeds(value: string): number[] {
   const trimmed = value.trim()
   if (!trimmed) return []
-  const seeds = trimmed.split(',').map((part) => Number(part.trim()))
-  if (seeds.some((seed) => !Number.isInteger(seed))) {
+  const parts = trimmed.split(',').map((part) => part.trim())
+  const seeds = parts.map(Number)
+  if (parts.some((part) => !/^[+-]?\\d+$/.test(part))
+    || seeds.some((seed) => !Number.isSafeInteger(seed))) {
     throw new Error('Batch match seeds must be comma-separated integers.')
   }
   if (new Set(seeds).size !== seeds.length) {

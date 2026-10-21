@@ -122,6 +122,7 @@ describe('RunBranchReadinessPanel', () => {
   it('renders independent saved heads and canonical 2001/02 positions with scoped simulation links', async () => {
     render()
     const original = await screen.findByLabelText('Operating status for original')
+    expect(screen.getByText('Legacy Branch simulation status')).toBeInTheDocument()
     const fork = screen.getByLabelText('Operating status for fork #2')
     await waitFor(() => expect(within(fork).getByText('2001/2002')).toBeInTheDocument())
     expect(within(original).getByText('Viewer Branch')).toBeInTheDocument()
@@ -142,7 +143,7 @@ describe('RunBranchReadinessPanel', () => {
     render()
     const original = await screen.findByLabelText('Operating status for original')
     await waitFor(() => expect(within(original).getAllByText('Not verified').length).toBeGreaterThan(0))
-    expect(within(original).getByText(/position has a mismatched or invalid Run/)).toBeInTheDocument()
+    expect(within(original).getByText(/Legacy simulation position does not match this Run/)).toBeInTheDocument()
     expect(within(original).queryByRole('link', { name: /Inspect authoritative simulation/ })).not.toBeInTheDocument()
   })
 

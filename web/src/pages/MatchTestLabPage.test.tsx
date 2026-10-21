@@ -117,6 +117,20 @@ describe('MatchTestLabPage', () => {
     expect(screen.queryByRole('table', { name: 'Match Lab results' })).not.toBeInTheDocument()
   })
 
+  it('rejects empty and unsafe batch seed tokens rather than silently treating them as zero', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    const field = screen.getByRole('textbox', { name: 'Match Lab batch seeds' })
+    fireEvent.change(field, { target: { value: '100, ' } })
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Batch seeds must be comma-separated integers.')
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+    fireEvent.change(field, { target: { value: '9007199254740992' } })
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Batch seeds must be comma-separated integers.')
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+  })
+
   it('rejects malformed local JSON before calling the API', async () => {
     const user = userEvent.setup()
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')

@@ -99,6 +99,24 @@ describe('MatchTestLabPage', () => {
     expect(screen.getByText(/LAB-B: 1/)).toBeInTheDocument()
   })
 
+  it('clears previous Match Lab results when the current scenario or batch seeds change', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    expect(await screen.findByRole('table', { name: 'Match Lab results' })).toBeInTheDocument()
+
+    const editor = screen.getByRole('textbox', { name: 'Match Lab scenario JSON' })
+    const value = JSON.parse((editor as HTMLTextAreaElement).value)
+    fireEvent.change(editor, { target: { value: JSON.stringify({ ...value, scenario_id: 'edited-match' }) } })
+    expect(screen.queryByRole('table', { name: 'Match Lab results' })).not.toBeInTheDocument()
+    expect(screen.getByText(/Scenario: edited-match/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    expect(await screen.findByRole('table', { name: 'Match Lab results' })).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('textbox', { name: 'Match Lab batch seeds' }), { target: { value: '100, 101' } })
+    expect(screen.queryByRole('table', { name: 'Match Lab results' })).not.toBeInTheDocument()
+  })
+
   it('rejects malformed local JSON before calling the API', async () => {
     const user = userEvent.setup()
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')

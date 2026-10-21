@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import type { RunHomeReadiness, RunReadinessCode } from '../api/runHomeReadiness'
+import type { RunHomeReadiness, RunReadinessCode, RunReadinessItem } from '../api/runHomeReadiness'
 
 const content = {
   cs: {
@@ -88,6 +88,9 @@ const ordered: RunReadinessCode[] = [
   'world', 'calendar_package', 'population', 'health', 'official_ranking', 'working_draft'
 ]
 
+const needsAttention = (item: RunReadinessItem): boolean =>
+  item.status === 'missing' || item.status === 'candidate_only' || item.status === 'unsaved'
+
 export function RunHomeReadinessPanel({
   data, runId, language, refreshing, refresh,
 }: {
@@ -100,15 +103,12 @@ export function RunHomeReadinessPanel({
   const l = content[language]
   const base = '/admin/runs/' + encodeURIComponent(runId)
   const next = ordered.find(code => data.items.some(
-    item => item.code === code && (item.status === 'missing'
-      || item.status === 'candidate_only' || item.status === 'unsaved')
+    item => item.code === code && needsAttention(item)
   ))
   const draftDirty = data.items.some(
     item => item.code === 'working_draft' && item.status === 'unsaved'
   )
-  const attentionCount = data.items.filter(item =>
-    item.status === 'missing' || item.status === 'candidate_only' || item.status === 'unsaved'
-  ).length
+  const attentionCount = data.items.filter(needsAttention).length
   return <section aria-label={language === 'cs' ? 'Připravenost Runu' : 'Run saved readiness'} className="run-home-status-block">
     <div className="actions">
       <h3>{l.heading}</h3>
@@ -122,7 +122,7 @@ export function RunHomeReadinessPanel({
           <span><strong>{l.item[item.code]}</strong>
             <small>{l.status[item.status]} · {item.evidence_count}</small>
           </span>
-          {(item.status === 'missing' || item.status === 'candidate_only' || item.status === 'unsaved') &&
+          {needsAttention(item) &&
             <Link to={base + href[item.code]}>{l.action[item.code]} →</Link>}
         </li>)}
       </ul>

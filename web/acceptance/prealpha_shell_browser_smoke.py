@@ -21,7 +21,10 @@ def main() -> None:
     parser.add_argument("--base-url", default="http://127.0.0.1:5173")
     parser.add_argument("--api-url", default="http://127.0.0.1:8001")
     parser.add_argument("--artifacts", type=Path, default=Path("work/prealpha-shell-browser"))
+    parser.add_argument("--population-size", type=int, choices=(64, 1000), default=64,
+                        help="64 for shell contracts; 1000 for full checkpoint scale")
     args = parser.parse_args()
+    population_size = args.population_size
     base = args.base_url.rstrip("/")
     artifacts = args.artifacts.resolve()
     artifacts.mkdir(parents=True, exist_ok=True)
@@ -352,12 +355,14 @@ def main() -> None:
             page.get_by_role("textbox", name="Calendar source season").fill("2012-2013")
             dialog_policy["accept"] = False
             before = len(dialogs)
-            page.evaluate("window.history.back()")
+            with page.expect_event("dialog"):
+                page.evaluate("window.history.back()")
             expect(page.get_by_role("heading", name="Run Management")).to_be_visible()
             expect(page.get_by_role("textbox", name="Calendar source season")).to_have_value("2012-2013")
             assert len(dialogs) == before + 1, dialogs
             dialog_policy["accept"] = True
-            page.evaluate("window.history.back()")
+            with page.expect_event("dialog"):
+                page.evaluate("window.history.back()")
             expect(page.get_by_role("heading", name="Next steps")).to_be_visible()
             assert len(dialogs) == before + 2, dialogs
             evidence["run_history_cancel_accept"] = True
@@ -400,18 +405,21 @@ def main() -> None:
             # protected. Rejecting navigation and target changes must keep it.
             dialog_policy["accept"] = False
             before = len(dialogs)
-            page.locator(".package-apply > p > a").first.click()
+            with page.expect_event("dialog"):
+                page.locator(".package-apply > p > a").first.click()
             expect(page.get_by_role("heading", name="Apply World Package to Run")).to_be_visible()
             expect(page.get_by_role("button", name="Save revision")).to_be_visible()
             assert len(dialogs) == before + 1, dialogs
-            page.get_by_role("combobox", name="Target Branch").select_option(source_branch["branch_id"])
+            with page.expect_event("dialog"):
+                page.get_by_role("combobox", name="Target Branch").select_option(source_branch["branch_id"])
             expect(page.get_by_role("combobox", name="Target Branch")).to_have_value(created_branch["branch_id"])
             assert len(dialogs) == before + 2, dialogs
 
             # Accept leaving. The server draft survives a full route exit
             # and must be explicitly inspected/reopened before manual Save.
             dialog_policy["accept"] = True
-            page.locator(".package-apply > p > a").first.click()
+            with page.expect_event("dialog"):
+                page.locator(".package-apply > p > a").first.click()
             expect(page.get_by_role("heading", name=worlds[0]["name"])).to_be_visible()
             assert len(dialogs) == before + 3, dialogs
             reopened_state = page.request.get(state_url)
@@ -710,7 +718,7 @@ def main() -> None:
             page.reload()
             page.get_by_role("link", name="Generate players →", exact=True).click()
             expect(page.get_by_role("heading", name="Generate players", exact=True)).to_be_visible()
-            page.get_by_label("Player count", exact=True).fill("1000")
+            page.get_by_label("Player count", exact=True).fill(str(population_size))
             assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
             with page.expect_response(lambda response: response.url.endswith("/calendar-preview")) as generated:
                 page.get_by_role("button", name="Generate preview", exact=True).click()
@@ -718,13 +726,13 @@ def main() -> None:
             generated_data = generated.value.json()
             assert generated_data["run_calendar"] == expected_clock
             assert generated_data["adoption_supported"] is False
-            assert len(generated_data["result"]["players"]) == 1000
+            assert len(generated_data["result"]["players"]) == population_size
             assert all(player["birth_year_week"] <= 52 and player["created_for_season"] == "2030/2031"
                        for player in generated_data["result"]["players"])
             expect(page.get_by_role("table")).to_be_visible()
             expect(page.get_by_role("row")).to_have_count(51)
             page.get_by_role("button", name="Next", exact=True).click()
-            expect(page.get_by_text("2 / 20", exact=True)).to_be_visible()
+            expect(page.get_by_text(f"2 / {(population_size + 49) // 50}", exact=True)).to_be_visible()
             assert page.get_by_role("button", name="Adopt reviewed InitialWorld").count() == 0
             page.screenshot(path=str(artifacts / "10-custom-calendar-player-preview.png"), full_page=True)
             # The real browser preview leaves the Saved owner/hash/content intact.
@@ -736,19 +744,19 @@ def main() -> None:
             assert page.locator(".app-shell--admin").get_attribute("data-run-form-edited") is None
             page.reload()
             expect(page.get_by_role("table")).to_have_count(0)
-            evidence["custom_calendar_player_preview"] = {"player_count": 1000, "weeks_per_year": 52,
+            evidence["custom_calendar_player_preview"] = {"player_count": population_size, "weeks_per_year": 52,
                 "saved_revision_unchanged": True, "preview_only": True, "paging_and_stale_reset": True}
 
             # The same generator now supports a separately reviewed population
             # adoption. No Save, Tour entry, result or time advance is implicit.
-            page.get_by_label("Player count", exact=True).fill("1000")
+            page.get_by_label("Player count", exact=True).fill(str(population_size))
             page.get_by_role("button", name="Generate preview", exact=True).click()
             expect(page.get_by_role("table")).to_be_visible()
             with page.expect_response(lambda response: response.url.endswith("/calendar-adoption/preview")) as population_review:
                 page.get_by_role("button", name="Review adding players", exact=True).click()
             assert population_review.value.status == 200, population_review.value.text()
             proposed = population_review.value.json()
-            assert proposed["player_count_before"] == 0 and proposed["player_count_after"] == 1000
+            assert proposed["player_count_before"] == 0 and proposed["player_count_after"] == population_size
             pop_root = args.api_url + "/admin/players/runs/" + custom_id + "/branches/" + preview_branch["branch_id"] + "/initial-world"
             assert page.request.get(pop_root + "/calendar-adoption").status == 404
             expect(page.get_by_role("button", name="Add players to Run", exact=True)).to_be_disabled()
@@ -771,7 +779,7 @@ def main() -> None:
             assert population_saved.value.status == 201, population_saved.value.text()
             saved_population = population_saved.value.json()["saved_revision"]
             content = saved_population["payload"]["content"]
-            assert len(content["initial_world"]["state"]["players"]) == 1000
+            assert len(content["initial_world"]["state"]["players"]) == population_size
             assert content["initial_world"]["state"]["schema_version"] == "initial_world_state.v2"
             life = content["player_lifecycle"]["states"][0]
             assert life["week"]["calendar"] == expected_clock and life["initialization_stage"] == "population_only"
@@ -785,7 +793,7 @@ def main() -> None:
             assert page.request.get(pop_root + "/calendar-adoption").json() == installed_population
             inventory = page.request.get(args.api_url + "/admin/runs/" + custom_id + "/branches/"
                                          + preview_branch["branch_id"] + "/saved-players").json()
-            assert inventory["total"] == 1000
+            assert inventory["total"] == population_size
             page.screenshot(path=str(artifacts / "11-custom-calendar-population-saved.png"), full_page=True)
             # Separate explicit health baseline; confirmation must not Save implicitly.
             health_root = args.api_url + "/admin/runs/" + custom_id + "/branches/" + preview_branch["branch_id"] + "/player-health"
@@ -800,7 +808,7 @@ def main() -> None:
             assert initial_health["saved_head_revision_id"] == saved_population["revision_id"]
             assert initial_health["draft_status"] == "dirty" and not initial_health["saved"]
             assert initial_health["state"]["week"]["calendar"] == expected_clock
-            assert len(initial_health["state"]["players"]) == 1000
+            assert len(initial_health["state"]["players"]) == population_size
             assert all(not p["records"] and not p["permanent_consequences"] for p in initial_health["state"]["players"])
             expect(page.get_by_role("button", name="Save initial health", exact=True)).to_be_disabled()
             page.get_by_label("Confirm health Save", exact=True).check()
@@ -816,7 +824,7 @@ def main() -> None:
             persisted_health = page.request.get(health_root + "/calendar-initial").json()
             assert persisted_health["saved"] and persisted_health["state"] == initial_health["state"]
             page.screenshot(path=str(artifacts / "13-custom-calendar-initial-health-saved.png"), full_page=True)
-            evidence["custom_calendar_initial_health"] = {"players":1000,"manual_save":True,
+            evidence["custom_calendar_initial_health"] = {"players":population_size,"manual_save":True,
                 "saved_revision_id":health_revision["revision_id"],"reload_exact":True,"injury_history_created":False}
             page.get_by_role("link", name="Open player list", exact=False).click()
             expect(page.get_by_role("heading", name="Players", exact=True)).to_be_visible()
@@ -878,7 +886,7 @@ def main() -> None:
             evidence["custom_calendar_health_edit"]={"manual_save":True,"reload_exact":True,
                 "preview_did_not_write":True,"confirmation_did_not_save":True,
                 "saved_revision_id":edited_revision["revision_id"],"record":preview_record}
-            evidence["custom_calendar_population_adopt_save_reload"] = {"player_count":1000,
+            evidence["custom_calendar_population_adopt_save_reload"] = {"player_count":population_size,
                 "saved_revision_id":saved_population["revision_id"],"weeks_per_year":52,
                 "adoption_did_not_save":True,"manual_save_verified":True,"population_only":True,
                 "saved_inventory_total":inventory["total"],"reload_exact":True}
@@ -944,7 +952,7 @@ def main() -> None:
             assert saved_readiness["simulation_started"] is False
             assert {item["code"]: item["status"] for item in saved_readiness["items"]}["population"] == "saved"
             assert {item["code"]: item["status"] for item in saved_readiness["items"]}["health"] == "saved"
-            assert {item["code"]: item["evidence_count"] for item in saved_readiness["items"]}["population"] == 1000
+            assert {item["code"]: item["evidence_count"] for item in saved_readiness["items"]}["population"] == population_size
             assert {item["code"]: item["status"] for item in saved_readiness["items"]}["official_ranking"] == "missing"
 
             # Run metadata and old population stay coherent over restart/reload.
@@ -968,7 +976,7 @@ def main() -> None:
                 "reviewed_all_branches": True,
                 "explicit_confirm_and_save": True,
                 "added_weeks": 104,
-                "preserved_initial_population": 1000,
+                "preserved_initial_population": population_size,
                 "old_saved_revision_byte_identical": True,
                 "old_health_records_preserved": True,
                 "original_calendar_provenance": expected_clock,
@@ -993,6 +1001,7 @@ def main() -> None:
                 run_id=custom_id,
                 original_branch_id=preview_branch["branch_id"],
                 original_clock=expected_clock,
+                population_size=population_size,
             )
             assert evidence["calendar_native_four_player_knockout"][
                 "reviewed_prepared_points"

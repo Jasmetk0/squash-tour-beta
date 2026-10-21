@@ -2,6 +2,7 @@ name: Saved Revision Branch Review
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/saved-revision-branch-review.yml'
       - 'src/beta_engine/application/run_branch_creation_service.py'
@@ -28,6 +29,8 @@ concurrency:
 
 jobs:
   http-sqlite:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Saved Branch review / actual HTTP SQLite
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -44,6 +47,8 @@ jobs:
               tests/api/test_native_saved_branch_review.py -vv --maxfail=1 --durations=5
 
   chromium:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Saved Branch review / real Chromium CS EN
     runs-on: ubuntu-latest
     timeout-minutes: 10

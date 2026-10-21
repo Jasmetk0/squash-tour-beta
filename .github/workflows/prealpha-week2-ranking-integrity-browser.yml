@@ -7,6 +7,7 @@ concurrency:
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/prealpha-week2-ranking-integrity-browser.yml'
       - 'scripts/admin_week2_integrity_browser.py'
@@ -17,6 +18,8 @@ permissions:
 
 jobs:
   week2-integrity:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: 64-player Week 1 ranking to Week 2, SQLite integrity and restart
     runs-on: ubuntu-latest
     timeout-minutes: 30

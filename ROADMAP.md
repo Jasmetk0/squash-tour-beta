@@ -1,3 +1,16 @@
+# Draft feedback / review acceptance — 21 October 2026
+
+PR #1576 follow-up repairs explicit-test deselection and Shell dialog/header
+regressions. Dedicated expensive acceptance is deferred during Draft iteration,
+then executes on Ready for review, ready-PR pushes or manual dispatch. Fast CI
+and CodeQL continue during development; skipped Draft jobs never certify merge.
+
+The source-bound native historical fork and independent actual continuation
+remain the original incomplete integration objective below. No native guard was
+removed and no Full Simulation or pre-alpha release is claimed.
+
+---
+
 # Native Saved Revision branching — incomplete candidate, 20 October 2026
 
 Verified `buuk`: `428ef8b75de4dd7dc980f307c6a2ffd31d4e4ec0` (#1575 owner merge).
@@ -494,3 +507,10 @@ restart/restore and W52/W80 replay. This establishes genuine sporting facts
 for future integration, not a read-only candidate. Next integrate configured
 Edition/approved Entry and authoritative Official publication into native
 Week Transition. No automatic promotion of prepared scores.
+
+
+Shell performance follow-up: its real population fixture now defaults to 64,
+with all existing scenario assertions parameterized. The separate 1,000-player
+cohort and native W80/1,000-player gates remain unchanged. Internal checkpoint
+Shell scale is explicitly available via `--population-size 1000`; a 64-player
+Shell pass is not represented as a large-population pass.

@@ -266,8 +266,8 @@ export function CalendarOpeningKnockoutPanel({
         {view.knockout.health_source && <div aria-label="Frozen knockout Health inputs">
           <p>{cs ? 'Zdravotní fakta použitá při odehrání (pozdější úpravy je nemění)' : 'Health facts used when played (later edits do not change them)'}</p>
           <table aria-label="Frozen knockout Health table"><thead><tr>
-            <th>{cs ? 'Hráč' : 'Player'}</th><th>{cs ? 'Omezení' : 'Conditions'}</th>
-            <th>{cs ? 'Závažnost' : 'Severity'}</th><th>{cs ? 'Trvalé omezení' : 'Permanent limitation'}</th>
+            <th scope="col">{cs ? 'Hráč' : 'Player'}</th><th scope="col">{cs ? 'Omezení' : 'Conditions'}</th>
+            <th scope="col">{cs ? 'Závažnost' : 'Severity'}</th><th scope="col">{cs ? 'Trvalé omezení' : 'Permanent limitation'}</th>
           </tr></thead><tbody>{view.knockout.health_source.profiles.map(profile => <tr key={profile.player_id}>
             <td>{profile.player_id}</td><td>{profile.current_records.map(r => r.condition_key).join(', ') || '—'}</td>
             <td>{profile.highest_current_severity}</td><td>{profile.highest_permanent_limitation}</td>
@@ -290,9 +290,9 @@ export function CalendarOpeningKnockoutPanel({
             ? 'Finalisté používají formu, rozehranost a dlouhodobou únavu po semifinále. Provizorní kalibrace; bez automatické regenerace, vývoje atributů a zdravotních změn.'
             : 'Finalists consume post-semifinal form, sharpness and long-term fatigue. Provisional calibration; no automatic recovery, attribute development or Health changes.'}</p>
           <table aria-label="Knockout player state table"><thead><tr>
-            <th>{cs ? 'Hráč' : 'Player'}</th><th>{cs ? 'Fáze' : 'Stage'}</th>
-            <th>{cs ? 'Forma' : 'Form'}</th><th>{cs ? 'Rozehranost' : 'Sharpness'}</th>
-            <th>{cs ? 'Dlouhodobá únava' : 'Long-term fatigue'}</th>
+            <th scope="col">{cs ? 'Hráč' : 'Player'}</th><th scope="col">{cs ? 'Fáze' : 'Stage'}</th>
+            <th scope="col">{cs ? 'Forma' : 'Form'}</th><th scope="col">{cs ? 'Rozehranost' : 'Sharpness'}</th>
+            <th scope="col">{cs ? 'Dlouhodobá únava' : 'Long-term fatigue'}</th>
           </tr></thead><tbody>
             {(['initial', 'after_semifinals', 'terminal'] as const).flatMap(stage =>
               view.knockout!.sporting![stage].map(player => <tr key={stage + player.player_id}>

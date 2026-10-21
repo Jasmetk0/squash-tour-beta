@@ -2,6 +2,7 @@ name: Native Calendar Season Boundary API
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/prealpha-native-season-api.yml'
       - 'src/beta_engine/application/calendar_tour_service.py'
@@ -24,6 +25,8 @@ concurrency:
 
 jobs:
   native-season:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Season rollover and next-season Edition / real SQLite
     runs-on: ubuntu-latest
     timeout-minutes: 35

@@ -1,3 +1,24 @@
+# PR #1576 follow-up — 21 October 2026
+
+The owner requested takeover of the interrupted branch and shorter development
+feedback. This follow-up fixes explicit configuration/security test commands
+being deselected by the PR changed-file collector. It also synchronizes Shell
+acceptance with actual navigation dialogs and gives native knockout table headers
+explicit column scope. All 188 existing Shell assertions remain present.
+
+Dedicated pre-alpha/Earth acceptance jobs now defer expensive execution for Draft
+PRs, run on Ready for review and subsequent ready-PR pushes, and remain available
+through manual dispatch. Fast CI and CodeQL remain active during Draft work.
+Draft skips are not integration evidence or merge permission; final review must
+still have all relevant latest-head acceptance actually green. See the updated
+[test policy](docs/PRE_ALPHA_TEST_POLICY.md).
+
+The original match-bearing native fork remains incomplete, as the detailed
+checkpoint below records. This follow-up does not remove its authenticated-source
+guards, rewrite sporting history, or claim successful native continuation.
+
+---
+
 # Saved Revision Branch review — incomplete native fork candidate, 20 October 2026
 
 **Verified integration base:** `buuk` is
@@ -828,3 +849,10 @@ added. Profiled cold inspection of the same copied nine-revision history fell
 from 130.96s to 74.34s. New focused regressions preserve four/eight-player award
 facts and fail-closed malformed Saved validation; final-head real regressions
 remain the handoff gate. See the audit for evidence and scope.
+
+
+Shell performance follow-up: its real population fixture now defaults to 64,
+with all existing scenario assertions parameterized. The separate 1,000-player
+cohort and native W80/1,000-player gates remain unchanged. Internal checkpoint
+Shell scale is explicitly available via `--population-size 1000`; a 64-player
+Shell pass is not represented as a large-population pass.

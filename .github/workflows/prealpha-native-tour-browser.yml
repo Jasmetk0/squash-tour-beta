@@ -2,6 +2,7 @@ name: Pre-alpha Native Tour Browser
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/prealpha-native-tour-browser.yml'
       - 'scripts/native_tour_browser_acceptance.py'
@@ -36,6 +37,8 @@ permissions:
 
 jobs:
   birth-readiness:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Native birth readiness / real Chromium
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -70,6 +73,8 @@ jobs:
           retention-days: 14
 
   post-intake:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Native post-intake competition / real Chromium
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -104,6 +109,8 @@ jobs:
           retention-days: 14
 
   source-epochs:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Native future prospect epoch Admin / real Chromium
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -138,6 +145,8 @@ jobs:
           retention-days: 14
 
   browser:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Native Tour W${{ matrix.width }} / ${{ matrix.players }} players
     runs-on: ubuntu-latest
     # A performance regression must fail promptly rather than consuming another

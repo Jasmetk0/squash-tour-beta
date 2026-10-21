@@ -1,6 +1,7 @@
 name: Pre-alpha Hybrid Ranking Closure Browser
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/prealpha-hybrid-format-browser.yml'
       - 'scripts/admin_saved_group_browser_smoke.py'
@@ -29,6 +30,8 @@ permissions:
 
 jobs:
   hybrid-format:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Real hybrid championship / ranking awards / SQLite restart
     runs-on: ubuntu-latest
     timeout-minutes: 30

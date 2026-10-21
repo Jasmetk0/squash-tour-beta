@@ -6,6 +6,7 @@ name: Pre-alpha Real Cyclic Tie Browser
 # It is NOT a normal Run Match-Day outcome/seed or Saved Revision acceptance.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/prealpha-real-cyclic-tie-browser.yml'
       - 'scripts/real_group_cyclic_tie_browser_checks.py'
@@ -25,6 +26,8 @@ permissions:
 
 jobs:
   cyclic-tie:
+    # Draft work gets Fast CI; review/manual runs retain full acceptance.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Genuine MatchEngine tie / Admin Chromium / SQLite restart
     runs-on: ubuntu-latest
     timeout-minutes: 30

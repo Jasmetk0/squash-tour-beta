@@ -89,3 +89,23 @@ backend. It tests review/cancel/explicit create, Viewer isolation, opening the
 created supported Branch and native blockers in CS/EN. Mocked component tests
 are separate UI contracts. The dedicated workflow runs actual HTTP/SQLite and
 browser cases; it does not replace existing gates or certify the full pre-alpha.
+
+
+## Interrupted-task follow-up
+
+The review prerequisite is retained while the native fork remains incomplete.
+The follow-up fixes explicit configuration/security commands being deselected
+and synchronizes Shell navigation checks with real dialog events, without
+removing their exact-count or preserved-form assertions. Native knockout column
+headers now carry explicit `scope="col"` for reliable accessible semantics.
+
+Draft iteration defers expensive dedicated workflows, while Ready for review,
+ready-PR pushes and manual dispatch retain complete relevant acceptance. See
+`PRE_ALPHA_TEST_POLICY.md`; Draft skips are never counted as executed tests.
+
+
+Shell performance follow-up: its real population fixture now defaults to 64,
+with all existing scenario assertions parameterized. The separate 1,000-player
+cohort and native W80/1,000-player gates remain unchanged. Internal checkpoint
+Shell scale is explicitly available via `--population-size 1000`; a 64-player
+Shell pass is not represented as a large-population pass.

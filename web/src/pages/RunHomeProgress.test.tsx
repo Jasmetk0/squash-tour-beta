@@ -13,6 +13,19 @@ describe('Run-local Home timeline', () => {
     expect(screen.getByTitle('2030')).toBeVisible()
     expect(view.container.querySelector('.is-current')).toBeNull()
   })
+  it('labels the Run timeline consistently in Czech including unavailable and loading states', () => {
+    const unavailable = render(<RunHomeProgress {...props} locale="cs" clock={null} />)
+    expect(screen.getByRole('region', { name: 'Časová osa Runu' })).toHaveTextContent('Kalendář Runu není dostupný.')
+    unavailable.unmount()
+
+    const loading = render(<RunHomeProgress {...props} locale="cs" clock={null} loading />)
+    expect(screen.getByRole('region', { name: 'Časová osa Runu' })).toHaveTextContent('Načítání…')
+    loading.unmount()
+
+    render(<RunHomeProgress {...props} locale="cs" clock={runHomeClock({})} />)
+    expect(screen.getByRole('region', { name: 'Časová osa Runu' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: '50 sezón' })).toBeInTheDocument()
+  })
   it('bounds rendering for a very large valid horizon and week count', () => {
     const view = render(<RunHomeProgress {...props} clock={{weeks_per_year:1000000,season_count:1000000,
       start_year:2030,season_start_year_week:1}} />)

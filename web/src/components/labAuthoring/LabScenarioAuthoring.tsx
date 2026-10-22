@@ -300,20 +300,21 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
           <input aria-label={kind + ' Lab ' + field.path.join('.')} disabled={busy}
             type={typeof value === 'number' ? 'number' : 'text'}
             min={field.min} max={field.max} step={field.integer ? 1 : 'any'}
-            value={String(value)} onChange={event => {
+            value={String(value)} onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }}
+            onChange={event => {
               if (event.target.value !== '') applyField(field, event.target.value)
             }} />
         </label>
       })}
       {kind === 'player' && variants.map((variant, index) => <VariantMatchCountsEditor
-        key={String(variant.variant_id) + ':' + selection} id={String(variant.variant_id)}
+        key={String(variant.variant_id) + ':' + selection + ':' + revision} id={String(variant.variant_id)}
         values={variant.competitive_match_counts as number[]} index={index} cs={cs} busy={busy}
         onApply={(position, draft) => {
           try { edit(changePlayerMatchCounts(text, position, draft)) }
           catch (reason) { setError(explain(reason, cs)) }
         }} />)}
       {kind === 'player' && variants.length > 0 && <PlayerDurationEditor
-        weeks={weeks} healthLocked={healthLocked} cs={cs} busy={busy}
+        key={selection + ':' + revision} weeks={weeks} healthLocked={healthLocked} cs={cs} busy={busy}
         onApply={nextWeeks => {
           try { edit(changePlayerWeeks(text, nextWeeks)) }
           catch (reason) { setError(explain(reason, cs)) }

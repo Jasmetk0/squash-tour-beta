@@ -155,7 +155,7 @@ describe('World Package country inventory', () => {
     expect(screen.getByRole('columnheader', { name: 'Populace' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Otevřít' }))
       .toHaveAttribute('href', '/admin/world/library/world-a/countries/C000')
-    expect(screen.getByText('1 / 1')).toBeInTheDocument()
+    expect(screen.getByText(/Strana 1 \/ 1/)).toBeInTheDocument()
   })
 
   it('renders translated Czech controls and the true empty-package state', async () => {

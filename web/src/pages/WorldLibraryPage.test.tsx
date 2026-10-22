@@ -98,7 +98,9 @@ describe('built-in World cloning', () => {
     expect(await screen.findByText('Clone Built-in World')).toBeInTheDocument()
     fireEvent.change(screen.getByPlaceholderText('my_custom_world'), { target: { value: 'editable_earth' } })
     fireEvent.change(screen.getByPlaceholderText('My Custom World'), { target: { value: 'Editable Earth' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Create Custom World' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review custom copy' }))
+    expect(api.cloneWorldPackage).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm custom copy' }))
 
     await waitFor(() => expect(api.cloneWorldPackage).toHaveBeenCalledWith(
       'real_world',

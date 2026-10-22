@@ -3918,6 +3918,44 @@ describe('AuthoritativeSimulationPanel', () => {
     }
   )
 
+  it('retries a lost Full Simulation parent response with the exact frozen reviewed request',async()=>{
+    localStorage.setItem('squash-engine-language-v1','en')
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,schedule:proposal.schedule,schedule_fingerprint:proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,schedule_already_adopted:true,
+      blockers:['week_schedule_already_adopted'],can_propose_schedule:false
+    })
+    const command={
+      command_id:'retry-original-parent',operator_label:'Commissioner',audit_reason:'Same frozen request',
+      expected_start_week:fullSimulationPreview.start_week,
+      expected_position_fingerprint:fullSimulationPreview.expected_position_fingerprint,
+      expected_revision_id:fullSimulationPreview.expected_revision_id,
+      expected_preview_fingerprint:fullSimulationPreview.preview_fingerprint
+    }
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version:'authoritative_full_simulation_pending_collection.v1',
+      run_id:'run-a',branch_id:'branch-a',legacy_pending_count:0,
+      operations:[{control_state:'running',command,review:fullSimulationPreview,
+        completed_seasons:[],completed_season_count:0,final_completed_weeks:[],final_completed_week_count:0}]
+    })
+    api.simulateAuthoritativeFullSimulation.mockRejectedValueOnce(new Error('Parent answer lost'))
+      .mockResolvedValue(fullSimulationReviewProgress)
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button',{name:'Resume this Full Simulation'}))
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    const submit=screen.getByRole('button',{name:'Simulate reviewed authoritative Full Simulation'})
+    await userEvent.click(submit)
+    await screen.findByText(/Parent answer lost/)
+    expect(screen.getByText(/original Full Simulation request is frozen for exact retry/i)).toBeInTheDocument()
+    await userEvent.click(submit)
+    await waitFor(()=>expect(api.simulateAuthoritativeFullSimulation).toHaveBeenCalledTimes(2))
+    expect(api.simulateAuthoritativeFullSimulation.mock.calls[1]).toEqual(api.simulateAuthoritativeFullSimulation.mock.calls[0])
+    expect(api.simulateAuthoritativeFullSimulation.mock.calls[1]).toEqual(['run-a','branch-a',command])
+    expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
+  })
+
   it('restores a durable pending Full Simulation parent after page state loss', async () => {
     api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
       ...scheduleInspection,

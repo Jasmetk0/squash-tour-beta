@@ -13,7 +13,7 @@ function yesNo(value: boolean, yes: string, no: string): string {
   return value ? yes : no
 }
 
-function usageLabel(value: number | null, cs: boolean): string {
+function usageLabel(value: number | null, cs = false): string {
   return value === null ? (cs ? 'Využití zatím není sledováno' : 'Usage not tracked yet') : String(value)
 }
 

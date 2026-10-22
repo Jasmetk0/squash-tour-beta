@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { changeLabField, changeLabParticipantModifier, changeTournamentStopRound, changeTournamentAssertion, changePlayerMatchCounts, changePlayerWeeks, labChangedPaths, labChangeDetails, LabScenarioAuthoring, readLabScenario } from './LabScenarioAuthoring'
+import { changeLabField, changeLabParticipantModifier, changeTournamentStopRound, changeTournamentAssertion, moveTournamentSeedOrder, changePlayerMatchCounts, changePlayerWeeks, labChangedPaths, labChangeDetails, LabScenarioAuthoring, readLabScenario } from './LabScenarioAuthoring'
 
 const currentLocale = vi.hoisted(() => ({language: 'en'}))
 vi.mock('../../i18n/LanguageContext', () => ({useLanguage: () => ({language: currentLocale.language})}))
@@ -128,6 +128,43 @@ describe('Lab scenario authoring boundaries', () => {
       {path: 'variants.1.competitive_match_counts.1', before: '0', after: '3'}
     ])
     expect(labChangedPaths(player, {...player, variants: []})).toEqual(['variants'])
+  })
+
+  it('reorders only existing tournament seed IDs, preserving full participant contexts and historical source', () => {
+    const moved = JSON.parse(moveTournamentSeedOrder(JSON.stringify(tournamentWithPlayers), 0, 1))
+    expect(moved.seed_order_player_ids).toEqual(['P2', 'P1'])
+    expect(moved.participants).toEqual(tournamentWithPlayers.participants)
+    expect(moved.source_snapshot).toEqual(tournamentWithPlayers.source_snapshot)
+    expect(moved.draw_seed).toBe(tournamentWithPlayers.draw_seed)
+    expect(JSON.parse(moveTournamentSeedOrder(JSON.stringify(moved), 1, -1)).seed_order_player_ids)
+      .toEqual(['P1', 'P2'])
+    expect(() => moveTournamentSeedOrder(JSON.stringify(tournamentWithPlayers), 0, -1)).toThrow('order')
+    expect(() => moveTournamentSeedOrder(JSON.stringify(tournamentWithPlayers), 1, 1)).toThrow('order')
+    expect(() => moveTournamentSeedOrder(JSON.stringify({
+      ...tournamentWithPlayers, seed_order_player_ids: ['P1', 'P1']
+    }), 0, 1)).toThrow('shape')
+    expect(() => moveTournamentSeedOrder(JSON.stringify({
+      ...tournamentWithPlayers, seed_order_player_ids: ['P1', 'P3']
+    }), 0, 1)).toThrow('shape')
+  })
+
+  it('moves an existing seed in guided mode without changing the draw or saving', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(tournamentWithPlayers))
+      return <><LabScenarioAuthoring kind="tournament" text={text} onChange={setText}
+        selection="scratch" revision={0} jsonLabel="Tournament Lab scenario JSON" />
+        <output data-testid="seed-scenario">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    expect(screen.getByRole('button', {name: 'tournament Lab seed move up P1'})).toBeDisabled()
+    await user.click(screen.getByRole('button', {name: 'tournament Lab seed move down P1'}))
+    const moved = JSON.parse(screen.getByTestId('seed-scenario').textContent ?? '')
+    expect(moved.seed_order_player_ids).toEqual(['P2', 'P1'])
+    expect(moved.participants).toEqual(tournamentWithPlayers.participants)
+    await user.click(screen.getByRole('button', {name: 'tournament Lab seed move up P1'}))
+    expect(JSON.parse(screen.getByTestId('seed-scenario').textContent ?? '').seed_order_player_ids)
+      .toEqual(['P1', 'P2'])
   })
 
   it('stages optional Tournament winner and match-count expectations without changing source evidence', () => {

@@ -150,7 +150,8 @@ export function PlayerTestLabPage(): JSX.Element {
   const runPending = useIsMutating({ mutationKey: ['player-lab-run'] }) > 0
   const runMutation = useMutation({
     mutationKey: ['player-lab-run'],
-    mutationFn: (scenario: PlayerLabScenario) => selectedSession ? runPlayerLabSession(selectedSession.session_id, selectedSession.session_fingerprint) : runPlayerTestLab({ scenario })
+    mutationFn: (input: {scenario: PlayerLabScenario; session: Pick<PlayerLabSession, 'session_id' | 'session_fingerprint'> | null}) =>
+      input.session ? runPlayerLabSession(input.session.session_id, input.session.session_fingerprint) : runPlayerTestLab({ scenario: input.scenario })
   })
 
   const saveMutation = useMutation({
@@ -197,7 +198,12 @@ export function PlayerTestLabPage(): JSX.Element {
     try {
       if (!scenarioText.trim()) throw new Error('Load or enter a Player Lab scenario first.')
       if (!parsedPreview) throw new Error('Player Lab scenario must contain its schema, ID and variants.')
-      runMutation.mutate(parsedPreview)
+      // Mutation setup and offline resumption may run after another selection.
+      // Bind the reviewed source at submission, never through a live closure.
+      runMutation.mutate({scenario: parsedPreview, session: selectedSession ? {
+        session_id: selectedSession.session_id,
+        session_fingerprint: selectedSession.session_fingerprint
+      } : null})
     } catch (error) {
       setLocalError(error instanceof Error ? error.message : String(error))
     }

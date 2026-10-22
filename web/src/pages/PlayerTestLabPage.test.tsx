@@ -1,5 +1,6 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { onlineManager } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PlayerTestLabPage } from './PlayerTestLabPage'
@@ -181,6 +182,36 @@ describe('PlayerTestLabPage', () => {
       scenario
     }])
     api.runPlayerTestLab.mockResolvedValue(result)
+  })
+
+  it.each(['saved', 'scratch'])('keeps the submitted %s source when a paused request resumes after switching selection', async kind => {
+    const first = {session_id: 'first', version: 1, session_fingerprint: '1'.repeat(64), display_name: 'First', scenario}
+    const second = {...first, session_id: 'second', session_fingerprint: '2'.repeat(64), display_name: 'Second'}
+    api.listPlayerLabSessions.mockResolvedValue([first, second])
+    const user = userEvent.setup()
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByRole('option', {name: 'First'})
+    if (kind === 'saved') await user.selectOptions(screen.getByLabelText('Open Player Test Session'), first.session_id)
+    onlineManager.setOnline(false)
+    try {
+      await user.click(screen.getByRole('button', {name: 'Run scenario'}))
+      expect(api.runPlayerLabSession).not.toHaveBeenCalled()
+      expect(api.runPlayerTestLab).not.toHaveBeenCalled()
+      await user.selectOptions(screen.getByLabelText('Open Player Test Session'), second.session_id)
+      await act(async () => {onlineManager.setOnline(true)})
+      if (kind === 'saved') {
+        await waitFor(() => expect(api.runPlayerLabSession).toHaveBeenCalledWith(first.session_id, first.session_fingerprint))
+        expect(api.runPlayerLabSession).toHaveBeenCalledTimes(1)
+        expect(api.runPlayerTestLab).not.toHaveBeenCalled()
+      } else {
+        await waitFor(() => expect(api.runPlayerTestLab).toHaveBeenCalledWith({scenario}))
+        expect(api.runPlayerTestLab).toHaveBeenCalledTimes(1)
+        expect(api.runPlayerLabSession).not.toHaveBeenCalled()
+      }
+      expect(screen.queryByRole('table', {name: 'Player Lab variant comparison'})).not.toBeInTheDocument()
+    } finally {
+      onlineManager.setOnline(true)
+    }
   })
 
   it.each(['edit', 'source'])('does not install a delayed historical import after a newer %s', async change => {

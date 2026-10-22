@@ -1,3 +1,21 @@
+# PR #1606 independent review correction — 22 October 2026
+
+Review reproduced a Player Lab request-selection race: an offline-paused run
+submitted for one saved Session could resume against a newly selected Session.
+Scratch runs could likewise be redirected to a later saved selection. The run
+now captures scenario and Session ID/fingerprint synchronously in mutation
+variables; source switches cannot change the submitted request or display its
+late result in another editor. Two regressions exercise actual QueryClient
+pause/resume for saved and scratch submissions.
+
+Independent local verification: 52 focused frontend/editor tests passed, 54 Lab
+service/calendar/legacy compatibility tests passed, and production build passed.
+Final-head hosted acceptance remains required; earlier-head results and Draft
+skips do not establish merge readiness. This is a bounded frontend correction,
+not a new simulation rule or broader native authoring support.
+
+---
+
 # Historical Run-to-Lab copies — 22 October 2026 candidate
 
 Verified base: `buuk` `405b569c4a84ae3b5e834ad7e89806126871f223`, owner-merged

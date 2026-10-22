@@ -102,3 +102,14 @@ Editions only through authenticated tours, and preventing a late built-in reply
 from replacing a selected Player Session. Existing native authoring refusals and
 production simulation kernels remain intact. No unresolved defect was found in
 this scoped review. Hosted Draft skips remain pending acceptance, not evidence.
+
+## Subsequent independent review correction
+
+A real QueryClient offline pause/resume exposed a selection race in the new
+Player Session runner. Its mutation callback read the later selected Session
+instead of the source reviewed at submission. The runner now freezes both
+scenario and Session identity/fingerprint in submitted variables. Regression
+checks cover saved-to-saved and scratch-to-saved selection changes while paused,
+including rejection of detached result display. This supersedes the earlier
+no-unresolved-defect statement for that candidate. Final-head hosted acceptance
+still applies.

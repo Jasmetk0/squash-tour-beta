@@ -58,6 +58,14 @@
 - No local warnings for empty scenario (existing empty-state cue) or malformed JSON (existing advanced-editor error). Pure and rendered tests verify both positive and negative cases, EN/CS descriptions, and that review never writes to a Session.
 - Exact-head Fast CI, TypeScript build and actual browser/HTTP/SQLite acceptance status must be checked before the user merges; genuine Lab jobs still skip Draft.
 
+### One-step local guided Undo (22 October 2026)
+
+- New bilingual Undo button in Match/Tournament/Player Lab scenario authoring reverts **only the last committed guided Apply** in the current local editor. This is not Save revision history, Run rollback, simulation replay, or a new backend authority.
+- The most recent guided operation stores exactly the preceding scenario text and an expected post-edit text + Session identity. A one-step undo clears itself after use. It cannot apply once another editor replacement/source load, manual JSON change, Session switch, remote Session fingerprint update, or editor state revision supersedes that edit.
+- Undo also invalidates staged imports and resets independently typed guided fields, preventing partially staged values from contaminating the restored scenario.
+- No saved Session mutation or Run write is triggered. Existing explicit Session Save and backend compatibility workflows remain unchanged. Pure/UI regression tests cover historical provenance, previous guided changes, selection/fingerprint changes, scratch replacement, and Match/Tournament/Player isolation.
+- Fast CI must pass on this final commit and real HTTP/SQLite/Chromium gates remain required separately before the user merges. Keep the PR Draft.
+
 ## Status and merge policy
 - This PR is intentionally **Draft** and NOT merge-ready.
 - Dedicated genuine Lab API/Chromium acceptance skips Draft PRs. Skipped jobs are not passes.

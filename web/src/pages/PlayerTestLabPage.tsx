@@ -3,6 +3,7 @@ import { LabSessionConflict, useLabSessionEditor, validateLabSession, type LabEd
 import { useLanguage } from '../i18n/LanguageContext'
 import {InitialPopulationComparisonPanel} from '../components/InitialPopulationComparisonPanel'
 import { LabNavigation } from '../components/LabNavigation'
+import { LabScenarioAuthoring } from '../components/labAuthoring/LabScenarioAuthoring'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useIsMutating, useMutation, useQuery } from '@tanstack/react-query'
 
@@ -283,13 +284,10 @@ export function PlayerTestLabPage(): JSX.Element {
 
     <form onSubmit={submit}>
       <SectionCard title="Portable Player Lab scenario JSON">
-        <textarea
-          aria-label="Player Lab scenario JSON"
-          value={scenarioText}
-          onChange={(event) => editScenario(event.target.value)}
-          rows={30}
-          style={{ width: '100%', fontFamily: 'monospace' }}
-        />
+        <LabScenarioAuthoring kind="player" text={scenarioText} onChange={editScenario}
+          jsonLabel="Player Lab scenario JSON" selection={selectedSessionId ?? 'scratch'} revision={editor.editorEdit}
+          savedScenario={selectedSession?.scenario} savedName={selectedSession?.display_name}
+          sessionName={editor.sessionName} busy={writePending || runPending} />
         <button type="button" onClick={formatScenario} disabled={runPending || Boolean(sessionConflict) || sessionHasUnsavedChanges || !parsedPreview}>
           Format JSON
         </button>{' '}

@@ -65,6 +65,18 @@ export function FinalsPage(): JSX.Element {
   const qualificationNotFound = isApiNotFound(qualificationQuery.error)
   const resultNotFound = isApiNotFound(resultQuery.error)
   const hasResultError = resultQuery.error && !resultNotFound
+  const qualificationStatus = qualificationQuery.data || summaryQuery.data?.qualification ? 'Ready'
+    : qualificationQuery.isLoading ? 'Loading'
+    : qualificationNotFound ? 'Missing'
+    : qualificationQuery.error ? 'Failed'
+    : summaryQuery.isLoading ? 'Loading'
+    : summaryQuery.error ? 'Unknown' : 'Pending'
+  const resultStatus = resultQuery.data || summaryQuery.data?.result ? 'Recorded'
+    : resultQuery.isLoading ? 'Loading'
+    : resultNotFound ? 'Missing'
+    : resultQuery.error ? 'Failed'
+    : summaryQuery.isLoading ? 'Loading'
+    : summaryQuery.error ? 'Unknown' : 'Not simulated'
 
   const qualifiedPlayersCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'qualified_player_ids')
   const groupCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'groups')
@@ -84,8 +96,8 @@ export function FinalsPage(): JSX.Element {
         items={[
           { label: 'Run', value: runId || 'unknown' },
           { label: 'Season', value: contextSeason },
-          { label: 'Qualification', value: summaryQuery.data?.qualification ? 'Ready' : 'Pending' },
-          { label: 'Result', value: summaryQuery.data?.result ? 'Recorded' : 'Not simulated' }
+          { label: 'Qualification', value: qualificationStatus },
+          { label: 'Result', value: resultStatus }
         ]}
       />
 
@@ -145,7 +157,7 @@ export function FinalsPage(): JSX.Element {
         ) : qualificationNotFound ? (
           <EmptyState message="No Finals qualification is available for this run yet." />
         ) : (
-          !qualificationQuery.isLoading && <EmptyState message="No qualification data available." />
+          !qualificationQuery.isLoading && !qualificationQuery.error && <EmptyState message="No qualification data available." />
         )}
       </SectionCard>
 

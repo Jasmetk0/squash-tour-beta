@@ -213,6 +213,7 @@ export function TournamentTestLabPage(): JSX.Element {
   const { selectedSession, selectedSessionId, setSelectedSessionId, scenarioText, setScenarioText,
     sessionName, setSessionName, sessionHasUnsavedChanges, sessionConflict } = editor
   const [batchText, setBatchText] = useState('')
+  const [scratchName, setScratchName] = useState('New Tournament Test Session')
   const [localError, setLocalError] = useState<string | null>(null)
   const [targetRunId, setTargetRunId] = useState('')
   const [targetBranchId, setTargetBranchId] = useState('')
@@ -367,7 +368,7 @@ export function TournamentTestLabPage(): JSX.Element {
     try {
       readLabScenario(scenarioText, 'tournament')
       createMutation.mutate({ ticket: editor.captureEditor(), request: {
-        display_name: sessionName.trim() || 'New Tournament Test Session',
+        display_name: scratchName.trim() || 'New Tournament Test Session',
         scenario: JSON.parse(scenarioText) as TournamentLabScenario
       } })
     } catch {
@@ -604,6 +605,12 @@ export function TournamentTestLabPage(): JSX.Element {
             runMutation.reset()
             runDraftPreviewMutation.reset()
             runDraftApplyMutation.reset()
+          }} />
+        </label> : null}
+        {!selectedSession ? <label>Tournament Lab new Session name
+          <input aria-label="Tournament Lab new Session name" value={scratchName} onChange={event => {
+            setScratchName(event.target.value)
+            editor.setSessionName(event.target.value)
           }} />
         </label> : null}
         <LabScenarioAuthoring kind="tournament" text={scenarioText} onChange={editScenario}

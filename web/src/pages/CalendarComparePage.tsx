@@ -156,7 +156,7 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
       setReviewedInputs({
         sourceTemplateId: submitted.source_template_id,
         targetSeasonLabel: submitted.target_season_label,
-        targetSource: submitted.target_source
+        targetSource: submitted.target_source ?? 'payload'
       })
       setApplyResponse(null)
     }
@@ -201,6 +201,8 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
     && Boolean(sourceTemplateId)
     && Boolean(targetSeasonLabel)
     && Boolean(dryRunResponse)
+    && dryRunResponse?.source_template_id === sourceTemplateId
+    && dryRunResponse?.target_season_label === targetSeasonLabel
     && dryRunResponse?.target_source === 'planning_calendar'
     && dryRunResponse.target_calendar_exists === true
     && Boolean(dryRunResponse.diff_fingerprint)

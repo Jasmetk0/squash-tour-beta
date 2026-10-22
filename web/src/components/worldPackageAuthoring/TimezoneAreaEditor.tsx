@@ -87,18 +87,6 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
     }
   })
 
-  // A remote refresh may replace a clean editor. It never overwrites an unsaved
-  // proposal or supplies a new fingerprint to a previously reviewed command.
-  useEffect(() => {
-    if (!dirty && !review && !refreshing && snapshot.worldId === pkg.world_id && !mutation.isPending &&
-      (snapshot.fingerprint !== pkg.fingerprint ||
-        timezoneAreaChanges(snapshot.areas, geography.timezone_areas).length > 0)) {
-      setSnapshot({worldId: pkg.world_id, fingerprint: pkg.fingerprint, areas: geography.timezone_areas})
-      setAreas(copyAreas(geography.timezone_areas))
-      setSuccess('')
-    }
-  }, [pkg.world_id, pkg.fingerprint, geography.timezone_areas, dirty, review, snapshot, refreshing])
-
   async function reload(): Promise<void> {
     if (mutation.isPending || refreshing) return
     if (!window.confirm(cs ? 'Načíst aktuální balíček a zahodit rozpracované časové oblasti?' :
@@ -169,16 +157,16 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
       ? 'Upravujete pouze vlastní kopii. Pořadí tvoří uzavřený kruh; první a poslední oblast spolu sousedí.'
       : 'Only your custom copy can be edited. This is a circular order: the first and last areas are adjacent.'}</p>
     {success && <p className="status" role="status">{success}</p>}
-    {stale && dirty && <p className="error" role="alert">{cs
-      ? 'World Package se mezitím změnil. Rozpracovaný návrh nelze uložit se starým fingerprintem.'
-      : 'The World Package changed. This draft cannot be saved with its previous fingerprint.'}</p>}
+    {stale && <p className="error" role="alert">{cs
+      ? 'World Package se mezitím změnil. Před dalším zápisem je nutné znovu načíst aktuální fingerprint a zkontrolovat úpravy.'
+      : 'The World Package changed. Reload to use its current fingerprint; any unsaved draft requires a new review.'}</p>}
     {error != null && <p className="error" role="alert">
       {isFingerprintConflict(error)
         ? (cs ? 'Konflikt změn: žádný zápis se neopakoval. Načtěte aktuální data a znovu je zkontrolujte.' :
           'Conflict: no write was retried. Reload current data and review the changes again.')
         : formatApiError(error)}
     </p>}
-    {(isFingerprintConflict(error) || (stale && dirty)) && <button type="button" disabled={busy} onClick={() => void reload()}>
+    {(isFingerprintConflict(error) || stale) && <button type="button" disabled={busy} onClick={() => void reload()}>
       {refreshing ? (cs ? 'Načítám…' : 'Reloading…') : (cs ? 'Načíst aktuální data' : 'Reload current data')}
     </button>}
     {review ? <div aria-label="Review Timezone Areas">

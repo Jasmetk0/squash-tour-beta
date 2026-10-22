@@ -155,7 +155,7 @@ describe('Lab scenario authoring boundaries', () => {
     Object.defineProperty(file, 'text', {value: () => Promise.resolve(JSON.stringify(incoming))})
     await userEvent.setup().upload(screen.getByLabelText('match Lab JSON file'), file)
     await waitFor(() => expect(JSON.parse(screen.getByTestId('draft').textContent ?? '')).toEqual(incoming))
-    expect(await screen.findByRole('status')).toHaveTextContent('Loaded into the editor only')
+    expect(await screen.findByText('Loaded into the editor only. No Session or Run was changed.')).toBeInTheDocument()
     expect(save).not.toHaveBeenCalled()
     expect(run).not.toHaveBeenCalled()
   })

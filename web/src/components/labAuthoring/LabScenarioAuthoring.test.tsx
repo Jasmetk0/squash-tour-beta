@@ -178,7 +178,7 @@ describe('Lab scenario authoring boundaries', () => {
     expect(await screen.findByText('File ready for review. Editor, Session and Run are unchanged.')).toBeInTheDocument()
     expect(JSON.parse(screen.getByTestId('draft').textContent ?? '')).toEqual(match)
     const review = screen.getByLabelText('match Lab imported draft review')
-    expect(review).toHaveTextContent('new-saved-copy')
+    expect(review).toHaveTextContent('source_reference')
     expect(review).toHaveTextContent('seed')
     await user.click(screen.getByRole('button', {name: 'Apply imported scenario to editor'}))
     await waitFor(() => expect(JSON.parse(screen.getByTestId('draft').textContent ?? '')).toEqual(incoming))

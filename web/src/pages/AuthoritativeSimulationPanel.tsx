@@ -311,6 +311,9 @@ export function AuthoritativeSimulationPanel({
   const [fullSimulationStopConfirmed, setFullSimulationStopConfirmed] = useState(false)
   // Keep one request identity across HTTP retries; rotate only for a new intent.
   const [fullSimulationControlCommandId, setFullSimulationControlCommandId] = useState(newCommandId)
+  const [frozenFullSimulationTarget, setFrozenFullSimulationTarget] = useState<{
+    runId:string;branchId:string;payload:Parameters<typeof retargetAuthoritativeFullSimulation>[2]
+  }|null>(null)
   const [fullSimulationTargetSelection, setFullSimulationTargetSelection] = useState<string | null>(null)
   const [fullSimulationTargetCommandId, setFullSimulationTargetCommandId] = useState(newCommandId)
   const [fullSimulationTargetSeason, setFullSimulationTargetSeason] = useState('0')
@@ -664,6 +667,8 @@ export function AuthoritativeSimulationPanel({
   useEffect(() => {
     setFullSimulationControlTarget(null)
     setFrozenFullSimulationControl(null)
+    setFullSimulationTargetSelection(null)
+    setFrozenFullSimulationTarget(null)
     setFullSimulationControlOperator('')
     setFullSimulationControlReason('')
     setFullSimulationStopConfirmed(false)
@@ -1865,35 +1870,20 @@ export function AuthoritativeSimulationPanel({
   })
 
   const fullSimulationTargetMutation = useMutation({
-    mutationFn: () => {
-      if (!fullSimulationTargetSelection) throw new Error('Select original Full Simulation.')
-      const common = {
-        control_command_id: fullSimulationTargetCommandId,
-        target_command_id: fullSimulationTargetSelection,
-        operator_label: fullSimulationTargetOperator.trim(),
-        audit_reason: fullSimulationTargetReason.trim()
+    mutationFn:(snapshot:{runId:string;branchId:string;payload:Parameters<typeof retargetAuthoritativeFullSimulation>[2]})=>
+      retargetAuthoritativeFullSimulation(snapshot.runId,snapshot.branchId,snapshot.payload),
+    onSuccess:async (_result,snapshot)=>{
+      if(activeScopeRef.current.runId===snapshot.runId&&activeScopeRef.current.branchId===snapshot.branchId){
+        setFullSimulationTargetSelection(null)
+        setFrozenFullSimulationTarget(null)
+        setFullSimulationTargetCommandId(newCommandId())
+        setFullSimulationTargetOperator('')
+        setFullSimulationTargetReason('')
       }
-      return retargetAuthoritativeFullSimulation(runId, branchId,
-        fullSimulationTargetMode === 'absolute'
-          ? {...common, target_week: {
-              season_index: Number(fullSimulationTargetSeason),
-              week: Number(fullSimulationTargetWeek)
-            }}
-          : {...common, relative_target: {
-              unit: fullSimulationTargetMode,
-              count: Number(fullSimulationTargetCount)
-            }}
-      )
-    },
-    onSuccess: async () => {
-      setFullSimulationTargetSelection(null)
-      setFullSimulationTargetCommandId(newCommandId())
-      setFullSimulationTargetOperator('')
-      setFullSimulationTargetReason('')
       await Promise.all([
-        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-pending',runId,branchId]}),
-        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-history',runId,branchId]}),
-        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-parent-detail',runId,branchId]})
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-pending',snapshot.runId,snapshot.branchId]}),
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-history',snapshot.runId,snapshot.branchId]}),
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-parent-detail',snapshot.runId,snapshot.branchId]})
       ])
     }
   })
@@ -3363,6 +3353,7 @@ export function AuthoritativeSimulationPanel({
                     )}
                     <button type="button" onClick={() => {
                       setFullSimulationTargetSelection(operation.command.command_id)
+                      setFrozenFullSimulationTarget(null)
                       setFullSimulationTargetCommandId(newCommandId())
                       setFullSimulationTargetMode('absolute')
                       setFullSimulationTargetCount('1')
@@ -3403,12 +3394,15 @@ export function AuthoritativeSimulationPanel({
               </ol>
               {fullSimulationTargetSelection && (
                 <div role="group" aria-label={C('Change Full Simulation week target')}>
-                  <p className="status">{C('The new target is the START of the selected week (season index 0 = 2000/01). Already committed work is never undone; if that week is in progress, the next safe boundary stops further work. Original command and Saved Revisions remain unchanged.')}</p>
-                  <p className="status">{C('Relative targets are resolved from the actual current week on the server when applied, not from a potentially stale browser view. One season is exactly 61 weeks.')}</p>
+                  <p className="status">{C('The new target is the START of the selected week (season index 0 = first Run season). Already committed work is never undone; if that week is in progress, the next safe boundary stops further work. Original command and Saved Revisions remain unchanged.')}</p>
+                  <p className="status">{C('Relative targets are resolved from the actual current week on the server when applied, not from a potentially stale browser view. The selected Run defines the number of weeks per season; the limits of this legacy control must be reviewed against that calendar.')}</p>
                   <p><code>{fullSimulationTargetSelection}</code> · {C('Control request ID:')} <code>{fullSimulationTargetCommandId}</code></p>
+                  {frozenFullSimulationTarget&&<p role="status">{language==='cs'
+                    ? 'Původní cíl, Run, větev a auditní údaje jsou uzamčené pro stejné opakování.'
+                    : 'Original target, Run, Branch and audit fields are locked for the same retry.'}</p>
                   <label>{C('Target type')}
                     <select aria-label={C('Target type')} value={fullSimulationTargetMode}
-                      onChange={e => setFullSimulationTargetMode(e.target.value as 'absolute'|'weeks'|'seasons')}>
+                      onChange={e => setFullSimulationTargetMode(e.target.value as 'absolute'|'weeks'|'seasons')} disabled={Boolean(frozenFullSimulationTarget)}>
                       <option value="absolute">{C('Absolute season/week')}</option>
                       <option value="weeks">{C('After N weeks')}</option>
                       <option value="seasons">{C('After N seasons')}</option>
@@ -3418,11 +3412,11 @@ export function AuthoritativeSimulationPanel({
                     <>
                       <label>{C('Target season index (0–49)')}
                         <input type="number" aria-label={C('Target season index (0–49)')} min={0} max={49} step={1}
-                          value={fullSimulationTargetSeason} onChange={e => setFullSimulationTargetSeason(e.target.value)}/>
+                          value={fullSimulationTargetSeason} onChange={e => setFullSimulationTargetSeason(e.target.value)} disabled={Boolean(frozenFullSimulationTarget)}/>
                       </label>
                       <label>{C('Target week (1–61)')}
                         <input type="number" aria-label={C('Target week (1–61)')} min={1} max={61} step={1}
-                          value={fullSimulationTargetWeek} onChange={e => setFullSimulationTargetWeek(e.target.value)}/>
+                          value={fullSimulationTargetWeek} onChange={e => setFullSimulationTargetWeek(e.target.value)} disabled={Boolean(frozenFullSimulationTarget)}/>
                       </label>
                     </>
                   ) : (
@@ -3430,16 +3424,16 @@ export function AuthoritativeSimulationPanel({
                       <input type="number" aria-label={C('Relative target count')} min={1}
                         max={fullSimulationTargetMode === 'seasons' ? 49 : 3050}
                         step={1} value={fullSimulationTargetCount}
-                        onChange={e => setFullSimulationTargetCount(e.target.value)}/>
+                        onChange={e => setFullSimulationTargetCount(e.target.value)} disabled={Boolean(frozenFullSimulationTarget)}/>
                     </label>
                   )}
                   <label>{C('Operator')}
                     <input aria-label={C('Target change operator')} maxLength={128}
-                      value={fullSimulationTargetOperator} onChange={e=>setFullSimulationTargetOperator(e.target.value)}/>
+                      value={fullSimulationTargetOperator} onChange={e=>setFullSimulationTargetOperator(e.target.value)} disabled={Boolean(frozenFullSimulationTarget)}/>
                   </label>
                   <label>{C('Audit reason')}
                     <textarea aria-label={C('Target change audit reason')} maxLength={2000}
-                      value={fullSimulationTargetReason} onChange={e=>setFullSimulationTargetReason(e.target.value)}/>
+                      value={fullSimulationTargetReason} onChange={e=>setFullSimulationTargetReason(e.target.value)} disabled={Boolean(frozenFullSimulationTarget)}/>
                   </label>
                   <button type="button" disabled={
                     (fullSimulationTargetMode === 'absolute' ? (
@@ -3456,10 +3450,25 @@ export function AuthoritativeSimulationPanel({
                     )) ||
                     !fullSimulationTargetOperator.trim() || !fullSimulationTargetReason.trim() ||
                     fullSimulationTargetMutation.isPending
-                  } onClick={()=>fullSimulationTargetMutation.mutate()}>
+                  } onClick={()=>{
+                    if(!fullSimulationTargetSelection||!fullSimulationTargetOperator.trim()||!fullSimulationTargetReason.trim())return
+                    const common={
+                      control_command_id:fullSimulationTargetCommandId,
+                      target_command_id:fullSimulationTargetSelection,
+                      operator_label:fullSimulationTargetOperator.trim(),
+                      audit_reason:fullSimulationTargetReason.trim()
+                    }
+                    const payload:Parameters<typeof retargetAuthoritativeFullSimulation>[2] =
+                      fullSimulationTargetMode==='absolute'
+                        ? {...common,target_week:{season_index:Number(fullSimulationTargetSeason),week:Number(fullSimulationTargetWeek)}}
+                        : {...common,relative_target:{unit:fullSimulationTargetMode,count:Number(fullSimulationTargetCount)}}
+                    const snapshot=frozenFullSimulationTarget??{runId,branchId,payload}
+                    setFrozenFullSimulationTarget(snapshot)
+                    fullSimulationTargetMutation.mutate(snapshot)
+                  }}>
                     {C('Apply week target')}
                   </button>
-                  <button type="button" onClick={()=>setFullSimulationTargetSelection(null)}
+                  <button type="button" onClick={()=>{setFullSimulationTargetSelection(null);setFrozenFullSimulationTarget(null)}}
                     disabled={fullSimulationTargetMutation.isPending}>{C('Cancel')}</button>
                   {fullSimulationTargetMutation.error && <p role="alert" className="error">{formatApiError(fullSimulationTargetMutation.error)}</p>}
                 </div>

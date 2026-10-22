@@ -134,9 +134,14 @@ describe('built-in World cloning', () => {
     </QueryClientProvider>)
 
     expect(await screen.findByText('Clone Built-in World')).toBeInTheDocument()
-    fireEvent.change(screen.getByPlaceholderText('my_custom_world'), { target: { value: 'editable_earth' } })
+    fireEvent.change(screen.getByPlaceholderText('my_custom_world'), { target: { value: '_bad_id' } })
     fireEvent.change(screen.getByPlaceholderText('My Custom World'), { target: { value: 'Editable Earth' } })
     fireEvent.click(screen.getByRole('button', { name: 'Review custom copy' }))
+    expect(screen.getByText(/must start with a lowercase letter or digit/)).toBeInTheDocument()
+    expect(api.cloneWorldPackage).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByPlaceholderText('my_custom_world'), { target: { value: 'editable_earth' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Review custom copy' }))
+    expect(screen.getByText('real-world-head')).toBeInTheDocument()
     expect(api.cloneWorldPackage).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'Confirm custom copy' }))
 

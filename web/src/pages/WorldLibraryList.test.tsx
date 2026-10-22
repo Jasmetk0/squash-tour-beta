@@ -74,7 +74,7 @@ describe('World Package library local filters', () => {
   it('filters archive status, sorts deterministically and resets all controls without refetching', async () => {
     api.listWorldPackages.mockResolvedValue({
       packages: [
-        { ...packageRow('last_id', 'Zulu', 'official'), country_count: 1 },
+        { ...packageRow('last_id', 'Zulu', 'official'), country_count: 70 },
         { ...packageRow('first_id', 'Alpha', 'custom'), country_count: 50, status: 'archived' },
         { ...packageRow('other_id', 'Beta', 'custom'), country_count: 20 },
       ],
@@ -95,8 +95,8 @@ describe('World Package library local filters', () => {
       '/admin/world/library/last_id'])
 
     fireEvent.change(sort, { target: { value: 'countries' } })
-    expect(links()).toEqual(['/admin/world/library/first_id', '/admin/world/library/other_id',
-      '/admin/world/library/last_id'])
+    expect(links()).toEqual(['/admin/world/library/last_id', '/admin/world/library/first_id',
+      '/admin/world/library/other_id'])
 
     fireEvent.change(status, { target: { value: 'archived' } })
     expect(screen.getByText('Alpha')).toBeInTheDocument()

@@ -52,6 +52,14 @@ describe('Canonical Run Players',()=>{
     fireEvent.change(screen.getByRole('textbox',{name:'Player search'}),{target:{value:'Olivia'}})
     await waitFor(()=>expect(api.getSavedPlayersInventory).toHaveBeenLastCalledWith('run-a','a','head-a',expect.objectContaining({offset:0,search:'Olivia'})))
   })
+  it('shows the exact saved ranking week index without assuming a 61-week calendar',async()=>{
+    api.getSavedPlayersInventory.mockImplementation(async (_r:string,_b:string,_h:string,filters:Filters)=>({
+      ...response(filters),ranking_week_ordinal:78,
+    }))
+    mount()
+    expect(await screen.findByText(/Ranking publication · week index 78/)).toBeInTheDocument()
+    expect(screen.queryByText(/Ranking W18/)).not.toBeInTheDocument()
+  })
   it('rejects a foreign Saved Revision response instead of displaying stale player',async()=>{
     api.getSavedPlayersInventory.mockImplementation(async (_r:string,_b:string,_h:string,filters:Filters)=>response(filters,'foreign'))
     mount()

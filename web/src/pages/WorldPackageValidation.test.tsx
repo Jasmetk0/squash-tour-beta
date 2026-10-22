@@ -85,6 +85,44 @@ describe('World Package validation diagnostics', () => {
     expect(screen.getByText('Errors:')).toBeInTheDocument()
   })
 
+  it('sorts errors first while preserving original order on request, without refetching', async () => {
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'custom', status: 'errors', error_count: 1, warning_count: 1,
+      info_count: 1, checks: [...checks].reverse(),
+    })
+    mount()
+    expect(await screen.findByText('Country count checked')).toBeInTheDocument()
+    const codes = () => within(screen.getByRole('table', { name: 'World package validation checks' }))
+      .getAllByRole('row').slice(1).map(row => within(row).getAllByRole('cell')[0].textContent)
+    expect(codes()).toEqual(['COUNTRY_CODE', 'REGION_LINK', 'COUNTRY_COUNT'])
+    const sort = screen.getByRole('combobox', { name: 'Validation order' })
+    fireEvent.change(sort, { target: { value: 'source' } })
+    expect(codes()).toEqual(['COUNTRY_COUNT', 'REGION_LINK', 'COUNTRY_CODE'])
+    fireEvent.click(screen.getByRole('button', { name: 'Clear validation filters' }))
+    expect(sort).toHaveValue('severity')
+    expect(codes()).toEqual(['COUNTRY_CODE', 'REGION_LINK', 'COUNTRY_COUNT'])
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
+  })
+
+  it('translates diagnostic UI to Czech while preserving original diagnostic evidence', async () => {
+    locale.language = 'cs'
+    mount()
+    expect(await screen.findByText('Invalid country code')).toBeInTheDocument()
+    expect(screen.getByText('Celkový stav:')).toBeInTheDocument()
+    expect(screen.getByText('Chyby:')).toBeInTheDocument()
+    expect(screen.getByText('Zobrazeno 3 z 3 validačních kontrol')).toBeInTheDocument()
+    const table = screen.getByRole('table', { name: 'Validační kontroly World Package' })
+    expect(within(table).getByRole('columnheader', { name: 'Závažnost' })).toBeInTheDocument()
+    expect(within(table).getByText('Chyba')).toBeInTheDocument()
+    expect(within(table).getByText('Selhalo')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Pořadí kontrol' })).toHaveValue('severity')
+    const severity = screen.getByRole('combobox', { name: 'Závažnost kontroly' })
+    fireEvent.change(severity, { target: { value: 'warning' } })
+    expect(within(table).getByText('Region missing')).toBeInTheDocument()
+    expect(within(table).queryByText('Invalid country code')).not.toBeInTheDocument()
+    expect(screen.getByText('Zobrazeno 1 z 3 validačních kontrol')).toBeInTheDocument()
+  })
+
   it('rejects validation results whose World ID is not the opened package', async () => {
     api.getWorldPackageValidation.mockResolvedValue({
       world_id: 'foreign-world', status: 'errors', error_count: 1, warning_count: 1,

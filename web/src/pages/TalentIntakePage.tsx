@@ -157,12 +157,21 @@ export function TalentIntakePage(): JSX.Element {
             <label>
               Country filter
               <input
+                type="search"
                 value={countryFilter}
                 onChange={(event) => setCountryFilter(event.target.value)}
                 placeholder="Code or name"
               />
             </label>
-            <table aria-label="Talent intake country totals">
+            <button type="button" disabled={!countryFilter} onClick={() => setCountryFilter('')}>
+              Clear country filter
+            </button>
+            <p role="status">Showing {filteredCountries.length} of {previewQuery.data.country_totals.length} country allocations</p>
+            {previewQuery.data.country_totals.length === 0
+              ? <p className="status">No country allocations exist in this cohort preview.</p>
+              : filteredCountries.length === 0
+                ? <p className="status">No country allocations match the current filter.</p>
+                : <div className="table-responsive"><table aria-label="Talent intake country totals">
               <thead>
                 <tr>
                   <th>Country</th>
@@ -179,7 +188,7 @@ export function TalentIntakePage(): JSX.Element {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>}
 
             <h4>Weekly intake timing</h4>
             <table aria-label="Talent intake weekly schedule">

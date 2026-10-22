@@ -170,7 +170,12 @@ export function changeTournamentStopRound(text: string, raw: string): string {
 function changes(oldValue: unknown, newValue: unknown, prefix: string, output: string[]): void {
   if (JSON.stringify(oldValue) === JSON.stringify(newValue)) return
   if (output.length >= 40) return
-  if (object(oldValue) && object(newValue)) {
+  if (Array.isArray(oldValue) && Array.isArray(newValue) && oldValue.length === newValue.length) {
+    for (let i = 0; i < oldValue.length; i++) {
+      changes(oldValue[i], newValue[i], prefix ? prefix + '.' + i : String(i), output)
+      if (output.length >= 40) return
+    }
+  } else if (object(oldValue) && object(newValue)) {
     for (const key of new Set([...Object.keys(oldValue), ...Object.keys(newValue)])) {
       changes(oldValue[key], newValue[key], prefix ? prefix + '.' + key : key, output)
       if (output.length >= 40) return
@@ -201,9 +206,9 @@ export function labChangeDetails(saved: unknown, draft: unknown): LabChangeDetai
   return labChangedPaths(saved, draft).map(path => ({
     path,
     before: short(path.split('.').reduce<unknown>((value, key) =>
-      object(value) ? value[key] : undefined, saved)),
+      object(value) ? value[key] : Array.isArray(value) && /^\d+$/.test(key) ? value[Number(key)] : undefined, saved)),
     after: short(path.split('.').reduce<unknown>((value, key) =>
-      object(value) ? value[key] : undefined, draft))
+      object(value) ? value[key] : Array.isArray(value) && /^\d+$/.test(key) ? value[Number(key)] : undefined, draft))
   }))
 }
 

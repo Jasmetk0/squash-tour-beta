@@ -13,8 +13,8 @@ function yesNo(value: boolean, yes: string, no: string): string {
   return value ? yes : no
 }
 
-function usageLabel(value: number | null): string {
-  return value === null ? 'Usage not tracked yet' : String(value)
+function usageLabel(value: number | null, cs: boolean): string {
+  return value === null ? (cs ? 'Využití zatím není sledováno' : 'Usage not tracked yet') : String(value)
 }
 
 function shortFingerprint(fingerprint: string): string {
@@ -22,28 +22,28 @@ function shortFingerprint(fingerprint: string): string {
   return `${fingerprint.slice(0, 8)}…${fingerprint.slice(-8)}`
 }
 
-function PackageTable({ packages }: { packages: WorldPackage[] }): JSX.Element {
+function PackageTable({ packages, cs }: { packages: WorldPackage[], cs: boolean }): JSX.Element {
   if (packages.length === 0) {
-    return <p className="status">No World Packages were returned by the registry. This read-only library has nothing to display yet.</p>
+    return <p className="status">{cs ? 'Registr zatím nevrátil žádné World Packages.' : 'No World Packages were returned by the registry.'}</p>
   }
 
   return (
     <table aria-label="World packages table">
       <thead>
         <tr>
-          <th>Name</th>
+          <th>{cs ? 'Název' : 'Name'}</th>
           <th>World ID</th>
-          <th>Type</th>
-          <th>Status</th>
-          <th>Package mode</th>
-          <th>Countries</th>
-          <th>Continents</th>
-          <th>Regions</th>
-          <th>Travel Regions</th><th>Timezone Areas</th>
-          <th>Used by Runs</th>
-          <th>Version</th>
+          <th>{cs ? 'Typ' : 'Type'}</th>
+          <th>{cs ? 'Stav' : 'Status'}</th>
+          <th>{cs ? 'Režim balíčku' : 'Package mode'}</th>
+          <th>{cs ? 'Země' : 'Countries'}</th>
+          <th>{cs ? 'Kontinenty' : 'Continents'}</th>
+          <th>{cs ? 'Regiony' : 'Regions'}</th>
+          <th>{cs ? 'Cestovní regiony' : 'Travel Regions'}</th><th>{cs ? 'Časové oblasti' : 'Timezone Areas'}</th>
+          <th>{cs ? 'Použito v Runech' : 'Used by Runs'}</th>
+          <th>{cs ? 'Verze' : 'Version'}</th>
           <th>Fingerprint</th>
-          <th>Actions</th>
+          <th>{cs ? 'Akce' : 'Actions'}</th>
         </tr>
       </thead>
       <tbody>
@@ -51,17 +51,17 @@ function PackageTable({ packages }: { packages: WorldPackage[] }): JSX.Element {
           <tr key={pkg.world_id}>
             <td>{pkg.name}</td>
             <td><code>{pkg.world_id}</code></td>
-            <td>{pkg.type === 'custom' ? 'Custom' : 'Built-in'}</td>
-            <td>{pkg.status}</td>
-            <td>{yesNo(pkg.editable, 'Editable source', 'Read-only')}</td>
+            <td>{pkg.type === 'custom' ? (cs ? 'Vlastní' : 'Custom') : (cs ? 'Vestavěný' : 'Built-in')}</td>
+            <td>{pkg.status === 'archived' ? (cs ? 'Archivovaný' : 'Archived') : (cs ? 'Aktivní' : 'Active')}</td>
+            <td>{yesNo(pkg.editable, cs ? 'Upravitelný zdroj' : 'Editable source', cs ? 'Jen pro čtení' : 'Read-only')}</td>
             <td>{pkg.country_count}</td>
             <td>{pkg.continent_count}</td>
             <td>{pkg.region_count}</td>
             <td>{pkg.travel_region_count}</td><td>{pkg.timezone_area_count}</td>
-            <td>{usageLabel(pkg.used_by_run_count)}</td>
+            <td>{usageLabel(pkg.used_by_run_count, cs)}</td>
             <td>{pkg.version}</td>
             <td><code title={pkg.fingerprint}>{shortFingerprint(pkg.fingerprint)}</code></td>
-            <td><Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}`}>Open World Package</Link></td>
+            <td><Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}`}>{cs ? 'Otevřít World Package' : 'Open World Package'}</Link></td>
           </tr>
         ))}
       </tbody>
@@ -101,17 +101,19 @@ export function WorldLibraryPage(): JSX.Element {
     <section className="panel">
       <div className="page-intro">
         <h2>World Packages</h2>
-        <p className="subtitle">Registry of foundational World Packages available to the engine.</p>
+        <p className="subtitle">{cs ? 'Registr dostupných zdrojů světa pro Squash Engine.' : 'Registry of available world sources for Squash Engine.'}</p>
       </div>
-      <p>
-        World Packages are foundational world input bundles. A run will eventually be created from one selected World Package.
-        Official FAX World is built in and read-only. Custom World Packages live under <code>config/world_packages/custom/</code> and use the same canonical package-scoped storage contract.
+      <p>{cs
+        ? 'World Packages jsou opakovaně použitelné zdroje světa. Run může vzniknout i prázdný; podporovaný zdroj lze později zkopírovat bez změny originálu.'
+        : 'World Packages are reusable world sources. A Run can start empty; a supported source may be copied in later without altering the original.'}
+        {' '}{cs ? 'Vlastní zdroje jsou uloženy v ' : 'Custom sources are stored under '}
+        <code>config/world_packages/custom/</code>.
       </p>
-      <p><Link to="/admin/world">Back to World hub</Link></p>
+      <p><Link to="/admin/world">{cs ? 'Zpět na přehled světů' : 'Back to World hub'}</Link></p>
 
-      <SectionCard title="Available World Packages">
-        {packagesQuery.isLoading && <p className="status">Loading World Packages...</p>}
-        {packagesQuery.error && <p className="error">Failed to load World Packages: {formatApiError(packagesQuery.error)}</p>}
+      <SectionCard title={cs ? 'Dostupné World Packages' : 'Available World Packages'}>
+        {packagesQuery.isLoading && <p className="status">{cs ? 'Načítám World Packages…' : 'Loading World Packages...'}</p>}
+        {packagesQuery.error && <p className="error">{cs ? 'Nepodařilo se načíst World Packages: ' : 'Failed to load World Packages: '}{formatApiError(packagesQuery.error)}</p>}
         {packagesQuery.data && <>
           <div className="form-grid">
             <label>
@@ -154,7 +156,7 @@ export function WorldLibraryPage(): JSX.Element {
             ? <p className="status">{cs
               ? 'Žádné World Packages neodpovídají hledání nebo filtrům.'
               : 'No World Packages match your search or filters.'}</p>
-            : <PackageTable packages={visiblePackages} />}
+            : <PackageTable packages={visiblePackages} cs={cs} />}
         </>}
       </SectionCard>
     </section>

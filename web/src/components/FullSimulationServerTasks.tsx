@@ -114,6 +114,7 @@ export function taskCalendarHandoff(task:ServerTask):string|null{
 function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
  const {language}=useLanguage();const t=copy[language];const client=useQueryClient()
  const [operator,setOperator]=useState('');const [reason,setReason]=useState('');const [pending,setPending]=useState<{target:ServerTask;body:ContinueTask}|null>(null)
+ const [summaryOpen,setSummaryOpen]=useState(false)
  const action=task.state==='recoverable'||task.state==='failed'?'recover':'resume'
  // A paused task can retain historical checkpoint evidence. Only operator_paused
  // is itself the current pause boundary; an older blocker is not current.
@@ -171,7 +172,9 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
   {mutation.error && <p role="alert">{formatApiError(mutation.error)}</p>}
   {requiresNewWeekReview && <FullSimulationWeekScheduleReview runId={task.run_id} branchId={task.branch_id} taskId={task.task_id} taskRevision={task.revision}/>}
   <Link to={`/admin/runs/${encodeURIComponent(task.run_id)}/simulate?branch=${encodeURIComponent(task.branch_id)}&task=${encodeURIComponent(task.task_id)}`}>{t.open}</Link>
-  {terminal && <details><summary>{t.detail}</summary><FullSimulationSummary runId={task.run_id} branchId={task.branch_id} commandId={task.parent_command_id}/></details>}
+  {terminal && <details onToggle={e=>setSummaryOpen(e.currentTarget.open)}><summary>{t.detail}</summary>
+   {summaryOpen&&<FullSimulationSummary runId={task.run_id} branchId={task.branch_id} commandId={task.parent_command_id}/>}
+  </details>}
  </li>
 }
 export function FullSimulationServerTasks({runId,branchId}:{runId?:string;branchId?:string}){

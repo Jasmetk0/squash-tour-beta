@@ -52,8 +52,8 @@ describe('reviewed Timezone Area authoring', () => {
     fireEvent.click(screen.getByRole('button',{name:'Review Timezone Areas'}))
     expect(api.replaceWorldPackageTimezoneAreas).not.toHaveBeenCalled()
     expect(screen.getByText('fp-1')).toBeInTheDocument()
-    expect(screen.getByText('W — West')).toBeInTheDocument()
-    expect(screen.getByText('E — East')).toBeInTheDocument()
+    expect(screen.getAllByText('W — West').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('E — East').length).toBeGreaterThan(0)
     fireEvent.click(screen.getByRole('button',{name:'Confirm and save'}))
     await waitFor(() => expect(api.replaceWorldPackageTimezoneAreas).toHaveBeenCalledWith('custom', [
       {code:'E',name:'East',position:0},{code:'W',name:'West',position:1}

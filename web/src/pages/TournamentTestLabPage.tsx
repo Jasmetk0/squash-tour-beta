@@ -26,7 +26,7 @@ import type {
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { prettyLabJson } from '../components/LabJson'
 import { LabNavigation } from '../components/LabNavigation'
-import { LabScenarioAuthoring } from '../components/labAuthoring/LabScenarioAuthoring'
+import { LabScenarioAuthoring, readLabScenario } from '../components/labAuthoring/LabScenarioAuthoring'
 import { LabSessionConflict, useLabSessionEditor, validateLabSession, type LabEditorTicket } from '../components/LabSessionEditor'
 import { newCommandId } from '../admin/branchSimulation'
 
@@ -361,6 +361,22 @@ export function TournamentTestLabPage(): JSX.Element {
     }
   }
 
+  const createFromDraft = () => {
+    if (selectedSession || writePending || sessionConflict) return
+    setLocalError(null)
+    try {
+      readLabScenario(scenarioText, 'tournament')
+      createMutation.mutate({ ticket: editor.captureEditor(), request: {
+        display_name: sessionName.trim() || 'New Tournament Test Session',
+        scenario: JSON.parse(scenarioText) as TournamentLabScenario
+      } })
+    } catch {
+      setLocalError(cs
+        ? 'Zkontrolujte platný JSON, typ a verzi scénáře před vytvořením Session.'
+        : 'Check the scenario JSON, Lab type and schema version before creating a Session.')
+    }
+  }
+
   const save = () => {
     if (!selectedSession || sessionConflict || writePending) return
     setLocalError(null)
@@ -603,6 +619,9 @@ export function TournamentTestLabPage(): JSX.Element {
           />
         </label>
         <button type="button" onClick={formatScenario} disabled={runPending || writePending}>Format JSON</button>
+        {!selectedSession ? <button type="button" onClick={createFromDraft} disabled={writePending || !scenarioText.trim()}>
+          {cs ? 'Vytvořit Session z pracovního scénáře' : 'Create Test Session from scratch'}
+        </button> : null}
         {selectedSession ? <button type="button" onClick={save} disabled={writePending || Boolean(sessionConflict) || !scenarioText}>
           {saveMutation.isPending ? 'Saving…' : 'Save Test Session'}
         </button> : null}

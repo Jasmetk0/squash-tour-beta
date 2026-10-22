@@ -50,6 +50,15 @@ describe('RunSimulationPage', () => {
     expect(screen.queryByText(/Canonical simulation blocked:/)).not.toBeInTheDocument()
   })
 
+  it('keeps historical compatibility tools available while canonical controls remain first',async()=>{
+    renderHarness()
+    const canonical=screen.getByRole('heading',{name:'Canonical authoritative sporting simulation'})
+    const summary=screen.getByText('Legacy compatibility simulation tools · optional')
+    expect(canonical.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(summary.closest('details')).toHaveAttribute('open')
+    expect(await screen.findByRole('button',{name:'Next Match'})).toBeEnabled()
+  })
+
   it('never uses a branch deep link to change Admin context from inside Simulation', async () => {
     select('branch-a', 'cp-a')
     const forbiddenSelection = context.value.selectBranch
@@ -87,6 +96,11 @@ describe('RunSimulationPage', () => {
   it('keeps Finals but removes five legacy controls for a Package-backed Branch', async () => {
     api.getRunPackageState.mockResolvedValue({ state: { run_id: 'run-a', branch_id: 'branch-a' }, fingerprint: 'pkg' })
     renderHarness(); await screen.findByText(/This Branch is Package-backed/)
+    const legacy=screen.getByText('Legacy compatibility simulation tools · optional').closest('details')
+    expect(legacy).not.toHaveAttribute('open')
+    expect(screen.queryByRole('button', { name: 'World Tour Finals' })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByText('Legacy compatibility simulation tools · optional'))
+    expect(legacy).toHaveAttribute('open')
     for (const name of ['Next Match', 'Next Round', 'Next Week', 'Next Tournament', 'Full Season']) expect(screen.queryByRole('button', { name })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'World Tour Finals' })).toBeEnabled()
     expect(screen.getByRole('heading', { name: 'Canonical authoritative sporting simulation' })).toBeInTheDocument()

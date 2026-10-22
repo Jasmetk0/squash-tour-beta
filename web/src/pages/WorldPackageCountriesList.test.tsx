@@ -50,6 +50,9 @@ describe('World Package country inventory', () => {
     mount()
     expect(await screen.findByText('Country 000')).toBeInTheDocument()
     expect(screen.getByText('Showing 53 of 53 countries')).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'World Package countries table' }).parentElement).toHaveClass('table-responsive')
+    expect(screen.getByText(/Unassigned travel region: 53 · Unassigned timezone area: 53/)).toBeInTheDocument()
+    expect(screen.getByText(/An unassigned value is not necessarily an error/)).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Open' })).toHaveLength(50)
     expect(screen.queryByText('Country 050')).not.toBeInTheDocument()
 
@@ -145,6 +148,7 @@ describe('World Package country inventory', () => {
     })
     mount()
     expect(await screen.findByText('Country 001')).toBeInTheDocument()
+    expect(screen.getByText(/Unassigned travel region: 2 · Unassigned timezone area: 1/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('checkbox', { name: 'Unassigned travel region' }))
     expect(screen.getByText('Showing 2 of 3 countries')).toBeInTheDocument()
     expect(screen.queryByText('Country 001')).not.toBeInTheDocument()

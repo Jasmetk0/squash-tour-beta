@@ -10,9 +10,9 @@ vi.mock('../api/client', async importOriginal => ({ ...(await importOriginal<obj
 
 describe('new-scale country creation', () => {
   it('authors explicit tenths on 1–10 without a court-count input', async () => {
-    api.getWorldPackage.mockResolvedValue({ type: 'custom', source: 'custom_config', editable: true, fingerprint: 'source-head' })
-    api.getWorldPackageGeography.mockResolvedValue({ regions: [{ code: 'EUR', name: 'Europe' }], travel_regions: [], timezone_areas: [] })
-    api.createWorldPackageCountry.mockResolvedValue({ country_detail: { country: { code: 'AAA' } } })
+    api.getWorldPackage.mockResolvedValue({ type: 'custom', source: 'custom_config', editable: true, fingerprint: 'source-head', world_id: 'custom' })
+    api.getWorldPackageGeography.mockResolvedValue({ regions: [{ code: 'EUR', name: 'Europe' }], travel_regions: [], timezone_areas: [], world_id: 'custom' })
+    api.createWorldPackageCountry.mockResolvedValue({ country_detail: { package: { world_id: 'custom' }, country: { code: 'AAA' } } })
     render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <MemoryRouter initialEntries={['/world/custom/new']}><Routes>
         <Route path="/world/:worldId/new" element={<WorldPackageCountryCreatePage />} />
@@ -29,7 +29,10 @@ describe('new-scale country creation', () => {
     fireEvent.change(screen.getByLabelText('Region'), { target: { value: 'EUR' } })
     fireEvent.change(screen.getByLabelText('Population value 2020'), { target: { value: '1000000' } })
     fireEvent.change(popularity, { target: { value: '7.4' } })
-    fireEvent.submit(screen.getByRole('button', { name: /Save country/i }).closest('form')!)
+    fireEvent.submit(screen.getByRole('button', { name: /Review before saving/i }).closest('form')!)
+    expect(api.createWorldPackageCountry).not.toHaveBeenCalled()
+    expect(await screen.findByText('Review new country')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm and save' }))
     await waitFor(() => expect(api.createWorldPackageCountry).toHaveBeenCalledWith('custom', expect.objectContaining({
       rating_scale: 'country_ratings_1_10.v2', squash_popularity: 7.4, court_count: null,
     })))

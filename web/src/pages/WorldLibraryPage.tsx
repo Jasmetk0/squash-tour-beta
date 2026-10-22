@@ -28,7 +28,7 @@ function PackageTable({ packages, cs }: { packages: WorldPackage[], cs: boolean 
   }
 
   return (
-    <table aria-label="World packages table">
+    <div className="table-responsive"><table aria-label="World packages table">
       <thead>
         <tr>
           <th>{cs ? 'Název' : 'Name'}</th>
@@ -69,7 +69,7 @@ function PackageTable({ packages, cs }: { packages: WorldPackage[], cs: boolean 
           </tr>
         ))}
       </tbody>
-    </table>
+    </table></div>
   )
 }
 
@@ -380,7 +380,7 @@ function CountryCell({ value }: { value: ReactNode }): JSX.Element {
 
 function PackageCountriesTable({ countries, worldId, cs }: { countries: CountryRecord[], worldId: string, cs: boolean }): JSX.Element {
   return (
-    <table aria-label={cs ? 'Země ve World Package' : 'World Package countries table'}>
+    <div className="table-responsive"><table aria-label={cs ? 'Země ve World Package' : 'World Package countries table'}>
       <thead>
         <tr>
           <th>{cs ? 'Kód' : 'Code'}</th>
@@ -421,7 +421,7 @@ function PackageCountriesTable({ countries, worldId, cs }: { countries: CountryR
           </tr>
         ))}
       </tbody>
-    </table>
+    </table></div>
   )
 }
 
@@ -453,6 +453,8 @@ export function WorldPackageCountriesPage(): JSX.Element {
     setPage(0)
   }, [worldId])
   const sourceCountries = data?.countries ?? []
+  const missingTravelCount = sourceCountries.filter(country => !country.travel_region).length
+  const missingTimezoneCount = sourceCountries.filter(country => !country.timezone_area).length
   const regions = Array.from(new Set(sourceCountries.map(country => country.region).filter(Boolean)))
     .sort((left, right) => left.localeCompare(right))
   const normalizedSearch = search.trim().toLocaleLowerCase()
@@ -541,6 +543,10 @@ export function WorldPackageCountriesPage(): JSX.Element {
                 {' '}{cs ? 'Bez časové oblasti' : 'Unassigned timezone area'}
               </label>
             </div>
+            <p className="status">{cs
+              ? `Nepřiřazený cestovní region: ${missingTravelCount} · Nepřiřazená časová oblast: ${missingTimezoneCount}`
+              : `Unassigned travel region: ${missingTravelCount} · Unassigned timezone area: ${missingTimezoneCount}`}
+              {' '}{cs ? 'Nepřiřazený údaj nemusí znamenat chybu.' : 'An unassigned value is not necessarily an error.'}</p>
             <button type="button" disabled={!search && !region && !missingTravelRegion && !missingTimezoneArea && sortBy === 'name'} onClick={clearFilters}>
               {cs ? 'Vymazat filtry a řazení' : 'Clear filters and sorting'}
             </button>

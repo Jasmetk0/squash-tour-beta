@@ -249,12 +249,17 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   const cs = language === 'cs'
   const sourceRef = useRef(source.world_id)
   sourceRef.current = source.world_id
+  const locationKey = useLocation().key
+  const activeLocationKey = useRef(locationKey)
+  activeLocationKey.current = locationKey
+  const mounted = useRef(false)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const [newWorldId, setNewWorldId] = useState('')
   const [name, setName] = useState('')
   const [description, setDescription] = useState(`Custom world cloned from ${source.name}.`)
   const [result, setResult] = useState<WorldPackageCloneResponse | null>(null)
   const [apiError, setApiError] = useState<string | null>(null)
-  const [review, setReview] = useState<{ sourceWorldId: string; payload: WorldPackageClonePayload } | null>(null)
+  const [review, setReview] = useState<{ sourceWorldId: string; sourceFingerprint: string; locationKey: string; payload: WorldPackageClonePayload } | null>(null)
   useEffect(() => {
     setNewWorldId(''); setName(''); setDescription(`Custom world cloned from ${source.name}.`)
     setResult(null); setApiError(null); setReview(null)
@@ -263,15 +268,15 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   useUnsavedWorldPackageWarning(cloneHasDraft)
   useEffect(() => { onDirtyChange(cloneHasDraft); return () => onDirtyChange(false) }, [cloneHasDraft, onDirtyChange])
   const mutation = useMutation({
-    mutationFn: (command: { sourceWorldId: string; payload: WorldPackageClonePayload }) => cloneWorldPackage(command.sourceWorldId, command.payload),
+    mutationFn: (command: { sourceWorldId: string; sourceFingerprint: string; locationKey: string; payload: WorldPackageClonePayload }) => cloneWorldPackage(command.sourceWorldId, command.payload),
     onSuccess: (response, command) => {
       if (response.ok && !response.dry_run) {
         void queryClient.invalidateQueries({ queryKey: ['world-packages'] })
         void queryClient.invalidateQueries({ queryKey: ['world-package', response.new_world_id] })
         void queryClient.invalidateQueries({ queryKey: ['world-package-validation', response.new_world_id] })
       }
-      if (sourceRef.current !== command.sourceWorldId) return
-      if (response.source_world_id !== command.sourceWorldId || response.new_world_id !== command.payload.new_world_id) {
+      if (!mounted.current || sourceRef.current !== command.sourceWorldId || activeLocationKey.current !== command.locationKey) return
+      if (response.source_world_id !== command.sourceWorldId || response.new_world_id !== command.payload.new_world_id || response.dry_run !== command.payload.dry_run) {
         setApiError(cs ? 'Odpověď nepatří kontrolované kopii.' : 'The response does not match the reviewed clone.')
         return
       }
@@ -282,7 +287,7 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
       }
     },
     onError: (error, command) => {
-      if (sourceRef.current !== command.sourceWorldId) return
+      if (!mounted.current || sourceRef.current !== command.sourceWorldId || activeLocationKey.current !== command.locationKey) return
       setResult(null)
       setApiError(formatApiError(error))
     }
@@ -290,8 +295,8 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   function prepare(dryRun: boolean): void {
     if (mutation.isPending) return
     const id = newWorldId.trim()
-    if (!/^[a-z0-9_]{3,64}$/.test(id)) {
-      setApiError(cs ? 'ID musí obsahovat 3–64 malých písmen, číslic nebo podtržítek.' : 'World ID must contain 3–64 lowercase letters, digits or underscores.')
+    if (!/^[a-z0-9][a-z0-9_]{2,63}$/.test(id)) {
+      setApiError(cs ? 'ID musí začínat malým písmenem nebo číslicí (3–64 znaků, dále také podtržítko).' : 'World ID must start with a lowercase letter or digit (3–64 characters, then underscores also allowed).')
       return
     }
     if (!name.trim()) {
@@ -304,30 +309,36 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
     setResult(null); setApiError(null)
     if (dryRun) {
       setReview(null)
-      mutation.mutate({ sourceWorldId: source.world_id, payload })
+      mutation.mutate({ sourceWorldId: source.world_id, sourceFingerprint: source.fingerprint, locationKey, payload })
     } else {
-      setReview({sourceWorldId: source.world_id, payload})
+      setReview({sourceWorldId: source.world_id, sourceFingerprint: source.fingerprint, locationKey, payload})
     }
   }
   const confirm = () => {
-    if (!review || review.sourceWorldId !== source.world_id || mutation.isPending) return
+    if (!review || mutation.isPending) return
+    if (review.sourceWorldId !== source.world_id || review.sourceFingerprint !== source.fingerprint ||
+        review.locationKey !== locationKey) {
+      setApiError(cs ? 'Zdroj World Package se změnil. Návrh zkontrolujte znovu.' :
+        'The source World Package changed. Review the clone again.')
+      return
+    }
     mutation.mutate(review)
   }
   return <SectionCard title={cs ? 'Vytvořit vlastní kopii World Package' : 'Clone Built-in World'}>
     <p>{cs ? 'Nezávislá vlastní kopie vestavěného zdroje' : 'Create an independent Custom World from'} <strong>{source.name}</strong>. {cs ? 'Originál ani existující Runy se nezmění.' : 'The original and existing Runs are never changed.'}</p>
     <p className="status">{cs ? 'Kopie zachová úplný obsah včetně historických zdrojových dat.' : 'The clone preserves the complete package tree, including historical evidence.'}</p>
     {review ? <div aria-label="Review World Package clone">
-      <p><strong>{cs ? 'Zdroj' : 'Source'}:</strong> <code>{review.sourceWorldId}</code> · <strong>{cs ? 'Nová kopie' : 'New copy'}:</strong> <code>{review.payload.new_world_id}</code></p>
+      <p><strong>{cs ? 'Zdroj' : 'Source'}:</strong> <code>{review.sourceWorldId}</code> · <strong>{cs ? 'Fingerprint zdroje' : 'Source fingerprint'}:</strong> <code>{review.sourceFingerprint}</code> · <strong>{cs ? 'Nová kopie' : 'New copy'}:</strong> <code>{review.payload.new_world_id}</code></p>
       <p><strong>{cs ? 'Název' : 'Name'}:</strong> {review.payload.name}</p>
       <p>{cs ? 'Zkontrolujte zdroj a cíl. Vytvoření vyžaduje výslovné potvrzení.' : 'Check the source and destination. The write needs explicit confirmation.'}</p>
       <button type="button" disabled={mutation.isPending} onClick={() => setReview(null)}>{cs ? 'Zpět k formuláři' : 'Back to form'}</button>{' '}
-      <button type="button" disabled={mutation.isPending} onClick={confirm}>{cs ? 'Potvrdit vytvoření kopie' : 'Confirm custom copy'}</button>
+      <button type="button" disabled={mutation.isPending || review.sourceFingerprint !== source.fingerprint || review.locationKey !== locationKey} onClick={confirm}>{cs ? 'Potvrdit vytvoření kopie' : 'Confirm custom copy'}</button>
     </div> : <form onSubmit={event => {event.preventDefault(); prepare(false)}}>
       <fieldset disabled={mutation.isPending}>
         <label>{cs ? 'Nové World ID' : 'New World ID'}
           <input value={newWorldId} onChange={event => setNewWorldId(event.target.value)} placeholder="my_custom_world" />
         </label>
-        <p className="status">{cs ? 'Malá písmena, číslice a podtržítko; 3–64 znaků.' : 'Lowercase letters, digits and underscores only; 3–64 characters.'}</p>
+        <p className="status">{cs ? '3–64 znaků; na začátku malé písmeno nebo číslice, potom i podtržítko.' : '3–64 characters; start with a lowercase letter or digit, underscores allowed thereafter.'}</p>
         <label>{cs ? 'Název' : 'Name'}<input value={name} onChange={event => setName(event.target.value)} placeholder="My Custom World" /></label>
         <label>{cs ? 'Popis' : 'Description'}<textarea value={description} onChange={event => setDescription(event.target.value)} /></label>
         <div className="actions">

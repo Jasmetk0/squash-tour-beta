@@ -55,8 +55,9 @@ export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
         { label: 'Distinct hosts', value: distinctHosts.length > 0 ? distinctHosts.join(', ') : '—' },
         { label: 'Distinct regions', value: distinctRegions.length > 0 ? distinctRegions.join(', ') : '—' }
       ]} />
+      {events.length === 0 ? <p className="status">Calendar contains no events.</p> : null}
       {firstTenEvents.length > 0 ? (
-        <table>
+        <div className="table-responsive"><table aria-label="Season calendar preview first events">
           <thead>
             <tr>
               <th>Week block / season week</th>
@@ -86,9 +87,9 @@ export function SeasonCalendarPreview({ seasonLabelRaw }: Props): JSX.Element {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       ) : null}
-      <p>Showing first 10 events only. Full calendar tooling remains in Seasons.</p>
+      <p>Showing {firstTenEvents.length} of {events.length} calendar events. Full calendar tooling remains in Seasons.</p>
       <DetailList items={[
         <Link key="open-seasons-tooling" to="/admin/seasons">Open Seasons tooling</Link>,
         <Link key="open-compare-apply" to="/admin/tour-seasons/compare">Open Calendar Compare / Apply</Link>,

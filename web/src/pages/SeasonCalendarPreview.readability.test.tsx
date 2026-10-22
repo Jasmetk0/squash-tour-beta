@@ -19,7 +19,7 @@ function response(events: ReturnType<typeof event>[]) {
   return {
     calendar: { events },
     summary: { event_count: events.length, persisted: true, first_event_week: events[0]?.season_week ?? null,
-      last_event_week: events.at(-1)?.season_week ?? null },
+      last_event_week: events.length ? events[events.length - 1].season_week : null },
     validation_warnings: [],
   }
 }

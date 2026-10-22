@@ -70,3 +70,7 @@ real Saved row, unchanged v1 task storage and read rejection of a damaged source
 
 Run the applicable existing Ready/manual real-browser workflows on the final
 head. Draft skips and mocked UI tests do not satisfy those acceptance gates.
+
+The `fullSimulationTasksCalendar*` helper/test filenames deliberately match the
+existing `fullSimulationTasks*` browser path selectors. No gate or assertion was
+disabled, and future helper-only edits retain the same acceptance selection.

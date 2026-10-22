@@ -1,7 +1,7 @@
 import {describe,expect,it,vi,afterEach} from 'vitest'
 import {getServerTasks,validateTasks} from './fullSimulationTasks'
-import {serverTaskCalendar,taskCalendarPosition,taskWeekOrdinal} from './fullSimulationTaskCalendar'
-import type {TaskCalendar} from './fullSimulationTaskCalendar'
+import {serverTaskCalendar,taskCalendarPosition,taskWeekOrdinal} from './fullSimulationTasksCalendar'
+import type {TaskCalendar} from './fullSimulationTasksCalendar'
 import {calendarTaskExample,taskExample} from './fullSimulationTasks.fixture'
 
 const earth:TaskCalendar={schema_version:'run_calendar.v1',weeks_per_year:52,season_start_year_week:1,start_year:2030,season_count:64}

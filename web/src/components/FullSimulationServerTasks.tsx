@@ -1,4 +1,4 @@
-import { taskCalendarPosition } from '../api/fullSimulationTaskCalendar'
+import { taskCalendarPosition } from '../api/fullSimulationTasksCalendar'
 import { BoundaryDescription } from './FullSimulationBoundaryTargets'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'

@@ -9,7 +9,7 @@ export function taskExample(){return {schema_version:'full_simulation_task_view.
  events:[{revision:1,previous:null as string|null,state:'queued',reason:'explicit_start',at_unix:1,fingerprint:'c'.repeat(64)}]}}
 
 /** v2 read DTO; this does not claim that the legacy worker executes this clock. */
-export function calendarTaskExample(calendar: import('./fullSimulationTaskCalendar').TaskCalendar) {
+export function calendarTaskExample(calendar: import('./fullSimulationTasksCalendar').TaskCalendar) {
  const task=taskExample() as unknown as import('./fullSimulationTasks').ServerTask
  task.schema_version='full_simulation_task_view.v2'
  task.execution_calendar={...calendar}

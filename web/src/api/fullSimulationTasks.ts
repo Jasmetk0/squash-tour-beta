@@ -1,5 +1,5 @@
-import { serverTaskCalendar, taskWeekOrdinal, validTaskWeek } from './fullSimulationTaskCalendar'
-import type { TaskCalendar } from './fullSimulationTaskCalendar'
+import { serverTaskCalendar, taskWeekOrdinal, validTaskWeek } from './fullSimulationTasksCalendar'
+import type { TaskCalendar } from './fullSimulationTasksCalendar'
 import { isBoundaryTarget } from './fullSimulationBoundaryTargets'
 import type { BoundaryTarget } from './fullSimulationBoundaryTargets'
 import { ApiError } from './client'

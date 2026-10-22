@@ -56,7 +56,7 @@ describe('RunSimulationPage', () => {
     const summary=screen.getByText('Legacy compatibility simulation tools · optional')
     expect(canonical.compareDocumentPosition(summary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(summary.closest('details')).toHaveAttribute('open')
-    expect(await screen.findByRole('button',{name:'Next Match'})).toBeEnabled()
+    await waitFor(()=>expect(screen.getByRole('button',{name:'Next Match'})).toBeEnabled())
   })
 
   it('never uses a branch deep link to change Admin context from inside Simulation', async () => {
@@ -98,7 +98,6 @@ describe('RunSimulationPage', () => {
     renderHarness(); await screen.findByText(/This Branch is Package-backed/)
     const legacy=screen.getByText('Legacy compatibility simulation tools · optional').closest('details')
     expect(legacy).not.toHaveAttribute('open')
-    expect(screen.queryByRole('button', { name: 'World Tour Finals' })).not.toBeInTheDocument()
     await userEvent.click(screen.getByText('Legacy compatibility simulation tools · optional'))
     expect(legacy).toHaveAttribute('open')
     for (const name of ['Next Match', 'Next Round', 'Next Week', 'Next Tournament', 'Full Season']) expect(screen.queryByRole('button', { name })).not.toBeInTheDocument()

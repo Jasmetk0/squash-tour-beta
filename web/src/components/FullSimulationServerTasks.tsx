@@ -1,6 +1,6 @@
 import { BoundaryDescription } from './FullSimulationBoundaryTargets'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { continueServerTask, getServerTasks, startServerTask } from '../api/fullSimulationTasks'
 import type { ContinueTask, ServerTask } from '../api/fullSimulationTasks'
@@ -21,7 +21,8 @@ const copy={
   ownership_unverified:'Another server instance owns the lease; inspect heartbeat and wait for release or expiry',queued:'Queued',active:'Executing on server',pause_requested:'Pausing at safe boundary',paused:'Safely paused',awaiting_operator:'Waiting for operator',
   stopped:'Stopped',target_reached:'Target reached',complete:'Complete',failed:'Failed; inspect before recovery',recoverable:'Interrupted; explicit recovery required',
   measured:'Stored Branch receipts in current week',slots:'Completed match slots',groups:'Committed match groups',advanced:'Week transitions since task start',
-  frozen:'Historical end week, frozen at termination',unavailable:'Historical end week unavailable; not inferred from the current Branch'},
+  frozen:'Historical end week, frozen at termination',unavailable:'Historical end week unavailable; not inferred from the current Branch',
+  desired:'Requested task state',lease:'Lease expiry (not proof of a live worker)',contextChanged:'The reviewed request belongs to a different Run, Branch or command. Return to that context to retry; this screen will not redirect it.'},
  cs:{title:'Serverové simulační úlohy',start:'Spustit jako serverovou úlohu',ack:'Serverová úloha přijata',refresh:'Obnovit údaje úloh',
   truth:'Server pokračuje i po zavření této stránky. Save a sezonní schválení zůstávají ruční. Po restartu serveru úlohu zkontrolujte a výslovně obnovte.',
   loading:'Načítám serverové úlohy…',empty:'V tomto kontextu nejsou serverové úlohy.',operator:'Operátor úlohy',reason:'Důvod akce úlohy',
@@ -32,23 +33,39 @@ const copy={
   ownership_unverified:'Lease vlastní jiná instance serveru; zkontrolujte odezvu a vyčkejte na uvolnění nebo expiraci',queued:'Ve frontě',active:'Běží na serveru',pause_requested:'Pozastavuji na bezpečné hranici',paused:'Bezpečně pozastaveno',awaiting_operator:'Čeká na operátora',
   stopped:'Ukončeno',target_reached:'Cíl dosažen',complete:'Dokončeno',failed:'Chyba; před obnovou zkontrolujte stav',recoverable:'Přerušeno; nutná výslovná obnova',
   measured:'Uložené výsledkové záznamy větve v aktuálním týdnu',slots:'Dokončené zápasové sloty',groups:'Potvrzené zápasové skupiny',advanced:'Týdenních přechodů od začátku úlohy',
-  frozen:'Historický koncový týden uložený při ukončení',unavailable:'Historický koncový týden není dostupný; aktuální stav větve jej nenahrazuje'}
+  frozen:'Historický koncový týden uložený při ukončení',unavailable:'Historický koncový týden není dostupný; aktuální stav větve jej nenahrazuje',
+  desired:'Požadovaný stav úlohy',lease:'Konec platnosti lease (nikoli důkaz živého workeru)',contextChanged:'Schválený požadavek patří jinému Runu, větvi nebo příkazu. Pro opakování se vraťte do původního kontextu; tato obrazovka jej nepřesměruje.'}
 } as const
 export function useServerTasks(run?:string,branch?:string,enabled=true){
  return useQuery({queryKey:['server-simulation-tasks',run??null,branch??null],queryFn:()=>getServerTasks(run,branch),retry:false,refetchInterval:2000,enabled})
 }
+type StartRequest = {
+ runId:string; branchId:string; requestId:string; command:AuthoritativeFullSimulationCommandPayload
+}
 export function StartServerTask({runId,branchId,command,disabled,onAccepted}:{runId:string;branchId:string;command:AuthoritativeFullSimulationCommandPayload;disabled:boolean;onAccepted:()=>void}){
  const {language}=useLanguage();const t=copy[language];const client=useQueryClient()
- // Stable across dropped responses and page remounts for this original command.
- const requestId='server-start-'+command.command_id.slice(0,100)
- const [frozen,setFrozen]=useState<AuthoritativeFullSimulationCommandPayload|null>(null)
- const mutation=useMutation({mutationFn:()=>startServerTask(runId,branchId,requestId,frozen??command),onSuccess:async()=>{
-   await client.invalidateQueries({queryKey:['server-simulation-tasks']});onAccepted()
- }})
+ const currentContext=useRef({runId,branchId,commandId:command.command_id})
+ currentContext.current={runId,branchId,commandId:command.command_id}
+ // A retry replays *all* original values, even if props change while offline.
+ const [frozen,setFrozen]=useState<StartRequest|null>(null)
+ const sameContext=!frozen||(frozen.runId===runId&&frozen.branchId===branchId&&frozen.command.command_id===command.command_id)
+ const mutation=useMutation({
+  mutationFn:(snapshot:StartRequest)=>startServerTask(snapshot.runId,snapshot.branchId,snapshot.requestId,snapshot.command),
+  onSuccess:async (_ack,snapshot)=>{
+   await client.invalidateQueries({queryKey:['server-simulation-tasks']})
+   const current=currentContext.current
+   if(current.runId===snapshot.runId&&current.branchId===snapshot.branchId&&current.commandId===snapshot.command.command_id)onAccepted()
+  }
+ })
  return <div><p>{t.truth}</p>
-  <button type="button" disabled={(disabled&&!frozen)||mutation.isPending||mutation.isSuccess} onClick={()=>{setFrozen(frozen??command);mutation.mutate()}}>{mutation.isError?t.retry:t.start}</button>
-  {mutation.data && <p role="status">{t.ack}: <code>{mutation.data.task_id}</code> · <code>{mutation.data.parent_command_id}</code></p>}
-  {mutation.error && <p role="alert">{formatApiError(mutation.error)}</p>}
+  <button type="button" disabled={(disabled&&!frozen)||!sameContext||mutation.isPending||mutation.isSuccess} onClick={()=>{
+   const snapshot=frozen??{runId,branchId,requestId:'server-start-'+command.command_id.slice(0,100),
+    command:{...command,expected_start_week:{...command.expected_start_week}}}
+   setFrozen(snapshot);mutation.mutate(snapshot)
+  }}>{mutation.isError?t.retry:t.start}</button>
+  {!sameContext&&<p role="alert">{t.contextChanged}</p>}
+  {mutation.data&&sameContext&&<p role="status">{t.ack}: <code>{mutation.data.task_id}</code> · <code>{mutation.data.parent_command_id}</code></p>}
+  {mutation.error&&sameContext&&<p role="alert">{formatApiError(mutation.error)}</p>}
  </div>
 }
 const checkpointGuidance = (checkpoint:string|null,language:'cs'|'en') => {
@@ -76,32 +93,38 @@ function storedDriverEvidence(task:ServerTask){
 }
 
 // A navigation hint, never an authority to copy, approve or resume a task.
-// Derived from the canonical current week; the selected Branch is retained in the URL.
+// The task contract has no Run calendar start year/season mapping: do not invent
+// a calendarSeason query parameter from a fixed 2000 baseline.
 export function taskCalendarHandoff(task:ServerTask):string|null{
  if(task.state!=='awaiting_operator'||!['week_preparation_required','season_preparation_required','week61_preparation_required','final_week_preparation_required'].includes(task.checkpoint??'')||
    !task.current_week)return null
- const year=2000+task.current_week.season_index
- const calendarSeason=`${year}-${year+1}`
- return `/admin/runs/${encodeURIComponent(task.run_id)}/manage?branch=${encodeURIComponent(task.branch_id)}&calendarSeason=${calendarSeason}`
+ return `/admin/runs/${encodeURIComponent(task.run_id)}/manage?branch=${encodeURIComponent(task.branch_id)}`
 }
 function TaskCard({task}:{task:ServerTask}){
  const {language}=useLanguage();const t=copy[language];const client=useQueryClient()
- const [operator,setOperator]=useState('');const [reason,setReason]=useState('');const [pending,setPending]=useState<ContinueTask|null>(null)
+ const [operator,setOperator]=useState('');const [reason,setReason]=useState('');const [pending,setPending]=useState<{target:ServerTask;body:ContinueTask}|null>(null)
  const action=task.state==='recoverable'||task.state==='failed'?'recover':'resume'
  const currentCheckpoint=task.state==='awaiting_operator'||task.state==='paused'?task.checkpoint:null
  const requiresNewWeekReview=task.state==='awaiting_operator'&&currentCheckpoint==='week_schedule_review_required'
  const driver=storedDriverEvidence(task)
  const calendarHandoff=taskCalendarHandoff(task)
  const isCurrentDriverBlocker=task.state==='awaiting_operator' && driver?.checkpoint===task.checkpoint
- const mutation=useMutation({mutationFn:(body:ContinueTask)=>continueServerTask(task,body),onSuccess:async()=>{
-  setPending(null);setReason('');await client.invalidateQueries({queryKey:['server-simulation-tasks']});
-  await client.invalidateQueries({queryKey:['authoritative-full-simulation-pending',task.run_id,task.branch_id]})
- }})
+ const mutation=useMutation({
+  mutationFn:(snapshot:{target:ServerTask;body:ContinueTask})=>continueServerTask(snapshot.target,snapshot.body),
+  onSuccess:async (_ack,snapshot)=>{
+   setPending(current=>current?.body.request_id===snapshot.body.request_id?null:current)
+   setReason('')
+   await client.invalidateQueries({queryKey:['server-simulation-tasks']})
+   await client.invalidateQueries({queryKey:['authoritative-full-simulation-pending',snapshot.target.run_id,snapshot.target.branch_id]})
+  }
+ })
  const terminal=['stopped','target_reached','complete'].includes(task.state)
  return <li className="server-simulation-tasks__item" data-task-id={task.task_id}>
   <strong>{task.run_name} / {task.branch_name}</strong> · <span>{t[task.state as keyof typeof t]??task.state}</span>
   <p><code>{task.task_id}</code> · {t.original}: <code>{task.parent_command_id}</code></p>
+  {task.desired_state!==task.state&&<p>{t.desired}: <code>{task.desired_state}</code></p>}
   <p>{t.health}: {t[task.heartbeat_health]}{task.heartbeat_unix>0 && <> · {new Date(task.heartbeat_unix*1000).toLocaleString(language)}</>}</p>
+  {task.lease_expires_at_unix!==null&&<p>{t.lease}: {new Date(task.lease_expires_at_unix*1000).toLocaleString(language)}</p>}
   {task.effective_boundary_target && <p><BoundaryDescription target={task.effective_boundary_target}/></p>}
   {task.current_week && <p>S{task.current_week.season_index} W{task.current_week.week}</p>}
   <p>{task.progress_evidence.kind==='terminal_frozen'?t.frozen:task.progress_evidence.kind==='unavailable'?t.unavailable:t.measured}</p>
@@ -124,8 +147,8 @@ function TaskCard({task}:{task:ServerTask}){
    <label>{t.operator}<input value={operator} disabled={!!pending} onChange={e=>setOperator(e.target.value)}/></label>
    <label>{t.reason}<input value={reason} disabled={!!pending} onChange={e=>setReason(e.target.value)}/></label>
    <button type="button" disabled={!operator.trim()||!reason.trim()||mutation.isPending} onClick={()=>{
-     const body=pending??{request_id:crypto.randomUUID(),action,expected_revision:task.revision,operator_label:operator.trim(),audit_reason:reason.trim()}
-     setPending(body);mutation.mutate(body)
+     const snapshot=pending??{target:task,body:{request_id:crypto.randomUUID(),action,expected_revision:task.revision,operator_label:operator.trim(),audit_reason:reason.trim()}}
+     setPending(snapshot);mutation.mutate(snapshot)
    }}>{pending?t.retry:action==='recover'?t.recover:t.resume}</button>
    {pending && !mutation.isPending && <button type="button" onClick={()=>{setPending(null);mutation.reset();void client.invalidateQueries({queryKey:['server-simulation-tasks']})}}>{t.cancel}</button>}
   </>}</>}

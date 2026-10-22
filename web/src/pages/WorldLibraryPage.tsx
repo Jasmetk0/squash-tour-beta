@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
@@ -418,6 +418,14 @@ export function WorldPackageCountriesPage(): JSX.Element {
   const [missingTimezoneArea, setMissingTimezoneArea] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'code' | 'population'>('name')
   const [page, setPage] = useState(0)
+  useEffect(() => {
+    setSearch('')
+    setRegion('')
+    setMissingTravelRegion(false)
+    setMissingTimezoneArea(false)
+    setSortBy('name')
+    setPage(0)
+  }, [worldId])
   const sourceCountries = data?.countries ?? []
   const regions = Array.from(new Set(sourceCountries.map(country => country.region).filter(Boolean)))
     .sort((left, right) => left.localeCompare(right))

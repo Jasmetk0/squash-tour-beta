@@ -121,7 +121,7 @@ describe('Lab scenario authoring boundaries', () => {
       'participants', 'main_draw_size', 'seed_order_player_ids',
       'match_format.games_to', 'stop_after_round', 'assertions.expected_played_match_count'
     ])
-    expect(valid.participants[0].player.traits.historical).toBe('unchanged')
+    expect(valid.participants[0]).toEqual(tournamentWithPlayers.participants[0])
   })
 
   it('validates Player workload ranges, canonical variant IDs, lengths and Health timeline limits', () => {

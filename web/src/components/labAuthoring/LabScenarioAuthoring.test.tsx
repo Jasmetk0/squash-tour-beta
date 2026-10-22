@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { changeLabField, changePlayerMatchCounts, changePlayerWeeks, labChangedPaths, labChangeDetails, LabScenarioAuthoring, readLabScenario } from './LabScenarioAuthoring'
+import { changeLabField, changeLabParticipantModifier, changeTournamentStopRound, changePlayerMatchCounts, changePlayerWeeks, labChangedPaths, labChangeDetails, LabScenarioAuthoring, readLabScenario } from './LabScenarioAuthoring'
 
 const currentLocale = vi.hoisted(() => ({language: 'en'}))
 vi.mock('../../i18n/LanguageContext', () => ({useLanguage: () => ({language: currentLocale.language})}))
@@ -43,6 +43,24 @@ const player = {
   ]
 }
 
+const tournamentWithPlayers = {
+  ...tournament,
+  participants: [
+    {player: {player_id: 'P1', name: 'Alice', traits: {historical: 'unchanged'}}, form_modifier: 0,
+      health_modifier: 0.05, extra: {private: 'retain'}},
+    {player: {player_id: 'P2', name: 'Bob'}, sharpness_modifier: 0.1}
+  ],
+  seed_order_player_ids: ['P1', 'P2']
+}
+
+const matchWithPlayers = {
+  ...match, context: {
+    ...match.context,
+    player_a: {player: {player_id: 'P1', name: 'Alice'}, form_modifier: 0},
+    player_b: {player: {player_id: 'P2', name: 'Bob'}, fatigue_modifier: -0.1, custom: 'keep'}
+  }
+}
+
 describe('Lab scenario authoring boundaries', () => {
   it('requires the exact Lab type/version and a scenario rather than Session/result envelopes', () => {
     expect(readLabScenario(JSON.stringify(match), 'match')).toEqual(match)
@@ -70,6 +88,77 @@ describe('Lab scenario authoring boundaries', () => {
     expect(JSON.parse(changeLabField(JSON.stringify(tournament), 'tournament', {
       path: ['draw_seed'], en: 'Draw seed', cs: 'Seed', integer: true
     }, '99')).source_snapshot).toEqual(tournament.source_snapshot)
+  })
+
+  it('changes one Tournament participant modifier without renaming players, seeds, source or other participants', () => {
+    const updated = JSON.parse(changeLabParticipantModifier(
+      JSON.stringify(tournamentWithPlayers), 'tournament', 1, 'health_modifier', '-0.15'))
+    expect(updated.participants[1].health_modifier).toBe(-0.15)
+    expect(updated.participants[0]).toEqual(tournamentWithPlayers.participants[0])
+    expect(updated.participants[1].player).toEqual(tournamentWithPlayers.participants[1].player)
+    expect(updated.seed_order_player_ids).toEqual(tournamentWithPlayers.seed_order_player_ids)
+    expect(updated.source_snapshot).toEqual(tournamentWithPlayers.source_snapshot)
+    expect(() => changeLabParticipantModifier(JSON.stringify(tournamentWithPlayers),
+      'tournament', 1, 'health_modifier', '-0.36')).toThrow('modifier')
+    expect(() => changeLabParticipantModifier(JSON.stringify(tournamentWithPlayers),
+      'tournament', 22, 'health_modifier', '0.2')).toThrow('shape')
+  })
+
+  it('edits one Match player context modifier without modifying opponent, historical source or player profile', () => {
+    const updated = JSON.parse(changeLabParticipantModifier(
+      JSON.stringify(matchWithPlayers), 'match', 'b', 'fatigue_modifier', '0.27'))
+    expect(updated.context.player_b.fatigue_modifier).toBe(0.27)
+    expect(updated.context.player_b.custom).toBe('keep')
+    expect(updated.context.player_a).toEqual(matchWithPlayers.context.player_a)
+    expect(updated.source_fingerprint).toBe(matchWithPlayers.source_fingerprint)
+    expect(() => changeLabParticipantModifier(JSON.stringify(matchWithPlayers),
+      'match', 'a', 'form_modifier', '')).toThrow('modifier')
+  })
+
+  it('allows an explicit optional round limit with backend-aligned bounds and preserved evidence', () => {
+    const limited = JSON.parse(changeTournamentStopRound(JSON.stringify(tournamentWithPlayers), '3'))
+    expect(limited.stop_after_round).toBe(3)
+    expect(limited.participants).toEqual(tournamentWithPlayers.participants)
+    expect(limited.source_snapshot).toEqual(tournamentWithPlayers.source_snapshot)
+    expect(JSON.parse(changeTournamentStopRound(JSON.stringify(limited), '')).stop_after_round).toBeNull()
+    expect(() => changeTournamentStopRound(JSON.stringify(limited), '8')).toThrow('round')
+    expect(() => changeTournamentStopRound(JSON.stringify(limited), '2.5')).toThrow('round')
+  })
+
+  it('shows a safe participant context selector with explicit Apply and prevents partial mutations', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(tournamentWithPlayers))
+      return <><LabScenarioAuthoring kind="tournament" text={text} onChange={setText}
+        selection="scratch" revision={0} jsonLabel="Tournament Lab scenario JSON" />
+        <output data-testid="participant-scenario">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    await user.selectOptions(screen.getByLabelText('tournament Lab modifier player'), '1')
+    await user.selectOptions(screen.getByLabelText('tournament Lab modifier kind'), 'sharpness_modifier')
+    expect(screen.getByLabelText('tournament Lab modifier value')).toHaveValue(0.1)
+    fireEvent.change(screen.getByLabelText('tournament Lab modifier value'), {target: {value: '0.23'}})
+    expect(JSON.parse(screen.getByTestId('participant-scenario').textContent ?? '')
+      .participants[1].sharpness_modifier).toBe(0.1)
+    await user.click(screen.getByRole('button', {name: 'tournament Lab apply modifier'}))
+    const applied = JSON.parse(screen.getByTestId('participant-scenario').textContent ?? '')
+    expect(applied.participants[1].sharpness_modifier).toBe(0.23)
+    expect(applied.participants[0]).toEqual(tournamentWithPlayers.participants[0])
+  })
+
+  it('stages the Tournament stop round selection until Apply', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(tournamentWithPlayers))
+      return <><LabScenarioAuthoring kind="tournament" text={text} onChange={setText}
+        selection="scratch" revision={0} jsonLabel="Tournament Lab scenario JSON" />
+        <output data-testid="round-draft">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    await user.selectOptions(screen.getByLabelText('tournament Lab stop after round'), '2')
+    expect(JSON.parse(screen.getByTestId('round-draft').textContent ?? '').stop_after_round).toBeUndefined()
+    await user.click(screen.getByRole('button', {name: 'tournament Lab apply stop after round'}))
+    expect(JSON.parse(screen.getByTestId('round-draft').textContent ?? '').stop_after_round).toBe(2)
   })
 
   it('extends all Player workload variants with explicit zero-match weeks without changing source evidence', () => {

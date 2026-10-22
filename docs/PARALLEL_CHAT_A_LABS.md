@@ -14,9 +14,10 @@
 4. Guided field patches preserve nested unknown data, source_snapshot, source_reference, source_fingerprint and other provenance untouched. No new simulation authority, Run live link or browser-stored fingerprint.
 5. Import a scenario JSON file (not a Session or result), validate Lab kind/schema version and basic shape, limit file to 2 MiB and refuse delayed reads if local editor or Session changed meanwhile. Import only edits the draft buffer; no Save/Run.
 6. Explicit JSON export from current editor; Saved Session change review by changed JSON paths and display name. Scratch, Session and historical-copy states labeled separately.
-7. Existing concurrent Save/import selection tickets, backend fingerprint checks and isolated sources remain intact.
+7. Match and Tournament scratch editors now offer an explicit 'Create Test Session from scratch' command using their existing scenario-taking create API, including imported JSON. The backend still creates an isolated Session; no automatic Run/Save/Apply. The existing editor ticket controls delayed create response installation.
+8. Existing concurrent Save/import selection tickets, backend fingerprint checks and isolated sources remain intact.
 8. Form inputs cannot trigger an implicit Run via the Enter key. Staged Player inputs reset when another scenario edit or Session selection supersedes them.
-9. Pure/frontend regression tests added for version checks, exact unrelated-field/provenance preservation, numeric bounds, Player Health-duration guard, weekly-match editing, explicit duration Apply, form/JSON switch, successful and invalid file import, saved-Session change review and late file read. These are not real API integration tests.
+10. Pure/frontend regression tests added for version checks, exact unrelated-field/provenance preservation, numeric bounds, Player Health-duration guard, weekly-match editing, explicit duration Apply, form/JSON switch, successful and invalid file import, saved-Session change review, scratch-to-Session creation and late file read. These are not real API integration tests.
 
 ## Status and merge policy
 - This PR is intentionally **Draft** and NOT merge-ready.

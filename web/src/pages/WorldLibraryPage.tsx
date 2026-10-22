@@ -330,6 +330,11 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
     {review ? <div aria-label="Review World Package clone">
       <p><strong>{cs ? 'Zdroj' : 'Source'}:</strong> <code>{review.sourceWorldId}</code> · <strong>{cs ? 'Fingerprint zdroje' : 'Source fingerprint'}:</strong> <code>{review.sourceFingerprint}</code> · <strong>{cs ? 'Nová kopie' : 'New copy'}:</strong> <code>{review.payload.new_world_id}</code></p>
       <p><strong>{cs ? 'Název' : 'Name'}:</strong> {review.payload.name}</p>
+      <p><strong>{cs ? 'Popis' : 'Description'}:</strong> {review.payload.description ?? '—'}</p>
+      {review.sourceFingerprint !== source.fingerprint && <p role="alert" className="error">
+        {cs ? 'Zdrojový balíček se změnil. Vraťte se k formuláři a zkontrolujte nové podklady.' :
+          'The source World Package changed. Return to the form and review its current data.'}
+      </p>}
       <p>{cs ? 'Zkontrolujte zdroj a cíl. Vytvoření vyžaduje výslovné potvrzení.' : 'Check the source and destination. The write needs explicit confirmation.'}</p>
       <button type="button" disabled={mutation.isPending} onClick={() => setReview(null)}>{cs ? 'Zpět k formuláři' : 'Back to form'}</button>{' '}
       <button type="button" disabled={mutation.isPending || review.sourceFingerprint !== source.fingerprint || review.locationKey !== locationKey} onClick={confirm}>{cs ? 'Potvrdit vytvoření kopie' : 'Confirm custom copy'}</button>

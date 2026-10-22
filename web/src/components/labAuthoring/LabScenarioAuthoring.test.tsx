@@ -1,11 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { changeLabField, changePlayerMatchCounts, changePlayerWeeks, labChangedPaths, labChangeDetails, LabScenarioAuthoring, readLabScenario } from './LabScenarioAuthoring'
 
-vi.mock('../../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en'})}))
+const currentLocale = vi.hoisted(() => ({language: 'en'}))
+vi.mock('../../i18n/LanguageContext', () => ({useLanguage: () => ({language: currentLocale.language})}))
+afterEach(() => { currentLocale.language = 'en' })
 
 const match = {
   schema_version: 'match_test_lab_scenario.v1',
@@ -127,6 +129,26 @@ describe('Lab scenario authoring boundaries', () => {
     ])
     expect(match.seed).toBe(42)
     expect(labChangedPaths(match, match)).toEqual([])
+  })
+
+  it('shows a useful empty state instead of a false invalid-scenario alert', () => {
+    render(<LabScenarioAuthoring kind="tournament" text="" onChange={vi.fn()}
+      selection="scratch" revision={0} jsonLabel="Tournament Lab scenario JSON" />)
+    expect(screen.getByText('Load a built-in scenario or import a JSON file to start editing.')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Tournament Lab scenario JSON')).toHaveValue('')
+  })
+
+  it('shows Czech controls and field errors when the app language is Czech', async () => {
+    currentLocale.language = 'cs'
+    render(<LabScenarioAuthoring kind="match" text={JSON.stringify(match)}
+      onChange={vi.fn()} selection="scratch" revision={0} jsonLabel="Match Lab scenario JSON" />)
+    expect(screen.getByRole('option', {name: 'Formulář + JSON'})).toBeInTheDocument()
+    expect(screen.getByRole('button', {name: 'Stáhnout JSON scénář'})).toBeInTheDocument()
+    const bestOf = screen.getByLabelText('match Lab context.best_of')
+    fireEvent.change(bestOf, {target: {value: '4'}})
+    await userEvent.setup().click(screen.getByRole('button', {name: 'match Lab apply context.best_of'}))
+    expect(screen.getByRole('alert')).toHaveTextContent('Zadejte platné číslo')
   })
 
   it('exposes guided fields immediately alongside the legacy JSON editor', async () => {

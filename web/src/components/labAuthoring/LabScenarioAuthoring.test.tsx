@@ -98,6 +98,26 @@ describe('Lab scenario authoring boundaries', () => {
     expect(() => changePlayerMatchCounts(JSON.stringify(withHealth), 0, '1, 2.5')).toThrow('counts')
   })
 
+  it('requires an explicit Apply before shortening a Player workload', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(player))
+      return <><LabScenarioAuthoring kind="player" text={text} onChange={setText}
+        selection="scratch" revision={0} jsonLabel="Player Lab scenario JSON" />
+        <output data-testid="player-draft">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    await user.selectOptions(screen.getByLabelText('player Lab editor mode'), 'form')
+    const duration = screen.getByLabelText('player Lab experiment duration')
+    await user.clear(duration)
+    await user.type(duration, '1')
+    expect(JSON.parse(screen.getByTestId('player-draft').textContent ?? '').variants[0].competitive_match_counts).toEqual([1, 2])
+    await user.click(screen.getByRole('button', {name: 'Apply duration'}))
+    const changed = JSON.parse(screen.getByTestId('player-draft').textContent ?? '')
+    expect(changed.variants[0].competitive_match_counts).toEqual([1])
+    expect(changed.source_snapshot).toEqual(player.source_snapshot)
+  })
+
   it('reports changed JSON paths against a saved Session without mutating the baseline', () => {
     const edited = {...match, seed: 99, context: {...match.context, best_of: 3}}
     expect(labChangedPaths(match, edited)).toEqual(['seed', 'context.best_of'])

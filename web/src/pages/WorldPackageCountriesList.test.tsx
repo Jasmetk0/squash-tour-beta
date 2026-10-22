@@ -132,6 +132,34 @@ describe('World Package country inventory', () => {
     expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
   })
 
+  it('filters unassigned travel/timezone areas without altering the source inventory', async () => {
+    api.getWorldPackageCountries.mockResolvedValue({
+      world_id: 'world-a', world_name: 'Editable world', type: 'custom',
+      source: 'custom_config', read_only: false, country_count: 3,
+      countries: [
+        { ...country(1), travel_region: 'Central', timezone_area: 'Europe A' },
+        { ...country(2), travel_region: null, timezone_area: 'Europe A' },
+        { ...country(3), travel_region: null, timezone_area: null },
+      ],
+    })
+    mount()
+    expect(await screen.findByText('Country 001')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Unassigned travel region' }))
+    expect(screen.getByText('Showing 2 of 3 countries')).toBeInTheDocument()
+    expect(screen.queryByText('Country 001')).not.toBeInTheDocument()
+    expect(screen.getByText('Country 002')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Unassigned timezone area' }))
+    expect(screen.getByText('Showing 1 of 3 countries')).toBeInTheDocument()
+    expect(screen.queryByText('Country 002')).not.toBeInTheDocument()
+    expect(screen.getByText('Country 003')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters and sorting' }))
+    expect(screen.getByText('Showing 3 of 3 countries')).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Unassigned travel region' })).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Unassigned timezone area' })).not.toBeChecked()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+  })
+
   it('rejects a country inventory belonging to a different World Package', async () => {
     api.getWorldPackageCountries.mockResolvedValue({
       world_id: 'foreign-world', countries, country_count: 53,
@@ -168,6 +196,8 @@ describe('World Package country inventory', () => {
     expect(await screen.findByText('Balíček neobsahuje žádné země.')).toBeInTheDocument()
     expect(screen.getByRole('searchbox', { name: 'Hledat země' })).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Filtrovat podle regionu' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Bez cestovního regionu' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Bez časové oblasti' })).toBeInTheDocument()
     expect(screen.getByText('Zobrazeno 0 z 0 zemí')).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Řazení zemí' })).toBeInTheDocument()
     expect(screen.queryByRole('table', { name: 'Země ve World Package' })).not.toBeInTheDocument()

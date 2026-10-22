@@ -1,8 +1,9 @@
 vi.mock('../components/FullSimulationServerTasks',()=>({FullSimulationServerTasks:()=>null,StartServerTask:()=>null,useServerTasks:()=>({data:[]})}))
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useState } from 'react'
 import type { ComponentProps } from 'react'
 
 import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
@@ -3378,6 +3379,57 @@ describe('AuthoritativeSimulationPanel', () => {
     )
   })
 
+
+  it('pins an offline-queued pause to its original Run, Branch and parent after changing context',async()=>{
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version:'authoritative_full_simulation_pending_collection.v1',
+      run_id:'run-a',branch_id:'branch-a',legacy_pending_count:0,
+      operations:[{
+        control_state:'running',
+        command:{
+          command_id:'offline-parent',operator_label:'Original',audit_reason:'Reviewed',
+          expected_start_week:fullSimulationPreview.start_week,
+          expected_position_fingerprint:fullSimulationPreview.expected_position_fingerprint,
+          expected_revision_id:fullSimulationPreview.expected_revision_id,
+          expected_preview_fingerprint:fullSimulationPreview.preview_fingerprint
+        },
+        review:fullSimulationPreview,
+        completed_seasons:[],completed_season_count:0,
+        final_completed_weeks:[],final_completed_week_count:0
+      }]
+    })
+    api.controlAuthoritativeFullSimulation.mockResolvedValue({
+      schema_version:'authoritative_full_simulation_control_result.v1',
+      run_id:'run-a',branch_id:'branch-a',target_command_id:'offline-parent',
+      control_command_id:'ack',action:'pause',control_state:'pause_requested',
+      observed_control_state:'pause_requested',committed_child_work_persists:true,replayed:false
+    })
+    function Switch(){
+      const [other,setOther]=useState(false)
+      return <><button type="button" onClick={()=>setOther(true)}>Switch selected Branch</button>
+        <AuthoritativeSimulationPanel runId={other?'run-b':'run-a'}
+          branchId={other?'branch-b':'branch-a'} savedRevisionId="revision-7" blockedReason={null}/></>
+    }
+    const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
+    render(<QueryClientProvider client={client}><LanguageProvider><Switch/></LanguageProvider></QueryClientProvider>)
+    await userEvent.click(await screen.findByRole('button',{name:'Request safe pause'}))
+    await userEvent.type(screen.getByLabelText('Full Simulation control operator'),'Operator')
+    await userEvent.type(screen.getByLabelText('Full Simulation control audit reason'),'Reviewed pause')
+    onlineManager.setOnline(false)
+    try{
+      await userEvent.click(screen.getByRole('button',{name:'Request pause'}))
+      expect(screen.getByLabelText('Full Simulation control operator')).toBeDisabled()
+      expect(screen.getByLabelText('Full Simulation control audit reason')).toBeDisabled()
+      await userEvent.click(screen.getByRole('button',{name:'Switch selected Branch'}))
+      onlineManager.setOnline(true)
+      await waitFor(()=>expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
+      expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledWith('run-a','branch-a',{
+        control_command_id:expect.any(String),target_command_id:'offline-parent',action:'pause',
+        operator_label:'Operator',audit_reason:'Reviewed pause'
+      })
+      expect(api.controlAuthoritativeFullSimulation.mock.calls[0][0]).not.toBe('run-b')
+    }finally{onlineManager.setOnline(true)}
+  })
 
   it.each(['en', 'cs'] as const)('retries an unanswered pause with the same audited control ID and parent (%s)', async (language) => {
     api.inspectAuthoritativeWeekSchedule.mockResolvedValue({

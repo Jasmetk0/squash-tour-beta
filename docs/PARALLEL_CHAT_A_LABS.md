@@ -21,6 +21,14 @@
 11. A blank scenario shows a useful Load/Import prompt, and English/Czech editor messages have focused coverage; invalid JSON does not add a duplicate alert over the page-level validation.
 12. Pure/frontend regression tests added for version checks, exact unrelated-field/provenance preservation, numeric bounds, Player Health-duration guard, weekly-match editing, explicit duration Apply, form/JSON switch, file staging, explicit Apply, cancel, wrong-type rejection, stale selection, JSON export, saved-Session before/after review, scratch-to-Session creation and late file read. These are not real API integration tests.
 
+### Subsequent guided editing (22 October 2026)
+
+- Match and Tournament now offer direct changes to the five canonical participant context modifiers (form, sharpness, fatigue, health and travel; each −0.35 to +0.35). The selector targets exactly one existing player by immutable player_id. Only that context input changes; the player record, opponent, seeding, historical source/snapshot, Session and Run are preserved.
+- Tournament offers an explicit stop-after-round control (no limit, or rounds 1–7), with Apply; the backend remains the authority on tournament compatibility and draw topology.
+- Saved Session review now descends equal-length participant and weekly workload arrays to identify the exact scalar path and old/new value (for example participants.1.sharpness_modifier or variants.0.competitive_match_counts.2). Whole-array length changes stay summarized, long change sets remain capped.
+- Focused tests include both Lab modifier boundaries, unknown-field/provenance protection, single-player and single-week isolation, round-limit bounds, staged UI Apply, and scalar diff. This changes no backend/API schema.
+- Verify Fast CI on the final commit; genuine real HTTP/SQLite/Chromium gates skip the Draft PR and remain required before user merge.
+
 ## Status and merge policy
 - This PR is intentionally **Draft** and NOT merge-ready.
 - Dedicated genuine Lab API/Chromium acceptance skips Draft PRs. Skipped jobs are not passes.
@@ -30,7 +38,7 @@
 - No backend, shared editor, client, routes, global styles, i18n resources, CI, Master, CURRENT_STATE or ROADMAP modifications.
 
 ## Exact-head checks and next work in this SAME PR
-- Last confirmed Fast CI success: commit 2c478043 (199 stable + 51 focused frontend tests, TypeScript/Vite build). Newer combined-mode/Player-week commits need current-head verification; never reuse an older run as evidence.
+- Last confirmed Fast CI success before this additional participant/round work: a11ea995 (199 stable + 56 focused tests, TypeScript/Vite build). New commits require final-head verification.
 - GitHub-hosted Fast CI runs focused frontend Vitest and web build. No local node_modules checkout is available in this chat; local TypeScript/build execution was not performed. Hosted job logs are the evidence.
 - Verify latest-head CI test/build; a combined-mode invalid JSON duplicate-alert regression was fixed after Fast CI exposed three matching-alert failures. Re-run exact-head tests.
 - Real HTTP/SQLite and Chromium Test Lab workflow is skipped automatically on Draft; a required Ready/manual run is still **not executed**. It must pass on the final SHA before owner merge. Draft skips are not green acceptance.

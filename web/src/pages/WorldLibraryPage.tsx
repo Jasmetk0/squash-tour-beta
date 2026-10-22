@@ -6,6 +6,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { cloneWorldPackage, createWorldPackageCountry, deleteWorldPackageCountry, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, replaceWorldPackageTimezoneAreas, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
 import type { CountryRecord, WorldPackage, WorldPackageClonePayload, WorldPackageCloneResponse, WorldPackageCountryCreatePayload, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
+import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 
 function yesNo(value: boolean, yes: string, no: string): string {
@@ -69,7 +70,17 @@ function PackageTable({ packages }: { packages: WorldPackage[] }): JSX.Element {
 }
 
 export function WorldLibraryPage(): JSX.Element {
+  const { language } = useLanguage()
+  const cs = language === 'cs'
   const packagesQuery = useQuery({ queryKey: ['world-packages'], queryFn: listWorldPackages, retry: false })
+  const [search, setSearch] = useState('')
+  const [packageType, setPackageType] = useState<'all' | 'built_in' | 'custom'>('all')
+  const packages = packagesQuery.data?.packages ?? []
+  const normalizedSearch = search.trim().toLocaleLowerCase()
+  const visiblePackages = packages.filter(pkg =>
+    (packageType === 'all' || (packageType === 'custom' ? pkg.type === 'custom' : pkg.type !== 'custom')) &&
+    (normalizedSearch === '' || `${pkg.name} ${pkg.world_id}`.toLocaleLowerCase().includes(normalizedSearch))
+  )
 
   return (
     <section className="panel">
@@ -86,7 +97,31 @@ export function WorldLibraryPage(): JSX.Element {
       <SectionCard title="Available World Packages">
         {packagesQuery.isLoading && <p className="status">Loading World Packages...</p>}
         {packagesQuery.error && <p className="error">Failed to load World Packages: {formatApiError(packagesQuery.error)}</p>}
-        {packagesQuery.data && <PackageTable packages={packagesQuery.data.packages} />}
+        {packagesQuery.data && <>
+          <div className="form-grid">
+            <label>
+              {cs ? 'Hledat World Package' : 'Search World Packages'}
+              <input type="search" value={search} onChange={event => setSearch(event.target.value)}
+                placeholder={cs ? 'Název nebo World ID' : 'Name or World ID'} />
+            </label>
+            <label>
+              {cs ? 'Typ World Package' : 'World Package type'}
+              <select value={packageType} onChange={event => setPackageType(event.target.value as typeof packageType)}>
+                <option value="all">{cs ? 'Všechny typy' : 'All types'}</option>
+                <option value="built_in">{cs ? 'Vestavěné' : 'Built-in'}</option>
+                <option value="custom">{cs ? 'Vlastní' : 'Custom'}</option>
+              </select>
+            </label>
+          </div>
+          <p role="status">{cs
+            ? `Zobrazeno ${visiblePackages.length} z ${packages.length} World Packages`
+            : `Showing ${visiblePackages.length} of ${packages.length} World Packages`}</p>
+          {packages.length > 0 && visiblePackages.length === 0
+            ? <p className="status">{cs
+              ? 'Žádné World Packages neodpovídají hledání nebo filtru typu.'
+              : 'No World Packages match your search or type filter.'}</p>
+            : <PackageTable packages={visiblePackages} />}
+        </>}
       </SectionCard>
     </section>
   )

@@ -337,6 +337,25 @@ describe('server task UI (mock HTTP)',()=>{
   expect(screen.getByText('Linked task stays visible regardless of filters.')).toBeInTheDocument()
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
+ it.each(['cs','en'] as const)('does not fall back to global task inventory when scoped Branch is unresolved (%s)',async language=>{
+  api.getServerTasks.mockResolvedValue([taskExample()])
+  open(language,<FullSimulationServerTasks runId="run" branchId=""/>)
+  expect(screen.getByRole('alert')).toHaveTextContent(language==='cs'
+    ? 'Před zobrazením úloh vyberte platný Run a větev'
+    : 'Select a valid Run and Branch')
+  expect(screen.queryByText('task')).toBeNull()
+  expect(screen.queryByText(language==='cs'?'Načítám serverové úlohy…':'Loading server tasks…')).toBeNull()
+  expect(api.getServerTasks).not.toHaveBeenCalled()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
+ it('preserves the intentional unscoped Global Task Center inventory request',async()=>{
+  api.getServerTasks.mockResolvedValue([taskExample()])
+  open('en',<FullSimulationServerTasks/>)
+  expect(await screen.findByText('task')).toBeInTheDocument()
+  expect(api.getServerTasks).toHaveBeenCalledWith(undefined,undefined)
+  expect(screen.queryByText(/No global inventory was requested/)).toBeNull()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
  it.each(['cs','en'] as const)('opens the exact linked task first without inventing an action (%s)',async language=>{
   const other={...taskExample(),task_id:'other',parent_command_id:'other-parent'}
   api.getServerTasks.mockResolvedValue([other,taskExample()])

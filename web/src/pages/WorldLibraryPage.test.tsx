@@ -178,6 +178,7 @@ describe('built-in World cloning', () => {
     expect(screen.queryByText(/Preview only:/)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Review custom copy' }))
     expect(screen.getAllByText('real-world-head').length).toBeGreaterThan(0)
+    expect(screen.getByText('A personally edited description')).toBeInTheDocument()
     expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
     expect(api.cloneWorldPackage).not.toHaveBeenCalledWith('real_world', expect.objectContaining({dry_run:false}))
     fireEvent.click(screen.getByRole('button', { name: 'Confirm custom copy' }))
@@ -219,6 +220,7 @@ describe('built-in World cloning', () => {
     expect(screen.getAllByText('before').length).toBeGreaterThan(0)
     client.setQueryData(['world-package','real_world'],{...pkg,fingerprint:'after'})
     await waitFor(() => expect(screen.getByRole('button',{name:'Confirm custom copy'})).toBeDisabled())
+    expect(screen.getByText(/source World Package changed/i)).toBeInTheDocument()
     expect(api.cloneWorldPackage).not.toHaveBeenCalled()
   })
 

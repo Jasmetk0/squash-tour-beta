@@ -4,11 +4,13 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WorldLibraryDetailPage } from './WorldLibraryPage'
 
+const locale = vi.hoisted(() => ({ language: 'en' }))
 const api = vi.hoisted(() => ({
   getWorldPackage: vi.fn(),
   getWorldPackageGeography: vi.fn(),
   getWorldPackageValidation: vi.fn(),
 }))
+vi.mock('../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: locale.language }) }))
 vi.mock('../api/client', async importOriginal => ({
   ...(await importOriginal<object>()), ...api
 }))
@@ -33,6 +35,7 @@ function mount() {
 describe('World Package validation diagnostics', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    locale.language = 'en'
     api.getWorldPackage.mockResolvedValue({
       world_id: 'custom', name: 'Custom World', type: 'custom', source: 'custom_config',
       editable: false, status: 'active', used_by_run_count: null,

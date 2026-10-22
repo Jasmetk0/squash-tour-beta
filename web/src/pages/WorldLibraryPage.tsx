@@ -1097,7 +1097,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     await refresh(worldId, countryCode)
   }
   const handleCountrySave = (payload: WorldPackageCountryUpdatePayload) => {
-    if (!canEdit || !data || pending) return
+    if (!canEdit || !data || pending || isFingerprintConflict(writeError)) return
     if (payload.expected_package_fingerprint !== data.package.fingerprint) {
       setWriteError({ status: 409, message: 'World Package changed before confirmation.' })
       return
@@ -1106,7 +1106,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     mutation.mutate({ worldId, countryCode, locationKey, payload })
   }
   const handlePopulationSave = (payload: WorldPackageCountryPopulationUpdatePayload) => {
-    if (!canEdit || !data || pending) return
+    if (!canEdit || !data || pending || isFingerprintConflict(writeError)) return
     if (payload.expected_package_fingerprint !== data.package.fingerprint) {
       setWriteError({ status: 409, message: 'World Package changed before confirmation.' })
       return
@@ -1139,9 +1139,9 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
           {cs ? 'Balíček se od otevření potvrzení změnil. Smazání bylo zablokováno.' :
             'The package has changed since deletion was reviewed. Deletion is blocked.'}
         </p>}
-        <p><button type="button" disabled={pending || data.package.fingerprint !== deleteReview.fingerprint}
+        <p><button type="button" disabled={pending || isFingerprintConflict(writeError) || data.package.fingerprint !== deleteReview.fingerprint}
           onClick={() => {
-            if (!deleteReview || pending) return
+            if (!deleteReview || pending || isFingerprintConflict(writeError)) return
             if (deleteReview.worldId !== worldId || deleteReview.countryCode !== countryCode ||
                 deleteReview.locationKey !== locationKey || deleteReview.fingerprint !== data.package.fingerprint) {
               setWriteError({status: 409, message: 'World Package changed after deletion review.'})
@@ -1160,7 +1160,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
         : formatApiError(writeError)}{' '}
         {isFingerprintConflict(writeError) && <button type="button" disabled={pending} onClick={() => void reloadAfterConflict()}>{cs ? 'Načíst aktuální data' : 'Reload current data'}</button>}
       </p>}
-      {canEdit && editing && <CountryEditForm key={routeKey} detail={data} geography={geographyQuery.data} saving={pending} cs={cs}
+      {canEdit && editing && <CountryEditForm key={routeKey} detail={data} geography={geographyQuery.data} saving={pending || isFingerprintConflict(writeError)} cs={cs}
         onCancel={() => { if (window.confirm(cs ? 'Zahodit rozpracovanou úpravu?' : 'Discard unsaved changes?')) setEditing(false) }}
         onSave={handleCountrySave} />}
       {!editing && <SectionCard title="Overview">
@@ -1172,7 +1172,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
         <DetailRow label="Effective/default population" value={formatNumber(data.country.default_population ?? data.country.population)} /><DetailRow label="Default authored year" value={data.country.default_population_year ?? '—'} /><DetailRow label="Authored population years" value={timeline.length} /><DetailRow label="Earliest authored year" value={timeline[0]?.[0] ?? '—'} /><DetailRow label="Latest authored year" value={timeline[timeline.length - 1]?.[0] ?? '—'} />
         <div style={{maxHeight: '28rem', overflowY: 'auto'}}><table aria-label="Authored population timeline"><thead><tr><th>Year</th><th>Population</th></tr></thead><tbody>{timeline.map(([year, value]) => <tr key={year}><td>{year}{year === '2020' ? ' · Default year' : ''}</td><td>{formatNumber(value)}</td></tr>)}</tbody></table></div>
       </SectionCard>}
-      {canEdit && populationEditing && <PopulationEditForm key={routeKey} detail={data} saving={pending} cs={cs}
+      {canEdit && populationEditing && <PopulationEditForm key={routeKey} detail={data} saving={pending || isFingerprintConflict(writeError)} cs={cs}
         onCancel={() => { if (window.confirm(cs ? 'Zahodit rozpracovanou úpravu?' : 'Discard unsaved changes?')) setPopulationEditing(false) }}
         onSave={handlePopulationSave} />}
       <SectionCard title="Geography"><DetailRow label="Area km²" value={formatNumber(data.country.area_km2)} /><DetailRow label="Region" value={data.region ? `${data.region.name} (${data.region.code})` : data.country.region} /><DetailRow label="Continent" value={data.continent?.name ?? '—'} /><DetailRow label="Travel Region" value={data.travel_region ? `${data.travel_region.name} (${data.travel_region.code})` : data.country.travel_region ?? '—'} /></SectionCard>

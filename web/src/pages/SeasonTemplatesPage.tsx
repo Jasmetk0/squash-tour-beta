@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { getSeasonTemplates, listCalendarTemplates } from '../api/client'
@@ -56,11 +57,26 @@ const plannedTemplateWorkflow = [
 ]
 
 export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'active' | 'archived'>('all')
+  const [sortBy, setSortBy] = useState<'source' | 'name' | 'events'>('source')
   const templatesQuery = useQuery({ queryKey: ['season-templates'], queryFn: getSeasonTemplates, retry: false })
   const calendarTemplatesQuery = useQuery({ queryKey: ['calendar-templates'], queryFn: listCalendarTemplates, retry: false })
   const payload = templatesQuery.data
   const calendarTemplatesPayload = calendarTemplatesQuery.data
   const calendarTemplates = calendarTemplatesPayload?.templates ?? []
+  const query = search.trim().toLocaleLowerCase()
+  const visibleCalendarTemplates = calendarTemplates
+    .filter(template =>
+      (statusFilter === 'all' || template.status === statusFilter) &&
+      (query === '' || `${template.name} ${template.id}`.toLocaleLowerCase().includes(query))
+    )
+  if (sortBy === 'name') {
+    visibleCalendarTemplates.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
+  } else if (sortBy === 'events') {
+    visibleCalendarTemplates.sort((a, b) => b.events.length - a.events.length || a.id.localeCompare(b.id))
+  }
+  const clearFilters = () => { setSearch(''); setStatusFilter('all'); setSortBy('source') }
   return (
     <section className="panel">
       <PageIntro title="Season Templates" subtitle="Reusable calendar plans that can later be copied into concrete seasons." />
@@ -120,9 +136,40 @@ export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
             <li>Status: {calendarTemplatesPayload.status}</li>
           </ul>
         ) : null}
-        {calendarTemplatesPayload && calendarTemplates.length === 0 ? <p className="status">No persisted Admin calendar templates exist yet.</p> : null}
-        {calendarTemplates.length ? (
-          <table>
+        {calendarTemplatesPayload && <>
+          <div className="form-grid">
+            <label>Search persisted templates
+              <input type="search" value={search} onChange={event => setSearch(event.target.value)}
+                placeholder="Template name or ID" />
+            </label>
+            <label>Filter calendar template status
+              <select value={statusFilter} onChange={event => setStatusFilter(event.target.value as typeof statusFilter)}>
+                <option value="all">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+                <option value="archived">Archived</option>
+              </select>
+            </label>
+            <label>Sort calendar templates
+              <select value={sortBy} onChange={event => setSortBy(event.target.value as typeof sortBy)}>
+                <option value="source">Registry order</option>
+                <option value="name">Name (A–Z)</option>
+                <option value="events">Event count (descending)</option>
+              </select>
+            </label>
+          </div>
+          <button type="button" disabled={!search && statusFilter === 'all' && sortBy === 'source'}
+            onClick={clearFilters}>Clear template filters</button>
+          <p role="status">Showing {visibleCalendarTemplates.length} of {calendarTemplates.length} persisted calendar templates</p>
+        </>}
+        {calendarTemplatesPayload && calendarTemplates.length === 0
+          ? <p className="status">No persisted Admin calendar templates exist yet.</p>
+          : null}
+        {calendarTemplates.length > 0 && visibleCalendarTemplates.length === 0
+          ? <p className="status">No persisted calendar templates match the current filters.</p>
+          : null}
+        {visibleCalendarTemplates.length > 0 ? (
+          <div className="table-responsive"><table aria-label="Persisted calendar templates table">
             <thead>
               <tr>
                 <th>Name</th>
@@ -134,7 +181,7 @@ export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
               </tr>
             </thead>
             <tbody>
-              {calendarTemplates.map((template) => (
+              {visibleCalendarTemplates.map((template) => (
                 <tr key={template.id}>
                   <td>{template.name}</td>
                   <td>{template.id}</td>
@@ -145,7 +192,7 @@ export function AdminTourSeasonsSeasonTemplatesPage(): JSX.Element {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         ) : null}
       </SectionCard>
       {payload?.templates.map((template) => (

@@ -301,6 +301,30 @@ describe('server task UI (mock HTTP)',()=>{
     operator_label:'Operator',audit_reason:'Inspected restart'})
   await waitFor(()=>expect(screen.queryByText(language==='cs'?/Stav úlohy se změnil, ale odpověď/:/Server evidence changed while the original continuation/)).toBeNull())
  })
+ it('preserves the original uncertain continuation when the task reaches a mandatory new-week schedule review',async()=>{
+  const initial=taskExample()
+  const changed={...initial,state:'awaiting_operator',desired_state:'awaiting_operator',
+    revision:2,needs_operator_action:true,checkpoint:'week_schedule_review_required'}
+  api.getServerTasks.mockResolvedValueOnce([initial]).mockResolvedValue([changed])
+  api.continueServerTask.mockRejectedValueOnce(Error('lost continuation reply')).mockResolvedValue({})
+  weekReview.getNextWeekExtensionInspection.mockResolvedValue([])
+  open('en',<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  await screen.findByText('task')
+  fireEvent.change(screen.getByLabelText('Task operator'),{target:{value:'Operator'}})
+  fireEvent.change(screen.getByLabelText('Task audit reason'),{target:{value:'Reviewed original recovery'}})
+  fireEvent.click(screen.getByRole('button',{name:'Explicitly recover server task'}))
+  expect(await screen.findByText('lost continuation reply')).toBeVisible()
+  fireEvent.click(screen.getByRole('button',{name:'Refresh task evidence'}))
+  await screen.findByText('week_schedule_review_required')
+  expect(screen.queryByLabelText('Task operator')).toBeNull()
+  expect(screen.getByRole('button',{name:'Retry same request'})).toBeEnabled()
+  expect(screen.getByRole('button',{name:'Cancel retry and refresh'})).toBeEnabled()
+  expect(api.continueServerTask).toHaveBeenCalledTimes(1)
+  fireEvent.click(screen.getByRole('button',{name:'Retry same request'}))
+  await waitFor(()=>expect(api.continueServerTask).toHaveBeenCalledTimes(2))
+  expect(api.continueServerTask.mock.calls[0]).toEqual(api.continueServerTask.mock.calls[1])
+  expect(weekReview.approveNextWeekExtension).not.toHaveBeenCalled()
+ })
  it('can discard an uncertain frozen continuation once the original task is no longer actionable',async()=>{
   const original=taskExample()
   const accepted={...original,state:'active',desired_state:'active',needs_operator_action:false}

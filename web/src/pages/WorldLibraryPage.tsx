@@ -1185,15 +1185,14 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     try {
       // Refetch a real Country detail; invalidation alone may resolve despite
       // an HTTP failure, silently discarding the user's original proposal.
-      const fresh = await queryClient.fetchQuery({
-        queryKey: ['world-package-country', worldId, countryCode],
-        queryFn: () => getWorldPackageCountry(worldId, countryCode),
-        staleTime: 0
-      })
+      // Verify the server response *before* publishing it to the scoped
+      // cache. fetchQuery would cache an unrelated Country before detection.
+      const fresh = await getWorldPackageCountry(worldId, countryCode)
       if (!mounted.current || activeLocationKey.current !== targetLocation || activeRoute.current !== targetRoute) return
       if (fresh.package.world_id !== worldId || fresh.country.code !== countryCode) {
         throw new Error(cs ? 'Načtené údaje nepatří původní zemi.' : 'Reloaded data belongs to a different Country.')
       }
+      queryClient.setQueryData(['world-package-country', worldId, countryCode], fresh)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
         queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }),

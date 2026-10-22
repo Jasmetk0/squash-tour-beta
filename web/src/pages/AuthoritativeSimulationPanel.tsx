@@ -4997,7 +4997,7 @@ export function AuthoritativeSimulationPanel({
                     }
                     setFrozenFullSimulationParent(snapshot)
                     fullSimulationMutation.mutate(snapshot)
-                  }
+                  }}
                   disabled={!confirmed || actionPending || serverTaskParents.has(fullSimulationCommandId)}
                 >
                   {fullSimulationProgress

@@ -1,7 +1,7 @@
 import { FullSimulationBoundaryTargets, BoundaryDescription } from '../components/FullSimulationBoundaryTargets'
 import { FullSimulationServerTasks, StartServerTask, useServerTasks } from '../components/FullSimulationServerTasks'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
 import { fullSimulationControlText } from '../i18n/fullSimulationControlText'
 import { FullSimulationSummary } from '../components/FullSimulationSummary'
@@ -230,6 +230,8 @@ export function AuthoritativeSimulationPanel({
   const { language } = useLanguage()
   const C = (text: string): string => fullSimulationControlText(language, text)
   const queryClient = useQueryClient()
+  const activeScopeRef = useRef({runId,branchId})
+  activeScopeRef.current = {runId,branchId}
   const enabled = Boolean(runId && branchId && savedRevisionId && !blockedReason)
   const [selectedGroupId, setSelectedGroupId] = useState('')
   const [confirmed, setConfirmed] = useState(false)
@@ -301,6 +303,9 @@ export function AuthoritativeSimulationPanel({
     useState<AuthoritativeFullSimulationProgress | null>(null)
   const [fullSimulationControlTarget, setFullSimulationControlTarget] =
     useState<{commandId:string; action:'pause'|'resume'|'stop'} | null>(null)
+  const [frozenFullSimulationControl, setFrozenFullSimulationControl] = useState<{
+    runId:string;branchId:string;payload:Parameters<typeof controlAuthoritativeFullSimulation>[2]
+  }|null>(null)
   const [fullSimulationControlOperator, setFullSimulationControlOperator] = useState('')
   const [fullSimulationControlReason, setFullSimulationControlReason] = useState('')
   const [fullSimulationStopConfirmed, setFullSimulationStopConfirmed] = useState(false)
@@ -654,6 +659,15 @@ export function AuthoritativeSimulationPanel({
     setNextSeasonReason('')
     setNextSeasonReview(null)
     setNextSeasonProgress(null)
+  }, [runId, branchId])
+
+  useEffect(() => {
+    setFullSimulationControlTarget(null)
+    setFrozenFullSimulationControl(null)
+    setFullSimulationControlOperator('')
+    setFullSimulationControlReason('')
+    setFullSimulationStopConfirmed(false)
+    setFullSimulationControlCommandId(newCommandId())
   }, [runId, branchId])
 
   useEffect(() => {
@@ -1818,49 +1832,35 @@ export function AuthoritativeSimulationPanel({
   })
 
   const fullSimulationControlMutation = useMutation({
-    mutationFn: () => {
-      if (!fullSimulationControlTarget) {
-        throw new Error('Choose the exact Full Simulation parent to control.')
+    mutationFn:(snapshot:{runId:string;branchId:string;payload:Parameters<typeof controlAuthoritativeFullSimulation>[2]})=>
+      controlAuthoritativeFullSimulation(snapshot.runId,snapshot.branchId,snapshot.payload),
+    onSuccess:async (response,snapshot)=>{
+      const current=activeScopeRef.current
+      if(current.runId===snapshot.runId&&current.branchId===snapshot.branchId){
+        if(response.action==='stop'){
+          setFullSimulationReview(null)
+          setFullSimulationProgress(null)
+          setConfirmed(false)
+          setFullSimulationCommandId(newCommandId())
+        }
+        setFullSimulationControlTarget(null)
+        setFrozenFullSimulationControl(null)
+        setFullSimulationControlOperator('')
+        setFullSimulationControlReason('')
+        setFullSimulationStopConfirmed(false)
+        setFullSimulationControlCommandId(newCommandId())
       }
-      if (!fullSimulationControlOperator.trim() || !fullSimulationControlReason.trim()) {
-        throw new Error('A control operation requires an operator and audit reason.')
-      }
-      if (fullSimulationControlTarget.action === 'stop' && !fullSimulationStopConfirmed) {
-        throw new Error('Confirm permanent stop before ending the simulation.')
-      }
-      return controlAuthoritativeFullSimulation(runId, branchId, {
-        control_command_id: fullSimulationControlCommandId,
-        target_command_id: fullSimulationControlTarget.commandId,
-        action: fullSimulationControlTarget.action,
-        operator_label: fullSimulationControlOperator.trim(),
-        audit_reason: fullSimulationControlReason.trim()
-      })
-    },
-    onSuccess: async (response) => {
-      if (response.action === 'stop') {
-        setFullSimulationReview(null)
-        setFullSimulationProgress(null)
-        setConfirmed(false)
-        setFullSimulationCommandId(newCommandId())
-      }
-      setFullSimulationControlTarget(null)
-      setFullSimulationControlOperator('')
-      setFullSimulationControlReason('')
-      setFullSimulationStopConfirmed(false)
-      setFullSimulationControlCommandId(newCommandId())
       await Promise.all([
-        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-pending',runId,branchId]}),
-        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-history',runId,branchId]}),
-        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-parent-detail',runId,branchId]})
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-pending',snapshot.runId,snapshot.branchId]}),
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-history',snapshot.runId,snapshot.branchId]}),
+        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-parent-detail',snapshot.runId,snapshot.branchId]})
       ])
-      if (response.action === 'stop') {
+      if(response.action==='stop'&&activeScopeRef.current.runId===snapshot.runId&&activeScopeRef.current.branchId===snapshot.branchId){
         await refreshCanonicalSimulation()
       }
     },
-    onError: async () => {
-      await queryClient.invalidateQueries({
-        queryKey:['authoritative-full-simulation-pending',runId,branchId]
-      })
+    onError:async (_error,snapshot)=>{
+      await queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-pending',snapshot.runId,snapshot.branchId]})
     }
   })
 
@@ -3348,6 +3348,7 @@ export function AuthoritativeSimulationPanel({
                     {operation.control_state !== 'pause_requested' && !(operation.control_state === 'paused' && serverTaskParents.has(operation.command.command_id)) && (
                       <button type="button" onClick={() => {
                         setFullSimulationControlCommandId(newCommandId())
+                        setFrozenFullSimulationControl(null)
                         setFullSimulationControlTarget({
                           commandId:operation.command.command_id,
                           action:operation.control_state === 'paused' ? 'resume' : 'pause'
@@ -3374,6 +3375,7 @@ export function AuthoritativeSimulationPanel({
                     </button>
                     <button type="button" onClick={() => {
                       setFullSimulationControlCommandId(newCommandId())
+                      setFrozenFullSimulationControl(null)
                       setFullSimulationControlTarget({
                         commandId:operation.command.command_id,
                         action:'stop'
@@ -3479,30 +3481,45 @@ export function AuthoritativeSimulationPanel({
                         <input type="checkbox" aria-label={C('Confirm permanent stop')}
                           checked={fullSimulationStopConfirmed}
                           onChange={event => setFullSimulationStopConfirmed(event.target.checked)}
-                          disabled={fullSimulationControlMutation.isPending} />
+                          disabled={fullSimulationControlMutation.isPending||Boolean(frozenFullSimulationControl)} />
                         {' '}{C('Confirm permanent stop')}
                       </label>
                     </>
                   )}
                   <p className="status">{C('Control request ID:')} <code>{fullSimulationControlCommandId}</code>. {C('If the response is lost, retrying reuses this exact ID and cannot duplicate the audit event.')}</p>
+                  {frozenFullSimulationControl&&<p role="status">{language==='cs'
+                    ? 'Původní Run, větev, příkaz i auditní údaje jsou uzamčené pro přesné opakování.'
+                    : 'Original Run, Branch, command and audit fields are locked for exact retry.'}</p>
                   <label>{C('Operator')}
                     <input aria-label={C('Full Simulation control operator')}
                       value={fullSimulationControlOperator} maxLength={128}
                       onChange={event=>setFullSimulationControlOperator(event.target.value)}
-                      disabled={fullSimulationControlMutation.isPending}/>
+                      disabled={fullSimulationControlMutation.isPending||Boolean(frozenFullSimulationControl)}/>
                   </label>
                   <label>{C('Audit reason')}
                     <textarea aria-label={C('Full Simulation control audit reason')}
                       value={fullSimulationControlReason} maxLength={2000}
                       onChange={event=>setFullSimulationControlReason(event.target.value)}
-                      disabled={fullSimulationControlMutation.isPending}/>
+                      disabled={fullSimulationControlMutation.isPending||Boolean(frozenFullSimulationControl)}/>
                   </label>
                   <button type="button"
                     disabled={!fullSimulationControlOperator.trim()||
                       !fullSimulationControlReason.trim()||
                       (fullSimulationControlTarget.action === 'stop' && !fullSimulationStopConfirmed)||
                       fullSimulationControlMutation.isPending}
-                    onClick={()=>fullSimulationControlMutation.mutate()}>
+                    onClick={()=>{
+                      if(!fullSimulationControlTarget||!fullSimulationControlOperator.trim()||!fullSimulationControlReason.trim()||
+                        (fullSimulationControlTarget.action==='stop'&&!fullSimulationStopConfirmed))return
+                      const snapshot=frozenFullSimulationControl??{runId,branchId,payload:{
+                        control_command_id:fullSimulationControlCommandId,
+                        target_command_id:fullSimulationControlTarget.commandId,
+                        action:fullSimulationControlTarget.action,
+                        operator_label:fullSimulationControlOperator.trim(),
+                        audit_reason:fullSimulationControlReason.trim()
+                      }}
+                      setFrozenFullSimulationControl(snapshot)
+                      fullSimulationControlMutation.mutate(snapshot)
+                    }}>
                     {fullSimulationControlTarget.action === 'pause'
                       ? C('Request pause')
                       : fullSimulationControlTarget.action === 'stop'
@@ -3511,6 +3528,7 @@ export function AuthoritativeSimulationPanel({
                   </button>
                   <button type="button" onClick={() => {
                     setFullSimulationControlTarget(null)
+                    setFrozenFullSimulationControl(null)
                     setFullSimulationStopConfirmed(false)
                     setFullSimulationControlCommandId(newCommandId())
                   }} disabled={fullSimulationControlMutation.isPending}>{C('Cancel')}</button>

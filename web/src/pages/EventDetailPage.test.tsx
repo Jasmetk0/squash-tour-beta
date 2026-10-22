@@ -120,6 +120,32 @@ describe('EventDetailPage', () => {
     expect(screen.getByText(/Previous planned:/)).toBeInTheDocument()
   })
 
+  it('keeps reserved Run and Event identifiers as one segment in detail links', async () => {
+    api.getEvent.mockResolvedValue({
+      event_sequence: 11, event_id: 'E11', season: 2028, week: 4,
+      template_id: 'psa-gold', tournament_result: {}
+    })
+    api.listEvents.mockResolvedValue({
+      events: [
+        { event_sequence: 10, event_id: 'E/10', season: 2028, week: 3, tournament_result: {} },
+        { event_sequence: 11, event_id: 'E11', season: 2028, week: 4, tournament_result: {} },
+      ]
+    })
+    renderEventDetailRoute('/runs/run%20x%2Fy/events/E11')
+    expect(await screen.findByRole('link', { name: 'Back to events history' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/events')
+    expect(screen.getByRole('link', { name: 'Back to Season Calendar' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/calendar')
+    expect(screen.getByRole('link', { name: 'Open planned-event detail' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/calendar/E11')
+    expect(screen.getByRole('link', { name: 'Open activity' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/activity')
+    expect(screen.getByRole('link', { name: 'E/10' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/events/E%2F10')
+    expect(api.getEvent).toHaveBeenCalledWith('run x/y', 'E11')
+    expect(api.listEvents).toHaveBeenCalledWith('run x/y')
+  })
+
   it('shows readable missing-event behavior for invalid event IDs', async () => {
     api.getEvent.mockRejectedValue(new api.ApiError('event not found', 404))
     api.listEvents.mockResolvedValue({ events: [] })

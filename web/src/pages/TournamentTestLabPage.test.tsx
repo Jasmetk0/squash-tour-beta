@@ -411,7 +411,7 @@ describe('TournamentTestLabPage', () => {
         built_in_scenario_id: 'standard-four-player'
       }
     )
-    expect(await screen.findByDisplayValue('Standard four-player — Test Session')).toBeInTheDocument()
+    expect(await screen.findByRole('textbox', { name: 'Tournament Lab session name' })).toHaveValue('Standard four-player — Test Session')
     expect(screen.getByText('isolated Test Session')).toBeInTheDocument()
 
     const nameInput = screen.getByLabelText('Tournament Lab session name')

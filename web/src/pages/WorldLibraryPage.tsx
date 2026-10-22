@@ -1036,8 +1036,10 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
   const [success, setSuccess] = useState('')
   const [writeError, setWriteError] = useState<unknown>(null)
   const [deleteReview, setDeleteReview] = useState<(DeleteWrite & { countryName: string }) | null>(null)
+  const [reloadingConflict, setReloadingConflict] = useState(false)
+  const [reloadError, setReloadError] = useState<unknown>(null)
   useEffect(() => {
-    setEditing(false); setPopulationEditing(false); setSuccess(''); setWriteError(null); setDeleteReview(null)
+    setEditing(false); setPopulationEditing(false); setSuccess(''); setWriteError(null); setDeleteReview(null); setReloadError(null); setReloadingConflict(false)
   }, [routeKey])
   useUnsavedWorldPackageWarning(editing || populationEditing)
   const query = useQuery({ queryKey: ['world-package-country', worldId, countryCode], queryFn: () => getWorldPackageCountry(worldId, countryCode), enabled: Boolean(worldId && countryCode), retry: false })
@@ -1096,13 +1098,44 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
   const raw = query.data
   const data = raw?.package.world_id === worldId && raw.country.code === countryCode ? raw : undefined
   const canEdit = data?.package.type === 'custom' && data.package.source === 'custom_config' && data.package.editable
-  const pending = mutation.isPending || populationMutation.isPending || deleteMutation.isPending
+  const pending = mutation.isPending || populationMutation.isPending || deleteMutation.isPending || reloadingConflict
   const timeline = Object.entries(data?.country.population_by_year ?? {}).filter((entry): entry is [string, number] => entry[1] != null).sort(([a], [b]) => Number(a) - Number(b))
   const reloadAfterConflict = async () => {
     if (pending) return
     if (!window.confirm(cs ? 'Načíst aktuální data a zahodit neuloženou úpravu?' : 'Reload current data and discard the unsaved edit?')) return
-    setEditing(false); setPopulationEditing(false); setDeleteReview(null); setWriteError(null)
-    await refresh(worldId, countryCode)
+    const targetRoute = routeKey
+    const targetLocation = locationKey
+    setReloadingConflict(true)
+    setReloadError(null)
+    try {
+      // Refetch a real Country detail; invalidation alone may resolve despite
+      // an HTTP failure, silently discarding the user's original proposal.
+      const fresh = await queryClient.fetchQuery({
+        queryKey: ['world-package-country', worldId, countryCode],
+        queryFn: () => getWorldPackageCountry(worldId, countryCode),
+        staleTime: 0
+      })
+      if (!mounted.current || activeLocationKey.current !== targetLocation || activeRoute.current !== targetRoute) return
+      if (fresh.package.world_id !== worldId || fresh.country.code !== countryCode) {
+        throw new Error(cs ? 'Načtené údaje nepatří původní zemi.' : 'Reloaded data belongs to a different Country.')
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] })
+      ])
+      if (!mounted.current || activeLocationKey.current !== targetLocation || activeRoute.current !== targetRoute) return
+      setEditing(false); setPopulationEditing(false); setDeleteReview(null)
+      setWriteError(null); setReloadError(null); setSuccess('')
+    } catch (error) {
+      if (mounted.current && activeLocationKey.current === targetLocation && activeRoute.current === targetRoute) {
+        setReloadError(error)
+      }
+    } finally {
+      if (mounted.current && activeLocationKey.current === targetLocation && activeRoute.current === targetRoute) {
+        setReloadingConflict(false)
+      }
+    }
   }
   const handleCountrySave = (payload: WorldPackageCountryUpdatePayload) => {
     if (!canEdit || !data || pending || isFingerprintConflict(writeError)) return
@@ -1163,6 +1196,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
           </button></p>
       </SectionCard>}
       {success && <p className="status" role="status">{success}</p>}
+      {reloadError != null && <p className="error" role="alert">{cs ? 'Načtení aktuálních údajů selhalo. Rozpracovaný návrh zůstal zachován: ' : 'Reload failed. Your existing draft has been preserved: '}{formatApiError(reloadError)}</p>}
       {writeError != null && <p className="error" role="alert">{isFingerprintConflict(writeError)
         ? (cs ? 'World Package se mezitím změnil. Nic nebylo znovu odesláno. Načtěte aktuální stav a zkontrolujte změny znovu.' : 'The World Package changed meanwhile. No write was retried. Reload current data and review your edits again.')
         : formatApiError(writeError)}{' '}

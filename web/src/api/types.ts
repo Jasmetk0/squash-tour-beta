@@ -8149,7 +8149,7 @@ export type PlayerLabVariant = {
 }
 
 export type PlayerLabScenario = {
-  schema_version: 'player_test_lab_scenario.v1'
+  schema_version: 'player_test_lab_scenario.v1' | 'player_test_lab_scenario.v2'
   scenario_id: string
   player: Record<string, unknown>
   birth_year: number
@@ -8157,7 +8157,10 @@ export type PlayerLabScenario = {
   start_week: { season_index: number; week: number }
   development_policy: Record<string, unknown>
   variants: PlayerLabVariant[]
-  source_kind: 'portable' | 'built_in_copy'
+  source_kind?: 'portable' | 'built_in_copy' | 'run_snapshot_copy'
+  seed?: number
+  initial_health?: unknown
+  source_snapshot?: {run_id: string; selected_branch_id: string; owner_branch_id: string; saved_revision_id: string; biography: {name: string}; week: {calendar: {weeks_per_year: number; start_year: number}; season_index: number; week: number}; scope: string}
   source_reference?: string | null
   source_fingerprint?: string | null
 }
@@ -8835,3 +8838,5 @@ export type CountryPlayerStandings = {
   total_players:number;offset:number;limit:number;has_more:boolean
   players:CountryPlayerStanding[]
 }
+
+export type PlayerLabSession = {session_id: string; display_name: string; version: number; session_fingerprint: string; scenario: PlayerLabScenario}

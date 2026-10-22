@@ -5394,3 +5394,17 @@ export function previewCalendarSportingWeek(runId: string, branchId: string, com
 export function commitCalendarSportingWeek(runId: string, branchId: string, command: import('./calendarContinuation').SportingWeekCommand, fingerprint: string): Promise<import('./calendarContinuation').SportingWeekPreview> {
   return request(authoritativeSimulationRoot(runId, branchId) + '/calendar-sporting-week/commit', { method: 'POST', body: JSON.stringify({command, expected_preview_fingerprint: fingerprint, explicit_confirmation: true}) })
 }
+
+export function listPlayerLabSessions(): Promise<import('./types').PlayerLabSession[]> {
+  return request('/admin/labs/player/sessions')
+}
+export function savePlayerLabSession(payload: {display_name: string; scenario: import('./types').PlayerLabScenario; expected_session_fingerprint?: string}, id?: string): Promise<import('./types').PlayerLabSession> {
+  return request(`/admin/labs/player/sessions${id ? '/' + encodeURIComponent(id) : ''}`, {method: id ? 'PUT' : 'POST', body: JSON.stringify(payload)})
+}
+export function importPlayerLabHistory(payload: {product_run_id: string; branch_id: string; saved_revision_id: string; player_id: string; duration_weeks: number}): Promise<import('./types').PlayerLabScenario> {
+  return request('/admin/labs/player/import-saved-revision-player', {method: 'POST', body: JSON.stringify(payload)})
+}
+
+export function runPlayerLabSession(id: string, fingerprint: string): Promise<import('./types').PlayerLabResult> {
+  return request(`/admin/labs/player/sessions/${encodeURIComponent(id)}/run`, {method: 'POST', body: JSON.stringify({expected_session_fingerprint: fingerprint})})
+}

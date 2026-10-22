@@ -1,10 +1,13 @@
+import { HistoricalLabSourcePicker } from '../components/HistoricalLabSourcePicker'
+import { LabSessionConflict, useLabSessionEditor, validateLabSession, type LabEditorTicket } from '../components/LabSessionEditor'
+import { useLanguage } from '../i18n/LanguageContext'
 import {InitialPopulationComparisonPanel} from '../components/InitialPopulationComparisonPanel'
 import { LabNavigation } from '../components/LabNavigation'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useIsMutating, useMutation, useQuery } from '@tanstack/react-query'
 
-import { getPlayerLabBuiltInScenarios, runPlayerTestLab } from '../api/client'
-import type { PlayerLabResult, PlayerLabScenario } from '../api/types'
+import { getPlayerLabBuiltInScenarios, runPlayerTestLab, listPlayerLabSessions, savePlayerLabSession, importPlayerLabHistory, runPlayerLabSession } from '../api/client'
+import type { PlayerLabResult, PlayerLabScenario, PlayerLabSession } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 
 function ResultPanels({ data }: { data: PlayerLabResult }): JSX.Element {
@@ -112,7 +115,15 @@ export function PlayerTestLabPage(): JSX.Element {
     queryFn: getPlayerLabBuiltInScenarios,
     retry: false
   })
-  const [scenarioText, setScenarioText] = useState('')
+  const {language} = useLanguage(), cs = language === 'cs'
+  const sessions = useQuery({queryKey: ['player-lab-sessions'], queryFn: listPlayerLabSessions, retry: false})
+  const editor = useLabSessionEditor<PlayerLabSession>(sessions.data, sessions.isSuccess, '', 'Player experiment')
+  const {scenarioText, setScenarioText, selectedSession, sessionConflict, sessionHasUnsavedChanges} = editor
+  const [discard, setDiscard] = useState(false)
+  const [source, setSource] = useState({run: '', branch: '', revision: '', player: ''})
+  const [duration, setDuration] = useState(8)
+  const sourceSelection = useRef('')
+  sourceSelection.current = JSON.stringify([source, duration])
   const [localError, setLocalError] = useState<string | null>(null)
   const initialScenarioHandled = useRef(false)
 
@@ -129,7 +140,7 @@ export function PlayerTestLabPage(): JSX.Element {
       const value: unknown = scenarioText.trim() ? JSON.parse(scenarioText) : null
       if (!value || typeof value !== 'object' || Array.isArray(value)) return null
       const candidate = value as Partial<PlayerLabScenario>
-      return candidate.schema_version === 'player_test_lab_scenario.v1'
+      return ['player_test_lab_scenario.v1', 'player_test_lab_scenario.v2'].includes(candidate.schema_version ?? '')
         && typeof candidate.scenario_id === 'string' && candidate.scenario_id.length > 0
         && Array.isArray(candidate.variants)
         ? candidate as PlayerLabScenario : null
@@ -139,8 +150,30 @@ export function PlayerTestLabPage(): JSX.Element {
   const runPending = useIsMutating({ mutationKey: ['player-lab-run'] }) > 0
   const runMutation = useMutation({
     mutationKey: ['player-lab-run'],
-    mutationFn: (scenario: PlayerLabScenario) => runPlayerTestLab({ scenario })
+    mutationFn: (input: {scenario: PlayerLabScenario; session: Pick<PlayerLabSession, 'session_id' | 'session_fingerprint'> | null}) =>
+      input.session ? runPlayerLabSession(input.session.session_id, input.session.session_fingerprint) : runPlayerTestLab({ scenario: input.scenario })
   })
+
+  const saveMutation = useMutation({
+    mutationKey: ['player-lab-write'],
+    mutationFn: async (input: {scenario: PlayerLabScenario; session: PlayerLabSession | null; name: string; ticket: LabEditorTicket}) =>
+      validateLabSession(await savePlayerLabSession({display_name: input.name, scenario: input.scenario,
+        expected_session_fingerprint: input.session?.session_fingerprint}, input.session?.session_id), input.session?.session_id),
+    onSuccess: (saved, {ticket}) => { void sessions.refetch(); if (editor.acceptSession(saved, ticket)) runMutation.reset() }
+  })
+  const importMutation = useMutation({
+    mutationKey: ['player-lab-write'],
+    mutationFn: (input: {source: typeof source; duration: number; selection: string; ticket: LabEditorTicket}) => importPlayerLabHistory({
+      product_run_id: input.source.run, branch_id: input.source.branch, saved_revision_id: input.source.revision,
+      player_id: input.source.player, duration_weeks: input.duration}),
+    onSuccess: (scenario, input) => {
+      if (input.selection === sourceSelection.current && editor.acceptScenario(JSON.stringify(scenario, null, 2), input.ticket)) {
+        initialScenarioHandled.current = true; runMutation.reset()
+      }
+    }
+  })
+  const writePending = useIsMutating({mutationKey: ['player-lab-write']}) > 0
+  useEffect(() => {runMutation.reset()}, [editor.selectedSessionId, sessionConflict, selectedSession?.session_fingerprint])
 
   const editScenario = (value: string) => {
     initialScenarioHandled.current = true
@@ -159,13 +192,18 @@ export function PlayerTestLabPage(): JSX.Element {
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    if (runPending) return
+    if (runPending || sessionConflict || sessionHasUnsavedChanges) return
     setLocalError(null)
     runMutation.reset()
     try {
       if (!scenarioText.trim()) throw new Error('Load or enter a Player Lab scenario first.')
       if (!parsedPreview) throw new Error('Player Lab scenario must contain its schema, ID and variants.')
-      runMutation.mutate(parsedPreview)
+      // Mutation setup and offline resumption may run after another selection.
+      // Bind the reviewed source at submission, never through a live closure.
+      runMutation.mutate({scenario: parsedPreview, session: selectedSession ? {
+        session_id: selectedSession.session_id,
+        session_fingerprint: selectedSession.session_fingerprint
+      } : null})
     } catch (error) {
       setLocalError(error instanceof Error ? error.message : String(error))
     }
@@ -179,6 +217,36 @@ export function PlayerTestLabPage(): JSX.Element {
 
     <LabNavigation active="player" />
     <InitialPopulationComparisonPanel />
+    <SectionCard title={cs ? 'Uložené experimenty hráče' : 'Saved Player experiments'}>
+      <label>{cs ? 'Session' : 'Session'} <select aria-label="Open Player Test Session" value={editor.selectedSessionId ?? ''}
+        disabled={sessionHasUnsavedChanges && !discard} onChange={e => {initialScenarioHandled.current = true; editor.setSelectedSessionId(e.target.value || null); setDiscard(false)}}>
+        <option value="">{cs ? 'Pracovní scénář' : 'Scratch scenario'}</option>
+        {sessions.data?.map(item => <option key={item.session_id} value={item.session_id}>{item.display_name}</option>)}
+      </select></label>
+      {sessionHasUnsavedChanges && <label><input type="checkbox" checked={discard} onChange={e => setDiscard(e.target.checked)} />{cs ? 'Zahodit místní změny při změně Session' : 'Discard local edits when switching Session'}</label>}
+      <label>{cs ? 'Název' : 'Name'} <input aria-label="Player Test Session name" value={editor.sessionName} onChange={e => editor.setSessionName(e.target.value)} /></label>
+      <button type="button" onClick={() => void sessions.refetch()}>{cs ? 'Obnovit seznam Session' : 'Refresh Player Test Sessions'}</button>
+      <button type="button" disabled={!parsedPreview || writePending || Boolean(sessionConflict)} onClick={() => parsedPreview && saveMutation.mutate({scenario: parsedPreview, session: selectedSession, name: editor.sessionName, ticket: editor.captureEditor()})}>{cs ? 'Uložit experiment' : 'Save Player Test Session'}</button>
+      <LabSessionConflict conflict={sessionConflict} dirty={sessionHasUnsavedChanges} canReload={editor.canReloadSession} onReload={editor.reloadSession} />
+      {saveMutation.isError && <p role="alert">{String(saveMutation.error)}</p>}
+    </SectionCard>
+    <SectionCard title={cs ? 'Historický hráč → nezávislý experiment' : 'Historical player → independent experiment'}>
+      <HistoricalLabSourcePicker lab="Player Lab" run={source.run} branch={source.branch} revision={source.revision}
+        onChange={(run, branch, revision) => setSource({...source, run, branch, revision})} />
+      {(['run', 'branch', 'revision', 'player'] as const).map(key => <label key={key}>{cs ? ({run: 'Run', branch: 'Větev', revision: 'Uložená revize', player: 'Hráč', event: 'Turnaj'})[key] : key}
+        <input aria-label={`Player Lab import ${key}`} value={source[key]} onChange={e => setSource({...source, [key]: e.target.value})} />
+      </label>)}
+      <label>{cs ? 'Počet týdnů experimentu' : 'Experiment weeks'} <input aria-label="Player Lab experiment weeks" type="number" min={1} max={61} value={duration} onChange={e => setDuration(Number(e.target.value))} /></label>
+      <button type="button" disabled={writePending || sessionHasUnsavedChanges || Boolean(sessionConflict) || !Object.values(source).every(Boolean)}
+        onClick={() => importMutation.mutate({source, duration, selection: sourceSelection.current, ticket: editor.captureEditor()})}>{cs ? 'Importovat historického hráče' : 'Import historical Player scenario'}</button>
+      {importMutation.isError && <p role="alert">{String(importMutation.error)}</p>}
+      {parsedPreview?.source_snapshot && <p aria-label="Player Lab historical provenance">
+        {parsedPreview.source_snapshot.biography.name} · {parsedPreview.source_snapshot.run_id} / {parsedPreview.source_snapshot.selected_branch_id} / {parsedPreview.source_snapshot.saved_revision_id}
+        {' · '}{cs ? 'Vlastník historie' : 'Historical owner'}: {parsedPreview.source_snapshot.owner_branch_id}
+        {' · '}W{parsedPreview.source_snapshot.week.calendar.weeks_per_year} · S{parsedPreview.source_snapshot.week.season_index + 1} W{parsedPreview.source_snapshot.week.week}
+        {' · '}{cs ? 'Úplný sportovní stav a uložené Health; automatické léčení není podporováno.' : 'Complete sporting state and stored Health; automatic healing is unsupported.'}
+      </p>}
+    </SectionCard>
 
     <SectionCard title="Safety boundary">
       <p>
@@ -222,10 +290,10 @@ export function PlayerTestLabPage(): JSX.Element {
           rows={30}
           style={{ width: '100%', fontFamily: 'monospace' }}
         />
-        <button type="button" onClick={formatScenario} disabled={runPending || !parsedPreview}>
+        <button type="button" onClick={formatScenario} disabled={runPending || Boolean(sessionConflict) || sessionHasUnsavedChanges || !parsedPreview}>
           Format JSON
         </button>{' '}
-        <button type="submit" disabled={runPending || !parsedPreview}>
+        <button type="submit" disabled={runPending || Boolean(sessionConflict) || sessionHasUnsavedChanges || !parsedPreview}>
           {runPending ? 'Running…' : 'Run scenario'}
         </button>
         {localError ? <p className="error">{localError}</p> : null}

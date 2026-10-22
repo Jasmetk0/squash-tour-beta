@@ -818,6 +818,21 @@ def _historical_tournament_sources():
     return component, World(), sporting, player_ids
 
 
+def _patch_historical_lab_source(monkeypatch, module, world, sporting):
+    from contextlib import contextmanager
+    from types import SimpleNamespace
+    from beta_engine.application.historical_lab_source import HistoricalLabSource
+    from beta_engine.domain.calendar.run_calendar import RunCalendar
+    from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+    @contextmanager
+    def read(repository, **kwargs):
+        revision = repository.history.saved_revisions[0]
+        yield HistoricalLabSource(revision, revision.branch_id,
+            SimpleNamespace(world=world, lifecycle=None, health=None, prospects=None, tour=None), sporting,
+            RunWeekPosition(calendar=RunCalendar.legacy_fax(), season_index=sporting.week.season_index, week=sporting.week.week))
+    monkeypatch.setattr(module, "historical_lab_source", read)
+
+
 def test_tournament_lab_copies_verified_saved_revision_knockout_without_live_link(
     tmp_path, monkeypatch
 ) -> None:
@@ -831,16 +846,7 @@ def test_tournament_lab_copies_verified_saved_revision_knockout_without_live_lin
             "load_saved_simulation_slot_component",
             lambda payload, *, run_id, branch_id: component,
         )
-        monkeypatch.setattr(
-            module,
-            "load_saved_initial_world",
-            lambda payload, *, run_id, branch_id: world,
-        )
-        monkeypatch.setattr(
-            module,
-            "load_saved_sporting_bundle",
-            lambda payload, *, run_id, branch_id: ((sporting,), None),
-        )
+        _patch_historical_lab_source(monkeypatch, module, world, sporting)
         service = TournamentTestLabService(
             factory,
             base_service._id_factory,
@@ -905,8 +911,7 @@ def test_tournament_lab_historical_copy_fails_closed_for_wc_until_replacement_sl
         )
         import beta_engine.application.tournament_test_lab_service as module
         monkeypatch.setattr(module, "load_saved_simulation_slot_component", lambda *args, **kwargs: component)
-        monkeypatch.setattr(module, "load_saved_initial_world", lambda *args, **kwargs: world)
-        monkeypatch.setattr(module, "load_saved_sporting_bundle", lambda *args, **kwargs: ((sporting,), None))
+        _patch_historical_lab_source(monkeypatch, module, world, sporting)
         service = TournamentTestLabService(
             factory,
             base_service._id_factory,

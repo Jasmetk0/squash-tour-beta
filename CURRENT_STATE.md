@@ -1,3 +1,69 @@
+# PR #1606 independent review correction — 22 October 2026
+
+Review reproduced a Player Lab request-selection race: an offline-paused run
+submitted for one saved Session could resume against a newly selected Session.
+Scratch runs could likewise be redirected to a later saved selection. The run
+now captures scenario and Session ID/fingerprint synchronously in mutation
+variables; source switches cannot change the submitted request or display its
+late result in another editor. Two regressions exercise actual QueryClient
+pause/resume for saved and scratch submissions.
+
+Independent local verification: 52 focused frontend/editor tests passed, 54 Lab
+service/calendar/legacy compatibility tests passed, and production build passed.
+Final-head hosted acceptance remains required; earlier-head results and Draft
+skips do not establish merge readiness. This is a bounded frontend correction,
+not a new simulation rule or broader native authoring support.
+
+---
+
+# Historical Run-to-Lab copies — 22 October 2026 candidate
+
+Verified base: `buuk` `405b569c4a84ae3b5e834ad7e89806126871f223`, owner-merged
+#1577; no other PR was open at task start. Older candidate/pending entries below
+are historical evidence, not the current implementation boundary.
+
+Match, Tournament and Player Labs now read the explicitly selected reachable
+Saved Revision through shared authenticated source resolution, including actual
+pre-fork ownership, native-v2 dependencies and born-player biography. Copies
+retain complete sporting/Health source facts and provenance; seven MatchEngine
+values remain an explicit projection. Native tournament copies support their
+frozen ranked main-only 4/8 field; unsupported repair formats still fail closed.
+Player Lab gains persistent independent Sessions, source selectors and calendar
+v2 experiments using the existing W-aware development kernel. Legacy v1 bytes,
+fingerprints and replay remain unchanged. Dirty/stale editors, late import/Save,
+selection changes and genuine running calculations retain their protections.
+
+Candidate evidence so far: 19 existing real Lab API tests passed in 28.13s;
+50 focused frontend/concurrency tests passed in 6.38s; production build passed;
+seven calendar/Health/legacy-byte contracts passed in 0.78s. Actual historical
+native W52 API/restart/isolation acceptance passed in 54.78s and separate
+rehashed-provenance/missing-dependency rejection in 25.35s. Genuine Chromium
+completed historical source selection, all three Lab experiments, late-import
+editor preservation, persisted Sessions, SQLite restart and identical replay,
+with no source-table mutation. These are executed candidate results, not a claim
+that final-head hosted checks already ran. Final acceptance must run again on the
+exact final commit; Draft skips do not count as passes.
+
+Distinct adversarial review checked actual-row proof scope, shared ownership,
+pre-birth membership, inherited Edition resolution, unsupported Health/repair
+rejection, legacy byte compatibility and UI reply ordering. The consolidated
+Lab service/API/calendar suite passed 73 tests in 55.57s. A real nested native
+fork inherited-Edition copy passed in 61.22s, with source-table isolation.
+No unresolved implementation defect was found in that review. Hosted manual
+workflow dispatch is currently blocked by `Forbidden` in the available CLI;
+local exact-head acceptance and hosted status are reported separately in the PR.
+
+Limits: complete sporting state is required; no seven-value-only bootstrap is
+advertised as a full copy. Unsupported numeric Health effects block Match and
+Tournament imports; Player v2 preserves/projects stored Health without invented
+healing. General native-v2 component authoring stays blocked. Training Load,
+career AI and broader Player Lab simulation remain separate work. See
+[the implemented contract and acceptance](docs/HISTORICAL_LAB_COPIES.md).
+Next: finish exact-head acceptance and owner review of this single Draft PR;
+then extend only the documented remaining Lab capabilities. No merge performed.
+
+---
+
 # Admin and Test Lab workflow review candidate — 22 October 2026
 
 Baseline `buuk` is `aecec53c560f8a850f82358158e9606da12483a4`, containing

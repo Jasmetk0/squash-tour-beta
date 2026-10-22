@@ -2,12 +2,22 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import json
+from hashlib import sha256
+from types import SimpleNamespace
 from typing import Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 
+from beta_engine.application.historical_lab_source import HistoricalLabPlayer
+from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.calendar.season_weeks import (
     age_at_calendar_position,
     season_week_to_calendar_position,
@@ -17,13 +27,19 @@ from beta_engine.domain.matches.health import (
     project_player_health,
 )
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
+from beta_engine.domain.players.calendar_health import CalendarHealthProfile
+from beta_engine.domain.players.calendar_sporting_week import (
+    CalendarAnnualDevelopmentPolicy,
+    age_in_run_years,
+    develop_and_recover,
+)
 from beta_engine.domain.players.health import (
     PlayerHealthProfile,
     PlayerHealthRecord,
 )
 from beta_engine.domain.players.sporting import (
-    CompletedWeekSportingContext,
     CompetitiveMatchCount,
+    CompletedWeekSportingContext,
     PlayerDevelopmentPolicy,
     PlayerSportingRecord,
     PlayerSportingWeekState,
@@ -31,7 +47,6 @@ from beta_engine.domain.players.sporting import (
     weekly_player_development_update,
 )
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
-
 
 PLAYER_LAB_SCHEMA_VERSION = "player_test_lab_scenario.v1"
 PLAYER_LAB_RESULT_VERSION = "player_test_lab_result.v1"
@@ -127,9 +142,18 @@ class PlayerLabScenario(FrozenInput):
     start_week: RankingWeek
     development_policy: PlayerDevelopmentPolicy = PlayerDevelopmentPolicy()
     variants: tuple[PlayerLabVariant, ...] = Field(min_length=1)
-    source_kind: Literal["portable", "built_in_copy"] = "portable"
+    source_kind: Literal["portable", "built_in_copy", "run_snapshot_copy"] = "portable"
     source_reference: str | None = Field(default=None, max_length=500)
     source_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+
+    source_snapshot: HistoricalLabPlayer | None = None
+
+    @model_serializer(mode="wrap")
+    def historical_shape(self, handler):
+        body = handler(self)
+        if self.source_snapshot is None:
+            body.pop("source_snapshot", None)
+        return body
 
     @field_validator("player", mode="before")
     @classmethod
@@ -190,6 +214,60 @@ class PlayerLabScenario(FrozenInput):
         return _fingerprint(self.model_dump(mode="json"))
 
 
+class PlayerLabScenarioV2(BaseModel):
+    """Explicit Run clock; v1 serialization and weekly replay remain unchanged."""
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    schema_version: Literal["player_test_lab_scenario.v2"] = "player_test_lab_scenario.v2"
+    scenario_id: str = Field(min_length=1, max_length=160)
+    player: PlayerSportingRecord
+    birth_year: int
+    birth_year_week: int = Field(ge=1)
+    start_week: RunWeekPosition
+    development_policy: CalendarAnnualDevelopmentPolicy = CalendarAnnualDevelopmentPolicy()
+    seed: int = 1
+    variants: tuple[PlayerLabVariant, ...] = Field(min_length=1, max_length=16)
+    initial_health: CalendarHealthProfile | PlayerHealthProfile
+    source_snapshot: HistoricalLabPlayer
+
+    @model_validator(mode="after")
+    def validate_scenario(self):
+        ids = tuple(v.variant_id for v in self.variants)
+        lengths = {len(v.competitive_match_counts) for v in self.variants}
+        if ids != tuple(sorted(set(ids))) or len(lengths) != 1:
+            raise ValueError("Player Lab variants require unique canonical IDs and equal durations")
+        if self.duration_weeks > MAX_PLAYER_LAB_WEEKS:
+            raise ValueError(f"Player Lab experiments support at most {MAX_PLAYER_LAB_WEEKS} weeks (execution budget)")
+        self.start_week.calendar.advance_weeks(self.start_week.season_index, self.start_week.week, self.duration_weeks)
+        if self.birth_year_week > self.start_week.calendar.weeks_per_year or age_in_run_years(self, self.start_week) < 0:
+            raise ValueError("Player Lab birthday is outside the source calendar or after its start")
+        if self.initial_health.player_id != self.player.player_id or self.source_snapshot.player.player_id != self.player.player_id:
+            raise ValueError("Player Lab source and Health identity differ")
+        if any(v.health_timeline is not None for v in self.variants):
+            raise ValueError("Calendar Lab retains source Health; explicit dated recovery timelines require a future version")
+        return self
+
+    @property
+    def duration_weeks(self):
+        return len(self.variants[0].competitive_match_counts)
+
+    @property
+    def fingerprint(self):
+        return _fingerprint(self.model_dump(mode="json"))
+
+
+def parse_player_lab_scenario(value):
+    if isinstance(value, dict):
+        version = value.get("schema_version", "player_test_lab_scenario.v1")
+        model = {"player_test_lab_scenario.v1": PlayerLabScenario,
+                 "player_test_lab_scenario.v2": PlayerLabScenarioV2}.get(version)
+        if model is None:
+            raise ValueError("Unsupported Player Lab scenario version")
+        # Frozen domain inputs intentionally use strict Python types; JSON API
+        # boundaries must retain their canonical JSON decoding rules.
+        return model.model_validate_json(json.dumps(value, ensure_ascii=False))
+    return value
+
+
 class BuiltInPlayerLabScenario(FrozenInput):
     scenario_id: str
     display_name: str
@@ -212,7 +290,7 @@ class PlayerLabCompatibility(FrozenInput):
 
 
 class PlayerLabWeekSnapshot(FrozenInput):
-    week: RankingWeek
+    week: RankingWeek | RunWeekPosition
     age: int = Field(ge=0)
     completed_competitive_matches: int = Field(ge=0)
     ovr: int = Field(ge=0, le=200)
@@ -249,7 +327,12 @@ class PlayerLabDiagnostics(FrozenInput):
 
 
 class PlayerLabRequest(FrozenInput):
-    scenario: PlayerLabScenario
+    scenario: PlayerLabScenario | PlayerLabScenarioV2
+
+    @field_validator("scenario", mode="before")
+    @classmethod
+    def normalize_scenario(cls, value):
+        return parse_player_lab_scenario(value)
 
     @property
     def fingerprint(self) -> str:
@@ -520,6 +603,8 @@ class PlayerTestLabService:
 
     def run(self, request: PlayerLabRequest) -> PlayerLabResult:
         scenario = request.scenario
+        if isinstance(scenario, PlayerLabScenarioV2):
+            return self._run_calendar(request)
         initial = self._initial_state(scenario)
         variants = tuple(
             self._run_variant(scenario, variant, initial)
@@ -555,3 +640,52 @@ class PlayerTestLabService:
                 max_final_sharpness=max(final_sharpness),
             ),
         )
+
+    def _run_calendar(self, request):
+        scenario = request.scenario
+        initial_attributes = dict(scenario.player.attributes)
+        health = project_player_health(scenario.initial_health)
+        results = []
+        # Stable paired starting state; variant labels never perturb sporting RNG.
+        initial_hash = _fingerprint({"player": scenario.player.model_dump(mode="json"),
+            "week": scenario.start_week.model_dump(mode="json"), "health": scenario.initial_health.model_dump(mode="json")})
+        for variant in scenario.variants:
+            player, week, state_hash = scenario.player, scenario.start_week, initial_hash
+            snapshots = []
+            for index, count in enumerate(variant.competitive_match_counts):
+                _, recovered = develop_and_recover(
+                    SimpleNamespace(players=(player,), week=week, fingerprint=state_hash),
+                    SimpleNamespace(players=(SimpleNamespace(player_id=player.player_id,
+                        birth_year=scenario.birth_year, birth_year_week=scenario.birth_year_week),)),
+                    completed_week=week, seed=scenario.seed + index,
+                    policy=scenario.development_policy, counts=((player.player_id, count),))
+                player = recovered[0]
+                position = week.calendar.advance_weeks(week.season_index, week.week, 1)
+                week = RunWeekPosition(calendar=week.calendar, season_index=position.season_index, week=position.season_week)
+                state_hash = _fingerprint({"previous": state_hash, "week": week.model_dump(mode="json"),
+                    "player": player.model_dump(mode="json"), "count": count,
+                    "policy": scenario.development_policy.model_dump(mode="json"), "seed": scenario.seed + index})
+                attrs = dict(player.attributes)
+                snapshots.append(PlayerLabWeekSnapshot(week=week, age=int(age_in_run_years(scenario, week)),
+                    completed_competitive_matches=count, ovr=player.ovr, potential_ovr=player.potential_ovr,
+                    current_form=player.current_form, match_sharpness=player.match_sharpness,
+                    long_term_fatigue=player.long_term_fatigue,
+                    changed_attribute_count=sum(attrs[n] != initial_attributes[n] for n in attrs),
+                    attribute_delta_total=sum(attrs[n] - initial_attributes[n] for n in attrs),
+                    health_projection=health, health_projection_fingerprint=health.fingerprint,
+                    state_fingerprint=state_hash))
+            results.append(PlayerLabVariantResult(variant_id=variant.variant_id, display_name=variant.display_name,
+                initial_state_fingerprint=initial_hash, initial_health_projection=health,
+                initial_health_projection_fingerprint=health.fingerprint, final_state_fingerprint=state_hash,
+                snapshots=tuple(snapshots), final_player=player))
+        return PlayerLabResult(scenario_id=scenario.scenario_id, scenario_fingerprint=scenario.fingerprint,
+            request_fingerprint=request.fingerprint, variants=tuple(results),
+            compatibility=PlayerLabCompatibility(production_kernels=("develop_and_recover", "project_player_health"),
+                warnings=("Annual development uses the source Run year (1/W); recovery stays weekly.",
+                    "Full source Health is retained and projected unchanged; no healing or numeric Health effect is generated.",
+                    "Variants supply completed competitive match counts; Training Load and career AI remain unsupported.")),
+            diagnostics=PlayerLabDiagnostics(variant_count=len(results), duration_weeks=scenario.duration_weeks,
+                distinct_final_state_count=len({r.final_state_fingerprint for r in results}),
+                min_final_ovr=min(r.final_player.ovr for r in results), max_final_ovr=max(r.final_player.ovr for r in results),
+                min_final_sharpness=min(r.final_player.match_sharpness for r in results),
+                max_final_sharpness=max(r.final_player.match_sharpness for r in results)))

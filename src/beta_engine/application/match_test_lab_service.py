@@ -2,33 +2,35 @@
 
 from __future__ import annotations
 
+import json
 from collections import Counter
 from hashlib import sha256
-import json
 from statistics import mean
 from typing import Callable, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    model_serializer,
+    model_validator,
+)
 
+from beta_engine.application.historical_lab_source import (
+    HistoricalLabPlayer,
+    historical_lab_source,
+    match_projection,
+)
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches.match_engine import MatchEngine
-from beta_engine.domain.matches.models import MatchContext, MatchParticipantContext, MatchResult
+from beta_engine.domain.matches.models import (
+    MatchContext,
+    MatchParticipantContext,
+    MatchResult,
+)
 from beta_engine.domain.players import HiddenCareerTraits, Player
-from beta_engine.domain.calendar.season_weeks import age_at_calendar_position, season_week_to_calendar_position
-from beta_engine.domain.simulation_slots import (
-    CanonicalMatchInputProjectionPolicy,
-    project_player,
-    projected_engine_player,
-)
-from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
-from beta_engine.infrastructure.db.player_sporting_state import load_saved_sporting_bundle
 from beta_engine.infrastructure.db.models import MatchLabSessionModel
-from beta_engine.application.run_saved_revision_history_service import RunSavedRevisionHistoryService
-from beta_engine.infrastructure.db import (
-    SavedRevisionHistoryConflictError,
-    SavedRevisionHistoryNotFoundError,
-)
-
 
 MATCH_LAB_SCHEMA_VERSION = "match_test_lab_scenario.v1"
 MATCH_LAB_RESULT_VERSION = "match_test_lab_result.v1"
@@ -154,6 +156,15 @@ class MatchLabParticipantImportEvidence(BaseModel):
     player_id: str
     source_profile_fingerprint: str
     canonical_projection_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    historical_snapshot: HistoricalLabPlayer | None = None
+
+    @model_serializer(mode="wrap")
+    def historical_shape(self, handler):
+        body = handler(self)
+        if not self.historical_snapshot:
+            body.pop("historical_snapshot", None)
+        return body
+
 
 
 class MatchLabSession(BaseModel):
@@ -454,82 +465,21 @@ class MatchTestLabService:
         if self._repository is None:
             raise RuntimeError("Match Lab Saved Revision import is not configured")
 
-        history = RunSavedRevisionHistoryService(self._repository)
-        try:
-            detail = history.get_revision(
-                run_id=request.product_run_id,
-                branch_id=request.branch_id,
-                revision_id=request.saved_revision_id,
+        with historical_lab_source(self._repository, run_id=request.product_run_id,
+                                   branch_id=request.branch_id,
+                                   revision_id=request.saved_revision_id) as source:
+            snapshot = source.player(request.player_id)
+            projection, participant = match_projection(snapshot)
+            evidence = MatchLabParticipantImportEvidence(
+                side=request.side, product_run_id=request.product_run_id,
+                branch_id=request.branch_id, saved_revision_id=request.saved_revision_id,
+                saved_revision_content_hash=source.revision.content_hash,
+                sporting_state_fingerprint=source.sporting.fingerprint,
+                sporting_week_ordinal=source.week.ordinal, player_id=request.player_id,
+                source_profile_fingerprint=snapshot.profile_fingerprint,
+                canonical_projection_fingerprint=projection.fingerprint,
+                historical_snapshot=snapshot,
             )
-        except SavedRevisionHistoryNotFoundError as exc:
-            raise KeyError(str(exc)) from exc
-        except SavedRevisionHistoryConflictError as exc:
-            raise ValueError(str(exc)) from exc
-        revision = detail.saved_revision
-        world = load_saved_initial_world(
-            revision.payload,
-            run_id=request.product_run_id,
-            branch_id=request.branch_id,
-        )
-        sporting_bundle = load_saved_sporting_bundle(
-            revision.payload,
-            run_id=request.product_run_id,
-            branch_id=request.branch_id,
-        )
-        if world is None:
-            raise ValueError("Saved Revision has no validated Initial World")
-        if sporting_bundle is None or not sporting_bundle[0]:
-            raise ValueError("Saved Revision has no validated player sporting state")
-
-        sporting = sporting_bundle[0][-1]
-        profile = next((item for item in world.players if item.player_id == request.player_id), None)
-        record = next((item for item in sporting.players if item.player_id == request.player_id), None)
-        if profile is None:
-            raise ValueError(
-                "Saved Revision player is not present in its Initial World; prospect-profile import is not supported by this slice"
-            )
-        if record is None:
-            raise ValueError("Saved Revision player has no sporting record at the saved sporting head")
-
-        season_start_year = 2000 + sporting.week.season_index
-        position = season_week_to_calendar_position(season_start_year, sporting.week.week)
-        age = age_at_calendar_position(
-            birth_year=profile.birth_year,
-            birth_year_week=profile.birth_year_week,
-            calendar_year=position.calendar_year,
-            year_week=position.year_week,
-        )
-        projection = project_player(
-            record,
-            source_sporting_fingerprint=sporting.fingerprint,
-            policy=CanonicalMatchInputProjectionPolicy(),
-            profile_source_fingerprint=profile.source_generation_fingerprint,
-            profile_provenance="validated Saved Revision Initial World + player sporting state",
-            age=age,
-            name=profile.name,
-            nationality=profile.nationality,
-            play_style=profile.play_style,
-            archetype=profile.archetype,
-            hidden_career_traits=profile.hidden_career_traits,
-        )
-        participant = MatchParticipantContext(
-            player=projected_engine_player(projection),
-            form_modifier=projection.form_modifier,
-            sharpness_modifier=projection.sharpness_modifier,
-            fatigue_modifier=projection.fatigue_modifier,
-        )
-        evidence = MatchLabParticipantImportEvidence(
-            side=request.side,
-            product_run_id=request.product_run_id,
-            branch_id=request.branch_id,
-            saved_revision_id=request.saved_revision_id,
-            saved_revision_content_hash=revision.content_hash,
-            sporting_state_fingerprint=sporting.fingerprint,
-            sporting_week_ordinal=sporting.week.ordinal,
-            player_id=request.player_id,
-            source_profile_fingerprint=profile.source_generation_fingerprint,
-            canonical_projection_fingerprint=projection.fingerprint,
-        )
 
         from sqlalchemy import text
         with self._session_factory.begin() as session:

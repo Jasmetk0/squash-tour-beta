@@ -1,13 +1,21 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { onlineManager } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { PlayerTestLabPage } from './PlayerTestLabPage'
 import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
+  listRunContainers: vi.fn().mockResolvedValue({run_containers: []}),
+  listRunBranches: vi.fn().mockResolvedValue({run_branches: []}),
+  listSavedRevisionHistory: vi.fn().mockResolvedValue({saved_revisions: []}),
   getPlayerLabBuiltInScenarios: vi.fn(),
   runPlayerTestLab: vi.fn(),
+  runPlayerLabSession: vi.fn(),
+  listPlayerLabSessions: vi.fn().mockResolvedValue([]),
+  savePlayerLabSession: vi.fn(),
+  importPlayerLabHistory: vi.fn(),
   listInitialPopulationComparisons: vi.fn().mockResolvedValue([]),
   getInitialPopulationComparison: vi.fn(),
   getInitialPopulationPlayers: vi.fn(),
@@ -15,6 +23,7 @@ const api = vi.hoisted(() => ({
   initialPopulationExportUrl: vi.fn()
 }))
 vi.mock('../api/client', () => api)
+vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en', t: (key: string) => key})}))
 
 const scenario = {
   schema_version: 'player_test_lab_scenario.v1',
@@ -160,6 +169,10 @@ describe('PlayerTestLabPage', () => {
   beforeEach(() => {
     api.getPlayerLabBuiltInScenarios.mockReset()
     api.runPlayerTestLab.mockReset()
+    api.listPlayerLabSessions.mockReset().mockResolvedValue([])
+    api.savePlayerLabSession.mockReset()
+    api.importPlayerLabHistory.mockReset()
+    api.runPlayerLabSession.mockReset().mockResolvedValue(result)
     api.getPlayerLabBuiltInScenarios.mockResolvedValue([{
       scenario_id: scenario.scenario_id,
       display_name: 'Development activity baseline',
@@ -169,6 +182,88 @@ describe('PlayerTestLabPage', () => {
       scenario
     }])
     api.runPlayerTestLab.mockResolvedValue(result)
+  })
+
+  it.each(['saved', 'scratch'])('keeps the submitted %s source when a paused request resumes after switching selection', async kind => {
+    const first = {session_id: 'first', version: 1, session_fingerprint: '1'.repeat(64), display_name: 'First', scenario}
+    const second = {...first, session_id: 'second', session_fingerprint: '2'.repeat(64), display_name: 'Second'}
+    api.listPlayerLabSessions.mockResolvedValue([first, second])
+    const user = userEvent.setup()
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByRole('option', {name: 'First'})
+    if (kind === 'saved') await user.selectOptions(screen.getByLabelText('Open Player Test Session'), first.session_id)
+    onlineManager.setOnline(false)
+    try {
+      await user.click(screen.getByRole('button', {name: 'Run scenario'}))
+      expect(api.runPlayerLabSession).not.toHaveBeenCalled()
+      expect(api.runPlayerTestLab).not.toHaveBeenCalled()
+      await user.selectOptions(screen.getByLabelText('Open Player Test Session'), second.session_id)
+      await act(async () => {onlineManager.setOnline(true)})
+      if (kind === 'saved') {
+        await waitFor(() => expect(api.runPlayerLabSession).toHaveBeenCalledWith(first.session_id, first.session_fingerprint))
+        expect(api.runPlayerLabSession).toHaveBeenCalledTimes(1)
+        expect(api.runPlayerTestLab).not.toHaveBeenCalled()
+      } else {
+        await waitFor(() => expect(api.runPlayerTestLab).toHaveBeenCalledWith({scenario}))
+        expect(api.runPlayerTestLab).toHaveBeenCalledTimes(1)
+        expect(api.runPlayerLabSession).not.toHaveBeenCalled()
+      }
+      expect(screen.queryByRole('table', {name: 'Player Lab variant comparison'})).not.toBeInTheDocument()
+    } finally {
+      onlineManager.setOnline(true)
+    }
+  })
+
+  it.each(['edit', 'source'])('does not install a delayed historical import after a newer %s', async change => {
+    let resolve!: (value: typeof scenario) => void
+    const pending = new Promise<typeof scenario>(done => {resolve = done})
+    api.importPlayerLabHistory.mockReturnValue(pending)
+    const user = userEvent.setup()
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByText('Development activity baseline')
+    const editor = screen.getByLabelText('Player Lab scenario JSON') as HTMLTextAreaElement
+    for (const key of ['run', 'branch', 'revision', 'player']) fireEvent.change(screen.getByLabelText(`Player Lab import ${key}`), {target: {value: key + '-old'}})
+    await user.click(screen.getByRole('button', {name: 'Import historical Player scenario'}))
+    const local = {...scenario, scenario_id: 'newer-local'}
+    if (change === 'edit') fireEvent.change(editor, {target: {value: JSON.stringify(local)}})
+    else fireEvent.change(screen.getByLabelText('Player Lab import revision'), {target: {value: 'another-revision'}})
+    const expected = editor.value
+    await act(async () => {resolve({...scenario, scenario_id: 'late-import'}); await pending})
+    await waitFor(() => expect(screen.getByRole('button', {name: 'Import historical Player scenario'})).toBeEnabled())
+    expect(editor.value).toBe(expected)
+  })
+
+  it('preserves newer edits after Save and blocks stale sessions until explicit reload', async () => {
+    const stored = {session_id: 'saved-player', version: 1, session_fingerprint: '1'.repeat(64), display_name: 'Saved Player', scenario}
+    api.listPlayerLabSessions.mockResolvedValue([stored])
+    let resolve!: (value: typeof stored) => void
+    const pending = new Promise<typeof stored>(done => {resolve = done})
+    api.savePlayerLabSession.mockReturnValue(pending)
+    const user = userEvent.setup()
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByRole('option', {name: 'Saved Player'})
+    await user.selectOptions(screen.getByLabelText('Open Player Test Session'), stored.session_id)
+    const editor = screen.getByLabelText('Player Lab scenario JSON') as HTMLTextAreaElement
+    const submitted = {...scenario, scenario_id: 'submitted'}
+    fireEvent.change(editor, {target: {value: JSON.stringify(submitted)}})
+    await user.click(screen.getByRole('button', {name: 'Save Player Test Session'}))
+    const local = {...scenario, scenario_id: 'newer-local'}
+    fireEvent.change(editor, {target: {value: JSON.stringify(local)}})
+    const saved = {...stored, version: 2, session_fingerprint: '2'.repeat(64), scenario: submitted}
+    api.listPlayerLabSessions.mockResolvedValue([saved])
+    await act(async () => {resolve(saved); await pending})
+    expect(JSON.parse(editor.value)).toEqual(local)
+    expect(screen.getByRole('button', {name: 'Run scenario'})).toBeDisabled()
+    api.listPlayerLabSessions.mockResolvedValue([{...saved, version: 3, session_fingerprint: '3'.repeat(64)}])
+    await user.click(screen.getByRole('button', {name: 'Refresh Player Test Sessions'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('saved Test Session changed')
+    expect(JSON.parse(editor.value)).toEqual(local)
+    expect(screen.getByRole('button', {name: 'Reload saved Test Session'})).toBeDisabled()
+    await user.click(screen.getByRole('checkbox', {name: 'Discard local edits when reloading'}))
+    await user.click(screen.getByRole('button', {name: 'Reload saved Test Session'}))
+    expect(JSON.parse(editor.value)).toEqual(submitted)
+    await user.click(screen.getByRole('button', {name: 'Run scenario'}))
+    expect(api.runPlayerLabSession).toHaveBeenCalledWith('saved-player', '3'.repeat(64))
   })
 
   it('retains in-flight status after editing and never publishes the detached old result', async () => {

@@ -2,23 +2,37 @@
 
 from __future__ import annotations
 
+import json
 from collections import Counter
 from hashlib import sha256
-import json
 from statistics import mean
 from typing import Callable, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    computed_field,
+    model_serializer,
+    model_validator,
+)
 from sqlalchemy import select, text, update
 
+from beta_engine.application.historical_lab_source import (
+    HistoricalLabPlayer,
+    historical_lab_source,
+    match_projection,
+)
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches.match_engine import MatchEngine
-from beta_engine.domain.matches.models import MatchContext, MatchParticipantContext, MatchResult
-from beta_engine.domain.calendar.season_weeks import age_at_calendar_position, season_week_to_calendar_position
-from beta_engine.domain.simulation_slots import (
-    CanonicalMatchInputProjectionPolicy,
-    project_player,
-    projected_engine_player,
+from beta_engine.domain.matches.models import (
+    MatchContext,
+    MatchParticipantContext,
+    MatchResult,
+)
+from beta_engine.domain.run_revisions import (
+    DIRTY_WORKING_DRAFT_STATUS,
+    RUN_WORKING_DRAFT_SCHEMA_VERSION,
 )
 from beta_engine.domain.tournaments.draw_authority import (
     TournamentDrawAuthority,
@@ -56,12 +70,15 @@ from beta_engine.domain.tournaments.hybrid_knockout_bracket_authority import (
     TournamentHybridKnockoutBracketBuilder,
 )
 from beta_engine.domain.tournaments.hybrid_knockout_entrants_authority import (
-    TournamentHybridKnockoutEntrantsAuthority,
     TournamentHybridKnockoutEntrantsBuilder,
 )
 from beta_engine.domain.tournaments.topology_authority import (
     TournamentTopologyAuthority,
     TournamentTopologyAuthorityBuilder,
+)
+from beta_engine.infrastructure.db import (
+    BranchRevisionStateConflictError,
+    BranchRevisionStateNotFoundError,
 )
 from beta_engine.infrastructure.db.models import (
     BranchSavedRevisionModel,
@@ -71,27 +88,15 @@ from beta_engine.infrastructure.db.models import (
     RunTournamentLabDraftApplicationReceiptModel,
     TournamentLabSessionModel,
 )
-from beta_engine.application.run_saved_revision_history_service import RunSavedRevisionHistoryService
-from beta_engine.infrastructure.db import (
-    BranchRevisionStateConflictError,
-    BranchRevisionStateNotFoundError,
-    SavedRevisionHistoryConflictError,
-    SavedRevisionHistoryNotFoundError,
-)
-from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
-from beta_engine.infrastructure.db.player_sporting_state import load_saved_sporting_bundle
-from beta_engine.infrastructure.db.simulation_slot_state import load_saved_simulation_slot_component
 from beta_engine.infrastructure.db.run_tournament_lab_draft_state import (
     build_run_tournament_lab_draft,
     capture_run_tournament_lab_draft_state,
     get_run_tournament_lab_draft,
     put_run_tournament_lab_draft,
 )
-from beta_engine.domain.run_revisions import (
-    DIRTY_WORKING_DRAFT_STATUS,
-    RUN_WORKING_DRAFT_SCHEMA_VERSION,
+from beta_engine.infrastructure.db.simulation_slot_state import (
+    load_saved_simulation_slot_component,
 )
-
 
 TOURNAMENT_LAB_SCENARIO_VERSION = "tournament_test_lab_scenario.v1"
 TOURNAMENT_LAB_RESULT_VERSION = "tournament_test_lab_result.v1"
@@ -141,6 +146,15 @@ class TournamentLabRunSnapshotEvidence(BaseModel):
     sporting_state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     sporting_week_ordinal: int = Field(ge=0)
     participant_projection_fingerprints: tuple[str, ...]
+    historical_players: tuple[HistoricalLabPlayer, ...] = ()
+
+    @model_serializer(mode="wrap")
+    def historical_shape(self, handler):
+        body = handler(self)
+        if not self.historical_players:
+            body.pop("historical_players", None)
+        return body
+
 
     @property
     def fingerprint(self) -> str:
@@ -734,31 +748,30 @@ class TournamentTestLabService:
         if self._repository is None:
             raise RuntimeError("Tournament Lab Saved Revision copy is not configured")
 
-        history = RunSavedRevisionHistoryService(self._repository)
-        try:
-            detail = history.get_revision(
-                run_id=request.product_run_id,
-                branch_id=request.branch_id,
-                revision_id=request.saved_revision_id,
-            )
-        except SavedRevisionHistoryNotFoundError as exc:
-            raise KeyError(str(exc)) from exc
-        except SavedRevisionHistoryConflictError as exc:
-            raise ValueError(str(exc)) from exc
+        with historical_lab_source(self._repository, run_id=request.product_run_id,
+                                   branch_id=request.branch_id,
+                                   revision_id=request.saved_revision_id) as source:
+            return self._copy_historical_tournament(request, source)
 
-        revision = detail.saved_revision
+    def _copy_historical_tournament(self, request, source):
+        revision = source.revision
+        if source.inputs.tour is not None:
+            return self._copy_native_tournament(request, source)
         component = load_saved_simulation_slot_component(
-            revision.payload,
-            run_id=request.product_run_id,
-            branch_id=request.branch_id,
-        )
+            revision.payload, run_id=request.product_run_id, branch_id=revision.branch_id)
         if component is None:
             raise ValueError("Saved Revision has no validated simulation-slot tournament state")
 
+        from beta_engine.domain.tournaments.draw_input_authority import (
+            TournamentDrawInputAuthority,
+        )
         from beta_engine.domain.tournaments.entry_field import TournamentEntryField
-        from beta_engine.domain.tournaments.format_authority import TournamentFormatAuthority
-        from beta_engine.domain.tournaments.draw_input_authority import TournamentDrawInputAuthority
-        from beta_engine.domain.tournaments.topology_authority import TournamentTopologyAuthority
+        from beta_engine.domain.tournaments.format_authority import (
+            TournamentFormatAuthority,
+        )
+        from beta_engine.domain.tournaments.topology_authority import (
+            TournamentTopologyAuthority,
+        )
 
         event_fields = [
             row for row in component.get("entry_fields", ())
@@ -816,21 +829,7 @@ class TournamentTestLabService:
                     "Historical Tournament uses WC/LL/replacement repair not yet supported by Tournament Lab copy"
                 )
 
-        world = load_saved_initial_world(
-            revision.payload,
-            run_id=request.product_run_id,
-            branch_id=request.branch_id,
-        )
-        sporting_bundle = load_saved_sporting_bundle(
-            revision.payload,
-            run_id=request.product_run_id,
-            branch_id=request.branch_id,
-        )
-        if world is None:
-            raise ValueError("Saved Revision has no validated Initial World")
-        if sporting_bundle is None or not sporting_bundle[0]:
-            raise ValueError("Saved Revision has no validated player sporting state")
-        sporting = sporting_bundle[0][-1]
+        sporting = source.sporting
 
         if format_authority.format_kind == "knockout":
             assert draw_input is not None
@@ -855,51 +854,13 @@ class TournamentTestLabService:
         if set(seed_order) != set(active_ids) or len(seed_order) != len(active_ids):
             raise ValueError("Historical Tournament seed order cannot be represented without invention")
 
-        profiles = {item.player_id: item for item in world.players}
-        records = {item.player_id: item for item in sporting.players}
-        season_start_year = 2000 + sporting.week.season_index
-        position = season_week_to_calendar_position(season_start_year, sporting.week.week)
-        participants = []
-        projection_fingerprints = []
+        participants, projection_fingerprints, snapshots = [], [], []
         for player_id in active_ids:
-            profile = profiles.get(player_id)
-            record = records.get(player_id)
-            if profile is None:
-                raise ValueError(
-                    f"Saved Revision Tournament player {player_id} is not present in Initial World; prospect-profile copy is not supported by this slice"
-                )
-            if record is None:
-                raise ValueError(
-                    f"Saved Revision Tournament player {player_id} has no sporting record at the saved sporting head"
-                )
-            age = age_at_calendar_position(
-                birth_year=profile.birth_year,
-                birth_year_week=profile.birth_year_week,
-                calendar_year=position.calendar_year,
-                year_week=position.year_week,
-            )
-            projection = project_player(
-                record,
-                source_sporting_fingerprint=sporting.fingerprint,
-                policy=CanonicalMatchInputProjectionPolicy(),
-                profile_source_fingerprint=profile.source_generation_fingerprint,
-                profile_provenance="validated Saved Revision Initial World + player sporting state",
-                age=age,
-                name=profile.name,
-                nationality=profile.nationality,
-                play_style=profile.play_style,
-                archetype=profile.archetype,
-                hidden_career_traits=profile.hidden_career_traits,
-            )
-            participants.append(
-                MatchParticipantContext(
-                    player=projected_engine_player(projection),
-                    form_modifier=projection.form_modifier,
-                    sharpness_modifier=projection.sharpness_modifier,
-                    fatigue_modifier=projection.fatigue_modifier,
-                )
-            )
+            snapshot = source.player(player_id)
+            projection, participant = match_projection(snapshot)
+            participants.append(participant)
             projection_fingerprints.append(projection.fingerprint)
+            snapshots.append(snapshot)
 
         evidence = TournamentLabRunSnapshotEvidence(
             product_run_id=request.product_run_id,
@@ -914,6 +875,7 @@ class TournamentTestLabService:
             sporting_state_fingerprint=sporting.fingerprint,
             sporting_week_ordinal=sporting.week.ordinal,
             participant_projection_fingerprints=tuple(projection_fingerprints),
+            historical_players=tuple(snapshots),
         )
 
         group = format_authority.group_configuration
@@ -953,6 +915,63 @@ class TournamentTestLabService:
                 scenario=scenario,
             )
         )
+
+    def _copy_native_tournament(self, request, source):
+        from beta_engine.domain.tournaments.draw_authority import (
+            TournamentDrawAuthorityBuilder,
+        )
+        from beta_engine.domain.tournaments.draw_input_authority import (
+            TournamentDrawInputAuthorityBuilder,
+        )
+        # A fork retains original Edition authority through authenticated source
+        # bindings. Resolve only those historical tours, never an original live HEAD.
+        tours = (*getattr(source.inputs, "history_tours", ()), source.inputs.tour)
+        authority = next((a for tour in reversed(tours) for a in tour.editions
+                          if a.edition.edition_id == request.event_id), None)
+        if authority is None or authority.field is None or authority.draw is None:
+            raise ValueError("Historical native Edition requires its frozen field and draw")
+        edition = authority.edition
+        if edition.main_entrant_count not in (4, 8) or not edition.ranked:
+            raise ValueError("Historical native copy supports ranked main-only fields of 4/8")
+        draw_input = TournamentDrawInputAuthorityBuilder.build(
+            authority=authority.ranking_authority, field=authority.field, field_sequence=1,
+            command_id=authority.draw_command_id, draw_seed=authority.draw_seed,
+            main_seed_count=None, qualification_seed_count=None,
+            schema_version="tournament_draw_input_authority.v2")
+        if TournamentDrawAuthorityBuilder.build(draw_input=draw_input, command_id=authority.draw_command_id) != authority.draw:
+            raise ValueError("Historical native draw cannot be represented without changing its authority")
+        if (draw_input.qualification_player_ids or draw_input.wild_card_player_ids
+                or draw_input.lucky_loser_player_ids or draw_input.lucky_loser_placeholder_ids
+                or draw_input.replacement_source_authority_fingerprints
+                or draw_input.released_wild_card_slot_ordinals
+                or draw_input.released_qualifier_placeholder_ids or draw_input.late_bye_count):
+            raise ValueError("Historical Tournament uses unsupported Q/WC/LL/replacement repair")
+        ids = tuple(draw_input.direct_main_player_ids)
+        snapshots = tuple(source.player(pid) for pid in ids)
+        projected = tuple(match_projection(p) for p in snapshots)
+        evidence = TournamentLabRunSnapshotEvidence(
+            product_run_id=request.product_run_id, branch_id=request.branch_id,
+            saved_revision_id=request.saved_revision_id,
+            saved_revision_content_hash=source.revision.content_hash,
+            event_id=request.event_id, entry_field_fingerprint=authority.field.fingerprint,
+            format_authority_fingerprint=edition.fingerprint,
+            draw_input_fingerprint=draw_input.fingerprint,
+            sporting_state_fingerprint=source.sporting.fingerprint,
+            sporting_week_ordinal=source.week.ordinal,
+            participant_projection_fingerprints=tuple(p.fingerprint for p, _ in projected),
+            historical_players=snapshots)
+        seeds = tuple(draw_input.main_seed_player_ids)
+        scenario = TournamentLabScenario(
+            scenario_id=f"run-copy:{request.event_id}:{request.saved_revision_id}",
+            display_name=request.display_name, format_kind="knockout",
+            participants=tuple(p for _, p in projected), main_draw_size=edition.main_entrant_count,
+            seed_order_player_ids=seeds + tuple(pid for pid in ids if pid not in seeds),
+            draw_seed=authority.draw_seed, match_seed=int(evidence.fingerprint[:16], 16),
+            source_kind="run_snapshot_copy",
+            source_reference=f"{request.product_run_id}/{request.branch_id}/{request.saved_revision_id}/{request.event_id}",
+            source_fingerprint=evidence.fingerprint, source_snapshot=evidence)
+        return self.create_session(TournamentLabSessionCreateRequest(
+            display_name=request.display_name, scenario=scenario))
 
     def preview_run_draft(
         self,

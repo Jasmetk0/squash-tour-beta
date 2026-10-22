@@ -63,11 +63,56 @@ describe('World Package library local filters', () => {
     expect(screen.queryByText('FAX World')).not.toBeInTheDocument()
 
     fireEvent.change(search, { target: { value: 'not-present' } })
-    expect(screen.getByText('No World Packages match your search or type filter.')).toBeInTheDocument()
+    expect(screen.getByText('No World Packages match your search or filters.')).toBeInTheDocument()
     expect(screen.queryByRole('table', { name: 'World packages table' })).not.toBeInTheDocument()
 
     fireEvent.change(search, { target: { value: '' } })
     expect(screen.getByText('Training Sandbox')).toBeInTheDocument()
+    expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
+  })
+
+  it('filters archive status, sorts deterministically and resets all controls without refetching', async () => {
+    api.listWorldPackages.mockResolvedValue({
+      packages: [
+        { ...packageRow('last_id', 'Zulu', 'official'), country_count: 1 },
+        { ...packageRow('first_id', 'Alpha', 'custom'), country_count: 50, status: 'archived' },
+        { ...packageRow('other_id', 'Beta', 'custom'), country_count: 20 },
+      ],
+    })
+    mount()
+    expect(await screen.findByText('Zulu')).toBeInTheDocument()
+    const links = () => screen.getAllByRole('link', { name: 'Open World Package' })
+      .map(link => link.getAttribute('href'))
+    expect(links()).toEqual(['/admin/world/library/last_id', '/admin/world/library/first_id',
+      '/admin/world/library/other_id'])
+
+    const status = screen.getByRole('combobox', { name: 'World Package status' })
+    const sort = screen.getByRole('combobox', { name: 'Sort World Packages' })
+    const type = screen.getByRole('combobox', { name: 'World Package type' })
+
+    fireEvent.change(sort, { target: { value: 'name' } })
+    expect(links()).toEqual(['/admin/world/library/first_id', '/admin/world/library/other_id',
+      '/admin/world/library/last_id'])
+
+    fireEvent.change(sort, { target: { value: 'countries' } })
+    expect(links()).toEqual(['/admin/world/library/first_id', '/admin/world/library/other_id',
+      '/admin/world/library/last_id'])
+
+    fireEvent.change(status, { target: { value: 'archived' } })
+    expect(screen.getByText('Alpha')).toBeInTheDocument()
+    expect(screen.queryByText('Beta')).not.toBeInTheDocument()
+    expect(screen.getByText('Showing 1 of 3 World Packages')).toBeInTheDocument()
+
+    fireEvent.change(type, { target: { value: 'built_in' } })
+    expect(screen.getByText('No World Packages match your search or filters.')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters and sorting' }))
+    expect(status).toHaveValue('all')
+    expect(sort).toHaveValue('registry')
+    expect(type).toHaveValue('all')
+    expect(links()).toEqual(['/admin/world/library/last_id', '/admin/world/library/first_id',
+      '/admin/world/library/other_id'])
+    expect(screen.getByRole('button', { name: 'Clear filters and sorting' })).toBeDisabled()
     expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
   })
 

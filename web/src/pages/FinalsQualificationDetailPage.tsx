@@ -38,6 +38,14 @@ export function FinalsQualificationDetailPage(): JSX.Element {
   const hasSummaryError = summaryQuery.error && !isApiNotFound(summaryQuery.error)
   const hasQualificationError = qualificationQuery.error && !qualificationNotFound
 
+  const qualificationStatus = qualificationQuery.data ? 'Available'
+    : qualificationQuery.isLoading ? 'Loading'
+    : qualificationNotFound ? 'Missing'
+    : qualificationQuery.error ? 'Failed' : 'Unavailable'
+  const resultStatus = summaryQuery.isLoading ? 'Loading'
+    : summaryQuery.error || !summaryQuery.data ? 'Unknown'
+    : summaryQuery.data.result ? 'Recorded' : 'Not simulated'
+
   const qualifiedPlayersCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'qualified_player_ids')
   const groupCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'groups')
 
@@ -55,8 +63,8 @@ export function FinalsQualificationDetailPage(): JSX.Element {
             label: 'Season',
             value: qualificationQuery.data?.season ?? summaryQuery.data?.season ?? summaryQuery.data?.qualification?.season ?? '—'
           },
-          { label: 'Qualification', value: qualificationQuery.data ? 'Available' : qualificationNotFound ? 'Missing' : 'Loading' },
-          { label: 'Result', value: summaryQuery.data?.result ? 'Recorded' : 'Not simulated' }
+          { label: 'Qualification', value: qualificationStatus },
+          { label: 'Result', value: resultStatus }
         ]}
       />
 

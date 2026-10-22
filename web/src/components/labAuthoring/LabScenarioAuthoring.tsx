@@ -121,6 +121,27 @@ export function labChangedPaths(saved: unknown, draft: unknown): string[] {
   return output
 }
 
+export type LabChangeDetail = { path: string; before: string; after: string }
+
+/** Small, read-only Session review: no deep payload dumps of sporting/Health data. */
+export function labChangeDetails(saved: unknown, draft: unknown): LabChangeDetail[] {
+  const short = (value: unknown): string => {
+    if (value === undefined) return '—'
+    if (value === null) return 'null'
+    if (Array.isArray(value)) return '[' + value.length + ' entries]'
+    if (object(value)) return '{…}'
+    const text = String(value)
+    return text.length <= 65 ? text : text.slice(0, 62) + '…'
+  }
+  return labChangedPaths(saved, draft).map(path => ({
+    path,
+    before: short(path.split('.').reduce<unknown>((value, key) =>
+      object(value) ? value[key] : undefined, saved)),
+    after: short(path.split('.').reduce<unknown>((value, key) =>
+      object(value) ? value[key] : undefined, draft))
+  }))
+}
+
 function fieldsFor(kind: LabKind, scenario: JsonObject): Field[] {
   const result: Field[] = [{ path: ['scenario_id'], en: 'Scenario ID', cs: 'ID scénáře' }]
   const numeric = (path: string[], en: string, cs: string, min?: number, max?: number, integer = true, odd = false) => {
@@ -391,7 +412,10 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
       <strong>{cs ? 'Změny vůči uložené Session' : 'Changes against saved Session'}</strong>
       {nameChanged && <p>{cs ? 'Název Session byl změněn.' : 'Session name changed.'}</p>}
       {savedChanges.length ? <><p>{cs ? 'Změněná pole' : 'Changed paths'} ({savedChanges.length}{savedChanges.length === 40 ? '+' : ''}):</p>
-        <ul>{savedChanges.slice(0, 12).map(path => <li key={path}><code>{path}</code></li>)}</ul>
+        <ul>{labChangeDetails(savedScenario, (() => { try { return JSON.parse(text) } catch { return null } })())
+          .slice(0, 12).map(change => <li key={change.path}><code>{change.path}</code>
+            {change.path !== '(invalid JSON)' ? <>: <code>{change.before}</code> → <code>{change.after}</code></> : null}
+          </li>)}</ul>
         {savedChanges.length > 12 && <p className="status">{cs ? 'Další změny jsou viditelné v JSON.' : 'More changes are visible in JSON.'}</p>}</>
         : !nameChanged && <p className="status">{cs ? 'Žádné místní změny.' : 'No local changes.'}</p>}
       <p className="status">{cs ? 'Uložení Session vyžaduje samostatné potvrzení.' : 'Saving the Session requires a separate explicit action.'}</p>

@@ -115,6 +115,16 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
  const {language}=useLanguage();const t=copy[language];const client=useQueryClient()
  const [operator,setOperator]=useState('');const [reason,setReason]=useState('');const [pending,setPending]=useState<{target:ServerTask;body:ContinueTask}|null>(null)
  const [summaryOpen,setSummaryOpen]=useState(false)
+ // An editable, not-yet-submitted audit reason belongs to one observed task
+ // revision/checkpoint only. Polling into a different decision must never
+ // inherit that text. Once submitted, the frozen request is authoritative.
+ const reviewKey=JSON.stringify([task.revision,task.state,task.checkpoint,task.needs_operator_action])
+ const previousReviewKey=useRef(reviewKey)
+ useEffect(()=>{
+  if(previousReviewKey.current===reviewKey)return
+  previousReviewKey.current=reviewKey
+  if(!pending){setOperator('');setReason('')}
+ },[reviewKey,pending])
  const action=task.state==='recoverable'||task.state==='failed'?'recover':'resume'
  // A paused task can retain historical checkpoint evidence. Only operator_paused
  // is itself the current pause boundary; an older blocker is not current.
@@ -167,7 +177,7 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
      const snapshot=pending??{target:task,body:{request_id:crypto.randomUUID(),action,expected_revision:task.revision,operator_label:operator.trim(),audit_reason:reason.trim()}}
      setPending(snapshot);mutation.mutate(snapshot)
    }}>{pending?t.retry:action==='recover'?t.recover:t.resume}</button>
-   {pending && !mutation.isPending && <button type="button" onClick={()=>{setPending(null);mutation.reset();void client.invalidateQueries({queryKey:['server-simulation-tasks']})}}>{t.cancel}</button>}
+   {pending && !mutation.isPending && <button type="button" onClick={()=>{setPending(null);setOperator('');setReason('');mutation.reset();void client.invalidateQueries({queryKey:['server-simulation-tasks']})}}>{t.cancel}</button>}
   </>}</>}
   {pending && (!task.needs_operator_action || requiresNewWeekReview) && <div role="group" aria-label={t.retry}>
    <p role="status">{t.uncertainAfterProgress}</p>
@@ -175,7 +185,7 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
    <button type="button" disabled={mutation.isPending || mutation.isSuccess}
     onClick={()=>mutation.mutate(pending)}>{t.retry}</button>
    {!mutation.isPending && <button type="button" onClick={()=>{
-    setPending(null);mutation.reset()
+    setPending(null);setOperator('');setReason('');mutation.reset()
     void client.invalidateQueries({queryKey:['server-simulation-tasks']})
    }}>{t.cancel}</button>}
   </div>}

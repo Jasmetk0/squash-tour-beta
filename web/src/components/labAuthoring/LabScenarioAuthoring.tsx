@@ -188,6 +188,22 @@ export function changeTournamentAssertion(text: string, key: TournamentAssertion
   return JSON.stringify({ ...scenario, assertions: { ...(assertions ?? {}), [key]: value } }, null, 2)
 }
 
+/** Reorders only existing validated seed IDs, without editing participants or the authoritative draw. */
+export function moveTournamentSeedOrder(text: string, index: number, direction: -1 | 1): string {
+  const scenario = readLabScenario(text, 'tournament')
+  const order = scenario.seed_order_player_ids
+  const present = new Set(participantOptions('tournament', scenario).map(p => p.id))
+  if (!Array.isArray(order) || order.length < 2 || order.length > 128 ||
+      order.some(id => typeof id !== 'string' || !id || !present.has(id)) ||
+      new Set(order).size !== order.length) throw new Error('shape')
+  const destination = index + direction
+  if (!Number.isSafeInteger(index) || (direction !== -1 && direction !== 1) ||
+      index < 0 || destination < 0 || destination >= order.length) throw new Error('order')
+  const next = order.slice()
+  ;[next[index], next[destination]] = [next[destination], next[index]]
+  return JSON.stringify({ ...scenario, seed_order_player_ids: next }, null, 2)
+}
+
 function changes(oldValue: unknown, newValue: unknown, prefix: string, output: string[]): void {
   if (JSON.stringify(oldValue) === JSON.stringify(newValue)) return
   if (output.length >= 40) return
@@ -273,6 +289,7 @@ const messages: Record<string, [string, string]> = {
   modifier: ['Modifier must be between −0.35 and +0.35.', 'Modifikátor musí být od −0,35 do +0,35.'],
   round: ['Choose no limit or a round from 1 to 7.', 'Vyberte bez omezení nebo kolo 1 až 7.'],
   assertion: ['Expected winner must be a player ID of at most 160 characters; match count must be a nonnegative integer.', 'Očekávaný vítěz může mít nejvýše 160 znaků; počet zápasů musí být nezáporné celé číslo.'],
+  order: ['Cannot move this seed priority position.', 'Tuto pozici nasazení nelze přesunout.'],
   file: ['Could not read the JSON file.', 'Soubor JSON se nepodařilo načíst.']
 }
 
@@ -386,6 +403,28 @@ function TournamentAssertionsEditor({ assertions, ids, cs, busy, onApply }: {
         {cs ? 'Použít počet zápasů' : 'Apply match-count expectation'}
       </button>
     </div>
+  </fieldset>
+}
+
+function TournamentSeedOrderEditor({ order, cs, busy, onMove }: {
+  order: string[]; cs: boolean; busy: boolean; onMove: (index: number, direction: -1 | 1) => void
+}): JSX.Element {
+  return <fieldset>
+    <legend>{cs ? 'Pořadí nasazení' : 'Seed priority order'}</legend>
+    <p className="status">{cs
+      ? 'Přesun změní jen pořadí současných ID, nikoli hráče, historický zdroj ani samotný los. Před simulací použijte kontrolu kompatibility.'
+      : 'Reordering changes existing ID priority only, not players, historical source or the draw itself. Inspect compatibility before simulating.'}</p>
+    <ol>{order.map((id, index) => <li key={id}>
+      <code>{id}</code>{' '}
+      <button type="button" aria-label={'tournament Lab seed move up ' + id}
+        disabled={busy || index === 0} onClick={() => onMove(index, -1)}>
+        {cs ? 'Výše' : 'Move up'}
+      </button>{' '}
+      <button type="button" aria-label={'tournament Lab seed move down ' + id}
+        disabled={busy || index === order.length - 1} onClick={() => onMove(index, 1)}>
+        {cs ? 'Níže' : 'Move down'}
+      </button>
+    </li>)}</ol>
   </fieldset>
 }
 
@@ -507,6 +546,11 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
   try { parsed = readLabScenario(text, kind) } catch { /* malformed advanced JSON is retained verbatim */ }
   const fields = parsed ? fieldsFor(kind, parsed) : []
   const participants = parsed ? participantOptions(kind, parsed) : []
+  const seedOrder = kind === 'tournament' && parsed && Array.isArray(parsed.seed_order_player_ids) &&
+    parsed.seed_order_player_ids.length > 1 && parsed.seed_order_player_ids.length <= 128 &&
+    parsed.seed_order_player_ids.every(id => typeof id === 'string' && id.length > 0 && participants.some(p => p.id === id)) &&
+    new Set(parsed.seed_order_player_ids).size === parsed.seed_order_player_ids.length
+    ? parsed.seed_order_player_ids as string[] : []
   const variants = kind === 'player' && parsed ? parsed.variants as JsonObject[] : []
   const weeks = variants.length ? (variants[0].competitive_match_counts as number[]).length : 0
   const healthLocked = variants.some(variant => variant.health_timeline != null)
@@ -600,6 +644,12 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
           try { edit(changeTournamentStopRound(text, raw)) }
           catch (reason) { setError(explain(reason, cs)) }
         }} />}
+      {kind === 'tournament' && seedOrder.length > 1 &&
+        <TournamentSeedOrderEditor order={seedOrder} cs={cs} busy={busy}
+          onMove={(index, direction) => {
+            try { edit(moveTournamentSeedOrder(text, index, direction)) }
+            catch (reason) { setError(explain(reason, cs)) }
+          }} />}
       {kind === 'tournament' && <TournamentAssertionsEditor
         key={selection + ':' + String(parsed.scenario_id)} assertions={parsed.assertions}
         ids={participants.map(p => p.id)} cs={cs} busy={busy}

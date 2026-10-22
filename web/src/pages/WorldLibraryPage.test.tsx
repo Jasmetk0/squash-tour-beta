@@ -120,6 +120,26 @@ describe('new Country conflict recovery and response identity', () => {
     expect(api.createWorldPackageCountry).toHaveBeenCalledTimes(1)
   })
 
+  it('does not partially replace package cache if the companion geography reload fails', async () => {
+    const {client,source,geography}=setupWithCustomWorld()
+    api.createWorldPackageCountry.mockRejectedValue({status:409,message:'World Package changed'})
+    await prepareNewCountry()
+    expect(await screen.findByText(/No write was retried/)).toBeInTheDocument()
+    vi.spyOn(window,'confirm').mockReturnValue(true)
+    api.getWorldPackage.mockResolvedValue({...source,fingerprint:'premature-new-head'})
+    api.getWorldPackageGeography.mockRejectedValueOnce(new Error('Geography temporarily unavailable'))
+    fireEvent.click(screen.getByRole('button',{name:'Reload current data'}))
+    expect(await screen.findByText(/Geography temporarily unavailable/)).toBeInTheDocument()
+    expect(client.getQueryData<{fingerprint:string}>(['world-package','custom'])?.fingerprint).toBe('create-base')
+    expect(screen.getByText('Preserved Country')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Confirm and save'})).toBeDisabled()
+    api.getWorldPackageGeography.mockResolvedValue(geography)
+    fireEvent.click(screen.getByRole('button',{name:'Reload current data'}))
+    expect(await screen.findByLabelText('Code')).toHaveValue('')
+    expect(client.getQueryData<{fingerprint:string}>(['world-package','custom'])?.fingerprint).toBe('premature-new-head')
+    expect(api.createWorldPackageCountry).toHaveBeenCalledTimes(1)
+  })
+
   it('rejects a mismatched create response rather than redirecting or claiming successful creation', async () => {
     const {router}=setupWithCustomWorld()
     api.createWorldPackageCountry.mockResolvedValue({

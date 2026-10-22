@@ -196,7 +196,7 @@ export function RolloverPage(): JSX.Element {
         {selectedSeason === null && <EmptyState message="No rollover yet. Enter a target season to inspect if persisted." />}
         {selectedSeason !== null ? (
           <p>
-            <Link to={`/runs/${encodeURIComponent(runId)}/rollover/${selectedSeason}`}>Open rollover season detail</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/rollover/${selectedSeason}`}>Open selected rollover season detail</Link>
           </p>
         ) : null}
       </SectionCard>

@@ -609,7 +609,7 @@ export function TournamentTestLabPage(): JSX.Element {
         <LabScenarioAuthoring kind="tournament" text={scenarioText} onChange={editScenario}
           jsonLabel="Tournament Lab scenario JSON" selection={selectedSessionId ?? 'scratch'} revision={editor.editorEdit}
           savedScenario={selectedSession?.scenario} savedName={selectedSession?.display_name}
-          sessionName={editor.sessionName} busy={writePending || runPending} />
+          sessionName={editor.sessionName} />
         <label>Batch match seeds (optional, comma-separated; max 100)
           <input
             aria-label="Tournament Lab batch match seeds"

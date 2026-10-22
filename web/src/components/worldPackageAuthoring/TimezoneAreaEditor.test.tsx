@@ -29,6 +29,7 @@ function geography(worldId = 'custom'): WorldPackageGeography {
 function setup(source = pkg(), regions = geography()) {
   const client = new QueryClient({defaultOptions:{queries:{retry:false},mutations:{retry:false}}})
   client.setQueryData(['world-package',source.world_id], source)
+  client.setQueryData(['world-package-geography',source.world_id], regions)
   const view = render(<QueryClientProvider client={client}>
     <TimezoneAreaEditor key={source.world_id} pkg={source} geography={regions} />
   </QueryClientProvider>)
@@ -47,6 +48,7 @@ describe('reviewed Timezone Area authoring', () => {
     const {client} = setup(source)
     api.replaceWorldPackageTimezoneAreas.mockImplementation(async (worldId: string, areas: unknown[]) => {
       client.setQueryData(['world-package',worldId], pkg(worldId,true,'fp-after'))
+      client.setQueryData(['world-package-geography',worldId], {...geography(worldId),timezone_areas:areas})
       return {...geography(worldId),timezone_areas:areas}
     })
     fireEvent.click(screen.getAllByRole('button',{name:'Move Down'})[0])

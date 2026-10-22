@@ -135,11 +135,41 @@ describe('Lab scenario authoring boundaries', () => {
     render(<Harness />)
     await user.selectOptions(screen.getByLabelText('match Lab editor mode'), 'form')
     fireEvent.change(screen.getByLabelText('match Lab context.best_of'), {target: {value: '3'}})
+    // An incomplete scalar input does not change the authoritative editor buffer.
+    await user.selectOptions(screen.getByLabelText('match Lab editor mode'), 'json')
+    expect(JSON.parse((screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement).value).context.best_of).toBe(5)
+    await user.selectOptions(screen.getByLabelText('match Lab editor mode'), 'form')
+    fireEvent.change(screen.getByLabelText('match Lab context.best_of'), {target: {value: '3'}})
+    await user.click(screen.getByRole('button', {name: 'match Lab apply context.best_of'}))
     await user.selectOptions(screen.getByLabelText('match Lab editor mode'), 'json')
     const text = (screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement).value
     expect(JSON.parse(text).context.best_of).toBe(3)
     expect(JSON.parse(text).source_fingerprint).toBe(match.source_fingerprint)
     expect(JSON.parse(text).context.extra).toEqual(match.context.extra)
+  })
+
+  it('does not commit a partially typed invalid guided number', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(match))
+      return <><LabScenarioAuthoring kind="match" text={text} onChange={setText}
+        selection="scratch" revision={0} jsonLabel="Match Lab scenario JSON" />
+        <output data-testid="scenario">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    await user.selectOptions(screen.getByLabelText('match Lab editor mode'), 'form')
+    const input = screen.getByLabelText('match Lab context.best_of')
+    await user.clear(input)
+    expect(JSON.parse(screen.getByTestId('scenario').textContent ?? '').context.best_of).toBe(5)
+    await user.type(input, '4')
+    await user.click(screen.getByRole('button', {name: 'match Lab apply context.best_of'}))
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid number')
+    expect(JSON.parse(screen.getByTestId('scenario').textContent ?? '').context.best_of).toBe(5)
+    await user.clear(input)
+    await user.type(input, '7')
+    await user.click(screen.getByRole('button', {name: 'match Lab apply context.best_of'}))
+    expect(JSON.parse(screen.getByTestId('scenario').textContent ?? '').context.best_of).toBe(7)
+    expect(JSON.parse(screen.getByTestId('scenario').textContent ?? '').source_fingerprint).toBe(match.source_fingerprint)
   })
 
   it('rejects an unrelated uploaded scenario and never replaces the draft', async () => {

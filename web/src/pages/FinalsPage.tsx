@@ -33,11 +33,12 @@ export function FinalsPage(): JSX.Element {
   const { runId = '' } = useParams()
   const queryClient = useQueryClient()
 
-  const summaryQuery = useQuery({ queryKey: ['finals-summary', runId], queryFn: () => getFinalsSummary(runId), enabled: Boolean(runId) })
+  const summaryQuery = useQuery({ queryKey: ['finals-summary', runId], queryFn: () => getFinalsSummary(runId), enabled: Boolean(runId), retry: false })
   const qualificationQuery = useQuery({
     queryKey: ['finals-qualification', runId],
     queryFn: () => getFinalsQualification(runId),
-    enabled: Boolean(runId)
+    enabled: Boolean(runId),
+    retry: false
   })
   const resultQuery = useQuery({
     queryKey: ['finals-result', runId],
@@ -65,18 +66,20 @@ export function FinalsPage(): JSX.Element {
   const qualificationNotFound = isApiNotFound(qualificationQuery.error)
   const resultNotFound = isApiNotFound(resultQuery.error)
   const hasResultError = resultQuery.error && !resultNotFound
-  const qualificationStatus = qualificationQuery.data || summaryQuery.data?.qualification ? 'Ready'
+  const qualificationStatus = qualificationQuery.data ? 'Ready'
     : qualificationQuery.isLoading ? 'Loading'
     : qualificationNotFound ? 'Missing'
     : qualificationQuery.error ? 'Failed'
     : summaryQuery.isLoading ? 'Loading'
-    : summaryQuery.error ? 'Unknown' : 'Pending'
-  const resultStatus = resultQuery.data || summaryQuery.data?.result ? 'Recorded'
+    : summaryQuery.error ? 'Unknown'
+    : summaryQuery.data?.qualification ? 'Ready' : 'Pending'
+  const resultStatus = resultQuery.data ? 'Recorded'
     : resultQuery.isLoading ? 'Loading'
     : resultNotFound ? 'Missing'
     : resultQuery.error ? 'Failed'
     : summaryQuery.isLoading ? 'Loading'
-    : summaryQuery.error ? 'Unknown' : 'Not simulated'
+    : summaryQuery.error ? 'Unknown'
+    : summaryQuery.data?.result ? 'Recorded' : 'Not simulated'
 
   const qualifiedPlayersCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'qualified_player_ids')
   const groupCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'groups')

@@ -308,36 +308,68 @@ function CloneBuiltInWorldSection({ source }: { source: WorldPackage }): JSX.Ele
 }
 
 function ValidationSection({ validation }: { validation: WorldPackageValidation }): JSX.Element {
+  const [search, setSearch] = useState('')
+  const [severity, setSeverity] = useState<'all' | 'error' | 'warning' | 'info'>('all')
+  const normalizedSearch = search.trim().toLocaleLowerCase()
+  const visibleChecks = validation.checks.filter(check =>
+    (severity === 'all' || check.severity === severity) &&
+    (normalizedSearch === '' ||
+      [check.code, check.message, check.path, check.field]
+        .some(value => value?.toLocaleLowerCase().includes(normalizedSearch)))
+  )
   return (
     <SectionCard title="World Package Validation">
       <DetailRow label="Overall status" value={validation.status} />
       <DetailRow label="Errors" value={validation.error_count} />
       <DetailRow label="Warnings" value={validation.warning_count} />
       <DetailRow label="Info" value={validation.info_count} />
-      <table aria-label="World package validation checks">
-        <thead>
-          <tr>
-            <th>Code</th>
-            <th>Severity</th>
-            <th>Status</th>
-            <th>Message</th>
-            <th>Path</th>
-            <th>Field</th>
-          </tr>
-        </thead>
-        <tbody>
-          {validation.checks.map((check) => (
-            <tr key={`${check.code}-${check.path ?? 'package'}-${check.field ?? 'root'}`}>
-              <td><code>{check.code}</code></td>
-              <td>{check.severity}</td>
-              <td>{check.status}</td>
-              <td>{check.message}</td>
-              <td>{check.path ? <code>{check.path}</code> : '—'}</td>
-              <td>{check.field ? <code>{check.field}</code> : '—'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="form-grid">
+        <label>Search validation checks
+          <input type="search" value={search} onChange={event => setSearch(event.target.value)}
+            placeholder="Code, message, path or field" />
+        </label>
+        <label>Validation severity
+          <select value={severity} onChange={event => setSeverity(event.target.value as typeof severity)}>
+            <option value="all">All severities</option>
+            <option value="error">Errors</option>
+            <option value="warning">Warnings</option>
+            <option value="info">Info</option>
+          </select>
+        </label>
+      </div>
+      <button type="button" disabled={!search && severity === 'all'}
+        onClick={() => { setSearch(''); setSeverity('all') }}>
+        Clear validation filters
+      </button>
+      <p role="status">Showing {visibleChecks.length} of {validation.checks.length} validation checks</p>
+      {validation.checks.length === 0
+        ? <p className="status">No validation checks were returned for this World Package.</p>
+        : visibleChecks.length === 0
+          ? <p className="status">No validation checks match your filters.</p>
+          : <div className="table-responsive"><table aria-label="World package validation checks">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Message</th>
+                <th>Path</th>
+                <th>Field</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleChecks.map((check, index) => (
+                <tr key={`${check.code}-${check.path ?? 'package'}-${check.field ?? 'root'}-${index}`}>
+                  <td><code>{check.code}</code></td>
+                  <td>{check.severity}</td>
+                  <td>{check.status}</td>
+                  <td>{check.message}</td>
+                  <td>{check.path ? <code>{check.path}</code> : '—'}</td>
+                  <td>{check.field ? <code>{check.field}</code> : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table></div>}
     </SectionCard>
   )
 }

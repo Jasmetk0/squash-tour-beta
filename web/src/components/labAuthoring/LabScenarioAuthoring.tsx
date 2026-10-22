@@ -91,7 +91,7 @@ export function changePlayerMatchCounts(text: string, index: number, raw: string
   if (!Number.isSafeInteger(index) || index < 0 || index >= variants.length) throw new Error('shape')
   const existing = variants[index].competitive_match_counts as unknown[]
   const parts = raw.split(',').map(value => value.trim())
-  if (parts.length !== existing.length || parts.some(value => !/^\\d+$/.test(value))) throw new Error('counts')
+  if (parts.length !== existing.length || parts.some(value => !/^\d+$/.test(value))) throw new Error('counts')
   const numbers = parts.map(Number)
   if (numbers.some(value => !Number.isSafeInteger(value) || value < 0 || value > 32)) throw new Error('counts')
   return JSON.stringify({

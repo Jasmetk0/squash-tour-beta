@@ -9,8 +9,8 @@ import { SelectedSeasonWorkspace } from './SelectedSeasonWorkspace'
 
 export function AdminSeasonDetailPage(): JSX.Element {
   const { seasonLabel: seasonLabelParam = '' } = useParams()
-  // React Router has already decoded route parameters. Decoding a second time
-  // can throw for a literal '%' or turn an invalid encoded label into a valid one.
+  // React Router supplies an already-decoded route parameter. Another
+  // decodeURIComponent call can throw for a literal '%' in the season label.
   const seasonLabel = seasonLabelParam
   const compactLabel = safeToCompactSeasonLabel(seasonLabel)
   const legacyLabel = safeToLongSeasonLabel(seasonLabel)

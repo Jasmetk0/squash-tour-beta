@@ -156,6 +156,39 @@ describe('Lab scenario authoring boundaries', () => {
       'expected_champion_player_id', 'P1')).toThrow('shape')
   })
 
+  it('keeps selected participant and week across accepted edits, but clamps a shortened workload', async () => {
+    function Harness() {
+      const [kind, setKind] = useState<'tournament' | 'player'>('tournament')
+      const [text, setText] = useState(JSON.stringify(tournamentWithPlayers))
+      const [revision, setRevision] = useState(0)
+      const edit = (next: string) => { setText(next); setRevision(old => old + 1) }
+      return <><button type="button" onClick={() => {
+        setKind('player'); setText(JSON.stringify(player)); setRevision(old => old + 1)
+      }}>Switch to Player</button>
+        <LabScenarioAuthoring kind={kind} text={text} onChange={edit}
+          selection="scratch" revision={revision} jsonLabel="Active Lab scenario JSON" />
+        <output data-testid="identity-draft">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    await user.selectOptions(screen.getByLabelText('tournament Lab modifier player'), '1')
+    await user.selectOptions(screen.getByLabelText('tournament Lab modifier kind'), 'sharpness_modifier')
+    fireEvent.change(screen.getByLabelText('tournament Lab modifier value'), {target: {value: '0.2'}})
+    await user.click(screen.getByRole('button', {name: 'tournament Lab apply modifier'}))
+    expect(screen.getByLabelText('tournament Lab modifier player')).toHaveValue('1')
+    expect(screen.getByLabelText('tournament Lab modifier kind')).toHaveValue('sharpness_modifier')
+    await user.click(screen.getByRole('button', {name: 'Switch to Player'}))
+    await user.selectOptions(screen.getByLabelText('player Lab variant a selected week'), '1')
+    fireEvent.change(screen.getByLabelText('player Lab variant a selected week matches'), {target: {value: '4'}})
+    await user.click(screen.getByRole('button', {name: 'player Lab variant a apply selected week'}))
+    expect(screen.getByLabelText('player Lab variant a selected week')).toHaveValue('1')
+    fireEvent.change(screen.getByLabelText('player Lab experiment duration'), {target: {value: '1'}})
+    await user.click(screen.getByRole('button', {name: 'Apply duration'}))
+    expect(screen.getByLabelText('player Lab variant a selected week')).toHaveValue('0')
+    expect(JSON.parse(screen.getByTestId('identity-draft').textContent ?? '')
+      .variants[0].competitive_match_counts).toEqual([1])
+  })
+
   it('keeps expected tournament results local until Apply in the guided form', async () => {
     function Harness() {
       const [text, setText] = useState(JSON.stringify({...tournamentWithPlayers, assertions: {}}))

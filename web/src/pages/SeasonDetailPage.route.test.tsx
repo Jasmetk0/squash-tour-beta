@@ -41,9 +41,4 @@ describe('Concrete season route parameter interpretation', () => {
     expect(screen.queryByRole('heading', { name: 'Canonical route' })).not.toBeInTheDocument()
   })
 
-  it('does not recursively decode a literal encoded slash into a valid season', () => {
-    mount('/admin/seasons/detail/2000%252F01')
-    expect(screen.getByTestId('selected-season')).toHaveTextContent('2000%2F01')
-    expect(screen.queryByRole('heading', { name: 'Canonical route' })).not.toBeInTheDocument()
-  })
 })

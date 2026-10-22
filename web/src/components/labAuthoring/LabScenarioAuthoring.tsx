@@ -540,8 +540,26 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
   const latest = useRef(identity)
   latest.current = identity
   const readIndex = useRef(0)
-  // An earlier file proposal never revives after switching away and back to a Session.
-  useEffect(() => { setPendingImport(null) }, [selection, revision])
+  // Distinguish small guided commits from replacing the draft with another source.
+  // Other independently staged guided inputs must survive a small Apply; they must
+  // never carry into a different Session, external JSON replacement or file import.
+  const [sourceEpoch, setSourceEpoch] = useState(0)
+  const lastSource = useRef({ selection, revision, text })
+  const guidedWrite = useRef<string | null>(null)
+  useEffect(() => {
+    const prior = lastSource.current
+    if (selection !== prior.selection || revision !== prior.revision || text !== prior.text) {
+      if (selection !== prior.selection || guidedWrite.current !== text) {
+        setSourceEpoch(value => value + 1)
+      }
+      // A file that was read before any intervening edit/selection cannot revive,
+      // even if the editor later returns to byte-for-byte identical JSON (ABA).
+      ++readIndex.current
+      setPendingImport(null)
+    }
+    lastSource.current = { selection, revision, text }
+    guidedWrite.current = null
+  }, [selection, revision, text])
   let parsed: JsonObject | null = null
   try { parsed = readLabScenario(text, kind) } catch { /* malformed advanced JSON is retained verbatim */ }
   const fields = parsed ? fieldsFor(kind, parsed) : []
@@ -560,7 +578,9 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
     catch { savedChanges = ['(invalid JSON)'] }
   }
   const nameChanged = savedName !== undefined && sessionName !== undefined && savedName !== sessionName
-  const edit = (next: string) => {
+  const edit = (next: string, origin: 'guided' | 'replacement' = 'guided') => {
+    guidedWrite.current = origin === 'guided' ? next : null
+    ++readIndex.current
     setPendingImport(null)
     setError('')
     setNotice('')
@@ -593,7 +613,7 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
       setError(explain(new Error('stale'), cs))
       return
     }
-    edit(reviewedImport.json)
+    edit(reviewedImport.json, 'replacement')
     setNotice(cs ? 'Návrh byl převzat pouze do editoru. Session ani Run se nezměnily.' : 'Draft applied to editor only. Session and Run are unchanged.')
   }
   const download = () => {
@@ -628,18 +648,18 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
     </label>
     {mode !== 'json' && (parsed ? <div>
       {fields.map(field => <GuidedFieldEditor
-        key={selection + ':' + revision + ':' + field.path.join('.')} field={field}
+        key={selection + ':' + sourceEpoch + ':' + field.path.join('.')} field={field}
         kind={kind} value={fieldValue(parsed!, field.path)} cs={cs} busy={busy}
         onApply={applyField} />)}
       {(kind === 'match' || kind === 'tournament') && participants.length > 0 &&
-        <ParticipantModifierEditor key={selection + ':' + String(parsed.scenario_id)} kind={kind}
+        <ParticipantModifierEditor key={selection + ':' + sourceEpoch + ':' + String(parsed.scenario_id)} kind={kind}
           participants={participants} cs={cs} busy={busy}
           onApply={(target, key, value) => {
             try { edit(changeLabParticipantModifier(text, kind, target, key, value)) }
             catch (reason) { setError(explain(reason, cs)) }
           }} />}
       {kind === 'tournament' && <TournamentStopRoundEditor
-        key={selection + ':' + revision} current={parsed.stop_after_round}
+        key={selection + ':' + sourceEpoch} current={parsed.stop_after_round}
         cs={cs} busy={busy} onApply={raw => {
           try { edit(changeTournamentStopRound(text, raw)) }
           catch (reason) { setError(explain(reason, cs)) }
@@ -651,21 +671,21 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
             catch (reason) { setError(explain(reason, cs)) }
           }} />}
       {kind === 'tournament' && <TournamentAssertionsEditor
-        key={selection + ':' + String(parsed.scenario_id)} assertions={parsed.assertions}
+        key={selection + ':' + sourceEpoch + ':' + String(parsed.scenario_id)} assertions={parsed.assertions}
         ids={participants.map(p => p.id)} cs={cs} busy={busy}
         onApply={(key, raw) => {
           try { edit(changeTournamentAssertion(text, key, raw)) }
           catch (reason) { setError(explain(reason, cs)) }
         }} />}
       {kind === 'player' && variants.map((variant, index) => <VariantMatchCountsEditor
-        key={String(variant.variant_id) + ':' + selection} id={String(variant.variant_id)}
+        key={String(variant.variant_id) + ':' + selection + ':' + sourceEpoch} id={String(variant.variant_id)}
         values={variant.competitive_match_counts as number[]} index={index} cs={cs} busy={busy}
         onApply={(position, draft) => {
           try { edit(changePlayerMatchCounts(text, position, draft)) }
           catch (reason) { setError(explain(reason, cs)) }
         }} />)}
       {kind === 'player' && variants.length > 0 && <PlayerDurationEditor
-        key={selection + ':' + revision} weeks={weeks} healthLocked={healthLocked} cs={cs} busy={busy}
+        key={selection + ':' + sourceEpoch} weeks={weeks} healthLocked={healthLocked} cs={cs} busy={busy}
         onApply={nextWeeks => {
           try { edit(changePlayerWeeks(text, nextWeeks)) }
           catch (reason) { setError(explain(reason, cs)) }
@@ -675,7 +695,7 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
       : <p className="status">{cs ? 'Nejdříve načtěte vestavěný scénář nebo importujte JSON soubor.' : 'Load a built-in scenario or import a JSON file to start editing.'}</p>))}
     {mode !== 'form' && <textarea aria-label={jsonLabel} rows={mode === 'combined' ? 12 : 24}
       style={{ width: '100%', fontFamily: 'monospace' }} disabled={busy} value={text}
-      onChange={event => edit(event.target.value)} />}
+      onChange={event => edit(event.target.value, 'replacement')} />}
     <div>
       <label>{cs ? 'Načíst scénář ze souboru JSON' : 'Load scenario JSON file'}{' '}
         <input aria-label={kind + ' Lab JSON file'} type="file" accept=".json,application/json"

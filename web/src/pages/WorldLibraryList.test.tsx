@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WorldLibraryPage } from './WorldLibraryPage'
@@ -126,8 +126,9 @@ describe('World Package library local filters', () => {
     })
     mount()
     expect(await screen.findByText('Custom unverified')).toBeInTheDocument()
-    expect(screen.getAllByText('Valid')).toHaveLength(2)
-    expect(screen.getByText('Unknown')).toBeInTheDocument()
+    const table = screen.getByRole('table', { name: 'World packages table' })
+    expect(within(table).getAllByText('Valid')).toHaveLength(2)
+    expect(within(table).getByText('Unknown')).toBeInTheDocument()
     expect(screen.getByText(/does not necessarily indicate an error/)).toBeInTheDocument()
 
     const validation = screen.getByRole('combobox', { name: 'World Package validation' })

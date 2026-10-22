@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { changeLabField, changePlayerWeeks, labChangedPaths, LabScenarioAuthoring, readLabScenario } from './LabScenarioAuthoring'
+import { changeLabField, changePlayerMatchCounts, changePlayerWeeks, labChangedPaths, LabScenarioAuthoring, readLabScenario } from './LabScenarioAuthoring'
 
 vi.mock('../../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en'})}))
 
@@ -81,6 +81,21 @@ describe('Lab scenario authoring boundaries', () => {
     expect(() => changePlayerWeeks(JSON.stringify({...player, variants: [
       {...player.variants[0], health_timeline: [{}, {}, {}]}, player.variants[1]
     ]}), 3)).toThrow('health')
+  })
+
+  it('edits one Player workload without modifying other variants or the historical Health timeline', () => {
+    const withHealth = {...player, variants: [
+      {...player.variants[0], health_timeline: [{state: 'start'}, {state: 'week1'}, {state: 'week2'}]},
+      player.variants[1]
+    ]}
+    const changed = JSON.parse(changePlayerMatchCounts(JSON.stringify(withHealth), 0, '0, 32'))
+    expect(changed.variants[0].competitive_match_counts).toEqual([0, 32])
+    expect(changed.variants[1].competitive_match_counts).toEqual([0, 0])
+    expect(changed.variants[0].health_timeline).toEqual(withHealth.variants[0].health_timeline)
+    expect(changed.source_snapshot).toEqual(withHealth.source_snapshot)
+    expect(() => changePlayerMatchCounts(JSON.stringify(withHealth), 0, '1, 2, 3')).toThrow('counts')
+    expect(() => changePlayerMatchCounts(JSON.stringify(withHealth), 0, '1, 33')).toThrow('counts')
+    expect(() => changePlayerMatchCounts(JSON.stringify(withHealth), 0, '1, 2.5')).toThrow('counts')
   })
 
   it('reports changed JSON paths against a saved Session without mutating the baseline', () => {

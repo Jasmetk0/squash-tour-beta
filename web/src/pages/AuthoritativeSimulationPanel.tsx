@@ -1913,7 +1913,7 @@ export function AuthoritativeSimulationPanel({
     mutationFn:(snapshot:{
       runId:string;branchId:string;payload:Parameters<typeof abandonAuthoritativeFullSimulation>[2]
     })=>abandonAuthoritativeFullSimulation(snapshot.runId,snapshot.branchId,snapshot.payload),
-    onSuccess:async(result,snapshot)=>{
+    onSuccess:async(_result,snapshot)=>{
       const current=activeScopeRef.current
       if(current.runId===snapshot.runId&&current.branchId===snapshot.branchId&&
         fullSimulationAbandonTarget===snapshot.payload.target_command_id){

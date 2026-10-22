@@ -222,6 +222,9 @@ describe('World Package country inventory', () => {
       { target: { value: 'R2' } })
     expect(screen.queryByText('Country 000')).not.toBeInTheDocument()
     expect(screen.getByText('Country 050')).toBeInTheDocument()
+    const populationHistory = screen.getByRole('combobox', { name: 'Population history' })
+    fireEvent.change(populationHistory, { target: { value: 'missing' } })
+    expect(populationHistory).toHaveValue('missing')
 
     fireEvent.click(screen.getByRole('link', { name: 'Switch World Package' }))
     expect(await screen.findByText('Different World')).toBeInTheDocument()

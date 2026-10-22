@@ -941,15 +941,12 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
     try {
       // The review must not be discarded until *both* authoritative reads
       // succeed. Invalidating cache is insufficient: a refetch can fail.
+      // Fetch outside React Query: two separate fetchQuery calls can write an
+      // inconsistent partial snapshot into the cache when one call fails.
+      // Only publish the pair after both responses pass the source checks.
       const [freshPackage, freshGeography] = await Promise.all([
-        queryClient.fetchQuery({
-          queryKey: ['world-package', originalWorld],
-          queryFn: () => getWorldPackage(originalWorld), staleTime: 0
-        }),
-        queryClient.fetchQuery({
-          queryKey: ['world-package-geography', originalWorld],
-          queryFn: () => getWorldPackageGeography(originalWorld), staleTime: 0
-        })
+        getWorldPackage(originalWorld),
+        getWorldPackageGeography(originalWorld)
       ])
       if (!mounted.current || activeWorld.current !== originalWorld ||
           activeLocationKey.current !== originalLocation) return
@@ -958,6 +955,8 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
         throw new Error(cs ? 'Načtené podklady nepatří upravitelnému World Package.' :
           'The refreshed resources do not belong to this editable World Package.')
       }
+      queryClient.setQueryData(['world-package', originalWorld], freshPackage)
+      queryClient.setQueryData(['world-package-geography', originalWorld], freshGeography)
       setIdentity({ code: '', name: '', notes: '', area: '' })
       setRegion(''); setTravelRegion(''); setTimezoneArea('')
       setValues({ squash_popularity: '5.5', squash_access: '5.5', development_quality: '5.5', competition_quality: '5.5', elite_support: '5.5', squash_tradition: '5.5' })

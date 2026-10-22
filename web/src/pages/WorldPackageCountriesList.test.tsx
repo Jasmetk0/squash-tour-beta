@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WorldPackageCountriesPage } from './WorldLibraryPage'
 
@@ -28,6 +28,7 @@ const countries = Array.from({ length: 53 }, (_, index) => country(index))
 function mount(worldId = 'world-a') {
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
     <MemoryRouter initialEntries={[`/admin/world/library/${worldId}/countries`]}>
+      <Link to="/admin/world/library/world-b/countries">Switch World Package</Link>
       <Routes>
         <Route path="/admin/world/library/:worldId/countries" element={<WorldPackageCountriesPage />} />
       </Routes>
@@ -158,6 +159,36 @@ describe('World Package country inventory', () => {
     expect(screen.getByRole('checkbox', { name: 'Unassigned travel region' })).not.toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Unassigned timezone area' })).not.toBeChecked()
     expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+  })
+
+  it('resets filters after navigating to a different package with a different country roster', async () => {
+    api.getWorldPackageCountries.mockImplementation(async (worldId: string) => worldId === 'world-b'
+      ? {
+          world_id: 'world-b', world_name: 'Different World', type: 'official',
+          source: 'built_in', read_only: true, country_count: 1,
+          countries: [country(0)],
+        }
+      : {
+          world_id: 'world-a', world_name: 'Earth copy', type: 'official',
+          source: 'built_in', read_only: true, country_count: 53, countries,
+        })
+    mount()
+    expect(await screen.findByText('Country 000')).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search countries' }),
+      { target: { value: 'Country 050' } })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Filter by region' }),
+      { target: { value: 'R2' } })
+    expect(screen.queryByText('Country 000')).not.toBeInTheDocument()
+    expect(screen.getByText('Country 050')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('link', { name: 'Switch World Package' }))
+    expect(await screen.findByText('Different World')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Search countries' })).toHaveValue('')
+    expect(screen.getByRole('combobox', { name: 'Filter by region' })).toHaveValue('')
+    expect(screen.getByText('Country 000')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open' }))
+      .toHaveAttribute('href', '/admin/world/library/world-b/countries/C000')
+    expect(api.getWorldPackageCountries).toHaveBeenCalledWith('world-b')
   })
 
   it('rejects a country inventory belonging to a different World Package', async () => {

@@ -231,6 +231,8 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
   const latest = useRef(identity)
   latest.current = identity
   const readIndex = useRef(0)
+  // An earlier file proposal never revives after switching away and back to a Session.
+  useEffect(() => { setPendingImport(null) }, [selection, revision])
   let parsed: JsonObject | null = null
   try { parsed = readLabScenario(text, kind) } catch { /* malformed advanced JSON is retained verbatim */ }
   const fields = parsed ? fieldsFor(kind, parsed) : []

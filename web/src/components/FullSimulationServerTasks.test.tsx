@@ -258,7 +258,7 @@ describe('server task UI (mock HTTP)',()=>{
   api.getServerTasks.mockResolvedValue([other,taskExample()])
   open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>,
    '/admin/runs/run/simulate?branch=branch&task=task')
-  await screen.findByText(language==='cs'?'Úloha vybraná z odkazu':'Task selected from the link')
+  await screen.findByText(language==='cs'?/Úloha vybraná z odkazu/:/Task selected from the link/)
   const tasks=screen.getAllByRole('listitem').filter(node=>node.hasAttribute('data-task-id'))
   expect(tasks[0]).toHaveAttribute('data-task-id','task')
   expect(tasks[0]).toHaveAttribute('aria-current','location')

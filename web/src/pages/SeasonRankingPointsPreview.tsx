@@ -51,7 +51,7 @@ export function SeasonRankingPointsPreview({ seasonLabelRaw }: Props): JSX.Eleme
             { label: 'Leader points', value: rankingQuery.data.summary.leader_points ?? '—' }
           ]} />
           {rankingQuery.data.rows.length > 0 ? (
-            <table>
+            <div className="table-responsive"><table aria-label="Season ranking top ten">
               <thead>
                 <tr>
                   <th>Rank</th><th>Player</th><th>Country</th><th>Points</th><th>Movement / status</th><th>Source</th>
@@ -69,7 +69,7 @@ export function SeasonRankingPointsPreview({ seasonLabelRaw }: Props): JSX.Eleme
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           ) : <p className="status">No ranking rows available.</p>}
         </>
       ) : null}
@@ -102,7 +102,7 @@ export function SeasonRankingPointsPreview({ seasonLabelRaw }: Props): JSX.Eleme
             { label: 'Errors', value: pointBreakdownQuery.data.validation_errors.length }
           ]} />
           {pointBreakdownQuery.data.summary_rows.length > 0 ? (
-            <table>
+            <div className="table-responsive"><table aria-label="Season point breakdown top ten">
               <thead><tr><th>Player</th><th>Event / Source</th><th>Points</th><th>Reason / Round / Category</th></tr></thead>
               <tbody>
                 {pointBreakdownQuery.data.summary_rows.slice(0, 10).map((row) => (
@@ -114,7 +114,7 @@ export function SeasonRankingPointsPreview({ seasonLabelRaw }: Props): JSX.Eleme
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           ) : <p className="status">No point breakdown rows available.</p>}
         </>
       ) : null}

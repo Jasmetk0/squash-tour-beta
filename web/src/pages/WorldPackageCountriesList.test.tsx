@@ -165,6 +165,44 @@ describe('World Package country inventory', () => {
     expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
   })
 
+  it('distinguishes missing population-year values from populated years including zero', async () => {
+    api.getWorldPackageCountries.mockResolvedValue({
+      world_id: 'world-a', world_name: 'Population history audit', type: 'custom',
+      source: 'custom_config', read_only: true, country_count: 5,
+      countries: [
+        { ...country(0), population_by_year: null },
+        { ...country(1), population_by_year: { 2020: null } },
+        { ...country(2), population_by_year: { 2020: 0 } },
+        { ...country(3), population_by_year: { 2020: 123_000 } },
+        { ...country(4), population_by_year: {} },
+      ],
+    })
+    mount()
+    expect(await screen.findByText('Population history audit')).toBeInTheDocument()
+    expect(screen.getByText(/Without historical population years: 3/)).toBeInTheDocument()
+    expect(screen.getByText(/not itself an error or a completeness verdict/)).toBeInTheDocument()
+    const coverage = screen.getByRole('combobox', { name: 'Population history' })
+    fireEvent.change(coverage, { target: { value: 'present' } })
+    expect(screen.getByText('Showing 2 of 5 countries')).toBeInTheDocument()
+    expect(screen.getByText('Country 002')).toBeInTheDocument()
+    expect(screen.getByText('Country 003')).toBeInTheDocument()
+    expect(screen.queryByText('Country 001')).not.toBeInTheDocument()
+    fireEvent.change(coverage, { target: { value: 'missing' } })
+    expect(screen.getByText('Showing 3 of 5 countries')).toBeInTheDocument()
+    expect(screen.getByText('Country 000')).toBeInTheDocument()
+    expect(screen.getByText('Country 001')).toBeInTheDocument()
+    expect(screen.getByText('Country 004')).toBeInTheDocument()
+    expect(screen.queryByText('Country 002')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search countries' }),
+      { target: { value: 'Country 001' } })
+    expect(screen.getByText('Showing 1 of 5 countries')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters and sorting' }))
+    expect(coverage).toHaveValue('all')
+    expect(screen.getByRole('searchbox', { name: 'Search countries' })).toHaveValue('')
+    expect(screen.getByText('Showing 5 of 5 countries')).toBeInTheDocument()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+  })
+
   it('resets filters after navigating to a different package with a different country roster', async () => {
     api.getWorldPackageCountries.mockImplementation(async (worldId: string) => worldId === 'world-b'
       ? {
@@ -189,6 +227,7 @@ describe('World Package country inventory', () => {
     expect(await screen.findByText('Different World')).toBeInTheDocument()
     expect(screen.getByRole('searchbox', { name: 'Search countries' })).toHaveValue('')
     expect(screen.getByRole('combobox', { name: 'Filter by region' })).toHaveValue('')
+    expect(screen.getByRole('combobox', { name: 'Population history' })).toHaveValue('all')
     expect(screen.getByText('Country 000')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open' }))
       .toHaveAttribute('href', '/admin/world/library/world-b/countries/C000')
@@ -236,6 +275,8 @@ describe('World Package country inventory', () => {
     expect(screen.getByRole('checkbox', { name: 'Bez časové oblasti' })).toBeInTheDocument()
     expect(screen.getByText('Zobrazeno 0 z 0 zemí')).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Řazení zemí' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Historická populace' })).toBeInTheDocument()
+    expect(screen.getByText(/Bez historických populačních let: 0/)).toBeInTheDocument()
     expect(screen.queryByRole('table', { name: 'Země ve World Package' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Další →' })).not.toBeInTheDocument()
   })

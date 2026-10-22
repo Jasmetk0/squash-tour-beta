@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { getCategories } from '../api/client'
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
 import { tournamentCategoryGroups } from '../tour/tournamentCategoryCatalog'
-import type { TournamentCategoryCatalogEntry } from '../tour/tournamentCategoryCatalog'
+import type { TournamentCategoryCatalogEntry, TournamentCategoryTourLevel } from '../tour/tournamentCategoryCatalog'
 import { formatApiError } from '../utils/apiErrors'
 
 function CategorySticker({ category }: { category: TournamentCategoryCatalogEntry }): JSX.Element {
@@ -24,6 +25,21 @@ function CategorySticker({ category }: { category: TournamentCategoryCatalogEntr
 export function AdminTourSeasonsCategoriesPage(): JSX.Element {
   const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: getCategories, retry: false })
   const payload = categoriesQuery.data
+  const [categorySearch, setCategorySearch] = useState('')
+  const [tourLevel, setTourLevel] = useState<'all' | TournamentCategoryTourLevel>('all')
+  const normalizedSearch = categorySearch.trim().toLocaleLowerCase()
+  const totalCategories = tournamentCategoryGroups.reduce((total, group) => total + group.categories.length, 0)
+  const visibleGroups = tournamentCategoryGroups
+    .filter(group => tourLevel === 'all' || group.tourLevel === tourLevel)
+    .map(group => ({
+      ...group,
+      categories: group.categories.filter(category =>
+        normalizedSearch === '' || `${category.name} ${category.code} ${category.stickerLabel}`
+          .toLocaleLowerCase().includes(normalizedSearch)
+      )
+    }))
+    .filter(group => group.categories.length > 0)
+  const visibleCount = visibleGroups.reduce((total, group) => total + group.categories.length, 0)
 
   return (
     <section className="panel">
@@ -42,8 +58,28 @@ export function AdminTourSeasonsCategoriesPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Category stickers by tour level">
+        <div className="form-grid" role="group" aria-label="Category identity filters">
+          <label>Search category name or code
+            <input type="search" value={categorySearch} onChange={event => setCategorySearch(event.target.value)}
+              placeholder="Name, code or sticker" />
+          </label>
+          <label>Filter by tour level
+            <select value={tourLevel} onChange={event => setTourLevel(event.target.value as typeof tourLevel)}>
+              <option value="all">All tours</option>
+              {tournamentCategoryGroups.map(group => (
+                <option key={group.tourLevel} value={group.tourLevel}>{group.tourLevelName}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <button type="button" disabled={!categorySearch && tourLevel === 'all'}
+          onClick={() => { setCategorySearch(''); setTourLevel('all') }}>Clear category filters</button>
+        <p role="status">Showing {visibleCount} of {totalCategories} canonical categories</p>
+        {visibleCount === 0
+          ? <p className="status">No canonical categories match your search or tour filter.</p>
+          : null}
         <div className="category-catalog" aria-label="Canonical tournament category catalog">
-          {tournamentCategoryGroups.map((group) => (
+          {visibleGroups.map((group) => (
             <section className="category-catalog__group" key={group.tourLevel} aria-labelledby={`category-group-${group.tourLevel}`}>
               <h3 id={`category-group-${group.tourLevel}`}>{group.tourLevelName}</h3>
               <div className="category-catalog__cards">

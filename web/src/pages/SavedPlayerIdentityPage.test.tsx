@@ -47,6 +47,15 @@ describe('Saved player three-tab profile',()=>{
     expect(screen.getByText(/Historical player profile for this checkpoint is not supported/)).toBeInTheDocument()
     expect(api.getSavedPlayerProfile).not.toHaveBeenCalled()
   })
+  it('keeps the published ranking ordinal without fabricating a 2000-based season or W61 date',async()=>{
+    api.getSavedPlayerProfile.mockResolvedValue({
+      ...profile,ranking_status:'ranked',ranking_week_ordinal:78,rank:3,points:42,
+    })
+    mount()
+    expect(await screen.findByText('Latest publication · week index: 78')).toBeInTheDocument()
+    expect(screen.queryByText(/2001\/02/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/W18/)).not.toBeInTheDocument()
+  })
   it('does not render foreign-branch profile',async()=>{
     api.getSavedPlayerProfile.mockResolvedValue({...profile,saved_revision_id:'foreign'})
     mount()

@@ -283,7 +283,7 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
       setResult(response)
       setApiError(null)
       if (response.ok && !response.dry_run) {
-        setReview(null); setNewWorldId(''); setName('')
+        setReview(null); setNewWorldId(''); setName(''); setDescription(`Custom world cloned from ${source.name}.`)
       }
     },
     onError: (error, command) => {
@@ -336,11 +336,11 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
     </div> : <form onSubmit={event => {event.preventDefault(); prepare(false)}}>
       <fieldset disabled={mutation.isPending}>
         <label>{cs ? 'Nové World ID' : 'New World ID'}
-          <input value={newWorldId} onChange={event => setNewWorldId(event.target.value)} placeholder="my_custom_world" />
+          <input value={newWorldId} onChange={event => { setNewWorldId(event.target.value); setResult(null); setApiError(null) }} placeholder="my_custom_world" />
         </label>
         <p className="status">{cs ? '3–64 znaků; na začátku malé písmeno nebo číslice, potom i podtržítko.' : '3–64 characters; start with a lowercase letter or digit, underscores allowed thereafter.'}</p>
-        <label>{cs ? 'Název' : 'Name'}<input value={name} onChange={event => setName(event.target.value)} placeholder="My Custom World" /></label>
-        <label>{cs ? 'Popis' : 'Description'}<textarea value={description} onChange={event => setDescription(event.target.value)} /></label>
+        <label>{cs ? 'Název' : 'Name'}<input value={name} onChange={event => { setName(event.target.value); setResult(null); setApiError(null) }} placeholder="My Custom World" /></label>
+        <label>{cs ? 'Popis' : 'Description'}<textarea value={description} onChange={event => { setDescription(event.target.value); setResult(null); setApiError(null) }} /></label>
         <div className="actions">
           <button type="button" onClick={() => prepare(true)}>{cs ? 'Náhled kopírování' : 'Preview clone'}</button>
           <button type="submit">{cs ? 'Zkontrolovat vytvoření kopie' : 'Review custom copy'}</button>

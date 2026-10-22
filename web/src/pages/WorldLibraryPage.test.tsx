@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { RouterProvider, createMemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { WorldLibraryDetailPage, WorldPackageCountryCreatePage } from './WorldLibraryPage'
 
@@ -13,11 +13,12 @@ describe('new-scale country creation', () => {
     api.getWorldPackage.mockResolvedValue({ type: 'custom', source: 'custom_config', editable: true, fingerprint: 'source-head', world_id: 'custom' })
     api.getWorldPackageGeography.mockResolvedValue({ regions: [{ code: 'EUR', name: 'Europe' }], travel_regions: [], timezone_areas: [], world_id: 'custom' })
     api.createWorldPackageCountry.mockResolvedValue({ country_detail: { package: { world_id: 'custom' }, country: { code: 'AAA' } } })
+    const router = createMemoryRouter([
+      {path:'/world/:worldId/new',element:<WorldPackageCountryCreatePage />},
+      {path:'*',element:<p>Created</p>}
+    ],{initialEntries:['/world/custom/new']})
     render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <MemoryRouter initialEntries={['/world/custom/new']}><Routes>
-        <Route path="/world/:worldId/new" element={<WorldPackageCountryCreatePage />} />
-        <Route path="*" element={<p>Created</p>} />
-      </Routes></MemoryRouter>
+      <RouterProvider router={router} />
     </QueryClientProvider>)
     const popularity = await screen.findByLabelText('squash popularity')
     expect(popularity).toHaveAttribute('min', '1')
@@ -36,6 +37,7 @@ describe('new-scale country creation', () => {
     await waitFor(() => expect(api.createWorldPackageCountry).toHaveBeenCalledWith('custom', expect.objectContaining({
       rating_scale: 'country_ratings_1_10.v2', squash_popularity: 7.4, court_count: null,
     })))
+    expect(await screen.findByText('Created')).toBeInTheDocument()
   })
 })
 
@@ -89,10 +91,11 @@ describe('built-in World cloning', () => {
       errors: []
     })
 
+    const router = createMemoryRouter([
+      {path:'/world/:worldId',element:<WorldLibraryDetailPage />}
+    ],{initialEntries:['/world/real_world']})
     render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <MemoryRouter initialEntries={['/world/real_world']}><Routes>
-        <Route path="/world/:worldId" element={<WorldLibraryDetailPage />} />
-      </Routes></MemoryRouter>
+      <RouterProvider router={router} />
     </QueryClientProvider>)
 
     expect(await screen.findByText('Clone Built-in World')).toBeInTheDocument()
@@ -127,19 +130,21 @@ describe('custom World Package geography navigation', () => {
     })
     api.getWorldPackageValidation.mockResolvedValue({world_id:'custom',status:'valid',
       error_count:0,warning_count:0,info_count:0,checks:[]})
-    const confirm = vi.spyOn(window,'confirm').mockReturnValue(false)
+    const router = createMemoryRouter([
+      {path:'/world/:worldId',element:<WorldLibraryDetailPage />},
+      {path:'/admin/world/library',element:<p>Library opened</p>}
+    ],{initialEntries:['/world/custom']})
     render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
-      <MemoryRouter initialEntries={['/world/custom']}><Routes>
-        <Route path="/world/:worldId" element={<WorldLibraryDetailPage />} />
-        <Route path="/admin/world/library" element={<p>Library opened</p>} />
-      </Routes></MemoryRouter>
+      <RouterProvider router={router} />
     </QueryClientProvider>)
     fireEvent.change(await screen.findByLabelText('Timezone Area name 0'),{target:{value:'Edited West'}})
     fireEvent.click(screen.getByRole('link',{name:'Back to World Library'}))
-    expect(confirm).toHaveBeenCalled()
+    expect(await screen.findByRole('alertdialog',{name:'Unsaved World Package changes'})).toBeInTheDocument()
     expect(screen.queryByText('Library opened')).not.toBeInTheDocument()
-    confirm.mockReturnValue(true)
+    fireEvent.click(screen.getByRole('button',{name:'Stay and keep editing'}))
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('link',{name:'Back to World Library'}))
+    fireEvent.click(await screen.findByRole('button',{name:'Discard and leave'}))
     expect(await screen.findByText('Library opened')).toBeInTheDocument()
   })
 })

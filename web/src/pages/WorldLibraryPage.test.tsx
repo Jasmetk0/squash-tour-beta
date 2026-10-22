@@ -41,6 +41,41 @@ describe('new-scale country creation', () => {
   })
 })
 
+describe('late new-country create response', () => {
+  it('does not redirect from a different page after the user discards the pending edit', async () => {
+    api.getWorldPackage.mockResolvedValue({type:'custom',source:'custom_config',editable:true,
+      fingerprint:'create-base',world_id:'custom'})
+    api.getWorldPackageGeography.mockResolvedValue({world_id:'custom',
+      regions:[{code:'EUR',name:'Europe'}],travel_regions:[],timezone_areas:[]})
+    let finish!: (response: unknown) => void
+    api.createWorldPackageCountry.mockImplementation(() => new Promise(resolve => {finish = resolve}))
+    const router = createMemoryRouter([
+      {path:'/world/:worldId/new',element:<WorldPackageCountryCreatePage />},
+      {path:'*',element:<p>Other page</p>}
+    ],{initialEntries:['/world/custom/new']})
+    render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false},mutations:{retry:false}}})}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>)
+    fireEvent.change(await screen.findByLabelText('Code'),{target:{value:'AAA'}})
+    fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Test Country'}})
+    fireEvent.change(screen.getByLabelText('Region'),{target:{value:'EUR'}})
+    fireEvent.change(screen.getByLabelText('Population value 2020'),{target:{value:'100'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review before saving'}))
+    fireEvent.click(screen.getByRole('button',{name:'Confirm and save'}))
+    await waitFor(() => expect(api.createWorldPackageCountry).toHaveBeenCalledWith('custom',
+      expect.objectContaining({code:'AAA',expected_package_fingerprint:'create-base'})))
+    fireEvent.click(screen.getByRole('link',{name:'Back to countries'}))
+    expect(await screen.findByRole('alertdialog',{name:'Unsaved World Package changes'})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Discard and leave'}))
+    expect(await screen.findByText('Other page')).toBeInTheDocument()
+    const expectedPath = router.state.location.pathname
+    expect(expectedPath).toBe('/admin/world/library/custom/countries')
+    await act(async () => {finish({country_detail:{package:{world_id:'custom'},country:{code:'AAA'}}})})
+    expect(router.state.location.pathname).toBe(expectedPath)
+    expect(screen.getByText('Other page')).toBeInTheDocument()
+  })
+})
+
 describe('built-in World cloning', () => {
   it('clones the built-in package currently being inspected, not a hard-coded FAX source', async () => {
     api.getWorldPackage.mockResolvedValue({

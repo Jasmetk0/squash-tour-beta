@@ -167,6 +167,27 @@ export function changeTournamentStopRound(text: string, raw: string): string {
   return JSON.stringify({ ...scenario, stop_after_round: round }, null, 2)
 }
 
+type TournamentAssertion = 'expected_champion_player_id' | 'expected_played_match_count'
+
+/** Optional output expectations only: no Run or simulation mutation. */
+export function changeTournamentAssertion(text: string, key: TournamentAssertion, raw: string): string {
+  const scenario = readLabScenario(text, 'tournament')
+  const assertions = scenario.assertions
+  if (assertions !== undefined && !object(assertions)) throw new Error('shape')
+  const input = raw.trim()
+  let value: string | number | null
+  if (key === 'expected_champion_player_id') {
+    if (input.length > 160) throw new Error('assertion')
+    value = input || null
+  } else if (key === 'expected_played_match_count') {
+    if (input && (!/^(0|[1-9]\d*)$/.test(input) || !Number.isSafeInteger(Number(input)))) {
+      throw new Error('assertion')
+    }
+    value = input ? Number(input) : null
+  } else throw new Error('assertion')
+  return JSON.stringify({ ...scenario, assertions: { ...(assertions ?? {}), [key]: value } }, null, 2)
+}
+
 function changes(oldValue: unknown, newValue: unknown, prefix: string, output: string[]): void {
   if (JSON.stringify(oldValue) === JSON.stringify(newValue)) return
   if (output.length >= 40) return
@@ -251,6 +272,7 @@ const messages: Record<string, [string, string]> = {
   stale: ['The editor changed while the file was being read. No file was applied.', 'Editor se během čtení souboru změnil. Soubor nebyl použit.'],
   modifier: ['Modifier must be between −0.35 and +0.35.', 'Modifikátor musí být od −0,35 do +0,35.'],
   round: ['Choose no limit or a round from 1 to 7.', 'Vyberte bez omezení nebo kolo 1 až 7.'],
+  assertion: ['Expected winner must be a player ID of at most 160 characters; match count must be a nonnegative integer.', 'Očekávaný vítěz může mít nejvýše 160 znaků; počet zápasů musí být nezáporné celé číslo.'],
   file: ['Could not read the JSON file.', 'Soubor JSON se nepodařilo načíst.']
 }
 
@@ -323,6 +345,48 @@ function TournamentStopRoundEditor({ current, cs, busy, onApply }: {
       {cs ? 'Použít limit kol' : 'Apply round limit'}
     </button>
   </div>
+}
+
+function TournamentAssertionsEditor({ assertions, ids, cs, busy, onApply }: {
+  assertions: unknown; ids: string[]; cs: boolean; busy: boolean
+  onApply: (key: TournamentAssertion, raw: string) => void
+}): JSX.Element {
+  const current = object(assertions) ? assertions : {}
+  const champion = typeof current.expected_champion_player_id === 'string' ? current.expected_champion_player_id : ''
+  const matches = current.expected_played_match_count == null ? '' : String(current.expected_played_match_count)
+  const [championDraft, setChampionDraft] = useState(champion)
+  const [matchesDraft, setMatchesDraft] = useState(matches)
+  useEffect(() => { setChampionDraft(champion) }, [champion])
+  useEffect(() => { setMatchesDraft(matches) }, [matches])
+  return <fieldset>
+    <legend>{cs ? 'Očekávané výsledky testu' : 'Tournament test assertions'}</legend>
+    <p className="status">{cs
+      ? 'Volitelné ověření výsledku; simulace ani Run se nemění. Prázdné pole kontrolu vypne.'
+      : 'Optional result checks; simulation and Run remain unchanged. Leave empty to disable a check.'}</p>
+    <label>{cs ? 'Očekávaný vítěz – ID hráče' : 'Expected champion player ID'}{' '}
+      <input type="text" list="lab-expected-champions" aria-label="tournament Lab expected champion"
+        disabled={busy} value={championDraft} onChange={e => setChampionDraft(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }} />
+    </label>{' '}
+    <datalist id="lab-expected-champions">{ids.map(id => <option value={id} key={id} />)}</datalist>
+    <button type="button" aria-label="tournament Lab apply expected champion"
+      disabled={busy || championDraft === champion}
+      onClick={() => onApply('expected_champion_player_id', championDraft)}>
+      {cs ? 'Použít vítěze' : 'Apply champion expectation'}
+    </button>
+    <div>
+      <label>{cs ? 'Očekávaný počet odehraných zápasů' : 'Expected played match count'}{' '}
+        <input aria-label="tournament Lab expected match count" type="number" min={0} step={1}
+          disabled={busy} value={matchesDraft} onChange={e => setMatchesDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }} />
+      </label>{' '}
+      <button type="button" aria-label="tournament Lab apply expected match count"
+        disabled={busy || matchesDraft === matches}
+        onClick={() => onApply('expected_played_match_count', matchesDraft)}>
+        {cs ? 'Použít počet zápasů' : 'Apply match-count expectation'}
+      </button>
+    </div>
+  </fieldset>
 }
 
 function GuidedFieldEditor({ field, kind, value, cs, busy, onApply }: {
@@ -533,6 +597,13 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
         key={selection + ':' + revision} current={parsed.stop_after_round}
         cs={cs} busy={busy} onApply={raw => {
           try { edit(changeTournamentStopRound(text, raw)) }
+          catch (reason) { setError(explain(reason, cs)) }
+        }} />}
+      {kind === 'tournament' && <TournamentAssertionsEditor
+        key={selection + ':' + revision} assertions={parsed.assertions}
+        ids={participants.map(p => p.id)} cs={cs} busy={busy}
+        onApply={(key, raw) => {
+          try { edit(changeTournamentAssertion(text, key, raw)) }
           catch (reason) { setError(explain(reason, cs)) }
         }} />}
       {kind === 'player' && variants.map((variant, index) => <VariantMatchCountsEditor

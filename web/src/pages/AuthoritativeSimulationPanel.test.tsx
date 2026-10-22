@@ -1,8 +1,9 @@
 vi.mock('../components/FullSimulationServerTasks',()=>({FullSimulationServerTasks:()=>null,StartServerTask:()=>null,useServerTasks:()=>({data:[]})}))
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { useState } from 'react'
 import type { ComponentProps } from 'react'
 
 import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
@@ -3379,6 +3380,171 @@ describe('AuthoritativeSimulationPanel', () => {
   })
 
 
+  it.each(['en','cs'] as const)('requires fresh evidence rather than repeating Abandon after an uncertain error (%s)',async language=>{
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,schedule:proposal.schedule,schedule_fingerprint:proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,schedule_already_adopted:true,
+      blockers:['week_schedule_already_adopted'],can_propose_schedule:false
+    })
+    const command={
+      command_id:'abandon-uncertain-parent',operator_label:'Original',audit_reason:'Original scope',
+      expected_start_week:fullSimulationPreview.start_week,
+      expected_position_fingerprint:fullSimulationPreview.expected_position_fingerprint,
+      expected_revision_id:fullSimulationPreview.expected_revision_id,
+      expected_preview_fingerprint:fullSimulationPreview.preview_fingerprint
+    }
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version:'authoritative_full_simulation_pending_collection.v1',
+      run_id:'run-a',branch_id:'branch-a',legacy_pending_count:0,
+      operations:[{control_state:'running',command,review:fullSimulationPreview,
+        completed_seasons:[],completed_season_count:0,
+        final_completed_weeks:[],final_completed_week_count:0}]
+    })
+    api.abandonAuthoritativeFullSimulation.mockRejectedValueOnce(new Error('Network response lost'))
+    renderPanel({},language)
+    await userEvent.click(await screen.findByRole('button',{name:'Prepare abandon'}))
+    await userEvent.type(screen.getByLabelText('Full Simulation abandon operator'),'Commissioner')
+    await userEvent.type(screen.getByLabelText('Full Simulation abandon audit reason'),'Final reviewed abandon')
+    await userEvent.click(screen.getByLabelText('Confirm committed Full Simulation child work persists'))
+    const submit=screen.getByRole('button',{name:'Abandon pending Full Simulation'})
+    await userEvent.click(submit)
+    await waitFor(()=>expect(api.abandonAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText('Network response lost',{exact:false})).toBeInTheDocument()
+    expect(screen.getByText(language==='cs'?/Neopakujte jej naslepo/:/Do not retry blindly/)).toBeInTheDocument()
+    expect(submit).toBeDisabled()
+    expect(screen.getByLabelText('Full Simulation abandon operator')).toBeDisabled()
+    expect(screen.getByLabelText('Full Simulation abandon audit reason')).toBeDisabled()
+    expect(screen.getByLabelText('Confirm committed Full Simulation child work persists')).toBeDisabled()
+    await userEvent.click(submit)
+    expect(api.abandonAuthoritativeFullSimulation).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('button',{name:'Keep parent'}))
+    expect(screen.queryByRole('button',{name:'Abandon pending Full Simulation'})).toBeNull()
+    expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
+  })
+
+  it('keeps an offline queued Abandon bound to its exact original Run and Branch',async()=>{
+    localStorage.setItem('squash-engine-language-v1','en')
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,schedule:proposal.schedule,schedule_fingerprint:proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,schedule_already_adopted:true,
+      blockers:['week_schedule_already_adopted'],can_propose_schedule:false
+    })
+    const command={
+      command_id:'abandon-original-parent',operator_label:'Original',audit_reason:'Original scope',
+      expected_start_week:fullSimulationPreview.start_week,
+      expected_position_fingerprint:fullSimulationPreview.expected_position_fingerprint,
+      expected_revision_id:fullSimulationPreview.expected_revision_id,
+      expected_preview_fingerprint:fullSimulationPreview.preview_fingerprint
+    }
+    api.getPendingAuthoritativeFullSimulations.mockImplementation(async(run:string,branch:string)=>({
+      schema_version:'authoritative_full_simulation_pending_collection.v1',
+      run_id:run,branch_id:branch,legacy_pending_count:0,
+      operations:run==='run-a'?[{control_state:'running',command,review:fullSimulationPreview,
+        completed_seasons:[],completed_season_count:0,
+        final_completed_weeks:[],final_completed_week_count:0}]:[]
+    }))
+    api.abandonAuthoritativeFullSimulation.mockResolvedValue({
+      schema_version:'authoritative_full_simulation_abandon_result.v1',
+      run_id:'run-a',branch_id:'branch-a',
+      target_command_id:'abandon-original-parent',status:'abandoned',
+      committed_child_work_persists:true,completed_seasons:[],completed_season_count:0,
+      final_completed_weeks:[],final_completed_week_count:0,
+      operator_label:'Commissioner',audit_reason:'Reviewed original'
+    })
+    function Switch(){
+      const [other,setOther]=useState(false)
+      return <><button type="button" onClick={()=>setOther(true)}>Switch after Abandon submit</button>
+        <AuthoritativeSimulationPanel runId={other?'run-b':'run-a'}
+          branchId={other?'branch-b':'branch-a'} savedRevisionId="revision-7" blockedReason={null}/></>
+    }
+    const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
+    render(<QueryClientProvider client={client}><LanguageProvider><Switch/></LanguageProvider></QueryClientProvider>)
+    await userEvent.click(await screen.findByRole('button',{name:'Prepare abandon'}))
+    await userEvent.type(screen.getByLabelText('Full Simulation abandon operator'),'Commissioner')
+    await userEvent.type(screen.getByLabelText('Full Simulation abandon audit reason'),'Reviewed original')
+    await userEvent.click(screen.getByLabelText('Confirm committed Full Simulation child work persists'))
+    onlineManager.setOnline(false)
+    try{
+      await userEvent.click(screen.getByRole('button',{name:'Abandon pending Full Simulation'}))
+      await userEvent.click(screen.getByRole('button',{name:'Switch after Abandon submit'}))
+      onlineManager.setOnline(true)
+      await waitFor(()=>expect(api.abandonAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
+      expect(api.abandonAuthoritativeFullSimulation).toHaveBeenCalledWith('run-a','branch-a',{
+        target_command_id:'abandon-original-parent',operator_label:'Commissioner',
+        audit_reason:'Reviewed original',confirm_committed_child_work_persists:true
+      })
+      expect(api.abandonAuthoritativeFullSimulation).not.toHaveBeenCalledWith('run-b','branch-b',expect.anything())
+      expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
+    }finally{onlineManager.setOnline(true)}
+  })
+
+  it('pins an offline-queued pause to its original Run, Branch and parent after changing context',async()=>{
+    localStorage.setItem('squash-engine-language-v1','en')
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version:'authoritative_full_simulation_pending_collection.v1',
+      run_id:'run-a',branch_id:'branch-a',legacy_pending_count:0,
+      operations:[{
+        control_state:'running',
+        command:{
+          command_id:'offline-parent',operator_label:'Original',audit_reason:'Reviewed',
+          expected_start_week:fullSimulationPreview.start_week,
+          expected_position_fingerprint:fullSimulationPreview.expected_position_fingerprint,
+          expected_revision_id:fullSimulationPreview.expected_revision_id,
+          expected_preview_fingerprint:fullSimulationPreview.preview_fingerprint
+        },
+        review:fullSimulationPreview,
+        completed_seasons:[],completed_season_count:0,
+        final_completed_weeks:[],final_completed_week_count:0
+      }]
+    })
+    api.controlAuthoritativeFullSimulation.mockResolvedValue({
+      schema_version:'authoritative_full_simulation_control_result.v1',
+      run_id:'run-a',branch_id:'branch-a',target_command_id:'offline-parent',
+      control_command_id:'ack',action:'pause',control_state:'pause_requested',
+      observed_control_state:'pause_requested',committed_child_work_persists:true,replayed:false
+    })
+    function Switch(){
+      const [other,setOther]=useState(false)
+      return <><button type="button" onClick={()=>setOther(true)}>Switch selected Branch</button>
+        <AuthoritativeSimulationPanel runId={other?'run-b':'run-a'}
+          branchId={other?'branch-b':'branch-a'} savedRevisionId="revision-7" blockedReason={null}/></>
+    }
+    const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
+    render(<QueryClientProvider client={client}><LanguageProvider><Switch/></LanguageProvider></QueryClientProvider>)
+    await userEvent.click(await screen.findByRole('button',{name:'Request safe pause'}))
+    await userEvent.type(screen.getByLabelText('Full Simulation control operator'),'Operator')
+    await userEvent.type(screen.getByLabelText('Full Simulation control audit reason'),'Reviewed pause')
+    onlineManager.setOnline(false)
+    try{
+      await userEvent.click(screen.getByRole('button',{name:'Request pause'}))
+      expect(screen.getByLabelText('Full Simulation control operator')).toBeDisabled()
+      expect(screen.getByLabelText('Full Simulation control audit reason')).toBeDisabled()
+      await userEvent.click(screen.getByRole('button',{name:'Switch selected Branch'}))
+      onlineManager.setOnline(true)
+      await waitFor(()=>expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
+      expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledWith('run-a','branch-a',{
+        control_command_id:expect.any(String),target_command_id:'offline-parent',action:'pause',
+        operator_label:'Operator',audit_reason:'Reviewed pause'
+      })
+      expect(api.controlAuthoritativeFullSimulation.mock.calls[0][0]).not.toBe('run-b')
+    }finally{onlineManager.setOnline(true)}
+  })
+
   it.each(['en', 'cs'] as const)('retries an unanswered pause with the same audited control ID and parent (%s)', async (language) => {
     api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
       ...scheduleInspection,
@@ -3430,6 +3596,9 @@ describe('AuthoritativeSimulationPanel', () => {
     await userEvent.click(screen.getByRole('button', {name: language === 'cs' ? 'Požádat o pauzu' : 'Request pause'}))
     await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
     expect(await screen.findByText('Network answer was lost')).toBeInTheDocument()
+    expect(screen.getByLabelText(language === 'cs' ? 'Operátor ovládání Full Simulation' : 'Full Simulation control operator')).toBeDisabled()
+    expect(screen.getByLabelText(language === 'cs' ? 'Důvod ovládání Full Simulation do auditu' : 'Full Simulation control audit reason')).toBeDisabled()
+    expect(screen.getByText(language === 'cs' ? /uzamčené pro přesné opakování/ : /locked for exact retry/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', {name: language === 'cs' ? 'Požádat o pauzu' : 'Request pause'}))
     await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledTimes(2))
     const first = api.controlAuthoritativeFullSimulation.mock.calls[0][2]
@@ -3569,6 +3738,10 @@ describe('AuthoritativeSimulationPanel', () => {
     await userEvent.click(apply)
     await waitFor(() => expect(api.retargetAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
     expect(await screen.findByText('Answer lost')).toBeInTheDocument()
+    expect(seasonInput).toBeDisabled()
+    expect(weekInput).toBeDisabled()
+    expect(screen.getByLabelText(language === 'cs' ? 'Operátor změny cíle' : 'Target change operator')).toBeDisabled()
+    expect(screen.getByText(language === 'cs' ? /uzamčené pro stejné opakování/ : /locked for the same retry/)).toBeInTheDocument()
     await userEvent.click(apply)
     await waitFor(() => expect(api.retargetAuthoritativeFullSimulation).toHaveBeenCalledTimes(2))
     expect(api.retargetAuthoritativeFullSimulation.mock.calls[0][2]).toEqual(
@@ -3753,6 +3926,135 @@ describe('AuthoritativeSimulationPanel', () => {
     await waitFor(() => expect(api.simulateAuthoritativeFullSimulation).toHaveBeenCalledWith(
       'run-a', 'branch-a', command))
     expect(api.controlAuthoritativeFullSimulation).not.toHaveBeenCalled()
+    expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
+  })
+
+  it('drops a delayed Full Simulation preview after changing the selected Run and Branch',async()=>{
+    localStorage.setItem('squash-engine-language-v1','en')
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,schedule:proposal.schedule,schedule_fingerprint:proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,schedule_already_adopted:true,
+      blockers:['week_schedule_already_adopted'],can_propose_schedule:false
+    })
+    let releasePreview:(value:typeof fullSimulationPreview)=>void=()=>{}
+    api.previewAuthoritativeFullSimulation.mockImplementation(()=>new Promise<typeof fullSimulationPreview>(
+      resolve=>{releasePreview=resolve}
+    ))
+    function Switch(){
+      const [other,setOther]=useState(false)
+      return <><button type="button" onClick={()=>setOther(true)}>Switch preview context</button>
+        <AuthoritativeSimulationPanel runId={other?'run-b':'run-a'}
+          branchId={other?'branch-b':'branch-a'} savedRevisionId="revision-7" blockedReason={null}/></>
+    }
+    const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
+    render(<QueryClientProvider client={client}><LanguageProvider><Switch/></LanguageProvider></QueryClientProvider>)
+    await userEvent.type(await screen.findByLabelText('Full Simulation operator'),'Operator')
+    await userEvent.type(screen.getByLabelText('Full Simulation audit reason'),'Review exact source')
+    await userEvent.click(screen.getByRole('button',{name:'Review authoritative Full Simulation'}))
+    expect(screen.getByLabelText('Full Simulation operator')).toBeDisabled()
+    await waitFor(()=>expect(api.previewAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
+    await userEvent.click(screen.getByRole('button',{name:'Switch preview context'}))
+    await act(async()=>{releasePreview(fullSimulationPreview);await Promise.resolve()})
+    await waitFor(()=>expect(api.previewAuthoritativeFullSimulation).toHaveBeenCalledWith(
+      'run-a','branch-a',expect.objectContaining({operator_label:'Operator',audit_reason:'Review exact source'})
+    ))
+    await waitFor(()=>expect(screen.queryByRole('heading',{name:/Reviewed canonical Full Simulation/})).toBeNull())
+    expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalled()
+  })
+
+  it.each(['parent','pause'] as const)(
+    'never retargets an offline-queued %s invocation after a Run/Branch switch',async mode=>{
+      localStorage.setItem('squash-engine-language-v1','en')
+      api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+        ...scheduleInspection,schedule:proposal.schedule,schedule_fingerprint:proposal.schedule_fingerprint
+      })
+      api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+        ...schedulePreflight,schedule_already_adopted:true,
+        blockers:['week_schedule_already_adopted'],can_propose_schedule:false
+      })
+      const command={
+        command_id:'offline-parent-'+mode,operator_label:'Commissioner',audit_reason:'Original scope',
+        expected_start_week:fullSimulationPreview.start_week,
+        expected_position_fingerprint:fullSimulationPreview.expected_position_fingerprint,
+        expected_revision_id:fullSimulationPreview.expected_revision_id,
+        expected_preview_fingerprint:fullSimulationPreview.preview_fingerprint
+      }
+      api.getPendingAuthoritativeFullSimulations.mockImplementation(async(run:string,branch:string)=>({
+        schema_version:'authoritative_full_simulation_pending_collection.v1',
+        run_id:run,branch_id:branch,legacy_pending_count:0,
+        operations:run==='run-a'?[{
+          control_state:mode==='parent'?'running':'pause_requested',
+          command,review:fullSimulationPreview,completed_seasons:[],completed_season_count:0,
+          final_completed_weeks:[],final_completed_week_count:0
+        }]:[]
+      }))
+      api.simulateAuthoritativeFullSimulation.mockResolvedValue(
+        mode==='parent'?fullSimulationReviewProgress:{checkpoint:'operator_paused'}
+      )
+      function Switch(){
+        const [other,setOther]=useState(false)
+        return <><button type="button" onClick={()=>setOther(true)}>Switch tested scope</button>
+          <AuthoritativeSimulationPanel runId={other?'run-b':'run-a'} branchId={other?'branch-b':'branch-a'}
+            savedRevisionId="revision-7" blockedReason={null}/></>
+      }
+      const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
+      render(<QueryClientProvider client={client}><LanguageProvider><Switch/></LanguageProvider></QueryClientProvider>)
+      if(mode==='parent'){
+        await userEvent.click(await screen.findByRole('button',{name:'Resume this Full Simulation'}))
+        await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+      }else await screen.findByRole('button',{name:'Acknowledge safe pause'})
+      onlineManager.setOnline(false)
+      try{
+        await userEvent.click(screen.getByRole('button',{name:mode==='parent'
+          ?'Simulate reviewed authoritative Full Simulation':'Acknowledge safe pause'}))
+        if(mode==='parent')expect(screen.getByText(/original Full Simulation request is frozen for exact retry/i)).toBeInTheDocument()
+        await userEvent.click(screen.getByRole('button',{name:'Switch tested scope'}))
+        onlineManager.setOnline(true)
+        await waitFor(()=>expect(api.simulateAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
+        expect(api.simulateAuthoritativeFullSimulation).toHaveBeenCalledWith('run-a','branch-a',command)
+        expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalledWith('run-b','branch-b',expect.anything())
+        expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
+      }finally{onlineManager.setOnline(true)}
+    }
+  )
+
+  it('retries a lost Full Simulation parent response with the exact frozen reviewed request',async()=>{
+    localStorage.setItem('squash-engine-language-v1','en')
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,schedule:proposal.schedule,schedule_fingerprint:proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,schedule_already_adopted:true,
+      blockers:['week_schedule_already_adopted'],can_propose_schedule:false
+    })
+    const command={
+      command_id:'retry-original-parent',operator_label:'Commissioner',audit_reason:'Same frozen request',
+      expected_start_week:fullSimulationPreview.start_week,
+      expected_position_fingerprint:fullSimulationPreview.expected_position_fingerprint,
+      expected_revision_id:fullSimulationPreview.expected_revision_id,
+      expected_preview_fingerprint:fullSimulationPreview.preview_fingerprint
+    }
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version:'authoritative_full_simulation_pending_collection.v1',
+      run_id:'run-a',branch_id:'branch-a',legacy_pending_count:0,
+      operations:[{control_state:'running',command,review:fullSimulationPreview,
+        completed_seasons:[],completed_season_count:0,final_completed_weeks:[],final_completed_week_count:0}]
+    })
+    api.simulateAuthoritativeFullSimulation.mockRejectedValueOnce(new Error('Parent answer lost'))
+      .mockResolvedValue(fullSimulationReviewProgress)
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button',{name:'Resume this Full Simulation'}))
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    const submit=screen.getByRole('button',{name:'Simulate reviewed authoritative Full Simulation'})
+    await userEvent.click(submit)
+    await screen.findByText(/Parent answer lost/)
+    expect(screen.getByText(/original Full Simulation request is frozen for exact retry/i)).toBeInTheDocument()
+    await userEvent.click(submit)
+    await waitFor(()=>expect(api.simulateAuthoritativeFullSimulation).toHaveBeenCalledTimes(2))
+    expect(api.simulateAuthoritativeFullSimulation.mock.calls[1]).toEqual(api.simulateAuthoritativeFullSimulation.mock.calls[0])
+    expect(api.simulateAuthoritativeFullSimulation.mock.calls[1]).toEqual(['run-a','branch-a',command])
     expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
   })
 

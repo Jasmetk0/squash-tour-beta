@@ -1,4 +1,5 @@
 import { HistoricalLabSourcePicker } from '../components/HistoricalLabSourcePicker'
+import { useLanguage } from '../i18n/LanguageContext'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -15,6 +16,7 @@ import type { MatchLabRequest, MatchLabResult, MatchLabScenario, MatchLabSession
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { prettyLabJson } from '../components/LabJson'
 import { LabNavigation } from '../components/LabNavigation'
+import { LabScenarioAuthoring, readLabScenario } from '../components/labAuthoring/LabScenarioAuthoring'
 import { LabSessionConflict, useLabSessionEditor, validateLabSession, type LabEditorTicket } from '../components/LabSessionEditor'
 
 const traits = {
@@ -114,6 +116,7 @@ function ResultPanels({ data }: { data: MatchLabResult }): JSX.Element {
 }
 
 export function MatchTestLabPage(): JSX.Element {
+  const {language} = useLanguage(), cs = language === 'cs'
   const builtIns = useQuery({ queryKey: ['match-lab-built-ins'], queryFn: getMatchLabBuiltInScenarios, retry: false })
   const sessions = useQuery({ queryKey: ['match-lab-sessions'], queryFn: getMatchLabSessions, retry: false })
   const client = useQueryClient()
@@ -121,6 +124,7 @@ export function MatchTestLabPage(): JSX.Element {
   const { selectedSession, selectedSessionId, setSelectedSessionId, scenarioText, setScenarioText,
     sessionName, setSessionName, sessionHasUnsavedChanges, sessionConflict } = editor
   const [batchText, setBatchText] = useState('')
+  const [scratchName, setScratchName] = useState('New Match Test Session')
   const [importRunId, setImportRunId] = useState('')
   const [importBranchId, setImportBranchId] = useState('')
   const [importRevisionId, setImportRevisionId] = useState('')
@@ -225,6 +229,22 @@ export function MatchTestLabPage(): JSX.Element {
       runMutation.mutate({ scenario, seeds: parseSeeds(batchText), session: selectedSession })
     }
     catch (error) { setLocalError(error instanceof Error ? error.message : String(error)) }
+  }
+
+  const createFromDraft = () => {
+    if (selectedSession || writePending || sessionConflict) return
+    setLocalError(null)
+    try {
+      readLabScenario(scenarioText, 'match')
+      createMutation.mutate({ ticket: editor.captureEditor(), request: {
+        display_name: scratchName.trim() || 'New Match Test Session',
+        scenario: JSON.parse(scenarioText) as MatchLabScenario
+      } })
+    } catch {
+      setLocalError(cs
+        ? 'Zkontrolujte platný JSON, typ a verzi scénáře před vytvořením Session.'
+        : 'Check the scenario JSON, Lab type and schema version before creating a Session.')
+    }
   }
 
   const save = () => {
@@ -343,12 +363,23 @@ export function MatchTestLabPage(): JSX.Element {
         {selectedSession ? <label>Session name
           <input aria-label="Match Lab session name" value={sessionName} onChange={(e) => { setSessionName(e.target.value); runMutation.reset() }} />
         </label> : null}
-        <textarea aria-label="Match Lab scenario JSON" value={scenarioText} onChange={(e) => editScenario(e.target.value)}
-          rows={28} style={{ width: '100%', fontFamily: 'monospace' }} />
+        {!selectedSession ? <label>Match Lab new Session name
+          <input aria-label="Match Lab new Session name" value={scratchName} onChange={event => {
+            setScratchName(event.target.value)
+            editor.setSessionName(event.target.value)
+          }} />
+        </label> : null}
+        <LabScenarioAuthoring kind="match" text={scenarioText} onChange={editScenario}
+          jsonLabel="Match Lab scenario JSON" selection={selectedSession ? `${selectedSession.session_id}:${selectedSession.session_fingerprint}` : 'scratch'} revision={editor.editorEdit}
+          savedScenario={selectedSession?.scenario} savedName={selectedSession?.display_name}
+          sessionName={editor.sessionName} />
         <label>Batch seeds (optional, comma-separated; max 100)
           <input aria-label="Match Lab batch seeds" value={batchText} onChange={(e) => { setBatchText(e.target.value); runMutation.reset() }} placeholder="100, 101, 102" />
         </label>
         <button type="button" onClick={formatScenario} disabled={runPending || writePending}>Format JSON</button>
+        {!selectedSession ? <button type="button" onClick={createFromDraft} disabled={writePending || !scenarioText.trim()}>
+          {cs ? 'Vytvořit Session z pracovního scénáře' : 'Create Test Session from scratch'}
+        </button> : null}
         {selectedSession ? <button type="button" onClick={save} disabled={writePending || Boolean(sessionConflict)}>Save Test Session</button> : null}
         <button type="submit" disabled={runPending || writePending || Boolean(sessionConflict) || sessionHasUnsavedChanges}>{runPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run scenario'}</button>
         {sessionHasUnsavedChanges ? <p role="status">Unsaved Test Session changes. Save before running.</p> : null}

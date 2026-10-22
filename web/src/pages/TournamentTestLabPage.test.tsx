@@ -186,6 +186,29 @@ describe('TournamentTestLabPage', () => {
     api.runTournamentTestLab.mockResolvedValue(result)
   })
 
+
+  it('creates an isolated Session from a scratch tournament without applying a Run proposal', async () => {
+    const user = userEvent.setup()
+    const created = {
+      schema_version: 'tournament_test_lab_session.v1', session_id: 'draft-created',
+      display_name: 'My Tournament experiments', version: 1,
+      session_fingerprint: 'f'.repeat(64), scenario
+    }
+    api.createTournamentLabSession.mockResolvedValue(created)
+    api.getTournamentLabSessions.mockResolvedValueOnce([]).mockResolvedValue([created])
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', {name: 'Load scratch copy'}))
+    const nameInput = screen.getByLabelText('Tournament Lab new Session name')
+    await user.clear(nameInput)
+    await user.type(nameInput, 'My Tournament experiments')
+    await user.click(screen.getByRole('button', {name: 'Create Test Session from scratch'}))
+    expect(api.createTournamentLabSession).toHaveBeenCalledWith({
+      display_name: 'My Tournament experiments', scenario
+    })
+    expect(await screen.findByDisplayValue('My Tournament experiments')).toBeInTheDocument()
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+  })
+
   it('loads an editable built-in, inspects compatibility and runs a batch report', async () => {
     const user = userEvent.setup()
     renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
@@ -388,7 +411,7 @@ describe('TournamentTestLabPage', () => {
         built_in_scenario_id: 'standard-four-player'
       }
     )
-    expect(await screen.findByDisplayValue('Standard four-player — Test Session')).toBeInTheDocument()
+    expect(await screen.findByRole('textbox', { name: 'Tournament Lab session name' })).toHaveValue('Standard four-player — Test Session')
     expect(screen.getByText('isolated Test Session')).toBeInTheDocument()
 
     const nameInput = screen.getByLabelText('Tournament Lab session name')

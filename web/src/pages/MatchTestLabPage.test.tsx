@@ -71,6 +71,29 @@ describe('MatchTestLabPage', () => {
     api.importMatchLabSavedRevisionPlayer.mockResolvedValue(undefined)
   })
 
+
+  it('creates an isolated Session from the current scratch JSON without automatically running', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    const draft = JSON.parse((screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement).value)
+    const created = {
+      schema_version: 'match_test_lab_session.v1', session_id: 'scratch-created',
+      display_name: 'My Match experiments', version: 1,
+      session_fingerprint: 'f'.repeat(64), participant_imports: [], scenario: draft
+    }
+    api.createMatchLabSession.mockResolvedValue(created)
+    api.getMatchLabSessions.mockResolvedValueOnce([]).mockResolvedValue([created])
+    const nameInput = screen.getByLabelText('Match Lab new Session name')
+    await user.clear(nameInput)
+    await user.type(nameInput, 'My Match experiments')
+    await user.click(screen.getByRole('button', {name: 'Create Test Session from scratch'}))
+    expect(api.createMatchLabSession).toHaveBeenCalledWith({
+      display_name: 'My Match experiments', scenario: draft
+    })
+    expect(await screen.findByDisplayValue('My Match experiments')).toBeInTheDocument()
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+  })
+
   it('runs a portable multi-seed scenario and renders isolation diagnostics', async () => {
     const user = userEvent.setup()
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')

@@ -26,6 +26,7 @@ import type {
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { prettyLabJson } from '../components/LabJson'
 import { LabNavigation } from '../components/LabNavigation'
+import { LabScenarioAuthoring, readLabScenario } from '../components/labAuthoring/LabScenarioAuthoring'
 import { LabSessionConflict, useLabSessionEditor, validateLabSession, type LabEditorTicket } from '../components/LabSessionEditor'
 import { newCommandId } from '../admin/branchSimulation'
 
@@ -212,6 +213,7 @@ export function TournamentTestLabPage(): JSX.Element {
   const { selectedSession, selectedSessionId, setSelectedSessionId, scenarioText, setScenarioText,
     sessionName, setSessionName, sessionHasUnsavedChanges, sessionConflict } = editor
   const [batchText, setBatchText] = useState('')
+  const [scratchName, setScratchName] = useState('New Tournament Test Session')
   const [localError, setLocalError] = useState<string | null>(null)
   const [targetRunId, setTargetRunId] = useState('')
   const [targetBranchId, setTargetBranchId] = useState('')
@@ -357,6 +359,22 @@ export function TournamentTestLabPage(): JSX.Element {
       inspectMutation.mutate(scenario)
     } catch (error) {
       setLocalError(error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  const createFromDraft = () => {
+    if (selectedSession || writePending || sessionConflict) return
+    setLocalError(null)
+    try {
+      readLabScenario(scenarioText, 'tournament')
+      createMutation.mutate({ ticket: editor.captureEditor(), request: {
+        display_name: scratchName.trim() || 'New Tournament Test Session',
+        scenario: JSON.parse(scenarioText) as TournamentLabScenario
+      } })
+    } catch {
+      setLocalError(cs
+        ? 'Zkontrolujte platný JSON, typ a verzi scénáře před vytvořením Session.'
+        : 'Check the scenario JSON, Lab type and schema version before creating a Session.')
     }
   }
 
@@ -589,14 +607,16 @@ export function TournamentTestLabPage(): JSX.Element {
             runDraftApplyMutation.reset()
           }} />
         </label> : null}
-        <textarea
-          aria-label="Tournament Lab scenario JSON"
-          value={scenarioText}
-          onChange={(event) => editScenario(event.target.value)}
-          rows={30}
-          style={{ width: '100%', fontFamily: 'monospace' }}
-          placeholder="Load a built-in scenario or paste tournament_test_lab_scenario.v1 JSON."
-        />
+        {!selectedSession ? <label>Tournament Lab new Session name
+          <input aria-label="Tournament Lab new Session name" value={scratchName} onChange={event => {
+            setScratchName(event.target.value)
+            editor.setSessionName(event.target.value)
+          }} />
+        </label> : null}
+        <LabScenarioAuthoring kind="tournament" text={scenarioText} onChange={editScenario}
+          jsonLabel="Tournament Lab scenario JSON" selection={selectedSession ? `${selectedSession.session_id}:${selectedSession.session_fingerprint}` : 'scratch'} revision={editor.editorEdit}
+          savedScenario={selectedSession?.scenario} savedName={selectedSession?.display_name}
+          sessionName={editor.sessionName} />
         <label>Batch match seeds (optional, comma-separated; max 100)
           <input
             aria-label="Tournament Lab batch match seeds"
@@ -606,6 +626,9 @@ export function TournamentTestLabPage(): JSX.Element {
           />
         </label>
         <button type="button" onClick={formatScenario} disabled={runPending || writePending}>Format JSON</button>
+        {!selectedSession ? <button type="button" onClick={createFromDraft} disabled={writePending || !scenarioText.trim()}>
+          {cs ? 'Vytvořit Session z pracovního scénáře' : 'Create Test Session from scratch'}
+        </button> : null}
         {selectedSession ? <button type="button" onClick={save} disabled={writePending || Boolean(sessionConflict) || !scenarioText}>
           {saveMutation.isPending ? 'Saving…' : 'Save Test Session'}
         </button> : null}

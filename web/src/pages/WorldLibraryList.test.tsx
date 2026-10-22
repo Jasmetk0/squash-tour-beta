@@ -116,6 +116,17 @@ describe('World Package library local filters', () => {
     expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
   })
 
+  it('localizes package table and describes empty Run creation correctly', async () => {
+    locale.language = 'cs'
+    mount()
+    expect(await screen.findByText('FAX World')).toBeInTheDocument()
+    expect(screen.getByText(/Run může vzniknout i prázdný/)).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Použito v Runech' })).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Otevřít World Package' })).toHaveLength(3)
+    expect(screen.getAllByText('Vestavěný')).toHaveLength(2)
+    expect(screen.getByText('Upravitelný zdroj')).toBeInTheDocument()
+  })
+
   it('uses Czech labels and keeps a genuinely empty registry distinct from no search results', async () => {
     locale.language = 'cs'
     api.listWorldPackages.mockResolvedValue({ packages: [] })
@@ -123,7 +134,7 @@ describe('World Package library local filters', () => {
     expect(await screen.findByText('Zobrazeno 0 z 0 World Packages')).toBeInTheDocument()
     expect(screen.getByRole('searchbox', { name: 'Hledat World Package' })).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Typ World Package' })).toBeInTheDocument()
-    expect(screen.getByText(/No World Packages were returned by the registry/)).toBeInTheDocument()
+    expect(screen.getByText('Registr zatím nevrátil žádné World Packages.')).toBeInTheDocument()
     expect(screen.queryByText(/Žádné World Packages neodpovídají/)).not.toBeInTheDocument()
   })
 })

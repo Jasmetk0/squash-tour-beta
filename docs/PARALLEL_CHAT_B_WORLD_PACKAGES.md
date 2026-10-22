@@ -70,21 +70,34 @@ Repository: `Jasmetk0/squash-tour-beta`; base: `buuk` at owner-merged
 - Frontend tests are mocked at the API boundary, not actual production
   HTTP/SQLite/Chromium E2E; an end-to-end manual/hosted walkthrough and
   adversarial audit before merge remain necessary.
-- Known limitation outside ownership: the full read-only World Package geography
-  editing section has its own direct-save UI and is not fully staged/reviewed by
-  this focused Country authoring slice. Further changes there must stay in this
-  file and follow explicit backend contracts, or be coordinated with Work.
-  Country historical ratings with source evidence are intentionally not
-  mutable through the scalar form; a supported explicit year/evidence authoring
-  surface would require a separate agreed implementation.
+- The previously direct-save Timezone Area editor is now replaced with a
+  separate authored-review component in the allowed World Package directory:
+  `web/src/components/worldPackageAuthoring/TimezoneAreaEditor.tsx`.
+  It checks the backend ring constraints (nonempty, unique uppercase-format
+  codes, nonempty trimmed names, contiguous positional indexes), stages a
+  position-by-position before→after diff, captures exact source/fingerprint,
+  and handles HTTP 409 with user-authorized reload rather than automatic retry.
+  An external fingerprint change cannot silently rebase a reviewed mutation.
+  Existing Country Timezone Area references are still protected by backend
+  referential-integrity checks; UI does not invent a separate authority.
+- `TimezoneAreaEditor.test.tsx` now exercises preview confirmation, reorder
+  submission, invalid/duplicate codes, protected sources, 409 with explicit
+  reload, stale fingerprint and delayed response after source switching.
+  `WorldLibraryPage.test.tsx` also verifies dirty Timezone Area navigation
+  confirmation at the package detail route.
+- Remaining limitations: Country historical ratings with source evidence are
+  intentionally not mutable through the scalar form; a supported explicit
+  year/evidence authoring surface requires separate agreed implementation.
+  Browser Back/programmatic route interruption has not been established by
+  these Link and beforeunload guards, so its full coverage is unproven.
 - Full pre-alpha acceptance and prior 78 Viewer baseline failures from #1631
   remain independent. No claims of release readiness.
 
 ## Continuation
 
 Continue on **the same branch and #1632 only**. First inspect latest tests/CI,
-correct actual failures without dropping controls, then review paused mutation,
-back/forward navigation, clone error/success source switches and manual reload
+correct actual failures without dropping controls, then adversarially review paused mutation, browser back/forward navigation,
+clone error/success source switches, Timezone Area conflicts and manual reload
 with production services. After successful scoped checks and adversarial review,
 coordinate with Work for possible Ready/full relevant acceptance; only the
 user may merge.

@@ -3381,6 +3381,18 @@ describe('AuthoritativeSimulationPanel', () => {
 
 
   it('pins an offline-queued pause to its original Run, Branch and parent after changing context',async()=>{
+    localStorage.setItem('squash-engine-language-v1','en')
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
       schema_version:'authoritative_full_simulation_pending_collection.v1',
       run_id:'run-a',branch_id:'branch-a',legacy_pending_count:0,

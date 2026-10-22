@@ -110,18 +110,18 @@ function fieldsFor(kind: LabKind, scenario: JsonObject): Field[] {
   }
   if (kind === 'match') {
     numeric(['seed'], 'Seed', 'Seed')
-    numeric(['context', 'best_of'], 'Best of sets', 'Počet setů (best of)', 1, 9, true, true)
-    numeric(['context', 'games_to'], 'Points per game', 'Bodů v gamu', 1, 99)
-    numeric(['context', 'win_by'], 'Win by', 'Rozdíl pro výhru', 1, 20)
+    numeric(['context', 'best_of'], 'Best of sets', 'Počet setů (best of)', 1, undefined, true, true)
+    numeric(['context', 'games_to'], 'Points per game', 'Bodů v gamu', 1)
+    numeric(['context', 'win_by'], 'Win by', 'Rozdíl pro výhru', 1)
     numeric(['context', 'upset_variance'], 'Upset variance', 'Variabilita překvapení', 0, 0.35, false)
   }
   if (kind === 'tournament') {
     if (typeof scenario.display_name === 'string') result.push({ path: ['display_name'], en: 'Tournament name', cs: 'Název turnaje' })
     numeric(['draw_seed'], 'Draw seed', 'Seed losu')
     numeric(['match_seed'], 'Match seed', 'Seed zápasů')
-    numeric(['match_format', 'best_of'], 'Best of sets', 'Počet setů (best of)', 1, 9, true, true)
-    numeric(['match_format', 'games_to'], 'Points per game', 'Bodů v gamu', 1, 99)
-    numeric(['match_format', 'win_by'], 'Win by', 'Rozdíl pro výhru', 1, 20)
+    numeric(['match_format', 'best_of'], 'Best of sets', 'Počet setů (best of)', 1, undefined, true, true)
+    numeric(['match_format', 'games_to'], 'Points per game', 'Bodů v gamu', 1)
+    numeric(['match_format', 'win_by'], 'Win by', 'Rozdíl pro výhru', 1)
     numeric(['match_format', 'upset_variance'], 'Upset variance', 'Variabilita překvapení', 0, 0.35, false)
   }
   if (kind === 'player' && scenario.seed !== undefined) numeric(['seed'], 'Seed', 'Seed')
@@ -221,6 +221,9 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
     <p className="status">{cs
       ? 'Strukturované úpravy mění jen uvedená pole; ostatní JSON a provenience zůstávají zachovány. Konečnou validaci provádí backend.'
       : 'Guided edits change only the displayed fields; all other JSON and provenance are preserved. The backend remains the final validator.'}</p>
+    <button type="button" onClick={() => setMode(mode === 'form' ? 'json' : 'form')}>
+      {mode === 'form' ? (cs ? 'Přepnout na JSON' : 'Switch to advanced JSON') : (cs ? 'Upravit pomocí formuláře' : 'Edit with guided form')}
+    </button>{' '}
     <label>{cs ? 'Režim editoru' : 'Editor mode'}{' '}
       <select aria-label={kind + ' Lab editor mode'} value={mode} onChange={event => setMode(event.target.value as 'form' | 'json')}>
         <option value="form">{cs ? 'Strukturovaný editor' : 'Guided editor'}</option>

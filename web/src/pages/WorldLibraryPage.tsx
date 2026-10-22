@@ -1073,9 +1073,9 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     {data && <>
       <div className="page-intro"><h2>{data.country.name}</h2><p className="subtitle"><code>{data.country.code}</code></p></div>
       <p><strong>{data.package.name} · {data.package.type === 'custom' ? 'Custom' : 'Built-in'} · {canEdit ? 'Editable source' : 'Read-only'}</strong></p>
-      {canEdit && !editing && !populationEditing && <button type="button" disabled={pending} onClick={() => { setEditing(true); setSuccess(''); setWriteError(null) }}>{cs ? 'Upravit zemi' : 'Edit country'}</button>}
+      {canEdit && !editing && !populationEditing && <button type="button" disabled={pending} onClick={() => { setEditing(true); setConfirmDelete(false); setSuccess(''); setWriteError(null) }}>{cs ? 'Upravit zemi' : 'Edit country'}</button>}
       {canEdit && !editing && !populationEditing && <button type="button" disabled={pending} onClick={() => { setConfirmDelete(true); setWriteError(null) }}>{cs ? 'Smazat zemi' : 'Delete country'}</button>}
-      {canEdit && confirmDelete && <SectionCard title={`${cs ? 'Smazat' : 'Delete'} ${data.country.code} — ${data.country.name}?`}>
+      {canEdit && confirmDelete && !editing && !populationEditing && <SectionCard title={`${cs ? 'Smazat' : 'Delete'} ${data.country.code} — ${data.country.name}?`}>
         <p>{cs ? 'Tím se země odstraní z vlastní kopie World Package. Existující Runy se nezmění.' : 'This removes the country from this custom World Package. Existing Runs are unchanged.'}</p>
         <p>World Package: <code>{worldId}</code> · Fingerprint: <code>{data.package.fingerprint}</code></p>
         <button type="button" disabled={pending} onClick={() => {
@@ -1098,7 +1098,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
         {data.country.notes && <DetailRow label="Notes" value={data.country.notes} />}
       </SectionCard>}
       {!populationEditing && <SectionCard title="Population">
-        {canEdit && !editing && <button type="button" disabled={pending} onClick={() => { setPopulationEditing(true); setSuccess(''); setWriteError(null) }}>{cs ? 'Upravit populaci' : 'Edit population'}</button>}
+        {canEdit && !editing && <button type="button" disabled={pending} onClick={() => { setPopulationEditing(true); setConfirmDelete(false); setSuccess(''); setWriteError(null) }}>{cs ? 'Upravit populaci' : 'Edit population'}</button>}
         <DetailRow label="Effective/default population" value={formatNumber(data.country.default_population ?? data.country.population)} /><DetailRow label="Default authored year" value={data.country.default_population_year ?? '—'} /><DetailRow label="Authored population years" value={timeline.length} /><DetailRow label="Earliest authored year" value={timeline[0]?.[0] ?? '—'} /><DetailRow label="Latest authored year" value={timeline[timeline.length - 1]?.[0] ?? '—'} />
         <div style={{maxHeight: '28rem', overflowY: 'auto'}}><table aria-label="Authored population timeline"><thead><tr><th>Year</th><th>Population</th></tr></thead><tbody>{timeline.map(([year, value]) => <tr key={year}><td>{year}{year === '2020' ? ' · Default year' : ''}</td><td>{formatNumber(value)}</td></tr>)}</tbody></table></div>
       </SectionCard>}

@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useState } from 'react'
+import { ChangeEvent, useEffect, useRef, useState } from 'react'
 import { useLanguage } from '../../i18n/LanguageContext'
 
 export type LabKind = 'match' | 'tournament' | 'player'
@@ -84,6 +84,24 @@ export function changePlayerWeeks(text: string, weeks: number): string {
   }, null, 2)
 }
 
+/** Edit a variant's existing workload without changing its length or Health timeline. */
+export function changePlayerMatchCounts(text: string, index: number, raw: string): string {
+  const scenario = readLabScenario(text, 'player')
+  const variants = scenario.variants as JsonObject[]
+  if (!Number.isSafeInteger(index) || index < 0 || index >= variants.length) throw new Error('shape')
+  const existing = variants[index].competitive_match_counts as unknown[]
+  const parts = raw.split(',').map(value => value.trim())
+  if (parts.length !== existing.length || parts.some(value => !/^\\d+$/.test(value))) throw new Error('counts')
+  const numbers = parts.map(Number)
+  if (numbers.some(value => !Number.isSafeInteger(value) || value < 0 || value > 32)) throw new Error('counts')
+  return JSON.stringify({
+    ...scenario,
+    variants: variants.map((variant, position) => position === index ? {
+      ...variant, competitive_match_counts: numbers
+    } : variant)
+  }, null, 2)
+}
+
 function changes(oldValue: unknown, newValue: unknown, prefix: string, output: string[]): void {
   if (JSON.stringify(oldValue) === JSON.stringify(newValue)) return
   if (output.length >= 40) return
@@ -136,6 +154,7 @@ const messages: Record<string, [string, string]> = {
   shape: ['Scenario structure is incomplete. Check the advanced JSON editor.', 'Scénář nemá úplnou strukturu. Zkontrolujte pokročilý JSON editor.'],
   number: ['Enter a valid number within the supported range.', 'Zadejte platné číslo v povoleném rozsahu.'],
   weeks: ['Duration must be 1–61 weeks.', 'Délka musí být 1–61 týdnů.'],
+  counts: ['Enter one comma-separated integer (0–32) per existing week.', 'Zadejte za každý existující týden jedno celé číslo (0–32) oddělené čárkou.'],
   health: ['Duration cannot be changed here because the explicit Health timeline must stay aligned. Use advanced JSON.', 'Délku zde nelze změnit: explicitní Health časová osa musí zůstat sladěná. Použijte pokročilý JSON.'],
   size: ['JSON file exceeds the 2 MB limit.', 'Soubor JSON překračuje limit 2 MB.'],
   stale: ['The editor changed while the file was being read. No file was applied.', 'Editor se během čtení souboru změnil. Soubor nebyl použit.'],
@@ -145,6 +164,25 @@ const messages: Record<string, [string, string]> = {
 function explain(error: unknown, cs: boolean): string {
   const key = error instanceof Error ? error.message : 'file'
   return (messages[key] ?? messages.file)[cs ? 1 : 0]
+}
+
+
+function VariantMatchCountsEditor({ id, values, index, cs, busy, onApply }: {
+  id: string; values: number[]; index: number; cs: boolean; busy: boolean
+  onApply: (index: number, draft: string) => void
+}): JSX.Element {
+  const original = values.join(', ')
+  const [draft, setDraft] = useState(original)
+  useEffect(() => { setDraft(original) }, [original])
+  return <div>
+    <label>{cs ? 'Zápasy za týden' : 'Weekly matches'} — <code>{id}</code>{' '}
+      <input aria-label={'player Lab variant ' + id + ' weekly matches'} type="text"
+        value={draft} disabled={busy} onChange={event => setDraft(event.target.value)}
+        onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }} />
+    </label>{' '}
+    <button type="button" disabled={busy || draft === original}
+      onClick={() => onApply(index, draft)}>{cs ? 'Použít týdenní počty' : 'Apply weekly counts'}</button>
+  </div>
 }
 
 export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, savedName, sessionName, selection, revision, jsonLabel, busy = false }: {
@@ -243,6 +281,13 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
             }} />
         </label>
       })}
+      {kind === 'player' && variants.map((variant, index) => <VariantMatchCountsEditor
+        key={String(variant.variant_id) + ':' + selection} id={String(variant.variant_id)}
+        values={variant.competitive_match_counts as number[]} index={index} cs={cs} busy={busy}
+        onApply={(position, draft) => {
+          try { edit(changePlayerMatchCounts(text, position, draft)) }
+          catch (reason) { setError(explain(reason, cs)) }
+        }} />)}
       {kind === 'player' && variants.length > 0 && <label>
         {cs ? 'Počet týdnů experimentu' : 'Experiment weeks'}{' '}
         <input type="number" aria-label="player Lab experiment duration" min={1} max={61}

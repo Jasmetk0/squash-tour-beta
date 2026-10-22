@@ -41,7 +41,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
   const { runId = '', snapshotSequence = '' } = useParams()
   // parseInt accepts invalid route suffixes such as "12abc" or "1.5".
   // Only a complete positive safe integer may identify a stored snapshot.
-  const parsedSequence = /^\\d+$/.test(snapshotSequence) ? Number(snapshotSequence) : NaN
+  const parsedSequence = /^\d+$/.test(snapshotSequence) ? Number(snapshotSequence) : NaN
   const isValidSequence = Number.isSafeInteger(parsedSequence) && parsedSequence > 0
 
   const snapshotQuery = useQuery({

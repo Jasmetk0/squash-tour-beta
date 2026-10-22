@@ -6,6 +6,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { cloneWorldPackage, createWorldPackageCountry, deleteWorldPackageCountry, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, replaceWorldPackageTimezoneAreas, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
 import type { CountryRecord, WorldPackage, WorldPackageClonePayload, WorldPackageCloneResponse, WorldPackageCountryCreatePayload, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
+import { TimezoneAreaEditor } from '../components/worldPackageAuthoring/TimezoneAreaEditor'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import { fieldChanges, isFingerprintConflict, parseInteger, parsePopulations, parseRating, populationChanges, requiredName } from '../components/worldPackageAuthoring/review'
@@ -241,7 +242,7 @@ function CloneResultCard({ result }: { result: WorldPackageCloneResponse }): JSX
   )
 }
 
-function CloneBuiltInWorldSection({ source }: { source: WorldPackage }): JSX.Element {
+function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPackage; onDirtyChange: (dirty: boolean) => void }): JSX.Element {
   const queryClient = useQueryClient()
   const { language } = useLanguage()
   const cs = language === 'cs'
@@ -257,7 +258,9 @@ function CloneBuiltInWorldSection({ source }: { source: WorldPackage }): JSX.Ele
     setNewWorldId(''); setName(''); setDescription(`Custom world cloned from ${source.name}.`)
     setResult(null); setApiError(null); setReview(null)
   }, [source.world_id, source.name])
-  useUnsavedWorldPackageWarning(Boolean(newWorldId || name || description !== `Custom world cloned from ${source.name}.` || review))
+  const cloneHasDraft = Boolean(newWorldId || name || description !== `Custom world cloned from ${source.name}.` || review)
+  useUnsavedWorldPackageWarning(cloneHasDraft)
+  useEffect(() => { onDirtyChange(cloneHasDraft); return () => onDirtyChange(false) }, [cloneHasDraft, onDirtyChange])
   const mutation = useMutation({
     mutationFn: (command: { sourceWorldId: string; payload: WorldPackageClonePayload }) => cloneWorldPackage(command.sourceWorldId, command.payload),
     onSuccess: (response, command) => {
@@ -431,21 +434,35 @@ function ValidationSection({ validation }: { validation: WorldPackageValidation 
   )
 }
 
-function GeographySection({ geography, pkg }: { geography: WorldPackageGeography, pkg: WorldPackage }): JSX.Element {
-  const queryClient = useQueryClient()
-  const [areas, setAreas] = useState(geography.timezone_areas ?? [])
-  const mutation = useMutation({ mutationFn: () => replaceWorldPackageTimezoneAreas(pkg.world_id, areas.map((area, position) => ({...area, position})), pkg.fingerprint), onSuccess: async () => { await Promise.all([queryClient.invalidateQueries({queryKey:['world-package-geography',pkg.world_id]}), queryClient.invalidateQueries({queryKey:['world-package',pkg.world_id]}), queryClient.invalidateQueries({queryKey:['world-packages']})]) } })
-  const editable = pkg.type === 'custom' && pkg.editable
-  return <SectionCard title="Geography">
-    <h4>Continents</h4>
-    <table><thead><tr><th>Code</th><th>Name</th></tr></thead><tbody>{geography.continents.map((item) => <tr key={item.code}><td><code>{item.code}</code></td><td>{item.name}</td></tr>)}</tbody></table>
-    <h4>Regions</h4>
-    <table><thead><tr><th>Code</th><th>Name</th><th>Continent</th></tr></thead><tbody>{geography.regions.map((item) => <tr key={item.code}><td><code>{item.code}</code></td><td>{item.name}</td><td>{geography.continents.find((continent) => continent.code === item.continent_code)?.name ?? '—'}</td></tr>)}</tbody></table>
-    <h4>Travel Regions</h4>
-    <table><thead><tr><th>Code</th><th>Name</th><th>Description</th></tr></thead><tbody>{geography.travel_regions.map((item) => <tr key={item.code}><td><code>{item.code}</code></td><td>{item.name}</td><td>{item.description ?? '—'}</td></tr>)}</tbody></table>
-    <h4>Timezone Areas</h4>
-    {!geography.timezone_areas_authored && !editable && <p className="status">Unavailable — this package has not yet authored the Timezone Area layer.</p>}
-    {(geography.timezone_areas_authored || editable) && <><p>Ordered circular topology; the first and last rows are adjacent. This is independent from Travel Regions.</p><table><thead><tr><th>Position</th><th>Code</th><th>Name</th>{editable && <th>Action</th>}</tr></thead><tbody>{areas.map((area,index)=><tr key={`${area.code}-${index}`}><td>{index}</td><td>{editable?<input aria-label={`Timezone Area code ${index}`} value={area.code} onChange={e=>setAreas(current=>current.map((x,i)=>i===index?{...x,code:e.target.value}:x))}/>:<code>{area.code}</code>}</td><td>{editable?<input aria-label={`Timezone Area name ${index}`} value={area.name} onChange={e=>setAreas(current=>current.map((x,i)=>i===index?{...x,name:e.target.value}:x))}/>:area.name}</td>{editable&&<td><button type="button" disabled={index===0} onClick={()=>setAreas(current=>current.map((item,i)=>i===index-1?current[index]:i===index?current[index-1]:item))}>Move Up</button> <button type="button" disabled={index===areas.length-1} onClick={()=>setAreas(current=>current.map((item,i)=>i===index+1?current[index]:i===index?current[index+1]:item))}>Move Down</button> <button type="button" onClick={()=>setAreas(current=>current.filter((_,i)=>i!==index))}>Remove</button></td>}</tr>)}</tbody></table>{editable&&<p><button type="button" onClick={()=>setAreas(current=>[...current,{code:'',name:'',position:current.length}])}>Add Timezone Area</button> <button type="button" disabled={mutation.isPending} onClick={()=>mutation.mutate()}>Save Timezone Areas</button></p>}{mutation.error&&<p className="error">{formatApiError(mutation.error)}</p>}</>}
+function GeographySection({ geography, pkg, onDirtyChange }: {
+  geography: WorldPackageGeography; pkg: WorldPackage; onDirtyChange: (dirty: boolean) => void
+}): JSX.Element {
+  const { language } = useLanguage()
+  const cs = language === 'cs'
+  const editable = pkg.type === 'custom' && pkg.source === 'custom_config' && pkg.editable
+  return <SectionCard title={cs ? 'Geografie' : 'Geography'}>
+    <h4>{cs ? 'Kontinenty' : 'Continents'}</h4>
+    <table><thead><tr><th>Code</th><th>Name</th></tr></thead><tbody>{geography.continents.map(item =>
+      <tr key={item.code}><td><code>{item.code}</code></td><td>{item.name}</td></tr>)}</tbody></table>
+    <h4>{cs ? 'Regiony' : 'Regions'}</h4>
+    <table><thead><tr><th>Code</th><th>Name</th><th>Continent</th></tr></thead>
+      <tbody>{geography.regions.map(item =>
+        <tr key={item.code}><td><code>{item.code}</code></td><td>{item.name}</td>
+          <td>{geography.continents.find(continent => continent.code === item.continent_code)?.name ?? '—'}</td></tr>)}</tbody>
+    </table>
+    <h4>{cs ? 'Cestovní regiony' : 'Travel Regions'}</h4>
+    <table><thead><tr><th>Code</th><th>Name</th><th>Description</th></tr></thead>
+      <tbody>{geography.travel_regions.map(item =>
+        <tr key={item.code}><td><code>{item.code}</code></td><td>{item.name}</td><td>{item.description ?? '—'}</td></tr>)}</tbody>
+    </table>
+    <h4>{cs ? 'Časové oblasti' : 'Timezone Areas'}</h4>
+    {!editable && !geography.timezone_areas_authored &&
+      <p className="status">{cs ? 'Tento balíček zatím nemá vlastní časové oblasti.' : 'Unavailable — this package has not authored Timezone Areas.'}</p>}
+    {!editable && geography.timezone_areas_authored &&
+      <table><thead><tr><th>Position</th><th>Code</th><th>Name</th></tr></thead>
+        <tbody>{geography.timezone_areas.map(item => <tr key={item.code}><td>{item.position}</td>
+          <td><code>{item.code}</code></td><td>{item.name}</td></tr>)}</tbody></table>}
+    {editable && <TimezoneAreaEditor pkg={pkg} geography={geography} onDirtyChange={onDirtyChange} />}
   </SectionCard>
 }
 
@@ -695,6 +712,13 @@ export function WorldPackageCountriesPage(): JSX.Element {
 
 export function WorldLibraryDetailPage(): JSX.Element {
   const { worldId = '' } = useParams()
+  const { language } = useLanguage()
+  const cs = language === 'cs'
+  const [geographyDirty, setGeographyDirty] = useState(false)
+  const [cloneDirty, setCloneDirty] = useState(false)
+  const confirmNavigate = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if ((geographyDirty || cloneDirty) && !window.confirm(cs ? 'Zahodit neuložené změny World Package?' : 'Discard unsaved World Package changes?')) event.preventDefault()
+  }
   const packageQuery = useQuery({
     queryKey: ['world-package', worldId],
     queryFn: () => getWorldPackage(worldId),
@@ -708,7 +732,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
     retry: false
   })
   const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), enabled: Boolean(worldId), retry: false })
-  const pkg = packageQuery.data
+  const pkg = packageQuery.data?.world_id === worldId ? packageQuery.data : undefined
 
   return (
     <section className="panel">
@@ -716,13 +740,13 @@ export function WorldLibraryDetailPage(): JSX.Element {
         <h2>World Package Details</h2>
         <p className="subtitle">Read-only inspection of a registered World Package.</p>
       </div>
-      <p><Link to="/admin/world/library">Back to World Library</Link></p>
+      <p><Link to="/admin/world/library" onClick={confirmNavigate}>Back to World Library</Link></p>
       {packageQuery.isLoading && <p className="status">Loading World Package...</p>}
       {packageQuery.error && <p className="error">Failed to load World Package: {formatApiError(packageQuery.error)}</p>}
       {pkg && (
         <>
           <h2>{pkg.name}</h2><p><code>{pkg.world_id}</code></p><p><strong>{pkg.type === 'custom' ? 'Custom' : 'Built-in'} · {pkg.editable ? 'Editable source' : 'Read-only'}</strong></p>
-          <nav aria-label="Package sections"><a href="#overview">Overview</a> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Countries</Link> · <a href="#geography">Geography</a> · <a href="#validation">Validation</a></nav>
+          <nav aria-label="Package sections"><a href="#overview">Overview</a> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`} onClick={confirmNavigate}>Countries</Link> · <a href="#geography">Geography</a> · <a href="#validation">Validation</a></nav>
           <div id="overview" />
           <SectionCard title="Metadata">
             <DetailRow label="Name" value={pkg.name} />
@@ -740,7 +764,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
             <DetailRow label="Archivable" value={yesNo(pkg.archivable, 'Archivable', 'Not archivable')} />
             <p className="status">Built-in World Packages are protected repository inputs. Custom clones are independent editable sources; existing Runs keep their own saved snapshots.</p>
           </SectionCard>
-          {pkg.type === 'official' && pkg.source === 'built_in' && <CloneBuiltInWorldSection source={pkg} />}
+          {pkg.type === 'official' && pkg.source === 'built_in' && <CloneBuiltInWorldSection key={pkg.world_id} source={pkg} onDirtyChange={setCloneDirty} />}
           <SectionCard title="Contents">
             <DetailRow label="Countries" value={<><span>{pkg.country_count}</span> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Open package countries</Link></>} />
             <DetailRow label="Continents" value={pkg.continent_count} />
@@ -754,7 +778,8 @@ export function WorldLibraryDetailPage(): JSX.Element {
           <div id="geography" />
           {geographyQuery.isLoading && <p className="status">Loading geography...</p>}
           {geographyQuery.error && <p className="error">Failed to load geography: {formatApiError(geographyQuery.error)}</p>}
-          {geographyQuery.data && <GeographySection geography={geographyQuery.data} pkg={pkg} />}
+          {geographyQuery.data?.world_id === pkg.world_id &&
+            <GeographySection key={pkg.world_id} geography={geographyQuery.data} pkg={pkg} onDirtyChange={setGeographyDirty} />}
           <div id="validation" />
           {validationQuery.isLoading && (
             <SectionCard title="World Package Validation">

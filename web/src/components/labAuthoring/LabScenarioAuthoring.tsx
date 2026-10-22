@@ -30,6 +30,131 @@ export function readLabScenario(text: string, kind: LabKind): JsonObject {
   return value
 }
 
+export type LabPreflightIssue = {
+  path: string
+  en: string
+  cs: string
+}
+
+/** Advisory browser-only diagnostics for *known* backend invariants, never an authority or save gate. */
+export function inspectLabScenarioDraft(text: string, kind: LabKind): LabPreflightIssue[] {
+  const scenario = readLabScenario(text, kind)
+  const issues: LabPreflightIssue[] = []
+  const add = (path: string, en: string, cs: string) => {
+    if (issues.length < 16) issues.push({ path, en, cs })
+  }
+  const positive = (value: unknown) => Number.isSafeInteger(value) && (value as number) >= 1
+  const format = (data: JsonObject, path: string) => {
+    if (data.best_of !== undefined && (!positive(data.best_of) || (data.best_of as number) % 2 === 0))
+      add(path + '.best_of', 'Best-of must be a positive odd integer.', 'Počet setů musí být kladné liché celé číslo.')
+    for (const key of ['games_to', 'win_by']) {
+      if (data[key] !== undefined && !positive(data[key]))
+        add(path + '.' + key, 'Match scoring must be a positive integer.', 'Bodování zápasu musí být kladné celé číslo.')
+    }
+    if (data.upset_variance !== undefined && (typeof data.upset_variance !== 'number'
+      || !Number.isFinite(data.upset_variance) || data.upset_variance < 0 || data.upset_variance > 0.35))
+      add(path + '.upset_variance', 'Upset variance must be between 0 and 0.35.', 'Variabilita překvapení musí být od 0 do 0,35.')
+  }
+  const playerId = (participant: unknown): string | null => {
+    if (!object(participant) || !object(participant.player)) return null
+    const id = participant.player.player_id
+    return typeof id === 'string' && id.length > 0 ? id : null
+  }
+  const modifierCheck = (participant: unknown, path: string) => {
+    if (!object(participant)) return
+    for (const { key } of modifierOptions) {
+      const value = participant[key]
+      if (value !== undefined && (typeof value !== 'number' || !Number.isFinite(value) || value < -0.35 || value > 0.35))
+        add(path + '.' + key, 'Context modifier must be between −0.35 and 0.35.', 'Kontextový modifikátor musí být od −0,35 do 0,35.')
+    }
+  }
+
+  if (kind === 'match') {
+    const context = scenario.context as JsonObject
+    const ids = [playerId(context.player_a), playerId(context.player_b)]
+    ids.forEach((id, index) => {
+      if (!id) add(index === 0 ? 'context.player_a.player.player_id' : 'context.player_b.player.player_id',
+        'A match participant needs a player ID.', 'Účastník zápasu musí mít ID hráče.')
+    })
+    if (ids[0] && ids[0] === ids[1])
+      add('context.player_b.player.player_id', 'Match players must have distinct IDs.', 'Hráči zápasu musí mít různá ID.')
+    format(context, 'context')
+    modifierCheck(context.player_a, 'context.player_a')
+    modifierCheck(context.player_b, 'context.player_b')
+    if (object(context.retirement_rule) && context.retirement_rule.enabled === true) {
+      const rule = context.retirement_rule
+      if (!ids.includes(rule.retired_player_id as string))
+        add('context.retirement_rule.retired_player_id', 'Retired player must belong to this match.', 'Ukončující hráč musí patřit do tohoto zápasu.')
+      if ((rule.trigger === undefined || rule.trigger === 'explicit_set_start') && !positive(rule.set_number))
+        add('context.retirement_rule.set_number', 'Explicit retirement needs a positive set number.', 'Explicitní ukončení vyžaduje kladné číslo setu.')
+    }
+  }
+
+  if (kind === 'tournament') {
+    const entries = scenario.participants as unknown[]
+    if (entries.length < 2 || entries.length > 128)
+      add('participants', 'Tournament requires 2–128 participants.', 'Turnaj vyžaduje 2–128 účastníků.')
+    const ids = entries.map(playerId)
+    if (ids.some(id => !id))
+      add('participants', 'Every participant needs a player ID.', 'Každý účastník musí mít ID hráče.')
+    const valid = ids.filter((id): id is string => id !== null)
+    if (new Set(valid).size !== valid.length)
+      add('participants', 'Player IDs must be unique.', 'ID hráčů se nesmí opakovat.')
+    entries.forEach((participant, index) => modifierCheck(participant, 'participants.' + index))
+    if (!Number.isSafeInteger(scenario.main_draw_size) || (scenario.main_draw_size as number) < 2
+      || (scenario.main_draw_size as number) > 128)
+      add('main_draw_size', 'Main draw size must be an integer from 2 to 128.', 'Velikost hlavního pavouku musí být celé číslo od 2 do 128.')
+    const ordered = scenario.seed_order_player_ids
+    if (ordered !== undefined) {
+      if (!Array.isArray(ordered) || ordered.some(id => typeof id !== 'string'
+        || !valid.includes(id)) || new Set(ordered).size !== ordered.length)
+        add('seed_order_player_ids', 'Seed priority IDs must be unique existing tournament players.', 'ID v pořadí nasazení musí být unikátní a patřit účastníkům turnaje.')
+    }
+    format(scenario.match_format as JsonObject, 'match_format')
+    const stop = scenario.stop_after_round
+    if (stop !== undefined && stop !== null && (!Number.isSafeInteger(stop) || (stop as number) < 1 || (stop as number) > 7))
+      add('stop_after_round', 'Round limit must be 1–7 or empty.', 'Limit kola musí být od 1 do 7 nebo prázdný.')
+    if (scenario.assertions !== undefined) {
+      if (!object(scenario.assertions)) add('assertions', 'Assertions must be an object.', 'Očekávání musí být objekt.')
+      else {
+        const matches = scenario.assertions.expected_played_match_count
+        if (matches !== undefined && matches !== null && (!Number.isSafeInteger(matches) || (matches as number) < 0))
+          add('assertions.expected_played_match_count', 'Expected played matches must be a nonnegative integer.', 'Očekávaný počet zápasů musí být nezáporné celé číslo.')
+      }
+    }
+  }
+
+  if (kind === 'player') {
+    const variants = scenario.variants as unknown[]
+    if (scenario.schema_version === 'player_test_lab_scenario.v2' && variants.length > 16)
+      add('variants', 'Calendar Player Lab supports at most 16 variants.', 'Kalendářní Player Lab podporuje nejvýše 16 variant.')
+    const ids = variants.map(v => object(v) ? v.variant_id : undefined)
+    if (ids.some(id => typeof id !== 'string' || !id))
+      add('variants', 'Every variant needs a nonempty ID.', 'Každá varianta musí mít neprázdné ID.')
+    else if (ids.join('\u0000') !== [...new Set(ids as string[])].sort().join('\u0000'))
+      add('variants', 'Variant IDs must be unique and in canonical alphabetical order.', 'ID variant musí být unikátní a v kanonickém abecedním pořadí.')
+    const lengths = variants.map(v => object(v) && Array.isArray(v.competitive_match_counts)
+      ? v.competitive_match_counts.length : 0)
+    if (lengths.some(n => n < 1 || n > 61))
+      add('variants.competitive_match_counts', 'Every workload must cover 1–61 weeks.', 'Každá zátěž musí pokrýt 1–61 týdnů.')
+    if (new Set(lengths).size > 1)
+      add('variants.competitive_match_counts', 'All variants must cover the same number of weeks.', 'Všechny varianty musí mít stejný počet týdnů.')
+    variants.forEach((variant, index) => {
+      if (!object(variant) || !Array.isArray(variant.competitive_match_counts)) return
+      if (variant.competitive_match_counts.some(n => !Number.isSafeInteger(n) || n < 0 || n > 32))
+        add('variants.' + index + '.competitive_match_counts', 'Weekly competitive matches must be integers from 0 to 32.', 'Týdenní počet soutěžních zápasů musí být celé číslo od 0 do 32.')
+      if (variant.health_timeline !== undefined && variant.health_timeline !== null) {
+        if (scenario.schema_version === 'player_test_lab_scenario.v2')
+          add('variants.' + index + '.health_timeline', 'Calendar v2 uses its source Health; explicit timelines are not supported.', 'Kalendářní verze v2 používá zdrojové zdraví; explicitní časová osa není podporována.')
+        else if (!Array.isArray(variant.health_timeline)
+          || variant.health_timeline.length !== variant.competitive_match_counts.length + 1)
+          add('variants.' + index + '.health_timeline', 'Health timeline needs a start state plus one state per simulated week.', 'Zdravotní časová osa musí obsahovat počáteční stav a jeden stav za každý týden.')
+      }
+    })
+  }
+  return issues
+}
+
 function fieldValue(scenario: JsonObject, path: string[]): unknown {
   let current: unknown = scenario
   for (const part of path) {
@@ -636,6 +761,22 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
     <p className="status">{cs
       ? 'Strukturované úpravy mění jen uvedená pole; ostatní JSON a provenience zůstávají zachovány. Konečnou validaci provádí backend.'
       : 'Guided edits change only the displayed fields; all other JSON and provenance are preserved. The backend remains the final validator.'}</p>
+    {parsed && <div aria-label={kind + ' Lab local preflight'}>
+      {(() => {
+        const checks = inspectLabScenarioDraft(text, kind)
+        return checks.length ? <>
+          <strong>{cs ? 'Místní kontrola vstupů' : 'Local input preflight'}: {checks.length}{checks.length === 16 ? '+' : ''}</strong>
+          <p className="status">{cs
+            ? 'Tyto vstupy pravděpodobně odmítne backend. Opravte je před spuštěním; konečnou kontrolu provádí server.'
+            : 'These inputs are likely to be rejected by the backend. Repair them before running; the server remains the final validator.'}</p>
+          <ul>{checks.map((issue, index) => <li key={issue.path + ':' + index}>
+            <code>{issue.path}</code>: {cs ? issue.cs : issue.en}
+          </li>)}</ul>
+        </> : <p className="status">{cs
+          ? 'Místní kontrola: bez zjištěných základních chyb. Kompatibilitu musí stále potvrdit backend.'
+          : 'Local preflight: no basic input issues found. Backend compatibility is still required.'}</p>
+      })()}
+    </div>}
     <button type="button" onClick={() => setMode(mode === 'form' ? 'json' : 'form')}>
       {mode === 'form' ? (cs ? 'Přepnout na JSON' : 'Switch to advanced JSON') : (cs ? 'Pouze strukturovaný editor' : 'Guided editor only')}
     </button>{' '}

@@ -75,12 +75,27 @@ export function WorldLibraryPage(): JSX.Element {
   const packagesQuery = useQuery({ queryKey: ['world-packages'], queryFn: listWorldPackages, retry: false })
   const [search, setSearch] = useState('')
   const [packageType, setPackageType] = useState<'all' | 'built_in' | 'custom'>('all')
+  const [packageStatus, setPackageStatus] = useState<'all' | 'active' | 'archived'>('all')
+  const [sortBy, setSortBy] = useState<'registry' | 'name' | 'countries'>('registry')
   const packages = packagesQuery.data?.packages ?? []
   const normalizedSearch = search.trim().toLocaleLowerCase()
+  const hasFilters = search !== '' || packageType !== 'all' || packageStatus !== 'all' || sortBy !== 'registry'
   const visiblePackages = packages.filter(pkg =>
-    (packageType === 'all' || (packageType === 'custom' ? pkg.type === 'custom' : pkg.type !== 'custom')) &&
+    (packageType === 'all' || (packageType === 'custom' ? pkg.type === 'custom' : pkg.type === 'official')) &&
+    (packageStatus === 'all' || pkg.status === packageStatus) &&
     (normalizedSearch === '' || `${pkg.name} ${pkg.world_id}`.toLocaleLowerCase().includes(normalizedSearch))
   )
+  if (sortBy !== 'registry') {
+    visiblePackages.sort((a, b) => sortBy === 'countries'
+      ? b.country_count - a.country_count || a.world_id.localeCompare(b.world_id)
+      : a.name.localeCompare(b.name) || a.world_id.localeCompare(b.world_id))
+  }
+  const resetFilters = () => {
+    setSearch('')
+    setPackageType('all')
+    setPackageStatus('all')
+    setSortBy('registry')
+  }
 
   return (
     <section className="panel">
@@ -112,14 +127,33 @@ export function WorldLibraryPage(): JSX.Element {
                 <option value="custom">{cs ? 'Vlastní' : 'Custom'}</option>
               </select>
             </label>
+            <label>
+              {cs ? 'Stav World Package' : 'World Package status'}
+              <select value={packageStatus} onChange={event => setPackageStatus(event.target.value as typeof packageStatus)}>
+                <option value="all">{cs ? 'Všechny stavy' : 'All statuses'}</option>
+                <option value="active">{cs ? 'Aktivní' : 'Active'}</option>
+                <option value="archived">{cs ? 'Archivované' : 'Archived'}</option>
+              </select>
+            </label>
+            <label>
+              {cs ? 'Seřadit World Packages' : 'Sort World Packages'}
+              <select value={sortBy} onChange={event => setSortBy(event.target.value as typeof sortBy)}>
+                <option value="registry">{cs ? 'Pořadí registru' : 'Registry order'}</option>
+                <option value="name">{cs ? 'Podle názvu (A–Z)' : 'Name (A–Z)'}</option>
+                <option value="countries">{cs ? 'Podle počtu zemí (sestupně)' : 'Country count (descending)'}</option>
+              </select>
+            </label>
           </div>
+          <button type="button" disabled={!hasFilters} onClick={resetFilters}>
+            {cs ? 'Vymazat filtry a řazení' : 'Clear filters and sorting'}
+          </button>
           <p role="status">{cs
             ? `Zobrazeno ${visiblePackages.length} z ${packages.length} World Packages`
             : `Showing ${visiblePackages.length} of ${packages.length} World Packages`}</p>
           {packages.length > 0 && visiblePackages.length === 0
             ? <p className="status">{cs
-              ? 'Žádné World Packages neodpovídají hledání nebo filtru typu.'
-              : 'No World Packages match your search or type filter.'}</p>
+              ? 'Žádné World Packages neodpovídají hledání nebo filtrům.'
+              : 'No World Packages match your search or filters.'}</p>
             : <PackageTable packages={visiblePackages} />}
         </>}
       </SectionCard>

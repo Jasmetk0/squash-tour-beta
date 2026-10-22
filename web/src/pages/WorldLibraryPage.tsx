@@ -308,8 +308,11 @@ function CloneBuiltInWorldSection({ source }: { source: WorldPackage }): JSX.Ele
 }
 
 function ValidationSection({ validation }: { validation: WorldPackageValidation }): JSX.Element {
+  const { language } = useLanguage()
+  const cs = language === 'cs'
   const [search, setSearch] = useState('')
   const [severity, setSeverity] = useState<'all' | 'error' | 'warning' | 'info'>('all')
+  const [order, setOrder] = useState<'severity' | 'source'>('severity')
   const normalizedSearch = search.trim().toLocaleLowerCase()
   const visibleChecks = validation.checks.filter(check =>
     (severity === 'all' || check.severity === severity) &&
@@ -317,52 +320,76 @@ function ValidationSection({ validation }: { validation: WorldPackageValidation 
       [check.code, check.message, check.path, check.field]
         .some(value => value?.toLocaleLowerCase().includes(normalizedSearch)))
   )
+  if (order === 'severity') {
+    const priority = { error: 0, warning: 1, info: 2 }
+    visibleChecks.sort((a, b) => priority[a.severity] - priority[b.severity])
+  }
+  const severityLabel = (value: 'error' | 'warning' | 'info'): string =>
+    value === 'error' ? (cs ? 'Chyba' : 'Error') :
+      value === 'warning' ? (cs ? 'Varování' : 'Warning') : (cs ? 'Informace' : 'Info')
+  const checkStatusLabel = (value: 'passed' | 'warning' | 'failed'): string =>
+    value === 'passed' ? (cs ? 'Prošlo' : 'Passed') :
+      value === 'failed' ? (cs ? 'Selhalo' : 'Failed') : (cs ? 'Varování' : 'Warning')
+  const overallLabel = validation.status === 'valid' ? (cs ? 'Platné' : 'Valid') :
+    validation.status === 'warnings' ? (cs ? 'Varování' : 'Warnings') : (cs ? 'Chyby' : 'Errors')
   return (
-    <SectionCard title="World Package Validation">
-      <DetailRow label="Overall status" value={validation.status} />
-      <DetailRow label="Errors" value={validation.error_count} />
-      <DetailRow label="Warnings" value={validation.warning_count} />
-      <DetailRow label="Info" value={validation.info_count} />
+    <SectionCard title={cs ? 'Ověření World Package' : 'World Package Validation'}>
+      <DetailRow label={cs ? 'Celkový stav' : 'Overall status'} value={overallLabel} />
+      <DetailRow label={cs ? 'Chyby' : 'Errors'} value={validation.error_count} />
+      <DetailRow label={cs ? 'Varování' : 'Warnings'} value={validation.warning_count} />
+      <DetailRow label={cs ? 'Informace' : 'Info'} value={validation.info_count} />
       <div className="form-grid">
-        <label>Search validation checks
+        <label>{cs ? 'Hledat validační kontroly' : 'Search validation checks'}
           <input type="search" value={search} onChange={event => setSearch(event.target.value)}
-            placeholder="Code, message, path or field" />
+            placeholder={cs ? 'Kód, zpráva, cesta nebo pole' : 'Code, message, path or field'} />
         </label>
-        <label>Validation severity
+        <label>{cs ? 'Závažnost kontroly' : 'Validation severity'}
           <select value={severity} onChange={event => setSeverity(event.target.value as typeof severity)}>
-            <option value="all">All severities</option>
-            <option value="error">Errors</option>
-            <option value="warning">Warnings</option>
-            <option value="info">Info</option>
+            <option value="all">{cs ? 'Všechny závažnosti' : 'All severities'}</option>
+            <option value="error">{cs ? 'Chyby' : 'Errors'}</option>
+            <option value="warning">{cs ? 'Varování' : 'Warnings'}</option>
+            <option value="info">{cs ? 'Informace' : 'Info'}</option>
+          </select>
+        </label>
+        <label>{cs ? 'Pořadí kontrol' : 'Validation order'}
+          <select value={order} onChange={event => setOrder(event.target.value as typeof order)}>
+            <option value="severity">{cs ? 'Nejdříve chyby' : 'Errors first'}</option>
+            <option value="source">{cs ? 'Původní pořadí' : 'Source order'}</option>
           </select>
         </label>
       </div>
-      <button type="button" disabled={!search && severity === 'all'}
-        onClick={() => { setSearch(''); setSeverity('all') }}>
-        Clear validation filters
+      <button type="button" disabled={!search && severity === 'all' && order === 'severity'}
+        onClick={() => { setSearch(''); setSeverity('all'); setOrder('severity') }}>
+        {cs ? 'Vymazat filtry kontrol' : 'Clear validation filters'}
       </button>
-      <p role="status">Showing {visibleChecks.length} of {validation.checks.length} validation checks</p>
+      <p role="status">{cs
+        ? `Zobrazeno ${visibleChecks.length} z ${validation.checks.length} validačních kontrol`
+        : `Showing ${visibleChecks.length} of ${validation.checks.length} validation checks`}</p>
       {validation.checks.length === 0
-        ? <p className="status">No validation checks were returned for this World Package.</p>
+        ? <p className="status">{cs
+          ? 'Tento World Package nevrátil žádné validační kontroly.'
+          : 'No validation checks were returned for this World Package.'}</p>
         : visibleChecks.length === 0
-          ? <p className="status">No validation checks match your filters.</p>
-          : <div className="table-responsive"><table aria-label="World package validation checks">
+          ? <p className="status">{cs
+            ? 'Žádné validační kontroly neodpovídají filtrům.'
+            : 'No validation checks match your filters.'}</p>
+          : <div className="table-responsive"><table aria-label={cs ? 'Validační kontroly World Package' : 'World package validation checks'}>
             <thead>
               <tr>
-                <th>Code</th>
-                <th>Severity</th>
-                <th>Status</th>
-                <th>Message</th>
-                <th>Path</th>
-                <th>Field</th>
+                <th>{cs ? 'Kód' : 'Code'}</th>
+                <th>{cs ? 'Závažnost' : 'Severity'}</th>
+                <th>{cs ? 'Stav' : 'Status'}</th>
+                <th>{cs ? 'Zpráva' : 'Message'}</th>
+                <th>{cs ? 'Cesta' : 'Path'}</th>
+                <th>{cs ? 'Pole' : 'Field'}</th>
               </tr>
             </thead>
             <tbody>
               {visibleChecks.map((check, index) => (
                 <tr key={`${check.code}-${check.path ?? 'package'}-${check.field ?? 'root'}-${index}`}>
                   <td><code>{check.code}</code></td>
-                  <td>{check.severity}</td>
-                  <td>{check.status}</td>
+                  <td>{severityLabel(check.severity)}</td>
+                  <td>{checkStatusLabel(check.status)}</td>
                   <td>{check.message}</td>
                   <td>{check.path ? <code>{check.path}</code> : '—'}</td>
                   <td>{check.field ? <code>{check.field}</code> : '—'}</td>

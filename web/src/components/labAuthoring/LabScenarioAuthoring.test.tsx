@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { changeLabField, changeLabParticipantModifier, changeTournamentStopRound, changeTournamentAssertion, moveTournamentSeedOrder, changePlayerMatchCounts, changePlayerWeeks, labChangedPaths, labChangeDetails, LabScenarioAuthoring, readLabScenario } from './LabScenarioAuthoring'
+import { changeLabField, changeLabParticipantModifier, changeTournamentStopRound, changeTournamentAssertion, moveTournamentSeedOrder, changePlayerMatchCounts, changePlayerWeeks, labChangedPaths, labChangeDetails, LabScenarioAuthoring, inspectLabScenarioDraft, readLabScenario } from './LabScenarioAuthoring'
 
 const currentLocale = vi.hoisted(() => ({language: 'en'}))
 vi.mock('../../i18n/LanguageContext', () => ({useLanguage: () => ({language: currentLocale.language})}))
@@ -88,6 +88,87 @@ describe('Lab scenario authoring boundaries', () => {
     expect(JSON.parse(changeLabField(JSON.stringify(tournament), 'tournament', {
       path: ['draw_seed'], en: 'Draw seed', cs: 'Seed', integer: true
     }, '99')).source_snapshot).toEqual(tournament.source_snapshot)
+  })
+
+  it('reports only known Match backend invariants without mutating a historical scenario', () => {
+    const valid = JSON.stringify(matchWithPlayers)
+    expect(inspectLabScenarioDraft(valid, 'match')).toEqual([])
+    const broken = {...matchWithPlayers, context: {...matchWithPlayers.context,
+      best_of: 4, upset_variance: 0.4,
+      player_b: {...matchWithPlayers.context.player_b, player: {player_id: 'P1'}, fatigue_modifier: 0.7},
+      retirement_rule: {enabled: true, trigger: 'EXPLICIT_SET_START', retired_player_id: 'P3'}
+    }}
+    const issues = inspectLabScenarioDraft(JSON.stringify(broken), 'match')
+    expect(issues.map(issue => issue.path)).toEqual([
+      'context.player_b.player.player_id', 'context.best_of', 'context.upset_variance',
+      'context.player_b.fatigue_modifier',
+      'context.retirement_rule.retired_player_id', 'context.retirement_rule.set_number'
+    ])
+    expect(JSON.parse(valid)).toEqual(matchWithPlayers)
+  })
+
+  it('checks Tournament participants, seed IDs and draw format before backend compatibility inspection', () => {
+    const valid = {...tournamentWithPlayers, main_draw_size: 4}
+    expect(inspectLabScenarioDraft(JSON.stringify(valid), 'tournament')).toEqual([])
+    const broken = {...valid,
+      participants: [valid.participants[0], {...valid.participants[1], player: {player_id: 'P1'}}],
+      seed_order_player_ids: ['P1', 'unknown', 'P1'], main_draw_size: 129,
+      match_format: {...valid.match_format, games_to: 0},
+      assertions: {expected_played_match_count: -1}, stop_after_round: 9
+    }
+    const issues = inspectLabScenarioDraft(JSON.stringify(broken), 'tournament')
+    expect(issues.map(issue => issue.path)).toEqual([
+      'participants', 'main_draw_size', 'seed_order_player_ids',
+      'match_format.games_to', 'stop_after_round', 'assertions.expected_played_match_count'
+    ])
+    expect(valid.participants[0].player.traits.historical).toBe('unchanged')
+  })
+
+  it('validates Player workload ranges, canonical variant IDs, lengths and Health timeline limits', () => {
+    expect(inspectLabScenarioDraft(JSON.stringify(player), 'player')).toEqual([])
+    const wrong = {...player, variants: [
+      {variant_id: 'z', competitive_match_counts: [33, -1]},
+      {variant_id: 'a', competitive_match_counts: [1], health_timeline: [{state: 'invalid'}]}
+    ]}
+    const issues = inspectLabScenarioDraft(JSON.stringify(wrong), 'player')
+    expect(issues.map(issue => issue.path)).toEqual([
+      'variants', 'variants.competitive_match_counts',
+      'variants.0.competitive_match_counts', 'variants.1.health_timeline'
+    ])
+    const v1 = {...player, schema_version: 'player_test_lab_scenario.v1', variants: [
+      {variant_id: 'a', competitive_match_counts: [1], health_timeline: [{state: 'start'}]}
+    ]}
+    expect(inspectLabScenarioDraft(JSON.stringify(v1), 'player')
+      .map(issue => issue.path)).toEqual(['variants.0.health_timeline'])
+  })
+
+  it('shows read-only localized input issues live without executing or rejecting a Lab run', () => {
+    const onChange = vi.fn()
+    const broken = JSON.stringify({...tournamentWithPlayers, main_draw_size: 4,
+      seed_order_player_ids: ['P1', 'P1']})
+    const {rerender} = render(<LabScenarioAuthoring kind="tournament" text={broken}
+      onChange={onChange} selection="scratch" revision={0} jsonLabel="Tournament Lab scenario JSON" />)
+    const preflight = screen.getByLabelText('tournament Lab local preflight')
+    expect(preflight).toHaveTextContent('seed_order_player_ids')
+    expect(preflight).toHaveTextContent('Seed priority IDs must be unique')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(onChange).not.toHaveBeenCalled()
+    currentLocale.language = 'cs'
+    rerender(<LabScenarioAuthoring kind="tournament" text={broken} onChange={onChange}
+      selection="scratch" revision={0} jsonLabel="Tournament Lab scenario JSON" />)
+    expect(screen.getByLabelText('tournament Lab local preflight')).toHaveTextContent('ID v pořadí nasazení musí být unikátní')
+  })
+
+  it('displays a basic-input pass separately from backend compatibility, and retains invalid advanced JSON', () => {
+    const valid = JSON.stringify({...tournamentWithPlayers, main_draw_size: 4})
+    const {rerender} = render(<LabScenarioAuthoring kind="tournament" text={valid}
+      onChange={vi.fn()} selection="scratch" revision={0} jsonLabel="Tournament Lab scenario JSON" />)
+    expect(screen.getByLabelText('tournament Lab local preflight')).toHaveTextContent(
+      'no basic input issues found. Backend compatibility is still required.')
+    rerender(<LabScenarioAuthoring kind="tournament" text={'{bad json'}
+      onChange={vi.fn()} selection="scratch" revision={0} jsonLabel="Tournament Lab scenario JSON" />)
+    expect(screen.queryByLabelText('tournament Lab local preflight')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Tournament Lab scenario JSON')).toHaveValue('{bad json')
   })
 
   it('changes one Tournament participant modifier without renaming players, seeds, source or other participants', () => {

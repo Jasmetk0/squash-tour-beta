@@ -25,40 +25,19 @@ def _json_object(raw: str, *, label: str) -> dict:
     return value
 
 
-def resolve_saved_run_calendar(
-    session: Session, *, run_id: str, branch_id: str
+def resolve_revision_run_calendar(
+    session: Session, *, run_id: str, revision_id: str
 ) -> RunCalendar:
-    """Return the verified calendar without modifying Run or Saved history.
+    """Read one hash-verified immutable calendar selected by an existing authority.
 
-    A fork may legitimately point to a hash-verified Saved Revision owned by
-    another Branch of the same Run. Hashes are verified from the ORIGINAL
-    payload/schema/identity, not reconstructed from current defaults.
+    This is not a public history selector: callers must already own the exact
+    revision reference (a Branch Saved head or a validated durable task command).
+    Never substitute the current Run/head after a horizon extension or restore.
+    A shared pre-fork revision retains its original owner/hash identity.
     """
+    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
 
-    # Loading db.models executes db.__init__, which imports sporting writers.
-    # Defer this boundary until the authority module has finished initializing.
-    from beta_engine.infrastructure.db.models import (
-        BranchSavedRevisionModel, RunBranchModel, RunContainerModel,
-    )
-
-    run = session.get(RunContainerModel, run_id)
-    branch = session.get(RunBranchModel, branch_id)
-    if run is None or branch is None or branch.run_id != run_id:
-        raise ValueError("Run calendar requires an existing matching Run/Branch")
-
-    metadata = _json_object(run.metadata_json, label="Run metadata")
-    current_calendar = (
-        RunCalendar.from_metadata(metadata["run_calendar"])
-        if "run_calendar" in metadata else RunCalendar.legacy_fax()
-    )
-
-    if branch.saved_head_revision_id is None:
-        if "run_calendar" in metadata:
-            raise ValueError("Versioned Run calendar has no immutable Saved head")
-        # Older legacy Run records did not necessarily have Saved Revisions.
-        return current_calendar
-
-    revision = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
+    revision = session.get(BranchSavedRevisionModel, revision_id)
     if revision is None or revision.run_id != run_id:
         raise ValueError("Run calendar Saved head is missing or outside this Run")
     payload = _json_object(revision.payload_json, label="Saved Revision payload")
@@ -87,6 +66,46 @@ def resolve_saved_run_calendar(
         saved_calendar = RunCalendar.from_metadata(saved_run["run_calendar"])
     else:
         saved_calendar = RunCalendar.legacy_fax()
+
+    return saved_calendar
+
+
+def resolve_saved_run_calendar(
+    session: Session, *, run_id: str, branch_id: str
+) -> RunCalendar:
+    """Return the verified calendar without modifying Run or Saved history.
+
+    A fork may legitimately point to a hash-verified Saved Revision owned by
+    another Branch of the same Run. Hashes are verified from the ORIGINAL
+    payload/schema/identity, not reconstructed from current defaults.
+    """
+
+    # Loading db.models executes db.__init__, which imports sporting writers.
+    # Defer this boundary until the authority module has finished initializing.
+    from beta_engine.infrastructure.db.models import (
+        RunBranchModel, RunContainerModel,
+    )
+
+    run = session.get(RunContainerModel, run_id)
+    branch = session.get(RunBranchModel, branch_id)
+    if run is None or branch is None or branch.run_id != run_id:
+        raise ValueError("Run calendar requires an existing matching Run/Branch")
+
+    metadata = _json_object(run.metadata_json, label="Run metadata")
+    current_calendar = (
+        RunCalendar.from_metadata(metadata["run_calendar"])
+        if "run_calendar" in metadata else RunCalendar.legacy_fax()
+    )
+
+    if branch.saved_head_revision_id is None:
+        if "run_calendar" in metadata:
+            raise ValueError("Versioned Run calendar has no immutable Saved head")
+        # Older legacy Run records did not necessarily have Saved Revisions.
+        return current_calendar
+
+    saved_calendar = resolve_revision_run_calendar(
+        session, run_id=run_id, revision_id=branch.saved_head_revision_id
+    )
 
     if saved_calendar != current_calendar:
         raise ValueError("Run calendar differs from the Branch Saved head")

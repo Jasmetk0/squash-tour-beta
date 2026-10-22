@@ -1,3 +1,25 @@
+# Original-calendar task evidence — 22 October 2026 candidate
+
+Verified base `buuk` `26e67903` contains owner-merged #1632–1634. Server task
+views now expose an authenticated original Saved calendar and revision in a v2
+read DTO. Progress calculations use its W/horizon; CS/EN rows show the true
+season/year/week, and v2 preparation links select the actual season start year.
+Old v1 client responses retain explicit legacy semantics. GET never rewrites
+Saved history, task storage, commands, audit or idempotency receipts; a later
+Run horizon cannot silently replace the original task clock.
+
+This does NOT enable arbitrary-calendar Full Simulation: legacy driver, ranking,
+summary and target execution guards remain. W52/W80 read/arithmetic tests are
+not complete worker execution proofs. Supported FAX HTTP/browser acceptance and
+final-head CI remain the merge gate. The historical 78 Viewer failures remain
+separate release debt. See docs/FULL_SIMULATION_TASK_CALENDAR.md.
+
+Next integration work: migrate actual native Full Simulation orchestration and
+its target/transition authorities, with real W52/W61/W80 execution evidence;
+do not remove legacy guards merely because the read DTO now accepts a clock.
+
+---
+
 # Consolidated Admin frontend review — 22 October 2026
 
 Baseline buuk `a0308cef` contains owner-merged #1606. The 52 remaining ordinary

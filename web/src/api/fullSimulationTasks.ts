@@ -1,17 +1,20 @@
+import { serverTaskCalendar, taskWeekOrdinal, validTaskWeek } from './fullSimulationTaskCalendar'
+import type { TaskCalendar } from './fullSimulationTaskCalendar'
 import { isBoundaryTarget } from './fullSimulationBoundaryTargets'
 import type { BoundaryTarget } from './fullSimulationBoundaryTargets'
 import { ApiError } from './client'
 import type { AuthoritativeFullSimulationCommandPayload } from './types'
 
 export type ServerTask = {
-  schema_version:'full_simulation_task_view.v1'; task_id:string; run_id:string; branch_id:string
+  schema_version:'full_simulation_task_view.v1'|'full_simulation_task_view.v2';
+  execution_calendar?:TaskCalendar; calendar_revision_id?:string; task_id:string; run_id:string; branch_id:string
   parent_command_id:string; run_name:string; branch_name:string; revision:number
   desired_state:string; state:string; heartbeat_health:'recent'|'stale'|'inactive'; heartbeat_unix:number
   lease_expires_at_unix:number|null; checkpoint:string|null; progress:Record<string,unknown>|null
   effective_boundary_target?:BoundaryTarget|null
   current_week:{season_index:number;week:number}|null
   progress_evidence:{
-    schema_version:'full_simulation_task_progress_evidence.v1'
+    schema_version:'full_simulation_task_progress_evidence.v1'|'full_simulation_task_progress_evidence.v2'
     kind:'live_branch'|'terminal_frozen'|'unavailable'
     week:{season_index:number;week:number}|null
     weeks_advanced_since_start:number|null
@@ -29,11 +32,11 @@ const root=()=>import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 const scope=(run:string,branch:string)=>`/admin/runs/${encodeURIComponent(run)}/branches/${encodeURIComponent(branch)}/authoritative-simulation/full-simulation/tasks`
 const id=(v:unknown):v is string=>typeof v==='string' && v.length>0
 const hash=(v:unknown)=>typeof v==='string' && /^[0-9a-f]{64}$/.test(v)
-const week=(v:unknown)=>{const w=v as {season_index:number;week:number};return !!w && Number.isInteger(w.season_index) && w.season_index>=0 && w.season_index<50 && Number.isInteger(w.week) && w.week>=1 && w.week<=61}
 const desired=['queued','active','paused','awaiting_operator','stopped','target_reached','complete','failed']
-function validProgress(t:ServerTask):boolean {
+function validProgress(t:ServerTask,calendar:TaskCalendar):boolean {
+  const week=(v:unknown)=>validTaskWeek(v,calendar)
   const p=t.progress_evidence
-  if(!p || p.schema_version!=='full_simulation_task_progress_evidence.v1' ||
+  if(!p || p.schema_version!==(t.schema_version==='full_simulation_task_view.v2'?'full_simulation_task_progress_evidence.v2':'full_simulation_task_progress_evidence.v1') ||
     !['live_branch','terminal_frozen','unavailable'].includes(p.kind) ||
     !(p.week===null || week(p.week)) || !(t.current_week===null || week(t.current_week)) ||
     (p.week===null)!==(t.current_week===null) ||
@@ -43,8 +46,7 @@ function validProgress(t:ServerTask):boolean {
     p.completed_slot_receipts_this_week===null && p.committed_group_receipts_this_week===null && p.receipt_scope===null
   if(!p.week || !Number.isInteger(p.weeks_advanced_since_start) ||
     p.weeks_advanced_since_start===null || p.weeks_advanced_since_start<0 ||
-    p.weeks_advanced_since_start!==(p.week.season_index*61+p.week.week-1 -
-      (t.original_command.expected_start_week.season_index*61+t.original_command.expected_start_week.week-1)))return false
+    p.weeks_advanced_since_start!==(taskWeekOrdinal(p.week,calendar)-taskWeekOrdinal(t.original_command.expected_start_week,calendar)))return false
   if(p.kind==='terminal_frozen')return ['stopped','target_reached','complete'].includes(t.state) &&
     p.receipt_scope===null && p.completed_slot_receipts_this_week===null && p.committed_group_receipts_this_week===null
   return !['stopped','target_reached','complete'].includes(t.state) &&
@@ -57,7 +59,10 @@ export function validateTasks(value:unknown,run?:string,branch?:string):ServerTa
   if(!data || data.schema_version!=='full_simulation_tasks.v1' || !Array.isArray(data.tasks))throw Error('Invalid server task collection')
   const ids=new Set<string>()
   for(const t of data.tasks){
-    if(!t || t.schema_version!=='full_simulation_task_view.v1' || ![t.task_id,t.run_id,t.branch_id,t.parent_command_id].every(id) ||
+    if(!t)throw Error('Invalid server task evidence')
+    const calendar=serverTaskCalendar(t)
+    const week=(v:unknown)=>validTaskWeek(v,calendar)
+    if(!t || !['full_simulation_task_view.v1','full_simulation_task_view.v2'].includes(t.schema_version) || ![t.task_id,t.run_id,t.branch_id,t.parent_command_id].every(id) ||
       (run!==undefined && (t.run_id!==run || t.branch_id!==branch)) || ids.has(t.task_id) ||
       !Number.isInteger(t.revision) || t.revision<1 || !desired.includes(t.desired_state) ||
       ![...desired,'recoverable','pause_requested','ownership_unverified'].includes(t.state) || !['recent','stale','inactive'].includes(t.heartbeat_health) ||
@@ -74,7 +79,7 @@ export function validateTasks(value:unknown,run?:string,branch?:string):ServerTa
       !t.original_command || t.original_command.command_id!==t.parent_command_id ||
       !id(t.original_command.operator_label) || !id(t.original_command.audit_reason) || !week(t.original_command.expected_start_week) ||
       !hash(t.original_command.expected_position_fingerprint) || !hash(t.original_command.expected_preview_fingerprint) || !id(t.original_command.expected_revision_id) ||
-      !validProgress(t)){throw Error('Invalid server task evidence')}
+      !validProgress(t,calendar)){throw Error('Invalid server task evidence')}
     ids.add(t.task_id)
   }
   return data.tasks

@@ -1,3 +1,4 @@
+import { taskCalendarPosition } from '../api/fullSimulationTaskCalendar'
 import { BoundaryDescription } from './FullSimulationBoundaryTargets'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
@@ -26,7 +27,7 @@ const copy={
   search:'Find a server task',searchHint:'Run, Branch, task, parent command or checkpoint',filter:'Task category',
   allTasks:'All tasks',attentionTasks:'Operator action required',liveTasks:'Queued / active / pausing',otherTasks:'Other states',
   uncertainAfterProgress:'Server evidence changed while the original continuation response was uncertain. Do not create a new request here. Replay only the identical frozen request ID, or cancel and inspect the current task evidence before authorizing a new intent.',clearFilters:'Clear filters',scopeMissing:'Select a valid Run and Branch before inspecting scoped server tasks. No global inventory was requested.',shown:'Displayed tasks',noMatches:'No tasks match the current search and category. Clear the filters to see all stored tasks.',pinned:'Linked task stays visible regardless of filters.',
-  desired:'Requested task state',lease:'Lease expiry (not proof of a live worker)',selected:'Task selected from the link',missing:'The linked task was not found in this Run / Branch.',contextChanged:'The reviewed request belongs to a different Run, Branch or command. Return to that context to retry; this screen will not redirect it.'},
+  clock:'Original task calendar',season:'Season',year:'Calendar year',yearWeek:'Year week',calendarRevision:'Calendar Saved Revision',legacyClock:'Legacy FAX calendar contract',desired:'Requested task state',lease:'Lease expiry (not proof of a live worker)',selected:'Task selected from the link',missing:'The linked task was not found in this Run / Branch.',contextChanged:'The reviewed request belongs to a different Run, Branch or command. Return to that context to retry; this screen will not redirect it.'},
  cs:{title:'Serverové simulační úlohy',start:'Spustit jako serverovou úlohu',ack:'Serverová úloha přijata',refresh:'Obnovit údaje úloh',
   truth:'Úloha se živým workerem může pokračovat i po zavření stránky; samotný záznam ani lease běh nedokazují. Save a schválení zůstávají ruční. Po restartu serveru úlohu zkontrolujte a výslovně obnovte.',
   loading:'Načítám serverové úlohy…',empty:'V tomto kontextu nejsou serverové úlohy.',operator:'Operátor úlohy',reason:'Důvod akce úlohy',
@@ -42,7 +43,7 @@ const copy={
   search:'Najít serverovou úlohu',searchHint:'Run, větev, úloha, původní příkaz nebo checkpoint',filter:'Kategorie úloh',
   allTasks:'Všechny úlohy',attentionTasks:'Vyžaduje zásah operátora',liveTasks:'Ve frontě / aktivní / pozastavuje se',otherTasks:'Ostatní stavy',
   uncertainAfterProgress:'Stav úlohy se změnil, ale odpověď na původní pokračování nebyla potvrzena. Nevytvářejte nový požadavek. Lze pouze opakovat původní uzamčené ID a údaje nebo opakování zrušit a před novým rozhodnutím zkontrolovat současný stav.',clearFilters:'Zrušit filtry',scopeMissing:'Před zobrazením úloh vyberte platný Run a větev. Globální přehled nebyl vyžádán.',shown:'Zobrazené úlohy',noMatches:'Hledání a kategorie neodpovídá žádná úloha. Zrušením filtrů zobrazíte všechny uložené úlohy.',pinned:'Úloha vybraná z odkazu zůstává viditelná bez ohledu na filtry.',
-  desired:'Požadovaný stav úlohy',lease:'Konec platnosti lease (nikoli důkaz živého workeru)',selected:'Úloha vybraná z odkazu',missing:'Odkazovaná úloha nebyla nalezena v tomto Runu / větvi.',contextChanged:'Schválený požadavek patří jinému Runu, větvi nebo příkazu. Pro opakování se vraťte do původního kontextu; tato obrazovka jej nepřesměruje.'}
+  clock:'Původní kalendář úlohy',season:'Sezona',year:'Kalendářní rok',yearWeek:'Týden roku',calendarRevision:'Saved Revision kalendáře',legacyClock:'Historický kalendářní kontrakt FAX',desired:'Požadovaný stav úlohy',lease:'Konec platnosti lease (nikoli důkaz živého workeru)',selected:'Úloha vybraná z odkazu',missing:'Odkazovaná úloha nebyla nalezena v tomto Runu / větvi.',contextChanged:'Schválený požadavek patří jinému Runu, větvi nebo příkazu. Pro opakování se vraťte do původního kontextu; tato obrazovka jej nepřesměruje.'}
 } as const
 export function useServerTasks(run?:string,branch?:string,enabled=true){
  // A partially resolved scoped route must NOT silently query global tasks.
@@ -104,12 +105,13 @@ function storedDriverEvidence(task:ServerTask){
 }
 
 // A navigation hint, never an authority to copy, approve or resume a task.
-// The task contract has no Run calendar start year/season mapping: do not invent
-// a calendarSeason query parameter from a fixed 2000 baseline.
+// v2 supplies a verified original Saved clock; legacy v1 keeps Branch-only navigation.
 export function taskCalendarHandoff(task:ServerTask):string|null{
  if(task.state!=='awaiting_operator'||!['week_preparation_required','season_preparation_required','week61_preparation_required','final_week_preparation_required'].includes(task.checkpoint??'')||
    !task.current_week)return null
- return `/admin/runs/${encodeURIComponent(task.run_id)}/manage?branch=${encodeURIComponent(task.branch_id)}`
+ const base=`/admin/runs/${encodeURIComponent(task.run_id)}/manage?branch=${encodeURIComponent(task.branch_id)}`
+ return task.schema_version==='full_simulation_task_view.v2'
+  ? base+`&calendarSeason=${taskCalendarPosition(task,task.current_week).seasonStartYear}` : base
 }
 function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
  const {language}=useLanguage();const t=copy[language];const client=useQueryClient()
@@ -143,6 +145,7 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
    await client.invalidateQueries({queryKey:['authoritative-full-simulation-pending',snapshot.target.run_id,snapshot.target.branch_id]})
   }
  })
+ const clockPosition=task.current_week?taskCalendarPosition(task,task.current_week):null
  const terminal=['stopped','target_reached','complete'].includes(task.state)
  return <li className="server-simulation-tasks__item" data-task-id={task.task_id} aria-current={focused?'location':undefined}>
   {focused&&<p role="status">{t.selected}: <code>{task.task_id}</code></p>}
@@ -153,6 +156,10 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
   {task.lease_expires_at_unix!==null&&<p>{t.lease}: {new Date(task.lease_expires_at_unix*1000).toLocaleString(language)}</p>}
   {task.effective_boundary_target && <p><BoundaryDescription target={task.effective_boundary_target}/></p>}
   {task.current_week && <p>S{task.current_week.season_index} W{task.current_week.week}</p>}
+  {clockPosition&&<p>{t.clock}: {t.season} {clockPosition.seasonLabel} · {t.year} {clockPosition.calendarYear} · {t.yearWeek} {clockPosition.yearWeek}</p>}
+  {task.schema_version==='full_simulation_task_view.v2'
+   ? <p>{t.calendarRevision}: <code>{task.calendar_revision_id}</code></p>
+   : <p>{t.legacyClock}</p>}
   <p>{task.progress_evidence.kind==='terminal_frozen'?t.frozen:task.progress_evidence.kind==='unavailable'?t.unavailable:t.measured}</p>
   {task.progress_evidence.weeks_advanced_since_start!==null && <p>{t.advanced}: {task.progress_evidence.weeks_advanced_since_start}</p>}
   {task.progress_evidence.kind==='live_branch' && <p>{t.slots}: {task.progress_evidence.completed_slot_receipts_this_week} · {t.groups}: {task.progress_evidence.committed_group_receipts_this_week}</p>}

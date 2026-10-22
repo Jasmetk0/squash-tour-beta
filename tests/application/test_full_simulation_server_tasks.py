@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 from sqlalchemy import text
 
-from beta_engine.infrastructure.db.models import FullSimulationTaskModel
+from beta_engine.infrastructure.db.models import FullSimulationTaskModel, BranchSavedRevisionModel
 from tests.api.test_saved_revision_history_api import _request
 from tests.application.test_full_simulation_http_flow import reviewed_command
 from tests.support.full_simulation_http_flow import (
@@ -99,6 +99,16 @@ def test_durable_start_disconnect_pause_resume_stop_and_exact_replay(
                 "GET", server.base_url + "/run-containers/full-simulation/tasks"
             )[1]
             assert inventory["tasks"][0]["task_id"] == ack["task_id"]
+            projected = inventory["tasks"][0]
+            assert projected["schema_version"] == "full_simulation_task_view.v2"
+            assert projected["calendar_revision_id"] == command["expected_revision_id"]
+            with factory() as session:
+                source = session.get(BranchSavedRevisionModel, command["expected_revision_id"])
+                assert projected["execution_calendar"] == json.loads(source.payload_json)["run"]["run_calendar"]
+                # The read contract is new; durable task/audit bytes retain v1.
+                stored = session.get(FullSimulationTaskModel, ack["task_id"])
+                assert json.loads(stored.payload_json)["schema_version"] == "full_simulation_task.v1"
+            assert projected["progress_evidence"]["schema_version"] == "full_simulation_task_progress_evidence.v2"
             measured = inventory["tasks"][0]["progress_evidence"]
             assert measured["kind"] == "live_branch"
             assert measured["receipt_scope"] == "branch_current_week"
@@ -216,6 +226,21 @@ def test_task_waits_at_real_manual_checkpoint_and_corruption_fails_closed(tmp_pa
         )
         after = after_pause
         assert paused["revision"] > waiting["revision"]
+        # v2 calendar evidence is authenticated against the original Saved
+        # source. A GET must fail closed, without repairing/rewriting it.
+        with factory.begin() as session:
+            source = session.get(BranchSavedRevisionModel, command["expected_revision_id"])
+            original_payload = source.payload_json
+            content = json.loads(original_payload)
+            content["run"]["run_calendar"]["weeks_per_year"] = 80
+            source.payload_json = json.dumps(content)
+        task_url = url + "/full-simulation/tasks/" + ack["task_id"]
+        assert _request("GET", task_url)[0] == 409
+        with factory.begin() as session:
+            source = session.get(BranchSavedRevisionModel, command["expected_revision_id"])
+            assert source.payload_json != original_payload
+            source.payload_json = original_payload
+        assert _request("GET", task_url)[1]["tasks"][0]["execution_calendar"] == paused["execution_calendar"]
         with factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             row = session.get(FullSimulationTaskModel, ack["task_id"])

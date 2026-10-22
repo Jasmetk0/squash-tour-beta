@@ -287,7 +287,7 @@ export function PlayerTestLabPage(): JSX.Element {
         <LabScenarioAuthoring kind="player" text={scenarioText} onChange={editScenario}
           jsonLabel="Player Lab scenario JSON" selection={editor.selectedSessionId ?? 'scratch'} revision={editor.editorEdit}
           savedScenario={selectedSession?.scenario} savedName={selectedSession?.display_name}
-          sessionName={editor.sessionName} busy={writePending || runPending} />
+          sessionName={editor.sessionName} />
         <button type="button" onClick={formatScenario} disabled={runPending || Boolean(sessionConflict) || sessionHasUnsavedChanges || !parsedPreview}>
           Format JSON
         </button>{' '}

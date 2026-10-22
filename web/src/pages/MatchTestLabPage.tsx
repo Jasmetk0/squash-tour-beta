@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
   createMatchLabSession,
@@ -12,6 +12,9 @@ import {
 } from '../api/client'
 import type { MatchLabRequest, MatchLabResult, MatchLabScenario, MatchLabSession } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
+import { prettyLabJson } from '../components/LabJson'
+import { LabNavigation } from '../components/LabNavigation'
+import { LabSessionConflict, useLabSessionEditor, validateLabSession, type LabEditorTicket } from '../components/LabSessionEditor'
 
 const traits = {
   potential_ceiling: 90, growth_curve: 'balanced', professionalism: 0.7, ambition: 0.7,
@@ -41,14 +44,27 @@ const defaultScenario: MatchLabScenario = {
 function parseSeeds(value: string): number[] {
   const trimmed = value.trim()
   if (!trimmed) return []
-  const seeds = trimmed.split(',').map((part) => Number(part.trim()))
-  if (seeds.some((seed) => !Number.isInteger(seed))) throw new Error('Batch seeds must be comma-separated integers.')
+  const parts = trimmed.split(',').map((part) => part.trim())
+  const seeds = parts.map(Number)
+  if (parts.some((part) => !/^[+-]?\d+$/.test(part))
+    || seeds.some((seed) => !Number.isSafeInteger(seed))) throw new Error('Batch seeds must be comma-separated integers.')
   if (new Set(seeds).size !== seeds.length) throw new Error('Batch seeds must be unique.')
   if (seeds.length > 100) throw new Error('At most 100 batch seeds are supported.')
   return seeds
 }
 
 function ResultPanels({ data }: { data: MatchLabResult }): JSX.Element {
+  const [winnerFilter, setWinnerFilter] = useState('all')
+  const winners = useMemo(() =>
+    Array.from(new Set(data.results.map(result => result.winner_player_id))).sort(),
+    [data.results]
+  )
+  // Never apply a previous batch's winner filter to a different batch accidentally.
+  const activeFilter = winnerFilter === 'all' || winners.includes(winnerFilter) ? winnerFilter : 'all'
+  const displayed = activeFilter === 'all'
+    ? data.results
+    : data.results.filter(result => result.winner_player_id === activeFilter)
+
   return <>
     <SectionCard title="Compatibility & isolation">
       <SummaryPills items={[
@@ -75,10 +91,17 @@ function ResultPanels({ data }: { data: MatchLabResult }): JSX.Element {
       <p>Wins: {Object.entries(data.diagnostics.wins_by_player).map(([player, wins]) => `${player}: ${wins}`).join(' · ')}</p>
     </SectionCard>
     <SectionCard title="Replayable results">
+      <label>Filter results by winner
+        <select aria-label="Match Lab winner filter" value={activeFilter} onChange={event => setWinnerFilter(event.target.value)}>
+          <option value="all">All winners</option>
+          {winners.map(winner => <option key={winner} value={winner}>{winner}</option>)}
+        </select>
+      </label>
+      <p className="status">Showing {displayed.length} of {data.results.length} results · Batch diagnostics above include all matches.</p>
       <table aria-label="Match Lab results"><thead><tr>
         <th>Seed</th><th>Winner</th><th>Sets</th><th>Set scores (A-B)</th><th>Rallies</th><th>Elapsed</th><th>Result fingerprint</th>
       </tr></thead><tbody>
-        {data.results.map((result) => <tr key={result.seed}>
+        {displayed.map((result) => <tr key={result.seed}>
           <td>{result.seed}</td><td>{result.winner_player_id}</td>
           <td>{Object.entries(result.sets_won).map(([player, sets]) => `${player} ${sets}`).join(' / ')}</td>
           <td>{result.set_scores.join(', ')}</td><td>{result.rally_count}</td><td>{result.elapsed_seconds.toFixed(1)} s</td>
@@ -92,10 +115,10 @@ function ResultPanels({ data }: { data: MatchLabResult }): JSX.Element {
 export function MatchTestLabPage(): JSX.Element {
   const builtIns = useQuery({ queryKey: ['match-lab-built-ins'], queryFn: getMatchLabBuiltInScenarios, retry: false })
   const sessions = useQuery({ queryKey: ['match-lab-sessions'], queryFn: getMatchLabSessions, retry: false })
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
-  const selectedSession = sessions.data?.find((item) => item.session_id === selectedSessionId) ?? null
-  const [scenarioText, setScenarioText] = useState(JSON.stringify(defaultScenario, null, 2))
-  const [sessionName, setSessionName] = useState('New Match Test Session')
+  const client = useQueryClient()
+  const editor = useLabSessionEditor(sessions.data, sessions.isSuccess, JSON.stringify(defaultScenario, null, 2), 'New Match Test Session')
+  const { selectedSession, selectedSessionId, setSelectedSessionId, scenarioText, setScenarioText,
+    sessionName, setSessionName, sessionHasUnsavedChanges, sessionConflict } = editor
   const [batchText, setBatchText] = useState('')
   const [importRunId, setImportRunId] = useState('')
   const [importBranchId, setImportBranchId] = useState('')
@@ -104,29 +127,17 @@ export function MatchTestLabPage(): JSX.Element {
   const [importSide, setImportSide] = useState<'player_a' | 'player_b'>('player_a')
   const [localError, setLocalError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (selectedSession) {
-      setScenarioText(JSON.stringify(selectedSession.scenario, null, 2))
-      setSessionName(selectedSession.display_name)
-    }
-  }, [selectedSession?.session_id, selectedSession?.version])
-
   const parsedPreview = useMemo(() => {
     try { return JSON.parse(scenarioText) as MatchLabScenario } catch { return null }
   }, [scenarioText])
 
-  // A saved Test Session runs by fingerprint, not by the editable textarea.
-  // Keep that boundary visible so a changed seed/profile is never silently ignored.
-  const sessionHasUnsavedChanges = Boolean(selectedSession && (
-    sessionName !== selectedSession.display_name
-    || JSON.stringify(parsedPreview) !== JSON.stringify(selectedSession.scenario)
-  ))
-
+  const runPending = useIsMutating({ mutationKey: ['match-lab-run'] }) > 0
   const runMutation = useMutation({
-    mutationFn: async ({ scenario, seeds }: { scenario: MatchLabScenario; seeds: number[] }) => {
-      if (selectedSession) {
-        return runMatchLabSession(selectedSession.session_id, {
-          expected_session_fingerprint: selectedSession.session_fingerprint,
+    mutationKey: ['match-lab-run'],
+    mutationFn: async ({ scenario, seeds, session }: { scenario: MatchLabScenario; seeds: number[]; session: MatchLabSession | null }) => {
+      if (session) {
+        return runMatchLabSession(session.session_id, {
+          expected_session_fingerprint: session.session_fingerprint,
           batch_seeds: seeds
         })
       }
@@ -135,48 +146,63 @@ export function MatchTestLabPage(): JSX.Element {
     }
   })
 
+  const editScenario = (value: string) => {
+    setScenarioText(value)
+    setLocalError(null)
+    runMutation.reset()
+  }
+
+  const formatScenario = () => {
+    try {
+      editScenario(prettyLabJson(scenarioText))
+    } catch (error) {
+      setLocalError(error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  const recordSession = (session: MatchLabSession) => {
+    client.setQueryData<MatchLabSession[]>(['match-lab-sessions'], previous =>
+      [...(previous ?? []).filter(item => item.session_id !== session.session_id), session])
+    void sessions.refetch()
+  }
   const createMutation = useMutation({
-    mutationFn: createMatchLabSession,
-    onSuccess: async (created) => {
-      await sessions.refetch()
-      setSelectedSessionId(created.session_id)
-      setScenarioText(JSON.stringify(created.scenario, null, 2))
-      setSessionName(created.display_name)
+    mutationKey: ['match-lab-write'],
+    mutationFn: (input: { request: Parameters<typeof createMatchLabSession>[0]; ticket: LabEditorTicket }) => createMatchLabSession(input.request),
+    onSuccess: (response, { ticket }) => {
+      const created = validateLabSession(response)
+      recordSession(created)
+      if (ticket && editor.acceptSession(created, ticket)) runMutation.reset()
     }
   })
-
   const saveMutation = useMutation({
-    mutationFn: async ({ session, scenario }: { session: MatchLabSession; scenario: MatchLabScenario }) =>
-      updateMatchLabSession(session.session_id, {
+    mutationKey: ['match-lab-write'],
+    mutationFn: async ({ session, scenario, displayName }: { session: MatchLabSession; scenario: MatchLabScenario; displayName: string; ticket: LabEditorTicket }) =>
+      validateLabSession(await updateMatchLabSession(session.session_id, {
         expected_session_fingerprint: session.session_fingerprint,
-        display_name: sessionName,
-        scenario
-      }),
-    onSuccess: async (updated) => {
-      await sessions.refetch()
-      setSelectedSessionId(updated.session_id)
-      setScenarioText(JSON.stringify(updated.scenario, null, 2))
+        display_name: displayName, scenario
+      }), session.session_id),
+    onSuccess: (updated, { ticket }) => {
+      recordSession(updated)
+      if (ticket && editor.acceptSession(updated, ticket)) runMutation.reset()
     }
   })
-
   const importMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedSession) throw new Error('Create or open a Test Session before importing a Saved Revision player.')
-      return importMatchLabSavedRevisionPlayer(selectedSession.session_id, {
-        expected_session_fingerprint: selectedSession.session_fingerprint,
-        product_run_id: importRunId.trim(),
-        branch_id: importBranchId.trim(),
-        saved_revision_id: importRevisionId.trim(),
-        player_id: importPlayerId.trim(),
-        side: importSide
-      })
-    },
-    onSuccess: async (updated) => {
-      await sessions.refetch()
-      setSelectedSessionId(updated.session_id)
-      setScenarioText(JSON.stringify(updated.scenario, null, 2))
+    mutationKey: ['match-lab-write'],
+    mutationFn: async (input: { session: MatchLabSession; runId: string; branchId: string; revisionId: string; playerId: string; side: 'player_a' | 'player_b'; ticket: LabEditorTicket }) =>
+      validateLabSession(await importMatchLabSavedRevisionPlayer(input.session.session_id, {
+        expected_session_fingerprint: input.session.session_fingerprint,
+        product_run_id: input.runId, branch_id: input.branchId,
+        saved_revision_id: input.revisionId, player_id: input.playerId, side: input.side
+      }), input.session.session_id),
+    onSuccess: (updated, { ticket }) => {
+      recordSession(updated)
+      // Import transforms participant data, so later local edits cannot be
+      // silently rebased onto its new provenance. Require explicit review.
+      if (ticket && editor.acceptSession(updated, ticket, false)) runMutation.reset()
     }
   })
+  const writePending = useIsMutating({ mutationKey: ['match-lab-write'] }) > 0
+  useEffect(() => { runMutation.reset() }, [selectedSessionId, selectedSession?.session_fingerprint, sessionConflict])
 
   const parseScenario = (): MatchLabScenario => {
     try { return JSON.parse(scenarioText) as MatchLabScenario }
@@ -185,26 +211,30 @@ export function MatchTestLabPage(): JSX.Element {
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
+    if (writePending || runPending) return
     setLocalError(null)
     runMutation.reset()
     try {
       const scenario = parseScenario()
       if (sessionHasUnsavedChanges) throw new Error('Save Test Session changes before running this scenario.')
-      runMutation.mutate({ scenario, seeds: parseSeeds(batchText) })
+      if (sessionConflict) throw new Error('Refresh and reload the saved Test Session before running.')
+      if (writePending || runPending) return
+      runMutation.mutate({ scenario, seeds: parseSeeds(batchText), session: selectedSession })
     }
     catch (error) { setLocalError(error instanceof Error ? error.message : String(error)) }
   }
 
   const save = () => {
-    if (!selectedSession) return
+    if (!selectedSession || sessionConflict || writePending) return
     setLocalError(null)
-    try { saveMutation.mutate({ session: selectedSession, scenario: parseScenario() }) }
+    try { saveMutation.mutate({ session: selectedSession, scenario: parseScenario(), displayName: sessionName, ticket: editor.captureEditor() }) }
     catch (error) { setLocalError(error instanceof Error ? error.message : String(error)) }
   }
 
   return <section className="panel">
     <PageIntro title="Match Test Lab" subtitle="Global isolated sandbox for built-in baselines, editable Test Sessions and portable replayable Match Engine scenarios." />
 
+    <LabNavigation active="match" />
     <SectionCard title="Safety boundary">
       <p>Built-in scenarios are read-only. <strong>New Test Session</strong> creates an independent editable copy outside every Run and Branch; copied provenance is data only, never a live link.</p>
       <SummaryPills items={[
@@ -220,21 +250,36 @@ export function MatchTestLabPage(): JSX.Element {
         <strong>{item.display_name}</strong>
         <p>{item.description}</p>
         <p className="status"><code>{item.scenario_fingerprint.slice(0, 12)}</code> · read-only baseline</p>
-        <button type="button" onClick={() => createMutation.mutate({
+        <button type="button" disabled={writePending} onClick={() => createMutation.mutate({ ticket: editor.captureEditor(), request: {
           display_name: `${item.display_name} — Test Session`,
           built_in_scenario_id: item.scenario_id
-        })}>New Test Session from {item.display_name}</button>
+        }})}>New Test Session from {item.display_name}</button>
       </article>)}
       {builtIns.isError ? <p className="error">Built-in scenarios unavailable.</p> : null}
+      {createMutation.isError ? <p role="alert" className="error">Session creation failed: {String(createMutation.error)}</p> : null}
     </SectionCard>
 
     <SectionCard title="Test Sessions">
+      <button type="button" disabled={sessions.isFetching} onClick={() => { void sessions.refetch() }}>
+        {sessions.isFetching ? 'Refreshing Test Sessions…' : 'Refresh Test Sessions'}
+      </button>
       <label>Open Test Session
-        <select aria-label="Open Match Test Session" value={selectedSessionId ?? ''} onChange={(e) => setSelectedSessionId(e.target.value || null)}>
+        <select aria-label="Open Match Test Session" value={selectedSessionId ?? ''} onChange={(e) => {
+          setSelectedSessionId(e.target.value || null)
+          runMutation.reset()
+        }}>
           <option value="">Portable scratch scenario</option>
+          {selectedSession && !sessions.data?.some(item => item.session_id === selectedSessionId)
+            ? <option value={selectedSession.session_id}>{selectedSession.display_name} · loaded v{selectedSession.version} (unavailable)</option> : null}
           {sessions.data?.map((item) => <option key={item.session_id} value={item.session_id}>{item.display_name} · v{item.version}</option>)}
         </select>
       </label>
+      {sessions.isLoading ? <p role="status">Loading saved Match Test Sessions…</p> : null}
+      {sessions.isError ? <p role="alert" className="error">Saved Match Test Sessions unavailable.</p> : null}
+      {sessions.isSuccess && sessions.data.length === 0
+        ? <p className="status">No saved Match Test Sessions yet. Scratch mode remains available.</p> : null}
+      <LabSessionConflict key={`${selectedSessionId}:${selectedSession?.session_fingerprint}:${sessionConflict}:${editor.editorEdit}`}
+        conflict={sessionConflict} dirty={sessionHasUnsavedChanges} canReload={editor.canReloadSession} onReload={editor.reloadSession} />
       {selectedSession ? <SummaryPills items={[
         { label: 'Session', value: selectedSession.display_name },
         { label: 'Version', value: selectedSession.version },
@@ -268,8 +313,10 @@ export function MatchTestLabPage(): JSX.Element {
       </label>
       <button
         type="button"
-        disabled={importMutation.isPending || !importRunId.trim() || !importBranchId.trim() || !importRevisionId.trim() || !importPlayerId.trim()}
-        onClick={() => importMutation.mutate()}
+        disabled={writePending || Boolean(sessionConflict) || sessionHasUnsavedChanges || !importRunId.trim() || !importBranchId.trim() || !importRevisionId.trim() || !importPlayerId.trim()}
+        onClick={() => { if (selectedSession && !writePending && !sessionConflict && !sessionHasUnsavedChanges) importMutation.mutate({
+          ticket: editor.captureEditor(), session: selectedSession, runId: importRunId.trim(), branchId: importBranchId.trim(), revisionId: importRevisionId.trim(), playerId: importPlayerId.trim(), side: importSide
+        }) }}
       >
         {importMutation.isPending ? 'Importing…' : 'Import historical player'}
       </button>
@@ -289,18 +336,19 @@ export function MatchTestLabPage(): JSX.Element {
     <form onSubmit={submit}>
       <SectionCard title={selectedSession ? 'Editable Test Session scenario' : 'Portable scratch scenario JSON'}>
         {selectedSession ? <label>Session name
-          <input aria-label="Match Lab session name" value={sessionName} onChange={(e) => setSessionName(e.target.value)} />
+          <input aria-label="Match Lab session name" value={sessionName} onChange={(e) => { setSessionName(e.target.value); runMutation.reset() }} />
         </label> : null}
-        <textarea aria-label="Match Lab scenario JSON" value={scenarioText} onChange={(e) => setScenarioText(e.target.value)}
+        <textarea aria-label="Match Lab scenario JSON" value={scenarioText} onChange={(e) => editScenario(e.target.value)}
           rows={28} style={{ width: '100%', fontFamily: 'monospace' }} />
         <label>Batch seeds (optional, comma-separated; max 100)
-          <input aria-label="Match Lab batch seeds" value={batchText} onChange={(e) => setBatchText(e.target.value)} placeholder="100, 101, 102" />
+          <input aria-label="Match Lab batch seeds" value={batchText} onChange={(e) => { setBatchText(e.target.value); runMutation.reset() }} placeholder="100, 101, 102" />
         </label>
-        {selectedSession ? <button type="button" onClick={save} disabled={saveMutation.isPending}>Save Test Session</button> : null}
-        <button type="submit" disabled={runMutation.isPending || saveMutation.isPending || sessionHasUnsavedChanges}>{runMutation.isPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run scenario'}</button>
+        <button type="button" onClick={formatScenario} disabled={runPending || writePending}>Format JSON</button>
+        {selectedSession ? <button type="button" onClick={save} disabled={writePending || Boolean(sessionConflict)}>Save Test Session</button> : null}
+        <button type="submit" disabled={runPending || writePending || Boolean(sessionConflict) || sessionHasUnsavedChanges}>{runPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run scenario'}</button>
         {sessionHasUnsavedChanges ? <p role="status">Unsaved Test Session changes. Save before running.</p> : null}
         {localError ? <p role="alert" className="error">{localError}</p> : null}
-        {saveMutation.isError ? <p className="error">Save failed: {String(saveMutation.error)}</p> : null}
+        {saveMutation.isError ? <p className="error">Save failed for {saveMutation.variables?.session.display_name}: {String(saveMutation.error)}</p> : null}
         {runMutation.isError ? <p className="error">Lab failed: {String(runMutation.error)}</p> : null}
         <p className="status">Scenario: {parsedPreview?.scenario_id ?? 'invalid JSON'} · seed {parsedPreview?.seed ?? '—'}</p>
       </SectionCard>

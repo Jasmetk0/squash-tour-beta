@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom'
-import type { RunHomeReadiness, RunReadinessCode } from '../api/runHomeReadiness'
+import type { RunHomeReadiness, RunReadinessCode, RunReadinessItem } from '../api/runHomeReadiness'
 
 const content = {
   cs: {
     heading: 'Připravenost této Branch',
-    explanation: 'Ověřené uložené podklady, nikoli souhlas se spuštěním simulace.',
+    explanation: 'Ověřené uložené podklady vybrané větve. Připravenost se vždy posuzuje pro konkrétní operaci.',
     refresh: 'Obnovit kontrolu',
     loading: 'Načítání aktuálního uloženého stavu…',
-    noSupport: 'Tento Run používá kalendář, pro který sportovní engine zatím neumí bezpečně simulovat.',
-    supported: 'Kalendář odpovídá podporované referenční FAX konfiguraci. Před každou operací je stále nutná vlastní kontrola.',
+    noSupport: 'Tento kalendář nepodporuje starší FAX simulační postup. Nativní operace mají vlastní nezávislé kontroly; tento údaj je nezakazuje.',
+    supported: 'Kalendář odpovídá referenčnímu FAX postupu staršího simulátoru. Před každou operací je stále nutná vlastní kontrola.',
     drafted: 'Neuložené změny nejsou do tohoto přehledu započítané.',
     phase: { preparation: 'Příprava', sporting_history: 'Již existuje uložená sportovní historie', completed: 'Dokončený Run' },
     item: {
@@ -32,15 +32,23 @@ const content = {
       working_draft: 'Zkontrolovat a uložit změny',
     },
     allSaved: 'Vybrané podklady jsou uloženy. Sportovní operace stále vyžadují samostatné ověření.',
+    checklist: 'Zobrazit kontrolu uložených podkladů',
+    attentionCount: 'položky k prověření',
     details: 'Technický původ a hranice',
+    branch: 'Vybraná Branch',
+    calendar: 'Kalendář Runu',
+    weeks: 'týdnů za sezónu',
+    seasons: 'sezón',
+    revision: 'Uložená revize HEAD',
+    draftVersion: 'Verze pracovního návrhu',
   },
   en: {
     heading: 'This Branch readiness',
-    explanation: 'Verified saved foundations, not authorization to run simulation.',
+    explanation: 'Verified saved foundations for the selected Branch. Readiness is always specific to the requested operation.',
     refresh: 'Refresh inspection',
     loading: 'Loading current saved state…',
-    noSupport: 'This Run calendar is not yet safely executable by the sporting engine.',
-    supported: 'The calendar matches the supported reference FAX configuration. Every operation still requires its own preflight.',
+    noSupport: 'This calendar is not supported by the legacy FAX simulation path. Native operations have their own independent preflights; this indicator does not disable them.',
+    supported: 'The calendar matches the reference FAX configuration for the legacy simulator. Every operation still requires its own preflight.',
     drafted: 'Unsaved changes are not counted in this overview.',
     phase: { preparation: 'Preparation', sporting_history: 'Saved sporting history exists', completed: 'Completed Run' },
     item: {
@@ -64,7 +72,15 @@ const content = {
       working_draft: 'Inspect and Save changes',
     },
     allSaved: 'The selected foundations are saved. Sporting operations still require a separate preflight.',
+    checklist: 'Show saved-foundation checks',
+    attentionCount: 'items needing attention',
     details: 'Technical provenance and limits',
+    branch: 'Selected Branch',
+    calendar: 'Run calendar',
+    weeks: 'weeks per season',
+    seasons: 'seasons',
+    revision: 'Saved Revision HEAD',
+    draftVersion: 'Working Draft version',
   }
 } as const
 
@@ -80,6 +96,9 @@ const ordered: RunReadinessCode[] = [
   'world', 'calendar_package', 'population', 'health', 'official_ranking', 'working_draft'
 ]
 
+const needsAttention = (item: RunReadinessItem): boolean =>
+  item.status === 'missing' || item.status === 'candidate_only' || item.status === 'unsaved'
+
 export function RunHomeReadinessPanel({
   data, runId, language, refreshing, refresh,
 }: {
@@ -92,29 +111,32 @@ export function RunHomeReadinessPanel({
   const l = content[language]
   const base = '/admin/runs/' + encodeURIComponent(runId)
   const next = ordered.find(code => data.items.some(
-    item => item.code === code && (item.status === 'missing'
-      || item.status === 'candidate_only' || item.status === 'unsaved')
+    item => item.code === code && needsAttention(item)
   ))
   const draftDirty = data.items.some(
     item => item.code === 'working_draft' && item.status === 'unsaved'
   )
-  return <section aria-label="Run saved readiness" className="run-home-status-block">
+  const attentionCount = data.items.filter(needsAttention).length
+  return <section aria-label={language === 'cs' ? 'Připravenost Runu' : 'Run saved readiness'} className="run-home-status-block">
     <div className="actions">
       <h3>{l.heading}</h3>
       <button type="button" disabled={refreshing} onClick={refresh}>{refreshing ? l.loading : l.refresh}</button>
     </div>
     <p className="status">{l.explanation} · {l.phase[data.phase]}</p>
-    <ul className="run-home-feed" aria-label="Saved preparation checks">
-      {data.items.map(item => <li key={item.code}>
-        <span><strong>{l.item[item.code]}</strong>
-          <small>{l.status[item.status]} · {item.evidence_count}</small>
-        </span>
-        {(item.status === 'missing' || item.status === 'candidate_only' || item.status === 'unsaved') &&
-          <Link to={base + href[item.code]}>{l.action[item.code]} →</Link>}
-      </li>)}
-    </ul>
+    <details className="run-home-readiness-checklist">
+      <summary>{l.checklist} ({data.items.length}){attentionCount > 0 ? ` · ${attentionCount} ${l.attentionCount}` : ''}</summary>
+      <ul className="run-home-feed" aria-label={language === 'cs' ? 'Kontrola uložených podkladů' : 'Saved preparation checks'}>
+        {data.items.map(item => <li key={item.code}>
+          <span><strong>{l.item[item.code]}</strong>
+            <small>{l.status[item.status]} · {item.evidence_count}</small>
+          </span>
+          {needsAttention(item) &&
+            <Link to={base + href[item.code]}>{l.action[item.code]} →</Link>}
+        </li>)}
+      </ul>
+    </details>
     {draftDirty && <p className="error">{l.drafted}</p>}
-    <p className={data.sporting_calendar_supported_by_legacy_writers ? 'status' : 'error'}>
+    <p className="status">
       {data.sporting_calendar_supported_by_legacy_writers ? l.supported : l.noSupport}
     </p>
     {next
@@ -124,9 +146,11 @@ export function RunHomeReadinessPanel({
       : <p className="status">{l.allSaved}</p>}
     <details>
       <summary>{l.details}</summary>
-      <p>Saved HEAD: <code>{data.saved_revision_id}</code></p>
+      <p>{l.branch}: <code>{data.branch_id}</code></p>
+      <p>{l.calendar}: {data.current_calendar.weeks_per_year} {l.weeks} · {data.current_calendar.season_count} {l.seasons}</p>
+      <p>{l.revision}: <code>{data.saved_revision_id}</code></p>
       <p>SHA256: <code>{data.saved_revision_content_hash}</code></p>
-      <p>Draft version: {data.draft_version}</p>
+      <p>{l.draftVersion}: {data.draft_version}</p>
       <p>{l.history}: {data.saved_transition_count}
         {' · '}{l.task}: {data.active_full_simulation_task_count}
         / {data.historical_full_simulation_task_count}</p>

@@ -19,7 +19,91 @@ import { EmptyState, MetadataList, SectionCard } from './RunScopedUi'
 type BranchReadinessPanelProps = {
   run: RunContainer
   branches: RunBranch[]
+  locale?: 'cs' | 'en'
 }
+
+const content = {
+  cs: {
+    heading: "Stav starší simulace pro jednotlivé branche",
+    description: "Tento přehled kontroluje pozici starší FAX simulace (50 sezón, 61 týdnů) a uloženou revizi každé branche. Chybějící pozice starší simulace neznamená, že nativní operace nad kalendářem Runu není dostupná. Každá operace vyžaduje vlastní kontrolu; zde se žádná simulace nespouští.",
+    refresh: "Obnovit stav branchí",
+    noBranches: "Tento Run zatím nemá žádné branche.",
+    viewer: "Viewer Branch",
+    season: "Sezóna",
+    week: "Týden",
+    slot: "Aktuální slot",
+    head: "Uložená revize HEAD",
+    kind: "Typ uložené revize",
+    transition: "Přechod týdne",
+    notVerified: "Neověřeno",
+    noSlot: "Žádný / nedostupný",
+    none: "Žádná",
+    transitionReady: "Engine hlásí připravenost",
+    transitionNotReady: "Nepřipraveno",
+    foreignRun: "Branch patří jinému Runu.",
+    inactiveRun: "Run není aktivní.",
+    readOnlyRun: "Run je pouze ke čtení.",
+    inactiveBranch: "Branch není aktivní.",
+    readOnlyBranch: "Branch je pouze ke čtení.",
+    noHead: "Branch nemá uloženou hlavní revizi.",
+    noRevision: "Bez uložené revize nelze zkontrolovat pozici starší simulace.",
+    positionLoading: "Načítání pozice starší simulace…",
+    positionError: "Pozice starší simulace není dostupná",
+    positionInvalid: "Pozice starší simulace neodpovídá Runu, branchi nebo rozsahu 50 sezón a 61 týdnů.",
+    revisionLoading: "Načítání uložené hlavní revize…",
+    revisionError: "Uložená revize není dostupná",
+    revisionInvalid: "Identita nebo stav hlavní uložené revize nesouhlasí.",
+    gateLoading: "Kontrola pravidel přihlášek…",
+    gateError: "Pravidla přihlášek nejsou dostupná",
+    gateInvalid: "Identita pravidel přihlášek nesouhlasí.",
+    branchUnavailable: "Branch není dostupná",
+    blockers: "Překážky přechodu týdne",
+    unresolved: "Vyhodnocení přihlášek vyžaduje výslovnou kontrolu Admina; pravidla automatické způsobilosti nejsou uzavřena.",
+    inspect: "Otevřít kontrolu simulace a dostupných akcí",
+    notInspected: "Připravenost simulace nebyla ověřena. Zkontroluj upozornění výše; tento přehled nespouští žádnou akci.",
+    ariaPrefix: "Stav branche",
+  },
+  en: {
+    heading: "Legacy Branch simulation status",
+    description: "This view checks the legacy FAX 50-season, 61-week simulation position and each Branch's Saved Revision. A missing legacy position does not prove that a native Run-calendar operation is unavailable. Every action needs its own Branch-specific preflight; this view never starts a simulation.",
+    refresh: "Refresh Branch operating status",
+    noBranches: "No Branches exist in this Run.",
+    viewer: "Viewer Branch",
+    season: "Season",
+    week: "Week",
+    slot: "Current slot",
+    head: "Saved Revision HEAD",
+    kind: "Saved revision type",
+    transition: "Week Transition",
+    notVerified: "Not verified",
+    noSlot: "None / unavailable",
+    none: "None",
+    transitionReady: "Reported ready by the engine",
+    transitionNotReady: "Not ready",
+    foreignRun: "Branch belongs to another Run.",
+    inactiveRun: "Run is not active.",
+    readOnlyRun: "Run is read-only.",
+    inactiveBranch: "Branch is not active.",
+    readOnlyBranch: "Branch is read-only.",
+    noHead: "Branch has no saved head revision.",
+    noRevision: "No saved revision; authoritative position cannot be inspected.",
+    positionLoading: "Loading authoritative position…",
+    positionError: "Authoritative position unavailable",
+    positionInvalid: "Legacy simulation position does not match this Run, Branch, or its 50-season / 61-week bounds.",
+    revisionLoading: "Loading saved revision head…",
+    revisionError: "Saved revision head unavailable",
+    revisionInvalid: "Saved revision head identity or head status is inconsistent.",
+    gateLoading: "Checking entry-validation policy…",
+    gateError: "Entry-validation policy unavailable",
+    gateInvalid: "Entry-validation policy identity is inconsistent.",
+    branchUnavailable: "Branch unavailable",
+    blockers: "Week Transition blockers",
+    unresolved: "Application validation requires explicit Admin review; automatic eligibility policy remains unresolved.",
+    inspect: "Inspect authoritative simulation and available actions",
+    notInspected: "Simulation readiness is not verified. Review the warnings above; no action is executed from this panel.",
+    ariaPrefix: "Operating status for",
+  }
+} as const
 
 const positionKey = (runId: string, branchId: string) =>
   ['admin-branch-operational-position', runId, branchId] as const
@@ -79,18 +163,20 @@ function validEntryGate(
   )
 }
 
-function readinessReason(run: RunContainer, branch: RunBranch): string | null {
-  if (branch.run_id !== run.run_id) return 'Branch belongs to another Run.'
-  if (run.status !== 'active') return 'Run is not active.'
-  if (run.read_only) return 'Run is read-only.'
-  if (branch.status !== 'active') return 'Branch is not active.'
-  if (branch.read_only) return 'Branch is read-only.'
-  if (!branch.saved_head_revision_id) return 'Branch has no saved head revision.'
+function readinessReason(run: RunContainer, branch: RunBranch, locale: 'cs' | 'en'): string | null {
+  const l = content[locale]
+  if (branch.run_id !== run.run_id) return l.foreignRun
+  if (run.status !== 'active') return l.inactiveRun
+  if (run.read_only) return l.readOnlyRun
+  if (branch.status !== 'active') return l.inactiveBranch
+  if (branch.read_only) return l.readOnlyBranch
+  if (!branch.saved_head_revision_id) return l.noHead
   return null
 }
 
 /** Read-only inspection. No mutation or simulated readiness inferred from legacy checkpoints. */
-export function RunBranchReadinessPanel({ run, branches }: BranchReadinessPanelProps): JSX.Element {
+export function RunBranchReadinessPanel({ run, branches, locale = 'en' }: BranchReadinessPanelProps): JSX.Element {
+  const l = content[locale]
   const client = useQueryClient()
   const positions = useQueries({
     queries: branches.map(branch => ({
@@ -122,19 +208,16 @@ export function RunBranchReadinessPanel({ run, branches }: BranchReadinessPanelP
   })
 
   return (
-    <SectionCard title="Branch operating status">
-      <p className="status">
-        Read-only status from each Branch's own Saved Revision and authoritative simulation position.
-        A Week Transition indicator does not authorize other simulation actions; open the Branch to review their preflights.
-      </p>
+    <SectionCard title={l.heading}>
+      <p className="status">{l.description}</p>
       <button type="button" onClick={() => {
         void Promise.all([
           client.invalidateQueries({ queryKey: ['admin-branch-operational-position', run.run_id] }),
           client.invalidateQueries({ queryKey: ['admin-branch-operational-revision', run.run_id] }),
           client.invalidateQueries({ queryKey: ['admin-branch-operational-entry-gate', run.run_id] })
         ])
-      }}>Refresh Branch operating status</button>
-      {branches.length === 0 && <EmptyState message="No Branches exist in this Run." />}
+      }}>{l.refresh}</button>
+      {branches.length === 0 && <EmptyState message={l.noBranches} />}
       {branches.map((branch, index) => {
         const positionQuery = positions[index]
         const revisionQuery = revisions[index]
@@ -148,72 +231,72 @@ export function RunBranchReadinessPanel({ run, branches }: BranchReadinessPanelP
         const needsGate = position?.current_slot_kind === 'entry'
         const hasGate = Boolean(position && validEntryGate(gateQuery.data, run.run_id, branch.branch_id, position))
         const gate = hasGate ? gateQuery.data : null
-        const blocker = readinessReason(run, branch)
+        const blocker = readinessReason(run, branch, locale)
         const positionWarning = !branch.saved_head_revision_id
-          ? 'No saved revision; authoritative position cannot be inspected.'
+          ? l.noRevision
           : positionQuery.isPending
-            ? 'Loading authoritative position…'
+            ? l.positionLoading
             : positionQuery.error
-              ? `Authoritative position unavailable: ${formatApiError(positionQuery.error)}`
+              ? `${l.positionError}: ${formatApiError(positionQuery.error)}`
               : !position
-                ? 'Authoritative position has a mismatched or invalid Run, Branch, or week identity.'
+                ? l.positionInvalid
                 : null
         const revisionWarning = !branch.saved_head_revision_id
           ? null
           : revisionQuery.isPending
-            ? 'Loading saved revision head…'
+            ? l.revisionLoading
             : revisionQuery.error
-              ? `Saved revision head unavailable: ${formatApiError(revisionQuery.error)}`
+              ? `${l.revisionError}: ${formatApiError(revisionQuery.error)}`
               : !revision
-                ? 'Saved revision head identity or head status is inconsistent.'
+                ? l.revisionInvalid
                 : null
         const gateWarning = !needsGate
           ? null
           : gateQuery.isPending
-            ? 'Checking entry-validation policy…'
+            ? l.gateLoading
             : gateQuery.error
-              ? `Entry-validation policy unavailable: ${formatApiError(gateQuery.error)}`
+              ? `${l.gateError}: ${formatApiError(gateQuery.error)}`
               : !gate
-                ? 'Entry-validation policy identity is inconsistent.'
+                ? l.gateInvalid
                 : null
         const canInspect = !blocker && position && revision && (!needsGate || gate)
         return (
-          <article className="panel nested-panel" aria-label={`Operating status for ${branch.branch_id}`} key={branch.branch_id}>
-            <h4>{branch.display_name} {branch.branch_id === (run.viewer_branch_id ?? run.official_branch_id) && <span className="status">Viewer Branch</span>}</h4>
+          <article className="panel nested-panel" aria-label={`${l.ariaPrefix} ${branch.branch_id}`} key={branch.branch_id}>
+            <h4>{branch.display_name} {branch.branch_id === (run.viewer_branch_id ?? run.official_branch_id) && <span className="status">{l.viewer}</span>}</h4>
             <MetadataList items={[
               { label: 'Branch ID', value: branch.branch_id },
-              { label: 'Season', value: position ? `${2000 + position.current_week.season_index}/${2001 + position.current_week.season_index}` : 'Not verified' },
-              { label: 'Week', value: position ? `W${position.current_week.week} / 61` : 'Not verified' },
-              { label: 'Current slot', value: position?.current_slot_kind ?? 'None / unavailable' },
-              { label: 'Saved Revision HEAD', value: branch.saved_head_revision_id ?? 'None' },
-              { label: 'Saved revision type', value: revision?.kind ?? 'Not verified' },
-              { label: 'Week Transition', value: position ? (
+              { label: l.season, value: position ? `${2000 + position.current_week.season_index}/${2001 + position.current_week.season_index}` : l.notVerified },
+              { label: l.week, value: position ? `W${position.current_week.week} / 61` : l.notVerified },
+              { label: l.slot, value: position?.current_slot_kind ?? l.noSlot },
+              { label: l.head, value: branch.saved_head_revision_id ?? l.none },
+              { label: l.kind, value: revision?.kind ?? l.notVerified },
+              { label: l.transition, value: position ? (
                 position.week_ready_for_transition && position.transition_blockers.length === 0
-                  ? 'Reported ready by the engine'
-                  : 'Not ready'
-              ) : 'Not verified' }
+                  ? l.transitionReady
+                  : l.transitionNotReady
+              ) : l.notVerified }
             ]} />
-            {blocker && <p role="alert" className="error">Branch unavailable: {blocker}</p>}
+            {blocker && <p role="alert" className="error">{l.branchUnavailable}: {blocker}</p>}
             {positionWarning && <p role="status">{positionWarning}</p>}
             {revisionWarning && <p role="status">{revisionWarning}</p>}
             {gateWarning && <p role="status">{gateWarning}</p>}
             {position?.transition_blockers.length ? (
               <div>
-                <strong>Week Transition blockers</strong>
+                <strong>{l.blockers}</strong>
                 <ul>{position.transition_blockers.map((reason, index) => <li key={index}>{reason}</li>)}</ul>
               </div>
             ) : null}
             {needsGate && gate && gate.current_blocker_code === 'application_validation_policy_unresolved' && (
               <p role="alert" className="error">
-                Application validation requires explicit Admin review; automatic eligibility policy remains unresolved.
+                {l.unresolved}
               </p>
             )}
             {canInspect ? (
               <Link to={`/admin/runs/${encodeURIComponent(run.run_id)}/simulate?branch=${encodeURIComponent(branch.branch_id)}`}>
-                Inspect authoritative simulation and available actions
+                {l.inspect}
               </Link>
             ) : (
-              <p className="status">Simulation readiness is not verified. Review the warnings above; no action is executed from this panel.</p>
+              <p className="status">{l.notInspected}</p>
             )}
           </article>
         )

@@ -493,7 +493,14 @@ def test_tournament_lab_api_review_apply_and_normal_save_roundtrip(tmp_path) -> 
         )
         assert status == 201, saved
         assert saved["saved_revision"]["kind"] == "tournament_lab_run_draft"
-        component = saved["saved_revision"]["payload"]["content"]["run_tournament_lab_drafts"]
+        status, detail = _request(
+            "GET",
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}"
+            f"/saved-revisions/{saved['saved_revision']['revision_id']}",
+        )
+        assert status == 200, detail
+        assert detail["content_hash"] == saved["saved_revision"]["content_hash"]
+        component = detail["payload"]["content"]["run_tournament_lab_drafts"]
         assert component["fingerprint"] == applied["draft_state_fingerprint"]
         assert component["drafts"][0]["fingerprint"] == applied["proposal_fingerprint"]
         assert saved["working_draft"]["status"] == "clean"

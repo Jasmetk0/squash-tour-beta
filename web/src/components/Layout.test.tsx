@@ -138,12 +138,12 @@ describe('Layout mode navigation', () => {
     await screen.findByRole('option', { name: /#1 · S2003 · W9/ })
     fireEvent.change(screen.getByRole('combobox', { name: 'Admin Time context' }), { target: { value: 'cp-old' } })
     fireEvent.click(screen.getByRole('link', { name: 'Události' }))
-    expect(await screen.findByRole('heading', { name: 'Historical view is not available on this page yet.' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Historický pohled na této stránce zatím není dostupný.' })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Run Admin navigation' })).toBeInTheDocument()
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2003 · W9')
-    expect(screen.getByRole('link', { name: 'Open Run Home' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
-    fireEvent.click(screen.getByRole('button', { name: 'Return to Present' }))
-    expect(screen.queryByRole('heading', { name: 'Historical view is not available on this page yet.' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Otevřít přehled Runu' })).toHaveAttribute('href', `/admin/runs/${FAX_REFERENCE_RUN_ID}`)
+    fireEvent.click(screen.getByRole('button', { name: 'Vrátit se do současnosti' }))
+    expect(screen.queryByRole('heading', { name: 'Historický pohled na této stránce zatím není dostupný.' })).not.toBeInTheDocument()
   })
 
   it('keeps Past selected across supported navigation and while an unsupported route is guarded', async () => {
@@ -160,9 +160,9 @@ describe('Layout mode navigation', () => {
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
 
     fireEvent.click(screen.getByRole('link', { name: 'Události' }))
-    expect(await screen.findByRole('heading', { name: 'Historical view is not available on this page yet.' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Historický pohled na této stránce zatím není dostupný.' })).toBeInTheDocument()
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
-    fireEvent.click(screen.getByRole('link', { name: 'Open Run Home' }))
+    fireEvent.click(screen.getByRole('link', { name: 'Otevřít přehled Runu' }))
     await waitFor(() => expect(screen.getByRole('link', { name: 'Domů' })).toHaveClass('active'))
     expect(screen.getByLabelText('Admin view time')).toHaveTextContent('Past · S2005 · W31')
   })

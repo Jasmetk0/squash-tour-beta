@@ -213,6 +213,109 @@ describe('TournamentTestLabPage', () => {
     expect(screen.getByRole('table', { name: 'Tournament Lab assertions' })).toBeInTheDocument()
   })
 
+  it('filters first-run matches by status without changing Tournament batch diagnostics', async () => {
+    const user = userEvent.setup()
+    api.runTournamentTestLab.mockResolvedValue({
+      ...result,
+      runs: [{
+        ...result.runs[0],
+        match_results: [
+          ...result.runs[0].match_results,
+          {
+            ...result.runs[0].match_results[0],
+            node_id: 'R1-BYE', status: 'bye', winner_player_id: 'P2',
+            set_scores: [], rally_count: 0
+          }
+        ]
+      }]
+    })
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', { name: 'Load scratch copy' }))
+    await user.click(screen.getByRole('button', { name: 'Run tournament scenario' }))
+    const table = await screen.findByRole('table', { name: 'Tournament Lab match results' })
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    expect(screen.getByText('Showing 2 of 2 first-run matches · Batch totals remain unchanged.')).toBeInTheDocument()
+    const filter = screen.getByRole('combobox', { name: 'Tournament Lab match status filter' })
+    await user.selectOptions(filter, 'bye')
+    expect(within(table).getAllByRole('row')).toHaveLength(2)
+    expect(within(table).getByRole('cell', { name: 'R1-BYE' })).toBeInTheDocument()
+    expect(within(table).queryByRole('cell', { name: 'R1-M1' })).not.toBeInTheDocument()
+    expect(screen.getByText('Showing 1 of 2 first-run matches · Batch totals remain unchanged.')).toBeInTheDocument()
+    expect(screen.getByText('Champions: P1: 2')).toBeInTheDocument()
+    await user.selectOptions(filter, 'all')
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    expect(api.runTournamentTestLab).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides previous inspection and run evidence when the editable scenario changes', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', { name: 'Load scratch copy' }))
+    await user.click(screen.getByRole('button', { name: 'Inspect compatibility' }))
+    expect(await screen.findByText('No compatibility issues.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Run tournament scenario' }))
+    expect(await screen.findByRole('table', { name: 'Tournament Lab match results' })).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Tournament Lab scenario JSON'), {
+      target: { value: JSON.stringify({ ...scenario, scenario_id: 'edited-proposal' }) }
+    })
+    expect(screen.queryByRole('table', { name: 'Tournament Lab match results' })).not.toBeInTheDocument()
+    expect(screen.queryByText('No compatibility issues.')).not.toBeInTheDocument()
+    expect(screen.getByText('Scenario: edited-proposal')).toBeInTheDocument()
+  })
+
+  it('rejects empty or unsafe match seed tokens before a Tournament Lab request', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', { name: 'Load scratch copy' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tournament Lab batch match seeds' }), {
+      target: { value: '3, ' }
+    })
+    await user.click(screen.getByRole('button', { name: 'Run tournament scenario' }))
+    expect(screen.getByText('Batch match seeds must be comma-separated integers.')).toBeInTheDocument()
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tournament Lab batch match seeds' }), {
+      target: { value: '9007199254740992' }
+    })
+    await user.click(screen.getByRole('button', { name: 'Run tournament scenario' }))
+    expect(screen.getByText('Batch match seeds must be comma-separated integers.')).toBeInTheDocument()
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+  })
+
+  it('manually refreshes Tournament Test Sessions without simulating or saving a session', async () => {
+    const user = userEvent.setup()
+    api.getTournamentLabSessions.mockResolvedValueOnce([]).mockResolvedValue([{
+      session_id: 'new-session', display_name: 'Fresh Tournament Session', version: 2
+    }])
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    expect(await screen.findByText('No saved Tournament Test Sessions yet. Scratch mode remains available.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh Test Sessions' }))
+    expect(await screen.findByRole('option', { name: 'Fresh Tournament Session · v2' })).toBeInTheDocument()
+    expect(api.getTournamentLabSessions).toHaveBeenCalledTimes(2)
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+    expect(api.createTournamentLabSession).not.toHaveBeenCalled()
+  })
+
+  it('formats scratch Tournament JSON and distinguishes unavailable sessions from no sessions', async () => {
+    const user = userEvent.setup()
+    api.getTournamentLabSessions.mockRejectedValue(new Error('Backend unavailable'))
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Saved Tournament Test Sessions unavailable.')
+    expect(screen.queryByText('No saved Tournament Test Sessions yet. Scratch mode remains available.')).not.toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: 'Load scratch copy' }))
+    const editor = screen.getByRole('textbox', { name: 'Tournament Lab scenario JSON' })
+    const compact = JSON.stringify(scenario)
+    fireEvent.change(editor, { target: { value: compact } })
+    await user.click(screen.getByRole('button', { name: 'Format JSON' }))
+    expect(editor).toHaveValue(JSON.stringify(scenario, null, 2))
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+    fireEvent.change(editor, { target: { value: '[]' } })
+    await user.click(screen.getByRole('button', { name: 'Format JSON' }))
+    expect(screen.getByText('A Lab scenario must be a JSON object.')).toBeInTheDocument()
+    expect(editor).toHaveValue('[]')
+  })
+
   it('shows structured incompatibility instead of fabricating a tournament result', async () => {
     const user = userEvent.setup()
     const blocked = {
@@ -278,8 +381,7 @@ describe('TournamentTestLabPage', () => {
       {
         display_name: 'Standard four-player — Test Session',
         built_in_scenario_id: 'standard-four-player'
-      },
-      expect.anything()
+      }
     )
     expect(await screen.findByDisplayValue('Standard four-player — Test Session')).toBeInTheDocument()
     expect(screen.getByText('isolated Test Session')).toBeInTheDocument()
@@ -316,6 +418,37 @@ describe('TournamentTestLabPage', () => {
     expect(await screen.findByText(/Champions: P1: 2/)).toBeInTheDocument()
   })
 
+
+  it('does not run a saved Tournament Session or preview a Run proposal with unsaved JSON', async () => {
+    const user = userEvent.setup()
+    const saved = {
+      schema_version: 'tournament_test_lab_session.v1',
+      session_id: 'guarded-session',
+      display_name: 'Saved baseline',
+      version: 1,
+      session_fingerprint: '1'.repeat(64),
+      scenario
+    }
+    api.getTournamentLabSessions.mockResolvedValue([saved])
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    await screen.findByRole('option', { name: 'Saved baseline · v1' })
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Open Tournament Test Session' }), saved.session_id)
+    expect(await screen.findByDisplayValue(saved.display_name)).toBeInTheDocument()
+    const run = screen.getByRole('button', { name: 'Run Test Session' })
+    expect(run).toBeEnabled()
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tournament Lab scenario JSON' }), {
+      target: { value: JSON.stringify({ ...scenario, draw_seed: 987 }) }
+    })
+    expect(run).toBeDisabled()
+    expect(screen.getByText('Unsaved Tournament Test Session changes. Save before running or reviewing a Run proposal.')).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tournament Lab target Run ID' }), { target: { value: 'run-a' } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tournament Lab target Branch ID' }), { target: { value: 'branch-a' } })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Tournament Lab target event ID' }), { target: { value: 'event-a' } })
+    expect(screen.getByRole('button', { name: 'Preview Run draft' })).toBeDisabled()
+    expect(api.runTournamentLabSession).not.toHaveBeenCalled()
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+  })
 
   it('renders resolved group standings and hybrid knockout evidence', async () => {
     const user = userEvent.setup()

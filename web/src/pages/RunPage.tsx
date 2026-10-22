@@ -316,7 +316,7 @@ export function RunPage(): JSX.Element {
           {positionQuery.isPending && <p role="status">{l.loading}</p>}
           {homeActivity && homeActivity.calendar_status === 'ready' && homeActivity.upcoming.length > 0 && <div>
             <h4>{l.upcomingEvents}</h4>
-            <ul className="run-home-feed" aria-label="Upcoming saved tournaments">
+            <ul className="run-home-feed" aria-label={language === 'cs' ? 'Nadcházející uložené turnaje' : 'Upcoming saved tournaments'}>
               {homeActivity.upcoming.map(event => <li key={event.event_id}>
                 <span><strong>{event.event_name}</strong><small>{event.season} · W{event.week} · {event.category}</small></span>
                 <Link to={base + '/manage'}>{language === 'cs' ? 'Balíčky Runu' : 'Run packages'} →</Link>
@@ -367,7 +367,7 @@ export function RunPage(): JSX.Element {
       {homeActivity && <section className="run-home-results">
         <h4>{l.publishedResults}</h4>
         {homeActivity.result_status === 'empty' && <p className="status">{l.noResults}</p>}
-        {homeActivity.result_status === 'ready' && <ul className="run-home-feed" aria-label="Published Branch tournament results">
+        {homeActivity.result_status === 'ready' && <ul className="run-home-feed" aria-label={language === 'cs' ? 'Publikované výsledky turnajů branche' : 'Published Branch tournament results'}>
           {homeActivity.recent_results.map(result => <li key={result.event_id}>
             <span><strong>{result.event_name}</strong><small>{result.season} · W{result.week} ·
               {language === 'cs' ? ' Vítěz' : ' Champion'}: <HomePlayerIdentityLink runId={runId}
@@ -427,15 +427,15 @@ export function RunPage(): JSX.Element {
       <RunCalendarExtensionInspection key={runId + ':' + branchId + ':' + homeClock.season_count}
         runId={runId} branchId={branchId} currentCount={homeClock.season_count} language={language} />
     </SectionCard>}
-    {setupAllowed && <section className="run-home-setup" aria-label="Run content preparation">
+    {setupAllowed && <section className="run-home-setup" aria-label={language === 'cs' ? 'Příprava obsahu Runu' : 'Run content preparation'}>
       <h3>{l.setup}</h3>
       <p className="status">{language === 'cs'
         ? 'Existující nástroje k přípravě hráčů, rankingu a prvního turnaje. Ruční Save a potvrzovací kroky se nemění.'
         : 'Existing player, ranking and first-tournament preparation. Manual Save and confirmations are unchanged.'}</p>
       <RunPackageSetupPanel run={run!} branch={selectedBranch} loadSourceCatalog={false} />
       {!sportingClockSupported && <p role="status">{language === 'cs'
-        ? 'Můžeš plánovat, kopírovat balíčky a prohlédnout náhled hráčů podle kalendáře Runu, potvrdit je a ručně uložit. Zápasy, ranking a posouvání času pro tento kalendář zatím nejsou dostupné.'
-        : 'Planning, package copies and calendar-aware player previews are available, with reviewed adoption and explicit Save. Matches, ranking and time progression are not yet available for this calendar.'}</p>}
+        ? 'Můžeš plánovat, kopírovat balíčky a podle kalendáře Runu připravit hráče, potvrdit je a ručně uložit. Nástroje pro počáteční ranking a první turnaj níže jsou určené pro starší 61týdenní postup. Nativní operace u jiných kalendářů se ověřují samostatně ve správě Runu a simulaci.'
+        : 'Planning, package copies and calendar-aware player previews are available with explicit Save. The initial-ranking and first-tournament shortcuts below belong to the legacy 61-week workflow. Native operations for other calendars require their own preflights in Run Management and Simulation.'}</p>}
       {homeClock && <p><Link to={base + '/players/generate'}>{language === 'cs' ? 'Generovat hráče →' : 'Generate players →'}</Link></p>}
       {sportingClockSupported && <>
       <RunInitialRankingSetupPanel run={run!} branch={selectedBranch} />

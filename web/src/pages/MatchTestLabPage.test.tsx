@@ -99,6 +99,94 @@ describe('MatchTestLabPage', () => {
     expect(screen.getByText(/LAB-B: 1/)).toBeInTheDocument()
   })
 
+  it('filters Match Lab batch results by winner without changing diagnostics or rerunning the API', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    const table = await screen.findByRole('table', { name: 'Match Lab results' })
+    const winnerFilter = screen.getByRole('combobox', { name: 'Match Lab winner filter' })
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    expect(screen.getByText('Showing 2 of 2 results · Batch diagnostics above include all matches.')).toBeInTheDocument()
+    await user.selectOptions(winnerFilter, 'LAB-A')
+    expect(within(table).getAllByRole('row')).toHaveLength(2)
+    expect(within(table).getByRole('cell', { name: '100' })).toBeInTheDocument()
+    expect(within(table).queryByRole('cell', { name: '101' })).not.toBeInTheDocument()
+    expect(screen.getByText('Showing 1 of 2 results · Batch diagnostics above include all matches.')).toBeInTheDocument()
+    expect(screen.getByText('Wins: LAB-A: 1 · LAB-B: 1')).toBeInTheDocument()
+    await user.selectOptions(winnerFilter, 'all')
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    expect(api.runMatchTestLab).toHaveBeenCalledTimes(1)
+  })
+
+  it('clears previous Match Lab results when the current scenario or batch seeds change', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    expect(await screen.findByRole('table', { name: 'Match Lab results' })).toBeInTheDocument()
+
+    const editor = screen.getByRole('textbox', { name: 'Match Lab scenario JSON' })
+    const value = JSON.parse((editor as HTMLTextAreaElement).value)
+    fireEvent.change(editor, { target: { value: JSON.stringify({ ...value, scenario_id: 'edited-match' }) } })
+    expect(screen.queryByRole('table', { name: 'Match Lab results' })).not.toBeInTheDocument()
+    expect(screen.getByText(/Scenario: edited-match/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    expect(await screen.findByRole('table', { name: 'Match Lab results' })).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('textbox', { name: 'Match Lab batch seeds' }), { target: { value: '100, 101' } })
+    expect(screen.queryByRole('table', { name: 'Match Lab results' })).not.toBeInTheDocument()
+  })
+
+  it('rejects empty and unsafe batch seed tokens rather than silently treating them as zero', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    const field = screen.getByRole('textbox', { name: 'Match Lab batch seeds' })
+    fireEvent.change(field, { target: { value: '100, ' } })
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Batch seeds must be comma-separated integers.')
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+    fireEvent.change(field, { target: { value: '9007199254740992' } })
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Batch seeds must be comma-separated integers.')
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+  })
+
+  it('manually refreshes Match Test Session inventory without modifying or running any session', async () => {
+    const user = userEvent.setup()
+    api.getMatchLabSessions.mockResolvedValueOnce([]).mockResolvedValue([{
+      session_id: 'new-session', display_name: 'Fresh Match Session', version: 1
+    }])
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    expect(await screen.findByText('No saved Match Test Sessions yet. Scratch mode remains available.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh Test Sessions' }))
+    expect(await screen.findByRole('option', { name: 'Fresh Match Session · v1' })).toBeInTheDocument()
+    expect(api.getMatchLabSessions).toHaveBeenCalledTimes(2)
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+    expect(api.createMatchLabSession).not.toHaveBeenCalled()
+  })
+
+  it('formats scratch JSON without running and reports a missing saved-session inventory honestly', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    expect(await screen.findByText('No saved Match Test Sessions yet. Scratch mode remains available.')).toBeInTheDocument()
+    const editor = screen.getByRole('textbox', { name: 'Match Lab scenario JSON' })
+    const compact = JSON.stringify(JSON.parse((editor as HTMLTextAreaElement).value))
+    fireEvent.change(editor, { target: { value: compact } })
+    await user.click(screen.getByRole('button', { name: 'Format JSON' }))
+    expect(editor).toHaveValue(JSON.stringify(JSON.parse(compact), null, 2))
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+    fireEvent.change(editor, { target: { value: 'null' } })
+    await user.click(screen.getByRole('button', { name: 'Format JSON' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('A Lab scenario must be a JSON object.')
+    expect(editor).toHaveValue('null')
+  })
+
+  it('reports an unavailable saved Match Test Session list rather than claiming no saved sessions', async () => {
+    api.getMatchLabSessions.mockRejectedValue(new Error('Backend unavailable'))
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Saved Match Test Sessions unavailable.')
+    expect(screen.queryByText('No saved Match Test Sessions yet. Scratch mode remains available.')).not.toBeInTheDocument()
+  })
+
   it('rejects malformed local JSON before calling the API', async () => {
     const user = userEvent.setup()
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
@@ -162,8 +250,7 @@ describe('MatchTestLabPage', () => {
       {
         display_name: 'Standard even match — Test Session',
         built_in_scenario_id: 'standard-even-match'
-      },
-      expect.anything()
+      }
     )
     expect(await screen.findByDisplayValue('Standard even match — Test Session')).toBeInTheDocument()
 

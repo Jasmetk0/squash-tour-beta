@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -171,6 +171,24 @@ describe('PlayerTestLabPage', () => {
     api.runPlayerTestLab.mockResolvedValue(result)
   })
 
+  it('retains in-flight status after editing and never publishes the detached old result', async () => {
+    const user = userEvent.setup()
+    let resolve!: (value: typeof result) => void
+    const pending = new Promise<typeof result>(done => { resolve = done })
+    api.runPlayerTestLab.mockImplementation(() => pending)
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Run scenario' })).toBeEnabled())
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    const editor = screen.getByLabelText('Player Lab scenario JSON')
+    fireEvent.change(editor, { target: { value: JSON.stringify({ ...scenario, scenario_id: 'newer-input' }) } })
+    expect(screen.getByRole('button', { name: 'Running…' })).toBeDisabled()
+    fireEvent.submit(editor.closest('form')!)
+    expect(api.runPlayerTestLab).toHaveBeenCalledTimes(1)
+    await act(async () => { resolve(result); await pending })
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Run scenario' })).toBeEnabled())
+    expect(screen.queryByRole('table', { name: 'Player Lab variant comparison' })).not.toBeInTheDocument()
+  })
+
   it('loads a built-in and renders shared-kernel diagnostics', async () => {
     const user = userEvent.setup()
     renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
@@ -195,4 +213,126 @@ describe('PlayerTestLabPage', () => {
     expect(screen.getByRole('table', { name: 'Player Lab active timeline' })).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Player Lab idle timeline' })).toBeInTheDocument()
   })
+  it('compares all Player Lab variants while filtering visible timelines without rerunning development', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByText('Development activity baseline')
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    const comparison = await screen.findByRole('table', { name: 'Player Lab variant comparison' })
+    expect(within(comparison).getAllByRole('row')).toHaveLength(3)
+    expect(screen.getByRole('table', { name: 'Player Lab active timeline' })).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Player Lab idle timeline' })).toBeInTheDocument()
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Player Lab variant filter' }), 'idle')
+    expect(screen.queryByRole('table', { name: 'Player Lab active timeline' })).not.toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Player Lab idle timeline' })).toBeInTheDocument()
+    expect(within(comparison).getAllByRole('row')).toHaveLength(3)
+    expect(screen.getByText('Showing 1 of 2 variants. Filters do not recalculate development.')).toBeInTheDocument()
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Player Lab variant filter' }), 'all')
+    expect(screen.getByRole('table', { name: 'Player Lab active timeline' })).toBeInTheDocument()
+    expect(api.runPlayerTestLab).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the last ten saved snapshots without changing final variant metrics', async () => {
+    const user = userEvent.setup()
+    const snapshots = Array.from({ length: 12 }, (_, index) => ({
+      ...result.variants[0].snapshots[0],
+      week: { season_index: 0, week: index + 1 },
+      ovr: 90 + index,
+      state_fingerprint: String(index).padStart(64, '0')
+    }))
+    api.runPlayerTestLab.mockResolvedValue({
+      ...result,
+      variants: [{
+        ...result.variants[0],
+        snapshots
+      }]
+    })
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByText('Development activity baseline')
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    const timeline = await screen.findByRole('table', { name: 'Player Lab active timeline' })
+    expect(within(timeline).getAllByRole('row')).toHaveLength(13)
+    const comparison = screen.getByRole('table', { name: 'Player Lab variant comparison' })
+    expect(within(comparison).getByRole('cell', { name: '101' })).toBeInTheDocument()
+    expect(within(comparison).getByRole('cell', { name: '+11' })).toBeInTheDocument()
+    expect(screen.getByText(/Changes compare first and last recorded snapshots/)).toBeInTheDocument()
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Player Lab timeline limit' }), '10')
+    expect(within(timeline).getAllByRole('row')).toHaveLength(11)
+    expect(within(timeline).queryByRole('cell', { name: 'S1 W1' })).not.toBeInTheDocument()
+    expect(within(timeline).getByRole('cell', { name: 'S1 W12' })).toBeInTheDocument()
+    expect(screen.getByText('Showing 10 of 12 saved snapshots.')).toBeInTheDocument()
+    expect(within(comparison).getByRole('cell', { name: '101' })).toBeInTheDocument()
+    expect(api.runPlayerTestLab).toHaveBeenCalledTimes(1)
+  })
+
+  it('formats valid JSON and clears stale results when the scenario is edited or reloaded', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByText('Development activity baseline')
+    const editor = screen.getByRole('textbox', { name: 'Player Lab scenario JSON' })
+
+    fireEvent.change(editor, { target: { value: JSON.stringify(scenario) } })
+    await user.click(screen.getByRole('button', { name: 'Format JSON' }))
+    expect(editor).toHaveValue(JSON.stringify(scenario, null, 2))
+
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    expect(await screen.findByRole('table', { name: 'Player Lab active timeline' })).toBeInTheDocument()
+
+    fireEvent.change(editor, { target: { value: '{}' } })
+    expect(screen.queryByRole('table', { name: 'Player Lab active timeline' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Run scenario' })).toBeDisabled()
+    expect(screen.getByText(/invalid \/ incomplete JSON/)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Load scenario' }))
+    expect(screen.getByRole('button', { name: 'Run scenario' })).toBeEnabled()
+    expect(screen.queryByRole('table', { name: 'Player Lab active timeline' })).not.toBeInTheDocument()
+  })
+
+  it('refreshes an empty built-in list without running the Player development engine', async () => {
+    const user = userEvent.setup()
+    api.getPlayerLabBuiltInScenarios.mockResolvedValueOnce([]).mockResolvedValue([{
+      scenario_id: scenario.scenario_id,
+      display_name: 'Development activity baseline',
+      description: 'Shared-kernel development comparison.',
+      read_only: true,
+      scenario_fingerprint: 'a'.repeat(64),
+      scenario
+    }])
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    expect(await screen.findByText('No built-in Player Lab scenarios are available.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh built-in scenarios' }))
+    expect(await screen.findByText('Development activity baseline')).toBeInTheDocument()
+    expect(api.getPlayerLabBuiltInScenarios).toHaveBeenCalledTimes(2)
+    expect(api.runPlayerTestLab).not.toHaveBeenCalled()
+  })
+
+  it('shows a failed Player Lab built-in fetch as an error, not an empty list', async () => {
+    api.getPlayerLabBuiltInScenarios.mockRejectedValue(new Error('No connection'))
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Built-in Player Lab scenarios unavailable.')
+    expect(screen.queryByText('No built-in Player Lab scenarios are available.')).not.toBeInTheDocument()
+  })
+
+  it('does not overwrite an intentionally emptied editor with the built-in baseline', async () => {
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByText('Development activity baseline')
+    const editor = screen.getByRole('textbox', { name: 'Player Lab scenario JSON' })
+    fireEvent.change(editor, { target: { value: '' } })
+    expect(editor).toHaveValue('')
+    expect(screen.getByRole('button', { name: 'Run scenario' })).toBeDisabled()
+    expect(editor).toHaveValue('')
+  })
+
+  it('does not read an invalid variants value as a valid scenario', async () => {
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByText('Development activity baseline')
+    const editor = screen.getByRole('textbox', { name: 'Player Lab scenario JSON' })
+    fireEvent.change(editor, { target: { value: JSON.stringify({
+      schema_version: 'player_test_lab_scenario.v1', scenario_id: 'partial', variants: null
+    }) } })
+    expect(screen.getByRole('button', { name: 'Run scenario' })).toBeDisabled()
+    expect(screen.getByText(/invalid \/ incomplete JSON/)).toBeInTheDocument()
+    expect(api.runPlayerTestLab).not.toHaveBeenCalled()
+  })
+
 })

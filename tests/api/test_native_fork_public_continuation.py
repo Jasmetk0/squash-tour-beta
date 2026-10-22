@@ -192,6 +192,30 @@ def test_public_native_fork_birth_matches_save_restore_restart_and_independence(
                 run_id="run", branch_id=target_id, document=doc()
             )
         assert _dump(path) == package_before
+        status, lab_session = _request(
+            "POST", server.base_url + "/admin/labs/tournament/sessions",
+            {"display_name": "Native fork component guard", "built_in_scenario_id": "standard-eight-player-knockout"},
+        )
+        assert status == 201, lab_session
+        lab_url = server.base_url + "/admin/labs/tournament/sessions/" + lab_session["session_id"]
+        lab_before = _dump(path)
+        status, lab_preview = _request("POST", lab_url + "/run-draft-preview", {
+            "expected_session_fingerprint": lab_session["session_fingerprint"],
+            "product_run_id": "run", "branch_id": target_id, "event_id": "unsupported-proposal",
+        })
+        assert status == 200, lab_preview
+        assert lab_preview["ready_for_draft"] is False
+        assert any(issue["code"] == "TARGET_COMPONENT_UNSUPPORTED" for issue in lab_preview["issues"])
+        status, blocked = _request("POST", lab_url + "/run-draft-apply", {
+            "command_id": "unsupported-native-lab-apply", "expected_session_fingerprint": lab_session["session_fingerprint"],
+            "product_run_id": "run", "branch_id": target_id, "event_id": "unsupported-proposal",
+            "expected_saved_revision_id": lab_preview["target_saved_revision_id"],
+            "expected_working_draft_version": lab_preview["target_working_draft_version"],
+            "expected_preview_fingerprint": lab_preview["preview_fingerprint"],
+            "expected_candidate_fingerprint": lab_preview["candidate_fingerprint"],
+        })
+        assert status == 409, blocked
+        assert _dump(path) == lab_before
         request = target.prepare("transition", "fork-birthday")
         with ThreadPoolExecutor(max_workers=2) as pool:
             results = list(

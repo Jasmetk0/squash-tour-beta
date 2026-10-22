@@ -960,6 +960,14 @@ class _RunDraftPreviewRepository:
         self.status = status
         self.run_id = run_id
 
+    def get_branch_saved_revision(self, *, revision_id: str):
+        from beta_engine.domain.run_revisions import (
+            RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+        )
+
+        assert revision_id == "target-revision-7"
+        return SimpleNamespace(payload_schema_version=RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION)
+
     def get_branch_revision_state(self, *, branch_id: str):
         if branch_id != "target-branch":
             raise KeyError("branch missing")
@@ -1183,6 +1191,45 @@ def test_tournament_lab_reviewed_run_draft_apply_is_atomic_idempotent_and_saveab
         assert loaded is not None
         assert loaded.drafts[0].fingerprint == applied.proposal_fingerprint
         assert saved.working_draft.status == "clean"
+    finally:
+        engine.dispose()
+
+
+def test_tournament_lab_run_draft_flush_remains_atomic_on_late_failure(tmp_path, monkeypatch) -> None:
+    import beta_engine.application.tournament_test_lab_service as module
+
+    engine, repository, service = _run_backed_lab_service(tmp_path)
+    try:
+        created = service.create_session(TournamentLabSessionCreateRequest(
+            display_name="Atomic proposal", scenario=_scenario(),
+        ))
+        preview = service.preview_run_draft(created.session_id, TournamentLabRunDraftPreviewRequest(
+            expected_session_fingerprint=created.fingerprint,
+            product_run_id="run-lab", branch_id="branch-lab", event_id="atomic-event",
+        ))
+        request = TournamentLabRunDraftApplyRequest(
+            command_id="atomic-apply", expected_session_fingerprint=created.fingerprint,
+            product_run_id="run-lab", branch_id="branch-lab", event_id="atomic-event",
+            expected_saved_revision_id=preview.target_saved_revision_id,
+            expected_working_draft_version=preview.target_working_draft_version,
+            expected_preview_fingerprint=preview.fingerprint,
+            expected_candidate_fingerprint=preview.candidate_fingerprint,
+        )
+        capture = module.capture_run_tournament_lab_draft_state
+
+        def fail_after_flush(db, **kwargs):
+            assert capture(db, **kwargs) is not None
+            raise RuntimeError("late aggregate failure")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(module, "capture_run_tournament_lab_draft_state", fail_after_flush)
+            with pytest.raises(RuntimeError, match="late aggregate failure"):
+                service.apply_run_draft(created.session_id, request)
+        with repository._session_factory() as db:
+            assert db.get(RunTournamentLabDraftModel, ("run-lab", "branch-lab", "atomic-event")) is None
+        assert repository.get_branch_revision_state(branch_id="branch-lab").working_draft.draft_version == 0
+        assert service.apply_run_draft(created.session_id, request).already_applied is False
+        assert service.apply_run_draft(created.session_id, request).already_applied is True
     finally:
         engine.dispose()
 

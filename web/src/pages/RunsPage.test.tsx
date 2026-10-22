@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -59,6 +59,46 @@ describe('canonical Runs inventory', () => {
     await userEvent.type(screen.getByRole('searchbox', { name: 'Hledat Run' }), 'another')
     expect(screen.queryByText('Sandbox One')).not.toBeInTheDocument()
     expect(screen.getByText('Another world')).toBeInTheDocument()
+  })
+
+  it('opens Run Home directly without fetching or expanding its Branches', async () => {
+    renderPage()
+    const row = (await screen.findByText('Sandbox One')).closest('li')!
+    const open = within(row).getByRole('link', { name: 'Otevřít Run' })
+    expect(open).toHaveAttribute('href', '/admin/runs/run-one')
+    expect(api.listRunBranches).not.toHaveBeenCalled()
+    await userEvent.click(open)
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-one')
+  })
+
+  it('combines search and visibility filters without modifying the stored inventory', async () => {
+    renderPage()
+    await screen.findByText('Sandbox One')
+    const visibility = screen.getByRole('combobox', { name: 'Typ Runu' })
+    await userEvent.selectOptions(visibility, 'protected')
+    expect(screen.queryByText('Sandbox One')).not.toBeInTheDocument()
+    expect(screen.getByText('Another world')).toBeInTheDocument()
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Hledat Run' }), 'sandbox')
+    expect(screen.getByText('Žádný Run neodpovídá hledání.')).toBeInTheDocument()
+    await userEvent.selectOptions(visibility, 'editable')
+    expect(screen.getByText('Sandbox One')).toBeInTheDocument()
+    expect(screen.queryByText('Another world')).not.toBeInTheDocument()
+    expect(screen.getByText('Zobrazeno: 1 / 2')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Zrušit filtry' }))
+    expect(screen.getByText('Sandbox One')).toBeInTheDocument()
+    expect(screen.getByText('Another world')).toBeInTheDocument()
+    expect(screen.getByText('Zobrazeno: 2 / 2')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Hledat Run' })).toHaveValue('')
+    expect(visibility).toHaveValue('all')
+  })
+
+  it('refreshes the Run inventory only when explicitly asked', async () => {
+    renderPage()
+    await screen.findByText('Sandbox One')
+    expect(api.listRunContainers).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('button', { name: 'Obnovit seznam Runů' }))
+    await waitFor(() => expect(api.listRunContainers).toHaveBeenCalledTimes(2))
+    expect(api.listRunBranches).not.toHaveBeenCalled()
   })
 
   it('links the chosen actual Branch, preserving unavailable time and Viewer selection', async () => {

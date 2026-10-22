@@ -23,8 +23,8 @@ type Props = {
 }
 
 export function RunHomeProgress({ season, week, loading, unavailable, historical, locale, clock = legacyClock }: Props): JSX.Element {
-  if (clock === null && loading) return <section className="run-home-progress" aria-label="Run timeline"><p role="status">{locale === 'cs' ? 'Načítání…' : 'Loading…'}</p></section>
-  if (clock === null) return <section className="run-home-progress" aria-label="Run timeline"><p role="alert">{locale === 'cs' ? 'Kalendář Runu není dostupný.' : 'Run calendar is unavailable.'}</p></section>
+  if (clock === null && loading) return <section className="run-home-progress" aria-label={locale === 'cs' ? 'Časová osa Runu' : 'Run timeline'}><p role="status">{locale === 'cs' ? 'Načítání…' : 'Loading…'}</p></section>
+  if (clock === null) return <section className="run-home-progress" aria-label={locale === 'cs' ? 'Časová osa Runu' : 'Run timeline'}><p role="alert">{locale === 'cs' ? 'Kalendář Runu není dostupný.' : 'Run calendar is unavailable.'}</p></section>
   const SEASONS = clock.season_count, WEEKS = clock.weeks_per_year
   const seasonLabel = (ordinal: number): string => clock.season_start_year_week === 1
     ? String(clock.start_year + ordinal) : `${clock.start_year + ordinal}/${String((clock.start_year + ordinal + 1) % 100).padStart(2, '0')}`
@@ -41,7 +41,7 @@ export function RunHomeProgress({ season, week, loading, unavailable, historical
         : (item === 'season' ? index === null : currentWeek === null)
           ? locale === 'cs' ? 'Zatím neurčeno' : 'Not positioned yet'
           : item === 'season' ? seasonLabel(index!) : 'W' + currentWeek
-  return <section className="run-home-progress" aria-label="Run timeline">
+  return <section className="run-home-progress" aria-label={locale === 'cs' ? 'Časová osa Runu' : 'Run timeline'}>
     <p className="status">{prefix}{historical
       ? locale === 'cs' ? ' · zobrazeny pouze lokátory, nikoliv rekonstruovaná historie' : ' · locators only, not reconstructed history'
       : ''}</p>

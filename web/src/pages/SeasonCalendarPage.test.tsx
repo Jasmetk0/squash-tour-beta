@@ -133,6 +133,25 @@ describe('SeasonCalendarPage', () => {
     expect(within(items[1]).getByRole('link', { name: 'W2' })).toHaveAttribute('href', '/runs/run-a/weeks/2')
   })
 
+  it('encodes a Run ID with reserved characters in calendar navigation without changing API IDs', async () => {
+    renderWithRoute(<SeasonCalendarPage />, '/runs/run%20x%2Fy/calendar')
+    const list = await screen.findByRole('list', { name: 'Season calendar ordered list' })
+    const items = within(list).getAllByRole('listitem')
+    expect(within(items[0]).getByRole('link', { name: 'E2' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/calendar/E2')
+    expect(within(items[0]).getByRole('link', { name: 'history' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/events/E2')
+    expect(within(items[1]).getByRole('link', { name: 'W2' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/weeks/2')
+    expect(screen.getByRole('link', { name: 'Back to Run Detail' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy')
+    const next = screen.getByRole('heading', { name: 'Next event focus' }).closest('article')!
+    expect(within(next).getByRole('link', { name: 'E1' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/calendar/E1')
+    expect(api.getRun).toHaveBeenCalledWith('run x/y')
+    expect(api.listEvents).toHaveBeenCalledWith('run x/y')
+  })
+
   it('filters by week/category/text without re-sorting matching entries', async () => {
     renderWithRoute(<SeasonCalendarPage />, '/runs/run-a/calendar')
     const list = await screen.findByRole('list', { name: 'Season calendar ordered list' })

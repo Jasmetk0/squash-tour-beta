@@ -1016,9 +1016,9 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
   const [populationEditing, setPopulationEditing] = useState(false)
   const [success, setSuccess] = useState('')
   const [writeError, setWriteError] = useState<unknown>(null)
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleteReview, setDeleteReview] = useState<(DeleteWrite & { countryName: string }) | null>(null)
   useEffect(() => {
-    setEditing(false); setPopulationEditing(false); setSuccess(''); setWriteError(null); setConfirmDelete(false)
+    setEditing(false); setPopulationEditing(false); setSuccess(''); setWriteError(null); setDeleteReview(null)
   }, [routeKey])
   useUnsavedWorldPackageWarning(editing || populationEditing)
   const query = useQuery({ queryKey: ['world-package-country', worldId, countryCode], queryFn: () => getWorldPackageCountry(worldId, countryCode), enabled: Boolean(worldId && countryCode), retry: false })
@@ -1082,7 +1082,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
   const reloadAfterConflict = async () => {
     if (pending) return
     if (!window.confirm(cs ? 'Načíst aktuální data a zahodit neuloženou úpravu?' : 'Reload current data and discard the unsaved edit?')) return
-    setEditing(false); setPopulationEditing(false); setConfirmDelete(false); setWriteError(null)
+    setEditing(false); setPopulationEditing(false); setDeleteReview(null); setWriteError(null)
     await refresh(worldId, countryCode)
   }
   const handleCountrySave = (payload: WorldPackageCountryUpdatePayload) => {
@@ -1111,16 +1111,37 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     {data && <>
       <div className="page-intro"><h2>{data.country.name}</h2><p className="subtitle"><code>{data.country.code}</code></p></div>
       <p><strong>{data.package.name} · {data.package.type === 'custom' ? 'Custom' : 'Built-in'} · {canEdit ? 'Editable source' : 'Read-only'}</strong></p>
-      {canEdit && !editing && !populationEditing && <button type="button" disabled={pending} onClick={() => { setEditing(true); setConfirmDelete(false); setSuccess(''); setWriteError(null) }}>{cs ? 'Upravit zemi' : 'Edit country'}</button>}
-      {canEdit && !editing && !populationEditing && <button type="button" disabled={pending} onClick={() => { setConfirmDelete(true); setWriteError(null) }}>{cs ? 'Smazat zemi' : 'Delete country'}</button>}
-      {canEdit && confirmDelete && !editing && !populationEditing && <SectionCard title={`${cs ? 'Smazat' : 'Delete'} ${data.country.code} — ${data.country.name}?`}>
-        <p>{cs ? 'Tím se země odstraní z vlastní kopie World Package. Existující Runy se nezmění.' : 'This removes the country from this custom World Package. Existing Runs are unchanged.'}</p>
-        <p>World Package: <code>{worldId}</code> · Fingerprint: <code>{data.package.fingerprint}</code></p>
-        <button type="button" disabled={pending} onClick={() => {
-          if (!window.confirm(cs ? 'Opravdu smazat tuto zemi?' : 'Delete this country?')) return
-          deleteMutation.mutate({ worldId, countryCode, locationKey, fingerprint: data.package.fingerprint })
-        }}>{cs ? 'Potvrdit smazání' : 'Confirm deletion'}</button>{' '}
-        <button type="button" disabled={pending} onClick={() => setConfirmDelete(false)}>{cs ? 'Zrušit' : 'Cancel'}</button>
+      {canEdit && !editing && !populationEditing && <button type="button" disabled={pending} onClick={() => { setEditing(true); setDeleteReview(null); setSuccess(''); setWriteError(null) }}>{cs ? 'Upravit zemi' : 'Edit country'}</button>}
+      {canEdit && !editing && !populationEditing && <button type="button" disabled={pending} onClick={() => {
+        if (!data) return
+        setDeleteReview({worldId, countryCode, locationKey, fingerprint: data.package.fingerprint, countryName: data.country.name})
+        setWriteError(null)
+      }}>{cs ? 'Smazat zemi' : 'Delete country'}</button>}
+      {canEdit && deleteReview && !editing && !populationEditing && <SectionCard
+        title={`${cs ? 'Smazat' : 'Delete'} ${deleteReview.countryCode} — ${deleteReview.countryName}?`}>
+        <p>{cs
+          ? 'Země bude odstraněna pouze z upravitelné kopie World Package; uložené Runy se nezmění.'
+          : 'Only the editable World Package copy will change; existing Runs remain unchanged.'}</p>
+        <p><strong>World Package:</strong> <code>{deleteReview.worldId}</code> · <strong>{cs ? 'Země' : 'Country'}:</strong> <code>{deleteReview.countryCode}</code></p>
+        <p><strong>{cs ? 'Zkontrolovaný fingerprint' : 'Reviewed fingerprint'}:</strong> <code>{deleteReview.fingerprint}</code></p>
+        {data.package.fingerprint !== deleteReview.fingerprint && <p className="error" role="alert">
+          {cs ? 'Balíček se od otevření potvrzení změnil. Smazání bylo zablokováno.' :
+            'The package has changed since deletion was reviewed. Deletion is blocked.'}
+        </p>}
+        <p><button type="button" disabled={pending || data.package.fingerprint !== deleteReview.fingerprint}
+          onClick={() => {
+            if (!deleteReview || pending) return
+            if (deleteReview.worldId !== worldId || deleteReview.countryCode !== countryCode ||
+                deleteReview.locationKey !== locationKey || deleteReview.fingerprint !== data.package.fingerprint) {
+              setWriteError({status: 409, message: 'World Package changed after deletion review.'})
+              return
+            }
+            if (!window.confirm(cs ? 'Opravdu smazat zkontrolovanou zemi?' : 'Delete the reviewed country?')) return
+            deleteMutation.mutate(deleteReview)
+          }}>{cs ? 'Potvrdit smazání' : 'Confirm deletion'}</button>{' '}
+          <button type="button" disabled={pending} onClick={() => setDeleteReview(null)}>
+            {cs ? 'Zrušit' : 'Cancel'}
+          </button></p>
       </SectionCard>}
       {success && <p className="status" role="status">{success}</p>}
       {writeError != null && <p className="error" role="alert">{isFingerprintConflict(writeError)
@@ -1136,7 +1157,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
         {data.country.notes && <DetailRow label="Notes" value={data.country.notes} />}
       </SectionCard>}
       {!populationEditing && <SectionCard title="Population">
-        {canEdit && !editing && <button type="button" disabled={pending} onClick={() => { setPopulationEditing(true); setConfirmDelete(false); setSuccess(''); setWriteError(null) }}>{cs ? 'Upravit populaci' : 'Edit population'}</button>}
+        {canEdit && !editing && <button type="button" disabled={pending} onClick={() => { setPopulationEditing(true); setDeleteReview(null); setSuccess(''); setWriteError(null) }}>{cs ? 'Upravit populaci' : 'Edit population'}</button>}
         <DetailRow label="Effective/default population" value={formatNumber(data.country.default_population ?? data.country.population)} /><DetailRow label="Default authored year" value={data.country.default_population_year ?? '—'} /><DetailRow label="Authored population years" value={timeline.length} /><DetailRow label="Earliest authored year" value={timeline[0]?.[0] ?? '—'} /><DetailRow label="Latest authored year" value={timeline[timeline.length - 1]?.[0] ?? '—'} />
         <div style={{maxHeight: '28rem', overflowY: 'auto'}}><table aria-label="Authored population timeline"><thead><tr><th>Year</th><th>Population</th></tr></thead><tbody>{timeline.map(([year, value]) => <tr key={year}><td>{year}{year === '2020' ? ' · Default year' : ''}</td><td>{formatNumber(value)}</td></tr>)}</tbody></table></div>
       </SectionCard>}

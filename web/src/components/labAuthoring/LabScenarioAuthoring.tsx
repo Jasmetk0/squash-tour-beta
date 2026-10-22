@@ -85,7 +85,7 @@ export function inspectLabScenarioDraft(text: string, kind: LabKind): LabPreflig
       const rule = context.retirement_rule
       if (!ids.includes(rule.retired_player_id as string))
         add('context.retirement_rule.retired_player_id', 'Retired player must belong to this match.', 'Ukončující hráč musí patřit do tohoto zápasu.')
-      if ((rule.trigger === undefined || rule.trigger === 'explicit_set_start') && !positive(rule.set_number))
+      if ((rule.trigger === undefined || rule.trigger === 'EXPLICIT_SET_START') && !positive(rule.set_number))
         add('context.retirement_rule.set_number', 'Explicit retirement needs a positive set number.', 'Explicitní ukončení vyžaduje kladné číslo setu.')
     }
   }

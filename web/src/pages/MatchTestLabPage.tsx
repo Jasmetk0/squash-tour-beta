@@ -1,4 +1,5 @@
 import { HistoricalLabSourcePicker } from '../components/HistoricalLabSourcePicker'
+import { useLanguage } from '../i18n/LanguageContext'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -15,7 +16,7 @@ import type { MatchLabRequest, MatchLabResult, MatchLabScenario, MatchLabSession
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { prettyLabJson } from '../components/LabJson'
 import { LabNavigation } from '../components/LabNavigation'
-import { LabScenarioAuthoring } from '../components/labAuthoring/LabScenarioAuthoring'
+import { LabScenarioAuthoring, readLabScenario } from '../components/labAuthoring/LabScenarioAuthoring'
 import { LabSessionConflict, useLabSessionEditor, validateLabSession, type LabEditorTicket } from '../components/LabSessionEditor'
 
 const traits = {
@@ -115,6 +116,7 @@ function ResultPanels({ data }: { data: MatchLabResult }): JSX.Element {
 }
 
 export function MatchTestLabPage(): JSX.Element {
+  const {language} = useLanguage(), cs = language === 'cs'
   const builtIns = useQuery({ queryKey: ['match-lab-built-ins'], queryFn: getMatchLabBuiltInScenarios, retry: false })
   const sessions = useQuery({ queryKey: ['match-lab-sessions'], queryFn: getMatchLabSessions, retry: false })
   const client = useQueryClient()
@@ -226,6 +228,22 @@ export function MatchTestLabPage(): JSX.Element {
       runMutation.mutate({ scenario, seeds: parseSeeds(batchText), session: selectedSession })
     }
     catch (error) { setLocalError(error instanceof Error ? error.message : String(error)) }
+  }
+
+  const createFromDraft = () => {
+    if (selectedSession || writePending || sessionConflict) return
+    setLocalError(null)
+    try {
+      readLabScenario(scenarioText, 'match')
+      createMutation.mutate({ ticket: editor.captureEditor(), request: {
+        display_name: sessionName.trim() || 'New Match Test Session',
+        scenario: JSON.parse(scenarioText) as MatchLabScenario
+      } })
+    } catch {
+      setLocalError(cs
+        ? 'Zkontrolujte platný JSON, typ a verzi scénáře před vytvořením Session.'
+        : 'Check the scenario JSON, Lab type and schema version before creating a Session.')
+    }
   }
 
   const save = () => {
@@ -352,6 +370,9 @@ export function MatchTestLabPage(): JSX.Element {
           <input aria-label="Match Lab batch seeds" value={batchText} onChange={(e) => { setBatchText(e.target.value); runMutation.reset() }} placeholder="100, 101, 102" />
         </label>
         <button type="button" onClick={formatScenario} disabled={runPending || writePending}>Format JSON</button>
+        {!selectedSession ? <button type="button" onClick={createFromDraft} disabled={writePending || !scenarioText.trim()}>
+          {cs ? 'Vytvořit Session z pracovního scénáře' : 'Create Test Session from scratch'}
+        </button> : null}
         {selectedSession ? <button type="button" onClick={save} disabled={writePending || Boolean(sessionConflict)}>Save Test Session</button> : null}
         <button type="submit" disabled={runPending || writePending || Boolean(sessionConflict) || sessionHasUnsavedChanges}>{runPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run scenario'}</button>
         {sessionHasUnsavedChanges ? <p role="status">Unsaved Test Session changes. Save before running.</p> : null}

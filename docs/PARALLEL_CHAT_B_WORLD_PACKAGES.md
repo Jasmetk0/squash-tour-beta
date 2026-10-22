@@ -127,3 +127,32 @@ user may merge.
   reassessed on the exact latest commit. Still **Draft**, not a production E2E
   pass: actual backend/SQLite/Chromium acceptance was not executed here.
   No branch merge performed.
+
+## Continuation checkpoint — frozen delete/clone review and conflict classification
+
+- New Country deletion review freezes `worldId`, `countryCode`, `locationKey`,
+  country display name and `fingerprint` when the review opens. The final
+  destructive API call uses exactly the saved fingerprint; if the package
+  changes, the action is disabled, not silently rebound to the new version.
+- Built-in → Custom cloning now shows the source fingerprint in review and
+  checks that fingerprint before dispatch. The target ID validation matches
+  the backend pattern `^[a-z0-9][a-z0-9_]{2,63}$`; a leading underscore
+  is rejected. Late results from another route/source are not presented.
+- **Important backend-contract limit:** `WorldPackageCloneRequest` does not
+  carry an expected source fingerprint. The client-side clone review can
+  reject a visibly changed source *before dispatch*, but cannot guarantee
+  atomic source-version consistency if the built-in contents change between
+  dispatch and the server copying them. This is a coordinated backend/API
+  enhancement, **outside this chat's file ownership**. Built-in packages are
+  read-only in the normal product, reducing but not eliminating that theoretical
+  deployment/replacement race. No backend workaround was invented here.
+- After HTTP 409 on Country/population/delete edits, stale Save stays locked
+  until the user explicitly reloads. UI distinguishes a duplicate Country
+  code (also HTTP 409 in the backend) from a stale package fingerprint, and
+  offers a code correction instead of the irrelevant conflict reload.
+- Focused tests additionally cover deletion review after a fingerprint
+  change, duplicate Country creation, clone ID format, source version changing
+  during clone review, and locked Save after 409.
+- No actual backend/SQLite/Chromium E2E has been run in this chat, and no
+  protected World Package data have been modified. Draft status remains
+  mandatory until Work coordinates applicable acceptance.

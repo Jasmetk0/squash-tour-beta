@@ -86,6 +86,71 @@ describe('TournamentTemplatesPage', () => {
     expect(await screen.findByText(/Examples you may create later/i)).toBeInTheDocument()
   })
 
+  it('filters template ID/category/tour and activity without modifying the editor or data', async () => {
+    api.listTournamentTemplates.mockResolvedValue({
+      templates: [
+        template,
+        { ...template, template_id: 'inactive_iron', category: 'IRON', tour_level: 'ELITE_TOUR', active: false },
+        { ...template, template_id: 'second_world', category: 'WORLD_FINALS', active: true },
+      ]
+    })
+    renderWithRoute(<TournamentTemplatesPage />, '/admin/tournament-templates')
+    expect(await screen.findByText('Showing 3 of 3 tournament templates')).toBeInTheDocument()
+    const table = () => screen.getByRole('table', { name: 'Tournament template inventory' })
+    expect(table().parentElement).toHaveClass('table-responsive')
+    const search = screen.getByRole('searchbox', { name: 'Search tournament templates' })
+    const active = screen.getByRole('combobox', { name: 'Filter active templates' })
+
+    fireEvent.change(search, { target: { value: '  elite_tour ' } })
+    expect(screen.getByText('Showing 1 of 3 tournament templates')).toBeInTheDocument()
+    expect(within(table()).getByRole('cell', { name: 'inactive_iron' })).toBeInTheDocument()
+    fireEvent.change(active, { target: { value: 'active' } })
+    expect(screen.getByText('No tournament templates match the current filters.')).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Tournament template inventory' })).not.toBeInTheDocument()
+
+    fireEvent.change(active, { target: { value: 'inactive' } })
+    expect(within(table()).getByRole('cell', { name: 'inactive_iron' })).toBeInTheDocument()
+    expect(screen.getByText('Showing 1 of 3 tournament templates')).toBeInTheDocument()
+    fireEvent.change(search, { target: { value: '  iron ' } })
+    expect(within(table()).getByRole('cell', { name: 'inactive_iron' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear template list filters' }))
+    expect(search).toHaveValue('')
+    expect(active).toHaveValue('all')
+    expect(screen.getByText('Showing 3 of 3 tournament templates')).toBeInTheDocument()
+    expect(api.listTournamentTemplates).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps selected editor state when its template disappears from filtered inventory', async () => {
+    api.listTournamentTemplates.mockResolvedValue({
+      templates: [template, { ...template, template_id: 'inactive_iron', category: 'IRON', active: false }],
+    })
+    renderWithRoute(<TournamentTemplatesPage />, '/admin/tournament-templates')
+    const table = () => screen.getByRole('table', { name: 'Tournament template inventory' })
+    await screen.findByRole('cell', { name: 'custom_opener_16' })
+    const row = within(table()).getByRole('cell', { name: 'custom_opener_16' }).closest('tr')
+    expect(row).not.toBeNull()
+    fireEvent.click(within(row as HTMLTableRowElement).getByRole('button', { name: 'Edit' }))
+    expect(screen.getByRole('heading', { name: 'Edit custom_opener_16' })).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('combobox', { name: 'Filter active templates' }),
+      { target: { value: 'inactive' } })
+    expect(within(table()).queryByRole('cell', { name: 'custom_opener_16' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Edit custom_opener_16' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Template ID')).toHaveValue('custom_opener_16')
+    expect(api.updateTournamentTemplate).not.toHaveBeenCalled()
+    expect(api.listTournamentTemplates).toHaveBeenCalledTimes(1)
+  })
+
+  it('distinguishes a genuinely empty registry from filtered-out records', async () => {
+    api.listTournamentTemplates.mockResolvedValue({ templates: [] })
+    renderWithRoute(<TournamentTemplatesPage />, '/admin/tournament-templates')
+    expect(await screen.findByText('No tournament templates. Create the first user-defined template with the form.')).toBeInTheDocument()
+    expect(screen.getByText('Showing 0 of 0 tournament templates')).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search tournament templates' }),
+      { target: { value: 'absent' } })
+    expect(screen.queryByText('No tournament templates match the current filters.')).not.toBeInTheDocument()
+  })
+
   it('submits create form payload for a user-defined category', async () => {
     renderWithRoute(<TournamentTemplatesPage />, '/admin/tournament-templates')
 

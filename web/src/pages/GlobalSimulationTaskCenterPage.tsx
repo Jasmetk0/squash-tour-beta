@@ -193,7 +193,7 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
                 {(operation.run_read_only || operation.branch_read_only || operation.branch_status !== 'active')
                   && <p className="status">{text.readonly}</p>}
                 <Link className="button-link"
-                  to={`/admin/runs/${encodeURIComponent(operation.run_id)}/simulate?branch=${encodeURIComponent(operation.branch_id)}`}
+                  to={`/admin/runs/${encodeURIComponent(operation.run_id)}/simulate?branch=${encodeURIComponent(operation.branch_id)}${linkedTask ? `&task=${encodeURIComponent(linkedTask.task_id)}` : ''}`}
                   onClick={() => {
                     writeLastRunId(operation.run_id)
                     rememberProductRun(operation.run_id)

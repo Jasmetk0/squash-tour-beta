@@ -185,6 +185,30 @@ function VariantMatchCountsEditor({ id, values, index, cs, busy, onApply }: {
   </div>
 }
 
+
+function PlayerDurationEditor({ weeks, healthLocked, cs, busy, onApply }: {
+  weeks: number; healthLocked: boolean; cs: boolean; busy: boolean
+  onApply: (weeks: number) => void
+}): JSX.Element {
+  const [draft, setDraft] = useState(String(weeks))
+  useEffect(() => { setDraft(String(weeks)) }, [weeks])
+  return <div>
+    <label>{cs ? 'Počet týdnů experimentu' : 'Experiment weeks'}{' '}
+      <input type="number" aria-label="player Lab experiment duration" min={1} max={61}
+        disabled={busy || healthLocked} value={draft} onChange={event => setDraft(event.target.value)}
+        onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }} />
+    </label>{' '}
+    <button type="button" disabled={busy || healthLocked || draft === String(weeks)}
+      onClick={() => onApply(Number(draft))}>{cs ? 'Použít délku' : 'Apply duration'}</button>
+    {healthLocked && <p className="status">{cs
+      ? 'Délka je svázána s explicitní Health časovou osou.'
+      : 'Duration is locked to the explicit Health timeline.'}</p>}
+    {!healthLocked && <p className="status">{cs
+      ? 'Nové týdny mají 0 soutěžních zápasů; zkrácení odstraní pozdější týdny až po potvrzení.'
+      : 'New weeks start with 0 competitive matches; shortening drops later weeks only after Apply.'}</p>}
+  </div>
+}
+
 export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, savedName, sessionName, selection, revision, jsonLabel, busy = false }: {
   kind: LabKind
   text: string
@@ -288,17 +312,12 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
           try { edit(changePlayerMatchCounts(text, position, draft)) }
           catch (reason) { setError(explain(reason, cs)) }
         }} />)}
-      {kind === 'player' && variants.length > 0 && <label>
-        {cs ? 'Počet týdnů experimentu' : 'Experiment weeks'}{' '}
-        <input type="number" aria-label="player Lab experiment duration" min={1} max={61}
-          disabled={busy || healthLocked} value={weeks} onChange={event => {
-            if (!event.target.value) return
-            try { edit(changePlayerWeeks(text, Number(event.target.value))) }
-            catch (reason) { setError(explain(reason, cs)) }
-          }} />
-        {healthLocked && <span className="status"> {cs ? 'Délka je svázána s Health časovou osou.' : 'Duration is locked to the explicit Health timeline.'}</span>}
-        {!healthLocked && <span className="status"> {cs ? 'Nové týdny mají 0 soutěžních zápasů.' : 'New weeks explicitly start with 0 competitive matches.'}</span>}
-      </label>}
+      {kind === 'player' && variants.length > 0 && <PlayerDurationEditor
+        weeks={weeks} healthLocked={healthLocked} cs={cs} busy={busy}
+        onApply={nextWeeks => {
+          try { edit(changePlayerWeeks(text, nextWeeks)) }
+          catch (reason) { setError(explain(reason, cs)) }
+        }} />}
     </div> : <p role="alert">{cs ? 'Neplatný nebo nepodporovaný scénář; opravte jej v pokročilém JSON editoru.' : 'Invalid or unsupported scenario; repair it in Advanced JSON.'}</p>)}
     {mode === 'json' && <textarea aria-label={jsonLabel} rows={24}
       style={{ width: '100%', fontFamily: 'monospace' }} disabled={busy} value={text}

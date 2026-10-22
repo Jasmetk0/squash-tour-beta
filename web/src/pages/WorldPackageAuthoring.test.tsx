@@ -86,7 +86,7 @@ describe('World Package authoring against mutable source', () => {
     fireEvent.change(screen.getByLabelText('Name'), {target:{value:'Old pending edit'}})
     fireEvent.click(screen.getByRole('button', {name:'Review changes'}))
     fireEvent.click(screen.getByRole('button', {name:'Confirm and save'}))
-    expect(api.updateWorldPackageCountry).toHaveBeenCalledWith('custom','AAA',expect.anything())
+    await waitFor(() => expect(api.updateWorldPackageCountry).toHaveBeenCalledWith('custom','AAA',expect.anything()))
     fireEvent.click(screen.getByRole('link', {name:'Switch country'}))
     expect(await screen.findByRole('heading', {name:'Country BBB'})).toBeInTheDocument()
     finish({country_detail:fixture(),validation:{status:'valid'}})

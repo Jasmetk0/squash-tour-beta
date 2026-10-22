@@ -182,6 +182,7 @@ describe('DashboardPage', () => {
 
   it('does not send an empty-but-whitespace Run ID to the backend', async () => {
     renderWithRoute(<DashboardPage />, '/')
+    api.getRun.mockClear()
     const input = screen.getByLabelText('Existing run ID')
     await userEvent.type(input, '   ')
     await userEvent.click(screen.getByRole('button', { name: 'Open and continue' }))

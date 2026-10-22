@@ -153,6 +153,34 @@ describe('built-in World cloning', () => {
 })
 
 
+  it('never confirms a clone with a changed source fingerprint', async () => {
+    const pkg = {world_id:'real_world',name:'Real World',description:'Earth',type:'official',
+      source:'built_in',editable:false,status:'active',deletable:false,archivable:false,
+      version:'v1',fingerprint:'before',country_count:2,continent_count:1,region_count:1,
+      travel_region_count:1,timezone_area_count:0,used_by_run_count:null,validation_status:'valid'}
+    api.getWorldPackage.mockResolvedValue(pkg)
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id:'real_world',continents:[],regions:[],travel_regions:[],
+      timezone_areas:[],timezone_areas_authored:false
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id:'real_world',status:'valid',error_count:0,warning_count:0,info_count:0,checks:[]
+    })
+    const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
+    const router=createMemoryRouter([{path:'/world/:worldId',element:<WorldLibraryDetailPage />}],
+      {initialEntries:['/world/real_world']})
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'),{target:{value:'custom_copy'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'),{target:{value:'Edited World'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review custom copy'}))
+    expect(screen.getByText('before')).toBeInTheDocument()
+    client.setQueryData(['world-package','real_world'],{...pkg,fingerprint:'after'})
+    await waitFor(() => expect(screen.getByRole('button',{name:'Confirm custom copy'})).toBeDisabled())
+    expect(api.cloneWorldPackage).not.toHaveBeenCalled()
+  })
+
+
+
 
 describe('custom World Package geography navigation', () => {
   it('guards the library link when Timezone Area edits are not yet reviewed', async () => {

@@ -840,6 +840,8 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   const [populations, setPopulations] = useState<Array<PopulationRow & { id: number }>>([{ id: 0, year: '2020', population: '' }])
   const [validationError, setValidationError] = useState('')
   const [requestError, setRequestError] = useState<unknown>(null)
+  const [reloadError, setReloadError] = useState<unknown>(null)
+  const [reloading, setReloading] = useState(false)
   const [review, setReview] = useState<{ worldId: string, payload: WorldPackageCountryCreatePayload, changes: ReviewChange[] } | null>(null)
   useEffect(() => {
     bypassNavigation.current = false
@@ -847,13 +849,23 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
     setRegion(''); setTravelRegion(''); setTimezoneArea('')
     setValues({ squash_popularity: '5.5', squash_access: '5.5', development_quality: '5.5', competition_quality: '5.5', elite_support: '5.5', squash_tradition: '5.5' })
     setPopulations([{ id: 0, year: '2020', population: '' }])
-    setValidationError(''); setRequestError(null); setReview(null)
+    setValidationError(''); setRequestError(null); setReloadError(null); setReview(null)
   }, [worldId])
   const dirty = Boolean(identity.code || identity.name || identity.notes || identity.area || region || travelRegion || timezoneArea || populations.some(row => row.population || row.year !== '2020') || Object.values(values).some(value => value !== '5.5') || review)
   useUnsavedWorldPackageWarning(dirty)
   const mutation = useMutation({
     mutationFn: (command: { worldId: string; locationKey: string; payload: WorldPackageCountryCreatePayload }) => createWorldPackageCountry(command.worldId, command.payload),
     onSuccess: (response, command) => {
+      const matching = response.country_detail?.package?.world_id === command.worldId &&
+        response.country_detail?.country?.code === command.payload.code &&
+        (!response.package || response.package.world_id === command.worldId)
+      if (!matching) {
+        if (mounted.current && activeLocationKey.current === command.locationKey &&
+            activeWorld.current === command.worldId) {
+          setRequestError({status:409, responseMismatch:true, message:'Unexpected Country creation response'})
+        }
+        return
+      }
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['world-package-countries', command.worldId] }),
         queryClient.invalidateQueries({ queryKey: ['world-package', command.worldId] }),
@@ -861,15 +873,14 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
         queryClient.invalidateQueries({ queryKey: ['world-packages'] })
       ])
       if (mounted.current && activeLocationKey.current === command.locationKey &&
-        activeWorld.current === command.worldId &&
-        response.country_detail.package.world_id === command.worldId &&
-        response.country_detail.country.code === command.payload.code) {
+        activeWorld.current === command.worldId) {
         bypassNavigation.current = true
         navigate(`/admin/world/library/${encodeURIComponent(command.worldId)}/countries/${encodeURIComponent(command.payload.code)}`)
       }
     },
     onError: (error, command) => {
-      if (activeWorld.current === command.worldId) setRequestError(error)
+      if (mounted.current && activeLocationKey.current === command.locationKey &&
+          activeWorld.current === command.worldId) setRequestError(error)
     }
   })
   const pkg = packageQuery.data
@@ -879,7 +890,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   const sortedPopulations = [...populations].sort((left, right) => Number(left.year) - Number(right.year))
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    if (!pkg || !allowed || !geography || mutation.isPending) return
+    if (!pkg || !allowed || !geography || mutation.isPending || reloading) return
     try {
       const code = identity.code.trim()
       if (!/^[A-Z]{3}$/.test(code)) throw new Error(cs ? 'Kód země musí mít přesně tři velká písmena A–Z.' : 'Country code must be exactly three uppercase A–Z letters.')
@@ -912,7 +923,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
     } catch (error) { setValidationError(formatApiError(error)) }
   }
   const save = () => {
-    if (!review || !pkg || !allowed || mutation.isPending) return
+    if (!review || !pkg || !allowed || mutation.isPending || reloading || sourceChanged) return
     if (review.worldId !== worldId || review.payload.expected_package_fingerprint !== pkg.fingerprint) {
       setRequestError({ status: 409, message: 'World Package changed before confirmation.' })
       return
@@ -921,39 +932,75 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
     mutation.mutate({ worldId: review.worldId, locationKey, payload: review.payload })
   }
   const reload = async () => {
+    if (mutation.isPending || reloading) return
     if (!window.confirm(cs ? 'Načíst aktuální balíček a zahodit rozepsanou zemi?' : 'Reload the World Package and discard this draft country?')) return
-    setReview(null); setRequestError(null)
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
-      queryClient.invalidateQueries({ queryKey: ['world-package-geography', worldId] }),
-      queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] })
-    ])
+    const originalWorld = worldId
+    const originalLocation = locationKey
+    setReloading(true)
+    setReloadError(null)
+    try {
+      // The review must not be discarded until *both* authoritative reads
+      // succeed. Invalidating cache is insufficient: a refetch can fail.
+      const [freshPackage, freshGeography] = await Promise.all([
+        queryClient.fetchQuery({
+          queryKey: ['world-package', originalWorld],
+          queryFn: () => getWorldPackage(originalWorld), staleTime: 0
+        }),
+        queryClient.fetchQuery({
+          queryKey: ['world-package-geography', originalWorld],
+          queryFn: () => getWorldPackageGeography(originalWorld), staleTime: 0
+        })
+      ])
+      if (!mounted.current || activeWorld.current !== originalWorld ||
+          activeLocationKey.current !== originalLocation) return
+      if (freshPackage.world_id !== originalWorld || freshGeography.world_id !== originalWorld ||
+          freshPackage.type !== 'custom' || freshPackage.source !== 'custom_config' || !freshPackage.editable) {
+        throw new Error(cs ? 'Načtené podklady nepatří upravitelnému World Package.' :
+          'The refreshed resources do not belong to this editable World Package.')
+      }
+      setIdentity({ code: '', name: '', notes: '', area: '' })
+      setRegion(''); setTravelRegion(''); setTimezoneArea('')
+      setValues({ squash_popularity: '5.5', squash_access: '5.5', development_quality: '5.5', competition_quality: '5.5', elite_support: '5.5', squash_tradition: '5.5' })
+      setPopulations([{ id: 0, year: '2020', population: '' }])
+      setValidationError(''); setRequestError(null); setReloadError(null); setReview(null)
+      void queryClient.invalidateQueries({queryKey:['world-package-countries', originalWorld]})
+    } catch (error) {
+      if (mounted.current && activeWorld.current === originalWorld &&
+          activeLocationKey.current === originalLocation) setReloadError(error)
+    } finally {
+      if (mounted.current && activeWorld.current === originalWorld &&
+          activeLocationKey.current === originalLocation) setReloading(false)
+    }
   }
   if (packageQuery.isLoading || geographyQuery.isLoading) return <p className="status">{cs ? 'Načítám formulář země…' : 'Loading country form...'}</p>
   if (packageQuery.error || geographyQuery.error) return <p className="error">{cs ? 'Nepodařilo se načíst podklady formuláře: ' : 'Failed to load country form resources: '}{formatApiError(packageQuery.error ?? geographyQuery.error)}</p>
   const requestMessage = (requestError as {message?: unknown} | null)?.message
   const countryAlreadyExists = isFingerprintConflict(requestError) && /country .* already exists/i.test(typeof requestMessage === 'string' ? requestMessage : formatApiError(requestError))
-  const sourceChanged = isFingerprintConflict(requestError) && !countryAlreadyExists
+  const responseMismatch = (requestError as {responseMismatch?:unknown} | null)?.responseMismatch === true
+  const sourceChanged = (isFingerprintConflict(requestError) && !countryAlreadyExists) || responseMismatch
   if (!allowed) return <section className="panel"><p className="error">{cs ? 'Země lze vytvářet jen v upravitelné vlastní kopii World Package.' : 'Countries can only be created in an editable Custom World source.'}</p></section>
   return <section className="panel">
     <UnsavedWorldPackageNavigationGuard active={dirty} cs={cs} bypassRef={bypassNavigation} />
     <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries`}>{cs ? 'Zpět na země' : 'Back to countries'}</Link></p>
     <h2>{cs ? 'Přidat zemi' : 'Add country'}</h2>
     {validationError && <p className="error" role="alert">{validationError}</p>}
+    {reloadError != null && <p className="error" role="alert">{cs ? 'Aktualizaci se nepodařilo načíst. Rozpracovaná země zůstala zachovaná: ' : 'Reload failed. Your draft Country has been preserved: '}{formatApiError(reloadError)}</p>}
     {requestError != null && <p className="error" role="alert">{countryAlreadyExists
       ? (cs ? 'Země s tímto kódem již existuje. Vraťte se k formuláři a zvolte jiný kód.' : 'A country with this code already exists. Return to the form and choose a different code.')
-      : sourceChanged
-        ? (cs ? 'Balíček se mezitím změnil. Bez automatického opakování zápisu načtěte aktuální stav a zkontrolujte úpravu znovu.' : 'The package changed. No write was retried: reload current data and review the edit again.')
+      : responseMismatch
+        ? (cs ? 'Server vrátil jinou zemi nebo balíček. Odpověď nebyla použita; načtěte aktuální stav.' : 'The server returned a different Country or World Package. The response was rejected; reload current data.')
+        : sourceChanged
+          ? (cs ? 'Balíček se mezitím změnil. Bez automatického opakování zápisu načtěte aktuální stav a zkontrolujte úpravu znovu.' : 'The package changed. No write was retried: reload current data and review the edit again.')
         : formatApiError(requestError)}{' '}
-      {sourceChanged && <button type="button" disabled={mutation.isPending} onClick={() => void reload()}>{cs ? 'Načíst aktuální data' : 'Reload current data'}</button>}
+      {sourceChanged && <button type="button" disabled={mutation.isPending || reloading} onClick={() => void reload()}>{reloading ? (cs ? 'Načítám…' : 'Reloading…') : (cs ? 'Načíst aktuální data' : 'Reload current data')}</button>}
     </p>}
     {review
       ? <SectionCard title={cs ? 'Před uložením' : 'Before saving'}>
           <ConfirmWorldPackageChanges title={cs ? 'Kontrola nové země' : 'Review new country'}
             worldId={review.worldId} countryCode={review.payload.code} fingerprint={review.payload.expected_package_fingerprint}
-            changes={review.changes} cs={cs} saving={mutation.isPending} locked={sourceChanged || countryAlreadyExists} onBack={() => setReview(null)} onConfirm={save} />
+            changes={review.changes} cs={cs} saving={mutation.isPending || reloading} locked={sourceChanged || countryAlreadyExists} onBack={() => setReview(null)} onConfirm={save} />
         </SectionCard>
-      : <form onSubmit={submit}><fieldset disabled={mutation.isPending}>
+      : <form onSubmit={submit}><fieldset disabled={mutation.isPending || reloading || sourceChanged}>
           <fieldset><legend>{cs ? 'Identita' : 'Identity'}</legend>
             <label>{cs ? 'Kód' : 'Code'}<input required pattern="[A-Z]{3}" maxLength={3} value={identity.code} onChange={event => setIdentity(current => ({...current,code:event.target.value}))} /></label>
             <label>{cs ? 'Název' : 'Name'}<input required value={identity.name} onChange={event => setIdentity(current => ({...current,name:event.target.value}))} /></label>

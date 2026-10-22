@@ -25,7 +25,7 @@ const copy={
   needsCount:'Operator action required',liveCount:'Queued / executing / pause requested (health unconfirmed)',otherCount:'Other task states',
   search:'Find a server task',searchHint:'Run, Branch, task, parent command or checkpoint',filter:'Task category',
   allTasks:'All tasks',attentionTasks:'Operator action required',liveTasks:'Queued / active / pausing',otherTasks:'Other states',
-  clearFilters:'Clear filters',scopeMissing:'Select a valid Run and Branch before inspecting scoped server tasks. No global inventory was requested.',shown:'Displayed tasks',noMatches:'No tasks match the current search and category. Clear the filters to see all stored tasks.',pinned:'Linked task stays visible regardless of filters.',
+  uncertainAfterProgress:'Server evidence changed while the original continuation response was uncertain. Do not create a new request here. Replay only the identical frozen request ID, or cancel and inspect the current task evidence before authorizing a new intent.',clearFilters:'Clear filters',scopeMissing:'Select a valid Run and Branch before inspecting scoped server tasks. No global inventory was requested.',shown:'Displayed tasks',noMatches:'No tasks match the current search and category. Clear the filters to see all stored tasks.',pinned:'Linked task stays visible regardless of filters.',
   desired:'Requested task state',lease:'Lease expiry (not proof of a live worker)',selected:'Task selected from the link',missing:'The linked task was not found in this Run / Branch.',contextChanged:'The reviewed request belongs to a different Run, Branch or command. Return to that context to retry; this screen will not redirect it.'},
  cs:{title:'Serverové simulační úlohy',start:'Spustit jako serverovou úlohu',ack:'Serverová úloha přijata',refresh:'Obnovit údaje úloh',
   truth:'Úloha se živým workerem může pokračovat i po zavření stránky; samotný záznam ani lease běh nedokazují. Save a schválení zůstávají ruční. Po restartu serveru úlohu zkontrolujte a výslovně obnovte.',
@@ -41,7 +41,7 @@ const copy={
   needsCount:'Vyžaduje zásah operátora',liveCount:'Fronta / běží / pozastavuje (zdraví procesu nepotvrzeno)',otherCount:'Ostatní stavy úloh',
   search:'Najít serverovou úlohu',searchHint:'Run, větev, úloha, původní příkaz nebo checkpoint',filter:'Kategorie úloh',
   allTasks:'Všechny úlohy',attentionTasks:'Vyžaduje zásah operátora',liveTasks:'Ve frontě / aktivní / pozastavuje se',otherTasks:'Ostatní stavy',
-  clearFilters:'Zrušit filtry',scopeMissing:'Před zobrazením úloh vyberte platný Run a větev. Globální přehled nebyl vyžádán.',shown:'Zobrazené úlohy',noMatches:'Hledání a kategorie neodpovídá žádná úloha. Zrušením filtrů zobrazíte všechny uložené úlohy.',pinned:'Úloha vybraná z odkazu zůstává viditelná bez ohledu na filtry.',
+  uncertainAfterProgress:'Stav úlohy se změnil, ale odpověď na původní pokračování nebyla potvrzena. Nevytvářejte nový požadavek. Lze pouze opakovat původní uzamčené ID a údaje nebo opakování zrušit a před novým rozhodnutím zkontrolovat současný stav.',clearFilters:'Zrušit filtry',scopeMissing:'Před zobrazením úloh vyberte platný Run a větev. Globální přehled nebyl vyžádán.',shown:'Zobrazené úlohy',noMatches:'Hledání a kategorie neodpovídá žádná úloha. Zrušením filtrů zobrazíte všechny uložené úlohy.',pinned:'Úloha vybraná z odkazu zůstává viditelná bez ohledu na filtry.',
   desired:'Požadovaný stav úlohy',lease:'Konec platnosti lease (nikoli důkaz živého workeru)',selected:'Úloha vybraná z odkazu',missing:'Odkazovaná úloha nebyla nalezena v tomto Runu / větvi.',contextChanged:'Schválený požadavek patří jinému Runu, větvi nebo příkazu. Pro opakování se vraťte do původního kontextu; tato obrazovka jej nepřesměruje.'}
 } as const
 export function useServerTasks(run?:string,branch?:string,enabled=true){
@@ -169,6 +169,16 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
    }}>{pending?t.retry:action==='recover'?t.recover:t.resume}</button>
    {pending && !mutation.isPending && <button type="button" onClick={()=>{setPending(null);mutation.reset();void client.invalidateQueries({queryKey:['server-simulation-tasks']})}}>{t.cancel}</button>}
   </>}</>}
+  {pending && !task.needs_operator_action && <div role="group" aria-label={t.retry}>
+   <p role="status">{t.uncertainAfterProgress}</p>
+   <p><code>{pending.target.task_id}</code> · <code>{pending.body.request_id}</code></p>
+   <button type="button" disabled={mutation.isPending || mutation.isSuccess}
+    onClick={()=>mutation.mutate(pending)}>{t.retry}</button>
+   {!mutation.isPending && <button type="button" onClick={()=>{
+    setPending(null);mutation.reset()
+    void client.invalidateQueries({queryKey:['server-simulation-tasks']})
+   }}>{t.cancel}</button>}
+  </div>}
   {mutation.error && <p role="alert">{formatApiError(mutation.error)}</p>}
   {requiresNewWeekReview && <FullSimulationWeekScheduleReview runId={task.run_id} branchId={task.branch_id} taskId={task.task_id} taskRevision={task.revision}/>}
   <Link to={`/admin/runs/${encodeURIComponent(task.run_id)}/simulate?branch=${encodeURIComponent(task.branch_id)}&task=${encodeURIComponent(task.task_id)}`}>{t.open}</Link>

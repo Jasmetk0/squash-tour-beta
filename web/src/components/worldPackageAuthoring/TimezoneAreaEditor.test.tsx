@@ -88,12 +88,40 @@ describe('reviewed Timezone Area authoring', () => {
     fireEvent.click(screen.getByRole('button',{name:'Review Timezone Areas'}))
     fireEvent.click(screen.getByRole('button',{name:'Confirm and save'}))
     expect(await screen.findByText(/no write was retried/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Confirm and save'})).toBeDisabled()
     expect(api.replaceWorldPackageTimezoneAreas).toHaveBeenCalledTimes(1)
     const confirm = vi.spyOn(window,'confirm').mockReturnValue(true)
     fireEvent.click(screen.getByRole('button',{name:'Reload current data'}))
     await waitFor(() => expect(api.getWorldPackage).toHaveBeenCalledWith('custom'))
     await waitFor(() => expect(screen.getByLabelText('Timezone Area name 1')).toHaveValue('East'))
     expect(confirm).toHaveBeenCalled()
+    expect(api.replaceWorldPackageTimezoneAreas).toHaveBeenCalledTimes(1)
+  })
+
+
+  it('requires explicit reload if the write returns but refreshed package and geography disagree', async () => {
+    const {client} = setup()
+    api.replaceWorldPackageTimezoneAreas.mockImplementation(async (worldId: string) => {
+      // A successful response must not be confused with a coherent new
+      // package snapshot when reloaded Timezone Areas differ.
+      client.setQueryData(['world-package',worldId],pkg(worldId,true,'fp-after'))
+      return { ...geography(worldId), timezone_areas: [
+        {code:'W',name:'New West',position:0},{code:'E',name:'East',position:1}
+      ]}
+    })
+    fireEvent.change(screen.getByLabelText('Timezone Area name 0'),{target:{value:'New West'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review Timezone Areas'}))
+    fireEvent.click(screen.getByRole('button',{name:'Confirm and save'}))
+    expect(await screen.findByText(/could not be matched to the refreshed fingerprint/)).toBeInTheDocument()
+    expect(screen.queryByText(/Timezone Areas saved/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Reload current data'})).toBeEnabled()
+    expect(screen.getByRole('button',{name:'Review Timezone Areas'})).toBeDisabled()
+    expect(api.replaceWorldPackageTimezoneAreas).toHaveBeenCalledTimes(1)
+    const confirm = vi.spyOn(window,'confirm').mockReturnValue(true)
+    fireEvent.click(screen.getByRole('button',{name:'Reload current data'}))
+    await waitFor(() => expect(screen.getByLabelText('Timezone Area name 0')).toHaveValue('West'))
+    expect(confirm).toHaveBeenCalled()
+    expect(screen.queryByText(/could not be matched to the refreshed fingerprint/)).not.toBeInTheDocument()
     expect(api.replaceWorldPackageTimezoneAreas).toHaveBeenCalledTimes(1)
   })
 

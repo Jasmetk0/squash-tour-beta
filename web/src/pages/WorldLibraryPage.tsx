@@ -945,7 +945,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
         : formatApiError(writeError)}{' '}
         {isFingerprintConflict(writeError) && <button type="button" disabled={pending} onClick={() => void reloadAfterConflict()}>{cs ? 'Načíst aktuální data' : 'Reload current data'}</button>}
       </p>}
-      {canEdit && editing && <CountryEditForm key={`${routeKey}:${data.package.fingerprint}`} detail={data} geography={geographyQuery.data} saving={pending} cs={cs}
+      {canEdit && editing && <CountryEditForm key={routeKey} detail={data} geography={geographyQuery.data} saving={pending} cs={cs}
         onCancel={() => { if (window.confirm(cs ? 'Zahodit rozpracovanou úpravu?' : 'Discard unsaved changes?')) setEditing(false) }}
         onSave={handleCountrySave} />}
       {!editing && <SectionCard title="Overview">
@@ -957,7 +957,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
         <DetailRow label="Effective/default population" value={formatNumber(data.country.default_population ?? data.country.population)} /><DetailRow label="Default authored year" value={data.country.default_population_year ?? '—'} /><DetailRow label="Authored population years" value={timeline.length} /><DetailRow label="Earliest authored year" value={timeline[0]?.[0] ?? '—'} /><DetailRow label="Latest authored year" value={timeline[timeline.length - 1]?.[0] ?? '—'} />
         <div style={{maxHeight: '28rem', overflowY: 'auto'}}><table aria-label="Authored population timeline"><thead><tr><th>Year</th><th>Population</th></tr></thead><tbody>{timeline.map(([year, value]) => <tr key={year}><td>{year}{year === '2020' ? ' · Default year' : ''}</td><td>{formatNumber(value)}</td></tr>)}</tbody></table></div>
       </SectionCard>}
-      {canEdit && populationEditing && <PopulationEditForm key={`${routeKey}:${data.package.fingerprint}`} detail={data} saving={pending} cs={cs}
+      {canEdit && populationEditing && <PopulationEditForm key={routeKey} detail={data} saving={pending} cs={cs}
         onCancel={() => { if (window.confirm(cs ? 'Zahodit rozpracovanou úpravu?' : 'Discard unsaved changes?')) setPopulationEditing(false) }}
         onSave={handlePopulationSave} />}
       <SectionCard title="Geography"><DetailRow label="Area km²" value={formatNumber(data.country.area_km2)} /><DetailRow label="Region" value={data.region ? `${data.region.name} (${data.region.code})` : data.country.region} /><DetailRow label="Continent" value={data.continent?.name ?? '—'} /><DetailRow label="Travel Region" value={data.travel_region ? `${data.travel_region.name} (${data.travel_region.code})` : data.country.travel_region ?? '—'} /></SectionCard>
@@ -974,7 +974,8 @@ function PopulationEditForm({ detail, saving, cs, onCancel, onSave }: {
   detail: WorldPackageCountryDetail; saving: boolean; cs: boolean; onCancel: () => void;
   onSave: (payload: WorldPackageCountryPopulationUpdatePayload) => void
 }): JSX.Element {
-  const initial = Object.entries(detail.country.population_by_year ?? {}).filter((entry): entry is [string, number] => entry[1] != null).map(([year, population]) => ({ year, population: String(population) }))
+  const [baseline] = useState(detail)
+  const initial = Object.entries(baseline.country.population_by_year ?? {}).filter((entry): entry is [string, number] => entry[1] != null).map(([year, population]) => ({ year, population: String(population) }))
   const [rows, setRows] = useState<PopulationRow[]>(initial)
   const [newYear, setNewYear] = useState('')
   const [newPopulation, setNewPopulation] = useState('')
@@ -995,16 +996,16 @@ function PopulationEditForm({ detail, saving, cs, onCancel, onSave }: {
     try {
       if (newYear.trim() || newPopulation.trim()) throw new Error(cs ? 'Nejdříve přidejte rozepsaný rok nebo obě pole vymažte.' : 'Add the pending year first, or clear both new-year fields.')
       const values_by_year = parsePopulations(rows, cs)
-      const changes = populationChanges(detail.country.population_by_year, values_by_year)
-      setReview({ payload: { values_by_year, expected_package_fingerprint: detail.package.fingerprint }, changes })
+      const changes = populationChanges(baseline.country.population_by_year, values_by_year)
+      setReview({ payload: { values_by_year, expected_package_fingerprint: baseline.package.fingerprint }, changes })
       setValidationError('')
     } catch (error) { setValidationError(formatApiError(error)) }
   }
   return <SectionCard title={cs ? 'Populační historie' : 'Population'}>
-    <p><strong>World Package: <code>{detail.package.world_id}</code> · {cs ? 'Země' : 'Country'}: <code>{detail.country.code}</code></strong></p>
+    <p><strong>World Package: <code>{baseline.package.world_id}</code> · {cs ? 'Země' : 'Country'}: <code>{baseline.country.code}</code></strong></p>
     {(validationError) && <p className="error" role="alert">{validationError}</p>}
     {review ? <ConfirmWorldPackageChanges title={cs ? 'Kontrola změn populace' : 'Review population changes'}
-      worldId={detail.package.world_id} countryCode={detail.country.code} fingerprint={detail.package.fingerprint}
+      worldId={baseline.package.world_id} countryCode={baseline.country.code} fingerprint={baseline.package.fingerprint}
       changes={review.changes} saving={saving} cs={cs} onBack={() => setReview(null)} onConfirm={() => onSave(review.payload)} />
       : <form onSubmit={submit}>
         <fieldset disabled={saving}><p><strong>{cs ? 'Výchozí rok: 2020' : 'Default year: 2020'}</strong></p>
@@ -1028,7 +1029,8 @@ function CountryEditForm({ detail, geography, saving, cs, onCancel, onSave }: {
   detail: WorldPackageCountryDetail; geography?: WorldPackageGeography; saving: boolean; cs: boolean;
   onCancel: () => void; onSave: (payload: WorldPackageCountryUpdatePayload) => void
 }): JSX.Element {
-  const country = detail.country
+  const [baseline] = useState(detail)
+  const country = baseline.country
   const scale = country.rating_scale === 'country_ratings_1_10.v2' ? 'country_ratings_1_10.v2' : 'country_ratings_1_5.v1'
   const ratingMaximum = scale === 'country_ratings_1_10.v2' ? 10 : 5
   const [name, setName] = useState(country.name)
@@ -1061,7 +1063,7 @@ function CountryEditForm({ detail, geography, saving, cs, onCancel, onSave }: {
         elite_support: parseRating(values.elite_support, 'Elite Support', cs, scale),
         squash_tradition: parseRating(values.squash_tradition, 'Squash Tradition', cs, scale),
         court_count: country.court_count,
-        expected_package_fingerprint: detail.package.fingerprint
+        expected_package_fingerprint: baseline.package.fingerprint
       }
       if (geography && !geography.regions.some(item => item.code === payload.region)) throw new Error(cs ? 'Region není v registru zemí.' : 'Region is not in the geography registry.')
       if (geography && payload.travel_region && !geography.travel_regions.some(item => item.code === payload.travel_region)) throw new Error(cs ? 'Cestovní region není v registru.' : 'Travel Region is not in the registry.')
@@ -1075,7 +1077,7 @@ function CountryEditForm({ detail, geography, saving, cs, onCancel, onSave }: {
   return <SectionCard title={cs ? 'Upravit zemi' : 'Edit country'}>
     {validationError && <p className="error" role="alert">{validationError}</p>}
     {review ? <ConfirmWorldPackageChanges title={cs ? 'Kontrola změn země' : 'Review country changes'}
-      worldId={detail.package.world_id} countryCode={country.code} fingerprint={detail.package.fingerprint}
+      worldId={baseline.package.world_id} countryCode={country.code} fingerprint={baseline.package.fingerprint}
       changes={review.changes} saving={saving} cs={cs} onBack={() => setReview(null)} onConfirm={() => onSave(review.payload)} />
       : <form onSubmit={submit}><fieldset disabled={saving}>
         <label>{cs ? 'Název' : 'Name'}<input required value={name} onChange={event => setName(event.target.value)} /></label>

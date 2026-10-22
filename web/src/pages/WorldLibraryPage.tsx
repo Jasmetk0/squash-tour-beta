@@ -35,6 +35,7 @@ function PackageTable({ packages, cs }: { packages: WorldPackage[], cs: boolean 
           <th>World ID</th>
           <th>{cs ? 'Typ' : 'Type'}</th>
           <th>{cs ? 'Stav' : 'Status'}</th>
+          <th>{cs ? 'Ověření' : 'Validation'}</th>
           <th>{cs ? 'Režim balíčku' : 'Package mode'}</th>
           <th>{cs ? 'Země' : 'Countries'}</th>
           <th>{cs ? 'Kontinenty' : 'Continents'}</th>
@@ -53,6 +54,9 @@ function PackageTable({ packages, cs }: { packages: WorldPackage[], cs: boolean 
             <td><code>{pkg.world_id}</code></td>
             <td>{pkg.type === 'custom' ? (cs ? 'Vlastní' : 'Custom') : (cs ? 'Vestavěný' : 'Built-in')}</td>
             <td>{pkg.status === 'archived' ? (cs ? 'Archivovaný' : 'Archived') : (cs ? 'Aktivní' : 'Active')}</td>
+            <td>{pkg.validation_status === 'valid'
+              ? (cs ? 'Ověřeno' : 'Valid')
+              : (cs ? 'Neověřeno' : 'Unknown')}</td>
             <td>{yesNo(pkg.editable, cs ? 'Upravitelný zdroj' : 'Editable source', cs ? 'Jen pro čtení' : 'Read-only')}</td>
             <td>{pkg.country_count}</td>
             <td>{pkg.continent_count}</td>
@@ -76,13 +80,18 @@ export function WorldLibraryPage(): JSX.Element {
   const [search, setSearch] = useState('')
   const [packageType, setPackageType] = useState<'all' | 'built_in' | 'custom'>('all')
   const [packageStatus, setPackageStatus] = useState<'all' | 'active' | 'archived'>('all')
+  const [validationStatus, setValidationStatus] = useState<'all' | 'valid' | 'unknown'>('all')
+  const [editableOnly, setEditableOnly] = useState(false)
   const [sortBy, setSortBy] = useState<'registry' | 'name' | 'countries'>('registry')
   const packages = packagesQuery.data?.packages ?? []
   const normalizedSearch = search.trim().toLocaleLowerCase()
-  const hasFilters = search !== '' || packageType !== 'all' || packageStatus !== 'all' || sortBy !== 'registry'
+  const hasFilters = search !== '' || packageType !== 'all' || packageStatus !== 'all' ||
+    validationStatus !== 'all' || editableOnly || sortBy !== 'registry'
   const visiblePackages = packages.filter(pkg =>
     (packageType === 'all' || (packageType === 'custom' ? pkg.type === 'custom' : pkg.type === 'official')) &&
     (packageStatus === 'all' || pkg.status === packageStatus) &&
+    (validationStatus === 'all' || pkg.validation_status === validationStatus) &&
+    (!editableOnly || pkg.editable) &&
     (normalizedSearch === '' || `${pkg.name} ${pkg.world_id}`.toLocaleLowerCase().includes(normalizedSearch))
   )
   if (sortBy !== 'registry') {
@@ -94,6 +103,8 @@ export function WorldLibraryPage(): JSX.Element {
     setSearch('')
     setPackageType('all')
     setPackageStatus('all')
+    setValidationStatus('all')
+    setEditableOnly(false)
     setSortBy('registry')
   }
 
@@ -138,14 +149,29 @@ export function WorldLibraryPage(): JSX.Element {
               </select>
             </label>
             <label>
+              {cs ? 'Ověření World Package' : 'World Package validation'}
+              <select value={validationStatus} onChange={event => setValidationStatus(event.target.value as typeof validationStatus)}>
+                <option value="all">{cs ? 'Všechny stavy ověření' : 'All validation states'}</option>
+                <option value="valid">{cs ? 'Ověřené' : 'Valid'}</option>
+                <option value="unknown">{cs ? 'Neověřené' : 'Unknown'}</option>
+              </select>
+            </label>
+            <label>
               {cs ? 'Seřadit World Packages' : 'Sort World Packages'}
-              <select value={sortBy} onChange={event => setSortBy(event.target.value as typeof sortBy)}>
+              <select value={sortBy} onChange={event => setSortBy(event.target.value as typeof sortBy)}> 
                 <option value="registry">{cs ? 'Pořadí registru' : 'Registry order'}</option>
                 <option value="name">{cs ? 'Podle názvu (A–Z)' : 'Name (A–Z)'}</option>
                 <option value="countries">{cs ? 'Podle počtu zemí (sestupně)' : 'Country count (descending)'}</option>
               </select>
             </label>
           </div>
+          <label><input type="checkbox" checked={editableOnly}
+            onChange={event => setEditableOnly(event.target.checked)} />
+            {' '}{cs ? 'Pouze upravitelné zdroje' : 'Editable sources only'}
+          </label>
+          <p className="status">{cs
+            ? 'Neověřeno znamená, že registr nepotvrdil výsledek validace; nejde automaticky o chybu.'
+            : 'Unknown validation means the registry has not confirmed a result; it does not necessarily indicate an error.'}</p>
           <button type="button" disabled={!hasFilters} onClick={resetFilters}>
             {cs ? 'Vymazat filtry a řazení' : 'Clear filters and sorting'}
           </button>

@@ -877,20 +877,20 @@ export function AuthoritativeSimulationPanel({
     setConfirmed(false)
   }, [selectedGroupId])
 
-  async function refreshCanonicalSimulation(): Promise<void> {
+  async function refreshCanonicalSimulation(targetRunId=runId,targetBranchId=branchId): Promise<void> {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-live-match', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-match-replays', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-match-reconstruction-state', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule-preflight', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-save-preview', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-entry-decision-slot', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-week-tournament-lock', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-full-simulation-pending', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-full-simulation-history', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-full-simulation-parent-detail', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', targetRunId, targetBranchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-live-match', targetRunId, targetBranchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-match-replays', targetRunId, targetBranchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-match-reconstruction-state', targetRunId, targetBranchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule', targetRunId, targetBranchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule-preflight', targetRunId, targetBranchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-save-preview', targetRunId, targetBranchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-entry-decision-slot', targetRunId, targetBranchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-week-tournament-lock', targetRunId, targetBranchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-full-simulation-pending', targetRunId, targetBranchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-full-simulation-history', targetRunId, targetBranchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-full-simulation-parent-detail', targetRunId, targetBranchId] }),
       queryClient.invalidateQueries({ queryKey: ['canonical-entry-field'] })
     ])
   }
@@ -1776,7 +1776,7 @@ export function AuthoritativeSimulationPanel({
         setFullSimulationProgress(null)
         setFullSimulationCommandId(newCommandId())
       }
-      await queryClient.invalidateQueries({queryKey:['authoritative-simulation-position',snapshot.runId,snapshot.branchId]})
+      await refreshCanonicalSimulation(snapshot.runId,snapshot.branchId)
     }
   })
 
@@ -1799,7 +1799,7 @@ export function AuthoritativeSimulationPanel({
           }
         }
         await Promise.all([
-          queryClient.invalidateQueries({queryKey:['authoritative-simulation-position',snapshot.runId,snapshot.branchId]}),
+          refreshCanonicalSimulation(snapshot.runId,snapshot.branchId),
           queryClient.invalidateQueries({queryKey:['admin-run-branches',snapshot.runId]}),
           queryClient.invalidateQueries({queryKey:['run-branches',snapshot.runId]}),
           queryClient.invalidateQueries({queryKey:['saved-revisions',snapshot.runId,snapshot.branchId]})
@@ -1816,6 +1816,7 @@ export function AuthoritativeSimulationPanel({
         setConfirmed(false)
       }
       await Promise.all([
+        refreshCanonicalSimulation(snapshot.runId,snapshot.branchId),
         queryClient.invalidateQueries({queryKey:['admin-run-branches',snapshot.runId]}),
         queryClient.invalidateQueries({queryKey:['run-branches',snapshot.runId]}),
         queryClient.invalidateQueries({queryKey:['saved-revisions',snapshot.runId,snapshot.branchId]}),
@@ -1827,7 +1828,7 @@ export function AuthoritativeSimulationPanel({
     onError: async (_error,snapshot) => {
       // Preserve the frozen parent for exact explicit retry after partial work.
       await Promise.all([
-        queryClient.invalidateQueries({queryKey:['authoritative-simulation-position',snapshot.runId,snapshot.branchId]}),
+        refreshCanonicalSimulation(snapshot.runId,snapshot.branchId),
         queryClient.invalidateQueries({queryKey:['admin-run-branches',snapshot.runId]}),
         queryClient.invalidateQueries({queryKey:['run-branches',snapshot.runId]}),
         queryClient.invalidateQueries({queryKey:['saved-revisions',snapshot.runId,snapshot.branchId]})
@@ -1893,11 +1894,7 @@ export function AuthoritativeSimulationPanel({
       // parent. It never creates a separate command or approves a checkpoint.
       simulateAuthoritativeFullSimulation(snapshot.runId,snapshot.branchId,snapshot.command),
     onSuccess: async (_result,snapshot) => {
-      await Promise.all([
-        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-pending',snapshot.runId,snapshot.branchId]}),
-        queryClient.invalidateQueries({queryKey:['authoritative-full-simulation-history',snapshot.runId,snapshot.branchId]}),
-        queryClient.invalidateQueries({queryKey:['authoritative-simulation-position',snapshot.runId,snapshot.branchId]})
-      ])
+      await refreshCanonicalSimulation(snapshot.runId,snapshot.branchId)
     }
   })
 

@@ -275,6 +275,50 @@ describe('server task UI (mock HTTP)',()=>{
   expect(api.continueServerTask.mock.calls[1][0].revision).toBe(1)
   expect(api.continueServerTask.mock.calls[1][1].expected_revision).toBe(1)
  }) 
+ it.each(['cs','en'] as const)('exposes only the identical continuation after lost reply when polling removes operator action (%s)',async language=>{
+  const original=taskExample()
+  const accepted={...original,state:'active',desired_state:'active',revision:2,
+   needs_operator_action:false,heartbeat_health:'recent',
+   events:[...original.events,{...original.events[0],revision:2,previous:original.events[0].fingerprint,
+    state:'active',reason:'operator_recovered'}]}
+  api.getServerTasks.mockResolvedValueOnce([original]).mockResolvedValue([accepted])
+  api.continueServerTask.mockRejectedValueOnce(Error('reply lost')).mockResolvedValue({})
+  open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  await screen.findByText('task')
+  fireEvent.change(screen.getByLabelText(language==='cs'?'Operátor úlohy':'Task operator'),{target:{value:'Operator'}})
+  fireEvent.change(screen.getByLabelText(language==='cs'?'Důvod akce úlohy':'Task audit reason'),{target:{value:'Inspected restart'}})
+  fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Výslovně obnovit serverovou úlohu':'Explicitly recover server task'}))
+  expect(await screen.findByText('reply lost')).toBeVisible()
+  fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Obnovit údaje úloh':'Refresh task evidence'}))
+  await screen.findByText(language==='cs'?'Aktivní stav úlohy (zdraví workeru nepotvrzeno)':'Active task state (worker health unverified)')
+  expect(screen.queryByLabelText(language==='cs'?'Operátor úlohy':'Task operator')).toBeNull()
+  expect(screen.getByText(language==='cs'?/Stav úlohy se změnil, ale odpověď/:/Server evidence changed while the original continuation/)).toBeVisible()
+  expect(screen.getByRole('button',{name:language==='cs'?'Zopakovat stejný požadavek':'Retry same request'})).toBeEnabled()
+  fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Zopakovat stejný požadavek':'Retry same request'}))
+  await waitFor(()=>expect(api.continueServerTask).toHaveBeenCalledTimes(2))
+  expect(api.continueServerTask.mock.calls[0]).toEqual(api.continueServerTask.mock.calls[1])
+  expect(api.continueServerTask.mock.calls[1][1]).toMatchObject({action:'recover',expected_revision:1,
+    operator_label:'Operator',audit_reason:'Inspected restart'})
+  await waitFor(()=>expect(screen.queryByText(language==='cs'?/Stav úlohy se změnil, ale odpověď/:/Server evidence changed while the original continuation/)).toBeNull())
+ })
+ it('can discard an uncertain frozen continuation once the original task is no longer actionable',async()=>{
+  const original=taskExample()
+  const accepted={...original,state:'active',desired_state:'active',needs_operator_action:false}
+  api.getServerTasks.mockResolvedValueOnce([original]).mockResolvedValue([accepted])
+  api.continueServerTask.mockRejectedValueOnce(Error('reply lost'))
+  open('en',<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  await screen.findByText('task')
+  fireEvent.change(screen.getByLabelText('Task operator'),{target:{value:'Operator'}})
+  fireEvent.change(screen.getByLabelText('Task audit reason'),{target:{value:'Inspect first'}})
+  fireEvent.click(screen.getByRole('button',{name:'Explicitly recover server task'}))
+  expect(await screen.findByText('reply lost')).toBeVisible()
+  fireEvent.click(screen.getByRole('button',{name:'Refresh task evidence'}))
+  await screen.findByText('Active task state (worker health unverified)')
+  fireEvent.click(screen.getByRole('button',{name:'Cancel retry and refresh'}))
+  expect(screen.queryByText(/Server evidence changed while the original continuation/)).toBeNull()
+  expect(screen.queryByText('reply lost')).toBeNull()
+  expect(api.continueServerTask).toHaveBeenCalledTimes(1)
+ })
  it.each(['cs','en'] as const)('surfaces actual action-required tasks first without claiming a healthy worker (%s)',async language=>{
   const active={...taskExample(),task_id:'queued-other',state:'active',
     needs_operator_action:false,checkpoint:null,heartbeat_health:'stale'}

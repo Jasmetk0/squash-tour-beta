@@ -68,13 +68,18 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
         return
       }
       const refreshed = queryClient.getQueryData<WorldPackage>(['world-package', command.worldId])
-      if (!refreshed || refreshed.world_id !== command.worldId) {
+      const freshGeography = queryClient.getQueryData<WorldPackageGeography>(['world-package-geography', command.worldId])
+      const coherent = Boolean(refreshed && freshGeography &&
+        refreshed.world_id === command.worldId && freshGeography.world_id === command.worldId &&
+        JSON.stringify(freshGeography.timezone_areas) === JSON.stringify(response.timezone_areas))
+      if (!coherent || !refreshed || !freshGeography) {
         setReview(null)
-        setError(new Error(cs ? 'Změna byla odeslána, ale aktuální fingerprint se nepodařilo ověřit. Načtěte data znovu.' :
-          'The write returned but the new fingerprint could not be verified. Reload current data.'))
+        setError(new Error(cs
+          ? 'Zápis byl potvrzen, ale aktuální verzi časových oblastí nelze bezpečně spojit s fingerprintem. Načtěte data znovu.'
+          : 'The write returned but the current Timezone Areas could not be matched to the refreshed fingerprint. Reload current data.'))
         return
       }
-      const saved = { worldId: command.worldId, fingerprint: refreshed.fingerprint, areas: response.timezone_areas }
+      const saved = { worldId: command.worldId, fingerprint: refreshed.fingerprint, areas: freshGeography.timezone_areas }
       setSnapshot(saved)
       setAreas(copyAreas(saved.areas))
       setReview(null)

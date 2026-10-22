@@ -314,6 +314,10 @@ describe('server task UI (mock HTTP)',()=>{
   expect(screen.getByText(language==='cs'
     ? /Hledání a kategorie neodpovídá žádná úloha/
     : /No tasks match the current search and category/)).toBeVisible()
+  fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Zrušit filtry':'Clear filters'}))
+  expect(visible()).toEqual(['needs-approval','task-running','task-complete'])
+  expect(screen.getByRole('combobox',{name:label})).toHaveValue('all')
+  expect(screen.getByRole('searchbox',{name:searchLabel})).toHaveValue('')
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
  it('keeps the exact deep-linked task visible even if operator filters exclude it',async()=>{

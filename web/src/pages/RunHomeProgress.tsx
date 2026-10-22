@@ -1,4 +1,4 @@
-type HomeClock = { weeks_per_year: number; season_count: number; start_year: number; season_start_year_week: number }
+export type HomeClock = { weeks_per_year: number; season_count: number; start_year: number; season_start_year_week: number }
 const legacyClock: HomeClock = { weeks_per_year: 61, season_count: 50, start_year: 2000, season_start_year_week: 37 }
 
 /** Absent historical metadata is legacy; an explicit malformed clock fails closed. */
@@ -10,6 +10,13 @@ export function runHomeClock(metadata: Record<string, unknown> | null | undefine
     || value.weeks_per_year < 1 || value.season_count < 1 || value.start_year < 0
     || value.season_start_year_week < 1 || value.season_start_year_week > value.weeks_per_year) return null
   return value
+}
+
+/** Display only: honor each Run's persisted year/season label convention. */
+export function runHomeSeasonLabel(clock: HomeClock, ordinal: number): string {
+  const year = clock.start_year + ordinal
+  return clock.season_start_year_week === 1
+    ? String(year) : `${year}/${String((year + 1) % 100).padStart(2, '0')}`
 }
 
 type Props = {
@@ -26,8 +33,7 @@ export function RunHomeProgress({ season, week, loading, unavailable, historical
   if (clock === null && loading) return <section className="run-home-progress" aria-label={locale === 'cs' ? 'Časová osa Runu' : 'Run timeline'}><p role="status">{locale === 'cs' ? 'Načítání…' : 'Loading…'}</p></section>
   if (clock === null) return <section className="run-home-progress" aria-label={locale === 'cs' ? 'Časová osa Runu' : 'Run timeline'}><p role="alert">{locale === 'cs' ? 'Kalendář Runu není dostupný.' : 'Run calendar is unavailable.'}</p></section>
   const SEASONS = clock.season_count, WEEKS = clock.weeks_per_year
-  const seasonLabel = (ordinal: number): string => clock.season_start_year_week === 1
-    ? String(clock.start_year + ordinal) : `${clock.start_year + ordinal}/${String((clock.start_year + ordinal + 1) % 100).padStart(2, '0')}`
+  const seasonLabel = (ordinal: number): string => runHomeSeasonLabel(clock, ordinal)
   const index = season == null || !Number.isInteger(season) ? null
     : season >= 0 && season < SEASONS ? season
       : season >= clock.start_year && season < clock.start_year + SEASONS ? season - clock.start_year : null

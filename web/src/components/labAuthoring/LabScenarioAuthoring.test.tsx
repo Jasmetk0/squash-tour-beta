@@ -100,6 +100,27 @@ describe('Lab scenario authoring boundaries', () => {
     expect(() => changePlayerMatchCounts(JSON.stringify(withHealth), 0, '1, 2.5')).toThrow('counts')
   })
 
+  it('edits one selected Player week without manual CSV or changing any other variant', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(player))
+      return <><LabScenarioAuthoring kind="player" text={text} onChange={setText}
+        selection="scratch" revision={0} jsonLabel="Player Lab scenario JSON" />
+        <output data-testid="player-draft">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    await user.selectOptions(screen.getByLabelText('player Lab variant a selected week'), '1')
+    expect(screen.getByLabelText('player Lab variant a selected week matches')).toHaveValue(2)
+    await user.clear(screen.getByLabelText('player Lab variant a selected week matches'))
+    await user.type(screen.getByLabelText('player Lab variant a selected week matches'), '6')
+    expect(JSON.parse(screen.getByTestId('player-draft').textContent ?? '').variants[0].competitive_match_counts).toEqual([1, 2])
+    await user.click(screen.getByRole('button', {name: 'player Lab variant a apply selected week'}))
+    const edited = JSON.parse(screen.getByTestId('player-draft').textContent ?? '')
+    expect(edited.variants[0].competitive_match_counts).toEqual([1, 6])
+    expect(edited.variants[1].competitive_match_counts).toEqual([0, 0])
+    expect(edited.source_snapshot).toEqual(player.source_snapshot)
+  })
+
   it('requires an explicit Apply before shortening a Player workload', async () => {
     function Harness() {
       const [text, setText] = useState(JSON.stringify(player))

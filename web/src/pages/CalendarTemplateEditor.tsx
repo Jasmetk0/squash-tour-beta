@@ -8,7 +8,7 @@ type EventFormRow = Omit<CalendarTemplateEventRecord, 'weeks' | 'qualification_w
   qualificationWeeksText: string
 }
 
-type TemplateStatus = 'draft' | 'active'
+type TemplateStatus = 'draft' | 'active' | 'archived'
 
 export type CalendarTemplateFormValue = {
   id: string
@@ -47,7 +47,7 @@ export function formValueFromTemplate(template: CalendarTemplateUpsertPayload): 
     id: template.id,
     name: template.name,
     description: template.description,
-    status: template.status === 'archived' ? 'draft' : template.status,
+    status: template.status,
     events: template.events.map((event) => ({
       ...event,
       weeksText: event.weeks.join(','),
@@ -137,6 +137,7 @@ export function CalendarTemplateEditor({ initialValue, idEditable, submitLabel, 
   const [value, setValue] = useState<CalendarTemplateFormValue>(initialValue)
   const [errors, setErrors] = useState<string[]>([])
   const categoryOptions = useMemo(() => tournamentCategoryCatalog.map((category) => category.code), [])
+  const archived = initialValue.status === 'archived'
 
   function updateEvent(index: number, patch: Partial<EventFormRow>): void {
     setValue((current) => ({
@@ -146,6 +147,7 @@ export function CalendarTemplateEditor({ initialValue, idEditable, submitLabel, 
   }
 
   function submit(): void {
+    if (archived) return
     const result = validate(value)
     setErrors(result.errors)
     if (result.payload) onSubmit(result.payload)
@@ -154,11 +156,13 @@ export function CalendarTemplateEditor({ initialValue, idEditable, submitLabel, 
   return (
     <div>
       {errors.length ? <div role="alert" className="error"><ul>{errors.map((error) => <li key={error}>{error}</li>)}</ul></div> : null}
+      {archived ? <p role="status" className="status">Archived calendar templates are read-only. Archive and restore workflows are not enabled.</p> : null}
+      <fieldset disabled={archived} aria-label="Calendar template editor fields">
       <div className="form-grid">
         <label>id<input aria-label="Template id" value={value.id} disabled={!idEditable} onChange={(event) => setValue({ ...value, id: event.target.value })} /></label>
         <label>name<input aria-label="Template name" value={value.name} onChange={(event) => setValue({ ...value, name: event.target.value })} /></label>
         <label>description<textarea aria-label="Template description" value={value.description} onChange={(event) => setValue({ ...value, description: event.target.value })} /></label>
-        <label>status<select aria-label="Template status" value={value.status} onChange={(event) => setValue({ ...value, status: event.target.value as TemplateStatus })}><option value="draft">draft</option><option value="active">active</option></select></label>
+        <label>status<select aria-label="Template status" value={value.status} onChange={(event) => setValue({ ...value, status: event.target.value as TemplateStatus })}><option value="draft">draft</option><option value="active">active</option>{archived ? <option value="archived" disabled>archived</option> : null}</select></label>
       </div>
       <h3>Events</h3>
       <button type="button" onClick={() => setValue({ ...value, events: [...value.events, emptyEvent()] })}>Add event row</button>
@@ -178,7 +182,8 @@ export function CalendarTemplateEditor({ initialValue, idEditable, submitLabel, 
           <button type="button" disabled={event.locked} onClick={() => setValue({ ...value, events: value.events.filter((_, eventIndex) => eventIndex !== index) })}>Delete event row</button>
         </fieldset>
       ))}
-      <button type="button" onClick={submit} disabled={isSubmitting}>{submitLabel}</button>
+      <button type="button" onClick={submit} disabled={isSubmitting || archived}>{submitLabel}</button>
+      </fieldset>
     </div>
   )
 }

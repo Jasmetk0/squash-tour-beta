@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { cloneWorldPackage, createWorldPackageCountry, deleteWorldPackageCountry, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, replaceWorldPackageTimezoneAreas, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
-import type { CountryRecord, WorldPackage, WorldPackageClonePayload, WorldPackageCloneResponse, WorldPackageCountryCreatePayload, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
+import type { CountryRecord, WorldPackage, WorldPackageClonePayload, WorldPackageCloneResponse, WorldPackageCountryCreatePayload, WorldPackageCountryDetail, WorldPackageCountryUpdateResponse, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
 import { TimezoneAreaEditor } from '../components/worldPackageAuthoring/TimezoneAreaEditor'
 import { UnsavedWorldPackageNavigationGuard } from '../components/worldPackageAuthoring/UnsavedWorldPackageNavigationGuard'
@@ -981,6 +981,12 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   </section>
 }
 
+function countryWriteResponseMatches(response: WorldPackageCountryUpdateResponse, worldId: string, code: string): boolean {
+  return response.country_detail?.package?.world_id === worldId &&
+    response.country_detail?.country?.code === code &&
+    (!response.package || response.package.world_id === worldId)
+}
+
 type CountryWrite = { worldId: string; countryCode: string; locationKey: string; payload: WorldPackageCountryUpdatePayload }
 type PopulationWrite = { worldId: string; countryCode: string; locationKey: string; payload: WorldPackageCountryPopulationUpdatePayload }
 type DeleteWrite = { worldId: string; countryCode: string; locationKey: string; fingerprint: string }
@@ -1056,6 +1062,13 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
   const mutation = useMutation({
     mutationFn: ({ worldId: targetWorldId, countryCode: targetCode, payload }: CountryWrite) => updateWorldPackageCountry(targetWorldId, targetCode, payload),
     onSuccess: (response, command) => {
+      if (!countryWriteResponseMatches(response, command.worldId, command.countryCode)) {
+        if (mounted.current && activeLocationKey.current === command.locationKey &&
+            activeRoute.current === `${command.worldId}/${command.countryCode}`) {
+          setWriteError({status:409, scopeMismatch:true, message:'Unexpected World Package Country response'})
+        }
+        return
+      }
       queryClient.setQueryData(['world-package-country', command.worldId, command.countryCode], response.country_detail)
       void refresh(command.worldId, command.countryCode)
       if (mounted.current && activeLocationKey.current === command.locationKey && activeRoute.current === `${command.worldId}/${command.countryCode}`) {
@@ -1071,6 +1084,13 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
   const populationMutation = useMutation({
     mutationFn: ({ worldId: targetWorldId, countryCode: targetCode, payload }: PopulationWrite) => updateWorldPackageCountryPopulation(targetWorldId, targetCode, payload),
     onSuccess: (response, command) => {
+      if (!countryWriteResponseMatches(response, command.worldId, command.countryCode)) {
+        if (mounted.current && activeLocationKey.current === command.locationKey &&
+            activeRoute.current === `${command.worldId}/${command.countryCode}`) {
+          setWriteError({status:409, scopeMismatch:true, message:'Unexpected World Package Country response'})
+        }
+        return
+      }
       queryClient.setQueryData(['world-package-country', command.worldId, command.countryCode], response.country_detail)
       void refresh(command.worldId, command.countryCode)
       if (mounted.current && activeLocationKey.current === command.locationKey && activeRoute.current === `${command.worldId}/${command.countryCode}`) {
@@ -1099,6 +1119,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
   const data = raw?.package.world_id === worldId && raw.country.code === countryCode ? raw : undefined
   const canEdit = data?.package.type === 'custom' && data.package.source === 'custom_config' && data.package.editable
   const pending = mutation.isPending || populationMutation.isPending || deleteMutation.isPending || reloadingConflict
+  const scopeMismatch = (writeError as {scopeMismatch?:unknown} | null)?.scopeMismatch === true
   const timeline = Object.entries(data?.country.population_by_year ?? {}).filter((entry): entry is [string, number] => entry[1] != null).sort(([a], [b]) => Number(a) - Number(b))
   const reloadAfterConflict = async () => {
     if (pending) return
@@ -1197,9 +1218,12 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
       </SectionCard>}
       {success && <p className="status" role="status">{success}</p>}
       {reloadError != null && <p className="error" role="alert">{cs ? 'Načtení aktuálních údajů selhalo. Rozpracovaný návrh zůstal zachován: ' : 'Reload failed. Your existing draft has been preserved: '}{formatApiError(reloadError)}</p>}
-      {writeError != null && <p className="error" role="alert">{isFingerprintConflict(writeError)
-        ? (cs ? 'World Package se mezitím změnil. Nic nebylo znovu odesláno. Načtěte aktuální stav a zkontrolujte změny znovu.' : 'The World Package changed meanwhile. No write was retried. Reload current data and review your edits again.')
-        : formatApiError(writeError)}{' '}
+      {writeError != null && <p className="error" role="alert">{scopeMismatch
+        ? (cs ? 'Server vrátil údaje pro jinou zemi nebo World Package. Odpověď nebyla použita; načtěte aktuální stav.' :
+            'The server returned a different Country or World Package. The response was rejected; reload current data.')
+        : isFingerprintConflict(writeError)
+          ? (cs ? 'World Package se mezitím změnil. Nic nebylo znovu odesláno. Načtěte aktuální stav a zkontrolujte změny znovu.' : 'The World Package changed meanwhile. No write was retried. Reload current data and review your edits again.')
+          : formatApiError(writeError)}{' '}
         {isFingerprintConflict(writeError) && <button type="button" disabled={pending} onClick={() => void reloadAfterConflict()}>{cs ? 'Načíst aktuální data' : 'Reload current data'}</button>}
       </p>}
       {canEdit && editing && <CountryEditForm key={routeKey} detail={data} geography={geographyQuery.data} saving={pending} blocked={isFingerprintConflict(writeError)} cs={cs}

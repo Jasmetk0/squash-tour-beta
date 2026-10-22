@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { changeLabField, changePlayerMatchCounts, changePlayerWeeks, labChangedPaths, LabScenarioAuthoring, readLabScenario } from './LabScenarioAuthoring'
+import { changeLabField, changePlayerMatchCounts, changePlayerWeeks, labChangedPaths, labChangeDetails, LabScenarioAuthoring, readLabScenario } from './LabScenarioAuthoring'
 
 vi.mock('../../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en'})}))
 
@@ -121,6 +121,10 @@ describe('Lab scenario authoring boundaries', () => {
   it('reports changed JSON paths against a saved Session without mutating the baseline', () => {
     const edited = {...match, seed: 99, context: {...match.context, best_of: 3}}
     expect(labChangedPaths(match, edited)).toEqual(['seed', 'context.best_of'])
+    expect(labChangeDetails(match, edited)).toEqual([
+      {path: 'seed', before: '42', after: '99'},
+      {path: 'context.best_of', before: '5', after: '3'}
+    ])
     expect(match.seed).toBe(42)
     expect(labChangedPaths(match, match)).toEqual([])
   })
@@ -296,6 +300,7 @@ describe('Lab scenario authoring boundaries', () => {
     const comparison = screen.getByLabelText('tournament Lab unsaved changes')
     expect(comparison).toHaveTextContent('Session name changed')
     expect(comparison).toHaveTextContent('draw_seed')
+    expect(comparison).toHaveTextContent('10 → 404')
     expect(comparison).toHaveTextContent('Saving the Session requires a separate explicit action')
   })
 

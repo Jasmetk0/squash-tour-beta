@@ -15,6 +15,7 @@ import type { MatchLabRequest, MatchLabResult, MatchLabScenario, MatchLabSession
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { prettyLabJson } from '../components/LabJson'
 import { LabNavigation } from '../components/LabNavigation'
+import { LabScenarioAuthoring } from '../components/labAuthoring/LabScenarioAuthoring'
 import { LabSessionConflict, useLabSessionEditor, validateLabSession, type LabEditorTicket } from '../components/LabSessionEditor'
 
 const traits = {
@@ -343,8 +344,10 @@ export function MatchTestLabPage(): JSX.Element {
         {selectedSession ? <label>Session name
           <input aria-label="Match Lab session name" value={sessionName} onChange={(e) => { setSessionName(e.target.value); runMutation.reset() }} />
         </label> : null}
-        <textarea aria-label="Match Lab scenario JSON" value={scenarioText} onChange={(e) => editScenario(e.target.value)}
-          rows={28} style={{ width: '100%', fontFamily: 'monospace' }} />
+        <LabScenarioAuthoring kind="match" text={scenarioText} onChange={editScenario}
+          jsonLabel="Match Lab scenario JSON" selection={selectedSessionId ?? 'scratch'} revision={editor.editorEdit}
+          savedScenario={selectedSession?.scenario} savedName={selectedSession?.display_name}
+          sessionName={editor.sessionName} busy={writePending || runPending} />
         <label>Batch seeds (optional, comma-separated; max 100)
           <input aria-label="Match Lab batch seeds" value={batchText} onChange={(e) => { setBatchText(e.target.value); runMutation.reset() }} placeholder="100, 101, 102" />
         </label>

@@ -10,7 +10,8 @@ const api=vi.hoisted(()=>({getServerTasks:vi.fn(),startServerTask:vi.fn(),contin
 const weekReview=vi.hoisted(()=>({getNextWeekExtensionInspection:vi.fn(),approveNextWeekExtension:vi.fn()}))
 vi.mock('../api/fullSimulationWeekReview',()=>weekReview)
 vi.mock('../api/fullSimulationTasks',async importOriginal=>({...await importOriginal<object>(),...api}))
-vi.mock('./FullSimulationSummary',()=>({FullSimulationSummary:()=>null}))
+const summaryMock=vi.hoisted(()=>({render:vi.fn()}))
+vi.mock('./FullSimulationSummary',()=>({FullSimulationSummary:(props:unknown)=>{summaryMock.render(props);return null}}))
 function open(language:'cs'|'en',child:React.ReactNode,initialPath='/'){
  localStorage.setItem('squash-engine-language-v1',language)
  return render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter initialEntries={[initialPath]}><LanguageProvider>{child}</LanguageProvider></MemoryRouter></QueryClientProvider>)
@@ -38,6 +39,27 @@ describe('server task UI (mock HTTP)',()=>{
   fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Spustit jako serverovou úlohu':'Start as server task'}))
   await screen.findByText('offline');fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Zopakovat stejný požadavek':'Retry same request'}))
   await screen.findByText('task');expect(api.startServerTask.mock.calls[0]).toEqual(api.startServerTask.mock.calls[1])
+ })
+ it('does not fetch every terminal summary until an operator expands its evidence',async()=>{
+  const a={...taskExample(),task_id:'completed-one',parent_command_id:'parent-one',
+    state:'complete',desired_state:'complete',needs_operator_action:false}
+  const b={...taskExample(),task_id:'completed-two',parent_command_id:'parent-two',
+    state:'stopped',desired_state:'stopped',needs_operator_action:false}
+  api.getServerTasks.mockResolvedValue([a,b])
+  open('en',<FullSimulationServerTasks/>)
+  await screen.findByText('completed-two')
+  expect(summaryMock.render).not.toHaveBeenCalled()
+  const terminal=screen.getAllByText('Stored terminal summary').map(el=>el.closest('details')!)
+  expect(terminal).toHaveLength(2)
+  terminal[0].open=true
+  fireEvent.toggle(terminal[0])
+  await waitFor(()=>expect(summaryMock.render).toHaveBeenCalled())
+  expect(summaryMock.render.mock.calls.every(([props])=>
+    (props as {commandId:string}).commandId==='parent-one'||
+    (props as {commandId:string}).commandId==='parent-two')).toBe(true)
+  const rendered=summaryMock.render.mock.calls.map(([props])=>(props as {commandId:string}).commandId)
+  expect(new Set(rendered).size).toBe(1)
+  expect(rendered[0]).toBe(terminal[0].parentElement?.getAttribute('data-task-id')==='completed-one'?'parent-one':'parent-two')
  })
  it.each(['cs','en'] as const)('labels current-week receipts and frozen historical Position honestly (%s)',async language=>{
   const live=taskExample()

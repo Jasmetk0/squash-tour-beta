@@ -1757,30 +1757,26 @@ export function AuthoritativeSimulationPanel({
   }
 
   const fullSimulationPreviewMutation = useMutation({
-    mutationFn: () => {
-      const operator = fullSimulationOperator.trim()
-      const reason = fullSimulationReason.trim()
-      if (!operator || !reason) {
-        throw new Error('Full Simulation requires an operator label and audit reason.')
-      }
-      return previewAuthoritativeFullSimulation(runId, branchId, {
-        command_id: fullSimulationCommandId,
-        operator_label: operator,
-        audit_reason: reason
-      })
-    },
-    onSuccess: (preview) => {
+    mutationFn:(snapshot:{runId:string;branchId:string;command:Parameters<typeof previewAuthoritativeFullSimulation>[2]})=>
+      previewAuthoritativeFullSimulation(snapshot.runId,snapshot.branchId,snapshot.command),
+    onSuccess:(preview,snapshot)=>{
+      const current=fullSimulationParentScopeRef.current
+      if(current.runId!==snapshot.runId||current.branchId!==snapshot.branchId||
+        current.commandId!==snapshot.command.command_id)return
       setFrozenFullSimulationParent(null)
       setFullSimulationReview(preview)
       setFullSimulationProgress(null)
     },
-    onError: async (error) => {
-      if ((error as { status?: number }).status === 409) {
+    onError:async(error,snapshot)=>{
+      if((error as {status?:number}).status!==409)return
+      const current=fullSimulationParentScopeRef.current
+      if(current.runId===snapshot.runId&&current.branchId===snapshot.branchId&&
+        current.commandId===snapshot.command.command_id){
         setFullSimulationReview(null)
         setFullSimulationProgress(null)
         setFullSimulationCommandId(newCommandId())
-        await refreshCanonicalSimulation()
       }
+      await queryClient.invalidateQueries({queryKey:['authoritative-simulation-position',snapshot.runId,snapshot.branchId]})
     }
   })
 
@@ -3826,7 +3822,7 @@ export function AuthoritativeSimulationPanel({
                 aria-label="Full Simulation operator"
                 value={fullSimulationOperator}
                 maxLength={128}
-                disabled={Boolean(fullSimulationReview) || fullSimulationMutation.isPending}
+                disabled={Boolean(fullSimulationReview) || fullSimulationMutation.isPending || fullSimulationPreviewMutation.isPending}
                 onChange={(event) => setFullSimulationOperator(event.target.value)}
               />
             </label>
@@ -3836,7 +3832,7 @@ export function AuthoritativeSimulationPanel({
                 aria-label="Full Simulation audit reason"
                 value={fullSimulationReason}
                 maxLength={2000}
-                disabled={Boolean(fullSimulationReview) || fullSimulationMutation.isPending}
+                disabled={Boolean(fullSimulationReview) || fullSimulationMutation.isPending || fullSimulationPreviewMutation.isPending}
                 onChange={(event) => setFullSimulationReason(event.target.value)}
               />
             </label>
@@ -3958,7 +3954,14 @@ export function AuthoritativeSimulationPanel({
             </button>
             <button
               type="button"
-              onClick={() => fullSimulationPreviewMutation.mutate()}
+              onClick={() => {
+                if(!fullSimulationOperator.trim()||!fullSimulationReason.trim())return
+                fullSimulationPreviewMutation.mutate({runId,branchId,command:{
+                  command_id:fullSimulationCommandId,
+                  operator_label:fullSimulationOperator.trim(),
+                  audit_reason:fullSimulationReason.trim()
+                }})
+              }}
               disabled={
                 !fullSimulationOperator.trim() ||
                 !fullSimulationReason.trim() ||

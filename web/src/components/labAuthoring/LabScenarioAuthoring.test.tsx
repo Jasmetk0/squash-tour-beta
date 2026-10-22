@@ -91,7 +91,7 @@ describe('Lab scenario authoring boundaries', () => {
     const changed = JSON.parse(changePlayerMatchCounts(JSON.stringify(withHealth), 0, '0, 32'))
     expect(changed.variants[0].competitive_match_counts).toEqual([0, 32])
     expect(changed.variants[1].competitive_match_counts).toEqual([0, 0])
-    expect(changed.variants[0].health_timeline).toEqual(withHealth.variants[0].health_timeline)
+    expect(changed.variants[0].health_timeline).toEqual([{state: 'start'}, {state: 'week1'}, {state: 'week2'}])
     expect(changed.source_snapshot).toEqual(withHealth.source_snapshot)
     expect(() => changePlayerMatchCounts(JSON.stringify(withHealth), 0, '1, 2, 3')).toThrow('counts')
     expect(() => changePlayerMatchCounts(JSON.stringify(withHealth), 0, '1, 33')).toThrow('counts')

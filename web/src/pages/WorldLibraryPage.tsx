@@ -364,14 +364,16 @@ function formatNumber(value: number | null | undefined): string {
   return value === null || value === undefined ? '—' : value.toLocaleString()
 }
 
-function formatPopulationYears(populationByYear: CountryRecord['population_by_year']): string {
+function formatPopulationYears(populationByYear: CountryRecord['population_by_year'], cs: boolean): string {
   if (!populationByYear) return '—'
   const years = Object.entries(populationByYear)
     .filter(([, value]) => value !== null && value !== undefined)
     .map(([year]) => year)
     .sort((left, right) => Number(left) - Number(right))
   if (years.length === 0) return '—'
-  return `${years.length} ${years.length === 1 ? 'year' : 'years'}: ${years.join(', ')}`
+  return cs
+    ? `${years.length} ${years.length === 1 ? 'rok' : years.length >= 2 && years.length <= 4 ? 'roky' : 'let'}: ${years.join(', ')}`
+    : `${years.length} ${years.length === 1 ? 'year' : 'years'}: ${years.join(', ')}`
 }
 
 function CountryCell({ value }: { value: ReactNode }): JSX.Element {
@@ -407,7 +409,7 @@ function PackageCountriesTable({ countries, worldId, cs }: { countries: CountryR
             <CountryCell value={country.name} />
             <CountryCell value={country.region} />
             <CountryCell value={country.population.toLocaleString()} />
-            <CountryCell value={formatPopulationYears(country.population_by_year)} />
+            <CountryCell value={formatPopulationYears(country.population_by_year, cs)} />
             <CountryCell value={formatNumber(country.area_km2)} />
             <CountryCell value={country.travel_region} />
             <CountryCell value={country.timezone_area} />

@@ -236,7 +236,8 @@ function VariantMatchCountsEditor({ id, values, index, cs, busy, onApply }: {
           onChange={event => setWeekDraft(event.target.value)}
           onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }} />
       </label>{' '}
-      <button type="button" disabled={busy || weekDraft === String(values[weekIndex])}
+      <button type="button" aria-label={'player Lab variant ' + id + ' apply selected week'}
+        disabled={busy || weekDraft === String(values[weekIndex])}
         onClick={() => onApply(index, values.map((count, i) =>
           i === weekIndex ? weekDraft : String(count)).join(', '))}>
         {cs ? 'Použít vybraný týden' : 'Apply selected week'}

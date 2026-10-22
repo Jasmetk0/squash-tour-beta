@@ -80,6 +80,29 @@ describe('World Package authoring against mutable source', () => {
     expect(api.updateWorldPackageCountry).toHaveBeenCalledTimes(1)
   })
 
+  it('keeps a conflicted Country draft intact if the approved reload fails', async () => {
+    api.updateWorldPackageCountry.mockRejectedValue({status:409,message:'World Package changed'})
+    api.getWorldPackageCountry.mockImplementationOnce(async () => fixture())
+      .mockRejectedValueOnce(new Error('Network offline'))
+      .mockImplementation(async () => ({...fixture(),package:{...fixture().package,fingerprint:'fresh-head'}}))
+    setup()
+    fireEvent.click(await screen.findByRole('button',{name:'Edit country'}))
+    fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Unsaved Reviewed Name'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review changes'}))
+    fireEvent.click(screen.getByRole('button',{name:'Confirm and save'}))
+    expect(await screen.findByText(/No write was retried/)).toBeInTheDocument()
+    vi.spyOn(window,'confirm').mockReturnValue(true)
+    fireEvent.click(screen.getByRole('button',{name:'Reload current data'}))
+    expect(await screen.findByText(/Reload failed. Your existing draft has been preserved: Network offline/)).toBeInTheDocument()
+    expect(screen.getByText('Unsaved Reviewed Name')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Confirm and save'})).toBeDisabled()
+    expect(api.updateWorldPackageCountry).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button',{name:'Reload current data'}))
+    await waitFor(() => expect(screen.queryByRole('heading',{name:'Review country changes'})).not.toBeInTheDocument())
+    expect(screen.queryByText(/Reload failed/)).not.toBeInTheDocument()
+    expect(api.updateWorldPackageCountry).toHaveBeenCalledTimes(1)
+  })
+
   it('does not route a paused country write to a newly selected package', async () => {
     let finish!: (value: unknown) => void
     api.updateWorldPackageCountry.mockImplementation(() => new Promise(resolve => {finish = resolve}))

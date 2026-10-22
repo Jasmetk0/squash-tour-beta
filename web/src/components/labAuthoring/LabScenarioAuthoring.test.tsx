@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { changeLabField, changeLabParticipantModifier, changeTournamentStopRound, changePlayerMatchCounts, changePlayerWeeks, labChangedPaths, labChangeDetails, LabScenarioAuthoring, readLabScenario } from './LabScenarioAuthoring'
+import { changeLabField, changeLabParticipantModifier, changeTournamentStopRound, changeTournamentAssertion, changePlayerMatchCounts, changePlayerWeeks, labChangedPaths, labChangeDetails, LabScenarioAuthoring, readLabScenario } from './LabScenarioAuthoring'
 
 const currentLocale = vi.hoisted(() => ({language: 'en'}))
 vi.mock('../../i18n/LanguageContext', () => ({useLanguage: () => ({language: currentLocale.language})}))
@@ -128,6 +128,52 @@ describe('Lab scenario authoring boundaries', () => {
       {path: 'variants.1.competitive_match_counts.1', before: '0', after: '3'}
     ])
     expect(labChangedPaths(player, {...player, variants: []})).toEqual(['variants'])
+  })
+
+  it('stages optional Tournament winner and match-count expectations without changing source evidence', () => {
+    const withChampion = JSON.parse(changeTournamentAssertion(JSON.stringify(tournamentWithPlayers),
+      'expected_champion_player_id', 'P2'))
+    expect(withChampion.assertions.expected_champion_player_id).toBe('P2')
+    expect(withChampion.source_snapshot).toEqual(tournamentWithPlayers.source_snapshot)
+    expect(withChampion.participants).toEqual(tournamentWithPlayers.participants)
+    const withMatches = JSON.parse(changeTournamentAssertion(JSON.stringify(withChampion),
+      'expected_played_match_count', '0'))
+    expect(withMatches.assertions.expected_champion_player_id).toBe('P2')
+    expect(withMatches.assertions.expected_played_match_count).toBe(0)
+    const cleared = JSON.parse(changeTournamentAssertion(JSON.stringify(withMatches),
+      'expected_champion_player_id', ''))
+    expect(cleared.assertions.expected_champion_player_id).toBeNull()
+    expect(cleared.assertions.expected_played_match_count).toBe(0)
+    expect(JSON.parse(changeTournamentAssertion(JSON.stringify(cleared),
+      'expected_played_match_count', '')).assertions.expected_played_match_count).toBeNull()
+    for (const invalid of ['-1', '0.5', 'abc', '9007199254740993']) {
+      expect(() => changeTournamentAssertion(JSON.stringify(tournamentWithPlayers),
+        'expected_played_match_count', invalid)).toThrow('assertion')
+    }
+    expect(() => changeTournamentAssertion(JSON.stringify(tournamentWithPlayers),
+      'expected_champion_player_id', 'x'.repeat(161))).toThrow('assertion')
+    expect(() => changeTournamentAssertion(JSON.stringify({...tournamentWithPlayers, assertions: null}),
+      'expected_champion_player_id', 'P1')).toThrow('shape')
+  })
+
+  it('keeps expected tournament results local until Apply in the guided form', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify({...tournamentWithPlayers, assertions: {}}))
+      return <><LabScenarioAuthoring kind="tournament" text={text} onChange={setText}
+        selection="scratch" revision={0} jsonLabel="Tournament Lab scenario JSON" />
+        <output data-testid="tournament-expectations">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    await user.type(screen.getByLabelText('tournament Lab expected champion'), 'P1')
+    await user.type(screen.getByLabelText('tournament Lab expected match count'), '3')
+    expect(JSON.parse(screen.getByTestId('tournament-expectations').textContent ?? '').assertions).toEqual({})
+    await user.click(screen.getByRole('button', {name: 'tournament Lab apply expected champion'}))
+    const onlyChampion = JSON.parse(screen.getByTestId('tournament-expectations').textContent ?? '')
+    expect(onlyChampion.assertions).toEqual({expected_champion_player_id: 'P1'})
+    await user.click(screen.getByRole('button', {name: 'tournament Lab apply expected match count'}))
+    expect(JSON.parse(screen.getByTestId('tournament-expectations').textContent ?? '').assertions)
+      .toEqual({expected_champion_player_id: 'P1', expected_played_match_count: 3})
   })
 
   it('allows an explicit optional round limit with backend-aligned bounds and preserved evidence', () => {

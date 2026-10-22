@@ -1,4 +1,5 @@
-import {QueryClient,QueryClientProvider} from '@tanstack/react-query'
+import {QueryClient,QueryClientProvider,onlineManager} from '@tanstack/react-query'
+import {useState} from 'react'
 import {fireEvent,render,screen,waitFor} from '@testing-library/react'
 import {MemoryRouter} from 'react-router-dom'
 import {afterEach,describe,expect,it,vi} from 'vitest'
@@ -196,7 +197,7 @@ describe('server task UI (mock HTTP)',()=>{
   const link=await screen.findByRole('link',{name:language==='cs'
    ?'Prověřit kalendář aktuální sezony ve správě Runu'
    :'Review this season’s Calendar in Run Management'})
-  expect(link).toHaveAttribute('href','/admin/runs/run/manage?branch=branch&calendarSeason=2001-2002')
+  expect(link).toHaveAttribute('href','/admin/runs/run/manage?branch=branch')
   expect(screen.getByText(language==='cs'?/chybějící kalendář neznamená prázdný týden/:/missing Calendar means an empty week/)).toBeVisible()
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
@@ -210,4 +211,46 @@ describe('server task UI (mock HTTP)',()=>{
   expect(screen.queryByRole('link',{name:'Review this season’s Calendar in Run Management'})).toBeNull()
  })
 
+ it('replays a queued start against its original Run, Branch and command after switching context',async()=>{
+  api.startServerTask.mockResolvedValue({task_id:'task',parent_command_id:'parent'})
+  const initial=taskExample().original_command
+  function Switch(){
+   const [other,setOther]=useState(false)
+   return <><button onClick={()=>setOther(true)}>Switch context</button>
+    <StartServerTask runId={other?'run-other':'run'} branchId={other?'branch-other':'branch'}
+     command={other?{...initial,command_id:'different-parent'}:initial} disabled={false} onAccepted={()=>{}}/></>
+  }
+  onlineManager.setOnline(false)
+  try{
+   open('en',<Switch/>)
+   fireEvent.click(screen.getByRole('button',{name:'Start as server task'}))
+   fireEvent.click(screen.getByRole('button',{name:'Switch context'}))
+   expect(screen.getByRole('button',{name:'Start as server task'})).toBeDisabled()
+   expect(screen.getByRole('alert')).toHaveTextContent('different Run, Branch or command')
+   onlineManager.setOnline(true)
+   await waitFor(()=>expect(api.startServerTask).toHaveBeenCalledTimes(1))
+   expect(api.startServerTask.mock.calls[0].slice(0,3)).toEqual(['run','branch','server-start-parent'])
+   expect(api.startServerTask.mock.calls[0][3]).toMatchObject({command_id:'parent'})
+   expect(screen.queryByText('Server task accepted')).toBeNull()
+  }finally{onlineManager.setOnline(true)}
+ })
+ it('retries a task continuation with the original task identity after a polling revision change',async()=>{
+  const first=taskExample()
+  const revised={...first,revision:2,events:[...first.events,{...first.events[0],revision:2,previous:first.events[0].fingerprint}]}
+  api.getServerTasks.mockResolvedValueOnce([first]).mockResolvedValue([revised])
+  api.continueServerTask.mockRejectedValueOnce(Error('connection lost')).mockResolvedValue({})
+  open('en',<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  await screen.findByText('task')
+  fireEvent.change(screen.getByLabelText('Task operator'),{target:{value:'Operator'}})
+  fireEvent.change(screen.getByLabelText('Task audit reason'),{target:{value:'Reviewed resume'}})
+  fireEvent.click(screen.getByRole('button',{name:'Explicitly recover server task'}))
+  await screen.findByText('connection lost')
+  fireEvent.click(screen.getByRole('button',{name:'Refresh task evidence'}))
+  await waitFor(()=>expect(api.getServerTasks).toHaveBeenCalledTimes(2))
+  fireEvent.click(screen.getByRole('button',{name:'Retry same request'}))
+  await waitFor(()=>expect(api.continueServerTask).toHaveBeenCalledTimes(2))
+  expect(api.continueServerTask.mock.calls[0]).toEqual(api.continueServerTask.mock.calls[1])
+  expect(api.continueServerTask.mock.calls[1][0].revision).toBe(1)
+  expect(api.continueServerTask.mock.calls[1][1].expected_revision).toBe(1)
+ })
 })

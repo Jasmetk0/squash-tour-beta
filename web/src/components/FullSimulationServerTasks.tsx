@@ -25,7 +25,7 @@ const copy={
   needsCount:'Operator action required',liveCount:'Queued / executing / pause requested (health unconfirmed)',otherCount:'Other task states',
   search:'Find a server task',searchHint:'Run, Branch, task, parent command or checkpoint',filter:'Task category',
   allTasks:'All tasks',attentionTasks:'Operator action required',liveTasks:'Queued / active / pausing',otherTasks:'Other states',
-  clearFilters:'Clear filters',shown:'Displayed tasks',noMatches:'No tasks match the current search and category. Clear the filters to see all stored tasks.',pinned:'Linked task stays visible regardless of filters.',
+  clearFilters:'Clear filters',scopeMissing:'Select a valid Run and Branch before inspecting scoped server tasks. No global inventory was requested.',shown:'Displayed tasks',noMatches:'No tasks match the current search and category. Clear the filters to see all stored tasks.',pinned:'Linked task stays visible regardless of filters.',
   desired:'Requested task state',lease:'Lease expiry (not proof of a live worker)',selected:'Task selected from the link',missing:'The linked task was not found in this Run / Branch.',contextChanged:'The reviewed request belongs to a different Run, Branch or command. Return to that context to retry; this screen will not redirect it.'},
  cs:{title:'Serverové simulační úlohy',start:'Spustit jako serverovou úlohu',ack:'Serverová úloha přijata',refresh:'Obnovit údaje úloh',
   truth:'Úloha se živým workerem může pokračovat i po zavření stránky; samotný záznam ani lease běh nedokazují. Save a schválení zůstávají ruční. Po restartu serveru úlohu zkontrolujte a výslovně obnovte.',
@@ -41,11 +41,14 @@ const copy={
   needsCount:'Vyžaduje zásah operátora',liveCount:'Fronta / běží / pozastavuje (zdraví procesu nepotvrzeno)',otherCount:'Ostatní stavy úloh',
   search:'Najít serverovou úlohu',searchHint:'Run, větev, úloha, původní příkaz nebo checkpoint',filter:'Kategorie úloh',
   allTasks:'Všechny úlohy',attentionTasks:'Vyžaduje zásah operátora',liveTasks:'Ve frontě / aktivní / pozastavuje se',otherTasks:'Ostatní stavy',
-  clearFilters:'Zrušit filtry',shown:'Zobrazené úlohy',noMatches:'Hledání a kategorie neodpovídá žádná úloha. Zrušením filtrů zobrazíte všechny uložené úlohy.',pinned:'Úloha vybraná z odkazu zůstává viditelná bez ohledu na filtry.',
+  clearFilters:'Zrušit filtry',scopeMissing:'Před zobrazením úloh vyberte platný Run a větev. Globální přehled nebyl vyžádán.',shown:'Zobrazené úlohy',noMatches:'Hledání a kategorie neodpovídá žádná úloha. Zrušením filtrů zobrazíte všechny uložené úlohy.',pinned:'Úloha vybraná z odkazu zůstává viditelná bez ohledu na filtry.',
   desired:'Požadovaný stav úlohy',lease:'Konec platnosti lease (nikoli důkaz živého workeru)',selected:'Úloha vybraná z odkazu',missing:'Odkazovaná úloha nebyla nalezena v tomto Runu / větvi.',contextChanged:'Schválený požadavek patří jinému Runu, větvi nebo příkazu. Pro opakování se vraťte do původního kontextu; tato obrazovka jej nepřesměruje.'}
 } as const
 export function useServerTasks(run?:string,branch?:string,enabled=true){
- return useQuery({queryKey:['server-simulation-tasks',run??null,branch??null],queryFn:()=>getServerTasks(run,branch),retry:false,refetchInterval:2000,enabled})
+ // A partially resolved scoped route must NOT silently query global tasks.
+ // Both absent means the intentional global Task Center request.
+ const scopeValid=(run===undefined&&branch===undefined)||Boolean(run&&branch)
+ return useQuery({queryKey:['server-simulation-tasks',run??null,branch??null],queryFn:()=>getServerTasks(run,branch),retry:false,refetchInterval:2000,enabled:enabled&&scopeValid})
 }
 type StartRequest = {
  runId:string; branchId:string; requestId:string; command:AuthoritativeFullSimulationCommandPayload
@@ -173,6 +176,7 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
 }
 export function FullSimulationServerTasks({runId,branchId}:{runId?:string;branchId?:string}){
  const {language}=useLanguage();const t=copy[language];const query=useServerTasks(runId,branchId)
+ const incompleteScope=(runId!==undefined||branchId!==undefined)&&!(runId&&branchId)
  const [searchParams]=useSearchParams()
  const focusedTaskId=runId&&branchId?searchParams.get('task'):null
  const [search,setSearch]=useState('')
@@ -208,7 +212,8 @@ export function FullSimulationServerTasks({runId,branchId}:{runId?:string;branch
    </select></label>
    {filtered&&<button type="button" onClick={()=>{setSearch('');setCategory('all')}}>{t.clearFilters}</button>}
   </div>
-  {query.isPending && <p role="status">{t.loading}</p>}
+  {incompleteScope&&<p role="alert">{t.scopeMissing}</p>}
+  {!incompleteScope&&query.isPending && <p role="status">{t.loading}</p>}
   {query.error && <p role="alert">{formatApiError(query.error)}</p>}
   {query.isSuccess&&Boolean(tasks?.length)&&<p role="status">{t.needsCount}: {needingAction} · {t.liveCount}: {liveOrQueued} · {t.otherCount}: {otherStates}</p>}
   {query.isSuccess&&focusedTaskId&&!query.data.some(task=>task.task_id===focusedTaskId)&&<p role="alert">{t.missing} <code>{focusedTaskId}</code></p>}

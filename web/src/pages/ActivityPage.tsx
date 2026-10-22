@@ -64,8 +64,10 @@ export function ActivityPage(): JSX.Element {
   const [weekFilter, setWeekFilter] = useState('')
   const [textFilter, setTextFilter] = useState('')
 
-  const requestedSelectedIndex = Number.parseInt(searchParams.get('selectedItem') ?? '', 10)
-  const hasRequestedSelectedIndex = Number.isInteger(requestedSelectedIndex)
+  const requestedItemText = searchParams.get('selectedItem') ?? ''
+  // The deep link indexes the original activity items; reject partial numbers.
+  const requestedSelectedIndex = /^\d+$/.test(requestedItemText) ? Number(requestedItemText) : NaN
+  const hasRequestedSelectedIndex = Number.isSafeInteger(requestedSelectedIndex) && requestedSelectedIndex >= 0
 
   const activityQuery = useQuery({
     queryKey: ['run-activity', runId],

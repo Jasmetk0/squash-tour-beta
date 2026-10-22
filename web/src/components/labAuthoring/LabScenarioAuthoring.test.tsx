@@ -129,6 +129,25 @@ describe('Lab scenario authoring boundaries', () => {
     expect(labChangedPaths(match, match)).toEqual([])
   })
 
+  it('exposes guided fields immediately alongside the legacy JSON editor', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(match, null, 2))
+      return <LabScenarioAuthoring kind="match" text={text} onChange={setText}
+        selection="scratch" revision={0} jsonLabel="Match Lab scenario JSON" />
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    expect(screen.getByLabelText('match Lab editor mode')).toHaveValue('combined')
+    expect(screen.getByLabelText('Match Lab scenario JSON')).toBeInTheDocument()
+    expect(screen.getByLabelText('match Lab seed')).toHaveValue(42)
+    await user.clear(screen.getByLabelText('match Lab seed'))
+    await user.type(screen.getByLabelText('match Lab seed'), '99')
+    await user.click(screen.getByRole('button', {name: 'match Lab apply seed'}))
+    const advanced = screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement
+    expect(JSON.parse(advanced.value).seed).toBe(99)
+    expect(JSON.parse(advanced.value).source_fingerprint).toBe(match.source_fingerprint)
+  })
+
   it('lets the user switch between guided and advanced editing without losing historical fields', async () => {
     function Harness() {
       const [text, setText] = useState(JSON.stringify(match, null, 2))

@@ -7,11 +7,13 @@ export function getFinalsInspectionRoute({
   hasQualification: boolean
   hasResult: boolean
 }): string {
+  // Treat the Run ID as one route segment even if it contains reserved characters.
+  const encodedRunId = encodeURIComponent(runId)
   if (hasResult) {
-    return `/runs/${runId}/finals/result`
+    return `/runs/${encodedRunId}/finals/result`
   }
   if (hasQualification) {
-    return `/runs/${runId}/finals/qualification`
+    return `/runs/${encodedRunId}/finals/qualification`
   }
-  return `/runs/${runId}/finals`
+  return `/runs/${encodedRunId}/finals`
 }

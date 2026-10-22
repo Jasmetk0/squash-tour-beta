@@ -207,6 +207,36 @@ describe('TalentIntakePage', () => {
     expect(screen.getByText(/materialized only after confirmation/i)).toBeInTheDocument()
   })
 
+  it('recovers from a country search with no matches without materializing a cohort', async () => {
+    renderWithRoute(<TalentIntakePage />, '/admin/runs/run-1/players/intake')
+    expect(await screen.findByText('Showing 2 of 2 country allocations')).toBeInTheDocument()
+    const search = screen.getByRole('searchbox', { name: 'Country filter' })
+    const clear = screen.getByRole('button', { name: 'Clear country filter' })
+    expect(clear).toBeDisabled()
+    const table = () => screen.getByRole('table', { name: 'Talent intake country totals' })
+    expect(table().parentElement).toHaveClass('table-responsive')
+    await userEvent.type(search, ' unknown ')
+    expect(screen.getByText('Showing 0 of 2 country allocations')).toBeInTheDocument()
+    expect(screen.getByText('No country allocations match the current filter.')).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Talent intake country totals' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Confirm materialization' })).toBeDisabled()
+    await userEvent.click(clear)
+    expect(search).toHaveValue('')
+    expect(screen.getByText('Showing 2 of 2 country allocations')).toBeInTheDocument()
+    expect(within(table()).getByText('Czechia (CZE)')).toBeInTheDocument()
+    expect(api.materializeRunProspects).not.toHaveBeenCalled()
+  })
+
+  it('does not claim zero matches when the cohort has no country allocations at all', async () => {
+    api.getRunWeeklyIntakeCohortSeasonPreview.mockResolvedValueOnce({ ...preview, country_totals: [] })
+    renderWithRoute(<TalentIntakePage />, '/admin/runs/run-1/players/intake')
+    expect(await screen.findByText('No country allocations exist in this cohort preview.')).toBeInTheDocument()
+    expect(screen.getByText('Showing 0 of 0 country allocations')).toBeInTheDocument()
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Country filter' }), 'CZE')
+    expect(screen.queryByText('No country allocations match the current filter.')).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Talent intake country totals' })).not.toBeInTheDocument()
+  })
+
   it('supports entering a Run ID from the global Talent Intake route', async () => {
     renderWithRoute(<TalentIntakePage />, '/admin/players/intake')
 

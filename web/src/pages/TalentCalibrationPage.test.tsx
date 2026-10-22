@@ -48,6 +48,8 @@ describe('TalentCalibrationPage', () => {
     renderWithRoute(<TalentCalibrationPage />, '/admin/world/talent-calibration')
     expect(screen.getByText(/diagnostic only/i)).toBeInTheDocument()
     const table = await screen.findByRole('table', { name: 'Quality band comparison' })
+    expect(table.parentElement).toHaveClass('table-responsive')
+    expect(screen.getByRole('table', { name: 'Potential histogram' }).parentElement).toHaveClass('table-responsive')
     for (const label of ['Solid Prospect', 'Strong Prospect', 'Elite Prospect', 'Special Prospect', 'Generational Talent']) {
       expect(within(table).getByRole('rowheader', { name: label })).toBeInTheDocument()
     }
@@ -75,6 +77,8 @@ describe('TalentCalibrationPage', () => {
     expect(api.compareTalentCalibration.mock.calls[0][0]).toEqual({ seed: 0, sample_count: 5000, candidate_ranges: { solid_prospect: { potential_min: 120, potential_max: 190 }, strong_prospect: { potential_min: 110, potential_max: 190 }, elite_prospect: { potential_min: 110, potential_max: 190 }, special_prospect: { potential_min: 110, potential_max: 190 }, generational_talent: { potential_min: 110, potential_max: 190 } } })
     expect(await screen.findByRole('table', { name: 'Candidate comparison' })).toBeInTheDocument()
     const globalTable = screen.getByRole('table', { name: 'Global candidate comparison' })
+    expect(globalTable.parentElement).toHaveClass('table-responsive')
+    expect(screen.getByRole('table', { name: 'Candidate comparison' }).parentElement).toHaveClass('table-responsive')
     expect(within(globalTable).getByText('100')).toBeInTheDocument()
     expect(screen.getByText('No generated samples for this seed/sample size')).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Adjacent-band overlap' })).toBeInTheDocument()
@@ -106,6 +110,8 @@ describe('TalentCalibrationPage', () => {
     expect(api.compareTalentCalibrationMultiSeed.mock.calls[0][0]).toEqual(expect.objectContaining({ seed_start: 100, seed_count: 2, sample_count_per_seed: 50 }))
     expect(api.compareTalentCalibrationMultiSeed.mock.calls[0][0].candidate_ranges).toEqual(expect.objectContaining({ solid_prospect: { potential_min: 110, potential_max: 190 } }))
     const bands = await screen.findByRole('table', { name: 'Band robustness' })
+    expect(bands.parentElement).toHaveClass('table-responsive')
+    expect(screen.getByRole('table', { name: 'Per-seed results' }).parentElement).toHaveClass('table-responsive')
     expect(within(bands).getAllByRole('rowheader')).toHaveLength(5)
     expect(within(bands).getByRole('rowheader', { name: 'Generational Talent' })).toBeInTheDocument()
     expect(screen.getByText('Seeds with Generational evidence')).toBeInTheDocument()

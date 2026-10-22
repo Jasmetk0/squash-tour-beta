@@ -40,6 +40,9 @@ export function SelectedSeasonWorkspace({ selectedSeasonRaw }: Props): JSX.Eleme
     retry: false
   })
 
+  const loadedStatus = (isLoading: boolean, loaded: boolean, details: string): string =>
+    isLoading ? 'Loading…' : loaded ? details : 'Unavailable'
+
   const selectedRegistryEntry = selectedCompactSeason
     ? (selectedSeasonRegistryQuery.data?.seasons ?? []).find((entry) => entry.label === selectedCompactSeason) ?? null
     : null
@@ -82,11 +85,16 @@ export function SelectedSeasonWorkspace({ selectedSeasonRaw }: Props): JSX.Eleme
           ]} />
 
           <h3>Operational Read-only Preview</h3>
-          <ReadOnlyStatusCard title="Active players" status={selectedSeasonPlayersQuery.data ? `Loaded (${selectedSeasonPlayersQuery.data.summary.total_active_players})` : 'Unavailable'} error={selectedSeasonPlayersQuery.error ? formatApiError(selectedSeasonPlayersQuery.error) : undefined} />
-          <ReadOnlyStatusCard title="Calendar" status={selectedSeasonCalendarQuery.data?.summary ? `Loaded (${selectedSeasonCalendarQuery.data.summary.event_count})` : 'Unavailable'} error={selectedSeasonCalendarQuery.error ? formatApiError(selectedSeasonCalendarQuery.error) : undefined} />
-          <ReadOnlyStatusCard title="Ranking table" status={selectedSeasonRankingQuery.data ? `Loaded (${selectedSeasonRankingQuery.data.rows.length})` : 'Unavailable'} error={selectedSeasonRankingQuery.error ? formatApiError(selectedSeasonRankingQuery.error) : undefined} />
-          <ReadOnlyStatusCard title="Ranking snapshot W1" status={selectedSeasonRankingSnapshotQuery.data?.summary ? `Loaded (${selectedSeasonRankingSnapshotQuery.data.summary.ranking.player_count})` : 'Unavailable'} error={selectedSeasonRankingSnapshotQuery.error ? formatApiError(selectedSeasonRankingSnapshotQuery.error) : undefined} />
-          <ReadOnlyStatusCard title="Point breakdowns" status={selectedSeasonPointBreakdownQuery.data ? `Loaded (${selectedSeasonPointBreakdownQuery.data.summary_rows.length})` : 'Unavailable'} error={selectedSeasonPointBreakdownQuery.error ? formatApiError(selectedSeasonPointBreakdownQuery.error) : undefined} />
+          <ReadOnlyStatusCard title="Active players" status={loadedStatus(selectedSeasonPlayersQuery.isLoading, Boolean(selectedSeasonPlayersQuery.data),
+            `Loaded (${selectedSeasonPlayersQuery.data?.summary.total_active_players ?? 0})`)} error={selectedSeasonPlayersQuery.error ? formatApiError(selectedSeasonPlayersQuery.error) : undefined} />
+          <ReadOnlyStatusCard title="Calendar" status={loadedStatus(selectedSeasonCalendarQuery.isLoading, Boolean(selectedSeasonCalendarQuery.data?.summary),
+            `Loaded (${selectedSeasonCalendarQuery.data?.summary?.event_count ?? 0})`)} error={selectedSeasonCalendarQuery.error ? formatApiError(selectedSeasonCalendarQuery.error) : undefined} />
+          <ReadOnlyStatusCard title="Ranking table" status={loadedStatus(selectedSeasonRankingQuery.isLoading, Boolean(selectedSeasonRankingQuery.data),
+            `Loaded (${selectedSeasonRankingQuery.data?.rows.length ?? 0})`)} error={selectedSeasonRankingQuery.error ? formatApiError(selectedSeasonRankingQuery.error) : undefined} />
+          <ReadOnlyStatusCard title="Ranking snapshot W1" status={loadedStatus(selectedSeasonRankingSnapshotQuery.isLoading, Boolean(selectedSeasonRankingSnapshotQuery.data?.summary),
+            `Loaded (${selectedSeasonRankingSnapshotQuery.data?.summary?.ranking.player_count ?? 0})`)} error={selectedSeasonRankingSnapshotQuery.error ? formatApiError(selectedSeasonRankingSnapshotQuery.error) : undefined} />
+          <ReadOnlyStatusCard title="Point breakdowns" status={loadedStatus(selectedSeasonPointBreakdownQuery.isLoading, Boolean(selectedSeasonPointBreakdownQuery.data),
+            `Loaded (${selectedSeasonPointBreakdownQuery.data?.summary_rows.length ?? 0})`)} error={selectedSeasonPointBreakdownQuery.error ? formatApiError(selectedSeasonPointBreakdownQuery.error) : undefined} />
 
           <h3>Navigation / Planned Workflows</h3>
           <DetailList

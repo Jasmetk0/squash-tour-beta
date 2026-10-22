@@ -33,8 +33,19 @@ export function PlayerCareerPage(): JSX.Element {
     enabled: Boolean(runId && playerId)
   })
 
-  const first = query.data?.entries[0]
-  const latest = query.data && query.data.entries.length > 0 ? query.data.entries[query.data.entries.length - 1] : null
+  // This legacy diagnostic combines three independent requests. Even a cached or
+  // incorrectly scoped server response must not be presented as another player.
+  const correctIdentity = (data: { requested_run_id: string; player_id: string }) =>
+    data.requested_run_id === runId && data.player_id === playerId
+  const career = query.data && correctIdentity(query.data) ? query.data : null
+  const performance = performanceQuery.data && correctIdentity(performanceQuery.data) ? performanceQuery.data : null
+  const results = tournamentResultsQuery.data && correctIdentity(tournamentResultsQuery.data)
+    ? tournamentResultsQuery.data : null
+  const careerMismatch = Boolean(query.data && !career)
+  const performanceMismatch = Boolean(performanceQuery.data && !performance)
+  const resultsMismatch = Boolean(tournamentResultsQuery.data && !results)
+  const first = career?.entries[0]
+  const latest = career && career.entries.length > 0 ? career.entries[career.entries.length - 1] : null
   const overallDelta = first && latest ? latest.overall - first.overall : null
 
   return (
@@ -44,41 +55,42 @@ export function PlayerCareerPage(): JSX.Element {
         items={[
           { label: 'Run', value: runId || 'unknown' },
           { label: 'Player', value: playerId || 'unknown' },
-          { label: 'Entries', value: query.data?.entries.length ?? '—' }
+          { label: 'Entries', value: career?.entries.length ?? '—' }
         ]}
       />
 
       <SectionCard title="Career header">
         {query.isLoading ? <p className="status">Loading career history…</p> : null}
         {query.error ? <p className="error">Failed to load career history: {String(query.error)}</p> : null}
-        {query.data ? (
+        {careerMismatch ? <p role="alert">Career history does not match the requested Run and player identity.</p> : null}
+        {career ? (
           <>
             <p>
-              <strong>{query.data.player_name ?? 'Unknown player'}</strong> ({query.data.player_id}) • {query.data.country_code ?? '—'}
+              <strong>{career.player_name ?? 'Unknown player'}</strong> ({career.player_id}) • {career.country_code ?? '—'}
             </p>
             <p>
               Origin source: {latest?.origin_source_type ?? '—'} | Origin band: {latest?.origin_quality_band ?? '—'} | Origin season:{' '}
               {latest?.origin_season ?? '—'} | Origin override: {latest?.origin_override_id ?? '—'}
             </p>
             <p>
-              <Link to={`/runs/${runId}/players`}>← Back to players explorer</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/players`}>← Back to players explorer</Link>
             </p>
           </>
         ) : null}
       </SectionCard>
 
       <SectionCard title="Trend summary">
-        {query.data ? (
+        {career ? (
           <p>
-            Seasons tracked: {query.data.entries.length} | Overall delta: {overallDelta === null ? '—' : overallDelta >= 0 ? `+${overallDelta}` : overallDelta}
+            Seasons tracked: {career.entries.length} | Overall delta: {overallDelta === null ? '—' : overallDelta >= 0 ? `+${overallDelta}` : overallDelta}
           </p>
         ) : (
-          <p className="status">Load career history to view trend summary.</p>
+          <p className="status">{careerMismatch ? 'Career trend unavailable because the response identity does not match.' : 'Load career history to view trend summary.'}</p>
         )}
       </SectionCard>
 
       <SectionCard title="Career timeline">
-        {query.data ? (
+        {career ? (
           <table>
             <thead>
               <tr>
@@ -95,7 +107,7 @@ export function PlayerCareerPage(): JSX.Element {
               </tr>
             </thead>
             <tbody>
-              {query.data.entries.map((entry) => (
+              {career.entries.map((entry) => (
                 <tr key={`${entry.run_id}-${entry.season}`}>
                   <td>{entry.season}</td>
                   <td>{entry.run_id}</td>
@@ -117,8 +129,9 @@ export function PlayerCareerPage(): JSX.Element {
       <SectionCard title="Season performance">
         {performanceQuery.isLoading ? <p className="status">Loading season performance…</p> : null}
         {performanceQuery.error ? <p className="error">Failed to load season performance: {String(performanceQuery.error)}</p> : null}
-        {performanceQuery.data ? (
-          performanceQuery.data.entries.length > 0 ? (
+        {performanceMismatch ? <p role="alert">Season performance does not match the requested Run and player identity.</p> : null}
+        {performance ? (
+          performance.entries.length > 0 ? (
             <table>
               <thead>
                 <tr>
@@ -136,7 +149,7 @@ export function PlayerCareerPage(): JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {performanceQuery.data.entries.map((entry) => (
+                {performance.entries.map((entry) => (
                   <tr key={`performance-${entry.run_id}-${entry.season}`}>
                     <td>{entry.season}</td>
                     <td>{entry.run_id}</td>
@@ -164,8 +177,9 @@ export function PlayerCareerPage(): JSX.Element {
         {tournamentResultsQuery.error ? (
           <p className="error">Failed to load tournament results timeline: {String(tournamentResultsQuery.error)}</p>
         ) : null}
-        {tournamentResultsQuery.data ? (
-          tournamentResultsQuery.data.entries.length > 0 ? (
+        {resultsMismatch ? <p role="alert">Tournament results do not match the requested Run and player identity.</p> : null}
+        {results ? (
+          results.entries.length > 0 ? (
             <table>
               <thead>
                 <tr>
@@ -181,7 +195,7 @@ export function PlayerCareerPage(): JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {tournamentResultsQuery.data.entries.map((entry) => (
+                {results.entries.map((entry) => (
                   <tr key={`result-${entry.run_id}-${entry.event_id}-${entry.event_sequence}`}>
                     <td>{entry.season}</td>
                     <td>{displayMetric(entry.week)}</td>

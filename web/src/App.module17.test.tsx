@@ -948,7 +948,7 @@ describe('Module 17 pages through routes', () => {
         'Control center for world balance, calendar validation, run health, invalidated data, narrative locks, and audit warnings.'
       )
     ).toBeInTheDocument()
-    expect(screen.getByText(/Operational diagnostics currently remain run-scoped in Run Diagnostics/i)).toBeInTheDocument()
+    expect(screen.getByText(/Run-specific diagnostics remain under Run Diagnostics/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open Runs' })).toHaveAttribute('href', '/admin/runs')
     expect(screen.getByRole('link', { name: /Open last run diagnostics/i })).toHaveAttribute('href', '/admin/runs/run-a/diagnostics')
 
@@ -3038,7 +3038,7 @@ describe('Module 17 pages through routes', () => {
     expect(await screen.findByRole('cell', { name: 'Official FAX World' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'official_fax_world' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'Built-in' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'active' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Active' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'Read-only' })).toBeInTheDocument()
     expect(screen.getByText('Usage not tracked yet')).toBeInTheDocument()
     expect(screen.getByTitle('abcdef1234567890fedcba0987654321')).toHaveTextContent('abcdef12…87654321')
@@ -3083,7 +3083,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getByText('Not archivable')).toBeInTheDocument()
     expect(screen.getByText('Usage aggregation is not implemented yet.')).toBeInTheDocument()
     expect(await screen.findByText('World Package Validation')).toBeInTheDocument()
-    expect(screen.getByText('warnings')).toBeInTheDocument()
+    expect(screen.getByText('Warnings', { selector: 'p' })).toBeInTheDocument()
     expect(screen.getByText('world_metadata_valid')).toBeInTheDocument()
     expect(screen.queryByText(/Countries Editor|Legacy World Package Import\/Export/i)).not.toBeInTheDocument()
   })
@@ -3849,7 +3849,7 @@ describe('Module 17 pages through routes', () => {
     expect(screen.getAllByRole('cell', { name: 'Ali Ace (P-1)' }).length).toBeGreaterThan(0)
     expect(screen.getByRole('heading', { name: 'Ranking snapshot W1' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Point breakdown (Top 10, applied only, non-zero)' })).toBeInTheDocument()
-    expect(screen.getByText('Showing first 10 events only. Full calendar tooling remains in Seasons.')).toBeInTheDocument()
+    expect(screen.getByText('Showing 10 of 11 calendar events. Full calendar tooling remains in Seasons.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /build|edit|apply|generate|simulate|recalculate/i })).not.toBeInTheDocument()
   })
 

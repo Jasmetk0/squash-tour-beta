@@ -1,12 +1,17 @@
 import { HomePlayerIdentityLink } from './HomePlayerIdentityLink'
 import type { SavedHomePlayerIdentity } from '../api/types'
 import type { RunHomeRankingChanges, RunHomeRankingChange } from '../api/types'
-import { seasonLabel } from './runHomeModel'
+import { runHomeClock, runHomeSeasonLabel } from './RunHomeProgress'
+import type { HomeClock } from './RunHomeProgress'
 
-type Props = { data: RunHomeRankingChanges; locale: 'cs' | 'en'; runId?: string; identities?: Record<string, SavedHomePlayerIdentity> }
+type Props = { data: RunHomeRankingChanges; locale: 'cs' | 'en'; runId?: string; identities?: Record<string, SavedHomePlayerIdentity>; clock?: HomeClock | null }
 
-function weekText(ordinal: number): string {
-  return seasonLabel(Math.floor(ordinal / 61)) + ' · W' + (ordinal % 61 + 1)
+function weekText(ordinal: number, clock: HomeClock | null): string {
+  if (!clock || !Number.isSafeInteger(ordinal) || ordinal < 0 ||
+    !Number.isSafeInteger(clock.weeks_per_year * clock.season_count) ||
+    ordinal >= clock.weeks_per_year * clock.season_count) return '—'
+  return runHomeSeasonLabel(clock, Math.floor(ordinal / clock.weeks_per_year))
+    + ' · W' + (ordinal % clock.weeks_per_year + 1)
 }
 
 function movementText(change: RunHomeRankingChange, locale: 'cs' | 'en'): string {
@@ -18,19 +23,24 @@ function movementText(change: RunHomeRankingChange, locale: 'cs' | 'en'): string
   return '#' + before + ' → #' + after + ' (' + (change.rank_delta! > 0 ? '+' : '') + change.rank_delta + ')'
 }
 
-export function RunHomeRankingPanel({ data, locale, runId = data.run_id, identities = {} }: Props): JSX.Element {
+export function RunHomeRankingPanel({
+  data, locale, runId = data.run_id, identities = {}, clock = runHomeClock({})
+}: Props): JSX.Element {
   const cs = locale === 'cs'
   return <section className="run-home-ranking" aria-label={cs ? 'Uložené týdenní změny žebříčku' : 'Saved weekly ranking changes'}>
     <h4>{cs ? 'Změny žebříčku · publikované týdny' : 'Ranking movement · published weeks'}</h4>
+    {!clock && data.status !== 'unpublished' && <p role="status">{cs
+      ? 'Kalendář Runu není ověřen; časové lokátory žebříčku se neodvozují.'
+      : 'Run calendar is unavailable; ranking week labels are not inferred.'}</p>}
     {data.status === 'unpublished' && <p className="status">{cs
       ? 'V této branchi zatím není uložená publikace Official Rankingu.'
       : 'This Branch has no saved Official Ranking publication yet.'}</p>}
     {data.status === 'first_publication' && <p className="status">{cs
       ? 'Existuje jen první publikovaný ranking. Posun lze určit až po další týdenní publikaci.'
       : 'Only the first ranking publication exists; movement needs a second published week.'}
-      {data.current_week_ordinal != null ? ' · ' + weekText(data.current_week_ordinal) : ''}</p>}
+      {data.current_week_ordinal != null ? ' · ' + weekText(data.current_week_ordinal, clock) : ''}</p>}
     {data.status === 'ready' && <>
-      <p className="status">{weekText(data.previous_week_ordinal!)} → {weekText(data.current_week_ordinal!)}
+      <p className="status">{weekText(data.previous_week_ordinal!, clock)} → {weekText(data.current_week_ordinal!, clock)}
         {' · '}{data.moved_count} {cs ? 'změn pořadí' : 'rank moves'}
         {' · '}{data.entered_count} {cs ? 'nových' : 'entrants'}
         {' · '}{data.exited_count} {cs ? 'odchodů' : 'exits'}

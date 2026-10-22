@@ -90,30 +90,30 @@ export function EventDetailPage(): JSX.Element {
 
       <SectionCard title="Event context">
         <p>
-          <Link to={`/runs/${runId}/calendar`}>Back to Season Calendar</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>Back to Season Calendar</Link>
           {' · '}
-          <Link to={`/runs/${runId}/calendar/${encodeURIComponent(eventId)}`}>Open planned-event detail</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(eventId)}`}>Open planned-event detail</Link>
           {' · '}
-          <Link to={`/runs/${runId}/events`}>Back to events history</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/events`}>Back to events history</Link>
           {' · '}
-          <Link to={`/runs/${runId}/activity`}>Open activity</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/activity`}>Open activity</Link>
         </p>
         <p>
           Previous:{' '}
           {previousEvent ? (
-            <Link to={`/runs/${runId}/events/${encodeURIComponent(previousEvent.event_id)}`}>{previousEvent.event_id}</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(previousEvent.event_id)}`}>{previousEvent.event_id}</Link>
           ) : (
             <span>None</span>
           )}{' '}
           · Next:{' '}
           {nextEvent ? (
-            <Link to={`/runs/${runId}/events/${encodeURIComponent(nextEvent.event_id)}`}>{nextEvent.event_id}</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(nextEvent.event_id)}`}>{nextEvent.event_id}</Link>
           ) : (
             <span>None</span>
           )}
         </p>
         <p>
-          <Link to={`/runs/${runId}/events#event-${encodeURIComponent(eventId)}`}>Back to events history at this event</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/events#event-${encodeURIComponent(eventId)}`}>Back to events history at this event</Link>
         </p>
       </SectionCard>
 
@@ -177,14 +177,14 @@ export function EventDetailPage(): JSX.Element {
                   ]}
                 />
                 <p>
-                  <Link to={`/runs/${runId}/calendar/${encodeURIComponent(eventId)}`}>Open planned-event detail page</Link>
+                  <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(eventId)}`}>Open planned-event detail page</Link>
                   {' · '}
-                  <Link to={`/runs/${runId}/weeks/${plannedEvent.week}`}>Open week detail</Link>
+                  <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${plannedEvent.week}`}>Open week detail</Link>
                 </p>
                 <p>
                   Previous planned:{' '}
                   {previousPlannedEvent ? (
-                    <Link to={`/runs/${runId}/calendar/${encodeURIComponent(previousPlannedEvent.event_id)}`}>
+                    <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(previousPlannedEvent.event_id)}`}>
                       {previousPlannedEvent.event_id}
                     </Link>
                   ) : (
@@ -192,7 +192,7 @@ export function EventDetailPage(): JSX.Element {
                   )}{' '}
                   · Next planned:{' '}
                   {nextPlannedEvent ? (
-                    <Link to={`/runs/${runId}/calendar/${encodeURIComponent(nextPlannedEvent.event_id)}`}>
+                    <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(nextPlannedEvent.event_id)}`}>
                       {nextPlannedEvent.event_id}
                     </Link>
                   ) : (
@@ -220,7 +220,7 @@ export function EventDetailPage(): JSX.Element {
                         <ul className="item-list">
                           {relatedRankingSnapshots.map((snapshot) => (
                             <li key={`ranking-${snapshot.snapshot_sequence}`}>
-                              <Link to={`/runs/${runId}/snapshots/ranking/${snapshot.snapshot_sequence}`}>
+                              <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/ranking/${snapshot.snapshot_sequence}`}>
                                 Ranking snapshot #{snapshot.snapshot_sequence}
                               </Link>
                             </li>
@@ -237,7 +237,7 @@ export function EventDetailPage(): JSX.Element {
                         <ul className="item-list">
                           {relatedRaceSnapshots.map((snapshot) => (
                             <li key={`race-${snapshot.snapshot_sequence}`}>
-                              <Link to={`/runs/${runId}/snapshots/race/${snapshot.snapshot_sequence}`}>
+                              <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/race/${snapshot.snapshot_sequence}`}>
                                 Race snapshot #{snapshot.snapshot_sequence}
                               </Link>
                             </li>

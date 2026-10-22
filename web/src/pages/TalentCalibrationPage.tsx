@@ -56,9 +56,9 @@ export function TalentCalibrationPage(): JSX.Element {
         <p className="status"><strong>Experimental only — this configuration is not saved and does not change prospect generation.</strong></p>
         <p className="status">It is not persisted or applied to Run generation. No candidate is canonical; current production rules remain unchanged.</p>
         {ranges ? <>
-          <table aria-label="Candidate potential ranges"><thead><tr><th>Band</th><th>Potential Min</th><th>Potential Max</th></tr></thead>
+          <div className="table-responsive"><table aria-label="Candidate potential ranges"><thead><tr><th>Band</th><th>Potential Min</th><th>Potential Max</th></tr></thead>
             <tbody>{BAND_KEYS.map((band) => <tr key={band}><th scope="row">{LABELS[band]}</th><td><input aria-label={`${LABELS[band]} Potential Min`} type="number" min={0} max={200} value={ranges[band].potential_min} onChange={(event) => updateRanges({ ...ranges, [band]: { ...ranges[band], potential_min: Number(event.target.value) } })} /></td><td><input aria-label={`${LABELS[band]} Potential Max`} type="number" min={0} max={200} value={ranges[band].potential_max} onChange={(event) => updateRanges({ ...ranges, [band]: { ...ranges[band], potential_max: Number(event.target.value) } })} /></td></tr>)}</tbody>
-          </table>
+          </table></div>
           <div className="button-row"><button type="button" onClick={compare} disabled={comparison.isPending}>Compare candidate</button><button type="button" onClick={reset}>Reset to baseline</button></div>
         </> : null}
         {comparison.isPending ? <p className="status">Comparing candidate…</p> : null}
@@ -82,22 +82,22 @@ export function TalentCalibrationPage(): JSX.Element {
         <p>Current OVR: {formatStats(query.data.current_ovr)}</p><p>Potential OVR: {formatStats(query.data.potential_ovr)}</p>
       </SectionCard>
       <SectionCard title="Quality band comparison">
-        <table aria-label="Quality band comparison"><thead><tr><th>Band</th><th>Weight</th><th>Expected</th><th>Generated</th><th>Share</th><th>Δ</th><th>Min</th><th>P10</th><th>P25</th><th>Median</th><th>P75</th><th>P90</th><th>Max</th><th>Mean</th></tr></thead>
+        <div className="table-responsive"><table aria-label="Quality band comparison"><thead><tr><th>Band</th><th>Weight</th><th>Expected</th><th>Generated</th><th>Share</th><th>Δ</th><th>Min</th><th>P10</th><th>P25</th><th>Median</th><th>P75</th><th>P90</th><th>Max</th><th>Mean</th></tr></thead>
           <tbody>{query.data.bands.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band] ?? row.band}</th><td>{pct(row.configured_rarity_weight)}</td><td>{row.expected_count.toFixed(1)}</td><td>{row.generated_count}</td><td>{pct(row.generated_share)}</td><td>{row.generated_minus_expected.toFixed(1)}</td><Cells stats={row.potential_ovr} /></tr>)}</tbody>
-        </table>
+        </table></div>
       </SectionCard>
       <SectionCard title="Current OVR by quality band">
-        <table aria-label="Current OVR by quality band">
+        <div className="table-responsive"><table aria-label="Current OVR by quality band">
           <thead><tr><th>Band</th><th>Min</th><th>P10</th><th>P25</th><th>Median</th><th>P75</th><th>P90</th><th>Max</th><th>Mean</th></tr></thead>
           <tbody>{query.data.bands.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band] ?? row.band}</th><Cells stats={row.current_ovr} /></tr>)}</tbody>
-        </table>
+        </table></div>
       </SectionCard>
       <SectionCard title="Development timing">
-        <table aria-label="Development timing"><thead><tr><th>Band</th><th>Early Bloomer</th><th>Standard</th><th>Late Bloomer</th></tr></thead><tbody>{query.data.bands.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band] ?? row.band}</th><td>{row.development_timing_counts['Early Bloomer']}</td><td>{row.development_timing_counts.Standard}</td><td>{row.development_timing_counts['Late Bloomer']}</td></tr>)}</tbody></table>
+        <div className="table-responsive"><table aria-label="Development timing"><thead><tr><th>Band</th><th>Early Bloomer</th><th>Standard</th><th>Late Bloomer</th></tr></thead><tbody>{query.data.bands.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band] ?? row.band}</th><td>{row.development_timing_counts['Early Bloomer']}</td><td>{row.development_timing_counts.Standard}</td><td>{row.development_timing_counts['Late Bloomer']}</td></tr>)}</tbody></table></div>
       </SectionCard>
       <SectionCard title="Potential distribution (10-point bins)">
         <p className="status">Bins are display aids on the 0–200 scale, not quality thresholds.</p>
-        <table aria-label="Potential histogram"><thead><tr><th>Band</th>{query.data.bands[0]?.potential_histogram.map((bin) => <th key={bin.lower}>{bin.lower}–{bin.upper}</th>)}</tr></thead><tbody>{query.data.bands.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band] ?? row.band}</th>{row.potential_histogram.map((bin) => <td key={bin.lower}>{bin.count}</td>)}</tr>)}</tbody></table>
+        <div className="table-responsive"><table aria-label="Potential histogram"><thead><tr><th>Band</th>{query.data.bands[0]?.potential_histogram.map((bin) => <th key={bin.lower}>{bin.lower}–{bin.upper}</th>)}</tr></thead><tbody>{query.data.bands.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band] ?? row.band}</th>{row.potential_histogram.map((bin) => <td key={bin.lower}>{bin.count}</td>)}</tr>)}</tbody></table></div>
       </SectionCard>
     </> : null}
   </section>
@@ -123,24 +123,24 @@ function ComparisonResults({ result }: { result: import('../api/types').TalentCa
         { label: 'Median Δ', value: show(result.global_comparison.delta.p50) },
         { label: 'Mean Δ', value: show(result.global_comparison.delta.mean) }
       ]} />
-      <table aria-label="Global candidate comparison">
+      <div className="table-responsive"><table aria-label="Global candidate comparison">
         <thead><tr><th>Baseline P10</th><th>Candidate P10</th><th>Baseline P90</th><th>Candidate P90</th><th>Increased</th><th>Same</th><th>Decreased</th></tr></thead>
         <tbody><tr><td>{show(result.global_comparison.baseline_potential_ovr.p10)}</td><td>{show(result.global_comparison.candidate_potential_ovr.p10)}</td><td>{show(result.global_comparison.baseline_potential_ovr.p90)}</td><td>{show(result.global_comparison.candidate_potential_ovr.p90)}</td><td>{result.global_comparison.delta.increased}</td><td>{result.global_comparison.delta.unchanged}</td><td>{result.global_comparison.delta.decreased}</td></tr></tbody>
-      </table>
+      </table></div>
       <p className="status">Candidate configuration fingerprint: <code>{result.candidate_sandbox_configuration_fingerprint}</code></p>
     </SectionCard>
     <SectionCard title="Candidate comparison">
-      <table aria-label="Candidate comparison"><thead><tr><th>Band</th><th>Candidate range</th><th>Baseline median</th><th>Candidate median</th><th>Median Δ</th><th>Baseline P10</th><th>Candidate P10</th><th>Baseline P90</th><th>Candidate P90</th><th>Mean Δ</th><th>Increased</th><th>Same</th><th>Decreased</th></tr></thead>
+      <div className="table-responsive"><table aria-label="Candidate comparison"><thead><tr><th>Band</th><th>Candidate range</th><th>Baseline median</th><th>Candidate median</th><th>Median Δ</th><th>Baseline P10</th><th>Candidate P10</th><th>Baseline P90</th><th>Candidate P90</th><th>Mean Δ</th><th>Increased</th><th>Same</th><th>Decreased</th></tr></thead>
         <tbody>{result.bands.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band]}</th>{row.generated_count === 0 ? <td colSpan={12}>No generated samples for this seed/sample size</td> : <><td>{row.candidate_range.potential_min}–{row.candidate_range.potential_max}</td><td>{show(row.baseline_potential_ovr.p50)}</td><td>{show(row.candidate_potential_ovr.p50)}</td><td>{show(row.delta.p50)}</td><td>{show(row.baseline_potential_ovr.p10)}</td><td>{show(row.candidate_potential_ovr.p10)}</td><td>{show(row.baseline_potential_ovr.p90)}</td><td>{show(row.candidate_potential_ovr.p90)}</td><td>{show(row.delta.mean)}</td><td>{row.delta.increased}</td><td>{row.delta.unchanged}</td><td>{row.delta.decreased}</td></>}</tr>)}</tbody>
-      </table>
+      </table></div>
     </SectionCard>
     <SectionCard title="Baseline and candidate histograms">
       <p className="status">Shared 10-point display bins are not quality thresholds.</p>
-      <table aria-label="Candidate histogram comparison"><thead><tr><th>Band</th><th>Range</th><th>Baseline count</th><th>Candidate count</th></tr></thead><tbody>{result.bands.flatMap((row) => row.baseline_histogram.map((bin, index) => <tr key={`${row.band}-${bin.lower}`}><th scope="row">{LABELS[row.band]}</th><td>{bin.lower}–{bin.upper}</td><td>{bin.count}</td><td>{row.candidate_histogram[index].count}</td></tr>))}</tbody></table>
+      <div className="table-responsive"><table aria-label="Candidate histogram comparison"><thead><tr><th>Band</th><th>Range</th><th>Baseline count</th><th>Candidate count</th></tr></thead><tbody>{result.bands.flatMap((row) => row.baseline_histogram.map((bin, index) => <tr key={`${row.band}-${bin.lower}`}><th scope="row">{LABELS[row.band]}</th><td>{bin.lower}–{bin.upper}</td><td>{bin.count}</td><td>{row.candidate_histogram[index].count}</td></tr>))}</tbody></table></div>
     </SectionCard>
     <SectionCard title="Adjacent-band overlap">
       <p>Overlap measures how much the sampled Potential OVR distributions occupy the same histogram bins. It is diagnostic only; the Lab does not decide what overlap level is desirable.</p>
-      <table aria-label="Adjacent-band overlap"><thead><tr><th>Pair</th><th>Baseline overlap</th><th>Candidate overlap</th><th>Δ</th></tr></thead><tbody>{result.adjacent_overlaps.map((row) => <tr key={row.lower_band}><th scope="row">{shortLabel(row.lower_band)} ↔ {shortLabel(row.upper_band)}</th><td>{show(row.baseline)}</td><td>{show(row.candidate)}</td><td>{row.baseline === null || row.candidate === null ? '—' : show(row.candidate - row.baseline)}</td></tr>)}</tbody></table>
+      <div className="table-responsive"><table aria-label="Adjacent-band overlap"><thead><tr><th>Pair</th><th>Baseline overlap</th><th>Candidate overlap</th><th>Δ</th></tr></thead><tbody>{result.adjacent_overlaps.map((row) => <tr key={row.lower_band}><th scope="row">{shortLabel(row.lower_band)} ↔ {shortLabel(row.upper_band)}</th><td>{show(row.baseline)}</td><td>{show(row.candidate)}</td><td>{row.baseline === null || row.candidate === null ? '—' : show(row.candidate - row.baseline)}</td></tr>)}</tbody></table></div>
     </SectionCard>
   </>
 }
@@ -154,14 +154,14 @@ function MultiSeedResults({ result }: { result: import('../api/types').TalentCal
       <p className="status">Candidate configuration fingerprint: <code>{result.candidate_sandbox_configuration_fingerprint}</code></p>
     </SectionCard>
     <SectionCard title="Band robustness">
-      <table aria-label="Band robustness"><thead><tr><th>Band</th><th>Total samples</th><th>Seeds with samples</th><th>Seeds without samples</th><th>Candidate median mean</th><th>Candidate median min</th><th>Candidate median max</th><th>Candidate median SD</th><th>Candidate mean Potential mean</th><th>Generated count per-seed mean</th></tr></thead><tbody>{result.band_robustness.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band]}</th><td>{row.total_generated_samples}</td><td>{row.seeds_with_samples}</td><td>{row.seeds_without_samples}</td><td>{show(row.candidate_median.mean)}</td><td>{show(row.candidate_median.minimum)}</td><td>{show(row.candidate_median.maximum)}</td><td>{show(row.candidate_median.standard_deviation)}</td><td>{show(row.candidate_mean.mean)}</td><td>{show(row.generated_count.mean)}</td></tr>)}</tbody></table>
+      <div className="table-responsive"><table aria-label="Band robustness"><thead><tr><th>Band</th><th>Total samples</th><th>Seeds with samples</th><th>Seeds without samples</th><th>Candidate median mean</th><th>Candidate median min</th><th>Candidate median max</th><th>Candidate median SD</th><th>Candidate mean Potential mean</th><th>Generated count per-seed mean</th></tr></thead><tbody>{result.band_robustness.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band]}</th><td>{row.total_generated_samples}</td><td>{row.seeds_with_samples}</td><td>{row.seeds_without_samples}</td><td>{show(row.candidate_median.mean)}</td><td>{show(row.candidate_median.minimum)}</td><td>{show(row.candidate_median.maximum)}</td><td>{show(row.candidate_median.standard_deviation)}</td><td>{show(row.candidate_mean.mean)}</td><td>{show(row.generated_count.mean)}</td></tr>)}</tbody></table></div>
     </SectionCard>
     <SectionCard title="Overlap robustness">
       <p className="status">Overlap is diagnostic only; missing evidence is shown as —, never zero.</p>
-      <table aria-label="Overlap robustness"><thead><tr><th>Pair</th><th>Baseline pooled</th><th>Candidate pooled</th><th>Candidate per-seed mean</th><th>Candidate minimum</th><th>Candidate maximum</th><th>Missing-seed count</th></tr></thead><tbody>{result.overlap_robustness.map((row) => <tr key={row.lower_band}><th scope="row">{shortLabel(row.lower_band)} ↔ {shortLabel(row.upper_band)}</th><td>{show(row.baseline_pooled)}</td><td>{show(row.candidate_pooled)}</td><td>{show(row.candidate_per_seed.mean)}</td><td>{show(row.candidate_per_seed.minimum)}</td><td>{show(row.candidate_per_seed.maximum)}</td><td>{row.missing_seed_count}</td></tr>)}</tbody></table>
+      <div className="table-responsive"><table aria-label="Overlap robustness"><thead><tr><th>Pair</th><th>Baseline pooled</th><th>Candidate pooled</th><th>Candidate per-seed mean</th><th>Candidate minimum</th><th>Candidate maximum</th><th>Missing-seed count</th></tr></thead><tbody>{result.overlap_robustness.map((row) => <tr key={row.lower_band}><th scope="row">{shortLabel(row.lower_band)} ↔ {shortLabel(row.upper_band)}</th><td>{show(row.baseline_pooled)}</td><td>{show(row.candidate_pooled)}</td><td>{show(row.candidate_per_seed.mean)}</td><td>{show(row.candidate_per_seed.minimum)}</td><td>{show(row.candidate_per_seed.maximum)}</td><td>{row.missing_seed_count}</td></tr>)}</tbody></table></div>
     </SectionCard>
     <SectionCard title="Per-seed results">
-      <table aria-label="Per-seed results"><thead><tr><th>Seed</th>{BAND_KEYS.map((band) => <th key={band}>{shortLabel(band)} count</th>)}<th>Baseline median</th><th>Candidate median</th><th>Median Δ</th></tr></thead><tbody>{result.per_seed.map((row) => <tr key={row.seed}><th scope="row">{row.seed}</th>{BAND_KEYS.map((band) => <td key={band}>{row.generated_counts[band]}</td>)}<td>{show(row.baseline_potential_median)}</td><td>{show(row.candidate_potential_median)}</td><td>{show(row.median_delta)}</td></tr>)}</tbody></table>
+      <div className="table-responsive"><table aria-label="Per-seed results"><thead><tr><th>Seed</th>{BAND_KEYS.map((band) => <th key={band}>{shortLabel(band)} count</th>)}<th>Baseline median</th><th>Candidate median</th><th>Median Δ</th></tr></thead><tbody>{result.per_seed.map((row) => <tr key={row.seed}><th scope="row">{row.seed}</th>{BAND_KEYS.map((band) => <td key={band}>{row.generated_counts[band]}</td>)}<td>{show(row.baseline_potential_median)}</td><td>{show(row.candidate_potential_median)}</td><td>{show(row.median_delta)}</td></tr>)}</tbody></table></div>
     </SectionCard>
   </>
 }

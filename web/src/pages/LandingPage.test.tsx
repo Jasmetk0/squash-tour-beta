@@ -14,6 +14,12 @@ describe('LandingPage', () => {
 
     expect(screen.getByRole('heading', { level: 2, name: 'Squash Tour Beta Engine' })).toBeInTheDocument()
     expect(screen.getByText('Choose how you want to use the deterministic FAX squash world.')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Pre-alpha: Admin is the internal development and testing entry point.'
+    )
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'publication and activation do not imply release readiness.'
+    )
     expect(screen.getByRole('link', { name: /Viewer \/ MSA Website Mode/ })).toHaveAttribute('href', '/viewer')
     expect(screen.getByText('Browse the generated squash world')).toBeInTheDocument()
     expect(screen.getByText('Rankings, tournaments, players, countries, history, and records in a public sports-site view.')).toBeInTheDocument()

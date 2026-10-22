@@ -66,7 +66,9 @@ export function WorldGenerationPage(): JSX.Element {
             <p className="status">
               Dataset status: {planQuery.data.dataset_status ?? 'n/a'} · Config version: {planQuery.data.config_version ?? 'n/a'}
             </p>
-            <table aria-label="Run talent country allocations table">
+            {planQuery.data.countries.length === 0
+              ? <EmptyState message="No country allocations were returned in the saved talent plan." />
+              : <div className="table-responsive"><table aria-label="Run talent country allocations table">
               <thead>
                 <tr>
                   <th>Country</th>
@@ -87,12 +89,15 @@ export function WorldGenerationPage(): JSX.Element {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>}
           </>
         )}
       </SectionCard>
 
       <SectionCard title="Generated players provenance">
+        <button type="button" disabled={!countryCode && !qualityBand}
+          onClick={() => { setCountryCode(''); setQualityBand('') }}>Clear provenance filters</button>
+        <p className="status">Provenance results are limited to the first 300 matching players, not a total player count.</p>
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem' }}>
           <label>
             Country
@@ -118,9 +123,12 @@ export function WorldGenerationPage(): JSX.Element {
         </div>
         {playersQuery.isLoading && <p className="status">Loading generated players provenance...</p>}
         {playersQuery.error && <p className="error">Failed to load generated players provenance: {formatApiError(playersQuery.error)}</p>}
-        {playersQuery.data && playersQuery.data.players.length === 0 && <EmptyState message="No persisted generated-player provenance found." />}
+        {playersQuery.data && playersQuery.data.players.length === 0 && <EmptyState
+          message={countryCode || qualityBand
+            ? 'No generated-player provenance matches the current filters.'
+            : 'No persisted generated-player provenance found.'} />}
         {playersQuery.data && playersQuery.data.players.length > 0 && (
-          <table aria-label="Generated players provenance table">
+          <div className="table-responsive"><table aria-label="Generated players provenance table">
             <thead>
               <tr>
                 <th>Player ID</th>
@@ -147,7 +155,7 @@ export function WorldGenerationPage(): JSX.Element {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </SectionCard>
     </section>

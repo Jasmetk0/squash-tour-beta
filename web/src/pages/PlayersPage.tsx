@@ -112,7 +112,7 @@ export function PlayersPage(): JSX.Element {
           <p role="status">{cs ? 'Celkový počet odpovídajících hráčů' : 'Total matching players'}:
             {' '}<strong>{data.total.toLocaleString(language === 'cs' ? 'cs-CZ' : 'en-US')}</strong>
             {' · '}{cs ? 'Zobrazeno' : 'Showing'} {data.players.length}
-            {data.ranking_week_ordinal != null ? ` · Ranking W${data.ranking_week_ordinal % 61 + 1}` : ''}
+            {data.ranking_week_ordinal != null ? ` · ${cs ? 'Publikace žebříčku · index týdne' : 'Ranking publication · week index'} ${data.ranking_week_ordinal}` : ''}
           </p>
           <div className="table-responsive">
             <table>

@@ -33,11 +33,12 @@ export function FinalsPage(): JSX.Element {
   const { runId = '' } = useParams()
   const queryClient = useQueryClient()
 
-  const summaryQuery = useQuery({ queryKey: ['finals-summary', runId], queryFn: () => getFinalsSummary(runId), enabled: Boolean(runId) })
+  const summaryQuery = useQuery({ queryKey: ['finals-summary', runId], queryFn: () => getFinalsSummary(runId), enabled: Boolean(runId), retry: false })
   const qualificationQuery = useQuery({
     queryKey: ['finals-qualification', runId],
     queryFn: () => getFinalsQualification(runId),
-    enabled: Boolean(runId)
+    enabled: Boolean(runId),
+    retry: false
   })
   const resultQuery = useQuery({
     queryKey: ['finals-result', runId],
@@ -65,6 +66,20 @@ export function FinalsPage(): JSX.Element {
   const qualificationNotFound = isApiNotFound(qualificationQuery.error)
   const resultNotFound = isApiNotFound(resultQuery.error)
   const hasResultError = resultQuery.error && !resultNotFound
+  const qualificationStatus = qualificationQuery.data ? 'Ready'
+    : qualificationQuery.isLoading ? 'Loading'
+    : qualificationNotFound ? 'Missing'
+    : qualificationQuery.error ? 'Failed'
+    : summaryQuery.isLoading ? 'Loading'
+    : summaryQuery.error ? 'Unknown'
+    : summaryQuery.data?.qualification ? 'Ready' : 'Pending'
+  const resultStatus = resultQuery.data ? 'Recorded'
+    : resultQuery.isLoading ? 'Loading'
+    : resultNotFound ? 'Missing'
+    : resultQuery.error ? 'Failed'
+    : summaryQuery.isLoading ? 'Loading'
+    : summaryQuery.error ? 'Unknown'
+    : summaryQuery.data?.result ? 'Recorded' : 'Not simulated'
 
   const qualifiedPlayersCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'qualified_player_ids')
   const groupCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'groups')
@@ -84,8 +99,8 @@ export function FinalsPage(): JSX.Element {
         items={[
           { label: 'Run', value: runId || 'unknown' },
           { label: 'Season', value: contextSeason },
-          { label: 'Qualification', value: summaryQuery.data?.qualification ? 'Ready' : 'Pending' },
-          { label: 'Result', value: summaryQuery.data?.result ? 'Recorded' : 'Not simulated' }
+          { label: 'Qualification', value: qualificationStatus },
+          { label: 'Result', value: resultStatus }
         ]}
       />
 
@@ -145,7 +160,7 @@ export function FinalsPage(): JSX.Element {
         ) : qualificationNotFound ? (
           <EmptyState message="No Finals qualification is available for this run yet." />
         ) : (
-          !qualificationQuery.isLoading && <EmptyState message="No qualification data available." />
+          !qualificationQuery.isLoading && !qualificationQuery.error && <EmptyState message="No qualification data available." />
         )}
       </SectionCard>
 

@@ -47,6 +47,31 @@ describe('FinalsQualificationDetailPage', () => {
     expect(screen.getByText(/qualified_player_ids/i)).toBeInTheDocument()
   })
 
+  it('reports a failed qualification request as failed, not forever loading', async () => {
+    api.getFinalsQualification.mockRejectedValueOnce(new api.ApiError('qualification unavailable', 503))
+    renderWithRoute(<FinalsQualificationDetailPage />, '/runs/run-a/finals/qualification')
+    expect(await screen.findByText('Failed to load Finals qualification: qualification unavailable')).toBeInTheDocument()
+    expect(screen.getByText('Qualification')).toBeInTheDocument()
+    expect(screen.getByText('Failed')).toBeInTheDocument()
+    expect(screen.queryByText('Loading Finals qualification detail...')).not.toBeInTheDocument()
+  })
+
+  it('does not claim Finals were not simulated when summary evidence failed', async () => {
+    api.getFinalsSummary.mockRejectedValueOnce(new api.ApiError('summary unavailable', 503))
+    renderWithRoute(<FinalsQualificationDetailPage />, '/runs/run-a/finals/qualification')
+    expect(await screen.findByText('Failed to load Finals summary: summary unavailable')).toBeInTheDocument()
+    expect(screen.getByText('Unknown')).toBeInTheDocument()
+    expect(screen.queryByText('Not simulated')).not.toBeInTheDocument()
+  })
+
+  it('keeps both statuses loading when the services have not responded yet', async () => {
+    api.getFinalsSummary.mockImplementationOnce(() => new Promise(() => {}))
+    api.getFinalsQualification.mockImplementationOnce(() => new Promise(() => {}))
+    renderWithRoute(<FinalsQualificationDetailPage />, '/runs/run-a/finals/qualification')
+    expect(await screen.findByText('Loading Finals qualification detail...')).toBeInTheDocument()
+    expect(screen.getAllByText('Loading')).toHaveLength(2)
+  })
+
   it('shows readable empty state when qualification is missing', async () => {
     api.getFinalsQualification.mockRejectedValueOnce(new api.ApiError('{"detail":"No finals qualification for run"}', 404))
     renderWithRoute(<FinalsQualificationDetailPage />, '/runs/run-a/finals/qualification')

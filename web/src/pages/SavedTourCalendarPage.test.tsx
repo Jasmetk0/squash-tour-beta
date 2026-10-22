@@ -84,6 +84,20 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(screen.getByRole('alert')).toHaveTextContent('Checkpoint is not mapped')
     expect(api.getSavedTourCalendar).not.toHaveBeenCalled()
   })
+  it.each(['', 'other-branch'])(
+    'fails closed for explicitly supplied invalid Branch query value %s',
+    async (requested) => {
+      mount('/admin/runs/run-a/tour/calendar?branch='+encodeURIComponent(requested)+'&revision=rev-old&season=2')
+      expect(await screen.findByRole('alert')).toHaveTextContent('Selected Branch does not match the link.')
+      expect(api.getSavedTourCalendar).not.toHaveBeenCalled()
+      expect(screen.queryByRole('link',{name:'Brno Open'})).not.toBeInTheDocument()
+    }
+  )
+  it('permits missing Branch parameter when the current selected Branch is authoritative',async()=>{
+    mount('/admin/runs/run-a/tour/calendar?revision=rev-old&season=2')
+    expect(await screen.findByText('Brno Open')).toBeInTheDocument()
+    expect(api.getSavedTourCalendar).toHaveBeenCalledWith('run-a','branch-a','rev-old',2)
+  })
   it('pins Saved HEAD when view filters change rather than silently fetching a later HEAD',async()=>{
     api.getSavedTourCalendar.mockResolvedValue({...fixture(),saved_revision_id:'head-a'})
     mount('/admin/runs/run-a/tour/calendar?season=2')

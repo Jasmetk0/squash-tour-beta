@@ -56,7 +56,10 @@ export function RunWorldCountrySavedPlayers({
 }: Props): JSX.Element {
   const cs = language === 'cs'
   const [includePrepared, setIncludePrepared] = useState(false)
-  const [page, setPage] = useState(0)
+  const sourceKey = JSON.stringify([runId, branchId, savedHead, countryCode])
+  const [pageSelection, setPageSelection] = useState({ sourceKey, page: 0 })
+  // Reset synchronously: never fetch old offset 25/50 from a different Saved HEAD.
+  const page = pageSelection.sourceKey === sourceKey ? pageSelection.page : 0
   const offset = page * PAGE_SIZE
   const enabled = Boolean(runId && branchId && savedHead && countryCode)
   const q = useQuery({
@@ -90,7 +93,7 @@ export function RunWorldCountrySavedPlayers({
         : 'No authoritative Saved Revision is available. Legacy players are never substituted.'}</p>}
     <label>
       <input type="checkbox" checked={includePrepared}
-        onChange={e=>{setIncludePrepared(e.target.checked);setPage(0)}} />
+        onChange={e=>{setIncludePrepared(e.target.checked);setPageSelection({ sourceKey, page: 0 })}} />
       {' '}{cs
         ? 'Výslovně zobrazit také uložené připravené prospekty (mohou být z budoucnosti)'
         : 'Explicitly include saved prepared prospects (may contain future identities)'}
@@ -121,10 +124,10 @@ export function RunWorldCountrySavedPlayers({
         ? 'Tato země nemá v uloženém inventáři odpovídající hráče. Nejde o odhad talentů.'
         : 'No saved player identities match this country. This is not a talent forecast.'}</p>}
       <div className="actions">
-        <button type="button" disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}>
+        <button type="button" disabled={page===0} onClick={()=>setPageSelection({ sourceKey, page: Math.max(0,page-1) })}>
           {cs?'← Předchozí':'← Previous'}</button>
         <span>{cs?'Strana':'Page'} {page+1} / {Math.max(1,Math.ceil(data.total/PAGE_SIZE))}</span>
-        <button type="button" disabled={!data.has_more} onClick={()=>setPage(p=>p+1)}>
+        <button type="button" disabled={!data.has_more} onClick={()=>setPageSelection({ sourceKey, page: page+1 })}>
           {cs?'Další →':'Next →'}</button>
       </div>
     </>}

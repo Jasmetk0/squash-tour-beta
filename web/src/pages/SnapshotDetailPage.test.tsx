@@ -175,6 +175,20 @@ describe('SnapshotDetailPage', () => {
     expect(screen.getByText('None (latest snapshot)')).toBeInTheDocument()
   })
 
+  it.each(['12abc', '1.5', '1e2', '0', '99999999999999999999999'])(
+    'does not silently parse malformed snapshot sequence %s into a valid endpoint request',
+    async (invalidSequence) => {
+      renderSnapshotDetailRoute(`/runs/run-a/snapshots/ranking/${invalidSequence}`, 'ranking')
+      expect(await screen.findByText(/is invalid\. Use a positive integer sequence\./i)).toBeInTheDocument()
+      expect(api.getRankingSnapshot).not.toHaveBeenCalled()
+      expect(api.getRaceSnapshot).not.toHaveBeenCalled()
+      expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+      expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+      expect(api.getRun).not.toHaveBeenCalled()
+      expect(api.listEvents).not.toHaveBeenCalled()
+    }
+  )
+
   it('shows readable invalid and missing snapshot sequence states', async () => {
     renderSnapshotDetailRoute('/runs/run-a/snapshots/ranking/not-a-number', 'ranking')
     expect(await screen.findByText(/is invalid\. Use a positive integer sequence\./i)).toBeInTheDocument()

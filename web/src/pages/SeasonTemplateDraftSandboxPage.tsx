@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { PageIntro, SectionCard } from '../components/RunScopedUi'
@@ -76,6 +76,7 @@ const emptyForm: DraftFormState = {
 export function SeasonTemplateDraftSandboxPage(): JSX.Element {
   const [templateName] = useState('Default World Tour Skeleton Sandbox')
   const [events, setEvents] = useState<CalendarEventDraft[]>(initialDraftEvents)
+  const nextLocalEventSequence = useRef(initialDraftEvents.length)
   const [form, setForm] = useState<DraftFormState>(emptyForm)
   const [errors, setErrors] = useState<string[]>([])
   const [warning, setWarning] = useState<string | null>(null)
@@ -99,10 +100,11 @@ export function SeasonTemplateDraftSandboxPage(): JSX.Element {
       return
     }
 
+    const localSequence = ++nextLocalEventSequence.current
     setEvents((current) => [
       ...current,
       {
-        id: `sandbox-local-${current.length + 1}-${form.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+        id: `sandbox-local-${localSequence}-${form.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
         name: form.name.trim(),
         categoryCode: form.categoryCode,
         weeks: validation.weeks,
@@ -142,6 +144,7 @@ export function SeasonTemplateDraftSandboxPage(): JSX.Element {
           <thead>
             <tr>
               <th>Name</th>
+              <th>Local ID</th>
               <th>Category</th>
               <th>Timing</th>
               <th>Lock</th>
@@ -153,6 +156,7 @@ export function SeasonTemplateDraftSandboxPage(): JSX.Element {
             {events.map((event) => (
               <tr key={event.id}>
                 <td>{event.name}</td>
+                <td><code>{event.id}</code></td>
                 <td>{event.categoryCode}</td>
                 <td>{describeCalendarEventTiming(event)}</td>
                 <td>{event.locked ? 'Locked' : 'Unlocked'}</td>

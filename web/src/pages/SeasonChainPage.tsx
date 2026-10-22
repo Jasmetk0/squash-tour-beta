@@ -81,7 +81,7 @@ function SeasonChainRunCard({
               {
                 label: 'Parent run',
                 value: (parentRunId ?? summary.source?.parent_run_id) ? (
-                  <Link to={`/runs/${parentRunId ?? summary.source?.parent_run_id}`}>{parentRunId ?? summary.source?.parent_run_id}</Link>
+                  <Link to={`/runs/${encodeURIComponent(parentRunId ?? summary.source?.parent_run_id ?? '')}`}>{parentRunId ?? summary.source?.parent_run_id}</Link>
                 ) : (
                   'None'
                 )
@@ -91,24 +91,24 @@ function SeasonChainRunCard({
           />
           {seasonProgressNote ? <p className="status">{seasonProgressNote}</p> : null}
           <p>
-            <Link to={`/runs/${runId}`}>Run Detail</Link> · <Link to={`/runs/${runId}/diagnostics`}>Diagnostics</Link> ·{' '}
-            <Link to={`/runs/${runId}/bootstrap-lineage`}>Bootstrap / Lineage</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}`}>Run Detail</Link> · <Link to={`/runs/${encodeURIComponent(runId)}/diagnostics`}>Diagnostics</Link> ·{' '}
+            <Link to={`/runs/${encodeURIComponent(runId)}/bootstrap-lineage`}>Bootstrap / Lineage</Link>
             {summary.rollover ? (
               <>
                 {' '}
-                · <Link to={`/runs/${runId}/rollover`}>Rollover</Link>
+                · <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>Rollover</Link>
               </>
             ) : null}
             {(summary.finals.qualification_available || summary.finals.result_available) ? (
               <>
                 {' '}
-                · <Link to={`/runs/${runId}/finals`}>World Tour Finals</Link>
+                · <Link to={`/runs/${encodeURIComponent(runId)}/finals`}>World Tour Finals</Link>
               </>
             ) : null}
             {isCurrent ? (
               <>
                 {' '}
-                · <Link to={`/runs/${runId}/season-chain`}>Season Chain</Link>
+                · <Link to={`/runs/${encodeURIComponent(runId)}/season-chain`}>Season Chain</Link>
               </>
             ) : null}
           </p>
@@ -171,31 +171,31 @@ export function SeasonChainPage(): JSX.Element {
   const currentSource = sourceQuery.data?.source ?? currentStatusQuery.data?.source
 
   const nextInspectionLinks: Array<{ key: string; label: string; to: string }> = [
-    { key: 'current-detail', label: 'Current run detail', to: `/runs/${runId}` },
-    { key: 'current-diagnostics', label: 'Current diagnostics', to: `/runs/${runId}/diagnostics` },
-    { key: 'current-chain', label: 'Current season chain', to: `/runs/${runId}/season-chain` }
+    { key: 'current-detail', label: 'Current run detail', to: `/runs/${encodeURIComponent(runId)}` },
+    { key: 'current-diagnostics', label: 'Current diagnostics', to: `/runs/${encodeURIComponent(runId)}/diagnostics` },
+    { key: 'current-chain', label: 'Current season chain', to: `/runs/${encodeURIComponent(runId)}/season-chain` }
   ]
 
   if (parentRunId) {
-    nextInspectionLinks.push({ key: 'parent-diagnostics', label: 'Parent diagnostics', to: `/runs/${parentRunId}/diagnostics` })
-    nextInspectionLinks.push({ key: 'parent-detail', label: 'Parent run detail', to: `/runs/${parentRunId}` })
+    nextInspectionLinks.push({ key: 'parent-diagnostics', label: 'Parent diagnostics', to: `/runs/${encodeURIComponent(parentRunId)}/diagnostics` })
+    nextInspectionLinks.push({ key: 'parent-detail', label: 'Parent run detail', to: `/runs/${encodeURIComponent(parentRunId)}` })
   }
 
   if (currentStatusQuery.data?.rollover) {
-    nextInspectionLinks.push({ key: 'current-rollover', label: 'Current rollover', to: `/runs/${runId}/rollover` })
+    nextInspectionLinks.push({ key: 'current-rollover', label: 'Current rollover', to: `/runs/${encodeURIComponent(runId)}/rollover` })
   }
 
   if (currentStatusQuery.data?.finals.qualification_available && !currentStatusQuery.data.finals.result_available) {
-    nextInspectionLinks.push({ key: 'current-finals', label: 'Current finals', to: `/runs/${runId}/finals` })
+    nextInspectionLinks.push({ key: 'current-finals', label: 'Current finals', to: `/runs/${encodeURIComponent(runId)}/finals` })
   }
 
   if (sourceMetadataExists) {
-    nextInspectionLinks.push({ key: 'current-bootstrap-lineage', label: 'Current bootstrap / lineage', to: `/runs/${runId}/bootstrap-lineage` })
+    nextInspectionLinks.push({ key: 'current-bootstrap-lineage', label: 'Current bootstrap / lineage', to: `/runs/${encodeURIComponent(runId)}/bootstrap-lineage` })
   }
 
   childRunIds.forEach((childRunId) => {
-    nextInspectionLinks.push({ key: `child-diag-${childRunId}`, label: `Child diagnostics: ${childRunId}`, to: `/runs/${childRunId}/diagnostics` })
-    nextInspectionLinks.push({ key: `child-detail-${childRunId}`, label: `Child run detail: ${childRunId}`, to: `/runs/${childRunId}` })
+    nextInspectionLinks.push({ key: `child-diag-${childRunId}`, label: `Child diagnostics: ${childRunId}`, to: `/runs/${encodeURIComponent(childRunId)}/diagnostics` })
+    nextInspectionLinks.push({ key: `child-detail-${childRunId}`, label: `Child run detail: ${childRunId}`, to: `/runs/${encodeURIComponent(childRunId)}` })
   })
 
   return (
@@ -383,7 +383,7 @@ export function SeasonChainPage(): JSX.Element {
                       {
                         label: 'Parent run',
                         value: childQuery.data.source?.parent_run_id ? (
-                          <Link to={`/runs/${childQuery.data.source.parent_run_id}`}>{childQuery.data.source.parent_run_id}</Link>
+                          <Link to={`/runs/${encodeURIComponent(childQuery.data.source.parent_run_id)}`}>{childQuery.data.source.parent_run_id}</Link>
                         ) : (
                           'None'
                         )
@@ -393,9 +393,9 @@ export function SeasonChainPage(): JSX.Element {
                   />
                   {seasonProgressNote ? <p className="status">{seasonProgressNote}</p> : null}
                   <p>
-                    <Link to={`/runs/${childRunId}`}>Run Detail</Link> ·{' '}
-                    <Link to={`/runs/${childRunId}/diagnostics`}>Diagnostics</Link> ·{' '}
-                    <Link to={`/runs/${childRunId}/bootstrap-lineage`}>Bootstrap / Lineage</Link>
+                    <Link to={`/runs/${encodeURIComponent(childRunId)}`}>Run Detail</Link> ·{' '}
+                    <Link to={`/runs/${encodeURIComponent(childRunId)}/diagnostics`}>Diagnostics</Link> ·{' '}
+                    <Link to={`/runs/${encodeURIComponent(childRunId)}/bootstrap-lineage`}>Bootstrap / Lineage</Link>
                   </p>
                 </>
               ) : null}

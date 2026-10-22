@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -150,6 +150,40 @@ describe('TalentPreviewPage', () => {
     expect(await screen.findByText(/Talent Preview does not create players./i)).toBeInTheDocument()
     expect(await screen.findByText(/Elite Talents:/i)).toBeInTheDocument()
     expect(await screen.findByRole('link', { name: 'Open Country' })).toHaveAttribute('href', '/admin/world/countries/AAA')
+  })
+
+  it('lets the user recover from zero forecast matches without reloading data', async () => {
+    renderWithRoute(<TalentPreviewPage />, '/world/talent-preview')
+    const search = await screen.findByRole('searchbox', { name: 'Country filter' })
+    expect(await screen.findByRole('table', { name: 'Country forecast table' })).toBeInTheDocument()
+    fireEvent.change(search, { target: { value: ' no_such_country ' } })
+    expect(screen.getByText('Showing 0 of 1 forecast countries')).toBeInTheDocument()
+    expect(screen.getByText('No country forecast data matches the current filter.')).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Country forecast table' })).not.toBeInTheDocument()
+    expect(search).toHaveValue(' no_such_country ')
+    fireEvent.click(screen.getByRole('button', { name: 'Clear country filter' }))
+    expect(search).toHaveValue('')
+    expect(screen.getByText('Showing 1 of 1 forecast countries')).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Country forecast table' }).parentElement)
+      .toHaveClass('table-responsive')
+    expect(screen.getByRole('button', { name: 'Clear country filter' })).toBeDisabled()
+    expect(api.getTalentClassSummary).toHaveBeenCalledTimes(1)
+    expect(api.getTalentClassPreview).toHaveBeenCalledTimes(1)
+  })
+
+  it('separates a genuinely empty forecast from a non-matching country filter', async () => {
+    const original = await api.getTalentClassSummary()
+    api.getTalentClassSummary.mockClear()
+    api.getTalentClassSummary.mockResolvedValue({
+      ...original, country_count: 0, countries: [],
+    })
+    renderWithRoute(<TalentPreviewPage />, '/world/talent-preview')
+    expect(await screen.findByText('No countries were returned in this forecast.')).toBeInTheDocument()
+    expect(screen.getByText('Showing 0 of 0 forecast countries')).toBeInTheDocument()
+    const search = screen.getByRole('searchbox', { name: 'Country filter' })
+    fireEvent.change(search, { target: { value: 'Alpha' } })
+    expect(screen.getByText('No countries were returned in this forecast.')).toBeInTheDocument()
+    expect(screen.queryByText('No country forecast data matches the current filter.')).not.toBeInTheDocument()
   })
 
   it('reacts to changed inputs', async () => {

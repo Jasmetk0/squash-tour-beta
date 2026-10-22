@@ -117,6 +117,27 @@ describe('WeekDetailPage', () => {
     expect(await screen.findByText('Week must be a whole number in the URL (for example /weeks/12).')).toBeInTheDocument()
   })
 
+  it.each(['12junk', '12.0', '12e0', '-12', '999999999999999999999999'])(
+    'rejects invalid week %s without fetching present Run history',
+    async (invalidWeek) => {
+      renderAt(`/runs/run-a/weeks/${invalidWeek}`)
+      expect(await screen.findByText('Week must be a whole number in the URL (for example /weeks/12).')).toBeInTheDocument()
+      expect(api.getRun).not.toHaveBeenCalled()
+      expect(api.listEvents).not.toHaveBeenCalled()
+      expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+      expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+    }
+  )
+
+  it('encodes special-character Run IDs in the week navigation links', async () => {
+    renderAt('/runs/run%20x%2Fy/weeks/3')
+    const calendar = await screen.findByRole('link', { name: 'Back to Season Calendar' })
+    expect(calendar).toHaveAttribute('href', '/runs/run%20x%2Fy/calendar')
+    expect(screen.getByRole('link', { name: 'Back to Run Detail' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy')
+    expect(api.getRun).toHaveBeenCalledWith('run x/y')
+  })
+
   it('renders planned and persisted detail links for week events', async () => {
     renderAt('/runs/run-a/weeks/3')
 

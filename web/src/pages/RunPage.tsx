@@ -379,7 +379,8 @@ export function RunPage(): JSX.Element {
         </ul>}
 
       </section>}
-      {rankingChanges && <RunHomeRankingPanel data={rankingChanges} locale={language} runId={runId} identities={playerIdentities}/>}
+      {rankingChanges && <RunHomeRankingPanel data={rankingChanges} locale={language} runId={runId}
+        identities={playerIdentities} clock={homeClock}/>}
       {identitiesQuery.isPending && identityIds.length > 0 && ready && <p role="status">{language === 'cs' ? 'Načítám uložená jména hráčů…' : 'Loading saved player names…'}</p>}
       {identitiesQuery.isError && <Unavailable message={formatApiError(identitiesQuery.error)}/>}
       {identitiesMismatch && <Unavailable message="Saved player identities do not match selected Branch HEAD"/>}

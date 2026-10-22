@@ -26,8 +26,8 @@ function statusProgress(summary?: RunStatusSummary): string {
 function LinkCluster({ runId }: { runId: string }): JSX.Element {
   return (
     <p>
-      <Link to={`/runs/${runId}`}>Run Detail</Link> · <Link to={`/runs/${runId}/diagnostics`}>Diagnostics</Link> ·{' '}
-      <Link to={`/runs/${runId}/season-chain`}>Season Chain</Link>
+      <Link to={`/runs/${encodeURIComponent(runId)}`}>Run Detail</Link> · <Link to={`/runs/${encodeURIComponent(runId)}/diagnostics`}>Diagnostics</Link> ·{' '}
+      <Link to={`/runs/${encodeURIComponent(runId)}/season-chain`}>Season Chain</Link>
     </p>
   )
 }
@@ -249,7 +249,7 @@ export function BootstrapLineagePage(): JSX.Element {
         (source?.source_rollover_to_season ?? lineage?.source.source_rollover_to_season) ? (
           <p>
             <Link
-              to={`/runs/${source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id}/rollover/${
+              to={`/runs/${encodeURIComponent(String(source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id))}/rollover/${
                 source?.source_rollover_to_season ?? lineage?.source.source_rollover_to_season
               }`}
             >
@@ -264,11 +264,11 @@ export function BootstrapLineagePage(): JSX.Element {
           items={[
             {
               label: 'Parent season chain',
-              value: parentRunId ? <Link to={`/runs/${parentRunId}/season-chain`}>Inspect parent season chain</Link> : 'No parent run linked'
+              value: parentRunId ? <Link to={`/runs/${encodeURIComponent(parentRunId)}/season-chain`}>Inspect parent season chain</Link> : 'No parent run linked'
             },
             {
               label: 'First child diagnostics',
-              value: childRunIds[0] ? <Link to={`/runs/${childRunIds[0]}/diagnostics`}>Inspect first child diagnostics</Link> : 'No child run linked'
+              value: childRunIds[0] ? <Link to={`/runs/${encodeURIComponent(childRunIds[0])}/diagnostics`}>Inspect first child diagnostics</Link> : 'No child run linked'
             },
             {
               label: 'Source rollover',
@@ -276,7 +276,7 @@ export function BootstrapLineagePage(): JSX.Element {
                 (source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id) &&
                 (source?.source_rollover_to_season ?? lineage?.source.source_rollover_to_season) ? (
                   <Link
-                    to={`/runs/${source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id}/rollover/${
+                    to={`/runs/${encodeURIComponent(String(source?.source_rollover_run_id ?? lineage?.source.source_rollover_run_id))}/rollover/${
                       source?.source_rollover_to_season ?? lineage?.source.source_rollover_to_season
                     }`}
                   >
@@ -340,7 +340,7 @@ export function BootstrapLineagePage(): JSX.Element {
               ]}
             />
             <p>
-              <Link to={`/runs/${bootstrapMutation.data.bootstrap.child_run_id}`}>Open child run</Link>
+              <Link to={`/runs/${encodeURIComponent(bootstrapMutation.data.bootstrap.child_run_id)}`}>Open child run</Link>
             </p>
             <JsonPayloadBlock
               title="Bootstrap payload"

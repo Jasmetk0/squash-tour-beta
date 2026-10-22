@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { createCalendarTemplate } from '../api/client'
@@ -9,9 +9,11 @@ import { CalendarTemplateEditor, emptyCalendarTemplateFormValue } from './Calend
 
 export function AdminCalendarTemplateNewPage(): JSX.Element {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: (payload: CalendarTemplateUpsertPayload) => createCalendarTemplate(payload),
     onSuccess: (response, payload) => {
+      void queryClient.invalidateQueries({ queryKey: ['calendar-templates'] })
       const templateId = response.template?.id ?? payload.id
       navigate(`/admin/tour-seasons/season-templates/calendar/${encodeURIComponent(templateId)}`)
     }

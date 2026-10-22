@@ -25,7 +25,7 @@ export function SavedTourCalendarPage():JSX.Element{
   const seasonIndex=season===null?0:season
   const seasonValid=seasonIndex>=0&&seasonIndex<50&&(raw===null||season!==null)
   const scopeValid=Boolean(runId&&branch&&revision&&revision.trim()===revision&&
-    (!requestedBranch||requestedBranch===branch)&&seasonValid&&!branchError&&
+    (requestedBranch===null||requestedBranch===branch)&&seasonValid&&!branchError&&
     !branchLoading&&!time.isLoading&&!time.error&&time.mode==='present')
   const query=useQuery({
     queryKey:['saved-tour-calendar',runId,branch,revision,seasonIndex],
@@ -61,7 +61,7 @@ export function SavedTourCalendarPage():JSX.Element{
   const issue=branchError||time.error||
     (time.mode==='checkpoint'?(cs?'Checkpoint nemá ověřenou vazbu na Saved Revision.':'Checkpoint is not mapped to a Saved Revision.'):
     (!seasonValid?(cs?'Neplatná sezona.':'Invalid season.'):
-    requestedBranch&&branch&&requestedBranch!==branch?(cs?'Nesouhlasí vybraná Branch.':'Selected Branch does not match the link.'):
+    requestedBranch!==null&&branch&&requestedBranch!==branch?(cs?'Nesouhlasí vybraná Branch.':'Selected Branch does not match the link.'):
     requestedRevision!==null&&!revision?(cs?'Chybí ID revize.':'Revision ID is missing.'):null))
   return <section className="panel">
     <Link to={`/admin/runs/${encodeURIComponent(runId)}/tour/editions`}>{cs?'Spravovat nativní Edition a oficiální týden':'Manage native Editions and Official week'}</Link>

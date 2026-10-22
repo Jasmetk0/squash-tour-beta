@@ -80,7 +80,7 @@ export function DashboardPage(): JSX.Element {
       const run = await createRun(worldId === 'official_fax_world' ? createInput : { ...createInput, world_id: worldId })
       writeLastRunId(run.run_id)
       setLastRunId(run.run_id)
-      navigate(`/admin/runs/${run.run_id}`)
+      navigate(`/admin/runs/${encodeURIComponent(run.run_id)}`)
     } catch (err) {
       setCreateError(`Could not create run: ${formatApiError(err)}`)
     } finally {
@@ -91,12 +91,17 @@ export function DashboardPage(): JSX.Element {
   const openRunById = async (runId: string, target: 'manual' | 'resume') => {
     const setError = target === 'manual' ? setOpenError : setResumeError
     setError(null)
+    const normalizedId = runId.trim()
+    if (!normalizedId) {
+      setError('Enter a Run ID before opening.')
+      return
+    }
     setOpeningTarget(target)
     try {
-      const run = await getRun(runId)
+      const run = await getRun(normalizedId)
       writeLastRunId(run.run.run_id)
       setLastRunId(run.run.run_id)
-      navigate(`/admin/runs/${run.run.run_id}`)
+      navigate(`/admin/runs/${encodeURIComponent(run.run.run_id)}`)
     } catch (err) {
       setError(`Could not open run: ${formatApiError(err)}`)
     } finally {

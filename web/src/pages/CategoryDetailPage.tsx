@@ -20,7 +20,11 @@ export function AdminTourSeasonsCategoryDetailPage(): JSX.Element {
   const { categoryId = '' } = useParams()
   const categoriesQuery = useQuery({ queryKey: ['categories'], queryFn: getCategories, retry: false })
   const payload = categoriesQuery.data
-  const category = payload?.categories.find((item) => item.category_id === categoryId)
+  const categories = payload?.categories ?? []
+  const categoryIndex = categories.findIndex(item => item.category_id === categoryId)
+  const category = categoryIndex >= 0 ? categories[categoryIndex] : null
+  const previous = categoryIndex > 0 ? categories[categoryIndex - 1] : null
+  const next = categoryIndex >= 0 ? categories[categoryIndex + 1] ?? null : null
 
   return (
     <section className="panel">
@@ -39,6 +43,18 @@ export function AdminTourSeasonsCategoryDetailPage(): JSX.Element {
               { label: 'Status', value: category.status },
               { label: 'Source', value: category.source }
             ]} />
+          </SectionCard>
+
+          <SectionCard title="Browse derived categories">
+            <p className="status">Category {categoryIndex + 1} of {categories.length} in the backend source order.</p>
+            <div className="actions">
+              {previous ? <Link to={`/admin/tour-seasons/categories/${encodeURIComponent(previous.category_id)}`}>
+                ← Previous category: {previous.name}
+              </Link> : null}
+              {next ? <Link to={`/admin/tour-seasons/categories/${encodeURIComponent(next.category_id)}`}>
+                Next category: {next.name} →
+              </Link> : null}
+            </div>
           </SectionCard>
 
           <SectionCard title="Identity">

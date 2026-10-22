@@ -15,7 +15,10 @@ export function LegacyRunPlayersExplorerPage(): JSX.Element {
   const [sourceType, setSourceType] = useState('')
   const [minAge, setMinAge] = useState('')
   const [maxAge, setMaxAge] = useState('')
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null)
+  // Selection belongs to the Run where it was made. Changing the route must
+  // not request or display that player's ID as if it belonged to the new Run.
+  const [selectedPlayer, setSelectedPlayer] = useState<{ runId: string; playerId: string } | null>(null)
+  const selectedPlayerId = selectedPlayer?.runId === runId ? selectedPlayer.playerId : null
 
   const queryParams = useMemo(
     () => ({
@@ -109,7 +112,7 @@ export function LegacyRunPlayersExplorerPage(): JSX.Element {
               {playersQuery.data.players.map((player) => (
                 <tr key={player.player_id}>
                   <td>
-                    <button type="button" onClick={() => setSelectedPlayerId(player.player_id)}>
+                    <button type="button" onClick={() => setSelectedPlayer({ runId, playerId: player.player_id })}>
                       {player.player_id}
                     </button>
                   </td>
@@ -150,7 +153,7 @@ export function LegacyRunPlayersExplorerPage(): JSX.Element {
               Style: {detailQuery.data.play_style} / {detailQuery.data.archetype}
             </p>
             <p>
-              <Link to={`/runs/${runId}/players/${detailQuery.data.player_id}/career`}>View career history</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/players/${encodeURIComponent(detailQuery.data.player_id)}/career`}>View career history</Link>
             </p>
             <pre className="json-block">{JSON.stringify(detailQuery.data, null, 2)}</pre>
           </>

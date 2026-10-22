@@ -48,6 +48,30 @@ describe('FinalsResultDetailPage', () => {
     expect(screen.getByText(/runner_up_player_id/i)).toBeInTheDocument()
   })
 
+  it('reports failed result requests as Failed, not indefinitely Loading', async () => {
+    api.getFinalsResult.mockRejectedValueOnce(new api.ApiError('result unavailable', 503))
+    renderWithRoute(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText('Failed to load Finals result: result unavailable')).toBeInTheDocument()
+    expect(screen.getByText('Failed')).toBeInTheDocument()
+    expect(screen.queryByText('Loading Finals result detail...')).not.toBeInTheDocument()
+  })
+
+  it('does not claim qualification was never generated if summary evidence is missing', async () => {
+    api.getFinalsSummary.mockRejectedValueOnce(new api.ApiError('summary unavailable', 503))
+    renderWithRoute(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText('Failed to load Finals summary: summary unavailable')).toBeInTheDocument()
+    expect(screen.getByText('Unknown')).toBeInTheDocument()
+    expect(screen.queryByText('Not generated')).not.toBeInTheDocument()
+  })
+
+  it('keeps qualification and result loading states while both requests are unresolved', async () => {
+    api.getFinalsSummary.mockImplementationOnce(() => new Promise(() => {}))
+    api.getFinalsResult.mockImplementationOnce(() => new Promise(() => {}))
+    renderWithRoute(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText('Loading Finals result detail...')).toBeInTheDocument()
+    expect(screen.getAllByText('Loading')).toHaveLength(2)
+  })
+
   it('shows readable empty state when result is missing', async () => {
     api.getFinalsResult.mockRejectedValueOnce(new api.ApiError('{"detail":"No finals result for run"}', 404))
     renderWithRoute(<FinalsResultDetailPage />, '/runs/run-a/finals/result')

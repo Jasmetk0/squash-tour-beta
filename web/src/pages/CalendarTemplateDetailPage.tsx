@@ -13,6 +13,9 @@ export function AdminCalendarTemplateDetailPage(): JSX.Element {
   const { templateId = '' } = useParams()
   const queryClient = useQueryClient()
   const [successMessage, setSuccessMessage] = useState('')
+  const [eventSearch, setEventSearch] = useState('')
+  const [lockFilter, setLockFilter] = useState<'all' | 'locked' | 'unlocked'>('all')
+  const [eventOrder, setEventOrder] = useState<'source' | 'week'>('source')
   const templateQuery = useQuery({
     queryKey: ['calendar-template', templateId],
     queryFn: () => getCalendarTemplate(templateId),
@@ -21,6 +24,18 @@ export function AdminCalendarTemplateDetailPage(): JSX.Element {
   })
 
   const template = templateQuery.data?.template ?? null
+  const normalizedEventSearch = eventSearch.trim().toLocaleLowerCase()
+  const events = template?.events ?? []
+  const visibleEvents = events.filter(event =>
+    (lockFilter === 'all' || (lockFilter === 'locked' ? event.locked : !event.locked)) &&
+    (!normalizedEventSearch || [event.id, event.name, event.category_code, event.country_code, event.city, event.venue]
+      .some(value => value?.toLocaleLowerCase().includes(normalizedEventSearch)))
+  )
+  if (eventOrder === 'week') {
+    visibleEvents.sort((a, b) => (a.weeks[0] ?? Number.MAX_SAFE_INTEGER) -
+      (b.weeks[0] ?? Number.MAX_SAFE_INTEGER) || a.id.localeCompare(b.id))
+  }
+  const clearEventFilters = () => { setEventSearch(''); setLockFilter('all'); setEventOrder('source') }
   const notFound = templateQuery.error && isApiNotFound(templateQuery.error)
   const updateMutation = useMutation({
     mutationFn: (payload: Parameters<typeof updateCalendarTemplate>[1]) => updateCalendarTemplate(templateId, payload),
@@ -33,6 +48,9 @@ export function AdminCalendarTemplateDetailPage(): JSX.Element {
 
   useEffect(() => {
     setSuccessMessage('')
+    setEventSearch('')
+    setLockFilter('all')
+    setEventOrder('source')
   }, [templateId])
 
   return (
@@ -73,8 +91,34 @@ export function AdminCalendarTemplateDetailPage(): JSX.Element {
           </SectionCard>
 
           <SectionCard title="Events">
-            {template.events.length ? (
-              <table>
+            <div className="form-grid">
+              <label>Search persisted template events
+                <input type="search" value={eventSearch} onChange={event => setEventSearch(event.target.value)}
+                  placeholder="Event name, ID, category, country, city or venue" />
+              </label>
+              <label>Event lock filter
+                <select value={lockFilter} onChange={event => setLockFilter(event.target.value as typeof lockFilter)}>
+                  <option value="all">All events</option>
+                  <option value="locked">Locked only</option>
+                  <option value="unlocked">Unlocked only</option>
+                </select>
+              </label>
+              <label>Event ordering
+                <select value={eventOrder} onChange={event => setEventOrder(event.target.value as typeof eventOrder)}>
+                  <option value="source">Original order</option>
+                  <option value="week">First main week</option>
+                </select>
+              </label>
+            </div>
+            <button type="button" disabled={!eventSearch && lockFilter === 'all' && eventOrder === 'source'}
+              onClick={clearEventFilters}>Clear event filters</button>
+            <p role="status">Showing {visibleEvents.length} of {events.length} persisted template events</p>
+            {events.length === 0 ? (
+              <p className="status">This persisted Admin calendar template has no events.</p>
+            ) : visibleEvents.length === 0 ? (
+              <p className="status">No persisted calendar events match the current filters.</p>
+            ) : (
+              <div className="table-responsive"><table aria-label="Persisted calendar template events">
                 <thead>
                   <tr>
                     <th>Name</th>
@@ -91,7 +135,7 @@ export function AdminCalendarTemplateDetailPage(): JSX.Element {
                   </tr>
                 </thead>
                 <tbody>
-                  {template.events.map((event) => (
+                  {visibleEvents.map((event) => (
                     <tr key={event.id}>
                       <td>{event.name}</td>
                       <td>{event.id}</td>
@@ -107,9 +151,7 @@ export function AdminCalendarTemplateDetailPage(): JSX.Element {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            ) : (
-              <p className="status">This persisted Admin calendar template has no events.</p>
+              </table></div>
             )}
           </SectionCard>
 

@@ -168,6 +168,29 @@ describe('DashboardPage', () => {
     expect(navigateMock).toHaveBeenCalledWith('/admin/runs/run-a')
   })
 
+  it('trims the requested Run ID and encodes the server-returned Run ID as one route segment', async () => {
+    api.getRun.mockResolvedValueOnce({ run: { run_id: 'run x/y' } })
+    renderWithRoute(<DashboardPage />, '/')
+
+    await userEvent.type(screen.getByLabelText('Existing run ID'), '  run x/y  ')
+    await userEvent.click(screen.getByRole('button', { name: 'Open and continue' }))
+
+    await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('run x/y'))
+    expect(navigateMock).toHaveBeenCalledWith('/admin/runs/run%20x%2Fy')
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run x/y')
+  })
+
+  it('does not send an empty-but-whitespace Run ID to the backend', async () => {
+    renderWithRoute(<DashboardPage />, '/')
+    api.getRun.mockClear()
+    const input = screen.getByLabelText('Existing run ID')
+    await userEvent.type(input, '   ')
+    await userEvent.click(screen.getByRole('button', { name: 'Open and continue' }))
+    expect(screen.getByText('Enter a Run ID before opening.')).toBeInTheDocument()
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(navigateMock).not.toHaveBeenCalled()
+  })
+
   it('shows empty resume state when no remembered run exists', async () => {
     renderWithRoute(<DashboardPage />, '/')
 

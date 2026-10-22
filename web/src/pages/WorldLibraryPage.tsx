@@ -926,7 +926,8 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   }
   if (packageQuery.isLoading || geographyQuery.isLoading) return <p className="status">{cs ? 'Načítám formulář země…' : 'Loading country form...'}</p>
   if (packageQuery.error || geographyQuery.error) return <p className="error">{cs ? 'Nepodařilo se načíst podklady formuláře: ' : 'Failed to load country form resources: '}{formatApiError(packageQuery.error ?? geographyQuery.error)}</p>
-  const countryAlreadyExists = isFingerprintConflict(requestError) && /country .* already exists/i.test(formatApiError(requestError))
+  const requestMessage = (requestError as {message?: unknown} | null)?.message
+  const countryAlreadyExists = isFingerprintConflict(requestError) && /country .* already exists/i.test(typeof requestMessage === 'string' ? requestMessage : formatApiError(requestError))
   const sourceChanged = isFingerprintConflict(requestError) && !countryAlreadyExists
   if (!allowed) return <section className="panel"><p className="error">{cs ? 'Země lze vytvářet jen v upravitelné vlastní kopii World Package.' : 'Countries can only be created in an editable Custom World source.'}</p></section>
   return <section className="panel">

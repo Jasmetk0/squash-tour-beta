@@ -203,22 +203,22 @@ export function FullSimulationServerTasks({runId,branchId}:{runId?:string;branch
  })
  const filtered=Boolean(normalized||category!=='all')
  return <section className="server-simulation-tasks" aria-label={t.title}><h3>{t.title}</h3><p>{t.truth}</p>
-  <button type="button" onClick={()=>void query.refetch()} disabled={query.isFetching}>{t.refresh}</button>
-  <div className="server-simulation-tasks__filters">
+  <button type="button" onClick={()=>{if(!incompleteScope)void query.refetch()}} disabled={query.isFetching||incompleteScope}>{t.refresh}</button>
+  {!incompleteScope&&<div className="server-simulation-tasks__filters">
    <label>{t.search}<input type="search" aria-label={t.search} placeholder={t.searchHint} value={search} onChange={e=>setSearch(e.target.value)}/></label>
    <label>{t.filter}<select aria-label={t.filter} value={category} onChange={e=>setCategory(e.target.value as 'all'|'attention'|'live'|'other')}>
     <option value="all">{t.allTasks}</option><option value="attention">{t.attentionTasks}</option>
     <option value="live">{t.liveTasks}</option><option value="other">{t.otherTasks}</option>
    </select></label>
    {filtered&&<button type="button" onClick={()=>{setSearch('');setCategory('all')}}>{t.clearFilters}</button>}
-  </div>
+  </div>}
   {incompleteScope&&<p role="alert">{t.scopeMissing}</p>}
   {!incompleteScope&&query.isPending && <p role="status">{t.loading}</p>}
-  {query.error && <p role="alert">{formatApiError(query.error)}</p>}
-  {query.isSuccess&&Boolean(tasks?.length)&&<p role="status">{t.needsCount}: {needingAction} · {t.liveCount}: {liveOrQueued} · {t.otherCount}: {otherStates}</p>}
-  {query.isSuccess&&focusedTaskId&&!query.data.some(task=>task.task_id===focusedTaskId)&&<p role="alert">{t.missing} <code>{focusedTaskId}</code></p>}
-  {query.isSuccess&&filtered&&<p className="status">{t.shown}: {displayed?.length??0} / {tasks?.length??0}</p>}
-  {query.isSuccess&&filtered&&focusedTaskId&&displayed?.some(task=>task.task_id===focusedTaskId)&&<p className="status">{t.pinned}</p>}
-  {query.isSuccess && (displayed?.length?<ul className="server-simulation-tasks__list">{displayed.map(task=><TaskCard key={JSON.stringify([task.run_id,task.branch_id,task.task_id])} task={task} focused={task.task_id===focusedTaskId}/>)}</ul>:<p>{tasks?.length?t.noMatches:t.empty}</p>)}
+  {!incompleteScope&&query.error && <p role="alert">{formatApiError(query.error)}</p>}
+  {!incompleteScope&&query.isSuccess&&Boolean(tasks?.length)&&<p role="status">{t.needsCount}: {needingAction} · {t.liveCount}: {liveOrQueued} · {t.otherCount}: {otherStates}</p>}
+  {!incompleteScope&&query.isSuccess&&focusedTaskId&&!query.data.some(task=>task.task_id===focusedTaskId)&&<p role="alert">{t.missing} <code>{focusedTaskId}</code></p>}
+  {!incompleteScope&&query.isSuccess&&filtered&&<p className="status">{t.shown}: {displayed?.length??0} / {tasks?.length??0}</p>}
+  {!incompleteScope&&query.isSuccess&&filtered&&focusedTaskId&&displayed?.some(task=>task.task_id===focusedTaskId)&&<p className="status">{t.pinned}</p>}
+  {!incompleteScope&&query.isSuccess && (displayed?.length?<ul className="server-simulation-tasks__list">{displayed.map(task=><TaskCard key={JSON.stringify([task.run_id,task.branch_id,task.task_id])} task={task} focused={task.task_id===focusedTaskId}/>)}</ul>:<p>{tasks?.length?t.noMatches:t.empty}</p>)}
  </section>
 }

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { Link, RouterProvider, createMemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { WorldPackageCountryDetailPage } from './WorldLibraryPage'
@@ -32,7 +32,7 @@ function setup(start = '/world/custom/countries/AAA') {
   const router = createMemoryRouter([{
     path:'/world/:worldId/countries/:countryCode',
     element:<><Link to="/world/other/countries/BBB">Switch country</Link><WorldPackageCountryDetailPage /></>
-  }],{initialEntries:[start]})
+  },{path:'/admin/world/library',element:<p>Library opened</p>}],{initialEntries:[start]})
   return {router, ...render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)}
 }
 beforeEach(() => {
@@ -122,4 +122,19 @@ describe('World Package authoring against mutable source', () => {
       'custom','AAA',{values_by_year:{'2020':120},expected_package_fingerprint:'fingerprint-custom'}
     ))
   })
+  it('does not redirect after deletion completes on a page the user already left', async () => {
+    let finish!: (response: unknown) => void
+    api.deleteWorldPackageCountry.mockImplementation(() => new Promise(resolve => { finish = resolve }))
+    const {router} = setup()
+    fireEvent.click(await screen.findByRole('button',{name:'Delete country'}))
+    vi.spyOn(window,'confirm').mockReturnValue(true)
+    fireEvent.click(screen.getByRole('button',{name:'Confirm deletion'}))
+    await waitFor(() => expect(api.deleteWorldPackageCountry).toHaveBeenCalledWith('custom','AAA','fingerprint-custom'))
+    fireEvent.click(screen.getByRole('link',{name:'World Packages'}))
+    expect(await screen.findByText('Library opened')).toBeInTheDocument()
+    await act(async () => { finish({deleted_country_code:'AAA',validation:{status:'valid'}}) })
+    expect(router.state.location.pathname).toBe('/admin/world/library')
+    expect(screen.getByText('Library opened')).toBeInTheDocument()
+  })
+
 })

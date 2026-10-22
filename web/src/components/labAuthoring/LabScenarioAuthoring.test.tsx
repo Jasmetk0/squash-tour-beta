@@ -492,6 +492,120 @@ describe('Lab scenario authoring boundaries', () => {
     expect(JSON.parse(advanced.value).source_fingerprint).toBe(match.source_fingerprint)
   })
 
+  it('undoes the last guided Match change only, without reverting earlier changes or historical source', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(match))
+      const [revision, setRevision] = useState(0)
+      return <><LabScenarioAuthoring kind="match" text={text}
+        onChange={next => {setText(next); setRevision(rev => rev + 1)}}
+        selection="saved-1:fingerprint" revision={revision} jsonLabel="Match Lab scenario JSON"
+        savedScenario={match} savedName="Stored" sessionName="Stored" />
+        <output data-testid="undo-match">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    const undo = screen.getByRole('button', {name: 'match Lab undo last guided edit'})
+    expect(undo).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('match Lab seed'), {target: {value: '101'}})
+    await user.click(screen.getByRole('button', {name: 'match Lab apply seed'}))
+    expect(undo).toBeEnabled()
+    fireEvent.change(screen.getByLabelText('match Lab context.best_of'), {target: {value: '3'}})
+    await user.click(screen.getByRole('button', {name: 'match Lab apply context.best_of'}))
+    expect(JSON.parse(screen.getByTestId('undo-match').textContent ?? '').context.best_of).toBe(3)
+    await user.click(undo)
+    const result = JSON.parse(screen.getByTestId('undo-match').textContent ?? '')
+    expect(result.context.best_of).toBe(5)
+    expect(result.seed).toBe(101)
+    expect(result.source_fingerprint).toBe(match.source_fingerprint)
+    expect(screen.getByLabelText('match Lab unsaved changes')).toHaveTextContent('seed')
+    expect(screen.getByLabelText('match Lab unsaved changes')).not.toHaveTextContent('context.best_of')
+    expect(undo).toBeDisabled()
+    expect(screen.getByText('Reverted the last local guided edit only. Saved Session and Run are unchanged.')).toBeInTheDocument()
+  })
+
+  it('undoes Tournament seed-priority and Player weekly changes without touching unrelated inputs', async () => {
+    const user = userEvent.setup()
+    function TournamentHarness() {
+      const [text, setText] = useState(JSON.stringify(tournamentWithPlayers))
+      return <><LabScenarioAuthoring kind="tournament" text={text} onChange={setText}
+        selection="scratch" revision={0} jsonLabel="Tournament Lab scenario JSON" />
+        <output data-testid="undo-tournament">{text}</output></>
+    }
+    const tournamentRender = render(<TournamentHarness />)
+    await user.click(screen.getByRole('button', {name: 'tournament Lab seed move down P1'}))
+    expect(JSON.parse(screen.getByTestId('undo-tournament').textContent ?? '').seed_order_player_ids).toEqual(['P2', 'P1'])
+    await user.click(screen.getByRole('button', {name: 'tournament Lab undo last guided edit'}))
+    expect(JSON.parse(screen.getByTestId('undo-tournament').textContent ?? '').seed_order_player_ids).toEqual(['P1', 'P2'])
+    expect(JSON.parse(screen.getByTestId('undo-tournament').textContent ?? '').source_snapshot).toEqual(tournamentWithPlayers.source_snapshot)
+    tournamentRender.unmount()
+    function PlayerHarness() {
+      const [text, setText] = useState(JSON.stringify(player))
+      return <><LabScenarioAuthoring kind="player" text={text} onChange={setText}
+        selection="scratch" revision={0} jsonLabel="Player Lab scenario JSON" />
+        <output data-testid="undo-player">{text}</output></>
+    }
+    render(<PlayerHarness />)
+    await user.selectOptions(screen.getByLabelText('player Lab variant a selected week'), '1')
+    fireEvent.change(screen.getByLabelText('player Lab variant a selected week matches'), {target: {value: '9'}})
+    await user.click(screen.getByRole('button', {name: 'player Lab variant a apply selected week'}))
+    expect(JSON.parse(screen.getByTestId('undo-player').textContent ?? '').variants[0].competitive_match_counts).toEqual([1, 9])
+    await user.click(screen.getByRole('button', {name: 'player Lab undo last guided edit'}))
+    const result = JSON.parse(screen.getByTestId('undo-player').textContent ?? '')
+    expect(result.variants[0].competitive_match_counts).toEqual([1, 2])
+    expect(result.variants[1].competitive_match_counts).toEqual([0, 0])
+    expect(result.source_snapshot).toEqual(player.source_snapshot)
+  })
+
+  it('clears guided undo after external source replacement, Session switch or manual advanced JSON edit', async () => {
+    function Harness() {
+      const [selection, setSelection] = useState('one')
+      const [text, setText] = useState(JSON.stringify(match))
+      const [revision, setRevision] = useState(0)
+      return <><LabScenarioAuthoring kind="match" text={text} onChange={setText}
+        selection={selection} revision={revision} jsonLabel="Match Lab scenario JSON" />
+        <button type="button" onClick={() => setSelection('two')}>Switch Session</button>
+        <button type="button" onClick={() => {setText(JSON.stringify({...match, seed: 155})); setRevision(n => n + 1)}}>
+          Load new scratch scenario</button>
+        <output data-testid="undo-current">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    const undo = screen.getByRole('button', {name: 'match Lab undo last guided edit'})
+    fireEvent.change(screen.getByLabelText('match Lab seed'), {target: {value: '90'}})
+    await user.click(screen.getByRole('button', {name: 'match Lab apply seed'}))
+    expect(undo).toBeEnabled()
+    await user.click(screen.getByRole('button', {name: 'Switch Session'}))
+    expect(undo).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('match Lab seed'), {target: {value: '93'}})
+    await user.click(screen.getByRole('button', {name: 'match Lab apply seed'}))
+    expect(undo).toBeEnabled()
+    await user.click(screen.getByRole('button', {name: 'Load new scratch scenario'}))
+    expect(undo).toBeDisabled()
+    expect(JSON.parse(screen.getByTestId('undo-current').textContent ?? '').seed).toBe(155)
+    fireEvent.change(screen.getByLabelText('match Lab seed'), {target: {value: '110'}})
+    await user.click(screen.getByRole('button', {name: 'match Lab apply seed'}))
+    expect(undo).toBeEnabled()
+    fireEvent.change(screen.getByLabelText('Match Lab scenario JSON'), {target: {value: JSON.stringify(match)}})
+    expect(undo).toBeDisabled()
+  })
+
+  it('never restores a stale guided draft after a remote Session fingerprint changes', async () => {
+    function Harness() {
+      const [selection, setSelection] = useState('saved:a')
+      const [text, setText] = useState(JSON.stringify(match))
+      return <><LabScenarioAuthoring kind="match" text={text} onChange={setText}
+        selection={selection} revision={0} jsonLabel="Match Lab scenario JSON" />
+        <button type="button" onClick={() => setSelection('saved:b')}>Remote fingerprint changed</button></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    fireEvent.change(screen.getByLabelText('match Lab seed'), {target: {value: '87'}})
+    await user.click(screen.getByRole('button', {name: 'match Lab apply seed'}))
+    expect(screen.getByRole('button', {name: 'match Lab undo last guided edit'})).toBeEnabled()
+    await user.click(screen.getByRole('button', {name: 'Remote fingerprint changed'}))
+    expect(screen.getByRole('button', {name: 'match Lab undo last guided edit'})).toBeDisabled()
+  })
+
   it('retains an independently staged guided input across another field Apply and revision advance', async () => {
     function Harness() {
       const [text, setText] = useState(JSON.stringify(match))

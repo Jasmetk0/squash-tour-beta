@@ -143,9 +143,9 @@ describe('built-in World cloning', () => {
       info_count: 0,
       checks: []
     })
-    api.cloneWorldPackage.mockResolvedValue({
+    api.cloneWorldPackage.mockImplementation(async (_worldId: string, payload: {dry_run:boolean}) => ({
       ok: true,
-      dry_run: false,
+      dry_run: payload.dry_run,
       source_world_id: 'real_world',
       new_world_id: 'editable_earth',
       target_path: 'config/world_packages/custom/editable_earth',
@@ -153,7 +153,7 @@ describe('built-in World cloning', () => {
       package: null,
       validation: null,
       errors: []
-    })
+    }))
 
     const router = createMemoryRouter([
       {path:'/world/:worldId',element:<WorldLibraryDetailPage />},
@@ -170,7 +170,12 @@ describe('built-in World cloning', () => {
     expect(screen.getByText(/must start with a lowercase letter or digit/)).toBeInTheDocument()
     expect(api.cloneWorldPackage).not.toHaveBeenCalled()
     fireEvent.change(screen.getByPlaceholderText('my_custom_world'), { target: { value: 'editable_earth' } })
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Previewed description' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Preview clone' }))
+    expect(await screen.findByText(/Preview only:/)).toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', expect.objectContaining({dry_run:true}))
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'A personally edited description' } })
+    expect(screen.queryByText(/Preview only:/)).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Review custom copy' }))
     expect(screen.getAllByText('real-world-head').length).toBeGreaterThan(0)
     expect(api.cloneWorldPackage).not.toHaveBeenCalled()

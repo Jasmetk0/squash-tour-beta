@@ -3827,6 +3827,41 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(api.saveAuthoritativeSimulation).not.toHaveBeenCalled()
   })
 
+  it('drops a delayed Full Simulation preview after changing the selected Run and Branch',async()=>{
+    localStorage.setItem('squash-engine-language-v1','en')
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,schedule:proposal.schedule,schedule_fingerprint:proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,schedule_already_adopted:true,
+      blockers:['week_schedule_already_adopted'],can_propose_schedule:false
+    })
+    let releasePreview:(value:typeof fullSimulationPreview)=>void=()=>{}
+    api.previewAuthoritativeFullSimulation.mockImplementation(()=>new Promise<typeof fullSimulationPreview>(
+      resolve=>{releasePreview=resolve}
+    ))
+    function Switch(){
+      const [other,setOther]=useState(false)
+      return <><button type="button" onClick={()=>setOther(true)}>Switch preview context</button>
+        <AuthoritativeSimulationPanel runId={other?'run-b':'run-a'}
+          branchId={other?'branch-b':'branch-a'} savedRevisionId="revision-7" blockedReason={null}/></>
+    }
+    const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
+    render(<QueryClientProvider client={client}><LanguageProvider><Switch/></LanguageProvider></QueryClientProvider>)
+    await userEvent.type(screen.getByLabelText('Full Simulation operator'),'Operator')
+    await userEvent.type(screen.getByLabelText('Full Simulation audit reason'),'Review exact source')
+    await userEvent.click(screen.getByRole('button',{name:'Review authoritative Full Simulation'}))
+    expect(screen.getByLabelText('Full Simulation operator')).toBeDisabled()
+    await waitFor(()=>expect(api.previewAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
+    await userEvent.click(screen.getByRole('button',{name:'Switch preview context'}))
+    releasePreview(fullSimulationPreview)
+    await waitFor(()=>expect(api.previewAuthoritativeFullSimulation).toHaveBeenCalledWith(
+      'run-a','branch-a',expect.objectContaining({operator_label:'Operator',audit_reason:'Review exact source'})
+    ))
+    await waitFor(()=>expect(screen.queryByRole('heading',{name:/Reviewed canonical Full Simulation/})).toBeNull())
+    expect(api.simulateAuthoritativeFullSimulation).not.toHaveBeenCalled()
+  })
+
   it.each(['parent','pause'] as const)(
     'never retargets an offline-queued %s invocation after a Run/Branch switch',async mode=>{
       localStorage.setItem('squash-engine-language-v1','en')

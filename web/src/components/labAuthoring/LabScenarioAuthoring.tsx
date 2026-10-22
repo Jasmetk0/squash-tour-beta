@@ -226,6 +226,7 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
   const [mode, setMode] = useState<'form' | 'json'>('json')
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
+  const [pendingImport, setPendingImport] = useState<{ file: string; json: string; scenario: JsonObject; identity: string } | null>(null)
   const identity = selection + ':' + revision + ':' + text
   const latest = useRef(identity)
   latest.current = identity
@@ -242,7 +243,12 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
     catch { savedChanges = ['(invalid JSON)'] }
   }
   const nameChanged = savedName !== undefined && sessionName !== undefined && savedName !== sessionName
-  const edit = (next: string) => { setError(''); setNotice(''); onChange(next) }
+  const edit = (next: string) => {
+    setPendingImport(null)
+    setError('')
+    setNotice('')
+    onChange(next)
+  }
   const applyField = (field: Field, raw: string) => {
     try { edit(changeLabField(text, kind, field, raw)) }
     catch (reason) { setError(explain(reason, cs)) }
@@ -253,15 +259,25 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
     if (!file) return
     const currentIdentity = latest.current
     const currentRead = ++readIndex.current
-    setError(''); setNotice('')
+    setError(''); setNotice(''); setPendingImport(null)
     try {
       if (file.size > 2 * 1024 * 1024) throw new Error('size')
       const contents = await file.text()
       const value = readLabScenario(contents, kind)
       if (latest.current !== currentIdentity || currentRead !== readIndex.current) throw new Error('stale')
-      edit(JSON.stringify(value, null, 2))
-      setNotice(cs ? 'Soubor byl načten pouze do editoru. Session ani Run se nezměnily.' : 'Loaded into the editor only. No Session or Run was changed.')
+      setPendingImport({ file: file.name, json: JSON.stringify(value, null, 2), scenario: value, identity: currentIdentity })
+      setNotice(cs ? 'Soubor je připraven ke kontrole. Editor, Session ani Run se nezměnily.' : 'File ready for review. Editor, Session and Run are unchanged.')
     } catch (reason) { setError(explain(reason, cs)) }
+  }
+  const reviewedImport = pendingImport?.identity === identity ? pendingImport : null
+  const applyImportedFile = () => {
+    if (!reviewedImport || busy || reviewedImport.identity !== latest.current) {
+      setPendingImport(null)
+      setError(explain(new Error('stale'), cs))
+      return
+    }
+    edit(reviewedImport.json)
+    setNotice(cs ? 'Návrh byl převzat pouze do editoru. Session ani Run se nezměnily.' : 'Draft applied to editor only. Session and Run are unchanged.')
   }
   const download = () => {
     try {
@@ -332,6 +348,23 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
         {cs ? 'Stáhnout JSON scénář' : 'Download scenario JSON'}
       </button>
     </div>
+    {reviewedImport && <div aria-label={kind + ' Lab imported draft review'}>
+      <strong>{cs ? 'Kontrola načteného scénáře' : 'Review imported scenario'}</strong>
+      <p><code>{reviewedImport.file}</code> · <code>{String(reviewedImport.scenario.schema_version)}</code>
+        {' · '}{String(reviewedImport.scenario.scenario_id)}</p>
+      <p className="status">{cs
+        ? 'Převzetí nahradí aktuální pracovní text; uložená Session i historický zdroj zůstanou nedotčeny.'
+        : 'Applying replaces the current local editor text; the saved Session and historical source are unchanged.'}</p>
+      <p>{cs ? 'Změněné cesty při převzetí' : 'Paths that would change'}: {labChangedPaths(
+        (() => { try { return JSON.parse(text) } catch { return null } })(), reviewedImport.scenario
+      ).slice(0, 12).join(', ') || (cs ? 'beze změny' : 'no changes')}</p>
+      <button type="button" disabled={busy} onClick={applyImportedFile}>
+        {cs ? 'Převzít načtený scénář do editoru' : 'Apply imported scenario to editor'}
+      </button>{' '}
+      <button type="button" onClick={() => { setPendingImport(null); setNotice('') }}>
+        {cs ? 'Zrušit import' : 'Cancel import'}
+      </button>
+    </div>}
     <p className="status">{cs ? 'Režim' : 'Source'}: {savedScenario === undefined
       ? (cs ? 'pracovní scénář, bez automatického uložení' : 'scratch scenario, not automatically saved')
       : (cs ? 'uložená Session + místní pracovní kopie' : 'saved Session + local working copy')}

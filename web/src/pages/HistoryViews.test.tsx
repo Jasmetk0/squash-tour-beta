@@ -271,8 +271,8 @@ describe('history list ordering, detail selection, and states', () => {
       api.listRaceSnapshots.mockResolvedValue({ snapshots: [] })
       renderWithRoute(<SnapshotsPage mode="ranking" />, `/runs/run-a/snapshots/ranking?selectedSequence=${encodeURIComponent(invalidSequence)}`)
       const list = await screen.findByRole('list', { name: 'Ranking snapshots list' })
-      await waitFor(() => expect(within(list).getByRole('button', { name: /4\\. WEEK/i })).toHaveClass('is-selected'))
-      expect(within(list).getByRole('button', { name: /3\\. WEEK/i })).not.toHaveClass('is-selected')
+      await waitFor(() => expect(within(list).getByRole('button', { name: /4\. WEEK/i })).toHaveClass('is-selected'))
+      expect(within(list).getByRole('button', { name: /3\. WEEK/i })).not.toHaveClass('is-selected')
       expect(await screen.findByText(/snapshot-4/)).toBeInTheDocument()
       expect(api.listRankingSnapshots).toHaveBeenCalledWith('run-a')
     }

@@ -159,7 +159,7 @@ describe('Lab scenario authoring boundaries', () => {
   })
 
 
-  it('loads a valid file into the scratch buffer without triggering an implicit Save or Run', async () => {
+  it('stages a valid file for review, then applies only to the draft after an explicit click', async () => {
     const save = vi.fn(), run = vi.fn()
     function Harness() {
       const [text, setText] = useState(JSON.stringify(match))
@@ -173,11 +173,61 @@ describe('Lab scenario authoring boundaries', () => {
     const incoming = {...match, seed: 210, source_reference: 'new-saved-copy'}
     const file = new File([JSON.stringify(incoming)], 'importable.json', {type: 'application/json'})
     Object.defineProperty(file, 'text', {value: () => Promise.resolve(JSON.stringify(incoming))})
-    await userEvent.setup().upload(screen.getByLabelText('match Lab JSON file'), file)
+    const user = userEvent.setup()
+    await user.upload(screen.getByLabelText('match Lab JSON file'), file)
+    expect(await screen.findByText('File ready for review. Editor, Session and Run are unchanged.')).toBeInTheDocument()
+    expect(JSON.parse(screen.getByTestId('draft').textContent ?? '')).toEqual(match)
+    const review = screen.getByLabelText('match Lab imported draft review')
+    expect(review).toHaveTextContent('new-saved-copy')
+    expect(review).toHaveTextContent('seed')
+    await user.click(screen.getByRole('button', {name: 'Apply imported scenario to editor'}))
     await waitFor(() => expect(JSON.parse(screen.getByTestId('draft').textContent ?? '')).toEqual(incoming))
-    expect(await screen.findByText('Loaded into the editor only. No Session or Run was changed.')).toBeInTheDocument()
+    expect(screen.getByText('Draft applied to editor only. Session and Run are unchanged.')).toBeInTheDocument()
     expect(save).not.toHaveBeenCalled()
     expect(run).not.toHaveBeenCalled()
+  })
+
+
+  it('canceling a staged file preserves the current editor and the saved baseline', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(match))
+      return <><LabScenarioAuthoring kind="match" text={text} onChange={setText}
+        selection="saved-1" revision={0} jsonLabel="Match Lab scenario JSON"
+        savedScenario={match} savedName="Stored" sessionName="Stored" />
+        <output data-testid="draft">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    const incoming = {...match, seed: 500}
+    const file = new File([JSON.stringify(incoming)], 'replace.json', {type: 'application/json'})
+    Object.defineProperty(file, 'text', {value: () => Promise.resolve(JSON.stringify(incoming))})
+    await user.upload(screen.getByLabelText('match Lab JSON file'), file)
+    expect(await screen.findByLabelText('match Lab imported draft review')).toBeInTheDocument()
+    expect(screen.getByLabelText('match Lab unsaved changes')).toHaveTextContent('No local changes')
+    await user.click(screen.getByRole('button', {name: 'Cancel import'}))
+    expect(screen.queryByLabelText('match Lab imported draft review')).not.toBeInTheDocument()
+    expect(JSON.parse(screen.getByTestId('draft').textContent ?? '')).toEqual(match)
+  })
+
+  it('discarding a staged import on editor change prevents an old proposal from appearing again', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(match))
+      const [selection, setSelection] = useState('one')
+      return <><LabScenarioAuthoring kind="match" text={text} onChange={setText}
+        selection={selection} revision={0} jsonLabel="Match Lab scenario JSON" />
+        <button type="button" onClick={() => setSelection('two')}>Switch Session</button>
+        <button type="button" onClick={() => setSelection('one')}>Back to original</button></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    const file = new File([JSON.stringify(match)], 'staged.json', {type: 'application/json'})
+    Object.defineProperty(file, 'text', {value: () => Promise.resolve(JSON.stringify(match))})
+    await user.upload(screen.getByLabelText('match Lab JSON file'), file)
+    expect(await screen.findByLabelText('match Lab imported draft review')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', {name: 'Switch Session'}))
+    expect(screen.queryByLabelText('match Lab imported draft review')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', {name: 'Back to original'}))
+    expect(screen.queryByLabelText('match Lab imported draft review')).not.toBeInTheDocument()
   })
 
   it('shows the exact changed paths before an explicit saved-Session operation', () => {

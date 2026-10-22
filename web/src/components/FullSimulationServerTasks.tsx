@@ -17,7 +17,7 @@ const copy={
   resume:'Explicitly resume server task',recover:'Explicitly recover server task',retry:'Retry same request',cancel:'Cancel retry and refresh',
   manual:'Operator action required. Resolve the checkpoint in Run Admin, then explicitly continue this task. Save is manual.',
   health:'Last worker heartbeat',recent:'Recently observed; work may be blocked',stale:'Stale; healthy execution is unconfirmed',inactive:'No valid worker ownership',
-  checkpoint:'Current operator checkpoint',lastCheckpoint:'Last recorded checkpoint (not a current blocker)',calendarPrep:'Review this season’s Calendar in Run Management',calendarPrepNote:'Review the actual blockers. Calendar source authoring, an explicit Run/Branch copy and Save are separate actions; never assume a missing Calendar means an empty week.',driverDetail:'Driver evidence',blockers:'Recorded blockers',currentBlockers:'Current blockers',open:'Open exact Run / Branch',original:'Original command',detail:'Stored terminal summary',
+  checkpoint:'Current operator checkpoint',lastCheckpoint:'Last recorded checkpoint (not a current blocker)',pauseCheckpoint:'Current safe-pause checkpoint (not an operator blocker)',calendarPrep:'Review this season’s Calendar in Run Management',calendarPrepNote:'Review the actual blockers. Calendar source authoring, an explicit Run/Branch copy and Save are separate actions; never assume a missing Calendar means an empty week.',driverDetail:'Driver evidence',blockers:'Recorded blockers',currentBlockers:'Current blockers',open:'Open exact Run / Branch',original:'Original command',detail:'Stored terminal summary',
   ownership_unverified:'Another server instance owns the lease; inspect heartbeat and wait for release or expiry',queued:'Queued',active:'Executing on server',pause_requested:'Pausing at safe boundary',paused:'Safely paused',awaiting_operator:'Waiting for operator',
   stopped:'Stopped',target_reached:'Target reached',complete:'Complete',failed:'Failed; inspect before recovery',recoverable:'Interrupted; explicit recovery required',
   measured:'Stored Branch receipts in current week',slots:'Completed match slots',groups:'Committed match groups',advanced:'Week transitions since task start',
@@ -30,7 +30,7 @@ const copy={
   resume:'Výslovně pokračovat v serverové úloze',recover:'Výslovně obnovit serverovou úlohu',retry:'Zopakovat stejný požadavek',cancel:'Zrušit opakování a obnovit údaje',
   manual:'Je nutná akce operátora. Vyřešte checkpoint ve správě Runu a pak výslovně pokračujte v této úloze. Save zůstává ruční.',
   health:'Poslední odezva workeru',recent:'Nedávno zaznamenána; práce může být blokovaná',stale:'Zastaralá; zdravý běh není potvrzen',inactive:'Bez platného vlastnictví workeru',
-  checkpoint:'Aktuální checkpoint operátora',lastCheckpoint:'Poslední zaznamenaný checkpoint (není aktuální překážkou)',calendarPrep:'Prověřit kalendář aktuální sezony ve správě Runu',calendarPrepNote:'Řiďte se skutečnými blokacemi. Vytvoření zdrojového kalendáře, výslovné zkopírování do Runu/větve a Save jsou oddělené kroky; chybějící kalendář neznamená prázdný týden.',driverDetail:'Podklady serverového průchodu',blockers:'Zaznamenané překážky',currentBlockers:'Aktuální překážky',open:'Otevřít přesný Run / větev',original:'Původní příkaz',detail:'Uložený závěrečný souhrn',
+  checkpoint:'Aktuální checkpoint operátora',lastCheckpoint:'Poslední zaznamenaný checkpoint (není aktuální překážkou)',pauseCheckpoint:'Aktuální checkpoint bezpečného pozastavení (nejde o blokaci operátora)',calendarPrep:'Prověřit kalendář aktuální sezony ve správě Runu',calendarPrepNote:'Řiďte se skutečnými blokacemi. Vytvoření zdrojového kalendáře, výslovné zkopírování do Runu/větve a Save jsou oddělené kroky; chybějící kalendář neznamená prázdný týden.',driverDetail:'Podklady serverového průchodu',blockers:'Zaznamenané překážky',currentBlockers:'Aktuální překážky',open:'Otevřít přesný Run / větev',original:'Původní příkaz',detail:'Uložený závěrečný souhrn',
   ownership_unverified:'Lease vlastní jiná instance serveru; zkontrolujte odezvu a vyčkejte na uvolnění nebo expiraci',queued:'Ve frontě',active:'Běží na serveru',pause_requested:'Pozastavuji na bezpečné hranici',paused:'Bezpečně pozastaveno',awaiting_operator:'Čeká na operátora',
   stopped:'Ukončeno',target_reached:'Cíl dosažen',complete:'Dokončeno',failed:'Chyba; před obnovou zkontrolujte stav',recoverable:'Přerušeno; nutná výslovná obnova',
   measured:'Uložené výsledkové záznamy větve v aktuálním týdnu',slots:'Dokončené zápasové sloty',groups:'Potvrzené zápasové skupiny',advanced:'Týdenních přechodů od začátku úlohy',
@@ -106,7 +106,10 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
  const {language}=useLanguage();const t=copy[language];const client=useQueryClient()
  const [operator,setOperator]=useState('');const [reason,setReason]=useState('');const [pending,setPending]=useState<{target:ServerTask;body:ContinueTask}|null>(null)
  const action=task.state==='recoverable'||task.state==='failed'?'recover':'resume'
- const currentCheckpoint=task.state==='awaiting_operator'||task.state==='paused'?task.checkpoint:null
+ // A paused task can retain historical checkpoint evidence. Only operator_paused
+ // is itself the current pause boundary; an older blocker is not current.
+ const currentCheckpoint=task.state==='awaiting_operator'?task.checkpoint:null
+ const safePauseCheckpoint=task.state==='paused'&&task.checkpoint==='operator_paused'?task.checkpoint:null
  const requiresNewWeekReview=task.state==='awaiting_operator'&&currentCheckpoint==='week_schedule_review_required'
  const driver=storedDriverEvidence(task)
  const calendarHandoff=taskCalendarHandoff(task)
@@ -134,7 +137,8 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
   {task.progress_evidence.weeks_advanced_since_start!==null && <p>{t.advanced}: {task.progress_evidence.weeks_advanced_since_start}</p>}
   {task.progress_evidence.kind==='live_branch' && <p>{t.slots}: {task.progress_evidence.completed_slot_receipts_this_week} · {t.groups}: {task.progress_evidence.committed_group_receipts_this_week}</p>}
   {currentCheckpoint && <p>{t.checkpoint}: <code>{currentCheckpoint}</code></p>}
-  {task.checkpoint&&!currentCheckpoint && <details><summary>{t.lastCheckpoint}</summary><code>{task.checkpoint}</code></details>}
+  {safePauseCheckpoint && <p>{t.pauseCheckpoint}: <code>{safePauseCheckpoint}</code></p>}
+  {task.checkpoint&&!currentCheckpoint&&!safePauseCheckpoint && <details><summary>{t.lastCheckpoint}</summary><code>{task.checkpoint}</code></details>}
   {driver && (driver.detail||driver.blockers.length>0||driver.checkpoint) && <details open={isCurrentDriverBlocker}>
    <summary>{t.driverDetail}{isCurrentDriverBlocker?' · '+t.currentBlockers:''}</summary>
    {driver.detail&&<p>{driver.detail}</p>}
@@ -178,6 +182,6 @@ export function FullSimulationServerTasks({runId,branchId}:{runId?:string;branch
   {query.error && <p role="alert">{formatApiError(query.error)}</p>}
   {query.isSuccess&&Boolean(tasks?.length)&&<p role="status">{t.needsCount}: {needingAction} · {t.liveCount}: {liveOrQueued} · {t.otherCount}: {otherStates}</p>}
   {query.isSuccess&&focusedTaskId&&!query.data.some(task=>task.task_id===focusedTaskId)&&<p role="alert">{t.missing} <code>{focusedTaskId}</code></p>}
-  {query.isSuccess && (tasks?.length?<ul className="server-simulation-tasks__list">{tasks.map(task=><TaskCard key={task.task_id} task={task} focused={task.task_id===focusedTaskId}/>)}</ul>:<p>{t.empty}</p>)}
+  {query.isSuccess && (tasks?.length?<ul className="server-simulation-tasks__list">{tasks.map(task=><TaskCard key={JSON.stringify([task.run_id,task.branch_id,task.task_id])} task={task} focused={task.task_id===focusedTaskId}/>)}</ul>:<p>{t.empty}</p>)}
  </section>
 }

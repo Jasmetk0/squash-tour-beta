@@ -147,7 +147,7 @@ function explain(error: unknown, cs: boolean): string {
   return (messages[key] ?? messages.file)[cs ? 1 : 0]
 }
 
-export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, savedName, sessionName, selection, revision, busy = false }: {
+export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, savedName, sessionName, selection, revision, jsonLabel, busy = false }: {
   kind: LabKind
   text: string
   onChange: (value: string) => void
@@ -156,11 +156,12 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
   sessionName?: string
   selection: string
   revision: number
+  jsonLabel: string
   busy?: boolean
 }): JSX.Element {
   const { language } = useLanguage()
   const cs = language === 'cs'
-  const [mode, setMode] = useState<'form' | 'json'>('form')
+  const [mode, setMode] = useState<'form' | 'json'>('json')
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const identity = selection + ':' + revision + ':' + text
@@ -251,7 +252,7 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
         {!healthLocked && <span className="status"> {cs ? 'Nové týdny mají 0 soutěžních zápasů.' : 'New weeks explicitly start with 0 competitive matches.'}</span>}
       </label>}
     </div> : <p role="alert">{cs ? 'Neplatný nebo nepodporovaný scénář; opravte jej v pokročilém JSON editoru.' : 'Invalid or unsupported scenario; repair it in Advanced JSON.'}</p>)}
-    {mode === 'json' && <textarea aria-label={kind + ' Lab advanced JSON'} rows={24}
+    {mode === 'json' && <textarea aria-label={jsonLabel} rows={24}
       style={{ width: '100%', fontFamily: 'monospace' }} disabled={busy} value={text}
       onChange={event => edit(event.target.value)} />}
     <div>

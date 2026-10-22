@@ -155,7 +155,7 @@ describe('RolloverPage', () => {
       expect(screen.getByRole('alert')).toHaveTextContent(
         'Enter a positive whole-number season using decimal digits only.'
       )
-      expect(screen.getByRole('link', { name: 'Open rollover season detail' }))
+      expect(screen.getByRole('link', { name: 'Open selected rollover season detail' }))
         .toHaveAttribute('href', '/runs/run-a/rollover/2028')
       expect(api.getRolloverBySeason).not.toHaveBeenCalled()
     }
@@ -172,6 +172,8 @@ describe('RolloverPage', () => {
       .toHaveAttribute('href', '/runs/run%20x%2Fy')
     expect(screen.getByRole('link', { name: 'Diagnostics' }))
       .toHaveAttribute('href', '/runs/run%20x%2Fy/diagnostics')
+    expect(screen.getByRole('link', { name: 'Open selected rollover season detail' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/rollover/2030')
     expect(screen.getByRole('link', { name: 'Open rollover season detail' }))
       .toHaveAttribute('href', '/runs/run%20x%2Fy/rollover/2028')
     expect(screen.getByRole('link', { name: 'Inspect latest rollover season detail' }))

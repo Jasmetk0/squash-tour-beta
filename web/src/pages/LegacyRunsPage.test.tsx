@@ -158,6 +158,31 @@ describe('RunsPage', () => {
     expect(screen.getByRole('link', { name: 'Season Calendar' })).toHaveAttribute('href', '/admin/runs/run-1/calendar')
   })
 
+  it('encodes the exact legacy Run ID throughout selected diagnostics links and open action', async () => {
+    api.listRuns.mockResolvedValueOnce({ runs: [{
+      run_id: 'run x/y?', season: 2029, seed: 5,
+      progress: { next_event_index: 2, total_events: 24, completed_event_count: 1 },
+      source_type: 'rollover_bootstrap', parent_run_id: 'parent', child_run_count: 1
+    }] })
+    api.getRun.mockResolvedValueOnce({ run: { run_id: 'run x/y?' } })
+    renderWithRoute(<LegacyRunsPage />, '/admin/legacy-runs')
+
+    expect(await screen.findByRole('button', { name: 'Selected run x/y?' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Run Detail' }))
+      .toHaveAttribute('href', '/admin/runs/run%20x%2Fy%3F')
+    expect(screen.getByRole('link', { name: 'Diagnostics' }))
+      .toHaveAttribute('href', '/admin/runs/run%20x%2Fy%3F/diagnostics')
+    expect(screen.getByRole('link', { name: 'Season Calendar' }))
+      .toHaveAttribute('href', '/admin/runs/run%20x%2Fy%3F/calendar')
+    expect(screen.getByRole('link', { name: 'Season Chain' }))
+      .toHaveAttribute('href', '/admin/runs/run%20x%2Fy%3F/season-chain')
+    const panel = (await screen.findByRole('heading', { name: 'Selected run detail' })).closest('article')!
+    await userEvent.click(within(panel).getByRole('button', { name: 'Open / continue' }))
+    await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('run x/y?'))
+    expect(navigateMock).toHaveBeenCalledWith('/admin/runs/run%20x%2Fy%3F')
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run x/y?')
+  })
+
   it('shows remembered-run marker and keeps open/continue behavior', async () => {
     localStorage.setItem('beta_engine:last_run_id', 'run-3')
     renderWithRoute(<LegacyRunsPage />, '/admin/runs')

@@ -4935,7 +4935,7 @@ export function AuthoritativeSimulationPanel({
                   ) : null}
                 </>
               ) : null}
-              <StartServerTask key={fullSimulationCommandId} runId={runId} branchId={branchId}
+              <StartServerTask key={`${runId}:${branchId}:${fullSimulationCommandId}`} runId={runId} branchId={branchId}
                 disabled={!confirmed || actionPending || serverTaskParents.has(fullSimulationCommandId)}
                 command={{command_id:fullSimulationCommandId,operator_label:fullSimulationOperator.trim(),audit_reason:fullSimulationReason.trim(),
                   expected_start_week:fullSimulationReview.start_week,expected_position_fingerprint:fullSimulationReview.expected_position_fingerprint,

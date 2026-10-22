@@ -345,6 +345,9 @@ describe('server task UI (mock HTTP)',()=>{
     : 'Select a valid Run and Branch')
   expect(screen.queryByText('task')).toBeNull()
   expect(screen.queryByText(language==='cs'?'Načítám serverové úlohy…':'Loading server tasks…')).toBeNull()
+  const refresh=screen.getByRole('button',{name:language==='cs'?'Obnovit údaje úloh':'Refresh task evidence'})
+  expect(refresh).toBeDisabled()
+  fireEvent.click(refresh)
   expect(api.getServerTasks).not.toHaveBeenCalled()
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
@@ -352,6 +355,7 @@ describe('server task UI (mock HTTP)',()=>{
   api.getServerTasks.mockResolvedValue([taskExample()])
   open('en',<FullSimulationServerTasks runId="" branchId=""/>)
   expect(screen.getByRole('alert')).toHaveTextContent('No global inventory was requested')
+  expect(screen.getByRole('button',{name:'Refresh task evidence'})).toBeDisabled()
   expect(api.getServerTasks).not.toHaveBeenCalled()
  })
  it('preserves the intentional unscoped Global Task Center inventory request',async()=>{

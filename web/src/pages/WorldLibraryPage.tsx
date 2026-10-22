@@ -1,4 +1,4 @@
-import type { FormEvent, ReactNode } from 'react'
+import type { FormEvent, MouseEvent, ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -716,7 +716,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
   const cs = language === 'cs'
   const [geographyDirty, setGeographyDirty] = useState(false)
   const [cloneDirty, setCloneDirty] = useState(false)
-  const confirmNavigate = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  const confirmNavigate = (event: MouseEvent<HTMLAnchorElement>) => {
     if ((geographyDirty || cloneDirty) && !window.confirm(cs ? 'Zahodit neuložené změny World Package?' : 'Discard unsaved World Package changes?')) event.preventDefault()
   }
   const packageQuery = useQuery({

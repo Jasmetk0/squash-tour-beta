@@ -1,7 +1,7 @@
 import { BoundaryDescription } from './FullSimulationBoundaryTargets'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { continueServerTask, getServerTasks, startServerTask } from '../api/fullSimulationTasks'
 import type { ContinueTask, ServerTask } from '../api/fullSimulationTasks'
 import type { AuthoritativeFullSimulationCommandPayload } from '../api/types'
@@ -22,7 +22,7 @@ const copy={
   stopped:'Stopped',target_reached:'Target reached',complete:'Complete',failed:'Failed; inspect before recovery',recoverable:'Interrupted; explicit recovery required',
   measured:'Stored Branch receipts in current week',slots:'Completed match slots',groups:'Committed match groups',advanced:'Week transitions since task start',
   frozen:'Historical end week, frozen at termination',unavailable:'Historical end week unavailable; not inferred from the current Branch',
-  desired:'Requested task state',lease:'Lease expiry (not proof of a live worker)',contextChanged:'The reviewed request belongs to a different Run, Branch or command. Return to that context to retry; this screen will not redirect it.'},
+  desired:'Requested task state',lease:'Lease expiry (not proof of a live worker)',selected:'Task selected from the link',missing:'The linked task was not found in this Run / Branch.',contextChanged:'The reviewed request belongs to a different Run, Branch or command. Return to that context to retry; this screen will not redirect it.'},
  cs:{title:'Serverové simulační úlohy',start:'Spustit jako serverovou úlohu',ack:'Serverová úloha přijata',refresh:'Obnovit údaje úloh',
   truth:'Server pokračuje i po zavření této stránky. Save a sezonní schválení zůstávají ruční. Po restartu serveru úlohu zkontrolujte a výslovně obnovte.',
   loading:'Načítám serverové úlohy…',empty:'V tomto kontextu nejsou serverové úlohy.',operator:'Operátor úlohy',reason:'Důvod akce úlohy',
@@ -34,7 +34,7 @@ const copy={
   stopped:'Ukončeno',target_reached:'Cíl dosažen',complete:'Dokončeno',failed:'Chyba; před obnovou zkontrolujte stav',recoverable:'Přerušeno; nutná výslovná obnova',
   measured:'Uložené výsledkové záznamy větve v aktuálním týdnu',slots:'Dokončené zápasové sloty',groups:'Potvrzené zápasové skupiny',advanced:'Týdenních přechodů od začátku úlohy',
   frozen:'Historický koncový týden uložený při ukončení',unavailable:'Historický koncový týden není dostupný; aktuální stav větve jej nenahrazuje',
-  desired:'Požadovaný stav úlohy',lease:'Konec platnosti lease (nikoli důkaz živého workeru)',contextChanged:'Schválený požadavek patří jinému Runu, větvi nebo příkazu. Pro opakování se vraťte do původního kontextu; tato obrazovka jej nepřesměruje.'}
+  desired:'Požadovaný stav úlohy',lease:'Konec platnosti lease (nikoli důkaz živého workeru)',selected:'Úloha vybraná z odkazu',missing:'Odkazovaná úloha nebyla nalezena v tomto Runu / větvi.',contextChanged:'Schválený požadavek patří jinému Runu, větvi nebo příkazu. Pro opakování se vraťte do původního kontextu; tato obrazovka jej nepřesměruje.'}
 } as const
 export function useServerTasks(run?:string,branch?:string,enabled=true){
  return useQuery({queryKey:['server-simulation-tasks',run??null,branch??null],queryFn:()=>getServerTasks(run,branch),retry:false,refetchInterval:2000,enabled})
@@ -100,7 +100,7 @@ export function taskCalendarHandoff(task:ServerTask):string|null{
    !task.current_week)return null
  return `/admin/runs/${encodeURIComponent(task.run_id)}/manage?branch=${encodeURIComponent(task.branch_id)}`
 }
-function TaskCard({task}:{task:ServerTask}){
+function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
  const {language}=useLanguage();const t=copy[language];const client=useQueryClient()
  const [operator,setOperator]=useState('');const [reason,setReason]=useState('');const [pending,setPending]=useState<{target:ServerTask;body:ContinueTask}|null>(null)
  const action=task.state==='recoverable'||task.state==='failed'?'recover':'resume'
@@ -119,7 +119,8 @@ function TaskCard({task}:{task:ServerTask}){
   }
  })
  const terminal=['stopped','target_reached','complete'].includes(task.state)
- return <li className="server-simulation-tasks__item" data-task-id={task.task_id}>
+ return <li className="server-simulation-tasks__item" data-task-id={task.task_id} aria-current={focused?'location':undefined}>
+  {focused&&<p role="status">{t.selected}: <code>{task.task_id}</code></p>}
   <strong>{task.run_name} / {task.branch_name}</strong> · <span>{t[task.state as keyof typeof t]??task.state}</span>
   <p><code>{task.task_id}</code> · {t.original}: <code>{task.parent_command_id}</code></p>
   {task.desired_state!==task.state&&<p>{t.desired}: <code>{task.desired_state}</code></p>}
@@ -160,10 +161,14 @@ function TaskCard({task}:{task:ServerTask}){
 }
 export function FullSimulationServerTasks({runId,branchId}:{runId?:string;branchId?:string}){
  const {language}=useLanguage();const t=copy[language];const query=useServerTasks(runId,branchId)
+ const [searchParams]=useSearchParams()
+ const focusedTaskId=runId&&branchId?searchParams.get('task'):null
+ const tasks=query.data && focusedTaskId?[...query.data].sort((a,b)=>Number(b.task_id===focusedTaskId)-Number(a.task_id===focusedTaskId)):query.data
  return <section className="server-simulation-tasks" aria-label={t.title}><h3>{t.title}</h3><p>{t.truth}</p>
   <button type="button" onClick={()=>void query.refetch()} disabled={query.isFetching}>{t.refresh}</button>
   {query.isPending && <p role="status">{t.loading}</p>}
   {query.error && <p role="alert">{formatApiError(query.error)}</p>}
-  {query.isSuccess && (query.data.length?<ul className="server-simulation-tasks__list">{query.data.map(task=><TaskCard key={task.task_id} task={task}/>)}</ul>:<p>{t.empty}</p>)}
+  {query.isSuccess&&focusedTaskId&&!query.data.some(task=>task.task_id===focusedTaskId)&&<p role="alert">{t.missing} <code>{focusedTaskId}</code></p>}
+  {query.isSuccess && (tasks?.length?<ul className="server-simulation-tasks__list">{tasks.map(task=><TaskCard key={task.task_id} task={task} focused={task.task_id===focusedTaskId}/>)}</ul>:<p>{t.empty}</p>)}
  </section>
 }

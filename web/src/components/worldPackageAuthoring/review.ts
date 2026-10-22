@@ -82,3 +82,40 @@ export function isFingerprintConflict(error: unknown): boolean {
   return typeof error === 'object' && error !== null &&
     'status' in error && (error as { status?: unknown }).status === 409
 }
+
+/** The server's TimezoneArea registry contract: nonempty circular ring,
+ * unique uppercase codes and contiguous positions, with no surrounding whitespace. */
+export type TimezoneAreaDraft = { code: string; name: string }
+export type AuthoredTimezoneArea = TimezoneAreaDraft & { position: number }
+
+export function validateTimezoneAreas(rows: TimezoneAreaDraft[], cs: boolean): AuthoredTimezoneArea[] {
+  if (!rows.length) throw new Error(cs ? 'Je nutné zadat alespoň jednu časovou oblast.' : 'At least one Timezone Area is required.')
+  const codes = new Set<string>()
+  return rows.map((row, position) => {
+    const label = cs ? `Časová oblast ${position + 1}` : `Timezone Area ${position + 1}`
+    if (!row.code || !/^[A-Z0-9][A-Z0-9_-]*$/.test(row.code)) {
+      throw new Error(cs ? `${label}: kód musí začínat velkým písmenem nebo číslicí a dále obsahovat jen A–Z, čísla, _ a -.` :
+        `${label}: code must start with an uppercase letter or digit and contain only A–Z, digits, _ and -.`)
+    }
+    if (codes.has(row.code)) throw new Error(cs ? `Duplicitní kód časové oblasti: ${row.code}.` : `Duplicate Timezone Area code: ${row.code}.`)
+    codes.add(row.code)
+    if (!row.name.trim()) throw new Error(cs ? `${label}: název je povinný.` : `${label}: name is required.`)
+    if (row.name !== row.name.trim()) throw new Error(cs ? `${label}: název nesmí mít krajní mezery.` : `${label}: name must not have surrounding whitespace.`)
+    return { code: row.code, name: row.name, position }
+  })
+}
+
+/** Position-specific diff also shows reorder operations. Positions are zero-based in the API. */
+export function timezoneAreaChanges(before: AuthoredTimezoneArea[], after: AuthoredTimezoneArea[]): ReviewChange[] {
+  const byPosition = (items: AuthoredTimezoneArea[]) => new Map(items.map(item => [item.position, item]))
+  const existing = byPosition(before), proposed = byPosition(after)
+  return Array.from({ length: Math.max(before.length, after.length) }, (_, position) => {
+    const old = existing.get(position), next = proposed.get(position)
+    if (old?.code === next?.code && old?.name === next?.name) return null
+    return {
+      field: `Timezone Area ${position + 1}`,
+      before: old ? `${old.code} — ${old.name}` : '—',
+      after: next ? `${next.code} — ${next.name}` : '—'
+    }
+  }).filter((entry): entry is ReviewChange => entry !== null)
+}

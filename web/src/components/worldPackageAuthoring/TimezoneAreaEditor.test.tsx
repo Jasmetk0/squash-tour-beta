@@ -13,11 +13,13 @@ vi.mock('../../api/client', async original => ({ ...(await original<object>()), 
 vi.mock('../../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }))
 
 function pkg(id = 'custom', editable = true, fingerprint = 'fp-1'): WorldPackage {
-  return { world_id: id, name: id, description: null, type: editable ? 'custom' : 'official',
+  return { world_id: id, name: id, description: '', type: editable ? 'custom' : 'official',
     source: editable ? 'custom_config' : 'built_in', status:'active', editable,
     deletable:editable,archivable:editable,version:'v1',fingerprint,
     country_count:2,continent_count:1,region_count:1,travel_region_count:1,
-    timezone_area_count:2,used_by_run_count:0,validation_status:'valid' }
+    timezone_area_count:2,used_by_run_count:0,validation_status:'valid',
+    storage: {package_root_path:'',world_metadata_path:'',countries_root_path:'',countries_index_path:'',
+      geography_root_path:'',continents_path:'',regions_path:'',travel_regions_path:'',timezone_areas_path:''} }
 }
 function geography(worldId = 'custom'): WorldPackageGeography {
   return {world_id: worldId,continents:[],regions:[],travel_regions:[],

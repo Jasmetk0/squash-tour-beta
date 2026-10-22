@@ -33,11 +33,13 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
   const [error, setError] = useState<unknown>(null)
   const [success, setSuccess] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [reloadRequired, setReloadRequired] = useState(false)
   const editable = pkg.type === 'custom' && pkg.source === 'custom_config' && pkg.editable &&
     geography.world_id === pkg.world_id
   const currentDraft = areas.map((area, position) => ({ ...area, position }))
   const dirty = timezoneAreaChanges(snapshot.areas, currentDraft).length > 0
   const stale = snapshot.fingerprint !== pkg.fingerprint || snapshot.worldId !== pkg.world_id
+  const needsReload = stale || reloadRequired || isFingerprintConflict(error)
 
   useEffect(() => {
     onDirtyChange?.(dirty)
@@ -64,6 +66,7 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
       ])
       if (routeRef.current !== command.worldId) return
       if (response.world_id !== command.worldId) {
+        setReloadRequired(true)
         setError(new Error(cs ? 'Odpověď patří jinému World Package.' : 'Response belongs to another World Package.'))
         return
       }
@@ -73,6 +76,7 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
         refreshed.world_id === command.worldId && freshGeography.world_id === command.worldId &&
         JSON.stringify(freshGeography.timezone_areas) === JSON.stringify(response.timezone_areas))
       if (!coherent || !refreshed || !freshGeography) {
+        setReloadRequired(true)
         setReview(null)
         setError(new Error(cs
           ? 'Zápis byl potvrzen, ale aktuální verzi časových oblastí nelze bezpečně spojit s fingerprintem. Načtěte data znovu.'
@@ -83,12 +87,16 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
       setSnapshot(saved)
       setAreas(copyAreas(saved.areas))
       setReview(null)
+      setReloadRequired(false)
       setError(null)
       setSuccess(cs ? 'Časové oblasti byly uloženy. Další změny vyžadují novou kontrolu.' :
         'Timezone Areas saved. Further changes require a new review.')
     },
     onError: (failure, command) => {
-      if (routeRef.current === command.worldId) { setError(failure); setSuccess('') }
+      if (routeRef.current === command.worldId) {
+        if (isFingerprintConflict(failure)) setReloadRequired(true)
+        setError(failure); setSuccess('')
+      }
     }
   })
 
@@ -110,6 +118,7 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
       setSnapshot({worldId, fingerprint: freshPackage.fingerprint, areas: freshGeography.timezone_areas})
       setAreas(copyAreas(freshGeography.timezone_areas))
       setReview(null)
+      setReloadRequired(false)
       setError(null)
       setSuccess('')
     } catch (failure) {
@@ -121,7 +130,7 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
 
   function prepareReview(): void {
     if (!editable || mutation.isPending || refreshing) return
-    if (stale) { setError({status:409}); return }
+    if (needsReload) { setReloadRequired(true); setError({status:409}); return }
     try {
       const parsed = validateTimezoneAreas(areas, cs)
       const changes = timezoneAreaChanges(snapshot.areas, parsed)
@@ -131,8 +140,9 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
   }
 
   function confirm(): void {
-    if (!review || !editable || mutation.isPending || refreshing) return
+    if (!review || !editable || mutation.isPending || refreshing || needsReload) return
     if (review.command.worldId !== pkg.world_id || review.command.fingerprint !== pkg.fingerprint) {
+      setReloadRequired(true)
       setError({status:409})
       return
     }
@@ -171,7 +181,7 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
           'Conflict: no write was retried. Reload current data and review the changes again.')
         : formatApiError(error)}
     </p>}
-    {(isFingerprintConflict(error) || stale) && <button type="button" disabled={busy} onClick={() => void reload()}>
+    {needsReload && <button type="button" disabled={busy} onClick={() => void reload()}>
       {refreshing ? (cs ? 'Načítám…' : 'Reloading…') : (cs ? 'Načíst aktuální data' : 'Reload current data')}
     </button>}
     {review ? <div aria-label="Review Timezone Areas">
@@ -186,11 +196,11 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
             <td>{change.field}</td><td>{change.before}</td><td>{change.after}</td>
           </tr>)}</tbody></table>}
       <p><button type="button" disabled={busy} onClick={() => setReview(null)}>{cs ? 'Zpět k úpravě' : 'Back to editing'}</button>{' '}
-        <button type="button" disabled={busy || stale || review.changes.length === 0} onClick={confirm}>
+        <button type="button" disabled={busy || needsReload || review.changes.length === 0} onClick={confirm}>
           {busy ? (cs ? 'Ukládám…' : 'Saving…') : (cs ? 'Potvrdit a uložit' : 'Confirm and save')}
         </button></p>
     </div> : <>
-      <fieldset disabled={busy || stale}><legend>{cs ? 'Upravit časové oblasti' : 'Edit Timezone Areas'}</legend>
+      <fieldset disabled={busy || needsReload}><legend>{cs ? 'Upravit časové oblasti' : 'Edit Timezone Areas'}</legend>
         <table><thead><tr><th>{cs ? 'Pozice' : 'Position'}</th><th>{cs ? 'Kód' : 'Code'}</th><th>{cs ? 'Název' : 'Name'}</th><th>{cs ? 'Akce' : 'Action'}</th></tr></thead>
           <tbody>{areas.map((area, index) => <tr key={index}>
             <td>{index + 1}</td>

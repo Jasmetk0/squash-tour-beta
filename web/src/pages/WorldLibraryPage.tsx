@@ -749,41 +749,158 @@ export function WorldLibraryDetailPage(): JSX.Element {
 }
 
 export function WorldPackageCountryCreatePage(): JSX.Element {
-  const { worldId = '' } = useParams(); const navigate = useNavigate(); const queryClient = useQueryClient()
-  const packageQuery = useQuery({ queryKey: ['world-package', worldId], queryFn: () => getWorldPackage(worldId), retry: false })
-  const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), retry: false })
+  const { worldId = '' } = useParams()
+  const navigate = useNavigate()
+  const { language } = useLanguage()
+  const cs = language === 'cs'
+  const queryClient = useQueryClient()
+  const activeWorld = useRef(worldId)
+  activeWorld.current = worldId
+  const packageQuery = useQuery({ queryKey: ['world-package', worldId], queryFn: () => getWorldPackage(worldId), enabled: Boolean(worldId), retry: false })
+  const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), enabled: Boolean(worldId), retry: false })
   const [identity, setIdentity] = useState({ code: '', name: '', notes: '', area: '' })
-  const [region, setRegion] = useState(''); const [travelRegion, setTravelRegion] = useState(''); const [timezoneArea, setTimezoneArea] = useState('')
-  const [values, setValues] = useState({ squash_popularity: '5.5', squash_access: '5.5', development_quality: '5.5', competition_quality: '5.5', elite_support: '5.5', squash_tradition: '5.5', court_count: '' })
+  const [region, setRegion] = useState('')
+  const [travelRegion, setTravelRegion] = useState('')
+  const [timezoneArea, setTimezoneArea] = useState('')
+  const [values, setValues] = useState({ squash_popularity: '5.5', squash_access: '5.5', development_quality: '5.5', competition_quality: '5.5', elite_support: '5.5', squash_tradition: '5.5' })
   const [populations, setPopulations] = useState<Array<PopulationRow & { id: number }>>([{ id: 0, year: '2020', population: '' }])
   const [validationError, setValidationError] = useState('')
-  const mutation = useMutation({ mutationFn: (payload: WorldPackageCountryCreatePayload) => createWorldPackageCountry(worldId, payload), onSuccess: async response => {
-    await Promise.all([queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-packages'] })])
-    navigate(`/admin/world/library/${encodeURIComponent(worldId)}/countries/${response.country_detail.country.code}`)
-  } })
-  const pkg = packageQuery.data; const allowed = pkg?.type === 'custom' && pkg.source === 'custom_config' && pkg.editable
-  const setNumber = (key: keyof typeof values, value: string) => setValues(current => ({...current, [key]: value}))
-  const sortedPopulations = [...populations].sort((a,b) => Number(a.year) - Number(b.year))
-  const submit = (event: FormEvent) => { event.preventDefault(); if (!pkg || !allowed) return
-    const years = populations.map(row => row.year); const duplicate = years.find((year, index) => year !== '' && years.indexOf(year) !== index)
-    if (duplicate) { setValidationError(`Year ${duplicate} is already authored.`); return }
-    if (!years.includes('2020')) { setValidationError('Population year 2020 is required.'); return }
-    setValidationError('')
-    mutation.mutate({ code: identity.code, name: identity.name, notes: identity.notes || null, area_km2: identity.area ? Number(identity.area) : null, region, travel_region: travelRegion || null, timezone_area: timezoneArea || null,
-      rating_scale: 'country_ratings_1_10.v2', squash_popularity: Number(values.squash_popularity), squash_access: Number(values.squash_access), development_quality: Number(values.development_quality), competition_quality: Number(values.competition_quality), elite_support: Number(values.elite_support), squash_tradition: Number(values.squash_tradition), court_count: values.court_count === '' ? null : Number(values.court_count),
-      population_by_year: Object.fromEntries(sortedPopulations.map(row => [row.year, Number(row.population)])), expected_package_fingerprint: pkg.fingerprint }) }
-  if (packageQuery.isLoading || geographyQuery.isLoading) return <p className="status">Loading country form...</p>
-  if (!allowed) return <section className="panel"><p className="error">Countries can only be created in an editable Custom World source.</p></section>
-  return <section className="panel"><p><Link to={`/admin/world/library/${worldId}/countries`}>Back to countries</Link></p><h2>Add country</h2><form onSubmit={submit}>
-    {(validationError || mutation.error) && <p className="error" role="alert">{validationError || formatApiError(mutation.error)}</p>}
-    <fieldset><legend>Identity</legend><label>Code<input required pattern="[A-Z]{3}" maxLength={3} value={identity.code} onChange={e => setIdentity({...identity,code:e.target.value})} /></label><label>Name<input required value={identity.name} onChange={e => setIdentity({...identity,name:e.target.value})} /></label><label>Notes<textarea value={identity.notes} onChange={e => setIdentity({...identity,notes:e.target.value})} /></label><label>Area km²<input type="number" min="1" value={identity.area} onChange={e => setIdentity({...identity,area:e.target.value})} /></label></fieldset>
-    <fieldset><legend>Geography</legend><label>Region<select required value={region} onChange={e => setRegion(e.target.value)}><option value="">Select region</option>{geographyQuery.data?.regions.map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label><label>Travel Region<select value={travelRegion} onChange={e=>setTravelRegion(e.target.value)}><option value="">None</option>{geographyQuery.data?.travel_regions.map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label><label>Timezone Area<select value={timezoneArea} onChange={e=>setTimezoneArea(e.target.value)}><option value="">Not assigned</option>{(geographyQuery.data?.timezone_areas ?? []).map(item=><option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label></fieldset>
-    <fieldset><legend>Population</legend>{sortedPopulations.map(row=><div key={row.id}><input aria-label={`Population year ${row.id === 0 ? '2020' : row.id}`} type="number" min="1955" max="2050" required readOnly={row.year==='2020'} value={row.year} onChange={e=>setPopulations(rows=>rows.map(item=>item.id===row.id?{...item,year:e.target.value}:item))}/><input aria-label={`Population value ${row.year || row.id}`} type="number" min="1" required value={row.population} onChange={e=>setPopulations(rows=>rows.map(item=>item.id===row.id?{...item,population:e.target.value}:item))}/>{row.year!=='2020'&&<button type="button" onClick={()=>setPopulations(rows=>rows.filter(item=>item.id!==row.id))}>Remove</button>}</div>)}<button type="button" onClick={()=>setPopulations(rows=>[...rows,{id:Math.max(...rows.map(row=>row.id))+1,year:'',population:''}])}>+ Add authored year</button></fieldset>
-    <fieldset><legend>Squash / Country strength</legend>{Object.entries(values).filter(([key]) => key !== 'court_count').map(([key,value])=><label key={key}>{key.split('_').join(' ')}<input type="number" required min={key==='court_count'?0:1} max={10} step={0.1} value={value} onChange={e=>setNumber(key as keyof typeof values,e.target.value)}/></label>)}</fieldset>
-    <button type="submit" disabled={mutation.isPending}>{mutation.isPending?'Saving…':'Save country'}</button>
-  </form></section>
+  const [requestError, setRequestError] = useState<unknown>(null)
+  const [review, setReview] = useState<{ worldId: string, payload: WorldPackageCountryCreatePayload, changes: ReviewChange[] } | null>(null)
+  useEffect(() => {
+    setIdentity({ code: '', name: '', notes: '', area: '' })
+    setRegion(''); setTravelRegion(''); setTimezoneArea('')
+    setValues({ squash_popularity: '5.5', squash_access: '5.5', development_quality: '5.5', competition_quality: '5.5', elite_support: '5.5', squash_tradition: '5.5' })
+    setPopulations([{ id: 0, year: '2020', population: '' }])
+    setValidationError(''); setRequestError(null); setReview(null)
+  }, [worldId])
+  const dirty = Boolean(identity.code || identity.name || identity.notes || identity.area || region || travelRegion || timezoneArea || populations.some(row => row.population || row.year !== '2020') || review)
+  useUnsavedWorldPackageWarning(dirty)
+  const mutation = useMutation({
+    mutationFn: (command: { worldId: string; payload: WorldPackageCountryCreatePayload }) => createWorldPackageCountry(command.worldId, command.payload),
+    onSuccess: (response, command) => {
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['world-package-countries', command.worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-package', command.worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-package-validation', command.worldId] }),
+        queryClient.invalidateQueries({ queryKey: ['world-packages'] })
+      ])
+      if (activeWorld.current === command.worldId &&
+        response.country_detail.package.world_id === command.worldId &&
+        response.country_detail.country.code === command.payload.code) {
+        navigate(`/admin/world/library/${encodeURIComponent(command.worldId)}/countries/${encodeURIComponent(command.payload.code)}`)
+      }
+    },
+    onError: (error, command) => {
+      if (activeWorld.current === command.worldId) setRequestError(error)
+    }
+  })
+  const pkg = packageQuery.data
+  const allowed = pkg?.world_id === worldId && pkg.type === 'custom' && pkg.source === 'custom_config' && pkg.editable
+  const geography = geographyQuery.data?.world_id === worldId ? geographyQuery.data : undefined
+  const setNumber = (key: keyof typeof values, value: string) => setValues(current => ({ ...current, [key]: value }))
+  const sortedPopulations = [...populations].sort((left, right) => Number(left.year) - Number(right.year))
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    if (!pkg || !allowed || !geography || mutation.isPending) return
+    try {
+      const code = identity.code.trim()
+      if (!/^[A-Z]{3}$/.test(code)) throw new Error(cs ? 'Kód země musí mít přesně tři velká písmena A–Z.' : 'Country code must be exactly three uppercase A–Z letters.')
+      const payload: WorldPackageCountryCreatePayload = {
+        code,
+        name: requiredName(identity.name, cs ? 'Název' : 'Name', cs),
+        notes: identity.notes.trim() ? identity.notes : null,
+        area_km2: parseInteger(identity.area, cs ? 'Plocha' : 'Area', cs, 1, undefined, true),
+        region: requiredName(region, 'Region', cs),
+        travel_region: travelRegion || null, timezone_area: timezoneArea || null,
+        rating_scale: 'country_ratings_1_10.v2',
+        squash_popularity: parseRating(values.squash_popularity, 'Squash Popularity', cs, 'country_ratings_1_10.v2'),
+        squash_access: parseRating(values.squash_access, 'Squash Access', cs, 'country_ratings_1_10.v2'),
+        development_quality: parseRating(values.development_quality, 'Development Quality', cs, 'country_ratings_1_10.v2'),
+        competition_quality: parseRating(values.competition_quality, 'Competition Quality', cs, 'country_ratings_1_10.v2'),
+        elite_support: parseRating(values.elite_support, 'Elite Support', cs, 'country_ratings_1_10.v2'),
+        squash_tradition: parseRating(values.squash_tradition, 'Squash Tradition', cs, 'country_ratings_1_10.v2'),
+        court_count: null,
+        population_by_year: parsePopulations(populations, cs),
+        expected_package_fingerprint: pkg.fingerprint
+      }
+      if (!geography.regions.some(item => item.code === payload.region)) throw new Error(cs ? 'Region není v registru.' : 'Region is not in the geography registry.')
+      if (payload.travel_region && !geography.travel_regions.some(item => item.code === payload.travel_region)) throw new Error(cs ? 'Neznámý cestovní region.' : 'Unknown Travel Region.')
+      if (payload.timezone_area && !geography.timezone_areas.some(item => item.code === payload.timezone_area)) throw new Error(cs ? 'Neznámá časová oblast.' : 'Unknown Timezone Area.')
+      const changes = [
+        ...fieldChanges({}, payload, ['code','name','notes','area_km2','region','travel_region','timezone_area','squash_popularity','squash_access','development_quality','competition_quality','elite_support','squash_tradition']),
+        ...populationChanges({}, payload.population_by_year).map(change => ({...change, field: `Population ${change.field}`}))
+      ]
+      setValidationError(''); setRequestError(null); setReview({ worldId, payload, changes })
+    } catch (error) { setValidationError(formatApiError(error)) }
+  }
+  const save = () => {
+    if (!review || !pkg || !allowed || mutation.isPending) return
+    if (review.worldId !== worldId || review.payload.expected_package_fingerprint !== pkg.fingerprint) {
+      setRequestError({ status: 409, message: 'World Package changed before confirmation.' })
+      return
+    }
+    setRequestError(null)
+    mutation.mutate({ worldId: review.worldId, payload: review.payload })
+  }
+  const reload = async () => {
+    if (!window.confirm(cs ? 'Načíst aktuální balíček a zahodit rozepsanou zemi?' : 'Reload the World Package and discard this draft country?')) return
+    setReview(null); setRequestError(null)
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
+      queryClient.invalidateQueries({ queryKey: ['world-package-geography', worldId] }),
+      queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] })
+    ])
+  }
+  if (packageQuery.isLoading || geographyQuery.isLoading) return <p className="status">{cs ? 'Načítám formulář země…' : 'Loading country form...'}</p>
+  if (packageQuery.error || geographyQuery.error) return <p className="error">{cs ? 'Nepodařilo se načíst podklady formuláře: ' : 'Failed to load country form resources: '}{formatApiError(packageQuery.error ?? geographyQuery.error)}</p>
+  if (!allowed) return <section className="panel"><p className="error">{cs ? 'Země lze vytvářet jen v upravitelné vlastní kopii World Package.' : 'Countries can only be created in an editable Custom World source.'}</p></section>
+  return <section className="panel">
+    <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries`} onClick={event => {
+      if (dirty && !window.confirm(cs ? 'Zahodit novou zemi bez uložení?' : 'Discard this unsaved country?')) event.preventDefault()
+    }}>{cs ? 'Zpět na země' : 'Back to countries'}</Link></p>
+    <h2>{cs ? 'Přidat zemi' : 'Add country'}</h2>
+    {validationError && <p className="error" role="alert">{validationError}</p>}
+    {requestError != null && <p className="error" role="alert">{isFingerprintConflict(requestError)
+      ? (formatApiError(requestError).includes('already exists')
+        ? (cs ? 'Země s tímto kódem již existuje.' : 'A country with this code already exists.')
+        : (cs ? 'Balíček se mezitím změnil. Bez automatického opakování zápisu načtěte aktuální stav a zkontrolujte úpravu znovu.' : 'The package changed. No write was retried: reload current data and review the edit again.'))
+      : formatApiError(requestError)}{' '}
+      {isFingerprintConflict(requestError) && <button type="button" disabled={mutation.isPending} onClick={() => void reload()}>{cs ? 'Načíst aktuální data' : 'Reload current data'}</button>}
+    </p>}
+    {review
+      ? <SectionCard title={cs ? 'Před uložením' : 'Before saving'}>
+          <ConfirmWorldPackageChanges title={cs ? 'Kontrola nové země' : 'Review new country'}
+            worldId={review.worldId} countryCode={review.payload.code} fingerprint={review.payload.expected_package_fingerprint}
+            changes={review.changes} cs={cs} saving={mutation.isPending} onBack={() => setReview(null)} onConfirm={save} />
+        </SectionCard>
+      : <form onSubmit={submit}><fieldset disabled={mutation.isPending}>
+          <fieldset><legend>{cs ? 'Identita' : 'Identity'}</legend>
+            <label>{cs ? 'Kód' : 'Code'}<input required pattern="[A-Z]{3}" maxLength={3} value={identity.code} onChange={event => setIdentity(current => ({...current,code:event.target.value}))} /></label>
+            <label>{cs ? 'Název' : 'Name'}<input required value={identity.name} onChange={event => setIdentity(current => ({...current,name:event.target.value}))} /></label>
+            <label>{cs ? 'Poznámky' : 'Notes'}<textarea value={identity.notes} onChange={event => setIdentity(current => ({...current,notes:event.target.value}))} /></label>
+            <label>{cs ? 'Plocha km²' : 'Area km²'}<input type="number" min="1" step="1" value={identity.area} onChange={event => setIdentity(current => ({...current,area:event.target.value}))} /></label>
+          </fieldset>
+          <fieldset><legend>{cs ? 'Geografie' : 'Geography'}</legend>
+            <label>Region<select required value={region} onChange={event => setRegion(event.target.value)}><option value="">{cs ? 'Vyberte region' : 'Select region'}</option>{geography?.regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
+            <label>Travel Region<select value={travelRegion} onChange={event => setTravelRegion(event.target.value)}><option value="">{cs ? 'Žádný' : 'None'}</option>{geography?.travel_regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
+            <label>Timezone Area<select value={timezoneArea} onChange={event => setTimezoneArea(event.target.value)}><option value="">{cs ? 'Nepřiřazeno' : 'Not assigned'}</option>{geography?.timezone_areas.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
+          </fieldset>
+          <fieldset><legend>{cs ? 'Populace' : 'Population'}</legend>
+            {sortedPopulations.map(row => <div key={row.id}>
+              <input aria-label={`Population year ${row.id === 0 ? '2020' : row.id}`} type="number" min="1955" max="2050" step="1" required readOnly={row.year === '2020'} value={row.year} onChange={event => setPopulations(current => current.map(item => item.id === row.id ? {...item,year:event.target.value} : item))} />
+              <input aria-label={`Population value ${row.year || row.id}`} type="number" min="1" step="1" required value={row.population} onChange={event => setPopulations(current => current.map(item => item.id === row.id ? {...item,population:event.target.value} : item))} />
+              {row.year !== '2020' && <button type="button" onClick={() => setPopulations(current => current.filter(item => item.id !== row.id))}>{cs ? 'Odebrat' : 'Remove'}</button>}
+            </div>)}
+            <button type="button" onClick={() => setPopulations(current => [...current, {id: Math.max(...current.map(row => row.id)) + 1,year:'',population:''}])}>{cs ? '+ Přidat rok' : '+ Add authored year'}</button>
+          </fieldset>
+          <fieldset><legend>{cs ? 'Herní atributy země' : 'Country game attributes'}</legend>
+            {Object.entries(values).map(([key, value]) => <label key={key}>{key.split('_').join(' ')}<input type="number" required min={1} max={10} step={0.1} value={value} onChange={event => setNumber(key as keyof typeof values, event.target.value)} /></label>)}
+          </fieldset>
+          <button type="submit">{cs ? 'Zkontrolovat před uložením' : 'Review before saving'}</button>
+        </fieldset></form>}
+  </section>
 }
-
 
 type CountryWrite = { worldId: string; countryCode: string; payload: WorldPackageCountryUpdatePayload }
 type PopulationWrite = { worldId: string; countryCode: string; payload: WorldPackageCountryPopulationUpdatePayload }

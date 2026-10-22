@@ -26,6 +26,7 @@ import type {
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { prettyLabJson } from '../components/LabJson'
 import { LabNavigation } from '../components/LabNavigation'
+import { LabScenarioAuthoring } from '../components/labAuthoring/LabScenarioAuthoring'
 import { LabSessionConflict, useLabSessionEditor, validateLabSession, type LabEditorTicket } from '../components/LabSessionEditor'
 import { newCommandId } from '../admin/branchSimulation'
 
@@ -589,14 +590,10 @@ export function TournamentTestLabPage(): JSX.Element {
             runDraftApplyMutation.reset()
           }} />
         </label> : null}
-        <textarea
-          aria-label="Tournament Lab scenario JSON"
-          value={scenarioText}
-          onChange={(event) => editScenario(event.target.value)}
-          rows={30}
-          style={{ width: '100%', fontFamily: 'monospace' }}
-          placeholder="Load a built-in scenario or paste tournament_test_lab_scenario.v1 JSON."
-        />
+        <LabScenarioAuthoring kind="tournament" text={scenarioText} onChange={editScenario}
+          jsonLabel="Tournament Lab scenario JSON" selection={selectedSessionId ?? 'scratch'} revision={editor.editorEdit}
+          savedScenario={selectedSession?.scenario} savedName={selectedSession?.display_name}
+          sessionName={editor.sessionName} busy={writePending || runPending} />
         <label>Batch match seeds (optional, comma-separated; max 100)
           <input
             aria-label="Tournament Lab batch match seeds"

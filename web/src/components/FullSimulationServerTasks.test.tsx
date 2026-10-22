@@ -263,9 +263,26 @@ describe('server task UI (mock HTTP)',()=>{
   await screen.findByText('needs-decision')
   const items=screen.getAllByRole('listitem').filter(node=>node.hasAttribute('data-task-id'))
   expect(items[0]).toHaveAttribute('data-task-id','needs-decision')
+  const activeItem=items.find(item=>item.getAttribute('data-task-id')==='queued-other')!
+  expect(activeItem).toHaveTextContent(language==='cs'
+   ? 'Aktivní stav úlohy (zdraví workeru nepotvrzeno)'
+   : 'Active task state (worker health unverified)')
   const counts=screen.getByRole('status')
   expect(counts).toHaveTextContent(language==='cs'?'Vyžaduje zásah operátora: 1':'Operator action required: 1')
   expect(counts).toHaveTextContent(language==='cs'?'zdraví procesu nepotvrzeno':'health unconfirmed')
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
+ it.each(['cs','en'] as const)('does not offer a resume action for a lease owned by another server (%s)',async language=>{
+  const task={...taskExample(),state:'ownership_unverified',heartbeat_health:'stale',
+    needs_operator_action:false,lease_expires_at_unix:2000000000}
+  api.getServerTasks.mockResolvedValue([task])
+  open(language,<FullSimulationServerTasks/>)
+  await screen.findByText('task')
+  expect(screen.getByText(language==='cs'
+    ? /Lease vlastní jiná instance serveru/:/Another server instance owns the lease/)).toBeInTheDocument()
+  expect(screen.queryByLabelText(language==='cs'?'Operátor úlohy':'Task operator')).toBeNull()
+  expect(screen.queryByRole('button',{name:language==='cs'
+    ? 'Výslovně obnovit serverovou úlohu':'Explicitly recover server task'})).toBeNull()
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
  it.each(['cs','en'] as const)('opens the exact linked task first without inventing an action (%s)',async language=>{

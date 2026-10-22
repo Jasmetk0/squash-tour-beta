@@ -285,6 +285,54 @@ describe('server task UI (mock HTTP)',()=>{
     ? 'Výslovně obnovit serverovou úlohu':'Explicitly recover server task'})).toBeNull()
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
+ it.each(['cs','en'] as const)('filters stored tasks by actual operator action, non-actionable activity and exact parent identity (%s)',async language=>{
+  const needs={...taskExample(),task_id:'needs-approval',parent_command_id:'parent-review',
+    state:'awaiting_operator',checkpoint:'week_preparation_required',needs_operator_action:true}
+  const active={...taskExample(),task_id:'task-running',parent_command_id:'parent-live',
+    state:'active',needs_operator_action:false,heartbeat_health:'stale'}
+  const done={...taskExample(),task_id:'task-complete',parent_command_id:'parent-complete',
+    state:'complete',needs_operator_action:false}
+  api.getServerTasks.mockResolvedValue([done,active,needs])
+  open(language,<FullSimulationServerTasks/>)
+  await screen.findByText('needs-approval')
+  const label=language==='cs'?'Kategorie úloh':'Task category'
+  const searchLabel=language==='cs'?'Najít serverovou úlohu':'Find a server task'
+  const visible=()=>screen.getAllByRole('listitem').filter(node=>node.hasAttribute('data-task-id'))
+    .map(node=>node.getAttribute('data-task-id'))
+  expect(visible()).toEqual(['needs-approval','task-running','task-complete'])
+  fireEvent.change(screen.getByRole('combobox',{name:label}),{target:{value:'attention'}})
+  expect(visible()).toEqual(['needs-approval'])
+  fireEvent.change(screen.getByRole('combobox',{name:label}),{target:{value:'live'}})
+  expect(visible()).toEqual(['task-running'])
+  fireEvent.change(screen.getByRole('combobox',{name:label}),{target:{value:'other'}})
+  expect(visible()).toEqual(['task-complete'])
+  fireEvent.change(screen.getByRole('combobox',{name:label}),{target:{value:'all'}})
+  fireEvent.change(screen.getByRole('searchbox',{name:searchLabel}),{target:{value:'PARENT-LIVE'}})
+  expect(visible()).toEqual(['task-running'])
+  fireEvent.change(screen.getByRole('combobox',{name:label}),{target:{value:'attention'}})
+  expect(screen.queryByRole('listitem')).toBeNull()
+  expect(screen.getByText(language==='cs'
+    ? /Hledání a kategorie neodpovídá žádná úloha/
+    : /No tasks match the current search and category/)).toBeVisible()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
+ it('keeps the exact deep-linked task visible even if operator filters exclude it',async()=>{
+  const active={...taskExample(),task_id:'current-link',parent_command_id:'other-parent',
+    state:'active',needs_operator_action:false}
+  const attention={...taskExample(),task_id:'another',parent_command_id:'another-parent',
+    state:'awaiting_operator',needs_operator_action:true}
+  api.getServerTasks.mockResolvedValue([active,attention])
+  open('en',<FullSimulationServerTasks runId="run" branchId="branch"/>,
+    '/admin/runs/run/simulate?branch=branch&task=current-link')
+  await screen.findByText('Task selected from the link:',{exact:false})
+  fireEvent.change(screen.getByRole('combobox',{name:'Task category'}),{target:{value:'attention'}})
+  fireEvent.change(screen.getByRole('searchbox',{name:'Find a server task'}),{target:{value:'another-parent'}})
+  const cards=screen.getAllByRole('listitem').filter(node=>node.hasAttribute('data-task-id'))
+  expect(cards.map(node=>node.getAttribute('data-task-id'))).toEqual(['current-link','another'])
+  expect(cards[0]).toHaveAttribute('aria-current','location')
+  expect(screen.getByText('Linked task stays visible regardless of filters.')).toBeInTheDocument()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
  it.each(['cs','en'] as const)('opens the exact linked task first without inventing an action (%s)',async language=>{
   const other={...taskExample(),task_id:'other',parent_command_id:'other-parent'}
   api.getServerTasks.mockResolvedValue([other,taskExample()])
@@ -326,10 +374,14 @@ describe('server task UI (mock HTTP)',()=>{
   const operator=await screen.findByLabelText('Task operator')
   fireEvent.change(operator,{target:{value:'Operator from previous Branch'}})
   expect(operator).toHaveValue('Operator from previous Branch')
+  fireEvent.change(screen.getByRole('searchbox',{name:'Find a server task'}),{target:{value:'task'}})
+  fireEvent.change(screen.getByRole('combobox',{name:'Task category'}),{target:{value:'attention'}})
   fireEvent.click(screen.getByRole('button',{name:'Change branch'}))
   await waitFor(()=>expect(screen.getByText('World / other-branch')).toBeVisible())
   expect(screen.getByLabelText('Task operator')).toHaveValue('')
   expect(screen.getByLabelText('Task audit reason')).toHaveValue('')
+  expect(screen.getByRole('searchbox',{name:'Find a server task'})).toHaveValue('')
+  expect(screen.getByRole('combobox',{name:'Task category'})).toHaveValue('all')
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
  it('reports a deep link to a missing task without acting on another one',async()=>{

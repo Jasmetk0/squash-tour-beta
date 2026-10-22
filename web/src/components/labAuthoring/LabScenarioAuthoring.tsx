@@ -267,7 +267,7 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
 }): JSX.Element {
   const { language } = useLanguage()
   const cs = language === 'cs'
-  const [mode, setMode] = useState<'form' | 'json'>('json')
+  const [mode, setMode] = useState<'combined' | 'form' | 'json'>('combined')
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const [pendingImport, setPendingImport] = useState<{ file: string; json: string; scenario: JsonObject; identity: string } | null>(null)
@@ -346,15 +346,16 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
       ? 'Strukturované úpravy mění jen uvedená pole; ostatní JSON a provenience zůstávají zachovány. Konečnou validaci provádí backend.'
       : 'Guided edits change only the displayed fields; all other JSON and provenance are preserved. The backend remains the final validator.'}</p>
     <button type="button" onClick={() => setMode(mode === 'form' ? 'json' : 'form')}>
-      {mode === 'form' ? (cs ? 'Přepnout na JSON' : 'Switch to advanced JSON') : (cs ? 'Upravit pomocí formuláře' : 'Edit with guided form')}
+      {mode === 'form' ? (cs ? 'Přepnout na JSON' : 'Switch to advanced JSON') : (cs ? 'Pouze strukturovaný editor' : 'Guided editor only')}
     </button>{' '}
     <label>{cs ? 'Režim editoru' : 'Editor mode'}{' '}
-      <select aria-label={kind + ' Lab editor mode'} value={mode} onChange={event => setMode(event.target.value as 'form' | 'json')}>
+      <select aria-label={kind + ' Lab editor mode'} value={mode} onChange={event => setMode(event.target.value as 'combined' | 'form' | 'json')}>
+        <option value="combined">{cs ? 'Formulář + JSON' : 'Guided fields + JSON'}</option>
         <option value="form">{cs ? 'Strukturovaný editor' : 'Guided editor'}</option>
         <option value="json">{cs ? 'Pokročilý JSON' : 'Advanced JSON'}</option>
       </select>
     </label>
-    {mode === 'form' && (parsed ? <div>
+    {mode !== 'json' && (parsed ? <div>
       {fields.map(field => <GuidedFieldEditor
         key={selection + ':' + revision + ':' + field.path.join('.')} field={field}
         kind={kind} value={fieldValue(parsed!, field.path)} cs={cs} busy={busy}
@@ -373,7 +374,7 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
           catch (reason) { setError(explain(reason, cs)) }
         }} />}
     </div> : <p role="alert">{cs ? 'Neplatný nebo nepodporovaný scénář; opravte jej v pokročilém JSON editoru.' : 'Invalid or unsupported scenario; repair it in Advanced JSON.'}</p>)}
-    {mode === 'json' && <textarea aria-label={jsonLabel} rows={24}
+    {mode !== 'form' && <textarea aria-label={jsonLabel} rows={mode === 'combined' ? 12 : 24}
       style={{ width: '100%', fontFamily: 'monospace' }} disabled={busy} value={text}
       onChange={event => edit(event.target.value)} />}
     <div>

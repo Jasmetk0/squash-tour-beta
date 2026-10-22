@@ -37,6 +37,12 @@
 - Focused pure/UI tests exercise bounds, zero, null reset, unsupported source shape, source fidelity, two independently staged assertions and selected-week/participant retention through revision changes.
 - Latest successful Fast CI before this addition: `b65dbd35` (199 stable, 62 focused frontend tests, TypeScript and Vite). Reverify current final SHA; genuine HTTP/SQLite/Chromium Lab gates skip Draft and remain required before user merge.
 
+### Existing seed priority editor (22 October 2026)
+
+- Tournament guided mode supports moving existing seeded player IDs one position up or down. This is a pure reorder of the current `seed_order_player_ids` list, not participant creation/deletion, draw mutation, or a seed-authority replacement. It appears only when every listed ID matches one unique existing participant and the list has at least two entries.
+- The original player contexts, historical source metadata, match settings, Saved Session and Run remain untouched. Normal backend compatibility inspection remains authoritative.
+- Pure/UI tests cover edge positions, unknown/duplicate IDs, reversible swaps, and provenance preservation.
+
 ## Status and merge policy
 - This PR is intentionally **Draft** and NOT merge-ready.
 - Dedicated genuine Lab API/Chromium acceptance skips Draft PRs. Skipped jobs are not passes.

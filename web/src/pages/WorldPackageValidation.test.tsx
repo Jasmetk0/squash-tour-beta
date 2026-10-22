@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, within } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { RouterProvider, createMemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WorldLibraryDetailPage } from './WorldLibraryPage'
 
@@ -26,9 +26,7 @@ const checks = [
 
 function mount() {
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-    <MemoryRouter initialEntries={['/world/custom']}>
-      <Routes><Route path="/world/:worldId" element={<WorldLibraryDetailPage />} /></Routes>
-    </MemoryRouter>
+    <RouterProvider router={createMemoryRouter([{ path: '/world/:worldId', element: <WorldLibraryDetailPage /> }], { initialEntries: ['/world/custom'] })} />
   </QueryClientProvider>)
 }
 

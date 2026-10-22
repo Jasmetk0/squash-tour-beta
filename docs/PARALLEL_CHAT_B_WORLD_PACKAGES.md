@@ -183,3 +183,24 @@ user may merge.
 - Keep extending the **same Draft PR #1632** on
   `feat/world-package-authoring-chat-b-20261022`. No merge; user controls
   merging. Never modify source Earth historical data or other parallel owners.
+
+## Independent Work review — 22 October 2026
+
+Reviewed alongside the exact non-overlapping Lab and simulation UI heads in
+#1633 and #1634. The combined 14-file focused frontend suite passed 270 tests
+and production TypeScript/Vite build. Broader route testing found old test
+harnesses using MemoryRouter without the data-router blocker contract, plus
+pre-review authoring expectations. App.module17 and WorldPackageValidation now
+use the production-compatible data router and exercise explicit review/confirm,
+409 reload/review, retained drafts, current complete geography responses and
+clone validation. Assertions and the existing Viewer failure baseline remain.
+
+A real Chromium headless-shell + production FastAPI HTTP acceptance against
+disposable custom package files and SQLite passed: Country edit, no write at
+review, population edit, unsaved navigation Stay, Country creation and reload.
+No browser page errors; protected original packages were not edited. This is
+a scoped authoring acceptance, not a full Run or full pre-alpha release.
+
+Final-head CI must be rechecked after this test correction. The owner alone
+merges. Ready-for-review was enabled by Work to execute applicable gates; older
+Draft-only statements above describe implementation history.

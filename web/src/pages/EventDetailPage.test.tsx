@@ -140,7 +140,7 @@ describe('EventDetailPage', () => {
       .toHaveAttribute('href', '/runs/run%20x%2Fy/calendar/E11')
     expect(screen.getByRole('link', { name: 'Open activity' }))
       .toHaveAttribute('href', '/runs/run%20x%2Fy/activity')
-    expect(screen.getByRole('link', { name: 'E/10' }))
+    expect(await screen.findByRole('link', { name: 'E/10' }))
       .toHaveAttribute('href', '/runs/run%20x%2Fy/events/E%2F10')
     expect(api.getEvent).toHaveBeenCalledWith('run x/y', 'E11')
     expect(api.listEvents).toHaveBeenCalledWith('run x/y')

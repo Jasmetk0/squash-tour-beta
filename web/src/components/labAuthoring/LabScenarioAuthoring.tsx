@@ -600,7 +600,7 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
           catch (reason) { setError(explain(reason, cs)) }
         }} />}
       {kind === 'tournament' && <TournamentAssertionsEditor
-        key={selection + ':' + revision} assertions={parsed.assertions}
+        key={selection + ':' + String(parsed.scenario_id)} assertions={parsed.assertions}
         ids={participants.map(p => p.id)} cs={cs} busy={busy}
         onApply={(key, raw) => {
           try { edit(changeTournamentAssertion(text, key, raw)) }

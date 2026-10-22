@@ -91,6 +91,29 @@ describe('RolloverSeasonDetailPage', () => {
     expect(api.getNextSeasonPlayers).not.toHaveBeenCalled()
   })
 
+  it.each(['2e3', '0x7ec', '2028.0', '-2028', '999999999999999999999999'])(
+    'refuses malformed rollover season %s without issuing any read requests',
+    async (invalid) => {
+      renderPage(`/runs/run-a/rollover/${invalid}`)
+      expect(await screen.findByText(/Invalid or missing target season in URL/)).toBeInTheDocument()
+      expect(api.getRolloverBySeason).not.toHaveBeenCalled()
+      expect(api.getPlayerTransitions).not.toHaveBeenCalled()
+      expect(api.getNextSeasonPlayers).not.toHaveBeenCalled()
+    }
+  )
+
+  it('preserves a special-character Run identifier in the overview link', async () => {
+    api.getRolloverBySeason.mockResolvedValue({ rollover: {
+      run_id: 'run x/y', from_season: 2027, to_season: 2028, transitioned_players: 0, metadata: {}
+    } })
+    api.getPlayerTransitions.mockResolvedValue({ transitions: [] })
+    api.getNextSeasonPlayers.mockResolvedValue({ players: [] })
+    renderPage('/runs/run%20x%2Fy/rollover/2028')
+    expect(await screen.findByRole('link', { name: 'Back to rollover overview' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/rollover')
+    expect(api.getRolloverBySeason).toHaveBeenCalledWith('run x/y', 2028)
+  })
+
   it('renders readable not found behavior for missing rollover season', async () => {
     api.getRolloverBySeason.mockRejectedValueOnce(new api.ApiError('{"detail":"not found"}', 404))
     api.getPlayerTransitions.mockResolvedValueOnce({ run_id: 'run-a', to_season: 2030, transitions: [] })

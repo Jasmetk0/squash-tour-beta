@@ -1105,7 +1105,15 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
   })
   const deleteMutation = useMutation({
     mutationFn: ({ worldId: targetWorldId, countryCode: targetCode, fingerprint }: DeleteWrite) => deleteWorldPackageCountry(targetWorldId, targetCode, fingerprint),
-    onSuccess: (_response, command) => {
+    onSuccess: (response, command) => {
+      if (response.deleted_country_code !== command.countryCode ||
+          response.package?.world_id !== command.worldId) {
+        if (mounted.current && activeLocationKey.current === command.locationKey &&
+            activeRoute.current === `${command.worldId}/${command.countryCode}`) {
+          setWriteError({status:409, scopeMismatch:true, message:'Unexpected Country deletion response'})
+        }
+        return
+      }
       void refresh(command.worldId, command.countryCode)
       if (mounted.current && activeLocationKey.current === command.locationKey && activeRoute.current === `${command.worldId}/${command.countryCode}`) {
         navigate(`/admin/world/library/${encodeURIComponent(command.worldId)}/countries`)

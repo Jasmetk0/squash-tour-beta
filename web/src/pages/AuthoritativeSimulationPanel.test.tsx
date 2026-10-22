@@ -1,6 +1,6 @@
 vi.mock('../components/FullSimulationServerTasks',()=>({FullSimulationServerTasks:()=>null,StartServerTask:()=>null,useServerTasks:()=>({data:[]})}))
 import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useState } from 'react'
@@ -3854,7 +3854,7 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(screen.getByLabelText('Full Simulation operator')).toBeDisabled()
     await waitFor(()=>expect(api.previewAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
     await userEvent.click(screen.getByRole('button',{name:'Switch preview context'}))
-    releasePreview(fullSimulationPreview)
+    await act(async()=>{releasePreview(fullSimulationPreview);await Promise.resolve()})
     await waitFor(()=>expect(api.previewAuthoritativeFullSimulation).toHaveBeenCalledWith(
       'run-a','branch-a',expect.objectContaining({operator_label:'Operator',audit_reason:'Review exact source'})
     ))

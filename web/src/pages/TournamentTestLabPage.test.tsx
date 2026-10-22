@@ -191,18 +191,21 @@ describe('TournamentTestLabPage', () => {
     const user = userEvent.setup()
     const created = {
       schema_version: 'tournament_test_lab_session.v1', session_id: 'draft-created',
-      display_name: 'New Tournament Test Session', version: 1,
+      display_name: 'My Tournament experiments', version: 1,
       session_fingerprint: 'f'.repeat(64), scenario
     }
     api.createTournamentLabSession.mockResolvedValue(created)
     api.getTournamentLabSessions.mockResolvedValueOnce([]).mockResolvedValue([created])
     renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
     await user.click(await screen.findByRole('button', {name: 'Load scratch copy'}))
+    const nameInput = screen.getByLabelText('Tournament Lab new Session name')
+    await user.clear(nameInput)
+    await user.type(nameInput, 'My Tournament experiments')
     await user.click(screen.getByRole('button', {name: 'Create Test Session from scratch'}))
     expect(api.createTournamentLabSession).toHaveBeenCalledWith({
-      display_name: 'New Tournament Test Session', scenario
+      display_name: 'My Tournament experiments', scenario
     })
-    expect(await screen.findByDisplayValue('New Tournament Test Session')).toBeInTheDocument()
+    expect(await screen.findByDisplayValue('My Tournament experiments')).toBeInTheDocument()
     expect(api.runTournamentTestLab).not.toHaveBeenCalled()
   })
 

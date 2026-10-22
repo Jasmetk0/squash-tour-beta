@@ -13,7 +13,10 @@ type Props={runId:string;branchId:string;countryCode:string;
 export function RunWorldCountryPlayerStandings({
   runId,branchId,countryCode,savedRevisionId,historical,cs
 }:Props):JSX.Element{
-  const [page,setPage]=useState(0)
+  const sourceKey=JSON.stringify([runId,branchId,countryCode,savedRevisionId])
+  const [pageSelection,setPageSelection]=useState({sourceKey,page:0})
+  // Never reuse a page from another country, Branch or Saved Revision.
+  const page=pageSelection.sourceKey===sourceKey?pageSelection.page:0
   const offset=page*PAGE_SIZE
   const enabled=Boolean(runId&&branchId&&countryCode&&savedRevisionId)
   const query=useQuery({
@@ -78,10 +81,10 @@ export function RunWorldCountryPlayerStandings({
           'No player has a published tournament finish or match in this revision.'}</p>}
       <div className="actions" aria-label="Country player standings pagination">
         <button type="button" disabled={page===0}
-          onClick={()=>setPage(p=>Math.max(0,p-1))}>
+          onClick={()=>setPageSelection({sourceKey,page:Math.max(0,page-1)})}>
           {cs?'← Předchozí':'← Previous'}</button>
         <span>{cs?'Strana':'Page'} {page+1} / {Math.max(1,Math.ceil(result.total_players/PAGE_SIZE))}</span>
-        <button type="button" disabled={!result.has_more} onClick={()=>setPage(p=>p+1)}>
+        <button type="button" disabled={!result.has_more} onClick={()=>setPageSelection({sourceKey,page:page+1})}>
           {cs?'Další →':'Next →'}</button>
       </div>
     </>}

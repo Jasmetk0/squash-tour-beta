@@ -23,6 +23,19 @@ def run_rows(path: Path) -> dict:
         }
 
 
+def hold_save_delivery(page, delayed):
+    # A factory binds each loop iteration without introducing a second
+    # callback argument: Playwright uses that position for Request.
+    def handle(route):
+        if route.request.method == "PUT":
+            delayed.append((route, route.fetch()))
+            page.evaluate("window.__labSaveReady = true")
+        else:
+            route.continue_()
+
+    return handle
+
+
 def main() -> None:
     from playwright.sync_api import expect, sync_playwright
 
@@ -111,13 +124,7 @@ def main() -> None:
                         # response; no response or simulation is fabricated.
                         delayed = []
 
-                        def hold_save(route, delayed=delayed):
-                            if route.request.method == "PUT":
-                                delayed.append((route, route.fetch()))
-                                page.evaluate("window.__labSaveReady = true")
-                            else:
-                                route.continue_()
-
+                        hold_save = hold_save_delivery(page, delayed)
                         pattern = f"**/admin/labs/{kind}/sessions/{session_id}"
                         page.route(pattern, hold_save)
                         submitted = {**updated["scenario"], seed_key: scenario[seed_key] + 30}

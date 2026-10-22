@@ -290,6 +290,26 @@ describe('Lab scenario authoring boundaries', () => {
     expect(JSON.parse(screen.getByTestId('draft').textContent ?? '')).toEqual(match)
   })
 
+  it('abandons staged JSON after the Session fingerprint changes even when the editor text does not', async () => {
+    function Harness() {
+      const [fingerprint, setFingerprint] = useState('a'.repeat(64))
+      const [text, setText] = useState(JSON.stringify(match))
+      return <><LabScenarioAuthoring kind="match" text={text} onChange={setText}
+        selection={'saved-1:' + fingerprint} revision={0} jsonLabel="Match Lab scenario JSON" />
+        <button type="button" onClick={() => setFingerprint('b'.repeat(64))}>Remote Save accepted</button>
+        <output data-testid="draft">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    const file = new File([JSON.stringify({...match, seed: 999})], 'older.json', {type: 'application/json'})
+    Object.defineProperty(file, 'text', {value: () => Promise.resolve(JSON.stringify({...match, seed: 999}))})
+    await user.upload(screen.getByLabelText('match Lab JSON file'), file)
+    expect(await screen.findByLabelText('match Lab imported draft review')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', {name: 'Remote Save accepted'}))
+    expect(screen.queryByLabelText('match Lab imported draft review')).not.toBeInTheDocument()
+    expect(JSON.parse(screen.getByTestId('draft').textContent ?? '').seed).toBe(42)
+  })
+
   it('discarding a staged import on editor change prevents an old proposal from appearing again', async () => {
     function Harness() {
       const [text, setText] = useState(JSON.stringify(match))

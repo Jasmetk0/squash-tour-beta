@@ -138,6 +138,39 @@ describe('Lab scenario authoring boundaries', () => {
     expect(screen.getByTestId('current').textContent).toBe(JSON.stringify(match))
   })
 
+
+  it('loads a valid file into the scratch buffer without triggering an implicit Save or Run', async () => {
+    const save = vi.fn(), run = vi.fn()
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(match))
+      return <><LabScenarioAuthoring kind="match" text={text} onChange={setText}
+        selection="scratch" revision={0} jsonLabel="Match Lab scenario JSON" />
+        <output data-testid="draft">{text}</output>
+        <button type="button" onClick={save}>Save manually</button>
+        <button type="button" onClick={run}>Run manually</button></>
+    }
+    render(<Harness />)
+    const incoming = {...match, seed: 210, source_reference: 'new-saved-copy'}
+    const file = new File([JSON.stringify(incoming)], 'importable.json', {type: 'application/json'})
+    Object.defineProperty(file, 'text', {value: () => Promise.resolve(JSON.stringify(incoming))})
+    await userEvent.setup().upload(screen.getByLabelText('match Lab JSON file'), file)
+    await waitFor(() => expect(JSON.parse(screen.getByTestId('draft').textContent ?? '')).toEqual(incoming))
+    expect(await screen.findByRole('status')).toHaveTextContent('Loaded into the editor only')
+    expect(save).not.toHaveBeenCalled()
+    expect(run).not.toHaveBeenCalled()
+  })
+
+  it('shows the exact changed paths before an explicit saved-Session operation', () => {
+    render(<LabScenarioAuthoring kind="tournament"
+      text={JSON.stringify({...tournament, draw_seed: 404})} onChange={vi.fn()}
+      selection="saved-1" revision={1} jsonLabel="Tournament Lab scenario JSON"
+      savedScenario={tournament} savedName="Previous name" sessionName="New name" />)
+    const comparison = screen.getByLabelText('tournament Lab unsaved changes')
+    expect(comparison).toHaveTextContent('Session name changed')
+    expect(comparison).toHaveTextContent('draw_seed')
+    expect(comparison).toHaveTextContent('Saving the Session requires a separate explicit action')
+  })
+
   it('does not install a late file read over a newer scenario edit', async () => {
     let finish!: (value: string) => void
     const pending = new Promise<string>(resolve => {finish = resolve})

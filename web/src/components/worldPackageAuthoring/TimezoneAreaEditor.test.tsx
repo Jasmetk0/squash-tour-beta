@@ -49,7 +49,10 @@ describe('reviewed Timezone Area authoring', () => {
     api.replaceWorldPackageTimezoneAreas.mockImplementation(async (worldId: string, areas: unknown[]) => {
       client.setQueryData(['world-package',worldId], pkg(worldId,true,'fp-after'))
       client.setQueryData(['world-package-geography',worldId], {...geography(worldId),timezone_areas:areas})
-      return {...geography(worldId),timezone_areas:areas}
+      // The server may serialize valid fields in a different object-property order.
+      const reordered = (areas as Array<{code:string,name:string,position:number}>)
+        .map(item => ({position:item.position,name:item.name,code:item.code}))
+      return {...geography(worldId),timezone_areas:reordered}
     })
     fireEvent.click(screen.getAllByRole('button',{name:'Move Down'})[0])
     expect(screen.getByRole('button',{name:'Review Timezone Areas'})).toBeEnabled()

@@ -71,6 +71,7 @@ describe('World Package authoring against mutable source', () => {
     fireEvent.click(screen.getByRole('button', {name:'Review changes'}))
     fireEvent.click(screen.getByRole('button', {name:'Confirm and save'}))
     expect(await screen.findByText(/No write was retried/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Confirm and save'})).toBeDisabled()
     expect(api.updateWorldPackageCountry).toHaveBeenCalledTimes(1)
     const confirm = vi.spyOn(window,'confirm').mockReturnValue(true)
     fireEvent.click(screen.getByRole('button', {name:'Reload current data'}))

@@ -137,6 +137,29 @@ describe('World Package authoring against mutable source', () => {
     expect(api.updateWorldPackageCountryPopulation).toHaveBeenCalledTimes(1)
   })
 
+  it('does not poison scoped Country cache if conflict reload returns another Country', async () => {
+    api.updateWorldPackageCountry.mockRejectedValue({status:409,message:'World Package changed'})
+    const {client}=setup()
+    fireEvent.click(await screen.findByRole('button',{name:'Edit country'}))
+    fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Unsent Review'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review changes'}))
+    fireEvent.click(screen.getByRole('button',{name:'Confirm and save'}))
+    expect(await screen.findByText(/No write was retried/)).toBeInTheDocument()
+    vi.spyOn(window,'confirm').mockReturnValue(true)
+    api.getWorldPackageCountry.mockResolvedValueOnce(fixture('other','BBB'))
+    fireEvent.click(screen.getByRole('button',{name:'Reload current data'}))
+    expect(await screen.findByText(/Reloaded data belongs to a different Country/)).toBeInTheDocument()
+    expect(client.getQueryData<{country:{code:string};package:{world_id:string}}>(
+      ['world-package-country','custom','AAA']
+    )).toMatchObject({country:{code:'AAA'},package:{world_id:'custom'}})
+    expect(screen.getByText('Unsent Review')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Confirm and save'})).toBeDisabled()
+    expect(api.updateWorldPackageCountry).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button',{name:'Reload current data'}))
+    await waitFor(() => expect(screen.queryByRole('heading',{name:'Review country changes'})).not.toBeInTheDocument())
+    expect(api.updateWorldPackageCountry).toHaveBeenCalledTimes(1)
+  })
+
   it('does not route a paused country write to a newly selected package', async () => {
     let finish!: (value: unknown) => void
     api.updateWorldPackageCountry.mockImplementation(() => new Promise(resolve => {finish = resolve}))

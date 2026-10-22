@@ -343,6 +343,27 @@ describe('server task UI (mock HTTP)',()=>{
   expect(screen.queryByText('reply lost')).toBeNull()
   expect(api.continueServerTask).toHaveBeenCalledTimes(1)
  })
+ it('drops an unsubmitted stale audit review when polling advances to a new decision checkpoint',async()=>{
+  const initial=taskExample()
+  const active={...initial,state:'active',needs_operator_action:false,revision:2,
+   checkpoint:null,desired_state:'active'}
+  const later={...initial,state:'recoverable',needs_operator_action:true,revision:3,
+   checkpoint:'season_transition_save_required',desired_state:'active'}
+  api.getServerTasks.mockResolvedValueOnce([initial]).mockResolvedValueOnce([active]).mockResolvedValue([later])
+  open('en',<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  const op=await screen.findByLabelText('Task operator')
+  fireEvent.change(op,{target:{value:'Review valid for revision one'}})
+  fireEvent.change(screen.getByLabelText('Task audit reason'),{target:{value:'Old checkpoint reason'}})
+  fireEvent.click(screen.getByRole('button',{name:'Refresh task evidence'}))
+  await screen.findByText('Active task state (worker health unverified)')
+  expect(screen.queryByLabelText('Task operator')).toBeNull()
+  fireEvent.click(screen.getByRole('button',{name:'Refresh task evidence'}))
+  const newOperator=await screen.findByLabelText('Task operator')
+  await waitFor(()=>expect(newOperator).toHaveValue(''))
+  expect(screen.getByLabelText('Task audit reason')).toHaveValue('')
+  expect(screen.getByRole('button',{name:'Explicitly recover server task'})).toBeDisabled()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
  it.each(['cs','en'] as const)('surfaces actual action-required tasks first without claiming a healthy worker (%s)',async language=>{
   const active={...taskExample(),task_id:'queued-other',state:'active',
     needs_operator_action:false,checkpoint:null,heartbeat_health:'stale'}

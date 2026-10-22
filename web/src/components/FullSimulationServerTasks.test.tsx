@@ -279,6 +279,42 @@ describe('server task UI (mock HTTP)',()=>{
   expect(tasks[0]).toHaveAttribute('aria-current','location')
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
+ it.each(['cs','en'] as const)('does not label a paused task historical blocker as current (%s)',async language=>{
+  const historical={...taskExample(),state:'paused',desired_state:'paused',
+    checkpoint:'week_preparation_required',needs_operator_action:false}
+  const safe={...taskExample(),task_id:'safe-pause',state:'paused',desired_state:'paused',
+    checkpoint:'operator_paused',needs_operator_action:false}
+  api.getServerTasks.mockResolvedValue([historical,safe])
+  open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>)
+  await screen.findByText('safe-pause')
+  const cards=screen.getAllByRole('listitem').filter(el=>el.hasAttribute('data-task-id'))
+  const past=cards.find(el=>el.getAttribute('data-task-id')==='task')!
+  const current=cards.find(el=>el.getAttribute('data-task-id')==='safe-pause')!
+  expect(past).toHaveTextContent(language==='cs'?'Poslední zaznamenaný checkpoint':'Last recorded checkpoint')
+  expect(past).not.toHaveTextContent(language==='cs'?'Aktuální checkpoint operátora':'Current operator checkpoint')
+  expect(current).toHaveTextContent(language==='cs'?'Aktuální checkpoint bezpečného pozastavení':'Current safe-pause checkpoint')
+  expect(current).not.toHaveTextContent(language==='cs'?'Aktuální checkpoint operátora':'Current operator checkpoint')
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
+ it('does not carry an unfinished operator form into a different Branch with the same task ID',async()=>{
+  api.getServerTasks.mockImplementation(async(_run:string,branch:string)=>[
+   {...taskExample(),branch_id:branch,branch_name:branch}
+  ])
+  function Switch(){
+   const [branch,setBranch]=useState('branch')
+   return <><button type="button" onClick={()=>setBranch('other-branch')}>Change branch</button>
+    <FullSimulationServerTasks runId="run" branchId={branch}/></>
+  }
+  open('en',<Switch/>)
+  const operator=await screen.findByLabelText('Task operator')
+  fireEvent.change(operator,{target:{value:'Operator from previous Branch'}})
+  expect(operator).toHaveValue('Operator from previous Branch')
+  fireEvent.click(screen.getByRole('button',{name:'Change branch'}))
+  await waitFor(()=>expect(screen.getByText('World / other-branch')).toBeVisible())
+  expect(screen.getByLabelText('Task operator')).toHaveValue('')
+  expect(screen.getByLabelText('Task audit reason')).toHaveValue('')
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
  it('reports a deep link to a missing task without acting on another one',async()=>{
   api.getServerTasks.mockResolvedValue([taskExample()])
   open('en',<FullSimulationServerTasks runId="run" branchId="branch"/>,

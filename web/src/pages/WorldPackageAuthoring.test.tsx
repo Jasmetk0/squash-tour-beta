@@ -33,7 +33,7 @@ function setup(start = '/world/custom/countries/AAA') {
     path:'/world/:worldId/countries/:countryCode',
     element:<><Link to="/world/other/countries/BBB">Switch country</Link><WorldPackageCountryDetailPage /></>
   },{path:'/admin/world/library',element:<p>Library opened</p>}],{initialEntries:[start]})
-  return {router, ...render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)}
+  return {router, client, ...render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)}
 }
 beforeEach(() => {
   vi.clearAllMocks()
@@ -135,6 +135,20 @@ describe('World Package authoring against mutable source', () => {
     await act(async () => { finish({deleted_country_code:'AAA',validation:{status:'valid'}}) })
     expect(router.state.location.pathname).toBe('/admin/world/library')
     expect(screen.getByText('Library opened')).toBeInTheDocument()
+  })
+
+  it('freezes delete fingerprint and rejects a changed package before destructive confirmation', async () => {
+    const {client} = setup()
+    fireEvent.click(await screen.findByRole('button',{name:'Delete country'}))
+    expect(screen.getByText('fingerprint-custom')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Confirm deletion'})).toBeEnabled()
+    const changed = fixture()
+    changed.package.fingerprint = 'new-fingerprint'
+    client.setQueryData(['world-package-country','custom','AAA'],changed)
+    expect(await screen.findByText(/Deletion is blocked/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Confirm deletion'})).toBeDisabled()
+    expect(screen.getByText('fingerprint-custom')).toBeInTheDocument()
+    expect(api.deleteWorldPackageCountry).not.toHaveBeenCalled()
   })
 
 })

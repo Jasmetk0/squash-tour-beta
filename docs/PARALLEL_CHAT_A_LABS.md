@@ -29,6 +29,14 @@
 - Focused tests include both Lab modifier boundaries, unknown-field/provenance protection, single-player and single-week isolation, round-limit bounds, staged UI Apply, and scalar diff. This changes no backend/API schema.
 - Verify Fast CI on the final commit; genuine real HTTP/SQLite/Chromium gates skip the Draft PR and remain required before user merge.
 
+### Guided test outcome assertions and improved selection (22 October 2026)
+
+- Tournament Lab now edits two existing backend assertion fields from the guided UI: `expected_champion_player_id` (optional string) and `expected_played_match_count` (optional nonnegative integer). Empty input writes null, disabling the assertion. Deliberately false expectations are allowed for test diagnostics; no simulation rules, result, seed or Run authority changes.
+- Assertion controls preserve independently staged champion/match-count values across applying the other field. Selection and editing changes still preserve source snapshots and keep Session Save explicit.
+- Selected Match/Tournament participant and Player competitive week survive local scalar Apply; after shortening a Player scenario, the selected week is clamped to the new available range.
+- Focused pure/UI tests exercise bounds, zero, null reset, unsupported source shape, source fidelity, two independently staged assertions and selected-week/participant retention through revision changes.
+- Latest successful Fast CI before this addition: `b65dbd35` (199 stable, 62 focused frontend tests, TypeScript and Vite). Reverify current final SHA; genuine HTTP/SQLite/Chromium Lab gates skip Draft and remain required before user merge.
+
 ## Status and merge policy
 - This PR is intentionally **Draft** and NOT merge-ready.
 - Dedicated genuine Lab API/Chromium acceptance skips Draft PRs. Skipped jobs are not passes.

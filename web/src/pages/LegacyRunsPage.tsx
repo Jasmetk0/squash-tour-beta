@@ -101,7 +101,7 @@ export function LegacyRunsPage(): JSX.Element {
       writeLastRunId(run.run.run_id)
       setRememberedRunId(run.run.run_id)
       rememberProductRun(run.run.run_id)
-      navigate(`/admin/runs/${run.run.run_id}`)
+      navigate(`/admin/runs/${encodeURIComponent(run.run.run_id)}`)
     } catch (err) {
       setOpenError(`Could not open run: ${formatApiError(err)}`)
     } finally {
@@ -261,32 +261,32 @@ export function LegacyRunsPage(): JSX.Element {
               ) : null}
 
               <p className="status">
-                <Link to={`/admin/runs/${selectedRun.run_id}`}>Run Detail</Link> ·{' '}
-                <Link to={`/admin/runs/${selectedRun.run_id}/diagnostics`}>Diagnostics</Link> ·{' '}
-                <Link to={`/admin/runs/${selectedRun.run_id}/activity`}>Activity</Link> ·{' '}
-                <Link to={`/admin/runs/${selectedRun.run_id}/calendar`}>Season Calendar</Link>
+                <Link to={`/admin/runs/${encodeURIComponent(selectedRun.run_id)}`}>Run Detail</Link> ·{' '}
+                <Link to={`/admin/runs/${encodeURIComponent(selectedRun.run_id)}/diagnostics`}>Diagnostics</Link> ·{' '}
+                <Link to={`/admin/runs/${encodeURIComponent(selectedRun.run_id)}/activity`}>Activity</Link> ·{' '}
+                <Link to={`/admin/runs/${encodeURIComponent(selectedRun.run_id)}/calendar`}>Season Calendar</Link>
                 {(selectedRun.parent_run_id || selectedRun.child_run_count > 0) ? (
                   <>
                     {' '}
-                    · <Link to={`/admin/runs/${selectedRun.run_id}/season-chain`}>Season Chain</Link>
+                    · <Link to={`/admin/runs/${encodeURIComponent(selectedRun.run_id)}/season-chain`}>Season Chain</Link>
                   </>
                 ) : null}
                 {selectedRunStatusQuery.data?.finals.qualification_available || selectedRunStatusQuery.data?.finals.result_available ? (
                   <>
                     {' '}
-                    · <Link to={`/admin/runs/${selectedRun.run_id}/finals`}>World Tour Finals</Link>
+                    · <Link to={`/admin/runs/${encodeURIComponent(selectedRun.run_id)}/finals`}>World Tour Finals</Link>
                   </>
                 ) : null}
                 {selectedRunStatusQuery.data?.rollover ? (
                   <>
                     {' '}
-                    · <Link to={`/admin/runs/${selectedRun.run_id}/rollover`}>Season Rollover</Link>
+                    · <Link to={`/admin/runs/${encodeURIComponent(selectedRun.run_id)}/rollover`}>Season Rollover</Link>
                   </>
                 ) : null}
                 {(selectedRun.parent_run_id || selectedRun.child_run_count > 0 || selectedRun.source_type) ? (
                   <>
                     {' '}
-                    · <Link to={`/admin/runs/${selectedRun.run_id}/bootstrap-lineage`}>Bootstrap / Lineage</Link>
+                    · <Link to={`/admin/runs/${encodeURIComponent(selectedRun.run_id)}/bootstrap-lineage`}>Bootstrap / Lineage</Link>
                   </>
                 ) : null}
               </p>

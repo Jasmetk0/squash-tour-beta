@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { getAdminPointBreakdown, getAdminRankingSnapshot, getAdminRankingTable, getSeasonActivePlayers, getSeasonCalendar, getSeasonRegistry } from '../api/client'
@@ -18,6 +19,7 @@ type HealthCheck = {
 }
 
 export function SeasonHealthPreview({ seasonLabelRaw }: Props): JSX.Element {
+  const [severityFilter, setSeverityFilter] = useState<'All' | HealthSeverity>('All')
   const compactLabel = seasonLabelRaw ? safeToCompactSeasonLabel(seasonLabelRaw) : null
   const enabled = Boolean(compactLabel)
 
@@ -98,15 +100,30 @@ export function SeasonHealthPreview({ seasonLabelRaw }: Props): JSX.Element {
     }
   ]
 
+  const visibleChecks = checks.filter(check => severityFilter === 'All' || check.severity === severityFilter)
+
   return (
     <>
       <p className="status">Read-only health preview. Not an authoritative simulation readiness gate yet.</p>
-      <table>
+      <label>Filter season health checks
+        <select value={severityFilter}
+          onChange={event => setSeverityFilter(event.target.value as typeof severityFilter)}>
+          <option value="All">All severities</option>
+          <option value="Warning">Warnings</option>
+          <option value="Info">Information</option>
+          <option value="OK">OK</option>
+        </select>
+      </label>
+      <button type="button" disabled={severityFilter === 'All'}
+        onClick={() => setSeverityFilter('All')}>Clear health check filter</button>
+      <p role="status">Showing {visibleChecks.length} of {checks.length} season health checks</p>
+      {visibleChecks.length === 0 ? <p className="status">No season health checks match the current filter.</p>
+        : <div className="table-responsive"><table aria-label="Season health checks">
         <thead>
           <tr><th>Check</th><th>Severity</th><th>Message</th><th>Related link</th></tr>
         </thead>
         <tbody>
-          {checks.map((check) => (
+          {visibleChecks.map((check) => (
             <tr key={check.name}>
               <td>{check.name}</td>
               <td>{check.severity}</td>
@@ -115,7 +132,7 @@ export function SeasonHealthPreview({ seasonLabelRaw }: Props): JSX.Element {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>}
       <DetailList items={[
         'Authoritative readiness gates are planned for a later phase.',
         'Build/simulate/apply workflows remain disabled in this page.'

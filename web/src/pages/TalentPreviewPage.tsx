@@ -92,12 +92,11 @@ export function TalentPreviewPage(): JSX.Element {
 
       <SectionCard title="Country Forecast Table">
         {summaryQuery.isLoading ? <p className="status">Loading expected talent forecast…</p> : null}
-        {summaryQuery.data && filteredSummary.length === 0 ? <p className="status">No country forecast data is available for the current filter.</p> : null}
-        {summaryQuery.data && filteredSummary.length > 0 ? (
+        {summaryQuery.data ? (
           <>
             <label>
               Country filter
-              <input value={countryFilter} onChange={(event) => setCountryFilter(event.target.value)} placeholder="Code or name" />
+              <input type="search" value={countryFilter} onChange={(event) => setCountryFilter(event.target.value)} placeholder="Code or name" />
             </label>
             <label>
               Sort
@@ -107,7 +106,15 @@ export function TalentPreviewPage(): JSX.Element {
                 <option value="country_asc">Country (A-Z)</option>
               </select>
             </label>
-            <table aria-label="Country forecast table">
+            <button type="button" disabled={!countryFilter} onClick={() => setCountryFilter('')}>
+              Clear country filter
+            </button>
+            <p role="status">Showing {filteredSummary.length} of {summaryQuery.data.countries.length} forecast countries</p>
+            {summaryQuery.data.countries.length === 0
+              ? <p className="status">No countries were returned in this forecast.</p>
+              : filteredSummary.length === 0
+                ? <p className="status">No country forecast data matches the current filter.</p>
+                : <div className="table-responsive"><table aria-label="Country forecast table">
               <thead>
                 <tr>
                   <th>Country</th>
@@ -140,7 +147,7 @@ export function TalentPreviewPage(): JSX.Element {
                   )
                 })}
               </tbody>
-            </table>
+            </table></div>}
           </>
         ) : null}
       </SectionCard>

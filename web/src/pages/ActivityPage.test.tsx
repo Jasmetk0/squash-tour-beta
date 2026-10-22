@@ -336,6 +336,22 @@ describe('ActivityPage', () => {
     expect(screen.getByRole('link', { name: 'Open finals result detail' })).toHaveAttribute('href', '/runs/run-a/finals/result')
   })
 
+  it.each(['2junk', '2.5', '2e0', '-2', '999999999999999999999999'])(
+    'falls back to the first stored activity rather than parsing malformed selectedItem=%s',
+    async (invalid) => {
+      api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: baseItems })
+      mockContext()
+      renderWithRoute(<ActivityPage />, `/runs/run-a/activity?selectedItem=${encodeURIComponent(invalid)}`)
+      const list = await screen.findByRole('list', { name: 'Run activity feed list' })
+      expect(within(list).getByRole('button', { name: /1\. Event E1/i }))
+        .toHaveAttribute('aria-current', 'true')
+      expect(within(list).getByRole('button', { name: /3\. Finals result S2027/i }))
+        .not.toHaveAttribute('aria-current', 'true')
+      expect(await screen.findByRole('link', { name: 'Open persisted event detail' }))
+        .toHaveAttribute('href', '/runs/run-a/events/E1')
+    }
+  )
+
   it('renders readable empty and no-match states', async () => {
     api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [] })
     mockContext()

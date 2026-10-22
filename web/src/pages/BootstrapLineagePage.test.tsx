@@ -151,6 +151,49 @@ describe('BootstrapLineagePage', () => {
     expect(await screen.findByText(/Persist rollover before bootstrapping/i)).toBeInTheDocument()
   })
 
+  it('encodes special-character current, parent, child and rollover Run IDs in navigation', async () => {
+    api.getRunSource.mockResolvedValueOnce({
+      source: {
+        source_type: 'bootstrapped_rollover',
+        parent_run_id: 'parent x/y', source_rollover_run_id: 'parent x/y',
+        source_rollover_from_season: 2027, source_rollover_to_season: 2028
+      }
+    })
+    api.getRunLineage.mockResolvedValueOnce({
+      lineage: {
+        run_id: 'run x/y',
+        source: { source_type: 'bootstrapped_rollover', parent_run_id: 'parent x/y' },
+        children: ['child?/one']
+      }
+    })
+    renderWithRoute(<BootstrapLineagePage />, '/runs/run%20x%2Fy/bootstrap-lineage')
+    expect(await screen.findByRole('link', { name: 'Inspect source rollover detail' }))
+      .toHaveAttribute('href', '/runs/parent%20x%2Fy/rollover/2028')
+    expect(screen.getByRole('link', { name: 'Inspect parent season chain' }))
+      .toHaveAttribute('href', '/runs/parent%20x%2Fy/season-chain')
+    expect(screen.getByRole('link', { name: 'Inspect first child diagnostics' }))
+      .toHaveAttribute('href', '/runs/child%3F%2Fone/diagnostics')
+    expect(api.getRunSource).toHaveBeenCalledWith('run x/y')
+    expect(api.getRunStatusSummary).toHaveBeenCalledWith('child?/one')
+  })
+
+  it('keeps the newly bootstrapped child Run as a single encoded route segment', async () => {
+    api.bootstrapNextSeason.mockResolvedValueOnce({
+      run: { run_id: 'child x/y', season: 2029, seed: 11 },
+      bootstrap: {
+        parent_run_id: 'run-a', child_run_id: 'child x/y', from_season: 2028, to_season: 2029,
+        child_seed: 11, transitioned_players: 64, source_rollover_run_id: 'run-a',
+        source_rollover_to_season: 2029, already_bootstrapped: false
+      }
+    })
+    renderWithRoute(<BootstrapLineagePage />, '/runs/run-a/bootstrap-lineage')
+    await userEvent.type(await screen.findByLabelText(/Child run ID/i), 'child x/y')
+    await userEvent.click(screen.getByRole('button', { name: /Bootstrap next season/i }))
+    expect(await screen.findByRole('link', { name: 'Open child run' }))
+      .toHaveAttribute('href', '/runs/child%20x%2Fy')
+    expect(api.bootstrapNextSeason).toHaveBeenCalledWith('run-a', { child_run_id: 'child x/y' })
+  })
+
   it('keeps child run links in lineage API order', async () => {
     renderWithRoute(<BootstrapLineagePage />, '/runs/run-a/bootstrap-lineage')
 

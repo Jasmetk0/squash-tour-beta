@@ -23,15 +23,22 @@ function ValidationIssueList({
   issues,
   emptyMessage,
   filter,
+  search,
   planned = false
 }: {
   title: string
   issues: NormalizedValidationIssue[]
   emptyMessage: string
   filter: ValidationFilter
+  search: string
   planned?: boolean
 }): JSX.Element {
-  const filteredIssues = filter === 'All' ? issues : issues.filter((issue) => issue.severity === filter)
+  const needle = search.trim().toLocaleLowerCase()
+  const filteredIssues = issues.filter(issue =>
+    (filter === 'All' || issue.severity === filter) &&
+    (!needle || [issue.id, issue.itemLabel, issue.message, issue.severity]
+      .some(value => value?.toLocaleLowerCase().includes(needle)))
+  )
 
   return (
     <>
@@ -67,6 +74,7 @@ export function AdminTourSeasonsValidationPage(): JSX.Element {
   const templates = templatesQuery.data?.templates ?? []
   const slotCountTotal = templates.reduce((total, template) => total + template.slots.length, 0)
   const [severityFilter, setSeverityFilter] = useState<ValidationFilter>('All')
+  const [issueSearch, setIssueSearch] = useState('')
 
   const registryChecks: { severity: ValidationSeverity; message: string }[] = registry
     ? [
@@ -155,6 +163,13 @@ export function AdminTourSeasonsValidationPage(): JSX.Element {
           <li>Info: {counts.info}</li>
           <li>OK: {counts.ok}</li>
         </ul>
+        <label>Search validation issues
+          <input type="search" value={issueSearch} onChange={event => setIssueSearch(event.target.value)}
+            placeholder="Category, tournament, source ID, issue or message" />
+        </label>
+        <button type="button" disabled={!issueSearch && severityFilter === 'All'}
+          onClick={() => { setIssueSearch(''); setSeverityFilter('All') }}>Clear validation issue filters</button>
+        <p className="status">Filters only the displayed issues; summary counts remain totals from the original checks.</p>
         <p>Severity filter:</p>
         <div role="group" aria-label="Validation severity filters">
           {(['All', 'Warnings', 'Info', 'OK'] as const).map((option) => {
@@ -205,6 +220,7 @@ export function AdminTourSeasonsValidationPage(): JSX.Element {
             issues={backendPreviewIssues}
             emptyMessage="No backend issues returned in preview."
             filter={severityFilter}
+            search={issueSearch}
             planned
           />
         </details>
@@ -216,19 +232,20 @@ export function AdminTourSeasonsValidationPage(): JSX.Element {
           issues={registryChecks.map((check, index) => ({ id: `registry-check-${index}`, severity: check.severity, itemLabel: 'Season Registry', message: check.message, link: '/admin/tour-seasons/season-registry' }))}
           emptyMessage="No issues detected from current read-only checks."
           filter={severityFilter}
+          search={issueSearch}
         />
       </SectionCard>
 
       <SectionCard title="Category checks">
-        <ValidationIssueList title="Category" issues={categoryIssues} emptyMessage="No issues detected from current read-only checks." filter={severityFilter} />
+        <ValidationIssueList title="Category" issues={categoryIssues} emptyMessage="No issues detected from current read-only checks." filter={severityFilter} search={issueSearch} />
       </SectionCard>
 
       <SectionCard title="Tournament checks">
-        <ValidationIssueList title="Tournament" issues={tournamentIssues} emptyMessage="No issues detected from current read-only checks." filter={severityFilter} />
+        <ValidationIssueList title="Tournament" issues={tournamentIssues} emptyMessage="No issues detected from current read-only checks." filter={severityFilter} search={issueSearch} />
       </SectionCard>
 
       <SectionCard title="Season Template checks">
-        <ValidationIssueList title="Season Template" issues={seasonTemplateIssues} emptyMessage="No issues detected from current read-only checks." filter={severityFilter} />
+        <ValidationIssueList title="Season Template" issues={seasonTemplateIssues} emptyMessage="No issues detected from current read-only checks." filter={severityFilter} search={issueSearch} />
       </SectionCard>
 
       <SectionCard title="Planned future validation">

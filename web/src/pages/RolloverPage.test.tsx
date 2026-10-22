@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -140,6 +140,45 @@ describe('RolloverPage', () => {
       'href',
       '/runs/run-a/rollover/2028'
     )
+  })
+
+  it.each(['2e3', '0x7ec', '2028.0', '-2028', '999999999999999999999999'])(
+    'rejects noncanonical rollover season input %s without fetching the wrong year',
+    async (raw) => {
+      renderWithRoute(<RolloverPage />, '/runs/run-a/rollover')
+      expect(await screen.findByRole('link', { name: 'Open rollover season detail' }))
+        .toHaveAttribute('href', '/runs/run-a/rollover/2028')
+      await waitFor(() => expect(api.getRolloverBySeason).toHaveBeenCalledWith('run-a', 2028))
+      api.getRolloverBySeason.mockClear()
+      fireEvent.change(screen.getByRole('textbox', { name: 'To season' }), { target: { value: raw } })
+      fireEvent.click(screen.getByRole('button', { name: 'Load season data' }))
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Enter a positive whole-number season using decimal digits only.'
+      )
+      expect(screen.getByRole('link', { name: 'Open selected rollover season detail' }))
+        .toHaveAttribute('href', '/runs/run-a/rollover/2028')
+      expect(api.getRolloverBySeason).not.toHaveBeenCalled()
+    }
+  )
+
+  it('accepts a correct year and preserves reserved Run ID characters in links', async () => {
+    renderWithRoute(<RolloverPage />, '/runs/run%20x%2Fy/rollover')
+    const input = screen.getByRole('textbox', { name: 'To season' })
+    await waitFor(() => expect(input).toHaveValue('2028'))
+    fireEvent.change(input, { target: { value: '2030' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Load season data' }))
+    await waitFor(() => expect(api.getRolloverBySeason).toHaveBeenCalledWith('run x/y', 2030))
+    expect(screen.getByRole('link', { name: 'Run Detail' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy')
+    expect(screen.getByRole('link', { name: 'Diagnostics' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/diagnostics')
+    expect(screen.getByRole('link', { name: 'Open selected rollover season detail' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/rollover/2030')
+    expect(screen.getByRole('link', { name: 'Open rollover season detail' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/rollover/2028')
+    expect(screen.getByRole('link', { name: 'Inspect latest rollover season detail' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/rollover/2028')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('shows explicit readable no-rollover state', async () => {

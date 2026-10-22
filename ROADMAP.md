@@ -1,3 +1,28 @@
+# Consolidated Admin frontend review — 22 October 2026
+
+Baseline buuk `a0308cef` contains owner-merged #1606. The 52 remaining ordinary
+ChatGPT frontend PRs were integrated together (114 non-overlapping source/test
+files), preserving their source heads in a machine-readable manifest. This
+covers truthful Saved/calendar labels, source-scoped selection and pagination,
+strict/encoded navigation, archived-template safety, loading/error feedback and
+read-only catalog/filter/table usability. No simulation, backend or product
+Master rule changes are implied.
+
+Independent review reproduced and corrected a paused Calendar Compare Apply
+switching to a later source/season; the submitted command is now frozen and a
+late result is scoped to its reviewed context. Existing route-level assertions
+were aligned with the intended labels and exact preview counts. Baseline full
+frontend testing has 78 failures in 13 Viewer files; these are retained and must
+not be hidden or described as successful checks. Final scoped/full-delta/build
+and exact-head hosted results belong to the integration PR before owner merge.
+
+See [review boundary and all source PRs](docs/ADMIN_FRONTEND_CONSOLIDATION_2026_10_22.md).
+This replaces 52 separate merge/test cycles; only the owner merges. Then resume
+canonical pre-alpha integration rather than continuing indefinitely with small
+legacy-screen polish. Prior candidate notes below remain historical evidence.
+
+---
+
 # PR #1606 independent review correction — 22 October 2026
 
 Review reproduced a Player Lab request-selection race: an offline-paused run

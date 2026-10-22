@@ -134,6 +134,30 @@ describe('SeasonTemplateDraftSandboxPage', () => {
     expect(screen.queryByText('Invalid Week Open')).not.toBeInTheDocument()
   })
 
+  it('uses distinct local event IDs after deleting rows and adding the same event again', async () => {
+    const user = userEvent.setup()
+    renderSandbox()
+    expect(screen.getByRole('columnheader', { name: 'Local ID' })).toBeInTheDocument()
+
+    const name = screen.getByLabelText('Name')
+    const add = screen.getByRole('button', { name: 'Add Local Draft Event' })
+    await user.type(name, 'Repeated Open')
+    await user.click(add)
+    expect(screen.getByText('sandbox-local-5-repeated-open')).toBeInTheDocument()
+
+    const originalRow = screen.getByText('Némarque Open').closest('tr') as HTMLElement
+    await user.click(within(originalRow).getByRole('button', { name: 'Unlock' }))
+    const unlockedRow = screen.getByText('Némarque Open').closest('tr') as HTMLElement
+    await user.click(within(unlockedRow).getByRole('button', { name: 'Delete' }))
+
+    await user.type(name, 'Repeated Open')
+    await user.click(add)
+    expect(screen.getByText('sandbox-local-5-repeated-open')).toBeInTheDocument()
+    expect(screen.getByText('sandbox-local-6-repeated-open')).toBeInTheDocument()
+    expect(screen.getAllByText('Repeated Open')).toHaveLength(2)
+    expectNoBackendCalls()
+  })
+
   it('prevents locked deletion until a local unlock', async () => {
     const user = userEvent.setup()
     renderSandbox()

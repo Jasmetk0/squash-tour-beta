@@ -1,0 +1,532 @@
+[
+  {
+    "number": 1578,
+    "sha": "1da3eb5c9335aa415c6efd4d3a29bbc4576fb611",
+    "branch": "chatgpt/saved-ranking-index-truthful-20261022",
+    "title": "fix(web): avoid invented ranking calendar dates in Saved Players views",
+    "files": [
+      "web/src/pages/PlayersPage.test.tsx",
+      "web/src/pages/PlayersPage.tsx",
+      "web/src/pages/SavedPlayerIdentityPage.test.tsx",
+      "web/src/pages/SavedPlayerIdentityPage.tsx"
+    ]
+  },
+  {
+    "number": 1579,
+    "sha": "6c32af1c84f56c0d44691b059dbd173f9893036f",
+    "branch": "chatgpt/world-library-search-filter-20261022",
+    "title": "feat(web): browse and audit World Package catalogs without backend changes",
+    "files": [
+      "web/src/pages/WorldLibraryList.test.tsx",
+      "web/src/pages/WorldLibraryPage.test.tsx",
+      "web/src/pages/WorldLibraryPage.tsx",
+      "web/src/pages/WorldPackageCountriesList.test.tsx",
+      "web/src/pages/WorldPackageValidation.test.tsx"
+    ]
+  },
+  {
+    "number": 1580,
+    "sha": "bfae4fedec86462891c66857723d3ee97882bf82",
+    "branch": "chatgpt/diagnostics-launcher-triage-20261022",
+    "title": "feat(web): distinguish linked and planned global diagnostics",
+    "files": [
+      "web/src/pages/AdminDiagnosticsPage.test.tsx",
+      "web/src/pages/AdminDiagnosticsPage.tsx"
+    ]
+  },
+  {
+    "number": 1581,
+    "sha": "40f0ef5b8ca2d38d76fabfeaa2631efc70c6d176",
+    "branch": "chatgpt/calendar-template-inventory-20261022",
+    "title": "feat(web): add persisted calendar template inventory filters",
+    "files": [
+      "web/src/pages/SeasonTemplatesPage.inventory.test.tsx",
+      "web/src/pages/SeasonTemplatesPage.tsx"
+    ]
+  },
+  {
+    "number": 1582,
+    "sha": "089ca521757c54e917d70be6ea32695ed8839778",
+    "branch": "chatgpt/category-catalog-discovery-20261022",
+    "title": "feat(web): search canonical category identities by tour",
+    "files": [
+      "web/src/pages/CategoriesPage.discovery.test.tsx",
+      "web/src/pages/CategoriesPage.tsx"
+    ]
+  },
+  {
+    "number": 1583,
+    "sha": "f6a06c1571c2a3259e3ec5699418c0661193a9cc",
+    "branch": "chatgpt/season-registry-browse-20261022",
+    "title": "feat(web): filter read-only season registry entries",
+    "files": [
+      "web/src/pages/SeasonRegistryPage.test.tsx",
+      "web/src/pages/SeasonRegistryPage.tsx"
+    ]
+  },
+  {
+    "number": 1584,
+    "sha": "f095dec2786ae37eaccab6bd1a7dfd11b99c2a39",
+    "branch": "chatgpt/tournament-master-inventory-20261022",
+    "title": "feat(web): filter read-only tournament master inventory",
+    "files": [
+      "web/src/pages/TournamentsPage.inventory.test.tsx",
+      "web/src/pages/TournamentsPage.tsx"
+    ]
+  },
+  {
+    "number": 1585,
+    "sha": "200e584c4352c7d771d67a597704685c165fc1a7",
+    "branch": "chatgpt/category-detail-neighbors-20261022",
+    "title": "feat(web): navigate adjacent derived category details",
+    "files": [
+      "web/src/pages/CategoryDetailPage.navigation.test.tsx",
+      "web/src/pages/CategoryDetailPage.tsx"
+    ]
+  },
+  {
+    "number": 1586,
+    "sha": "c43985b682737d48245f7f8cd7b52b23f59b4a7b",
+    "branch": "chatgpt/tournament-template-list-filter-20261022",
+    "title": "feat(web): filter tournament template inventory without changing editor",
+    "files": [
+      "web/src/pages/TournamentTemplatesPage.test.tsx",
+      "web/src/pages/TournamentTemplatesPage.tsx"
+    ]
+  },
+  {
+    "number": 1587,
+    "sha": "7abfb93af751650bab7dabaf91dca2a66b0a6174",
+    "branch": "chatgpt/tournament-detail-neighbors-20261022",
+    "title": "feat(web): navigate adjacent tournament master details",
+    "files": [
+      "web/src/pages/TournamentDetailPage.navigation.test.tsx",
+      "web/src/pages/TournamentDetailPage.tsx"
+    ]
+  },
+  {
+    "number": 1588,
+    "sha": "ee9d62252e9e20b93ddd4b21b4d044aa34276152",
+    "branch": "chatgpt/season-template-slots-browse-20261022",
+    "title": "feat(web): browse read-only season template slots",
+    "files": [
+      "web/src/pages/SeasonTemplateDetailPage.slots.test.tsx",
+      "web/src/pages/SeasonTemplateDetailPage.tsx"
+    ]
+  },
+  {
+    "number": 1589,
+    "sha": "d603436d7bbff8fb03e0797de4a3ad1954445c19",
+    "branch": "chatgpt/calendar-template-event-inspection-20261022",
+    "title": "feat(web): inspect persisted calendar template event lists",
+    "files": [
+      "web/src/pages/CalendarTemplateDetailPage.inventory.test.tsx",
+      "web/src/pages/CalendarTemplateDetailPage.tsx"
+    ]
+  },
+  {
+    "number": 1590,
+    "sha": "98202c50f41ea17b08fb4dcdea9f523bf5e75b15",
+    "branch": "chatgpt/talent-preview-filter-recovery-20261022",
+    "title": "fix(web): recover Talent Preview after zero country matches",
+    "files": [
+      "web/src/pages/TalentPreviewPage.test.tsx",
+      "web/src/pages/TalentPreviewPage.tsx"
+    ]
+  },
+  {
+    "number": 1591,
+    "sha": "bf5afed17cbc361370a7996d0ca1bcc5b1fd834a",
+    "branch": "chatgpt/calendar-validation-issue-search-20261022",
+    "title": "feat(web): search Tour Seasons validation issues across panels",
+    "files": [
+      "web/src/pages/CalendarValidationPage.search.test.tsx",
+      "web/src/pages/CalendarValidationPage.tsx"
+    ]
+  },
+  {
+    "number": 1592,
+    "sha": "68b09d7d3d4dbc3e32dcc2d68f3d3064d750b76e",
+    "branch": "chatgpt/sandbox-unique-draft-ids-20261022",
+    "title": "fix(web): keep local sandbox event IDs unique after deletion",
+    "files": [
+      "web/src/pages/SeasonTemplateDraftSandboxPage.test.tsx",
+      "web/src/pages/SeasonTemplateDraftSandboxPage.tsx"
+    ]
+  },
+  {
+    "number": 1593,
+    "sha": "5e73b1626dfdf968fe19f055429135008e181ede",
+    "branch": "chatgpt/landing-prealpha-scope-20261022",
+    "title": "docs(web): clarify pre-alpha Viewer limitations on landing",
+    "files": [
+      "web/src/pages/LandingPage.test.tsx",
+      "web/src/pages/LandingPage.tsx"
+    ]
+  },
+  {
+    "number": 1594,
+    "sha": "ad8fd3e0e443063379cafc081c01d77bfe6c556c",
+    "branch": "chatgpt/season-health-check-filter-20261022",
+    "title": "feat(web): filter read-only season health checks by severity",
+    "files": [
+      "web/src/pages/SeasonHealthPreview.filter.test.tsx",
+      "web/src/pages/SeasonHealthPreview.tsx"
+    ]
+  },
+  {
+    "number": 1595,
+    "sha": "bb258c927edfba2194245309883bee99ddc34c4b",
+    "branch": "chatgpt/calendar-template-archived-readonly-20261022",
+    "title": "fix(web): prevent silent unarchiving in calendar template editor",
+    "files": [
+      "web/src/pages/CalendarTemplateEditor.archived.test.tsx",
+      "web/src/pages/CalendarTemplateEditor.tsx"
+    ]
+  },
+  {
+    "number": 1596,
+    "sha": "2f6c9cf095d8d210e2e4c051c55123f2b9e545d1",
+    "branch": "chatgpt/selected-season-loading-truth-20261022",
+    "title": "fix(web): distinguish loading from unavailable season workspace data",
+    "files": [
+      "web/src/pages/SelectedSeasonWorkspace.loading.test.tsx",
+      "web/src/pages/SelectedSeasonWorkspace.tsx"
+    ]
+  },
+  {
+    "number": 1597,
+    "sha": "f150a7a2dd871e3db97804d65804acbb076c6775",
+    "branch": "chatgpt/season-ranking-preview-tables-20261022",
+    "title": "feat(web): accessible and scrollable season ranking preview tables",
+    "files": [
+      "web/src/pages/SeasonRankingPointsPreview.tables.test.tsx",
+      "web/src/pages/SeasonRankingPointsPreview.tsx"
+    ]
+  },
+  {
+    "number": 1598,
+    "sha": "ff50d51304b40004add49dedaf61703b31f3f630",
+    "branch": "chatgpt/season-detail-safe-route-param-20261022",
+    "title": "fix(web): avoid double-decoding Concrete Season route IDs",
+    "files": [
+      "web/src/pages/SeasonDetailPage.route.test.tsx",
+      "web/src/pages/SeasonDetailPage.tsx"
+    ]
+  },
+  {
+    "number": 1599,
+    "sha": "a0a18e779577979dff07d373033585b34afe4cac",
+    "branch": "chatgpt/calendar-template-create-cache-refresh-20261022",
+    "title": "fix(web): refresh calendar template inventory after successful creation",
+    "files": [
+      "web/src/pages/CalendarTemplateNewPage.cache.test.tsx",
+      "web/src/pages/CalendarTemplateNewPage.tsx"
+    ]
+  },
+  {
+    "number": 1600,
+    "sha": "a9dd300f97084cd0600db089129accc8ffee92cd",
+    "branch": "chatgpt/nations-source-scoped-selection-20261022",
+    "title": "fix(web): keep Nation Dashboard detail selection scoped to its Run",
+    "files": [
+      "web/src/pages/NationsPage.selection.test.tsx",
+      "web/src/pages/NationsPage.tsx"
+    ]
+  },
+  {
+    "number": 1601,
+    "sha": "cd4d5cf7629acce67453b1d24c20a93e9c831a44",
+    "branch": "chatgpt/season-calendar-preview-readable-20261022",
+    "title": "feat(web): truthful counts and accessible season calendar preview",
+    "files": [
+      "web/src/pages/SeasonCalendarPreview.readability.test.tsx",
+      "web/src/pages/SeasonCalendarPreview.tsx"
+    ]
+  },
+  {
+    "number": 1602,
+    "sha": "64d5d015f762ee2d8bf88c919b345f7a7f4193a8",
+    "branch": "chatgpt/world-generation-empty-filter-truth-20261022",
+    "title": "feat(web): recover World Generation provenance filters and clarify empty results",
+    "files": [
+      "web/src/pages/WorldGenerationPage.test.tsx",
+      "web/src/pages/WorldGenerationPage.tsx"
+    ]
+  },
+  {
+    "number": 1603,
+    "sha": "d40f1f335d25f4dce0c60339e92c79b98e600434",
+    "branch": "chatgpt/talent-calibration-scroll-tables-20261022",
+    "title": "feat(web): scrollable Talent Calibration diagnostic tables",
+    "files": [
+      "web/src/pages/TalentCalibrationPage.test.tsx",
+      "web/src/pages/TalentCalibrationPage.tsx"
+    ]
+  },
+  {
+    "number": 1604,
+    "sha": "3050de20182d69cbfd6f26d24d4f085db8cfb0f2",
+    "branch": "chatgpt/dashboard-trim-safe-run-open-20261022",
+    "title": "fix(web): normalize manual Dashboard Run IDs and encode detail routes",
+    "files": [
+      "web/src/pages/DashboardPage.test.tsx",
+      "web/src/pages/DashboardPage.tsx"
+    ]
+  },
+  {
+    "number": 1605,
+    "sha": "6e8111d6c39fee6b02469da236cb00e53e920361",
+    "branch": "chatgpt/tour-calendar-missing-head-truth-20261022",
+    "title": "fix(web): distinguish unselected Branch from missing saved HEAD in Tour Calendar",
+    "files": [
+      "web/src/pages/CalendarTourPage.readiness.test.tsx",
+      "web/src/pages/CalendarTourPage.tsx"
+    ]
+  },
+  {
+    "number": 1607,
+    "sha": "cedcfe52df96e9f33bad31e2cf82b1fd974dfa91",
+    "branch": "chatgpt/calendar-compare-review-input-guard-20261022",
+    "title": "fix(web): prevent applying a stale Calendar Compare review",
+    "files": [
+      "web/src/pages/CalendarComparePage.reviewGuard.test.tsx",
+      "web/src/pages/CalendarComparePage.tsx"
+    ]
+  },
+  {
+    "number": 1608,
+    "sha": "5c0252f3b379b7bacd618acc249e8feaef1f25fa",
+    "branch": "chatgpt/finals-qualification-truthful-status-20261022",
+    "title": "fix(web): show truthful Finals qualification and result availability states",
+    "files": [
+      "web/src/pages/FinalsQualificationDetailPage.test.tsx",
+      "web/src/pages/FinalsQualificationDetailPage.tsx"
+    ]
+  },
+  {
+    "number": 1609,
+    "sha": "e0517d7d76deb109e48447b86e0ac787c7e4a59a",
+    "branch": "chatgpt/finals-result-truthful-status-20261022",
+    "title": "fix(web): distinguish unknown, failed and missing Finals result states",
+    "files": [
+      "web/src/pages/FinalsResultDetailPage.test.tsx",
+      "web/src/pages/FinalsResultDetailPage.tsx"
+    ]
+  },
+  {
+    "number": 1610,
+    "sha": "c895f5cd82f1ff25beb433834e2bf57779224c61",
+    "branch": "chatgpt/talent-intake-country-filter-recovery-20261022",
+    "title": "feat(web): recover Talent Intake country searches and distinguish true empty cohorts",
+    "files": [
+      "web/src/pages/TalentIntakePage.test.tsx",
+      "web/src/pages/TalentIntakePage.tsx"
+    ]
+  },
+  {
+    "number": 1611,
+    "sha": "9c35bf3da4db35f7192f73e51854d713db8a0fe1",
+    "branch": "chatgpt/season-category-points-save-feedback-20261022",
+    "title": "fix(web): show Season Category Points load, initialization and save errors",
+    "files": [
+      "web/src/pages/SeasonCategoryPoints.feedback.test.tsx",
+      "web/src/pages/SeasonCategoryPoints.tsx"
+    ]
+  },
+  {
+    "number": 1612,
+    "sha": "2f30c81e1afcb5455dd79359944b88085f15fe72",
+    "branch": "chatgpt/finals-overview-status-accuracy-20261022",
+    "title": "fix(web): show truthful loading, missing and failed Finals overview states",
+    "files": [
+      "web/src/pages/FinalsPage.status.test.tsx",
+      "web/src/pages/FinalsPage.tsx"
+    ]
+  },
+  {
+    "number": 1613,
+    "sha": "bfb1b9c99f71bcc78c25978cf1f2e9e3e5babfbc",
+    "branch": "chatgpt/season-chain-safe-links-20261022",
+    "title": "fix(web): preserve encoded Run IDs in Season Chain navigation",
+    "files": [
+      "web/src/pages/SeasonChainPage.test.tsx",
+      "web/src/pages/SeasonChainPage.tsx"
+    ]
+  },
+  {
+    "number": 1614,
+    "sha": "2f2c341d1c671b1757b361743bce89ee3b6c7ab1",
+    "branch": "chatgpt/bootstrap-lineage-safe-run-links-20261022",
+    "title": "fix(web): keep Bootstrap Lineage Run IDs safely encoded in links",
+    "files": [
+      "web/src/pages/BootstrapLineagePage.test.tsx",
+      "web/src/pages/BootstrapLineagePage.tsx"
+    ]
+  },
+  {
+    "number": 1615,
+    "sha": "456d1b1c5a38c46137c3e4fe09aeda5067525bb5",
+    "branch": "chatgpt/snapshot-sequence-strict-route-20261022",
+    "title": "fix(web): require an exact positive snapshot sequence in detail routes",
+    "files": [
+      "web/src/pages/SnapshotDetailPage.test.tsx",
+      "web/src/pages/SnapshotDetailPage.tsx"
+    ]
+  },
+  {
+    "number": 1616,
+    "sha": "68f18b36b3a57c067439d9ca01308ee8708480f0",
+    "branch": "chatgpt/snapshot-list-query-strict-selection-20261022",
+    "title": "fix(web): reject malformed snapshot list deep-link selection IDs",
+    "files": [
+      "web/src/pages/HistoryViews.test.tsx",
+      "web/src/pages/SnapshotsPage.tsx"
+    ]
+  },
+  {
+    "number": 1617,
+    "sha": "97aae8a79c39bc4ab99757945439c30d2c098cad",
+    "branch": "chatgpt/rollover-season-strict-route-20261022",
+    "title": "fix(web): reject malformed rollover season route IDs",
+    "files": [
+      "web/src/pages/RolloverSeasonDetailPage.test.tsx",
+      "web/src/pages/RolloverSeasonDetailPage.tsx"
+    ]
+  },
+  {
+    "number": 1618,
+    "sha": "fd0b296deb42f2141212011c37796e4952318954",
+    "branch": "chatgpt/week-detail-invalid-route-no-fetch-20261022",
+    "title": "fix(web): stop week-history requests for invalid week URL parameters",
+    "files": [
+      "web/src/pages/WeekDetailPage.test.tsx",
+      "web/src/pages/WeekDetailPage.tsx"
+    ]
+  },
+  {
+    "number": 1619,
+    "sha": "902cdb245003b3be499890b3441c956bc4c26cfe",
+    "branch": "chatgpt/run-diagnostics-safe-links-20261022",
+    "title": "fix(web): preserve Run IDs in Diagnostics and Finals navigation routes",
+    "files": [
+      "web/src/pages/RunDiagnosticsPage.test.tsx",
+      "web/src/pages/RunDiagnosticsPage.tsx",
+      "web/src/pages/finalsDetailRoutes.encoding.test.ts",
+      "web/src/pages/finalsDetailRoutes.ts"
+    ]
+  },
+  {
+    "number": 1620,
+    "sha": "f0f698e73ac0c6b25ac1302aa8086508338b7824",
+    "branch": "chatgpt/event-detail-run-id-links-20261022",
+    "title": "fix(web): encode Run IDs throughout persisted Event Detail navigation",
+    "files": [
+      "web/src/pages/EventDetailPage.test.tsx",
+      "web/src/pages/EventDetailPage.tsx"
+    ]
+  },
+  {
+    "number": 1621,
+    "sha": "b2e9e8068d5d4081fb8b69903c328942192fa911",
+    "branch": "chatgpt/activity-feed-strict-deeplink-20261022",
+    "title": "fix(web): reject invalid selectedItem deep links in Activity Feed",
+    "files": [
+      "web/src/pages/ActivityPage.test.tsx",
+      "web/src/pages/ActivityPage.tsx"
+    ]
+  },
+  {
+    "number": 1622,
+    "sha": "d7da24da29e69604b76728c62283bc4cb80f73de",
+    "branch": "chatgpt/rollover-overview-exact-season-input-20261022",
+    "title": "fix(web): validate rollover browser seasons without implicit numeric coercion",
+    "files": [
+      "web/src/pages/RolloverPage.test.tsx",
+      "web/src/pages/RolloverPage.tsx"
+    ]
+  },
+  {
+    "number": 1623,
+    "sha": "908afe7a8c7d593821489e84f6851522dc9ce4d2",
+    "branch": "chatgpt/saved-tour-empty-branch-fail-closed-20261022",
+    "title": "fix(web): reject explicitly empty Saved Tour Branch deep links",
+    "files": [
+      "web/src/pages/SavedTourCalendarPage.test.tsx",
+      "web/src/pages/SavedTourCalendarPage.tsx"
+    ]
+  },
+  {
+    "number": 1624,
+    "sha": "3aeb30b77eb9072398a59504dc3d1bc10bc696de",
+    "branch": "chatgpt/run-world-country-year-label-20261022",
+    "title": "fix(web): label Run World country by validated data year",
+    "files": [
+      "web/src/pages/RunWorldPage.test.tsx",
+      "web/src/pages/RunWorldPage.tsx"
+    ]
+  },
+  {
+    "number": 1625,
+    "sha": "4af9a10bfdac7cdd56e736755bc062c89db4c4af",
+    "branch": "chatgpt/season-calendar-route-encoding-20261022",
+    "title": "fix(web): keep Run IDs encoded throughout Season Calendar navigation",
+    "files": [
+      "web/src/pages/SeasonCalendarPage.test.tsx",
+      "web/src/pages/SeasonCalendarPage.tsx"
+    ]
+  },
+  {
+    "number": 1626,
+    "sha": "b24ea1e9f4047a5157c38768d286653da3158d4c",
+    "branch": "chatgpt/legacy-run-hub-encoded-navigation-20261022",
+    "title": "fix(web): encode Legacy Runs diagnostics links and open action",
+    "files": [
+      "web/src/pages/LegacyRunsPage.test.tsx",
+      "web/src/pages/LegacyRunsPage.tsx"
+    ]
+  },
+  {
+    "number": 1627,
+    "sha": "968434eb79358cfe0d124fad289dba8a26f1c632",
+    "branch": "chatgpt/legacy-player-selection-run-scoped-20261022",
+    "title": "fix(web): prevent cross-Run selection in legacy player inspector",
+    "files": [
+      "web/src/pages/LegacyRunPlayersExplorerPage.selection.test.tsx",
+      "web/src/pages/LegacyRunPlayersExplorerPage.tsx"
+    ]
+  },
+  {
+    "number": 1628,
+    "sha": "7dd3c3937d834687317bc1b4fd7c0a3de7390f83",
+    "branch": "chatgpt/legacy-career-response-identity-20261022",
+    "title": "fix(web): reject cross-Run and cross-player legacy Career responses",
+    "files": [
+      "web/src/pages/PlayerCareerPage.identity.test.tsx",
+      "web/src/pages/PlayerCareerPage.tsx"
+    ]
+  },
+  {
+    "number": 1629,
+    "sha": "060b8b2d727d77eca0437df84a2e2a575a3639b6",
+    "branch": "chatgpt/run-ranking-dynamic-week-label-20261022",
+    "title": "fix(web): respect each Run calendar when labeling saved ranking weeks",
+    "files": [
+      "web/src/pages/RunHomeProgress.tsx",
+      "web/src/pages/RunHomeRankingPanel.clock.test.tsx",
+      "web/src/pages/RunHomeRankingPanel.tsx",
+      "web/src/pages/RunPage.tsx"
+    ]
+  },
+  {
+    "number": 1630,
+    "sha": "f92710331049d081235803a8120f382c988ab8a3",
+    "branch": "chatgpt/country-saved-roster-scope-pagination-20261022",
+    "title": "fix(web): reset Saved country roster and standings pages on source changes",
+    "files": [
+      "web/src/pages/RunWorldCountryPlayerStandings.tsx",
+      "web/src/pages/RunWorldCountrySavedPaging.test.tsx",
+      "web/src/pages/RunWorldCountrySavedPlayers.tsx"
+    ]
+  }
+]

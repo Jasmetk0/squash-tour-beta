@@ -9,6 +9,10 @@ export function LandingPage(): JSX.Element {
         <h2>Squash Tour Beta Engine</h2>
         <p className="subtitle">Choose how you want to use the deterministic FAX squash world.</p>
       </div>
+      <p className="status" role="status">
+        Pre-alpha: Admin is the internal development and testing entry point. The Viewer remains a read-only
+        inspection surface; publication and activation do not imply release readiness.
+      </p>
       <div className="mode-choice-grid">
         <Link className="mode-choice mode-choice--viewer" to={viewerHomePath()}>
           <span className="eyebrow">Viewer / MSA Website Mode</span>

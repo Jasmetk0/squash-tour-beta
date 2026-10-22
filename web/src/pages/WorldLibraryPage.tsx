@@ -1,19 +1,20 @@
 import type { FormEvent, ReactNode } from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { cloneWorldPackage, createWorldPackageCountry, deleteWorldPackageCountry, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, replaceWorldPackageTimezoneAreas, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
 import type { CountryRecord, WorldPackage, WorldPackageClonePayload, WorldPackageCloneResponse, WorldPackageCountryCreatePayload, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
+import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 
 function yesNo(value: boolean, yes: string, no: string): string {
   return value ? yes : no
 }
 
-function usageLabel(value: number | null): string {
-  return value === null ? 'Usage not tracked yet' : String(value)
+function usageLabel(value: number | null, cs = false): string {
+  return value === null ? (cs ? 'Využití zatím není sledováno' : 'Usage not tracked yet') : String(value)
 }
 
 function shortFingerprint(fingerprint: string): string {
@@ -21,28 +22,29 @@ function shortFingerprint(fingerprint: string): string {
   return `${fingerprint.slice(0, 8)}…${fingerprint.slice(-8)}`
 }
 
-function PackageTable({ packages }: { packages: WorldPackage[] }): JSX.Element {
+function PackageTable({ packages, cs }: { packages: WorldPackage[], cs: boolean }): JSX.Element {
   if (packages.length === 0) {
-    return <p className="status">No World Packages were returned by the registry. This read-only library has nothing to display yet.</p>
+    return <p className="status">{cs ? 'Registr zatím nevrátil žádné World Packages.' : 'No World Packages were returned by the registry.'}</p>
   }
 
   return (
-    <table aria-label="World packages table">
+    <div className="table-responsive"><table aria-label="World packages table">
       <thead>
         <tr>
-          <th>Name</th>
+          <th>{cs ? 'Název' : 'Name'}</th>
           <th>World ID</th>
-          <th>Type</th>
-          <th>Status</th>
-          <th>Package mode</th>
-          <th>Countries</th>
-          <th>Continents</th>
-          <th>Regions</th>
-          <th>Travel Regions</th><th>Timezone Areas</th>
-          <th>Used by Runs</th>
-          <th>Version</th>
+          <th>{cs ? 'Typ' : 'Type'}</th>
+          <th>{cs ? 'Stav' : 'Status'}</th>
+          <th>{cs ? 'Ověření' : 'Validation'}</th>
+          <th>{cs ? 'Režim balíčku' : 'Package mode'}</th>
+          <th>{cs ? 'Země' : 'Countries'}</th>
+          <th>{cs ? 'Kontinenty' : 'Continents'}</th>
+          <th>{cs ? 'Regiony' : 'Regions'}</th>
+          <th>{cs ? 'Cestovní regiony' : 'Travel Regions'}</th><th>{cs ? 'Časové oblasti' : 'Timezone Areas'}</th>
+          <th>{cs ? 'Použito v Runech' : 'Used by Runs'}</th>
+          <th>{cs ? 'Verze' : 'Version'}</th>
           <th>Fingerprint</th>
-          <th>Actions</th>
+          <th>{cs ? 'Akce' : 'Actions'}</th>
         </tr>
       </thead>
       <tbody>
@@ -50,43 +52,138 @@ function PackageTable({ packages }: { packages: WorldPackage[] }): JSX.Element {
           <tr key={pkg.world_id}>
             <td>{pkg.name}</td>
             <td><code>{pkg.world_id}</code></td>
-            <td>{pkg.type === 'custom' ? 'Custom' : 'Built-in'}</td>
-            <td>{pkg.status}</td>
-            <td>{yesNo(pkg.editable, 'Editable source', 'Read-only')}</td>
+            <td>{pkg.type === 'custom' ? (cs ? 'Vlastní' : 'Custom') : (cs ? 'Vestavěný' : 'Built-in')}</td>
+            <td>{pkg.status === 'archived' ? (cs ? 'Archivovaný' : 'Archived') : (cs ? 'Aktivní' : 'Active')}</td>
+            <td>{pkg.validation_status === 'valid'
+              ? (cs ? 'Ověřeno' : 'Valid')
+              : (cs ? 'Neověřeno' : 'Unknown')}</td>
+            <td>{yesNo(pkg.editable, cs ? 'Upravitelný zdroj' : 'Editable source', cs ? 'Jen pro čtení' : 'Read-only')}</td>
             <td>{pkg.country_count}</td>
             <td>{pkg.continent_count}</td>
             <td>{pkg.region_count}</td>
             <td>{pkg.travel_region_count}</td><td>{pkg.timezone_area_count}</td>
-            <td>{usageLabel(pkg.used_by_run_count)}</td>
+            <td>{usageLabel(pkg.used_by_run_count, cs)}</td>
             <td>{pkg.version}</td>
             <td><code title={pkg.fingerprint}>{shortFingerprint(pkg.fingerprint)}</code></td>
-            <td><Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}`}>Open World Package</Link></td>
+            <td><Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}`}>{cs ? 'Otevřít World Package' : 'Open World Package'}</Link></td>
           </tr>
         ))}
       </tbody>
-    </table>
+    </table></div>
   )
 }
 
 export function WorldLibraryPage(): JSX.Element {
+  const { language } = useLanguage()
+  const cs = language === 'cs'
   const packagesQuery = useQuery({ queryKey: ['world-packages'], queryFn: listWorldPackages, retry: false })
+  const [search, setSearch] = useState('')
+  const [packageType, setPackageType] = useState<'all' | 'built_in' | 'custom'>('all')
+  const [packageStatus, setPackageStatus] = useState<'all' | 'active' | 'archived'>('all')
+  const [validationStatus, setValidationStatus] = useState<'all' | 'valid' | 'unknown'>('all')
+  const [editableOnly, setEditableOnly] = useState(false)
+  const [sortBy, setSortBy] = useState<'registry' | 'name' | 'countries'>('registry')
+  const packages = packagesQuery.data?.packages ?? []
+  const normalizedSearch = search.trim().toLocaleLowerCase()
+  const hasFilters = search !== '' || packageType !== 'all' || packageStatus !== 'all' ||
+    validationStatus !== 'all' || editableOnly || sortBy !== 'registry'
+  const visiblePackages = packages.filter(pkg =>
+    (packageType === 'all' || (packageType === 'custom' ? pkg.type === 'custom' : pkg.type === 'official')) &&
+    (packageStatus === 'all' || pkg.status === packageStatus) &&
+    (validationStatus === 'all' || pkg.validation_status === validationStatus) &&
+    (!editableOnly || pkg.editable) &&
+    (normalizedSearch === '' || `${pkg.name} ${pkg.world_id}`.toLocaleLowerCase().includes(normalizedSearch))
+  )
+  if (sortBy !== 'registry') {
+    visiblePackages.sort((a, b) => sortBy === 'countries'
+      ? b.country_count - a.country_count || a.world_id.localeCompare(b.world_id)
+      : a.name.localeCompare(b.name) || a.world_id.localeCompare(b.world_id))
+  }
+  const resetFilters = () => {
+    setSearch('')
+    setPackageType('all')
+    setPackageStatus('all')
+    setValidationStatus('all')
+    setEditableOnly(false)
+    setSortBy('registry')
+  }
 
   return (
     <section className="panel">
       <div className="page-intro">
         <h2>World Packages</h2>
-        <p className="subtitle">Registry of foundational World Packages available to the engine.</p>
+        <p className="subtitle">{cs ? 'Registr dostupných zdrojů světa pro Squash Engine.' : 'Registry of available world sources for Squash Engine.'}</p>
       </div>
-      <p>
-        World Packages are foundational world input bundles. A run will eventually be created from one selected World Package.
-        Official FAX World is built in and read-only. Custom World Packages live under <code>config/world_packages/custom/</code> and use the same canonical package-scoped storage contract.
+      <p>{cs
+        ? 'World Packages jsou opakovaně použitelné zdroje světa. Run může vzniknout i prázdný; podporovaný zdroj lze později zkopírovat bez změny originálu.'
+        : 'World Packages are reusable world sources. A Run can start empty; a supported source may be copied in later without altering the original.'}
+        {' '}{cs ? 'Vlastní zdroje jsou uloženy v ' : 'Custom sources are stored under '}
+        <code>config/world_packages/custom/</code>.
       </p>
-      <p><Link to="/admin/world">Back to World hub</Link></p>
+      <p><Link to="/admin/world">{cs ? 'Zpět na přehled světů' : 'Back to World hub'}</Link></p>
 
-      <SectionCard title="Available World Packages">
-        {packagesQuery.isLoading && <p className="status">Loading World Packages...</p>}
-        {packagesQuery.error && <p className="error">Failed to load World Packages: {formatApiError(packagesQuery.error)}</p>}
-        {packagesQuery.data && <PackageTable packages={packagesQuery.data.packages} />}
+      <SectionCard title={cs ? 'Dostupné World Packages' : 'Available World Packages'}>
+        {packagesQuery.isLoading && <p className="status">{cs ? 'Načítám World Packages…' : 'Loading World Packages...'}</p>}
+        {packagesQuery.error && <p className="error">{cs ? 'Nepodařilo se načíst World Packages: ' : 'Failed to load World Packages: '}{formatApiError(packagesQuery.error)}</p>}
+        {packagesQuery.data && <>
+          <div className="form-grid">
+            <label>
+              {cs ? 'Hledat World Package' : 'Search World Packages'}
+              <input type="search" value={search} onChange={event => setSearch(event.target.value)}
+                placeholder={cs ? 'Název nebo World ID' : 'Name or World ID'} />
+            </label>
+            <label>
+              {cs ? 'Typ World Package' : 'World Package type'}
+              <select value={packageType} onChange={event => setPackageType(event.target.value as typeof packageType)}>
+                <option value="all">{cs ? 'Všechny typy' : 'All types'}</option>
+                <option value="built_in">{cs ? 'Vestavěné' : 'Built-in'}</option>
+                <option value="custom">{cs ? 'Vlastní' : 'Custom'}</option>
+              </select>
+            </label>
+            <label>
+              {cs ? 'Stav World Package' : 'World Package status'}
+              <select value={packageStatus} onChange={event => setPackageStatus(event.target.value as typeof packageStatus)}>
+                <option value="all">{cs ? 'Všechny stavy' : 'All statuses'}</option>
+                <option value="active">{cs ? 'Aktivní' : 'Active'}</option>
+                <option value="archived">{cs ? 'Archivované' : 'Archived'}</option>
+              </select>
+            </label>
+            <label>
+              {cs ? 'Ověření World Package' : 'World Package validation'}
+              <select value={validationStatus} onChange={event => setValidationStatus(event.target.value as typeof validationStatus)}>
+                <option value="all">{cs ? 'Všechny stavy ověření' : 'All validation states'}</option>
+                <option value="valid">{cs ? 'Ověřené' : 'Valid'}</option>
+                <option value="unknown">{cs ? 'Neověřené' : 'Unknown'}</option>
+              </select>
+            </label>
+            <label>
+              {cs ? 'Seřadit World Packages' : 'Sort World Packages'}
+              <select value={sortBy} onChange={event => setSortBy(event.target.value as typeof sortBy)}>
+                <option value="registry">{cs ? 'Pořadí registru' : 'Registry order'}</option>
+                <option value="name">{cs ? 'Podle názvu (A–Z)' : 'Name (A–Z)'}</option>
+                <option value="countries">{cs ? 'Podle počtu zemí (sestupně)' : 'Country count (descending)'}</option>
+              </select>
+            </label>
+          </div>
+          <label><input type="checkbox" checked={editableOnly}
+            onChange={event => setEditableOnly(event.target.checked)} />
+            {' '}{cs ? 'Pouze upravitelné zdroje' : 'Editable sources only'}
+          </label>
+          <p className="status">{cs
+            ? 'Neověřeno znamená, že registr nepotvrdil výsledek validace; nejde automaticky o chybu.'
+            : 'Unknown validation means the registry has not confirmed a result; it does not necessarily indicate an error.'}</p>
+          <button type="button" disabled={!hasFilters} onClick={resetFilters}>
+            {cs ? 'Vymazat filtry a řazení' : 'Clear filters and sorting'}
+          </button>
+          <p role="status">{cs
+            ? `Zobrazeno ${visiblePackages.length} z ${packages.length} World Packages`
+            : `Showing ${visiblePackages.length} of ${packages.length} World Packages`}</p>
+          {packages.length > 0 && visiblePackages.length === 0
+            ? <p className="status">{cs
+              ? 'Žádné World Packages neodpovídají hledání nebo filtrům.'
+              : 'No World Packages match your search or filters.'}</p>
+            : <PackageTable packages={visiblePackages} cs={cs} />}
+        </>}
       </SectionCard>
     </section>
   )
@@ -211,36 +308,95 @@ function CloneBuiltInWorldSection({ source }: { source: WorldPackage }): JSX.Ele
 }
 
 function ValidationSection({ validation }: { validation: WorldPackageValidation }): JSX.Element {
+  const { language } = useLanguage()
+  const cs = language === 'cs'
+  const [search, setSearch] = useState('')
+  const [severity, setSeverity] = useState<'all' | 'error' | 'warning' | 'info'>('all')
+  const [order, setOrder] = useState<'severity' | 'source'>('severity')
+  const normalizedSearch = search.trim().toLocaleLowerCase()
+  const visibleChecks = validation.checks.filter(check =>
+    (severity === 'all' || check.severity === severity) &&
+    (normalizedSearch === '' ||
+      [check.code, check.message, check.path, check.field]
+        .some(value => value?.toLocaleLowerCase().includes(normalizedSearch)))
+  )
+  if (order === 'severity') {
+    const priority = { error: 0, warning: 1, info: 2 }
+    visibleChecks.sort((a, b) => priority[a.severity] - priority[b.severity])
+  }
+  const severityLabel = (value: 'error' | 'warning' | 'info'): string =>
+    value === 'error' ? (cs ? 'Chyba' : 'Error') :
+      value === 'warning' ? (cs ? 'Varování' : 'Warning') : (cs ? 'Informace' : 'Info')
+  const checkStatusLabel = (value: 'passed' | 'warning' | 'failed'): string =>
+    value === 'passed' ? (cs ? 'Prošlo' : 'Passed') :
+      value === 'failed' ? (cs ? 'Selhalo' : 'Failed') : (cs ? 'Varování' : 'Warning')
+  const overallLabel = validation.status === 'valid' ? (cs ? 'Platné' : 'Valid') :
+    validation.status === 'warnings' ? (cs ? 'Varování' : 'Warnings') : (cs ? 'Chyby' : 'Errors')
   return (
-    <SectionCard title="World Package Validation">
-      <DetailRow label="Overall status" value={validation.status} />
-      <DetailRow label="Errors" value={validation.error_count} />
-      <DetailRow label="Warnings" value={validation.warning_count} />
-      <DetailRow label="Info" value={validation.info_count} />
-      <table aria-label="World package validation checks">
-        <thead>
-          <tr>
-            <th>Code</th>
-            <th>Severity</th>
-            <th>Status</th>
-            <th>Message</th>
-            <th>Path</th>
-            <th>Field</th>
-          </tr>
-        </thead>
-        <tbody>
-          {validation.checks.map((check) => (
-            <tr key={`${check.code}-${check.path ?? 'package'}-${check.field ?? 'root'}`}>
-              <td><code>{check.code}</code></td>
-              <td>{check.severity}</td>
-              <td>{check.status}</td>
-              <td>{check.message}</td>
-              <td>{check.path ? <code>{check.path}</code> : '—'}</td>
-              <td>{check.field ? <code>{check.field}</code> : '—'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <SectionCard title={cs ? 'Ověření World Package' : 'World Package Validation'}>
+      <DetailRow label={cs ? 'Celkový stav' : 'Overall status'} value={overallLabel} />
+      <DetailRow label={cs ? 'Chyby' : 'Errors'} value={validation.error_count} />
+      <DetailRow label={cs ? 'Varování' : 'Warnings'} value={validation.warning_count} />
+      <DetailRow label={cs ? 'Informace' : 'Info'} value={validation.info_count} />
+      <div className="form-grid">
+        <label>{cs ? 'Hledat validační kontroly' : 'Search validation checks'}
+          <input type="search" value={search} onChange={event => setSearch(event.target.value)}
+            placeholder={cs ? 'Kód, zpráva, cesta nebo pole' : 'Code, message, path or field'} />
+        </label>
+        <label>{cs ? 'Závažnost kontroly' : 'Validation severity'}
+          <select value={severity} onChange={event => setSeverity(event.target.value as typeof severity)}>
+            <option value="all">{cs ? 'Všechny závažnosti' : 'All severities'}</option>
+            <option value="error">{cs ? 'Chyby' : 'Errors'}</option>
+            <option value="warning">{cs ? 'Varování' : 'Warnings'}</option>
+            <option value="info">{cs ? 'Informace' : 'Info'}</option>
+          </select>
+        </label>
+        <label>{cs ? 'Pořadí kontrol' : 'Validation order'}
+          <select value={order} onChange={event => setOrder(event.target.value as typeof order)}>
+            <option value="severity">{cs ? 'Nejdříve chyby' : 'Errors first'}</option>
+            <option value="source">{cs ? 'Původní pořadí' : 'Source order'}</option>
+          </select>
+        </label>
+      </div>
+      <button type="button" disabled={!search && severity === 'all' && order === 'severity'}
+        onClick={() => { setSearch(''); setSeverity('all'); setOrder('severity') }}>
+        {cs ? 'Vymazat filtry kontrol' : 'Clear validation filters'}
+      </button>
+      <p role="status">{cs
+        ? `Zobrazeno ${visibleChecks.length} z ${validation.checks.length} validačních kontrol`
+        : `Showing ${visibleChecks.length} of ${validation.checks.length} validation checks`}</p>
+      {validation.checks.length === 0
+        ? <p className="status">{cs
+          ? 'Tento World Package nevrátil žádné validační kontroly.'
+          : 'No validation checks were returned for this World Package.'}</p>
+        : visibleChecks.length === 0
+          ? <p className="status">{cs
+            ? 'Žádné validační kontroly neodpovídají filtrům.'
+            : 'No validation checks match your filters.'}</p>
+          : <div className="table-responsive"><table aria-label={cs ? 'Validační kontroly World Package' : 'World package validation checks'}>
+            <thead>
+              <tr>
+                <th>{cs ? 'Kód' : 'Code'}</th>
+                <th>{cs ? 'Závažnost' : 'Severity'}</th>
+                <th>{cs ? 'Stav' : 'Status'}</th>
+                <th>{cs ? 'Zpráva' : 'Message'}</th>
+                <th>{cs ? 'Cesta' : 'Path'}</th>
+                <th>{cs ? 'Pole' : 'Field'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleChecks.map((check, index) => (
+                <tr key={`${check.code}-${check.path ?? 'package'}-${check.field ?? 'root'}-${index}`}>
+                  <td><code>{check.code}</code></td>
+                  <td>{severityLabel(check.severity)}</td>
+                  <td>{checkStatusLabel(check.status)}</td>
+                  <td>{check.message}</td>
+                  <td>{check.path ? <code>{check.path}</code> : '—'}</td>
+                  <td>{check.field ? <code>{check.field}</code> : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table></div>}
     </SectionCard>
   )
 }
@@ -267,26 +423,46 @@ function formatNumber(value: number | null | undefined): string {
   return value === null || value === undefined ? '—' : value.toLocaleString()
 }
 
-function formatPopulationYears(populationByYear: CountryRecord['population_by_year']): string {
+function hasPopulationHistory(country: CountryRecord): boolean {
+  return Object.values(country.population_by_year ?? {}).some(value => value !== null && value !== undefined)
+}
+
+function formatPopulationYears(populationByYear: CountryRecord['population_by_year'], cs: boolean): string {
   if (!populationByYear) return '—'
   const years = Object.entries(populationByYear)
     .filter(([, value]) => value !== null && value !== undefined)
     .map(([year]) => year)
     .sort((left, right) => Number(left) - Number(right))
   if (years.length === 0) return '—'
-  return `${years.length} ${years.length === 1 ? 'year' : 'years'}: ${years.join(', ')}`
+  return cs
+    ? `${years.length} ${years.length === 1 ? 'rok' : years.length >= 2 && years.length <= 4 ? 'roky' : 'let'}: ${years.join(', ')}`
+    : `${years.length} ${years.length === 1 ? 'year' : 'years'}: ${years.join(', ')}`
 }
 
 function CountryCell({ value }: { value: ReactNode }): JSX.Element {
   return <td>{value === null || value === undefined || value === '' ? '—' : value}</td>
 }
 
-function PackageCountriesTable({ countries, worldId }: { countries: CountryRecord[], worldId: string }): JSX.Element {
+function PackageCountriesTable({ countries, worldId, cs }: { countries: CountryRecord[], worldId: string, cs: boolean }): JSX.Element {
   return (
-    <table>
+    <div className="table-responsive"><table aria-label={cs ? 'Země ve World Package' : 'World Package countries table'}>
       <thead>
         <tr>
-          <th>Code</th><th>Name</th><th>Region</th><th>Population</th><th>Population coverage</th><th>Area km²</th><th>Travel Region</th><th>Timezone Area</th><th>Squash Popularity</th><th>Squash Access</th><th>Development Quality</th><th>Competition Quality</th><th>Elite Support</th><th>Squash Tradition</th><th>Action</th>
+          <th>{cs ? 'Kód' : 'Code'}</th>
+          <th>{cs ? 'Název' : 'Name'}</th>
+          <th>Region</th>
+          <th>{cs ? 'Populace' : 'Population'}</th>
+          <th>{cs ? 'Historie populace' : 'Population coverage'}</th>
+          <th>{cs ? 'Rozloha km²' : 'Area km²'}</th>
+          <th>{cs ? 'Cestovní region' : 'Travel Region'}</th>
+          <th>{cs ? 'Časová oblast' : 'Timezone Area'}</th>
+          <th>{cs ? 'Popularita squashe' : 'Squash Popularity'}</th>
+          <th>{cs ? 'Dostupnost squashe' : 'Squash Access'}</th>
+          <th>{cs ? 'Kvalita rozvoje' : 'Development Quality'}</th>
+          <th>{cs ? 'Kvalita soutěží' : 'Competition Quality'}</th>
+          <th>{cs ? 'Podpora elity' : 'Elite Support'}</th>
+          <th>{cs ? 'Tradice squashe' : 'Squash Tradition'}</th>
+          <th>{cs ? 'Akce' : 'Action'}</th>
         </tr>
       </thead>
       <tbody>
@@ -296,7 +472,7 @@ function PackageCountriesTable({ countries, worldId }: { countries: CountryRecor
             <CountryCell value={country.name} />
             <CountryCell value={country.region} />
             <CountryCell value={country.population.toLocaleString()} />
-            <CountryCell value={formatPopulationYears(country.population_by_year)} />
+            <CountryCell value={formatPopulationYears(country.population_by_year, cs)} />
             <CountryCell value={formatNumber(country.area_km2)} />
             <CountryCell value={country.travel_region} />
             <CountryCell value={country.timezone_area} />
@@ -306,53 +482,180 @@ function PackageCountriesTable({ countries, worldId }: { countries: CountryRecor
             <CountryCell value={country.competition_quality} />
             <CountryCell value={country.elite_support} />
             <CountryCell value={country.squash_tradition} />
-            <td><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(country.code)}`}>Open</Link></td>
+            <td><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(country.code)}`}>{cs ? 'Otevřít' : 'Open'}</Link></td>
           </tr>
         ))}
       </tbody>
-    </table>
+    </table></div>
   )
 }
 
+const COUNTRY_LIST_PAGE_SIZE = 50
+
 export function WorldPackageCountriesPage(): JSX.Element {
   const { worldId = '' } = useParams()
+  const { language } = useLanguage()
+  const cs = language === 'cs'
   const countriesQuery = useQuery({
     queryKey: ['world-package-countries', worldId],
     queryFn: () => getWorldPackageCountries(worldId),
     enabled: Boolean(worldId),
     retry: false
   })
-  const data = countriesQuery.data
+  const data = countriesQuery.data?.world_id === worldId ? countriesQuery.data : null
   const [search, setSearch] = useState('')
-  const visibleCountries = (data?.countries ?? [])
-    .filter((country) => `${country.code} ${country.name}`.toLowerCase().includes(search.trim().toLowerCase()))
-    .sort((left, right) => left.name.localeCompare(right.name) || left.code.localeCompare(right.code))
+  const [region, setRegion] = useState('')
+  const [missingTravelRegion, setMissingTravelRegion] = useState(false)
+  const [missingTimezoneArea, setMissingTimezoneArea] = useState(false)
+  const [populationHistory, setPopulationHistory] = useState<'all' | 'present' | 'missing'>('all')
+  const [sortBy, setSortBy] = useState<'name' | 'code' | 'population'>('name')
+  const [page, setPage] = useState(0)
+  useEffect(() => {
+    setSearch('')
+    setRegion('')
+    setMissingTravelRegion(false)
+    setMissingTimezoneArea(false)
+    setPopulationHistory('all')
+    setSortBy('name')
+    setPage(0)
+  }, [worldId])
+  const sourceCountries = data?.countries ?? []
+  const missingTravelCount = sourceCountries.filter(country => !country.travel_region).length
+  const missingTimezoneCount = sourceCountries.filter(country => !country.timezone_area).length
+  const missingPopulationHistoryCount = sourceCountries.filter(country => !hasPopulationHistory(country)).length
+  const regions = Array.from(new Set(sourceCountries.map(country => country.region).filter(Boolean)))
+    .sort((left, right) => left.localeCompare(right))
+  const normalizedSearch = search.trim().toLocaleLowerCase()
+  const visibleCountries = sourceCountries
+    .filter(country =>
+      (region === '' || country.region === region) &&
+      (!missingTravelRegion || !country.travel_region) &&
+      (!missingTimezoneArea || !country.timezone_area) &&
+      (populationHistory === 'all' ||
+        (populationHistory === 'present' ? hasPopulationHistory(country) : !hasPopulationHistory(country))) &&
+      `${country.code} ${country.name}`.toLocaleLowerCase().includes(normalizedSearch)
+    )
+    .sort((left, right) => sortBy === 'code'
+      ? left.code.localeCompare(right.code) || left.name.localeCompare(right.name)
+      : sortBy === 'population'
+        ? right.population - left.population || left.code.localeCompare(right.code)
+        : left.name.localeCompare(right.name) || left.code.localeCompare(right.code))
+  const pageCount = Math.max(1, Math.ceil(visibleCountries.length / COUNTRY_LIST_PAGE_SIZE))
+  const currentPage = Math.min(page, pageCount - 1)
+  const pageCountries = visibleCountries.slice(
+    currentPage * COUNTRY_LIST_PAGE_SIZE, (currentPage + 1) * COUNTRY_LIST_PAGE_SIZE
+  )
+  const clearFilters = () => {
+    setSearch('')
+    setRegion('')
+    setMissingTravelRegion(false)
+    setMissingTimezoneArea(false)
+    setPopulationHistory('all')
+    setSortBy('name')
+    setPage(0)
+  }
 
   return (
     <section className="panel">
       <div className="page-intro">
-        <h2>World Package Countries</h2>
-        <p className="subtitle">Assembled typed view of the countries in the selected World Package.</p>
+        <h2>{cs ? 'Země ve World Package' : 'World Package Countries'}</h2>
+        <p className="subtitle">{cs
+          ? 'Přehled zemí z vybraného World Package.'
+          : 'Assembled typed view of the countries in the selected World Package.'}</p>
       </div>
-      <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}`}>Back to World Package detail</Link></p>
-      {countriesQuery.isLoading && <p className="status">Loading package countries...</p>}
-      {countriesQuery.error && <p className="error">Failed to load package countries: {formatApiError(countriesQuery.error)}</p>}
+      <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}`}>{cs
+        ? 'Zpět na detail World Package' : 'Back to World Package detail'}</Link></p>
+      {countriesQuery.isLoading && <p className="status">{cs ? 'Načítám země…' : 'Loading package countries...'}</p>}
+      {countriesQuery.error && <p className="error">{cs ? 'Nepodařilo se načíst země: ' : 'Failed to load package countries: '}{formatApiError(countriesQuery.error)}</p>}
+      {countriesQuery.isSuccess && !data && <p role="alert" className="error">{cs
+        ? 'Odpověď nepatří vybranému World Package.' : 'Response does not belong to the selected World Package.'}</p>}
       {data && (
         <>
-          <SectionCard title="Package">
-            <DetailRow label="World name" value={data.world_name} />
+          <SectionCard title={cs ? 'Balíček' : 'Package'}>
+            <DetailRow label={cs ? 'Název světa' : 'World name'} value={data.world_name} />
             <DetailRow label="World ID" value={<code>{data.world_id}</code>} />
-            <DetailRow label="Type" value={data.type} />
-            <DetailRow label="Source" value={data.source} />
-            <DetailRow label="Country count" value={data.country_count} />
-            <DetailRow label="Package mode" value={`${data.type === 'custom' ? 'Custom' : 'Built-in'} · ${data.read_only ? 'Read-only' : 'Editable source'}`} />
+            <DetailRow label={cs ? 'Typ' : 'Type'} value={data.type} />
+            <DetailRow label={cs ? 'Zdroj' : 'Source'} value={data.source} />
+            <DetailRow label={cs ? 'Počet zemí' : 'Country count'} value={data.country_count} />
+            <DetailRow label={cs ? 'Režim balíčku' : 'Package mode'} value={`${data.type === 'custom' ? (cs ? 'Vlastní' : 'Custom') : (cs ? 'Vestavěný' : 'Built-in')} · ${data.read_only ? (cs ? 'Jen pro čtení' : 'Read-only') : (cs ? 'Upravitelný zdroj' : 'Editable source')}`} />
           </SectionCard>
-          <SectionCard title="Package countries">
-            <p className="status">This inspection screen does not currently provide bulk edit, import, or export actions.</p>
-            {data.type === 'custom' && data.source === 'custom_config' && !data.read_only && <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/new`}>+ Add country</Link></p>}
-            <label>Search by country name or code<input aria-label="Search countries" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
-            <p>{visibleCountries.length} {visibleCountries.length === 1 ? 'country' : 'countries'}</p>
-            <PackageCountriesTable countries={visibleCountries} worldId={worldId} />
+          <SectionCard title={cs ? 'Země v balíčku' : 'Package countries'}>
+            <p className="status">{cs
+              ? 'Tato stránka zatím nepodporuje hromadné úpravy, import ani export.'
+              : 'This inspection screen does not currently provide bulk edit, import, or export actions.'}</p>
+            {data.type === 'custom' && data.source === 'custom_config' && !data.read_only && <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/new`}>{cs ? '+ Přidat zemi' : '+ Add country'}</Link></p>}
+            <div className="form-grid">
+              <label>{cs ? 'Hledat podle názvu nebo kódu země' : 'Search by country name or code'}
+                <input type="search" aria-label={cs ? 'Hledat země' : 'Search countries'} value={search}
+                  onChange={event => { setSearch(event.target.value); setPage(0) }} />
+              </label>
+              <label>{cs ? 'Region' : 'Region'}
+                <select aria-label={cs ? 'Filtrovat podle regionu' : 'Filter by region'} value={region}
+                  onChange={event => { setRegion(event.target.value); setPage(0) }}>
+                  <option value="">{cs ? 'Všechny regiony' : 'All regions'}</option>
+                  {regions.map(value => <option key={value} value={value}>{value}</option>)}
+                </select>
+              </label>
+              <label>{cs ? 'Historická populace' : 'Population history'}
+                <select value={populationHistory}
+                  onChange={event => { setPopulationHistory(event.target.value as typeof populationHistory); setPage(0) }}>
+                  <option value="all">{cs ? 'Všechny země' : 'All countries'}</option>
+                  <option value="present">{cs ? 'S populační řadou' : 'With population years'}</option>
+                  <option value="missing">{cs ? 'Bez populační řady' : 'Without population years'}</option>
+                </select>
+              </label>
+              <label>{cs ? 'Řazení zemí' : 'Sort countries'}
+                <select value={sortBy} onChange={event => { setSortBy(event.target.value as typeof sortBy); setPage(0) }}>
+                  <option value="name">{cs ? 'Název (A–Z)' : 'Name (A–Z)'}</option>
+                  <option value="code">{cs ? 'Kód (A–Z)' : 'Code (A–Z)'}</option>
+                  <option value="population">{cs ? 'Populace (sestupně)' : 'Population (descending)'}</option>
+                </select>
+              </label>
+            </div>
+            <div className="actions">
+              <label><input type="checkbox" checked={missingTravelRegion}
+                onChange={event => { setMissingTravelRegion(event.target.checked); setPage(0) }} />
+                {' '}{cs ? 'Bez cestovního regionu' : 'Unassigned travel region'}
+              </label>
+              <label><input type="checkbox" checked={missingTimezoneArea}
+                onChange={event => { setMissingTimezoneArea(event.target.checked); setPage(0) }} />
+                {' '}{cs ? 'Bez časové oblasti' : 'Unassigned timezone area'}
+              </label>
+            </div>
+            <p className="status">{cs
+              ? `Nepřiřazený cestovní region: ${missingTravelCount} · Nepřiřazená časová oblast: ${missingTimezoneCount}`
+              : `Unassigned travel region: ${missingTravelCount} · Unassigned timezone area: ${missingTimezoneCount}`}
+              {' '}{cs ? 'Nepřiřazený údaj nemusí znamenat chybu.' : 'An unassigned value is not necessarily an error.'}</p>
+            <p className="status">{cs
+              ? `Bez historických populačních let: ${missingPopulationHistoryCount}`
+              : `Without historical population years: ${missingPopulationHistoryCount}`}
+              {' '}{cs
+                ? 'Sleduje pouze vyplněné hodnoty v populační řadě; samo o sobě nejde o chybu ani potvrzení úplnosti dat.'
+                : 'Counts populated year entries only; it is not itself an error or a completeness verdict.'}</p>
+            <button type="button" disabled={!search && !region && !missingTravelRegion && !missingTimezoneArea && populationHistory === 'all' && sortBy === 'name'} onClick={clearFilters}>
+              {cs ? 'Vymazat filtry a řazení' : 'Clear filters and sorting'}
+            </button>
+            <p role="status">{cs
+              ? `Zobrazeno ${visibleCountries.length} z ${sourceCountries.length} zemí`
+              : `Showing ${visibleCountries.length} of ${sourceCountries.length} countries`}</p>
+            {visibleCountries.length === 0 ? <p className="status">{cs
+              ? (sourceCountries.length === 0 ? 'Balíček neobsahuje žádné země.' : 'Žádná země neodpovídá filtrům.')
+              : (sourceCountries.length === 0 ? 'This package has no countries.' : 'No countries match your filters.')}</p>
+              : <>
+                <PackageCountriesTable countries={pageCountries} worldId={worldId} cs={cs} />
+                <div className="actions">
+                  <button type="button" disabled={currentPage === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>
+                    {cs ? '← Předchozí' : '← Previous'}
+                  </button>
+                  <span>{cs ? 'Strana' : 'Page'} {currentPage + 1} / {pageCount}
+                    {' · '}{currentPage * COUNTRY_LIST_PAGE_SIZE + 1}–{Math.min((currentPage + 1) * COUNTRY_LIST_PAGE_SIZE, visibleCountries.length)}
+                    {' / '}{visibleCountries.length}</span>
+                  <button type="button" disabled={currentPage >= pageCount - 1}
+                    onClick={() => setPage(value => Math.min(pageCount - 1, value + 1))}>
+                    {cs ? 'Další →' : 'Next →'}
+                  </button>
+                </div>
+              </>}
           </SectionCard>
         </>
       )}
@@ -433,7 +736,10 @@ export function WorldLibraryDetailPage(): JSX.Element {
               <p className="error">Failed to load World Package validation: {formatApiError(validationQuery.error)}</p>
             </SectionCard>
           )}
-          {validationQuery.data && <ValidationSection validation={validationQuery.data} />}
+          {validationQuery.data && validationQuery.data.world_id !== pkg.world_id &&
+            <p role="alert" className="error">Validation response does not belong to this World Package.</p>}
+          {validationQuery.data?.world_id === pkg.world_id &&
+            <ValidationSection key={pkg.world_id} validation={validationQuery.data} />}
         </>
       )}
     </section>

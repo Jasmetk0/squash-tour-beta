@@ -17,30 +17,32 @@ import { getPlannedEventStatus, getWeekStatus, getWeeksInSeasonOrder } from './p
 
 export function WeekDetailPage(): JSX.Element {
   const { runId = '', week = '' } = useParams()
+  const parsedWeek = /^[0-9]+$/.test(week) ? Number(week) : NaN
+  const hasValidWeekParam = Number.isSafeInteger(parsedWeek) && parsedWeek > 0 && String(parsedWeek) === week
   const viewed = useAdminViewedSeasonState()
 
   const runQuery = useQuery({
     queryKey: ['run', runId],
     queryFn: () => getRun(runId),
-    enabled: Boolean(runId) && !viewed.historical,
+    enabled: Boolean(runId && hasValidWeekParam) && !viewed.historical,
     retry: false
   })
   const eventsQuery = useQuery({
     queryKey: ['events', runId],
     queryFn: () => listEvents(runId),
-    enabled: Boolean(runId) && !viewed.historical,
+    enabled: Boolean(runId && hasValidWeekParam) && !viewed.historical,
     retry: false
   })
   const rankingSnapshotsQuery = useQuery({
     queryKey: ['ranking-snapshots', runId],
     queryFn: () => listRankingSnapshots(runId),
-    enabled: Boolean(runId) && !viewed.historical,
+    enabled: Boolean(runId && hasValidWeekParam) && !viewed.historical,
     retry: false
   })
   const raceSnapshotsQuery = useQuery({
     queryKey: ['race-snapshots', runId],
     queryFn: () => listRaceSnapshots(runId),
-    enabled: Boolean(runId) && !viewed.historical,
+    enabled: Boolean(runId && hasValidWeekParam) && !viewed.historical,
     retry: false
   })
 
@@ -49,9 +51,6 @@ export function WeekDetailPage(): JSX.Element {
   const nextEventIndex = seasonState?.next_event_index ?? 0
   const completedEventIds = new Set(seasonState?.completed_event_ids ?? [])
   const persistedEventIds = new Set((eventsQuery.data?.events ?? []).map((event) => event.event_id))
-
-  const parsedWeek = Number.parseInt(week, 10)
-  const hasValidWeekParam = Number.isInteger(parsedWeek) && String(parsedWeek) === week
 
   const orderedWeeks = getWeeksInSeasonOrder(orderedEvents)
   const weekPosition = hasValidWeekParam ? orderedWeeks.indexOf(parsedWeek) : -1
@@ -108,11 +107,11 @@ export function WeekDetailPage(): JSX.Element {
 
       <SectionCard title="Week context">
         <p>
-          <Link to={`/runs/${runId}/calendar`}>Back to Season Calendar</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>Back to Season Calendar</Link>
           {' · '}
-          <Link to={`/runs/${runId}`}>Back to Run Detail</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}`}>Back to Run Detail</Link>
           {' · '}
-          {!viewed.historical ? <Link to={`/runs/${runId}/events`}>Open persisted Events history</Link> : <span>Persisted Events and Ranking/Race snapshots are not available for historical weeks in this slice.</span>}
+          {!viewed.historical ? <Link to={`/runs/${encodeURIComponent(runId)}/events`}>Open persisted Events history</Link> : <span>Persisted Events and Ranking/Race snapshots are not available for historical weeks in this slice.</span>}
         </p>
       </SectionCard>
 
@@ -170,11 +169,11 @@ export function WeekDetailPage(): JSX.Element {
                         label: 'Links',
                         value: (
                           <>
-                            <Link to={`/runs/${runId}/calendar/${encodeURIComponent(event.event_id)}`}>Planned detail</Link>
+                            <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(event.event_id)}`}>Planned detail</Link>
                             {!viewed.historical && hasPersistedDetail ? (
                               <>
                                 {' '}·{' '}
-                                <Link to={`/runs/${runId}/events/${encodeURIComponent(event.event_id)}`}>Persisted detail</Link>
+                                <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(event.event_id)}`}>Persisted detail</Link>
                               </>
                             ) : null}
                           </>
@@ -201,7 +200,7 @@ export function WeekDetailPage(): JSX.Element {
                     <ul className="item-list">
                       {relatedRankingSnapshots.map((snapshot) => (
                         <li key={`ranking-${snapshot.snapshot_sequence}`}>
-                          <Link to={`/runs/${runId}/snapshots/ranking/${snapshot.snapshot_sequence}`}>
+                          <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/ranking/${snapshot.snapshot_sequence}`}>
                             Ranking snapshot #{snapshot.snapshot_sequence}
                           </Link>
                           {' '}· Event {snapshot.source_event_id}
@@ -219,7 +218,7 @@ export function WeekDetailPage(): JSX.Element {
                     <ul className="item-list">
                       {relatedRaceSnapshots.map((snapshot) => (
                         <li key={`race-${snapshot.snapshot_sequence}`}>
-                          <Link to={`/runs/${runId}/snapshots/race/${snapshot.snapshot_sequence}`}>
+                          <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/race/${snapshot.snapshot_sequence}`}>
                             Race snapshot #{snapshot.snapshot_sequence}
                           </Link>
                           {' '}· Event {snapshot.source_event_id}
@@ -243,9 +242,9 @@ export function WeekDetailPage(): JSX.Element {
         <SectionCard title="Week navigation">
           <p>
             Previous week:{' '}
-            {previousWeek !== null ? <Link to={`/runs/${runId}/weeks/${previousWeek}`}>W{previousWeek}</Link> : <span>None</span>}
+            {previousWeek !== null ? <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${previousWeek}`}>W{previousWeek}</Link> : <span>None</span>}
             {' · '}
-            Next week: {nextWeek !== null ? <Link to={`/runs/${runId}/weeks/${nextWeek}`}>W{nextWeek}</Link> : <span>None</span>}
+            Next week: {nextWeek !== null ? <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${nextWeek}`}>W{nextWeek}</Link> : <span>None</span>}
           </p>
         </SectionCard>
       ) : null}

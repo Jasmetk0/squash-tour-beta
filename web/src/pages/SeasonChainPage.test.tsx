@@ -92,6 +92,32 @@ describe('SeasonChainPage', () => {
     expect(await within(list).findByRole('link', { name: 'Current bootstrap / lineage' })).toHaveAttribute('href', '/runs/run-a/bootstrap-lineage')
   })
 
+  it('keeps Run IDs with reserved characters inside one route segment', async () => {
+    api.getRunSource.mockResolvedValueOnce({
+      source: { source_type: 'rollover_bootstrap', parent_run_id: 'parent x/y', source_rollover_run_id: 'parent x/y' }
+    })
+    api.getRunLineage.mockResolvedValueOnce({
+      lineage: {
+        run_id: 'run x/y',
+        source: { source_type: 'rollover_bootstrap', parent_run_id: 'parent x/y' },
+        children: ['child?/one']
+      }
+    })
+
+    renderWithRoute(<SeasonChainPage />, '/runs/run%20x%2Fy/season-chain')
+
+    const nextLinks = await screen.findByRole('list', { name: 'Season chain next inspection links' })
+    expect(await within(nextLinks).findByRole('link', { name: 'Current run detail' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy')
+    expect(within(nextLinks).getByRole('link', { name: 'Parent diagnostics' }))
+      .toHaveAttribute('href', '/runs/parent%20x%2Fy/diagnostics')
+    expect(within(nextLinks).getByRole('link', { name: 'Child run detail: child?/one' }))
+      .toHaveAttribute('href', '/runs/child%3F%2Fone')
+    expect(api.getRunSource).toHaveBeenCalledWith('run x/y')
+    expect(api.getRunStatusSummary).toHaveBeenCalledWith('parent x/y')
+    expect(api.getRunStatusSummary).toHaveBeenCalledWith('child?/one')
+  })
+
   it('renders readable empty states when parent and children are absent', async () => {
     api.getRunSource.mockResolvedValueOnce({
       source: {

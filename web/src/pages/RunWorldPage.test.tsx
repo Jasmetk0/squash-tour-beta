@@ -203,6 +203,22 @@ describe('Run-owned World overview navigation',()=>{
     expect(api.getRunPackageState).toHaveBeenCalledTimes(1)
   })
 
+  it.each(['not-a-year','2051','2000junk','2e3','0x7d0'])(
+    'labels the validated country year instead of raw invalid year=%s',
+    async(raw)=>{
+      mountWorld('/admin/runs/run-a/world/countries/CZE?year='+encodeURIComponent(raw))
+      expect(await screen.findByRole('heading',{name:/Czechia/})).toBeInTheDocument()
+      expect(screen.getByText('Saved FIFA Earth · 2000')).toBeInTheDocument()
+      expect(screen.queryByText('Saved FIFA Earth · '+raw)).not.toBeInTheDocument()
+      expect(api.getRunPackageState).toHaveBeenCalledTimes(1)
+    }
+  )
+  it('keeps a valid explicitly requested country year visible',async()=>{
+    mountWorld('/admin/runs/run-a/world/countries/CZE?year=2020')
+    expect(await screen.findByRole('heading',{name:/Czechia/})).toBeInTheDocument()
+    expect(screen.getByText('Saved FIFA Earth · 2020')).toBeInTheDocument()
+  })
+
   it('shows only authored population anchors and preserves tab/filter when inspecting another year',async()=>{
     mountWorld('/admin/runs/run-a/world/countries/CZE?year=2010&tab=population&q=cz')
     expect(await screen.findByRole('heading',{name:'Population history'})).toBeInTheDocument()

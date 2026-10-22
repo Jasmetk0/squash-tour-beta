@@ -88,6 +88,32 @@ describe('RunDiagnosticsPage', () => {
     })
   })
 
+  it('encodes Run and parent Run IDs in all diagnostics navigation while retaining raw API identity', async () => {
+    api.getRunSource.mockResolvedValueOnce({
+      source: {
+        source_type: 'rollover_bootstrap', parent_run_id: 'parent x/y',
+        source_rollover_run_id: 'parent x/y', source_rollover_from_season: 2027, source_rollover_to_season: 2028,
+      }
+    })
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'run x/y', season: 2028, qualification: { qualified_players: [] }, result: null,
+    })
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run%20x%2Fy/diagnostics')
+    expect(await screen.findByRole('link', { name: 'Run Detail' })).toHaveAttribute(
+      'href', '/runs/run%20x%2Fy'
+    )
+    expect(screen.getByRole('link', { name: 'Open world generation diagnostics' })).toHaveAttribute(
+      'href', '/runs/run%20x%2Fy/world-generation'
+    )
+    expect(await screen.findByRole('link', { name: 'parent x/y' })).toHaveAttribute(
+      'href', '/runs/parent%20x%2Fy'
+    )
+    expect(await screen.findByRole('link', { name: 'Inspect Finals qualification detail (qualification available, result pending)' }))
+      .toHaveAttribute('href', '/runs/run%20x%2Fy/finals/qualification')
+    expect(api.getRun).toHaveBeenCalledWith('run x/y')
+    expect(api.getRunSource).toHaveBeenCalledWith('run x/y')
+  })
+
   it('renders diagnostics route content with compact summary', async () => {
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
 

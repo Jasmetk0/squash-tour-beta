@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { getSeasonRegistry } from '../api/client'
@@ -16,6 +17,14 @@ function seasonWeekToYearWeek(seasonWeek: number): number {
 export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
   const registryQuery = useQuery({ queryKey: ['season-registry'], queryFn: getSeasonRegistry, retry: false })
   const registry = registryQuery.data
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('')
+  const statuses = Array.from(new Set((registry?.seasons ?? []).map(season => season.status))).sort()
+  const needle = search.trim().toLocaleLowerCase()
+  const visibleSeasons = (registry?.seasons ?? []).filter(season =>
+    (!status || season.status === status) &&
+    (!needle || `${season.label} ${season.season_start_year}`.toLocaleLowerCase().includes(needle))
+  )
 
   return (
     <section className="panel">
@@ -72,9 +81,30 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
 
       <SectionCard title="Registry table">
         <p className="status">Season links open the read-only Concrete Season detail profile. Direct season editing workflow is planned.</p>
+        {registry ? <>
+          <div className="form-grid">
+            <label>Search registry seasons
+              <input type="search" value={search} onChange={event => setSearch(event.target.value)}
+                placeholder="Season label or start year" />
+            </label>
+            <label>Filter registry status
+              <select value={status} onChange={event => setStatus(event.target.value)}>
+                <option value="">All statuses</option>
+                {statuses.map(value => <option value={value} key={value}>{value}</option>)}
+              </select>
+            </label>
+          </div>
+          <button type="button" disabled={!search && !status}
+            onClick={() => { setSearch(''); setStatus('') }}>Clear season filters</button>
+          <p role="status">Showing {visibleSeasons.length} of {registry.seasons.length} registry seasons</p>
+        </> : null}
         {registry ? (
-          registry.seasons.length ? (
-            <table>
+          registry.seasons.length === 0 ? (
+            <p className="status">No season registry entries available.</p>
+          ) : visibleSeasons.length === 0 ? (
+            <p className="status">No registry seasons match the current filters.</p>
+          ) : (
+            <div className="table-responsive"><table aria-label="Season registry entries">
               <thead>
                 <tr>
                   <th>Season</th>
@@ -91,7 +121,7 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {registry.seasons.map((entry) => (
+                {visibleSeasons.map((entry) => (
                   <tr key={entry.label}>
                     <td><Link to={`/admin/seasons/detail/${encodeURIComponent(entry.label)}`}>{entry.label}</Link></td>
                     <td>{entry.season_index}</td>
@@ -112,9 +142,7 @@ export function AdminTourSeasonsSeasonRegistryPage(): JSX.Element {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          ) : (
-            <p className="status">No season registry entries available.</p>
+            </table></div>
           )
         ) : null}
       </SectionCard>

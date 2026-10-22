@@ -28,8 +28,10 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   const [weekFilter, setWeekFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [sourceEventFilter, setSourceEventFilter] = useState('')
-  const requestedSequence = Number.parseInt(searchParams.get('selectedSequence') ?? '', 10)
-  const hasRequestedSequence = Number.isInteger(requestedSequence)
+  const requestedSequenceText = searchParams.get('selectedSequence') ?? ''
+  // A partial number like "3abc" must not select snapshot #3.
+  const requestedSequence = /^\d+$/.test(requestedSequenceText) ? Number(requestedSequenceText) : NaN
+  const hasRequestedSequence = Number.isSafeInteger(requestedSequence) && requestedSequence > 0
 
   const query = useQuery({
     queryKey: [`${mode}-snapshots`, runId],

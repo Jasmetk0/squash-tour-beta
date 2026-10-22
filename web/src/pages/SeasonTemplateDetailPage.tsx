@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { getSeasonTemplates } from '../api/client'
@@ -8,6 +9,9 @@ import { formatApiError } from '../utils/apiErrors'
 
 export function AdminTourSeasonsSeasonTemplateDetailPage(): JSX.Element {
   const { templateId = '' } = useParams()
+  const [search, setSearch] = useState('')
+  const [qualificationOnly, setQualificationOnly] = useState(false)
+  const [slotOrder, setSlotOrder] = useState<'source' | 'week'>('source')
   const templatesQuery = useQuery({ queryKey: ['season-templates'], queryFn: getSeasonTemplates, retry: false })
   const payload = templatesQuery.data
   const template = payload?.templates.find((item) => item.template_id === templateId)
@@ -16,6 +20,16 @@ export function AdminTourSeasonsSeasonTemplateDetailPage(): JSX.Element {
   const earliestWeek = slots.length ? Math.min(...slots.map((slot) => slot.season_week_start)) : null
   const latestWeek = slots.length ? Math.max(...slots.map((slot) => slot.season_week_end)) : null
   const qualificationSlotCount = slots.filter((slot) => slot.has_qualification).length
+  const needle = search.trim().toLocaleLowerCase()
+  const visibleSlots = slots.filter(slot =>
+    (!qualificationOnly || slot.has_qualification) &&
+    (!needle || [slot.slot_id, slot.tournament_name, slot.category, slot.host_country, slot.region]
+      .some(value => value?.toLocaleLowerCase().includes(needle)))
+  )
+  if (slotOrder === 'week') {
+    visibleSlots.sort((a, b) =>
+      a.season_week_start - b.season_week_start || a.slot_id.localeCompare(b.slot_id))
+  }
 
   return (
     <section className="panel">
@@ -67,14 +81,37 @@ export function AdminTourSeasonsSeasonTemplateDetailPage(): JSX.Element {
           </SectionCard>
 
           <SectionCard title="Slots">
-            <table>
+            <div className="form-grid">
+              <label>Search season template slots
+                <input type="search" value={search} onChange={event => setSearch(event.target.value)}
+                  placeholder="Slot, tournament, category, host or region" />
+              </label>
+              <label>Slot order
+                <select value={slotOrder} onChange={event => setSlotOrder(event.target.value as typeof slotOrder)}>
+                  <option value="source">Source order</option>
+                  <option value="week">Earliest week first</option>
+                </select>
+              </label>
+            </div>
+            <label><input type="checkbox" checked={qualificationOnly}
+              onChange={event => setQualificationOnly(event.target.checked)} />
+              {' '}Slots with qualification only
+            </label>
+            <button type="button" disabled={!search && !qualificationOnly && slotOrder === 'source'}
+              onClick={() => { setSearch(''); setQualificationOnly(false); setSlotOrder('source') }}>
+              Clear slot filters
+            </button>
+            <p role="status">Showing {visibleSlots.length} of {slots.length} template slots</p>
+            {slots.length === 0 ? <p className="status">This season template has no slots.</p>
+              : visibleSlots.length === 0 ? <p className="status">No template slots match the current filters.</p>
+              : <div className="table-responsive"><table aria-label="Season template slots table">
               <thead>
                 <tr>
                   <th>Slot</th><th>Week block</th><th>Tournament</th><th>Category</th><th>Host</th><th>Region</th><th>Qualification</th><th>Main draw week</th><th>Source template</th><th>Notes</th>
                 </tr>
               </thead>
               <tbody>
-                {slots.map((slot) => (
+                {visibleSlots.map((slot) => (
                   <tr key={slot.slot_id}>
                     <td>{slot.slot_id}</td>
                     <td>SW{slot.season_week_start}–SW{slot.season_week_end}</td>
@@ -89,7 +126,7 @@ export function AdminTourSeasonsSeasonTemplateDetailPage(): JSX.Element {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>}
           </SectionCard>
 
           <SectionCard title="Planned future model">

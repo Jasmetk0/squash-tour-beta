@@ -107,7 +107,7 @@ export function RunDiagnosticsPage(): JSX.Element {
         subtitle="Read-only run health, progress, and structure summary."
       />
       <p>
-        <Link to={`/runs/${runId}/world-generation`}>Open world generation diagnostics</Link>
+        <Link to={`/runs/${encodeURIComponent(runId)}/world-generation`}>Open world generation diagnostics</Link>
       </p>
       <CurrentContextStrip
         items={[
@@ -221,7 +221,7 @@ export function RunDiagnosticsPage(): JSX.Element {
               {
                 label: 'Parent run',
                 value: sourceQuery.data.source.parent_run_id ? (
-                  <Link to={`/runs/${sourceQuery.data.source.parent_run_id}`}>{sourceQuery.data.source.parent_run_id}</Link>
+                  <Link to={`/runs/${encodeURIComponent(sourceQuery.data.source.parent_run_id)}`}>{sourceQuery.data.source.parent_run_id}</Link>
                 ) : (
                   'No parent run'
                 )
@@ -236,7 +236,7 @@ export function RunDiagnosticsPage(): JSX.Element {
 
       <SectionCard title="Recent activity">
         <p>
-          <Link to={`/runs/${runId}/activity`}>Open aggregated run activity feed</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/activity`}>Open aggregated run activity feed</Link>
         </p>
         <MetadataList
           items={[
@@ -250,7 +250,7 @@ export function RunDiagnosticsPage(): JSX.Element {
                     ? (
                         <>
                           Available —{' '}
-                          <Link to={`/runs/${runId}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
+                          <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
                             {latestCompletedEvent.event_id} (Seq {latestCompletedEvent.event_sequence})
                           </Link>
                         </>
@@ -267,7 +267,7 @@ export function RunDiagnosticsPage(): JSX.Element {
                     ? (
                         <>
                           Available —{' '}
-                          <Link to={`/runs/${runId}/snapshots/ranking/${latestRankingSnapshot.snapshot_sequence}`}>
+                          <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/ranking/${latestRankingSnapshot.snapshot_sequence}`}>
                             Seq {latestRankingSnapshot.snapshot_sequence}
                           </Link>
                         </>
@@ -284,7 +284,7 @@ export function RunDiagnosticsPage(): JSX.Element {
                     ? (
                         <>
                           Available —{' '}
-                          <Link to={`/runs/${runId}/snapshots/race/${latestRaceSnapshot.snapshot_sequence}`}>
+                          <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/race/${latestRaceSnapshot.snapshot_sequence}`}>
                             Seq {latestRaceSnapshot.snapshot_sequence}
                           </Link>
                         </>
@@ -304,11 +304,11 @@ export function RunDiagnosticsPage(): JSX.Element {
           listAriaLabel="Diagnostics recent events"
           getKey={(event) => event.event_id}
           renderItem={(event) => (
-            <Link to={`/runs/${runId}/events/${encodeURIComponent(event.event_id)}`}>
+            <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(event.event_id)}`}>
               <strong>{event.event_id}</strong> <span className="status">• Seq {event.event_sequence}</span>
             </Link>
           )}
-          viewAllLink={<Link to={`/runs/${runId}/events`}>View all events</Link>}
+          viewAllLink={<Link to={`/runs/${encodeURIComponent(runId)}/events`}>View all events</Link>}
         />
       </SectionCard>
 
@@ -391,28 +391,28 @@ export function RunDiagnosticsPage(): JSX.Element {
         <ul className="item-list" aria-label="Diagnostics next inspection links">
           {latestCompletedEvent ? (
             <li>
-              <Link to={`/runs/${runId}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
+              <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
                 Inspect latest completed event ({latestCompletedEvent.event_id})
               </Link>
             </li>
           ) : null}
           {latestRankingSnapshot ? (
             <li>
-              <Link to={`/runs/${runId}/snapshots/ranking/${latestRankingSnapshot.snapshot_sequence}`}>
+              <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/ranking/${latestRankingSnapshot.snapshot_sequence}`}>
                 Inspect latest ranking snapshot (Seq {latestRankingSnapshot.snapshot_sequence})
               </Link>
             </li>
           ) : null}
           {latestRaceSnapshot ? (
             <li>
-              <Link to={`/runs/${runId}/snapshots/race/${latestRaceSnapshot.snapshot_sequence}`}>
+              <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/race/${latestRaceSnapshot.snapshot_sequence}`}>
                 Inspect latest race snapshot (Seq {latestRaceSnapshot.snapshot_sequence})
               </Link>
             </li>
           ) : null}
           {nextPlannedEvent && nextPlannedWeek !== null ? (
             <li>
-              <Link to={`/runs/${runId}/weeks/${nextPlannedWeek}`}>
+              <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${nextPlannedWeek}`}>
                 Inspect current week detail (W{nextPlannedWeek} from {nextPlannedEvent.event_id})
               </Link>
             </li>
@@ -428,12 +428,12 @@ export function RunDiagnosticsPage(): JSX.Element {
           ) : null}
           {latestRolloverQuery.data?.rollover ? (
             <li>
-              <Link to={`/runs/${runId}/rollover`}>Inspect latest rollover details</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>Inspect latest rollover details</Link>
             </li>
           ) : null}
           {hasLineageChildren ? (
             <li>
-              <Link to={`/runs/${runId}/season-chain`}>Inspect season chain ({lineageQuery.data?.lineage.children.length} child run(s))</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/season-chain`}>Inspect season chain ({lineageQuery.data?.lineage.children.length} child run(s))</Link>
             </li>
           ) : null}
           {!latestCompletedEvent &&
@@ -453,41 +453,41 @@ export function RunDiagnosticsPage(): JSX.Element {
       <SectionCard title="Quick navigation">
         <ul className="item-list" aria-label="Diagnostics quick navigation">
           <li>
-            <Link to={`/runs/${runId}`}>Run Detail</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}`}>Run Detail</Link>
           </li>
           <li>
-            <Link to={`/runs/${runId}/events`}>Events</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/events`}>Events</Link>
           </li>
           <li>
-            <Link to={`/runs/${runId}/calendar`}>Season Calendar</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>Season Calendar</Link>
           </li>
           <li>
             {nextPlannedWeek !== null ? (
-              <Link to={`/runs/${runId}/weeks/${nextPlannedWeek}`}>Week Detail (current week)</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${nextPlannedWeek}`}>Week Detail (current week)</Link>
             ) : (
               <span>Week Detail (current week unavailable)</span>
             )}
           </li>
           <li>
-            <Link to={`/runs/${runId}/activity`}>Activity</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/activity`}>Activity</Link>
           </li>
           <li>
-            <Link to={`/runs/${runId}/finals`}>World Tour Finals</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/finals`}>World Tour Finals</Link>
           </li>
           <li>
-            <Link to={`/runs/${runId}/rollover`}>Season Rollover</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>Season Rollover</Link>
           </li>
           <li>
-            <Link to={`/runs/${runId}/bootstrap-lineage`}>Bootstrap / Lineage</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/bootstrap-lineage`}>Bootstrap / Lineage</Link>
           </li>
           <li>
-            <Link to={`/runs/${runId}/season-chain`}>Season Chain</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/season-chain`}>Season Chain</Link>
           </li>
           <li>
-            <Link to={`/runs/${runId}/snapshots/ranking`}>Ranking snapshots</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/ranking`}>Ranking snapshots</Link>
           </li>
           <li>
-            <Link to={`/runs/${runId}/snapshots/race`}>Race snapshots</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/race`}>Race snapshots</Link>
           </li>
         </ul>
       </SectionCard>

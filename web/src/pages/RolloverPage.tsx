@@ -25,8 +25,8 @@ import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 function RunBridgeLinks({ runId }: { runId: string }): JSX.Element {
   return (
     <p>
-      <Link to={`/runs/${runId}`}>Run Detail</Link> · <Link to={`/runs/${runId}/diagnostics`}>Diagnostics</Link> ·{' '}
-      <Link to={`/runs/${runId}/season-chain`}>Season Chain</Link>
+      <Link to={`/runs/${encodeURIComponent(runId)}`}>Run Detail</Link> · <Link to={`/runs/${encodeURIComponent(runId)}/diagnostics`}>Diagnostics</Link> ·{' '}
+      <Link to={`/runs/${encodeURIComponent(runId)}/season-chain`}>Season Chain</Link>
     </p>
   )
 }
@@ -35,6 +35,7 @@ export function RolloverPage(): JSX.Element {
   const { runId = '' } = useParams()
   const queryClient = useQueryClient()
   const [seasonInput, setSeasonInput] = useState('')
+  const [seasonInputError, setSeasonInputError] = useState<string | null>(null)
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null)
 
   const latestQuery = useQuery({
@@ -100,10 +101,13 @@ export function RolloverPage(): JSX.Element {
 
   const submitSeason = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const parsed = Number(seasonInput)
-    if (Number.isInteger(parsed) && parsed > 0) {
-      setSelectedSeason(parsed)
+    const parsed = /^[0-9]+$/.test(seasonInput) ? Number(seasonInput) : NaN
+    if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+      setSeasonInputError('Enter a positive whole-number season using decimal digits only.')
+      return
     }
+    setSeasonInputError(null)
+    setSelectedSeason(parsed)
   }
 
   const latestNotFound = isApiNotFound(latestQuery.error)
@@ -116,7 +120,7 @@ export function RolloverPage(): JSX.Element {
   const contextSeason = selectedSeason ?? latestQuery.data?.rollover.to_season ?? '—'
 
   const latestToSeason = latestQuery.data?.rollover.to_season ?? null
-  const latestDetailHref = latestToSeason ? `/runs/${runId}/rollover/${latestToSeason}` : null
+  const latestDetailHref = latestToSeason ? `/runs/${encodeURIComponent(runId)}/rollover/${latestToSeason}` : null
 
   return (
     <section className="panel">
@@ -165,7 +169,7 @@ export function RolloverPage(): JSX.Element {
                 { label: 'Run ID', value: latestQuery.data.rollover.run_id },
                 {
                   label: 'Open rollover season detail',
-                  value: <Link to={`/runs/${runId}/rollover/${latestQuery.data.rollover.to_season}`}>Open rollover season detail</Link>
+                  value: <Link to={`/runs/${encodeURIComponent(runId)}/rollover/${latestQuery.data.rollover.to_season}`}>Open rollover season detail</Link>
                 }
               ]}
             />
@@ -178,19 +182,21 @@ export function RolloverPage(): JSX.Element {
           <label>
             To season
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={seasonInput}
-              onChange={(event) => setSeasonInput(event.target.value)}
+              onChange={(event) => { setSeasonInput(event.target.value); setSeasonInputError(null) }}
               placeholder="Enter target season"
               aria-label="To season"
             />
           </label>
           <button type="submit">Load season data</button>
         </form>
+        {seasonInputError ? <p role="alert" className="error">{seasonInputError}</p> : null}
         {selectedSeason === null && <EmptyState message="No rollover yet. Enter a target season to inspect if persisted." />}
         {selectedSeason !== null ? (
           <p>
-            <Link to={`/runs/${runId}/rollover/${selectedSeason}`}>Open rollover season detail</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/rollover/${selectedSeason}`}>Open selected rollover season detail</Link>
           </p>
         ) : null}
       </SectionCard>
@@ -271,14 +277,14 @@ export function RolloverPage(): JSX.Element {
             </li>
           ) : (
             <li>
-              <Link to={`/runs/${runId}/bootstrap-lineage`}>Inspect bootstrap / lineage (no rollover yet)</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/bootstrap-lineage`}>Inspect bootstrap / lineage (no rollover yet)</Link>
             </li>
           )}
           <li>
-            <Link to={`/runs/${runId}/season-chain`}>Inspect season chain</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/season-chain`}>Inspect season chain</Link>
           </li>
           <li>
-            <Link to={`/runs/${runId}/diagnostics`}>Inspect run diagnostics</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/diagnostics`}>Inspect run diagnostics</Link>
           </li>
         </ul>
       </SectionCard>

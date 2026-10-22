@@ -37,6 +37,14 @@ export function FinalsResultDetailPage(): JSX.Element {
   const resultNotFound = isApiNotFound(resultQuery.error)
   const hasSummaryError = summaryQuery.error && !isApiNotFound(summaryQuery.error)
   const hasResultError = resultQuery.error && !resultNotFound
+  const qualificationStatus = summaryQuery.isLoading ? 'Loading'
+    : summaryQuery.error || !summaryQuery.data ? 'Unknown'
+    : summaryQuery.data.qualification ? 'Available' : 'Not generated'
+  const resultStatus = resultQuery.data ? 'Recorded'
+    : resultQuery.isLoading ? 'Loading'
+    : resultNotFound ? 'Missing'
+    : resultQuery.error ? 'Failed' : 'Unavailable'
+
   const championPlayerId = readStringField(resultQuery.data?.result, 'champion_player_id')
   const runnerUpPlayerId = readStringField(resultQuery.data?.result, 'runner_up_player_id')
 
@@ -47,8 +55,8 @@ export function FinalsResultDetailPage(): JSX.Element {
         items={[
           { label: 'Run', value: runId || 'unknown' },
           { label: 'Season', value: resultQuery.data?.season ?? summaryQuery.data?.season ?? summaryQuery.data?.result?.season ?? '—' },
-          { label: 'Qualification', value: summaryQuery.data?.qualification ? 'Available' : 'Not generated' },
-          { label: 'Result', value: resultQuery.data ? 'Recorded' : resultNotFound ? 'Missing' : 'Loading' }
+          { label: 'Qualification', value: qualificationStatus },
+          { label: 'Result', value: resultStatus }
         ]}
       />
 

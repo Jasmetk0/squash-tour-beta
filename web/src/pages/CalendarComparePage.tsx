@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { applyCalendarTemplateToPlanningCalendar, compareCalendarTemplateDryRun, getSeasonRegistry, getSeasonTemplates, listCalendarTemplates, listPlanningSeasonCalendars } from '../api/client'
@@ -133,6 +133,11 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
   const [targetSeasonLabel, setTargetSeasonLabel] = useState('2006/07')
   const [targetSource, setTargetSource] = useState<CalendarTemplateCompareTargetSource>('payload')
   const [dryRunResponse, setDryRunResponse] = useState<CalendarTemplateCompareDryRunResponse | null>(null)
+  const [reviewedInputs, setReviewedInputs] = useState<{
+    sourceTemplateId: string
+    targetSeasonLabel: string
+    targetSource: CalendarTemplateCompareTargetSource
+  } | null>(null)
   const [requestedBy, setRequestedBy] = useState('')
   const [auditReason, setAuditReason] = useState('')
   const [explicitConfirmation, setExplicitConfirmation] = useState('')
@@ -143,28 +148,26 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
   const templateSlotCount = templates.reduce((total, template) => total + template.slot_count, 0)
   const calendarTemplates = calendarTemplatesQuery.data?.templates ?? []
   const planningCalendars = planningCalendarsQuery.data?.calendars ?? []
+  const currentReview = useRef('')
+  currentReview.current = JSON.stringify([sourceTemplateId, targetSeasonLabel, targetSource, dryRunResponse?.diff_fingerprint])
   const targetEvents = TARGET_PREVIEW_EVENTS.map(toCalendarTemplateEventRecord)
   const compareMutation = useMutation({
     mutationFn: compareCalendarTemplateDryRun,
-    onSuccess: (response) => {
+    onSuccess: (response, submitted) => {
       setDryRunResponse(response)
+      setReviewedInputs({
+        sourceTemplateId: submitted.source_template_id,
+        targetSeasonLabel: submitted.target_season_label,
+        targetSource: submitted.target_source ?? 'payload'
+      })
       setApplyResponse(null)
     }
   })
   const applyMutation = useMutation({
-    mutationFn: () => applyCalendarTemplateToPlanningCalendar(targetSeasonLabel, {
-      source_template_id: sourceTemplateId,
-      policy: 'copy_missing_only',
-      selected_source_event_ids: null,
-      expected_planning_calendar_fingerprint: dryRunResponse?.target_calendar_fingerprint ?? '',
-      source_template_fingerprint: dryRunResponse?.source_template_fingerprint ?? '',
-      reviewed_diff_fingerprint: dryRunResponse?.diff_fingerprint ?? '',
-      requested_by: requestedBy,
-      audit_reason: auditReason,
-      explicit_confirmation: explicitConfirmation
-    }),
-    onSuccess: (response) => {
-      setApplyResponse(response)
+    mutationFn: (input: {args: Parameters<typeof applyCalendarTemplateToPlanningCalendar>; review: string}) =>
+      applyCalendarTemplateToPlanningCalendar(...input.args),
+    onSuccess: (response, submitted) => {
+      if (submitted.review === currentReview.current) setApplyResponse(response)
       void queryClient.invalidateQueries({ queryKey: ['planning-season-calendars'] })
     }
   })
@@ -181,10 +184,18 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
     }
   }, [planningCalendars, targetSeasonLabel, targetSource])
 
-  const canShowApplyUi = targetSource === 'planning_calendar'
+  const reviewMatchesSelection =
+    reviewedInputs?.sourceTemplateId === sourceTemplateId &&
+    reviewedInputs?.targetSeasonLabel === targetSeasonLabel &&
+    reviewedInputs?.targetSource === targetSource
+
+  const canShowApplyUi = reviewMatchesSelection
+    && targetSource === 'planning_calendar'
     && Boolean(sourceTemplateId)
     && Boolean(targetSeasonLabel)
     && Boolean(dryRunResponse)
+    && dryRunResponse?.source_template_id === sourceTemplateId
+    && dryRunResponse?.target_season_label === targetSeasonLabel
     && dryRunResponse?.target_source === 'planning_calendar'
     && dryRunResponse.target_calendar_exists === true
     && Boolean(dryRunResponse.diff_fingerprint)
@@ -199,6 +210,7 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
   function handleCompareSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     setDryRunResponse(null)
+    setReviewedInputs(null)
     setApplyResponse(null)
     compareMutation.mutate(targetSource === 'planning_calendar' ? {
       target_season_label: targetSeasonLabel,
@@ -394,6 +406,9 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
           </form>
         ) : null}
         {compareMutation.error ? <p className="error">Backend compare dry-run failed: {formatApiError(compareMutation.error)}{targetSource === 'planning_calendar' ? ' The selected planning calendar was not found or may not exist yet.' : ''}</p> : null}
+        {dryRunResponse && !reviewMatchesSelection
+          ? <p role="status">The selected source, target season or target type differs from the reviewed dry-run. Run a new compare before applying changes.</p>
+          : null}
         {dryRunResponse ? (
           <div>
             <div className="dashboard-grid">
@@ -448,7 +463,22 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
             <article className="metric-card"><span>conflict_count</span><strong>{dryRunResponse.summary.conflict_count}</strong></article>
             <article className="metric-card"><span>locked_target_preserved_count</span><strong>{dryRunResponse.summary.locked_target_preserved_count}</strong></article>
           </div>
-          <form className="form-grid" onSubmit={(event) => { event.preventDefault(); applyMutation.mutate() }}>
+          <form className="form-grid" onSubmit={(event) => {
+            event.preventDefault()
+            if (!canApplyReviewedDiff) return
+            // Bind the confirmed command before async setup/offline resumption.
+            applyMutation.mutate({review: currentReview.current, args: [targetSeasonLabel, {
+              source_template_id: sourceTemplateId,
+              policy: 'copy_missing_only',
+              selected_source_event_ids: null,
+              expected_planning_calendar_fingerprint: dryRunResponse!.target_calendar_fingerprint!,
+              source_template_fingerprint: dryRunResponse!.source_template_fingerprint!,
+              reviewed_diff_fingerprint: dryRunResponse!.diff_fingerprint!,
+              requested_by: requestedBy,
+              audit_reason: auditReason,
+              explicit_confirmation: explicitConfirmation
+            }]})
+          }}>
             <label>requested_by<input value={requestedBy} onChange={(event) => setRequestedBy(event.target.value)} /></label>
             <label>audit_reason<textarea value={auditReason} onChange={(event) => setAuditReason(event.target.value)} /></label>
             <label>explicit_confirmation<input value={explicitConfirmation} onChange={(event) => setExplicitConfirmation(event.target.value)} /></label>

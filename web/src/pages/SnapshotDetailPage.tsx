@@ -39,8 +39,10 @@ type PlannedEventContext = {
 
 export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Element {
   const { runId = '', snapshotSequence = '' } = useParams()
-  const parsedSequence = Number.parseInt(snapshotSequence, 10)
-  const isValidSequence = Number.isInteger(parsedSequence) && parsedSequence > 0
+  // parseInt accepts invalid route suffixes such as "12abc" or "1.5".
+  // Only a complete positive safe integer may identify a stored snapshot.
+  const parsedSequence = /^\d+$/.test(snapshotSequence) ? Number(snapshotSequence) : NaN
+  const isValidSequence = Number.isSafeInteger(parsedSequence) && parsedSequence > 0
 
   const snapshotQuery = useQuery({
     queryKey: [`${mode}-snapshot`, runId, parsedSequence],

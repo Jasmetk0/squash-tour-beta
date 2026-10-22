@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { WorldLibraryDetailPage, WorldPackageCountryCreatePage } from './WorldLibraryPage'
 
 const api = vi.hoisted(() => ({ getWorldPackage: vi.fn(), getWorldPackageGeography: vi.fn(), getWorldPackageValidation: vi.fn(), createWorldPackageCountry: vi.fn(), cloneWorldPackage: vi.fn() }))
+vi.mock('../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }))
 vi.mock('../api/client', async importOriginal => ({ ...(await importOriginal<object>()), ...api }))
 
 describe('new-scale country creation', () => {

@@ -82,9 +82,8 @@ export function SavedPlayerIdentityPage(): JSX.Element {
             <strong>#{profile.rank}</strong> · {profile.points} {cs ? 'bodů' : 'points'}
           </p>}
           {profile.ranking_week_ordinal != null && <p className="status">
-            {cs ? 'Poslední publikace: ' : 'Latest publication: '}
-            {2000 + Math.floor(profile.ranking_week_ordinal / 61)}/{String((2001 + Math.floor(profile.ranking_week_ordinal / 61)) % 100).padStart(2, '0')}
-            {' · W'}{profile.ranking_week_ordinal % 61 + 1}
+            {cs ? 'Poslední publikace · index týdne: ' : 'Latest publication · week index: '}
+            {profile.ranking_week_ordinal}
           </p>}
           </section>}
           {tab==='attributes' && <section role="tabpanel" aria-label={cs ? 'Atributy' : 'Attributes'}>

@@ -20,7 +20,11 @@ export function AdminTourSeasonsTournamentDetailPage(): JSX.Element {
   const { tournamentId = '' } = useParams()
   const tournamentsQuery = useQuery({ queryKey: ['tournaments'], queryFn: getTournaments, retry: false })
   const payload = tournamentsQuery.data
-  const tournament = payload?.tournaments.find((item) => item.tournament_id === tournamentId)
+  const tournaments = payload?.tournaments ?? []
+  const tournamentIndex = tournaments.findIndex(item => item.tournament_id === tournamentId)
+  const tournament = tournamentIndex >= 0 ? tournaments[tournamentIndex] : null
+  const previous = tournamentIndex > 0 ? tournaments[tournamentIndex - 1] : null
+  const next = tournamentIndex >= 0 ? tournaments[tournamentIndex + 1] ?? null : null
 
   return (
     <section className="panel">
@@ -42,6 +46,18 @@ export function AdminTourSeasonsTournamentDetailPage(): JSX.Element {
               { label: 'Status', value: tournament.status },
               { label: 'Source', value: tournament.source }
             ]} />
+          </SectionCard>
+
+          <SectionCard title="Browse tournament masters">
+            <p className="status">Tournament {tournamentIndex + 1} of {tournaments.length} in backend source order.</p>
+            <div className="actions">
+              {previous ? <Link to={`/admin/tour-seasons/tournaments/${encodeURIComponent(previous.tournament_id)}`}>
+                ← Previous tournament: {previous.name}
+              </Link> : null}
+              {next ? <Link to={`/admin/tour-seasons/tournaments/${encodeURIComponent(next.tournament_id)}`}>
+                Next tournament: {next.name} →
+              </Link> : null}
+            </div>
           </SectionCard>
 
           <SectionCard title="Identity">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fieldChanges, parseInteger, parsePopulations, parseRating, populationChanges } from './review'
+import { fieldChanges, parseInteger, parsePopulations, parseRating, populationChanges, timezoneAreaChanges, validateTimezoneAreas } from './review'
 
 describe('World Package authoring input boundary', () => {
   it('does not turn empty or non-numeric input into zero', () => {
@@ -41,5 +41,32 @@ describe('World Package authoring input boundary', () => {
         {field:'2000', before:'20', after:'—'},
         {field:'2020', before:'100', after:'200'}
       ])
+  })
+})
+
+
+describe('Timezone Area authored circular registry', () => {
+  it('assigns zero-based contiguous positions and accepts a one-area ring', () => {
+    expect(validateTimezoneAreas([{ code: 'UTC_0', name: 'UTC center' }], false))
+      .toEqual([{ code: 'UTC_0', name: 'UTC center', position: 0 }])
+    expect(validateTimezoneAreas([{ code: 'W', name: 'West' }, { code: 'E', name: 'East' }], false))
+      .toEqual([{code:'W',name:'West',position:0},{code:'E',name:'East',position:1}])
+  })
+  it('rejects empty, duplicate, malformed and whitespace-padded entries', () => {
+    expect(() => validateTimezoneAreas([], false)).toThrow('At least one')
+    expect(() => validateTimezoneAreas([{code:'W',name:'West'},{code:'W',name:'Repeat'}], false)).toThrow('Duplicate')
+    expect(() => validateTimezoneAreas([{code:' w',name:'West'}], false)).toThrow('uppercase')
+    expect(() => validateTimezoneAreas([{code:'w',name:'West'}], false)).toThrow('uppercase')
+    expect(() => validateTimezoneAreas([{code:'W',name:'  '}], false)).toThrow('required')
+    expect(() => validateTimezoneAreas([{code:'W',name:' West'}], false)).toThrow('surrounding')
+  })
+  it('shows explicit before→after entries for reorders and removals', () => {
+    expect(timezoneAreaChanges(
+      [{code:'W',name:'West',position:0},{code:'E',name:'East',position:1}],
+      [{code:'E',name:'East',position:0},{code:'W',name:'West',position:1}]
+    )).toEqual([
+      {field:'Timezone Area 1',before:'W — West',after:'E — East'},
+      {field:'Timezone Area 2',before:'E — East',after:'W — West'}
+    ])
   })
 })

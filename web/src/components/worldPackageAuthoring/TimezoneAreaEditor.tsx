@@ -107,14 +107,18 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
     const worldId = pkg.world_id
     setRefreshing(true)
     try {
+      // Read both independently before replacing cache entries. A failed
+      // companion fetch must never publish only half of the source snapshot.
       const [freshPackage, freshGeography] = await Promise.all([
-        queryClient.fetchQuery({queryKey:['world-package', worldId], queryFn: () => getWorldPackage(worldId), staleTime: 0}),
-        queryClient.fetchQuery({queryKey:['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), staleTime: 0})
+        getWorldPackage(worldId),
+        getWorldPackageGeography(worldId)
       ])
       if (routeRef.current !== worldId) return
       if (freshPackage.world_id !== worldId || freshGeography.world_id !== worldId) {
         throw new Error(cs ? 'Načtená data nepatří tomuto balíčku.' : 'The loaded data belongs to another package.')
       }
+      queryClient.setQueryData(['world-package', worldId], freshPackage)
+      queryClient.setQueryData(['world-package-geography', worldId], freshGeography)
       setSnapshot({worldId, fingerprint: freshPackage.fingerprint, areas: freshGeography.timezone_areas})
       setAreas(copyAreas(freshGeography.timezone_areas))
       setReview(null)

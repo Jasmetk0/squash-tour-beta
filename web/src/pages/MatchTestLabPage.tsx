@@ -365,7 +365,7 @@ export function MatchTestLabPage(): JSX.Element {
         <LabScenarioAuthoring kind="match" text={scenarioText} onChange={editScenario}
           jsonLabel="Match Lab scenario JSON" selection={selectedSessionId ?? 'scratch'} revision={editor.editorEdit}
           savedScenario={selectedSession?.scenario} savedName={selectedSession?.display_name}
-          sessionName={editor.sessionName} busy={writePending || runPending} />
+          sessionName={editor.sessionName} />
         <label>Batch seeds (optional, comma-separated; max 100)
           <input aria-label="Match Lab batch seeds" value={batchText} onChange={(e) => { setBatchText(e.target.value); runMutation.reset() }} placeholder="100, 101, 102" />
         </label>

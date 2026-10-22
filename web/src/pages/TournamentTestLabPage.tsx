@@ -614,7 +614,7 @@ export function TournamentTestLabPage(): JSX.Element {
           }} />
         </label> : null}
         <LabScenarioAuthoring kind="tournament" text={scenarioText} onChange={editScenario}
-          jsonLabel="Tournament Lab scenario JSON" selection={selectedSessionId ?? 'scratch'} revision={editor.editorEdit}
+          jsonLabel="Tournament Lab scenario JSON" selection={selectedSession ? `${selectedSession.session_id}:${selectedSession.session_fingerprint}` : 'scratch'} revision={editor.editorEdit}
           savedScenario={selectedSession?.scenario} savedName={selectedSession?.display_name}
           sessionName={editor.sessionName} />
         <label>Batch match seeds (optional, comma-separated; max 100)

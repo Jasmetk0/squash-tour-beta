@@ -103,6 +103,40 @@ describe('World Package authoring against mutable source', () => {
     expect(api.updateWorldPackageCountry).toHaveBeenCalledTimes(1)
   })
 
+  it('rejects a wrong-country update response without poisoning the original Country cache', async () => {
+    api.updateWorldPackageCountry.mockResolvedValue({
+      country_detail:fixture('other','BBB'),
+      validation:{status:'valid'}
+    })
+    const {client} = setup()
+    fireEvent.click(await screen.findByRole('button',{name:'Edit country'}))
+    fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Reviewed Name'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review changes'}))
+    fireEvent.click(screen.getByRole('button',{name:'Confirm and save'}))
+    expect(await screen.findByText(/server returned a different Country or World Package/i)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Confirm and save'})).toBeDisabled()
+    expect(screen.queryByText(/Country saved/)).not.toBeInTheDocument()
+    expect(client.getQueryData<{country:{code:string}}>(['world-package-country','custom','AAA'])?.country.code).toBe('AAA')
+    expect(api.updateWorldPackageCountry).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects a wrong-package population update response and keeps reviewed population changes', async () => {
+    api.updateWorldPackageCountryPopulation.mockResolvedValue({
+      country_detail:fixture('other','AAA'),
+      validation:{status:'valid'}
+    })
+    setup()
+    fireEvent.click(await screen.findByRole('button',{name:'Edit population'}))
+    fireEvent.change(screen.getByLabelText('Population 2020'),{target:{value:'150'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review changes'}))
+    fireEvent.click(screen.getByRole('button',{name:'Confirm and save'}))
+    expect(await screen.findByText(/server returned a different Country or World Package/i)).toBeInTheDocument()
+    expect(screen.getByText('150')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Confirm and save'})).toBeDisabled()
+    expect(screen.queryByText(/Population saved/)).not.toBeInTheDocument()
+    expect(api.updateWorldPackageCountryPopulation).toHaveBeenCalledTimes(1)
+  })
+
   it('does not route a paused country write to a newly selected package', async () => {
     let finish!: (value: unknown) => void
     api.updateWorldPackageCountry.mockImplementation(() => new Promise(resolve => {finish = resolve}))

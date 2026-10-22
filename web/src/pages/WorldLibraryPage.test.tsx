@@ -70,6 +70,72 @@ it('explains duplicate Country code without mislabeling it as a package version 
 })
 
 
+
+describe('new Country conflict recovery and response identity', () => {
+  function setupWithCustomWorld() {
+    const source={type:'custom',source:'custom_config',editable:true,fingerprint:'create-base',world_id:'custom'}
+    const geography={world_id:'custom',
+      regions:[{code:'EUR',name:'Europe'}],travel_regions:[],timezone_areas:[]}
+    api.getWorldPackage.mockResolvedValue(source)
+    api.getWorldPackageGeography.mockResolvedValue(geography)
+    const client=new QueryClient({defaultOptions:{queries:{retry:false},mutations:{retry:false}}})
+    const router=createMemoryRouter([
+      {path:'/world/:worldId/new',element:<WorldPackageCountryCreatePage />},
+      {path:'*',element:<p>Other page</p>}
+    ],{initialEntries:['/world/custom/new']})
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+    return {client,router,source,geography}
+  }
+  async function prepareNewCountry() {
+    fireEvent.change(await screen.findByLabelText('Code'),{target:{value:'AAA'}})
+    fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Preserved Country'}})
+    fireEvent.change(screen.getByLabelText('Region'),{target:{value:'EUR'}})
+    fireEvent.change(screen.getByLabelText('Population value 2020'),{target:{value:'100'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review before saving'}))
+    expect(await screen.findByText('Review new country')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Confirm and save'}))
+  }
+
+  it('preserves a reviewed new Country if a 409 reload fails, then clears it after a valid reload', async () => {
+    const {source,geography}=setupWithCustomWorld()
+    api.createWorldPackageCountry.mockRejectedValue({status:409,message:'world package changed'})
+    await prepareNewCountry()
+    expect(await screen.findByText(/No write was retried/)).toBeInTheDocument()
+    const confirm=vi.spyOn(window,'confirm').mockReturnValue(true)
+    api.getWorldPackage.mockRejectedValueOnce(new Error('Source offline'))
+      .mockResolvedValue({...source,fingerprint:'fresh-fp'})
+    fireEvent.click(screen.getByRole('button',{name:'Reload current data'}))
+    expect(await screen.findByText(/Reload failed. Your draft Country has been preserved: Source offline/)).toBeInTheDocument()
+    expect(screen.getByText('Preserved Country')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Confirm and save'})).toBeDisabled()
+    expect(api.createWorldPackageCountry).toHaveBeenCalledTimes(1)
+    api.getWorldPackageGeography.mockResolvedValue(geography)
+    fireEvent.click(screen.getByRole('button',{name:'Reload current data'}))
+    expect(await screen.findByLabelText('Code')).toHaveValue('')
+    expect(screen.getByLabelText('Name')).toHaveValue('')
+    expect(screen.getByLabelText('Population value 2020')).toHaveValue(null)
+    expect(screen.queryByText('Review new country')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Reload failed/)).not.toBeInTheDocument()
+    expect(confirm).toHaveBeenCalledTimes(2)
+    expect(api.createWorldPackageCountry).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects a mismatched create response rather than redirecting or claiming successful creation', async () => {
+    const {router}=setupWithCustomWorld()
+    api.createWorldPackageCountry.mockResolvedValue({
+      country_detail:{package:{world_id:'other'},country:{code:'BBB'}},
+      package:{world_id:'other'},validation:{status:'valid'}
+    })
+    await prepareNewCountry()
+    expect(await screen.findByText(/server returned a different Country or World Package/i)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Confirm and save'})).toBeDisabled()
+    expect(router.state.location.pathname).toBe('/world/custom/new')
+    expect(screen.getByText('Preserved Country')).toBeInTheDocument()
+    expect(api.createWorldPackageCountry).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button',{name:'Reload current data'})).toBeEnabled()
+  })
+})
+
 describe('late new-country create response', () => {
   it('does not redirect from a different page after the user discards the pending edit', async () => {
     api.getWorldPackage.mockResolvedValue({type:'custom',source:'custom_config',editable:true,

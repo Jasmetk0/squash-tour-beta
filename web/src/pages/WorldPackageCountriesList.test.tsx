@@ -209,10 +209,11 @@ describe('World Package country inventory', () => {
     api.getWorldPackageCountries.mockResolvedValue({
       world_id: 'world-a', world_name: 'Český svět', type: 'official',
       source: 'built_in', read_only: true, country_count: 1,
-      countries: [country(0)],
+      countries: [{ ...country(0), population_by_year: { 2020: 100_000, 2021: 101_000, 2022: 102_000 } }],
     })
     mount()
     expect(await screen.findByText('Country 000')).toBeInTheDocument()
+    expect(screen.getByText('3 roky: 2020, 2021, 2022')).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Země ve World Package' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Kvalita rozvoje' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Populace' })).toBeInTheDocument()

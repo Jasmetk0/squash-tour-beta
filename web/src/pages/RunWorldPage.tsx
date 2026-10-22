@@ -73,7 +73,7 @@ function CountryDetail({runId,branchId,savedHead,historicalRevisionId,country,wo
     <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/world?'+returnParams.toString()}>
       ← {cs?'Zpět na seznam zemí':'Back to countries'}
     </Link>
-    <div className="page-intro"><p className="eyebrow">{world.worldName} · {params.get('year')||startYear}</p>
+    <div className="page-intro"><p className="eyebrow">{world.worldName} · {selectedWorldYear}</p>
       <h3>{country.name} <small>({country.code})</small></h3>
     </div>
     <nav className="run-world-tabs" aria-label="Country detail sections">

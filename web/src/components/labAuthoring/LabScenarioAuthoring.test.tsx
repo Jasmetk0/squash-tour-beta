@@ -218,6 +218,34 @@ describe('Lab scenario authoring boundaries', () => {
   })
 
 
+  it('exports only the current JSON scenario under a safe filename without running or saving', async () => {
+    const objectUrl = vi.fn().mockReturnValue('blob:test-scenario')
+    const old = URL.createObjectURL
+    const oldRevoke = URL.revokeObjectURL
+    let downloadName = ''
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      downloadName = this.download
+    })
+    URL.createObjectURL = objectUrl
+    URL.revokeObjectURL = vi.fn()
+    try {
+      const run = vi.fn()
+      render(<><LabScenarioAuthoring kind="match" text={JSON.stringify({...match, scenario_id: 'Match A/B'})}
+        onChange={vi.fn()} selection="scratch" revision={0} jsonLabel="Match Lab scenario JSON" />
+        <button onClick={run}>Run manually</button></>)
+      await userEvent.setup().click(screen.getByRole('button', {name: 'Download scenario JSON'}))
+      expect(objectUrl).toHaveBeenCalledTimes(1)
+      expect(objectUrl.mock.calls[0][0]).toBeInstanceOf(Blob)
+      expect((objectUrl.mock.calls[0][0] as Blob).type).toContain('application/json')
+      expect(downloadName).toBe('Match_A_B.json')
+      expect(run).not.toHaveBeenCalled()
+    } finally {
+      URL.createObjectURL = old
+      URL.revokeObjectURL = oldRevoke
+      click.mockRestore()
+    }
+  })
+
   it('canceling a staged file preserves the current editor and the saved baseline', async () => {
     function Harness() {
       const [text, setText] = useState(JSON.stringify(match))

@@ -169,7 +169,7 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
    }}>{pending?t.retry:action==='recover'?t.recover:t.resume}</button>
    {pending && !mutation.isPending && <button type="button" onClick={()=>{setPending(null);mutation.reset();void client.invalidateQueries({queryKey:['server-simulation-tasks']})}}>{t.cancel}</button>}
   </>}</>}
-  {pending && !task.needs_operator_action && <div role="group" aria-label={t.retry}>
+  {pending && (!task.needs_operator_action || requiresNewWeekReview) && <div role="group" aria-label={t.retry}>
    <p role="status">{t.uncertainAfterProgress}</p>
    <p><code>{pending.target.task_id}</code> · <code>{pending.body.request_id}</code></p>
    <button type="button" disabled={mutation.isPending || mutation.isSuccess}

@@ -167,6 +167,29 @@ function explain(error: unknown, cs: boolean): string {
 }
 
 
+function GuidedFieldEditor({ field, kind, value, cs, busy, onApply }: {
+  field: Field; kind: LabKind; value: unknown; cs: boolean; busy: boolean
+  onApply: (field: Field, draft: string) => void
+}): JSX.Element {
+  const original = String(value)
+  const [draft, setDraft] = useState(original)
+  useEffect(() => { setDraft(original) }, [original])
+  const name = cs ? field.cs : field.en
+  return <span style={{ display: 'inline-block', marginRight: '1rem' }}>
+    <label>{name}{' '}
+      <input aria-label={kind + ' Lab ' + field.path.join('.')}
+        type={typeof value === 'number' ? 'number' : 'text'} min={field.min} max={field.max}
+        step={field.integer ? 1 : 'any'} disabled={busy} value={draft}
+        onChange={event => setDraft(event.target.value)}
+        onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }} />
+    </label>{' '}
+    <button type="button" aria-label={kind + ' Lab apply ' + field.path.join('.')}
+      disabled={busy || draft === original} onClick={() => onApply(field, draft)}>
+      {cs ? 'Použít' : 'Apply'}
+    </button>
+  </span>
+}
+
 function VariantMatchCountsEditor({ id, values, index, cs, busy, onApply }: {
   id: string; values: number[]; index: number; cs: boolean; busy: boolean
   onApply: (index: number, draft: string) => void
@@ -311,19 +334,10 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
       </select>
     </label>
     {mode === 'form' && (parsed ? <div>
-      {fields.map(field => {
-        const value = fieldValue(parsed!, field.path)
-        return <label key={field.path.join('.')} style={{ display: 'inline-block', marginRight: '1rem' }}>
-          {cs ? field.cs : field.en}{' '}
-          <input aria-label={kind + ' Lab ' + field.path.join('.')} disabled={busy}
-            type={typeof value === 'number' ? 'number' : 'text'}
-            min={field.min} max={field.max} step={field.integer ? 1 : 'any'}
-            value={String(value)} onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }}
-            onChange={event => {
-              if (event.target.value !== '') applyField(field, event.target.value)
-            }} />
-        </label>
-      })}
+      {fields.map(field => <GuidedFieldEditor
+        key={selection + ':' + revision + ':' + field.path.join('.')} field={field}
+        kind={kind} value={fieldValue(parsed!, field.path)} cs={cs} busy={busy}
+        onApply={applyField} />)}
       {kind === 'player' && variants.map((variant, index) => <VariantMatchCountsEditor
         key={String(variant.variant_id) + ':' + selection + ':' + revision} id={String(variant.variant_id)}
         values={variant.competitive_match_counts as number[]} index={index} cs={cs} busy={busy}

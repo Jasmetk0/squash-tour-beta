@@ -50,6 +50,14 @@
 - In-flight JSON file reads carry a monotonic read ticket. Editor changes and Session/source transitions increment the ticket, so a late read cannot stage an old file even after an A → B → A return to identical text/selection (ABA protection).
 - Regression tests cover multiple independently staged fields with parent revision, external source replacement with the same scratch ID, and delayed file read across Session A → B → A. No backend/API/fingerprint modifications.
 
+### Advisory pre-run input preflight (22 October 2026)
+
+- Shared guided scenario authoring now displays **read-only, bilingual (EN/CS), path-specific local preflight** in Match, Tournament and Player Labs, including while the advanced JSON editor is visible.
+- Match checks canonical distinct participant IDs, best-of/games-to/win-by/upset variance, modifiers and explicit retirement references. Tournament checks unique participant IDs, participant count 2–128, main draw 2–128, seed-priority references, match format, stop-after round and expected played-match count. Player checks variant IDs/canonical ordering, equal weekly durations 1–61, counts 0–32 and version-specific Health timeline requirements.
+- Diagnoses only basic input invariants. No guesswork on sporting realism, seeding validity, backend format authority or Run compatibility. This is **advisory**: no request gating, writes, or new frontend authority; the backend remains final.
+- No local warnings for empty scenario (existing empty-state cue) or malformed JSON (existing advanced-editor error). Pure and rendered tests verify both positive and negative cases, EN/CS descriptions, and that review never writes to a Session.
+- Exact-head Fast CI, TypeScript build and actual browser/HTTP/SQLite acceptance status must be checked before the user merges; genuine Lab jobs still skip Draft.
+
 ## Status and merge policy
 - This PR is intentionally **Draft** and NOT merge-ready.
 - Dedicated genuine Lab API/Chromium acceptance skips Draft PRs. Skipped jobs are not passes.

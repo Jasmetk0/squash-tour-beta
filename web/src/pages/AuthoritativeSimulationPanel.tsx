@@ -3387,7 +3387,8 @@ export function AuthoritativeSimulationPanel({
                         setFullSimulationAbandonReason('')
                         setFullSimulationAbandonConfirmed(false)
                       }}
-                      disabled={actionPending}
+                      disabled={actionPending || Boolean(submittedFullSimulationAbandon) ||
+                        !pendingFullSimulationQuery.isSuccess || pendingFullSimulationQuery.isFetching}
                     >
                       Prepare abandon
                     </button>

@@ -156,3 +156,30 @@ user may merge.
 - No actual backend/SQLite/Chromium E2E has been run in this chat, and no
   protected World Package data have been modified. Draft status remains
   mandatory until Work coordinates applicable acceptance.
+
+## Continuation — October 22 authoring guards and navigation
+
+- Timezone Area editor: after a rejected fingerprint (HTTP 409) or successful
+  response that cannot be reconciled with current authoritative package and
+  geography, the reviewed Save is **locked** until explicit user-approved
+  reload and review. No repeated dispatch of the old fingerprint. The error
+  is not mislabelled as an in-progress save.
+- Timezone Area success comparison now uses code, name and zero-based position,
+  not JSON object serialization order. A response with equivalent values and
+  differently ordered object properties is accepted.
+- Built-in → Custom World clone: editing ID, name or description clears an
+  obsolete dry-run preview/error. Upon successful creation, the clone draft
+  (including manually edited description) resets while retaining the confirmed
+  result and Open-new-world link. The source page's unsaved-change navigation
+  blocker must no longer obstruct opening the successfully created package.
+- Focused tests now exercise reload-required Timezone Area conflicts, a
+  mismatched post-write refresh, property-order-insensitive success,
+  stale dry-run preview clearing, and successful clone navigation even with
+  a custom description.
+- Remaining integration boundary: this chat cannot run local server or
+  SQLite/Chromium E2E via repository checkout because the execution
+  environment has no direct DNS access to GitHub. GitHub connector and hosted
+  Fast CI checks are used instead. Real API behavior is not claimed tested.
+- Keep extending the **same Draft PR #1632** on
+  `feat/world-package-authoring-chat-b-20261022`. No merge; user controls
+  merging. Never modify source Earth historical data or other parallel owners.

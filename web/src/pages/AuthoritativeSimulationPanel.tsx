@@ -3394,8 +3394,12 @@ export function AuthoritativeSimulationPanel({
               </ol>
               {fullSimulationTargetSelection && (
                 <div role="group" aria-label={C('Change Full Simulation week target')}>
-                  <p className="status">{C('The new target is the START of the selected week (season index 0 = first Run season). Already committed work is never undone; if that week is in progress, the next safe boundary stops further work. Original command and Saved Revisions remain unchanged.')}</p>
-                  <p className="status">{C('Relative targets are resolved from the actual current week on the server when applied, not from a potentially stale browser view. The selected Run defines the number of weeks per season; the limits of this legacy control must be reviewed against that calendar.')}</p>
+                  <p className="status">{language==='cs'
+                    ? 'Nový cíl je ZAČÁTEK vybraného týdne (index 0 znamená první sezonu Runu). Potvrzené výsledky se nikdy nemažou; další práce se zastaví na bezpečné hranici. Původní příkaz i Saved Revisions zůstávají zachovány.'
+                    : 'The target is the START of the selected week (season index 0 is the first season of this Run). Committed results are never undone; further work stops at a safe boundary. The original command and Saved Revisions remain unchanged.'}</p>
+                  <p className="status">{language==='cs'
+                    ? 'Relativní cíl vyhodnocuje server podle skutečného aktuálního týdne. Délku sezony určuje kalendář Runu; limity tohoto staršího formuláře nepopisují všechny Runy.'
+                    : 'The server resolves relative targets from its actual current week. The Run calendar defines the season length; limits in this legacy form are not universal.'}</p>
                   <p><code>{fullSimulationTargetSelection}</code> · {C('Control request ID:')} <code>{fullSimulationTargetCommandId}</code></p>
                   {frozenFullSimulationTarget&&<p role="status">{language==='cs'
                     ? 'Původní cíl, Run, větev a auditní údaje jsou uzamčené pro stejné opakování.'

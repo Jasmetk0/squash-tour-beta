@@ -52,7 +52,7 @@ describe('server task UI (mock HTTP)',()=>{
   const terminal=screen.getAllByText('Stored terminal summary').map(el=>el.closest('details')!)
   expect(terminal).toHaveLength(2)
   terminal[0].open=true
-  fireEvent.toggle(terminal[0])
+  fireEvent(terminal[0],new Event('toggle',{bubbles:true}))
   await waitFor(()=>expect(summaryMock.render).toHaveBeenCalled())
   expect(summaryMock.render.mock.calls.every(([props])=>
     (props as {commandId:string}).commandId==='parent-one'||

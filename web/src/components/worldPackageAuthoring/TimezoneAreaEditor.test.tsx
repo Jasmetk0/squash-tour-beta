@@ -47,7 +47,7 @@ describe('reviewed Timezone Area authoring', () => {
       client.setQueryData(['world-package',worldId], pkg(worldId,true,'fp-after'))
       return {...geography(worldId),timezone_areas:areas}
     })
-    fireEvent.click(screen.getByRole('button',{name:'Move Down'}))
+    fireEvent.click(screen.getAllByRole('button',{name:'Move Down'})[0])
     expect(screen.getByRole('button',{name:'Review Timezone Areas'})).toBeEnabled()
     fireEvent.click(screen.getByRole('button',{name:'Review Timezone Areas'}))
     expect(api.replaceWorldPackageTimezoneAreas).not.toHaveBeenCalled()

@@ -1,6 +1,6 @@
 import { BoundaryDescription } from './FullSimulationBoundaryTargets'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { continueServerTask, getServerTasks, startServerTask } from '../api/fullSimulationTasks'
 import type { ContinueTask, ServerTask } from '../api/fullSimulationTasks'
@@ -23,6 +23,9 @@ const copy={
   measured:'Stored Branch receipts in current week',slots:'Completed match slots',groups:'Committed match groups',advanced:'Week transitions since task start',
   frozen:'Historical end week, frozen at termination',unavailable:'Historical end week unavailable; not inferred from the current Branch',
   needsCount:'Operator action required',liveCount:'Queued / executing / pause requested (health unconfirmed)',otherCount:'Other task states',
+  search:'Find a server task',searchHint:'Run, Branch, task, parent command or checkpoint',filter:'Task category',
+  allTasks:'All tasks',attentionTasks:'Operator action required',liveTasks:'Queued / active / pausing',otherTasks:'Other states',
+  shown:'Displayed tasks',noMatches:'No tasks match the current search and category. Clear the filters to see all stored tasks.',pinned:'Linked task stays visible regardless of filters.',
   desired:'Requested task state',lease:'Lease expiry (not proof of a live worker)',selected:'Task selected from the link',missing:'The linked task was not found in this Run / Branch.',contextChanged:'The reviewed request belongs to a different Run, Branch or command. Return to that context to retry; this screen will not redirect it.'},
  cs:{title:'Serverové simulační úlohy',start:'Spustit jako serverovou úlohu',ack:'Serverová úloha přijata',refresh:'Obnovit údaje úloh',
   truth:'Úloha se živým workerem může pokračovat i po zavření stránky; samotný záznam ani lease běh nedokazují. Save a schválení zůstávají ruční. Po restartu serveru úlohu zkontrolujte a výslovně obnovte.',
@@ -36,6 +39,9 @@ const copy={
   measured:'Uložené výsledkové záznamy větve v aktuálním týdnu',slots:'Dokončené zápasové sloty',groups:'Potvrzené zápasové skupiny',advanced:'Týdenních přechodů od začátku úlohy',
   frozen:'Historický koncový týden uložený při ukončení',unavailable:'Historický koncový týden není dostupný; aktuální stav větve jej nenahrazuje',
   needsCount:'Vyžaduje zásah operátora',liveCount:'Fronta / běží / pozastavuje (zdraví procesu nepotvrzeno)',otherCount:'Ostatní stavy úloh',
+  search:'Najít serverovou úlohu',searchHint:'Run, větev, úloha, původní příkaz nebo checkpoint',filter:'Kategorie úloh',
+  allTasks:'Všechny úlohy',attentionTasks:'Vyžaduje zásah operátora',liveTasks:'Ve frontě / aktivní / pozastavuje se',otherTasks:'Ostatní stavy',
+  shown:'Zobrazené úlohy',noMatches:'Hledání a kategorie neodpovídá žádná úloha. Zrušením filtrů zobrazíte všechny uložené úlohy.',pinned:'Úloha vybraná z odkazu zůstává viditelná bez ohledu na filtry.',
   desired:'Požadovaný stav úlohy',lease:'Konec platnosti lease (nikoli důkaz živého workeru)',selected:'Úloha vybraná z odkazu',missing:'Odkazovaná úloha nebyla nalezena v tomto Runu / větvi.',contextChanged:'Schválený požadavek patří jinému Runu, větvi nebo příkazu. Pro opakování se vraťte do původního kontextu; tato obrazovka jej nepřesměruje.'}
 } as const
 export function useServerTasks(run?:string,branch?:string,enabled=true){
@@ -169,6 +175,11 @@ export function FullSimulationServerTasks({runId,branchId}:{runId?:string;branch
  const {language}=useLanguage();const t=copy[language];const query=useServerTasks(runId,branchId)
  const [searchParams]=useSearchParams()
  const focusedTaskId=runId&&branchId?searchParams.get('task'):null
+ const [search,setSearch]=useState('')
+ const [category,setCategory]=useState<'all'|'attention'|'live'|'other'>('all')
+ // A filter from a different Run/Branch must not hide this scope's tasks.
+ useEffect(()=>{setSearch('');setCategory('all')},[runId,branchId])
+ const normalized=search.trim().toLocaleLowerCase()
  const liveStates=['queued','active','pause_requested']
  const taskPriority=(task:ServerTask)=>
    task.task_id===focusedTaskId?-1:task.needs_operator_action?0:liveStates.includes(task.state)?1:2
@@ -176,12 +187,32 @@ export function FullSimulationServerTasks({runId,branchId}:{runId?:string;branch
  const needingAction=tasks?.filter(task=>task.needs_operator_action).length??0
  const liveOrQueued=tasks?.filter(task=>!task.needs_operator_action&&liveStates.includes(task.state)).length??0
  const otherStates=(tasks?.length??0)-needingAction-liveOrQueued
+ const displayed=tasks?.filter(task=>{
+  if(focusedTaskId===task.task_id)return true
+  const categoryMatch=category==='all'||(category==='attention'&&task.needs_operator_action)||
+   (category==='live'&&!task.needs_operator_action&&liveStates.includes(task.state))||
+   (category==='other'&&!task.needs_operator_action&&!liveStates.includes(task.state))
+  if(!categoryMatch)return false
+  const terms=[task.run_id,task.run_name,task.branch_id,task.branch_name,
+   task.task_id,task.parent_command_id,task.checkpoint??''].join(' ').toLocaleLowerCase()
+  return terms.includes(normalized)
+ })
+ const filtered=Boolean(normalized||category!=='all')
  return <section className="server-simulation-tasks" aria-label={t.title}><h3>{t.title}</h3><p>{t.truth}</p>
   <button type="button" onClick={()=>void query.refetch()} disabled={query.isFetching}>{t.refresh}</button>
+  <div className="server-simulation-tasks__filters">
+   <label>{t.search}<input type="search" aria-label={t.search} placeholder={t.searchHint} value={search} onChange={e=>setSearch(e.target.value)}/></label>
+   <label>{t.filter}<select aria-label={t.filter} value={category} onChange={e=>setCategory(e.target.value as 'all'|'attention'|'live'|'other')}>
+    <option value="all">{t.allTasks}</option><option value="attention">{t.attentionTasks}</option>
+    <option value="live">{t.liveTasks}</option><option value="other">{t.otherTasks}</option>
+   </select></label>
+  </div>
   {query.isPending && <p role="status">{t.loading}</p>}
   {query.error && <p role="alert">{formatApiError(query.error)}</p>}
   {query.isSuccess&&Boolean(tasks?.length)&&<p role="status">{t.needsCount}: {needingAction} · {t.liveCount}: {liveOrQueued} · {t.otherCount}: {otherStates}</p>}
   {query.isSuccess&&focusedTaskId&&!query.data.some(task=>task.task_id===focusedTaskId)&&<p role="alert">{t.missing} <code>{focusedTaskId}</code></p>}
-  {query.isSuccess && (tasks?.length?<ul className="server-simulation-tasks__list">{tasks.map(task=><TaskCard key={JSON.stringify([task.run_id,task.branch_id,task.task_id])} task={task} focused={task.task_id===focusedTaskId}/>)}</ul>:<p>{t.empty}</p>)}
+  {query.isSuccess&&filtered&&<p className="status">{t.shown}: {displayed?.length??0} / {tasks?.length??0}</p>}
+  {query.isSuccess&&filtered&&focusedTaskId&&displayed?.some(task=>task.task_id===focusedTaskId)&&<p className="status">{t.pinned}</p>}
+  {query.isSuccess && (displayed?.length?<ul className="server-simulation-tasks__list">{displayed.map(task=><TaskCard key={JSON.stringify([task.run_id,task.branch_id,task.task_id])} task={task} focused={task.task_id===focusedTaskId}/>)}</ul>:<p>{tasks?.length?t.noMatches:t.empty}</p>)}
  </section>
 }

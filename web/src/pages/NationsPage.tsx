@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 
@@ -11,7 +11,12 @@ export function NationsPage(): JSX.Element {
   const { runId = '' } = useParams()
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('total_players_desc')
-  const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null)
+  const [selectedNation, setSelectedNation] = useState<{ runId: string; countryCode: string } | null>(null)
+  const selectedCountryCode = selectedNation?.runId === runId ? selectedNation.countryCode : null
+
+  useEffect(() => {
+    setSelectedNation(null)
+  }, [runId])
 
   const queryParams = useMemo(
     () => ({ search: search.trim() || undefined, sort, limit: 300, offset: 0 }),
@@ -64,7 +69,9 @@ export function NationsPage(): JSX.Element {
         {nationsQuery.isLoading ? <p className="status">Loading nations…</p> : null}
         {nationsQuery.error ? <p className="error">Failed to load nations: {String(nationsQuery.error)}</p> : null}
         {!nationsQuery.isLoading && !nationsQuery.error && nationsQuery.data ? (
-          <table>
+          nationsQuery.data.nations.length === 0
+            ? <p className="status">No nations match the current search or Run.</p>
+            : <div className="table-responsive"><table aria-label="Run nations table">
             <thead>
               <tr>
                 <th>Country</th>
@@ -82,7 +89,7 @@ export function NationsPage(): JSX.Element {
               {nationsQuery.data.nations.map((nation) => (
                 <tr key={nation.country_code}>
                   <td>
-                    <button type="button" onClick={() => setSelectedCountryCode(nation.country_code)}>
+                    <button type="button" onClick={() => setSelectedNation({ runId, countryCode: nation.country_code })}>
                       {nation.country_code} {nation.country_name ? `— ${nation.country_name}` : ''}
                     </button>
                   </td>
@@ -99,7 +106,7 @@ export function NationsPage(): JSX.Element {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         ) : null}
       </SectionCard>
 

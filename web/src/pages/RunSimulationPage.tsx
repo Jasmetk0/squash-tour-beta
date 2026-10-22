@@ -168,6 +168,9 @@ export function RunSimulationPage(): JSX.Element {
     )}
 
     {eligibility && <p role="alert" className="error">Legacy compatibility simulation blocked: {eligibility}</p>}
+    <details className="simulation-legacy-controls" open={packageOwnership !== 'package'}>
+      <summary>Legacy compatibility simulation tools · optional</summary>
+      <p className="status">The canonical simulation controls above are the supported path. Expand these tools only when a historical Branch or the existing World Tour Finals compatibility flow requires them.</p>
     <SectionCard title="Legacy compatibility simulation actions">
       <p className="status">
         These controls still use the legacy branch simulation wrapper. Canonical Next Match, Next Slot, Next Match Day, Next Round, Next Tournament, Next Week, Next Season and Full Simulation now live in the authoritative panel above; legacy actions remain compatibility tools only.
@@ -187,6 +190,7 @@ export function RunSimulationPage(): JSX.Element {
         <button type="submit" disabled={!canSubmit}>{mutation.isPending ? 'Executing…' : simulationActions[review.action].confirmationLabel}</button>
       </form>
     </SectionCard>}
+    </details>
     {notice && <p className="status">{notice}</p>}{mutation.error && mutationBelongsToCurrentContext && (mutation.error as { status?: number }).status !== 409 && <p className="error">{formatApiError(mutation.error)}</p>}
     {result && <SectionCard title="Execution result"><MetadataList items={[{ label: 'Branch', value: result.branch_id }, { label: 'Previous head', value: result.previous_head_checkpoint_id }, { label: 'New head', value: result.new_head_checkpoint_id }, { label: 'Viewer Branch pointer changed', value: result.official_branch_changed ? 'Yes' : 'No' }]} /></SectionCard>}
   </section>

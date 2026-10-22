@@ -685,7 +685,10 @@ export function WorldLibraryDetailPage(): JSX.Element {
               <p className="error">Failed to load World Package validation: {formatApiError(validationQuery.error)}</p>
             </SectionCard>
           )}
-          {validationQuery.data && <ValidationSection validation={validationQuery.data} />}
+          {validationQuery.data && validationQuery.data.world_id !== pkg.world_id &&
+            <p role="alert" className="error">Validation response does not belong to this World Package.</p>}
+          {validationQuery.data?.world_id === pkg.world_id &&
+            <ValidationSection key={pkg.world_id} validation={validationQuery.data} />}
         </>
       )}
     </section>

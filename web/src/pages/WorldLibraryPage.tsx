@@ -1,4 +1,4 @@
-import type { FormEvent, MouseEvent, ReactNode } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -7,6 +7,7 @@ import { cloneWorldPackage, createWorldPackageCountry, deleteWorldPackageCountry
 import type { CountryRecord, WorldPackage, WorldPackageClonePayload, WorldPackageCloneResponse, WorldPackageCountryCreatePayload, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
 import { SectionCard } from '../components/RunScopedUi'
 import { TimezoneAreaEditor } from '../components/worldPackageAuthoring/TimezoneAreaEditor'
+import { UnsavedWorldPackageNavigationGuard } from '../components/worldPackageAuthoring/UnsavedWorldPackageNavigationGuard'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import { fieldChanges, isFingerprintConflict, parseInteger, parsePopulations, parseRating, populationChanges, requiredName } from '../components/worldPackageAuthoring/review'
@@ -716,9 +717,6 @@ export function WorldLibraryDetailPage(): JSX.Element {
   const cs = language === 'cs'
   const [geographyDirty, setGeographyDirty] = useState(false)
   const [cloneDirty, setCloneDirty] = useState(false)
-  const confirmNavigate = (event: MouseEvent<HTMLAnchorElement>) => {
-    if ((geographyDirty || cloneDirty) && !window.confirm(cs ? 'Zahodit neuložené změny World Package?' : 'Discard unsaved World Package changes?')) event.preventDefault()
-  }
   const packageQuery = useQuery({
     queryKey: ['world-package', worldId],
     queryFn: () => getWorldPackage(worldId),
@@ -736,17 +734,18 @@ export function WorldLibraryDetailPage(): JSX.Element {
 
   return (
     <section className="panel">
+      <UnsavedWorldPackageNavigationGuard active={geographyDirty || cloneDirty} cs={cs} />
       <div className="page-intro">
         <h2>World Package Details</h2>
         <p className="subtitle">Read-only inspection of a registered World Package.</p>
       </div>
-      <p><Link to="/admin/world/library" onClick={confirmNavigate}>Back to World Library</Link></p>
+      <p><Link to="/admin/world/library">Back to World Library</Link></p>
       {packageQuery.isLoading && <p className="status">Loading World Package...</p>}
       {packageQuery.error && <p className="error">Failed to load World Package: {formatApiError(packageQuery.error)}</p>}
       {pkg && (
         <>
           <h2>{pkg.name}</h2><p><code>{pkg.world_id}</code></p><p><strong>{pkg.type === 'custom' ? 'Custom' : 'Built-in'} · {pkg.editable ? 'Editable source' : 'Read-only'}</strong></p>
-          <nav aria-label="Package sections"><a href="#overview">Overview</a> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`} onClick={confirmNavigate}>Countries</Link> · <a href="#geography">Geography</a> · <a href="#validation">Validation</a></nav>
+          <nav aria-label="Package sections"><a href="#overview">Overview</a> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Countries</Link> · <a href="#geography">Geography</a> · <a href="#validation">Validation</a></nav>
           <div id="overview" />
           <SectionCard title="Metadata">
             <DetailRow label="Name" value={pkg.name} />
@@ -766,7 +765,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
           </SectionCard>
           {pkg.type === 'official' && pkg.source === 'built_in' && <CloneBuiltInWorldSection key={`clone:${pkg.world_id}`} source={pkg} onDirtyChange={setCloneDirty} />}
           <SectionCard title="Contents">
-            <DetailRow label="Countries" value={<><span>{pkg.country_count}</span> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`} onClick={confirmNavigate}>Open package countries</Link></>} />
+            <DetailRow label="Countries" value={<><span>{pkg.country_count}</span> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Open package countries</Link></>} />
             <DetailRow label="Continents" value={pkg.continent_count} />
             <DetailRow label="Regions" value={pkg.region_count} />
             <DetailRow label="Travel regions" value={pkg.travel_region_count} />
@@ -809,6 +808,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   const queryClient = useQueryClient()
   const activeWorld = useRef(worldId)
   activeWorld.current = worldId
+  const bypassNavigation = useRef(false)
   const packageQuery = useQuery({ queryKey: ['world-package', worldId], queryFn: () => getWorldPackage(worldId), enabled: Boolean(worldId), retry: false })
   const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), enabled: Boolean(worldId), retry: false })
   const [identity, setIdentity] = useState({ code: '', name: '', notes: '', area: '' })
@@ -821,6 +821,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   const [requestError, setRequestError] = useState<unknown>(null)
   const [review, setReview] = useState<{ worldId: string, payload: WorldPackageCountryCreatePayload, changes: ReviewChange[] } | null>(null)
   useEffect(() => {
+    bypassNavigation.current = false
     setIdentity({ code: '', name: '', notes: '', area: '' })
     setRegion(''); setTravelRegion(''); setTimezoneArea('')
     setValues({ squash_popularity: '5.5', squash_access: '5.5', development_quality: '5.5', competition_quality: '5.5', elite_support: '5.5', squash_tradition: '5.5' })
@@ -841,6 +842,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
       if (activeWorld.current === command.worldId &&
         response.country_detail.package.world_id === command.worldId &&
         response.country_detail.country.code === command.payload.code) {
+        bypassNavigation.current = true
         navigate(`/admin/world/library/${encodeURIComponent(command.worldId)}/countries/${encodeURIComponent(command.payload.code)}`)
       }
     },
@@ -909,9 +911,8 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   if (packageQuery.error || geographyQuery.error) return <p className="error">{cs ? 'Nepodařilo se načíst podklady formuláře: ' : 'Failed to load country form resources: '}{formatApiError(packageQuery.error ?? geographyQuery.error)}</p>
   if (!allowed) return <section className="panel"><p className="error">{cs ? 'Země lze vytvářet jen v upravitelné vlastní kopii World Package.' : 'Countries can only be created in an editable Custom World source.'}</p></section>
   return <section className="panel">
-    <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries`} onClick={event => {
-      if (dirty && !window.confirm(cs ? 'Zahodit novou zemi bez uložení?' : 'Discard this unsaved country?')) event.preventDefault()
-    }}>{cs ? 'Zpět na země' : 'Back to countries'}</Link></p>
+    <UnsavedWorldPackageNavigationGuard active={dirty} cs={cs} bypassRef={bypassNavigation} />
+    <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries`}>{cs ? 'Zpět na země' : 'Back to countries'}</Link></p>
     <h2>{cs ? 'Přidat zemi' : 'Add country'}</h2>
     {validationError && <p className="error" role="alert">{validationError}</p>}
     {requestError != null && <p className="error" role="alert">{isFingerprintConflict(requestError)
@@ -1092,7 +1093,8 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     populationMutation.mutate({ worldId, countryCode, payload })
   }
   return <section className="panel">
-    <p><Link to="/admin/world/library" onClick={event => { if ((editing || populationEditing) && !window.confirm(cs ? 'Zahodit neuložené změny?' : 'Discard unsaved edits?')) event.preventDefault() }}>World Packages</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}`} onClick={event => { if ((editing || populationEditing) && !window.confirm(cs ? 'Zahodit neuložené změny?' : 'Discard unsaved edits?')) event.preventDefault() }} >{data?.package.name ?? worldId}</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries`} onClick={event => { if ((editing || populationEditing) && !window.confirm(cs ? 'Zahodit neuložené změny?' : 'Discard unsaved edits?')) event.preventDefault() }}>Countries</Link>{data ? ` → ${data.country.name}` : ''}</p>
+    <UnsavedWorldPackageNavigationGuard active={editing || populationEditing} cs={cs} />
+    <p><Link to="/admin/world/library">World Packages</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}`}>{data?.package.name ?? worldId}</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries`}>Countries</Link>{data ? ` → ${data.country.name}` : ''}</p>
     {query.isLoading && <p className="status">{cs ? 'Načítám zemi…' : 'Loading country...'}</p>}
     {query.error && <p className="error">{cs ? 'Nepodařilo se načíst zemi: ' : 'Failed to load country: '}{formatApiError(query.error)}</p>}
     {data && <>

@@ -18,7 +18,7 @@ function packageRow(worldId: string, name: string, type: 'official' | 'custom') 
     world_id: worldId, name, type, status: 'active', editable: type === 'custom',
     country_count: 250, continent_count: 7, region_count: 10, travel_region_count: 10,
     timezone_area_count: 7, used_by_run_count: null, version: 'v1',
-    fingerprint: 'f'.repeat(64),
+    fingerprint: 'f'.repeat(64), validation_status: 'unknown',
   }
 }
 
@@ -116,12 +116,49 @@ describe('World Package library local filters', () => {
     expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
   })
 
+  it('separates validated from unknown packages and intersects editable-source filters', async () => {
+    api.listWorldPackages.mockResolvedValue({
+      packages: [
+        { ...packageRow('valid_builtin', 'Built-in valid', 'official'), validation_status: 'valid' },
+        { ...packageRow('unknown_custom', 'Custom unverified', 'custom'), validation_status: 'unknown' },
+        { ...packageRow('valid_custom', 'Custom valid', 'custom'), validation_status: 'valid' },
+      ],
+    })
+    mount()
+    expect(await screen.findByText('Custom unverified')).toBeInTheDocument()
+    expect(screen.getAllByText('Valid')).toHaveLength(2)
+    expect(screen.getByText('Unknown')).toBeInTheDocument()
+    expect(screen.getByText(/does not necessarily indicate an error/)).toBeInTheDocument()
+
+    const validation = screen.getByRole('combobox', { name: 'World Package validation' })
+    const onlyEditable = screen.getByRole('checkbox', { name: 'Editable sources only' })
+    fireEvent.change(validation, { target: { value: 'valid' } })
+    expect(screen.getByText('Built-in valid')).toBeInTheDocument()
+    expect(screen.getByText('Custom valid')).toBeInTheDocument()
+    expect(screen.queryByText('Custom unverified')).not.toBeInTheDocument()
+    fireEvent.click(onlyEditable)
+    expect(screen.getByText('Custom valid')).toBeInTheDocument()
+    expect(screen.queryByText('Built-in valid')).not.toBeInTheDocument()
+    expect(screen.getByText('Showing 1 of 3 World Packages')).toBeInTheDocument()
+    fireEvent.change(validation, { target: { value: 'unknown' } })
+    expect(screen.getByText('Custom unverified')).toBeInTheDocument()
+    expect(screen.queryByText('Custom valid')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters and sorting' }))
+    expect(validation).toHaveValue('all')
+    expect(onlyEditable).not.toBeChecked()
+    expect(screen.getByText('Showing 3 of 3 World Packages')).toBeInTheDocument()
+    expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
+  })
+
   it('localizes package table and describes empty Run creation correctly', async () => {
     locale.language = 'cs'
     mount()
     expect(await screen.findByText('FAX World')).toBeInTheDocument()
     expect(screen.getByText(/Run může vzniknout i prázdný/)).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Použito v Runech' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Ověření' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Pouze upravitelné zdroje' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Ověření World Package' })).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Otevřít World Package' })).toHaveLength(3)
     expect(screen.getAllByText('Vestavěný')).toHaveLength(2)
     expect(screen.getByText('Upravitelný zdroj')).toBeInTheDocument()

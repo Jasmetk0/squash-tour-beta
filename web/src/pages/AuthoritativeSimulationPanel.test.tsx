@@ -3848,7 +3848,7 @@ describe('AuthoritativeSimulationPanel', () => {
     }
     const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
     render(<QueryClientProvider client={client}><LanguageProvider><Switch/></LanguageProvider></QueryClientProvider>)
-    await userEvent.type(screen.getByLabelText('Full Simulation operator'),'Operator')
+    await userEvent.type(await screen.findByLabelText('Full Simulation operator'),'Operator')
     await userEvent.type(screen.getByLabelText('Full Simulation audit reason'),'Review exact source')
     await userEvent.click(screen.getByRole('button',{name:'Review authoritative Full Simulation'}))
     expect(screen.getByLabelText('Full Simulation operator')).toBeDisabled()

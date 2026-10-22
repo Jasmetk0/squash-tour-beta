@@ -341,6 +341,10 @@ export function AuthoritativeSimulationPanel({
   const [submittedFullSimulationAbandon, setSubmittedFullSimulationAbandon] = useState<{
     runId:string;branchId:string;payload:Parameters<typeof abandonAuthoritativeFullSimulation>[2]
   }|null>(null)
+  const abandonEditorRef=useRef({runId,branchId,target:fullSimulationAbandonTarget,
+    submitted:submittedFullSimulationAbandon})
+  abandonEditorRef.current={runId,branchId,target:fullSimulationAbandonTarget,
+    submitted:submittedFullSimulationAbandon}
   const [fullSimulationHistorySelection, setFullSimulationHistorySelection] =
     useState<string | null>(null)
   const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
@@ -1914,9 +1918,12 @@ export function AuthoritativeSimulationPanel({
       runId:string;branchId:string;payload:Parameters<typeof abandonAuthoritativeFullSimulation>[2]
     })=>abandonAuthoritativeFullSimulation(snapshot.runId,snapshot.branchId,snapshot.payload),
     onSuccess:async(_result,snapshot)=>{
-      const current=activeScopeRef.current
+      const current=abandonEditorRef.current
       if(current.runId===snapshot.runId&&current.branchId===snapshot.branchId&&
-        fullSimulationAbandonTarget===snapshot.payload.target_command_id){
+        current.target===snapshot.payload.target_command_id&&
+        current.submitted?.payload.target_command_id===snapshot.payload.target_command_id &&
+        current.submitted.payload.operator_label===snapshot.payload.operator_label &&
+        current.submitted.payload.audit_reason===snapshot.payload.audit_reason){
         if(fullSimulationCommandId===snapshot.payload.target_command_id){
           setFrozenFullSimulationParent(null)
           setFullSimulationReview(null)

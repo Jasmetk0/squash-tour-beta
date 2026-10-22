@@ -102,6 +102,71 @@ export function changePlayerMatchCounts(text: string, index: number, raw: string
   }, null, 2)
 }
 
+type ParticipantModifier = 'form_modifier' | 'sharpness_modifier' | 'fatigue_modifier' | 'health_modifier' | 'travel_modifier'
+const modifierOptions: { key: ParticipantModifier; en: string; cs: string }[] = [
+  { key: 'form_modifier', en: 'Form', cs: 'Forma' },
+  { key: 'sharpness_modifier', en: 'Sharpness', cs: 'Rozehranost' },
+  { key: 'fatigue_modifier', en: 'Fatigue', cs: 'Únava' },
+  { key: 'health_modifier', en: 'Health', cs: 'Zdraví' },
+  { key: 'travel_modifier', en: 'Travel', cs: 'Cestování' }
+]
+
+type ParticipantOption = { target: 'a' | 'b' | number; id: string; name: string; modifier: JsonObject }
+
+function participantOptions(kind: LabKind, scenario: JsonObject): ParticipantOption[] {
+  const inputs: { target: ParticipantOption['target']; value: unknown }[] = kind === 'match'
+    ? [{ target: 'a', value: object(scenario.context) ? scenario.context.player_a : undefined },
+       { target: 'b', value: object(scenario.context) ? scenario.context.player_b : undefined }]
+    : kind === 'tournament' && Array.isArray(scenario.participants)
+      ? scenario.participants.map((value, target) => ({ target, value })) : []
+  return inputs.flatMap(({ target, value }) => {
+    if (!object(value) || !object(value.player) || typeof value.player.player_id !== 'string'
+      || !value.player.player_id.trim()) return []
+    if (modifierOptions.some(option => value[option.key] !== undefined
+      && (typeof value[option.key] !== 'number' || !Number.isFinite(value[option.key])))) return []
+    return [{ target, id: value.player.player_id,
+      name: typeof value.player.name === 'string' && value.player.name.trim()
+        ? value.player.name : value.player.player_id, modifier: value }]
+  })
+}
+
+/** Patch exactly one existing participant context, never the player ID or historical source evidence. */
+export function changeLabParticipantModifier(
+  text: string, kind: 'match' | 'tournament', target: 'a' | 'b' | number,
+  key: ParticipantModifier, raw: string
+): string {
+  const scenario = readLabScenario(text, kind)
+  const input = raw.trim()
+  const value = Number(input)
+  if (!input || !Number.isFinite(value) || value < -0.35 || value > 0.35) throw new Error('modifier')
+  if (!modifierOptions.some(option => option.key === key)) throw new Error('modifier')
+  const option = participantOptions(kind, scenario).find(item => item.target === target)
+  if (!option) throw new Error('shape')
+  if (kind === 'match') {
+    if (target !== 'a' && target !== 'b') throw new Error('shape')
+    const context = scenario.context as JsonObject
+    const slot = target === 'a' ? 'player_a' : 'player_b'
+    return JSON.stringify({ ...scenario, context: {
+      ...context, [slot]: { ...option.modifier, [key]: value }
+    } }, null, 2)
+  }
+  if (typeof target !== 'number' || !Array.isArray(scenario.participants)) throw new Error('shape')
+  return JSON.stringify({ ...scenario, participants: scenario.participants.map((participant, index) =>
+    index === target ? { ...option.modifier, [key]: value } : participant) }, null, 2)
+}
+
+/** Stop after round may be unset (full draw) or 1–7, matching the canonical API contract. */
+export function changeTournamentStopRound(text: string, raw: string): string {
+  const scenario = readLabScenario(text, 'tournament')
+  const input = raw.trim()
+  let round: number | null = null
+  if (input) {
+    round = Number(input)
+    if (!/^[1-7]$/.test(input) || !Number.isSafeInteger(round)) throw new Error('round')
+  }
+  return JSON.stringify({ ...scenario, stop_after_round: round }, null, 2)
+}
+
 function changes(oldValue: unknown, newValue: unknown, prefix: string, output: string[]): void {
   if (JSON.stringify(oldValue) === JSON.stringify(newValue)) return
   if (output.length >= 40) return

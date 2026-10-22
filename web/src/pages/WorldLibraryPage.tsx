@@ -243,70 +243,95 @@ function CloneResultCard({ result }: { result: WorldPackageCloneResponse }): JSX
 
 function CloneBuiltInWorldSection({ source }: { source: WorldPackage }): JSX.Element {
   const queryClient = useQueryClient()
+  const { language } = useLanguage()
+  const cs = language === 'cs'
+  const sourceRef = useRef(source.world_id)
+  sourceRef.current = source.world_id
   const [newWorldId, setNewWorldId] = useState('')
   const [name, setName] = useState('')
   const [description, setDescription] = useState(`Custom world cloned from ${source.name}.`)
   const [result, setResult] = useState<WorldPackageCloneResponse | null>(null)
   const [apiError, setApiError] = useState<string | null>(null)
+  const [review, setReview] = useState<{ sourceWorldId: string; payload: WorldPackageClonePayload } | null>(null)
+  useEffect(() => {
+    setNewWorldId(''); setName(''); setDescription(`Custom world cloned from ${source.name}.`)
+    setResult(null); setApiError(null); setReview(null)
+  }, [source.world_id, source.name])
+  useUnsavedWorldPackageWarning(Boolean(newWorldId || name || review))
   const mutation = useMutation({
-    mutationFn: (payload: WorldPackageClonePayload) => cloneWorldPackage(source.world_id, payload),
-    onSuccess: (response) => {
-      setResult(response)
-      setApiError(null)
+    mutationFn: (command: { sourceWorldId: string; payload: WorldPackageClonePayload }) => cloneWorldPackage(command.sourceWorldId, command.payload),
+    onSuccess: (response, command) => {
       if (response.ok && !response.dry_run) {
         void queryClient.invalidateQueries({ queryKey: ['world-packages'] })
         void queryClient.invalidateQueries({ queryKey: ['world-package', response.new_world_id] })
         void queryClient.invalidateQueries({ queryKey: ['world-package-validation', response.new_world_id] })
       }
+      if (sourceRef.current !== command.sourceWorldId) return
+      if (response.source_world_id !== command.sourceWorldId || response.new_world_id !== command.payload.new_world_id) {
+        setApiError(cs ? 'Odpověď nepatří kontrolované kopii.' : 'The response does not match the reviewed clone.')
+        return
+      }
+      setResult(response)
+      setApiError(null)
     },
-    onError: (error) => {
+    onError: (error, command) => {
+      if (sourceRef.current !== command.sourceWorldId) return
       setResult(null)
       setApiError(formatApiError(error))
     }
   })
-
-  function submitClone(dryRun: boolean): void {
-    setApiError(null)
-    mutation.mutate({
-      new_world_id: newWorldId,
-      name,
-      description: description.trim() === '' ? null : description,
-      dry_run: dryRun
-    })
+  function prepare(dryRun: boolean): void {
+    if (mutation.isPending) return
+    const id = newWorldId.trim()
+    if (!/^[a-z0-9_]{3,64}$/.test(id)) {
+      setApiError(cs ? 'ID musí obsahovat 3–64 malých písmen, číslic nebo podtržítek.' : 'World ID must contain 3–64 lowercase letters, digits or underscores.')
+      return
+    }
+    if (!name.trim()) {
+      setApiError(cs ? 'Název vlastní kopie je povinný.' : 'A name is required for the custom copy.')
+      return
+    }
+    const payload: WorldPackageClonePayload = {
+      new_world_id: id, name: name.trim(), description: description.trim() || null, dry_run: dryRun
+    }
+    setResult(null); setApiError(null)
+    if (dryRun) {
+      setReview(null)
+      mutation.mutate({ sourceWorldId: source.world_id, payload })
+    } else {
+      setReview({sourceWorldId: source.world_id, payload})
+    }
   }
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault()
+  const confirm = () => {
+    if (!review || review.sourceWorldId !== source.world_id || mutation.isPending) return
+    mutation.mutate(review)
   }
-
-  return (
-    <SectionCard title="Clone Built-in World">
-      <p>Create an independent repository-stored Custom World from <strong>{source.name}</strong>. The built-in source and existing Runs are never changed.</p>
-      <p className="status">The clone copies the complete package tree, including historical rating evidence and package-owned generation inputs when present.</p>
-      <form onSubmit={handleSubmit}>
-        <label>
-          New World ID
-          <input value={newWorldId} onChange={(event) => setNewWorldId(event.target.value)} placeholder="my_custom_world" />
+  return <SectionCard title={cs ? 'Vytvořit vlastní kopii World Package' : 'Clone Built-in World'}>
+    <p>{cs ? 'Nezávislá vlastní kopie vestavěného zdroje' : 'Create an independent Custom World from'} <strong>{source.name}</strong>. {cs ? 'Originál ani existující Runy se nezmění.' : 'The original and existing Runs are never changed.'}</p>
+    <p className="status">{cs ? 'Kopie zachová úplný obsah včetně historických zdrojových dat.' : 'The clone preserves the complete package tree, including historical evidence.'}</p>
+    {review ? <div aria-label="Review World Package clone">
+      <p><strong>{cs ? 'Zdroj' : 'Source'}:</strong> <code>{review.sourceWorldId}</code> · <strong>{cs ? 'Nová kopie' : 'New copy'}:</strong> <code>{review.payload.new_world_id}</code></p>
+      <p><strong>{cs ? 'Název' : 'Name'}:</strong> {review.payload.name}</p>
+      <p>{cs ? 'Zkontrolujte zdroj a cíl. Vytvoření vyžaduje výslovné potvrzení.' : 'Check the source and destination. The write needs explicit confirmation.'}</p>
+      <button type="button" disabled={mutation.isPending} onClick={() => setReview(null)}>{cs ? 'Zpět k formuláři' : 'Back to form'}</button>{' '}
+      <button type="button" disabled={mutation.isPending} onClick={confirm}>{cs ? 'Potvrdit vytvoření kopie' : 'Confirm custom copy'}</button>
+    </div> : <form onSubmit={event => {event.preventDefault(); prepare(false)}}>
+      <fieldset disabled={mutation.isPending}>
+        <label>{cs ? 'Nové World ID' : 'New World ID'}
+          <input value={newWorldId} onChange={event => setNewWorldId(event.target.value)} placeholder="my_custom_world" />
         </label>
-        <p className="status">lowercase letters, numbers, underscores only; 3–64 chars; no spaces</p>
-        <label>
-          Name
-          <input value={name} onChange={(event) => setName(event.target.value)} placeholder="My Custom World" />
-        </label>
-        <label>
-          Description
-          <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder={`Custom world cloned from ${source.name}.`} />
-        </label>
+        <p className="status">{cs ? 'Malá písmena, číslice a podtržítko; 3–64 znaků.' : 'Lowercase letters, digits and underscores only; 3–64 characters.'}</p>
+        <label>{cs ? 'Název' : 'Name'}<input value={name} onChange={event => setName(event.target.value)} placeholder="My Custom World" /></label>
+        <label>{cs ? 'Popis' : 'Description'}<textarea value={description} onChange={event => setDescription(event.target.value)} /></label>
         <div className="actions">
-          <button type="button" disabled={mutation.isPending} onClick={() => submitClone(true)}>Preview clone</button>
-          <button type="button" disabled={mutation.isPending} onClick={() => submitClone(false)}>Create Custom World</button>
+          <button type="button" onClick={() => prepare(true)}>{cs ? 'Náhled kopírování' : 'Preview clone'}</button>
+          <button type="submit">{cs ? 'Zkontrolovat vytvoření kopie' : 'Review custom copy'}</button>
         </div>
-      </form>
-      {apiError && <p className="error">Clone request failed: {apiError}</p>}
-      {result && !result.ok && <CloneResultCard result={result} />}
-      {result && result.ok && <CloneResultCard result={result} />}
-    </SectionCard>
-  )
+      </fieldset>
+    </form>}
+    {apiError && <p className="error" role="alert">{cs ? 'Kopírování se nezdařilo: ' : 'Clone request failed: '}{apiError}</p>}
+    {result && <CloneResultCard result={result} />}
+  </SectionCard>
 }
 
 function ValidationSection({ validation }: { validation: WorldPackageValidation }): JSX.Element {

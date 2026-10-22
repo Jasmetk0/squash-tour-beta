@@ -3482,6 +3482,9 @@ describe('AuthoritativeSimulationPanel', () => {
     await userEvent.click(screen.getByRole('button', {name: language === 'cs' ? 'Požádat o pauzu' : 'Request pause'}))
     await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
     expect(await screen.findByText('Network answer was lost')).toBeInTheDocument()
+    expect(screen.getByLabelText(language === 'cs' ? 'Operátor ovládání Full Simulation' : 'Full Simulation control operator')).toBeDisabled()
+    expect(screen.getByLabelText(language === 'cs' ? 'Důvod ovládání Full Simulation do auditu' : 'Full Simulation control audit reason')).toBeDisabled()
+    expect(screen.getByText(language === 'cs' ? /uzamčené pro přesné opakování/ : /locked for exact retry/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', {name: language === 'cs' ? 'Požádat o pauzu' : 'Request pause'}))
     await waitFor(() => expect(api.controlAuthoritativeFullSimulation).toHaveBeenCalledTimes(2))
     const first = api.controlAuthoritativeFullSimulation.mock.calls[0][2]
@@ -3621,6 +3624,10 @@ describe('AuthoritativeSimulationPanel', () => {
     await userEvent.click(apply)
     await waitFor(() => expect(api.retargetAuthoritativeFullSimulation).toHaveBeenCalledTimes(1))
     expect(await screen.findByText('Answer lost')).toBeInTheDocument()
+    expect(seasonInput).toBeDisabled()
+    expect(weekInput).toBeDisabled()
+    expect(screen.getByLabelText(language === 'cs' ? 'Operátor změny cíle' : 'Target change operator')).toBeDisabled()
+    expect(screen.getByText(language === 'cs' ? /uzamčené pro stejné opakování/ : /locked for the same retry/)).toBeInTheDocument()
     await userEvent.click(apply)
     await waitFor(() => expect(api.retargetAuthoritativeFullSimulation).toHaveBeenCalledTimes(2))
     expect(api.retargetAuthoritativeFullSimulation.mock.calls[0][2]).toEqual(

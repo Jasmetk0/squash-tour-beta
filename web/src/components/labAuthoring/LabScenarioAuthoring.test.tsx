@@ -411,6 +411,78 @@ describe('Lab scenario authoring boundaries', () => {
     expect(JSON.parse(advanced.value).source_fingerprint).toBe(match.source_fingerprint)
   })
 
+  it('retains an independently staged guided input across another field Apply and revision advance', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(match))
+      const [revision, setRevision] = useState(0)
+      return <><LabScenarioAuthoring kind="match" text={text}
+        onChange={next => { setText(next); setRevision(i => i + 1) }}
+        selection="scratch" revision={revision} jsonLabel="Match Lab scenario JSON" />
+        <output data-testid="independent-draft">{text}</output></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    fireEvent.change(screen.getByLabelText('match Lab context.best_of'), {target: {value: '3'}})
+    fireEvent.change(screen.getByLabelText('match Lab seed'), {target: {value: '100'}})
+    await user.click(screen.getByRole('button', {name: 'match Lab apply seed'}))
+    expect(screen.getByLabelText('match Lab context.best_of')).toHaveValue(3)
+    expect(screen.getByRole('button', {name: 'match Lab apply context.best_of'})).toBeEnabled()
+    const afterSeed = JSON.parse(screen.getByTestId('independent-draft').textContent ?? '')
+    expect(afterSeed.seed).toBe(100)
+    expect(afterSeed.context.best_of).toBe(5)
+    await user.click(screen.getByRole('button', {name: 'match Lab apply context.best_of'}))
+    const final = JSON.parse(screen.getByTestId('independent-draft').textContent ?? '')
+    expect(final.context.best_of).toBe(3)
+    expect(final.seed).toBe(100)
+    expect(final.source_fingerprint).toBe(match.source_fingerprint)
+  })
+
+  it('discards uncommitted guided values when an external scenario replaces the same scratch source', async () => {
+    function Harness() {
+      const [text, setText] = useState(JSON.stringify(match))
+      const [revision, setRevision] = useState(0)
+      return <><LabScenarioAuthoring kind="match" text={text}
+        onChange={next => { setText(next); setRevision(i => i + 1) }}
+        selection="scratch" revision={revision} jsonLabel="Match Lab scenario JSON" />
+        <button type="button" onClick={() => {
+          setText(JSON.stringify({...match, seed: 155, source_reference: 'another-copy'}))
+          setRevision(i => i + 1)
+        }}>Load a different scratch source</button></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    fireEvent.change(screen.getByLabelText('match Lab context.best_of'), {target: {value: '3'}})
+    await user.click(screen.getByRole('button', {name: 'Load a different scratch source'}))
+    expect(screen.getByLabelText('match Lab context.best_of')).toHaveValue(5)
+    expect(screen.getByRole('button', {name: 'match Lab apply context.best_of'})).toBeDisabled()
+    expect(JSON.parse((screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement).value)
+      .source_reference).toBe('another-copy')
+  })
+
+  it('invalidates an asynchronous JSON read after switching sessions away and back before it completes', async () => {
+    let finish!: (contents: string) => void
+    const reading = new Promise<string>(resolve => { finish = resolve })
+    function Harness() {
+      const [selection, setSelection] = useState('first')
+      return <><LabScenarioAuthoring kind="match" text={JSON.stringify(match)}
+        onChange={vi.fn()} selection={selection} revision={0}
+        jsonLabel="Match Lab scenario JSON" />
+        <button type="button" onClick={() => setSelection('second')}>Switch away</button>
+        <button type="button" onClick={() => setSelection('first')}>Switch back</button></>
+    }
+    const user = userEvent.setup()
+    render(<Harness />)
+    const file = new File(['{}'], 'delayed.json', {type: 'application/json'})
+    Object.defineProperty(file, 'text', {value: () => reading})
+    await user.upload(screen.getByLabelText('match Lab JSON file'), file)
+    await user.click(screen.getByRole('button', {name: 'Switch away'}))
+    await user.click(screen.getByRole('button', {name: 'Switch back'}))
+    finish(JSON.stringify({...match, seed: 199}))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('editor changed'))
+    expect(screen.queryByLabelText('match Lab imported draft review')).not.toBeInTheDocument()
+    expect(JSON.parse((screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement).value).seed).toBe(42)
+  })
+
   it('lets the user switch between guided and advanced editing without losing historical fields', async () => {
     function Harness() {
       const [text, setText] = useState(JSON.stringify(match, null, 2))

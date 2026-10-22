@@ -3399,7 +3399,7 @@ export function AuthoritativeSimulationPanel({
                   <p><code>{fullSimulationTargetSelection}</code> · {C('Control request ID:')} <code>{fullSimulationTargetCommandId}</code></p>
                   {frozenFullSimulationTarget&&<p role="status">{language==='cs'
                     ? 'Původní cíl, Run, větev a auditní údaje jsou uzamčené pro stejné opakování.'
-                    : 'Original target, Run, Branch and audit fields are locked for the same retry.'}</p>
+                    : 'Original target, Run, Branch and audit fields are locked for the same retry.'}</p>}
                   <label>{C('Target type')}
                     <select aria-label={C('Target type')} value={fullSimulationTargetMode}
                       onChange={e => setFullSimulationTargetMode(e.target.value as 'absolute'|'weeks'|'seasons')} disabled={Boolean(frozenFullSimulationTarget)}>
@@ -3498,7 +3498,7 @@ export function AuthoritativeSimulationPanel({
                   <p className="status">{C('Control request ID:')} <code>{fullSimulationControlCommandId}</code>. {C('If the response is lost, retrying reuses this exact ID and cannot duplicate the audit event.')}</p>
                   {frozenFullSimulationControl&&<p role="status">{language==='cs'
                     ? 'Původní Run, větev, příkaz i auditní údaje jsou uzamčené pro přesné opakování.'
-                    : 'Original Run, Branch, command and audit fields are locked for exact retry.'}</p>
+                    : 'Original Run, Branch, command and audit fields are locked for exact retry.'}</p>}
                   <label>{C('Operator')}
                     <input aria-label={C('Full Simulation control operator')}
                       value={fullSimulationControlOperator} maxLength={128}

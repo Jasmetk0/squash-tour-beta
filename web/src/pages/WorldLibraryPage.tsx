@@ -423,6 +423,10 @@ function formatNumber(value: number | null | undefined): string {
   return value === null || value === undefined ? '—' : value.toLocaleString()
 }
 
+function hasPopulationHistory(country: CountryRecord): boolean {
+  return Object.values(country.population_by_year ?? {}).some(value => value !== null && value !== undefined)
+}
+
 function formatPopulationYears(populationByYear: CountryRecord['population_by_year'], cs: boolean): string {
   if (!populationByYear) return '—'
   const years = Object.entries(populationByYear)
@@ -503,6 +507,7 @@ export function WorldPackageCountriesPage(): JSX.Element {
   const [region, setRegion] = useState('')
   const [missingTravelRegion, setMissingTravelRegion] = useState(false)
   const [missingTimezoneArea, setMissingTimezoneArea] = useState(false)
+  const [populationHistory, setPopulationHistory] = useState<'all' | 'present' | 'missing'>('all')
   const [sortBy, setSortBy] = useState<'name' | 'code' | 'population'>('name')
   const [page, setPage] = useState(0)
   useEffect(() => {
@@ -510,12 +515,14 @@ export function WorldPackageCountriesPage(): JSX.Element {
     setRegion('')
     setMissingTravelRegion(false)
     setMissingTimezoneArea(false)
+    setPopulationHistory('all')
     setSortBy('name')
     setPage(0)
   }, [worldId])
   const sourceCountries = data?.countries ?? []
   const missingTravelCount = sourceCountries.filter(country => !country.travel_region).length
   const missingTimezoneCount = sourceCountries.filter(country => !country.timezone_area).length
+  const missingPopulationHistoryCount = sourceCountries.filter(country => !hasPopulationHistory(country)).length
   const regions = Array.from(new Set(sourceCountries.map(country => country.region).filter(Boolean)))
     .sort((left, right) => left.localeCompare(right))
   const normalizedSearch = search.trim().toLocaleLowerCase()
@@ -524,6 +531,8 @@ export function WorldPackageCountriesPage(): JSX.Element {
       (region === '' || country.region === region) &&
       (!missingTravelRegion || !country.travel_region) &&
       (!missingTimezoneArea || !country.timezone_area) &&
+      (populationHistory === 'all' ||
+        (populationHistory === 'present' ? hasPopulationHistory(country) : !hasPopulationHistory(country))) &&
       `${country.code} ${country.name}`.toLocaleLowerCase().includes(normalizedSearch)
     )
     .sort((left, right) => sortBy === 'code'
@@ -541,6 +550,7 @@ export function WorldPackageCountriesPage(): JSX.Element {
     setRegion('')
     setMissingTravelRegion(false)
     setMissingTimezoneArea(false)
+    setPopulationHistory('all')
     setSortBy('name')
     setPage(0)
   }
@@ -586,6 +596,14 @@ export function WorldPackageCountriesPage(): JSX.Element {
                   {regions.map(value => <option key={value} value={value}>{value}</option>)}
                 </select>
               </label>
+              <label>{cs ? 'Historická populace' : 'Population history'}
+                <select value={populationHistory}
+                  onChange={event => { setPopulationHistory(event.target.value as typeof populationHistory); setPage(0) }}>
+                  <option value="all">{cs ? 'Všechny země' : 'All countries'}</option>
+                  <option value="present">{cs ? 'S populační řadou' : 'With population years'}</option>
+                  <option value="missing">{cs ? 'Bez populační řady' : 'Without population years'}</option>
+                </select>
+              </label>
               <label>{cs ? 'Řazení zemí' : 'Sort countries'}
                 <select value={sortBy} onChange={event => { setSortBy(event.target.value as typeof sortBy); setPage(0) }}>
                   <option value="name">{cs ? 'Název (A–Z)' : 'Name (A–Z)'}</option>
@@ -608,7 +626,13 @@ export function WorldPackageCountriesPage(): JSX.Element {
               ? `Nepřiřazený cestovní region: ${missingTravelCount} · Nepřiřazená časová oblast: ${missingTimezoneCount}`
               : `Unassigned travel region: ${missingTravelCount} · Unassigned timezone area: ${missingTimezoneCount}`}
               {' '}{cs ? 'Nepřiřazený údaj nemusí znamenat chybu.' : 'An unassigned value is not necessarily an error.'}</p>
-            <button type="button" disabled={!search && !region && !missingTravelRegion && !missingTimezoneArea && sortBy === 'name'} onClick={clearFilters}>
+            <p className="status">{cs
+              ? `Bez historických populačních let: ${missingPopulationHistoryCount}`
+              : `Without historical population years: ${missingPopulationHistoryCount}`}
+              {' '}{cs
+                ? 'Sleduje pouze vyplněné hodnoty v populační řadě; samo o sobě nejde o chybu ani potvrzení úplnosti dat.'
+                : 'Counts populated year entries only; it is not itself an error or a completeness verdict.'}</p>
+            <button type="button" disabled={!search && !region && !missingTravelRegion && !missingTimezoneArea && populationHistory === 'all' && sortBy === 'name'} onClick={clearFilters}>
               {cs ? 'Vymazat filtry a řazení' : 'Clear filters and sorting'}
             </button>
             <p role="status">{cs

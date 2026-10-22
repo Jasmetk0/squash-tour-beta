@@ -34,7 +34,7 @@ describe('Persisted calendar template inventory', () => {
     api.getSeasonTemplates.mockResolvedValue({ templates: [], source_path: null, status: 'read_only' })
     api.listCalendarTemplates.mockResolvedValue({
       templates: [
-        template('zulu_source', 'Zulu', 'active', 1),
+        template('zulu_source', 'Zulu', 'active', 5),
         template('alpha_source', 'Alpha', 'draft', 5),
         template('bravo_source', 'Bravo', 'archived', 3),
       ],
@@ -84,7 +84,11 @@ describe('Persisted calendar template inventory', () => {
       '/admin/tour-seasons/season-templates/calendar/zulu_source',
     ])
     fireEvent.change(sort, { target: { value: 'events' } })
-    expect(links()[0]).toBe('/admin/tour-seasons/season-templates/calendar/alpha_source')
+    expect(links()).toEqual([
+      '/admin/tour-seasons/season-templates/calendar/alpha_source',
+      '/admin/tour-seasons/season-templates/calendar/zulu_source',
+      '/admin/tour-seasons/season-templates/calendar/bravo_source',
+    ])
     fireEvent.change(status, { target: { value: 'archived' } })
     expect(links()).toEqual(['/admin/tour-seasons/season-templates/calendar/bravo_source'])
     expect(screen.getByText('Showing 1 of 3 persisted calendar templates')).toBeInTheDocument()

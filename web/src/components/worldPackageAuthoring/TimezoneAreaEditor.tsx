@@ -74,7 +74,7 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
       const freshGeography = queryClient.getQueryData<WorldPackageGeography>(['world-package-geography', command.worldId])
       const coherent = Boolean(refreshed && freshGeography &&
         refreshed.world_id === command.worldId && freshGeography.world_id === command.worldId &&
-        JSON.stringify(freshGeography.timezone_areas) === JSON.stringify(response.timezone_areas))
+        timezoneAreaChanges(freshGeography.timezone_areas, response.timezone_areas).length === 0)
       if (!coherent || !refreshed || !freshGeography) {
         setReloadRequired(true)
         setReview(null)

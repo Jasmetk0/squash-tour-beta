@@ -348,6 +348,12 @@ describe('server task UI (mock HTTP)',()=>{
   expect(api.getServerTasks).not.toHaveBeenCalled()
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
+ it('fails closed if both scope parameters are present but empty',async()=>{
+  api.getServerTasks.mockResolvedValue([taskExample()])
+  open('en',<FullSimulationServerTasks runId="" branchId=""/>)
+  expect(screen.getByRole('alert')).toHaveTextContent('No global inventory was requested')
+  expect(api.getServerTasks).not.toHaveBeenCalled()
+ })
  it('preserves the intentional unscoped Global Task Center inventory request',async()=>{
   api.getServerTasks.mockResolvedValue([taskExample()])
   open('en',<FullSimulationServerTasks/>)

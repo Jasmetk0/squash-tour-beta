@@ -190,9 +190,23 @@ describe('World Package authoring against mutable source', () => {
     await waitFor(() => expect(api.deleteWorldPackageCountry).toHaveBeenCalledWith('custom','AAA','fingerprint-custom'))
     fireEvent.click(screen.getByRole('link',{name:'World Packages'}))
     expect(await screen.findByText('Library opened')).toBeInTheDocument()
-    await act(async () => { finish({deleted_country_code:'AAA',validation:{status:'valid'}}) })
+    await act(async () => { finish({deleted_country_code:'AAA',package:{world_id:'custom'},validation:{status:'valid'}}) })
     expect(router.state.location.pathname).toBe('/admin/world/library')
     expect(screen.getByText('Library opened')).toBeInTheDocument()
+  })
+
+  it('does not navigate or claim deletion when the response names a different Country', async () => {
+    api.deleteWorldPackageCountry.mockResolvedValue({
+      deleted_country_code:'ZZZ',package:{world_id:'custom'},validation:{status:'valid'}
+    })
+    const {router} = setup()
+    fireEvent.click(await screen.findByRole('button',{name:'Delete country'}))
+    vi.spyOn(window,'confirm').mockReturnValue(true)
+    fireEvent.click(screen.getByRole('button',{name:'Confirm deletion'}))
+    expect(await screen.findByText(/server returned a different Country or World Package/i)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Confirm deletion'})).toBeDisabled()
+    expect(router.state.location.pathname).toBe('/world/custom/countries/AAA')
+    expect(api.deleteWorldPackageCountry).toHaveBeenCalledTimes(1)
   })
 
   it('freezes delete fingerprint and rejects a changed package before destructive confirmation', async () => {

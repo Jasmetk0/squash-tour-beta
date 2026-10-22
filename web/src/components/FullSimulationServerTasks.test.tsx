@@ -11,9 +11,9 @@ const weekReview=vi.hoisted(()=>({getNextWeekExtensionInspection:vi.fn(),approve
 vi.mock('../api/fullSimulationWeekReview',()=>weekReview)
 vi.mock('../api/fullSimulationTasks',async importOriginal=>({...await importOriginal<object>(),...api}))
 vi.mock('./FullSimulationSummary',()=>({FullSimulationSummary:()=>null}))
-function open(language:'cs'|'en',child:React.ReactNode){
+function open(language:'cs'|'en',child:React.ReactNode,initialPath='/'){
  localStorage.setItem('squash-engine-language-v1',language)
- return render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter><LanguageProvider>{child}</LanguageProvider></MemoryRouter></QueryClientProvider>)
+ return render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><MemoryRouter initialEntries={[initialPath]}><LanguageProvider>{child}</LanguageProvider></MemoryRouter></QueryClientProvider>)
 }
 afterEach(()=>vi.resetAllMocks())
 describe('server task UI (mock HTTP)',()=>{
@@ -252,5 +252,23 @@ describe('server task UI (mock HTTP)',()=>{
   expect(api.continueServerTask.mock.calls[0]).toEqual(api.continueServerTask.mock.calls[1])
   expect(api.continueServerTask.mock.calls[1][0].revision).toBe(1)
   expect(api.continueServerTask.mock.calls[1][1].expected_revision).toBe(1)
+ }) 
+ it.each(['cs','en'] as const)('opens the exact linked task first without inventing an action (%s)',async language=>{
+  const other={...taskExample(),task_id:'other',parent_command_id:'other-parent'}
+  api.getServerTasks.mockResolvedValue([other,taskExample()])
+  open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>,
+   '/admin/runs/run/simulate?branch=branch&task=task')
+  await screen.findByText(language==='cs'?'Úloha vybraná z odkazu':'Task selected from the link')
+  const tasks=screen.getAllByRole('listitem').filter(node=>node.hasAttribute('data-task-id'))
+  expect(tasks[0]).toHaveAttribute('data-task-id','task')
+  expect(tasks[0]).toHaveAttribute('aria-current','location')
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
+ it('reports a deep link to a missing task without acting on another one',async()=>{
+  api.getServerTasks.mockResolvedValue([taskExample()])
+  open('en',<FullSimulationServerTasks runId="run" branchId="branch"/>,
+   '/admin/runs/run/simulate?branch=branch&task=unknown')
+  expect(await screen.findByRole('alert')).toHaveTextContent('linked task was not found')
+  expect(api.continueServerTask).not.toHaveBeenCalled()
  })
 })

@@ -109,3 +109,37 @@ describe('built-in World cloning', () => {
   })
 })
 
+
+
+describe('custom World Package geography navigation', () => {
+  it('guards the library link when Timezone Area edits are not yet reviewed', async () => {
+    api.getWorldPackage.mockResolvedValue({
+      world_id:'custom',name:'Custom world',description:'',type:'custom',source:'custom_config',
+      status:'active',editable:true,deletable:true,archivable:true,version:'1',fingerprint:'fp',
+      country_count:1,continent_count:0,region_count:0,travel_region_count:0,timezone_area_count:2,
+      used_by_run_count:0,validation_status:'valid',
+      storage:{package_root_path:'',world_metadata_path:'',countries_root_path:'',countries_index_path:'',
+        geography_root_path:'',continents_path:'',regions_path:'',travel_regions_path:'',timezone_areas_path:''}
+    })
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id:'custom',continents:[],regions:[],travel_regions:[],timezone_areas_authored:true,
+      timezone_areas:[{code:'W',name:'West',position:0},{code:'E',name:'East',position:1}]
+    })
+    api.getWorldPackageValidation.mockResolvedValue({world_id:'custom',status:'valid',
+      error_count:0,warning_count:0,info_count:0,checks:[]})
+    const confirm = vi.spyOn(window,'confirm').mockReturnValue(false)
+    render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
+      <MemoryRouter initialEntries={['/world/custom']}><Routes>
+        <Route path="/world/:worldId" element={<WorldLibraryDetailPage />} />
+        <Route path="/admin/world/library" element={<p>Library opened</p>} />
+      </Routes></MemoryRouter>
+    </QueryClientProvider>)
+    fireEvent.change(await screen.findByLabelText('Timezone Area name 0'),{target:{value:'Edited West'}})
+    fireEvent.click(screen.getByRole('link',{name:'Back to World Library'}))
+    expect(confirm).toHaveBeenCalled()
+    expect(screen.queryByText('Library opened')).not.toBeInTheDocument()
+    confirm.mockReturnValue(true)
+    fireEvent.click(screen.getByRole('link',{name:'Back to World Library'}))
+    expect(await screen.findByText('Library opened')).toBeInTheDocument()
+  })
+})

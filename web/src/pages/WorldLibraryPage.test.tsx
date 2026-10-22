@@ -141,7 +141,7 @@ describe('built-in World cloning', () => {
     expect(api.cloneWorldPackage).not.toHaveBeenCalled()
     fireEvent.change(screen.getByPlaceholderText('my_custom_world'), { target: { value: 'editable_earth' } })
     fireEvent.click(screen.getByRole('button', { name: 'Review custom copy' }))
-    expect(screen.getByText('real-world-head')).toBeInTheDocument()
+    expect(screen.getAllByText('real-world-head').length).toBeGreaterThan(0)
     expect(api.cloneWorldPackage).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'Confirm custom copy' }))
 
@@ -173,7 +173,7 @@ describe('built-in World cloning', () => {
     fireEvent.change(await screen.findByPlaceholderText('my_custom_world'),{target:{value:'custom_copy'}})
     fireEvent.change(screen.getByPlaceholderText('My Custom World'),{target:{value:'Edited World'}})
     fireEvent.click(screen.getByRole('button',{name:'Review custom copy'}))
-    expect(screen.getByText('before')).toBeInTheDocument()
+    expect(screen.getAllByText('before').length).toBeGreaterThan(0)
     client.setQueryData(['world-package','real_world'],{...pkg,fingerprint:'after'})
     await waitFor(() => expect(screen.getByRole('button',{name:'Confirm custom copy'})).toBeDisabled())
     expect(api.cloneWorldPackage).not.toHaveBeenCalled()

@@ -99,11 +99,11 @@ export function SeasonCalendarPage(): JSX.Element {
               ]}
             />
             <p>
-              <Link to={`/runs/${runId}`}>Back to Run Detail</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}`}>Back to Run Detail</Link>
               {' · '}
-              {!viewed.historical ? <Link to={`/runs/${runId}/events`}>Open persisted Events history</Link> : <span>Persisted historical event detail is not available in this phase.</span>}
+              {!viewed.historical ? <Link to={`/runs/${encodeURIComponent(runId)}/events`}>Open persisted Events history</Link> : <span>Persisted historical event detail is not available in this phase.</span>}
               {' · '}
-              <Link to={`/runs/${runId}/activity`}>Open run Activity</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/activity`}>Open run Activity</Link>
             </p>
           </>
         ) : null}
@@ -169,18 +169,18 @@ export function SeasonCalendarPage(): JSX.Element {
                         label: 'Event ID',
                         value: (
                           <>
-                            <Link to={`/runs/${runId}/calendar/${encodeURIComponent(event.event_id)}`}>{event.event_id}</Link>
+                            <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(event.event_id)}`}>{event.event_id}</Link>
                             {!viewed.historical && status === 'Completed' && hasPersistedDetail ? (
                               <>
                                 {' '}·{' '}
-                                <Link to={`/runs/${runId}/events/${encodeURIComponent(event.event_id)}`}>history</Link>
+                                <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(event.event_id)}`}>history</Link>
                               </>
                             ) : null}
                           </>
                         )
                       },
                       { label: 'Season', value: event.season },
-                      { label: 'Week', value: <Link to={`/runs/${runId}/weeks/${event.week}`}>W{event.week}</Link> },
+                      { label: 'Week', value: <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${event.week}`}>W{event.week}</Link> },
                       { label: 'Tour', value: event.tour },
                       { label: 'Category', value: event.category },
                       { label: 'Template', value: event.template_id }
@@ -200,7 +200,7 @@ export function SeasonCalendarPage(): JSX.Element {
             items={[
               {
                 label: 'Event ID',
-                value: <Link to={`/runs/${runId}/calendar/${encodeURIComponent(nextEvent.event_id)}`}>{nextEvent.event_id}</Link>
+                value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(nextEvent.event_id)}`}>{nextEvent.event_id}</Link>
               },
               { label: 'Season', value: nextEvent.season },
               { label: 'Week', value: nextEvent.week },

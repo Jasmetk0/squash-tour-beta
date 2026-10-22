@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Link, RouterProvider, createcreateMemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { WorldPackageCountryDetailPage } from './WorldLibraryPage'
 
@@ -29,10 +29,11 @@ function fixture(worldId = 'custom', code = 'AAA', editable = true) {
 }
 function setup(start = '/world/custom/countries/AAA') {
   const client = new QueryClient({defaultOptions: {queries: {retry: false}, mutations: {retry: false}}})
-  return render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[start]}>
-    <Link to="/world/other/countries/BBB">Switch country</Link>
-    <Routes><Route path="/world/:worldId/countries/:countryCode" element={<WorldPackageCountryDetailPage />} /></Routes>
-  </MemoryRouter></QueryClientProvider>)
+  const router = createcreateMemoryRouter([{
+    path:'/world/:worldId/countries/:countryCode',
+    element:<><Link to="/world/other/countries/BBB">Switch country</Link><WorldPackageCountryDetailPage /></>
+  }],{initialEntries:[start]})
+  return {router, ...render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)}
 }
 beforeEach(() => {
   vi.clearAllMocks()
@@ -88,6 +89,9 @@ describe('World Package authoring against mutable source', () => {
     fireEvent.click(screen.getByRole('button', {name:'Confirm and save'}))
     await waitFor(() => expect(api.updateWorldPackageCountry).toHaveBeenCalledWith('custom','AAA',expect.anything()))
     fireEvent.click(screen.getByRole('link', {name:'Switch country'}))
+    expect(await screen.findByRole('alertdialog',{name:'Unsaved World Package changes'})).toBeInTheDocument()
+    expect(screen.queryByRole('heading',{name:'Country BBB'})).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Discard and leave'}))
     expect(await screen.findByRole('heading', {name:'Country BBB'})).toBeInTheDocument()
     finish({country_detail:fixture(),validation:{status:'valid'}})
     await waitFor(() => expect(api.getWorldPackageCountry).toHaveBeenCalledWith('other','BBB'))

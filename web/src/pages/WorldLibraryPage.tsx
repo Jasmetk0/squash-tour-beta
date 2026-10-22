@@ -257,7 +257,7 @@ function CloneBuiltInWorldSection({ source }: { source: WorldPackage }): JSX.Ele
     setNewWorldId(''); setName(''); setDescription(`Custom world cloned from ${source.name}.`)
     setResult(null); setApiError(null); setReview(null)
   }, [source.world_id, source.name])
-  useUnsavedWorldPackageWarning(Boolean(newWorldId || name || review))
+  useUnsavedWorldPackageWarning(Boolean(newWorldId || name || description !== `Custom world cloned from ${source.name}.` || review))
   const mutation = useMutation({
     mutationFn: (command: { sourceWorldId: string; payload: WorldPackageClonePayload }) => cloneWorldPackage(command.sourceWorldId, command.payload),
     onSuccess: (response, command) => {
@@ -273,6 +273,9 @@ function CloneBuiltInWorldSection({ source }: { source: WorldPackage }): JSX.Ele
       }
       setResult(response)
       setApiError(null)
+      if (response.ok && !response.dry_run) {
+        setReview(null); setNewWorldId(''); setName('')
+      }
     },
     onError: (error, command) => {
       if (sourceRef.current !== command.sourceWorldId) return
@@ -799,7 +802,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
     setPopulations([{ id: 0, year: '2020', population: '' }])
     setValidationError(''); setRequestError(null); setReview(null)
   }, [worldId])
-  const dirty = Boolean(identity.code || identity.name || identity.notes || identity.area || region || travelRegion || timezoneArea || populations.some(row => row.population || row.year !== '2020') || review)
+  const dirty = Boolean(identity.code || identity.name || identity.notes || identity.area || region || travelRegion || timezoneArea || populations.some(row => row.population || row.year !== '2020') || Object.values(values).some(value => value !== '5.5') || review)
   useUnsavedWorldPackageWarning(dirty)
   const mutation = useMutation({
     mutationFn: (command: { worldId: string; payload: WorldPackageCountryCreatePayload }) => createWorldPackageCountry(command.worldId, command.payload),
@@ -1064,7 +1067,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     populationMutation.mutate({ worldId, countryCode, payload })
   }
   return <section className="panel">
-    <p><Link to="/admin/world/library">World Packages</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}`}>{data?.package.name ?? worldId}</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries`}>Countries</Link>{data ? ` → ${data.country.name}` : ''}</p>
+    <p><Link to="/admin/world/library" onClick={event => { if ((editing || populationEditing) && !window.confirm(cs ? 'Zahodit neuložené změny?' : 'Discard unsaved edits?')) event.preventDefault() }}>World Packages</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}`} onClick={event => { if ((editing || populationEditing) && !window.confirm(cs ? 'Zahodit neuložené změny?' : 'Discard unsaved edits?')) event.preventDefault() }} >{data?.package.name ?? worldId}</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries`} onClick={event => { if ((editing || populationEditing) && !window.confirm(cs ? 'Zahodit neuložené změny?' : 'Discard unsaved edits?')) event.preventDefault() }}>Countries</Link>{data ? ` → ${data.country.name}` : ''}</p>
     {query.isLoading && <p className="status">{cs ? 'Načítám zemi…' : 'Loading country...'}</p>}
     {query.error && <p className="error">{cs ? 'Nepodařilo se načíst zemi: ' : 'Failed to load country: '}{formatApiError(query.error)}</p>}
     {data && <>

@@ -83,13 +83,22 @@ Repository: `Jasmetk0/squash-tour-beta`; base: `buuk` at owner-merged
 - `TimezoneAreaEditor.test.tsx` now exercises preview confirmation, reorder
   submission, invalid/duplicate codes, protected sources, 409 with explicit
   reload, stale fingerprint and delayed response after source switching.
-  `WorldLibraryPage.test.tsx` also verifies dirty Timezone Area navigation
-  confirmation at the package detail route.
+  `WorldLibraryPage.test.tsx` verifies dirty Timezone Area navigation,
+  including browser POP/Back and the user's Stay/Discard choice, and a
+  late create-country response after the editor is abandoned.
+  `WorldPackageAuthoring.test.tsx` also verifies a late delete-country
+  response after the user has navigated elsewhere.
 - Remaining limitations: Country historical ratings with source evidence are
   intentionally not mutable through the scalar form; a supported explicit
   year/evidence authoring surface requires separate agreed implementation.
-  Browser Back/programmatic route interruption has not been established by
-  these Link and beforeunload guards, so its full coverage is unproven.
+  SPA Back/Forward and same-app programmatic navigation now use a shared
+  `UnsavedWorldPackageNavigationGuard.tsx` with React Router v7 `useBlocker`.
+  Production uses `createBrowserRouter` and the focused tests use
+  `createMemoryRouter`. Users explicitly Stay or Discard/Leave; pending
+  writes cannot redirect after the original editor unmounts or location key
+  changes. Normal create-success navigation bypasses the blocker only after
+  server confirmation. Hard reload/tab close still uses `beforeunload`; no
+  claim is made about custom cross-origin navigation protection.
 - Full pre-alpha acceptance and prior 78 Viewer baseline failures from #1631
   remain independent. No claims of release readiness.
 
@@ -101,3 +110,20 @@ clone error/success source switches, Timezone Area conflicts and manual reload
 with production services. After successful scoped checks and adversarial review,
 coordinate with Work for possible Ready/full relevant acceptance; only the
 user may merge.
+
+## Continuation checkpoint — SPA navigation and stale-write safety
+
+- **Final code candidate before this documentation commit:** `ed6bff47fffeb3d6cbe060922aa5e0f9a08274d1`.
+- **Hosted Fast CI success:** [run 39837599596](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/39837599596).
+  Critical frontend: **198/198 passed** (14 files); direct World Package
+  contract/navigation tests: **23/23 passed** (4 files); `tsc -b` and Vite
+  production build passed. Path-skipped jobs are not claimed as passes.
+- Added `UnsavedWorldPackageNavigationGuard` for SPA navigation protection,
+  with original location/mount guards against late Country create/delete/update
+  navigation or success after leaving the original editor. All mutations
+  target their original frozen World Package identity and fingerprint;
+  no automatic retries on 409.
+- The documentation update itself changes PR HEAD; required checks must be
+  reassessed on the exact latest commit. Still **Draft**, not a production E2E
+  pass: actual backend/SQLite/Chromium acceptance was not executed here.
+  No branch merge performed.

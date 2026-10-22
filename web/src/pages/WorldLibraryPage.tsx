@@ -1,7 +1,7 @@
 import type { FormEvent, ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { cloneWorldPackage, createWorldPackageCountry, deleteWorldPackageCountry, getWorldPackage, getWorldPackageCountries, getWorldPackageCountry, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages, replaceWorldPackageTimezoneAreas, updateWorldPackageCountry, updateWorldPackageCountryPopulation } from '../api/client'
 import type { CountryRecord, WorldPackage, WorldPackageClonePayload, WorldPackageCloneResponse, WorldPackageCountryCreatePayload, WorldPackageCountryDetail, WorldPackageCountryPopulationUpdatePayload, WorldPackageCountryUpdatePayload, WorldPackageGeography, WorldPackageValidation } from '../api/types'
@@ -806,6 +806,11 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   const { language } = useLanguage()
   const cs = language === 'cs'
   const queryClient = useQueryClient()
+  const locationKey = useLocation().key
+  const activeLocationKey = useRef(locationKey)
+  activeLocationKey.current = locationKey
+  const mounted = useRef(false)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const activeWorld = useRef(worldId)
   activeWorld.current = worldId
   const bypassNavigation = useRef(false)
@@ -831,7 +836,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   const dirty = Boolean(identity.code || identity.name || identity.notes || identity.area || region || travelRegion || timezoneArea || populations.some(row => row.population || row.year !== '2020') || Object.values(values).some(value => value !== '5.5') || review)
   useUnsavedWorldPackageWarning(dirty)
   const mutation = useMutation({
-    mutationFn: (command: { worldId: string; payload: WorldPackageCountryCreatePayload }) => createWorldPackageCountry(command.worldId, command.payload),
+    mutationFn: (command: { worldId: string; locationKey: string; payload: WorldPackageCountryCreatePayload }) => createWorldPackageCountry(command.worldId, command.payload),
     onSuccess: (response, command) => {
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['world-package-countries', command.worldId] }),
@@ -839,7 +844,8 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
         queryClient.invalidateQueries({ queryKey: ['world-package-validation', command.worldId] }),
         queryClient.invalidateQueries({ queryKey: ['world-packages'] })
       ])
-      if (activeWorld.current === command.worldId &&
+      if (mounted.current && activeLocationKey.current === command.locationKey &&
+        activeWorld.current === command.worldId &&
         response.country_detail.package.world_id === command.worldId &&
         response.country_detail.country.code === command.payload.code) {
         bypassNavigation.current = true
@@ -896,7 +902,7 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
       return
     }
     setRequestError(null)
-    mutation.mutate({ worldId: review.worldId, payload: review.payload })
+    mutation.mutate({ worldId: review.worldId, locationKey, payload: review.payload })
   }
   const reload = async () => {
     if (!window.confirm(cs ? 'Načíst aktuální balíček a zahodit rozepsanou zemi?' : 'Reload the World Package and discard this draft country?')) return
@@ -956,9 +962,9 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   </section>
 }
 
-type CountryWrite = { worldId: string; countryCode: string; payload: WorldPackageCountryUpdatePayload }
-type PopulationWrite = { worldId: string; countryCode: string; payload: WorldPackageCountryPopulationUpdatePayload }
-type DeleteWrite = { worldId: string; countryCode: string; fingerprint: string }
+type CountryWrite = { worldId: string; countryCode: string; locationKey: string; payload: WorldPackageCountryUpdatePayload }
+type PopulationWrite = { worldId: string; countryCode: string; locationKey: string; payload: WorldPackageCountryPopulationUpdatePayload }
+type DeleteWrite = { worldId: string; countryCode: string; locationKey: string; fingerprint: string }
 
 function useUnsavedWorldPackageWarning(active: boolean): void {
   useEffect(() => {
@@ -994,6 +1000,11 @@ function ConfirmWorldPackageChanges({ title, worldId, countryCode, fingerprint, 
 
 export function WorldPackageCountryDetailPage(): JSX.Element {
   const { worldId = '', countryCode = '' } = useParams()
+  const locationKey = useLocation().key
+  const activeLocationKey = useRef(locationKey)
+  activeLocationKey.current = locationKey
+  const mounted = useRef(false)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const { language } = useLanguage()
   const cs = language === 'cs'
   const queryClient = useQueryClient()
@@ -1026,14 +1037,14 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     onSuccess: (response, command) => {
       queryClient.setQueryData(['world-package-country', command.worldId, command.countryCode], response.country_detail)
       void refresh(command.worldId, command.countryCode)
-      if (activeRoute.current === `${command.worldId}/${command.countryCode}`) {
+      if (mounted.current && activeLocationKey.current === command.locationKey && activeRoute.current === `${command.worldId}/${command.countryCode}`) {
         setEditing(false)
         setWriteError(null)
         setSuccess(cs ? `Země uložena. Stav validace: ${response.validation.status}.` : `Country saved. Validation status: ${response.validation.status}.`)
       }
     },
     onError: (error, command) => {
-      if (activeRoute.current === `${command.worldId}/${command.countryCode}`) setWriteError(error)
+      if (mounted.current && activeLocationKey.current === command.locationKey && activeRoute.current === `${command.worldId}/${command.countryCode}`) setWriteError(error)
     }
   })
   const populationMutation = useMutation({
@@ -1041,26 +1052,26 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
     onSuccess: (response, command) => {
       queryClient.setQueryData(['world-package-country', command.worldId, command.countryCode], response.country_detail)
       void refresh(command.worldId, command.countryCode)
-      if (activeRoute.current === `${command.worldId}/${command.countryCode}`) {
+      if (mounted.current && activeLocationKey.current === command.locationKey && activeRoute.current === `${command.worldId}/${command.countryCode}`) {
         setPopulationEditing(false)
         setWriteError(null)
         setSuccess(cs ? `Populace uložena. Stav validace: ${response.validation.status}.` : `Population saved. Validation status: ${response.validation.status}.`)
       }
     },
     onError: (error, command) => {
-      if (activeRoute.current === `${command.worldId}/${command.countryCode}`) setWriteError(error)
+      if (mounted.current && activeLocationKey.current === command.locationKey && activeRoute.current === `${command.worldId}/${command.countryCode}`) setWriteError(error)
     }
   })
   const deleteMutation = useMutation({
     mutationFn: ({ worldId: targetWorldId, countryCode: targetCode, fingerprint }: DeleteWrite) => deleteWorldPackageCountry(targetWorldId, targetCode, fingerprint),
     onSuccess: (_response, command) => {
       void refresh(command.worldId, command.countryCode)
-      if (activeRoute.current === `${command.worldId}/${command.countryCode}`) {
+      if (mounted.current && activeLocationKey.current === command.locationKey && activeRoute.current === `${command.worldId}/${command.countryCode}`) {
         navigate(`/admin/world/library/${encodeURIComponent(command.worldId)}/countries`)
       }
     },
     onError: (error, command) => {
-      if (activeRoute.current === `${command.worldId}/${command.countryCode}`) setWriteError(error)
+      if (mounted.current && activeLocationKey.current === command.locationKey && activeRoute.current === `${command.worldId}/${command.countryCode}`) setWriteError(error)
     }
   })
   const raw = query.data
@@ -1081,7 +1092,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
       return
     }
     setWriteError(null)
-    mutation.mutate({ worldId, countryCode, payload })
+    mutation.mutate({ worldId, countryCode, locationKey, payload })
   }
   const handlePopulationSave = (payload: WorldPackageCountryPopulationUpdatePayload) => {
     if (!canEdit || !data || pending) return
@@ -1090,7 +1101,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
       return
     }
     setWriteError(null)
-    populationMutation.mutate({ worldId, countryCode, payload })
+    populationMutation.mutate({ worldId, countryCode, locationKey, payload })
   }
   return <section className="panel">
     <UnsavedWorldPackageNavigationGuard active={editing || populationEditing} cs={cs} />
@@ -1107,7 +1118,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
         <p>World Package: <code>{worldId}</code> · Fingerprint: <code>{data.package.fingerprint}</code></p>
         <button type="button" disabled={pending} onClick={() => {
           if (!window.confirm(cs ? 'Opravdu smazat tuto zemi?' : 'Delete this country?')) return
-          deleteMutation.mutate({ worldId, countryCode, fingerprint: data.package.fingerprint })
+          deleteMutation.mutate({ worldId, countryCode, locationKey, fingerprint: data.package.fingerprint })
         }}>{cs ? 'Potvrdit smazání' : 'Confirm deletion'}</button>{' '}
         <button type="button" disabled={pending} onClick={() => setConfirmDelete(false)}>{cs ? 'Zrušit' : 'Cancel'}</button>
       </SectionCard>}

@@ -216,10 +216,33 @@ function VariantMatchCountsEditor({ id, values, index, cs, busy, onApply }: {
   onApply: (index: number, draft: string) => void
 }): JSX.Element {
   const original = values.join(', ')
+  const [weekIndex, setWeekIndex] = useState(0)
+  const [weekDraft, setWeekDraft] = useState(String(values[0] ?? 0))
   const [draft, setDraft] = useState(original)
+  useEffect(() => { setWeekDraft(String(values[weekIndex] ?? 0)) }, [values, weekIndex])
   useEffect(() => { setDraft(original) }, [original])
   return <div>
-    <label>{cs ? 'Zápasy za týden' : 'Weekly matches'} — <code>{id}</code>{' '}
+    <strong>{cs ? 'Varianta' : 'Variant'} <code>{id}</code></strong>
+    <div>
+      <label>{cs ? 'Vybraný týden' : 'Selected week'}{' '}
+        <select aria-label={'player Lab variant ' + id + ' selected week'} value={weekIndex}
+          disabled={busy} onChange={event => setWeekIndex(Number(event.target.value))}>
+          {values.map((_, i) => <option key={i} value={i}>{cs ? 'Týden' : 'Week'} {i + 1}</option>)}
+        </select>
+      </label>{' '}
+      <label>{cs ? 'Počet soutěžních zápasů' : 'Competitive matches'}{' '}
+        <input aria-label={'player Lab variant ' + id + ' selected week matches'}
+          type="number" min={0} max={32} step={1} disabled={busy} value={weekDraft}
+          onChange={event => setWeekDraft(event.target.value)}
+          onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }} />
+      </label>{' '}
+      <button type="button" disabled={busy || weekDraft === String(values[weekIndex])}
+        onClick={() => onApply(index, values.map((count, i) =>
+          i === weekIndex ? weekDraft : String(count)).join(', '))}>
+        {cs ? 'Použít vybraný týden' : 'Apply selected week'}
+      </button>
+    </div>
+    <label>{cs ? 'Zápasy za týden – celý seznam' : 'Weekly matches – full list'} — <code>{id}</code>{' '}
       <input aria-label={'player Lab variant ' + id + ' weekly matches'} type="text"
         value={draft} disabled={busy} onChange={event => setDraft(event.target.value)}
         onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }} />

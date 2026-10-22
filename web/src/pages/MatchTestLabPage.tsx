@@ -124,6 +124,7 @@ export function MatchTestLabPage(): JSX.Element {
   const { selectedSession, selectedSessionId, setSelectedSessionId, scenarioText, setScenarioText,
     sessionName, setSessionName, sessionHasUnsavedChanges, sessionConflict } = editor
   const [batchText, setBatchText] = useState('')
+  const [scratchName, setScratchName] = useState('New Match Test Session')
   const [importRunId, setImportRunId] = useState('')
   const [importBranchId, setImportBranchId] = useState('')
   const [importRevisionId, setImportRevisionId] = useState('')
@@ -236,7 +237,7 @@ export function MatchTestLabPage(): JSX.Element {
     try {
       readLabScenario(scenarioText, 'match')
       createMutation.mutate({ ticket: editor.captureEditor(), request: {
-        display_name: sessionName.trim() || 'New Match Test Session',
+        display_name: scratchName.trim() || 'New Match Test Session',
         scenario: JSON.parse(scenarioText) as MatchLabScenario
       } })
     } catch {
@@ -361,6 +362,12 @@ export function MatchTestLabPage(): JSX.Element {
       <SectionCard title={selectedSession ? 'Editable Test Session scenario' : 'Portable scratch scenario JSON'}>
         {selectedSession ? <label>Session name
           <input aria-label="Match Lab session name" value={sessionName} onChange={(e) => { setSessionName(e.target.value); runMutation.reset() }} />
+        </label> : null}
+        {!selectedSession ? <label>Match Lab new Session name
+          <input aria-label="Match Lab new Session name" value={scratchName} onChange={event => {
+            setScratchName(event.target.value)
+            editor.setSessionName(event.target.value)
+          }} />
         </label> : null}
         <LabScenarioAuthoring kind="match" text={scenarioText} onChange={editScenario}
           jsonLabel="Match Lab scenario JSON" selection={selectedSessionId ?? 'scratch'} revision={editor.editorEdit}

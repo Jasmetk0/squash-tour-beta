@@ -43,6 +43,33 @@ describe('new-scale country creation', () => {
   })
 })
 
+
+it('explains duplicate Country code without mislabeling it as a package version conflict', async () => {
+  api.getWorldPackage.mockResolvedValue({type:'custom',source:'custom_config',editable:true,
+    fingerprint:'base-fp',world_id:'custom'})
+  api.getWorldPackageGeography.mockResolvedValue({world_id:'custom',
+    regions:[{code:'EUR',name:'Europe'}],travel_regions:[],timezone_areas:[]})
+  api.createWorldPackageCountry.mockRejectedValue({status:409,message:"country 'AAA' already exists"})
+  const router=createMemoryRouter([{path:'/world/:worldId/new',element:<WorldPackageCountryCreatePage />}],
+    {initialEntries:['/world/custom/new']})
+  render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false},mutations:{retry:false}}})}>
+    <RouterProvider router={router} />
+  </QueryClientProvider>)
+  fireEvent.change(await screen.findByLabelText('Code'),{target:{value:'AAA'}})
+  fireEvent.change(screen.getByLabelText('Name'),{target:{value:'Duplicate Country'}})
+  fireEvent.change(screen.getByLabelText('Region'),{target:{value:'EUR'}})
+  fireEvent.change(screen.getByLabelText('Population value 2020'),{target:{value:'100'}})
+  fireEvent.click(screen.getByRole('button',{name:'Review before saving'}))
+  fireEvent.click(screen.getByRole('button',{name:'Confirm and save'}))
+  expect(await screen.findByText(/A country with this code already exists/)).toBeInTheDocument()
+  expect(screen.queryByRole('button',{name:'Reload current data'})).not.toBeInTheDocument()
+  expect(screen.getByRole('button',{name:'Confirm and save'})).toBeDisabled()
+  expect(api.createWorldPackageCountry).toHaveBeenCalledTimes(1)
+  fireEvent.click(screen.getByRole('button',{name:'Back to editing'}))
+  expect(screen.getByLabelText('Code')).toHaveValue('AAA')
+})
+
+
 describe('late new-country create response', () => {
   it('does not redirect from a different page after the user discards the pending edit', async () => {
     api.getWorldPackage.mockResolvedValue({type:'custom',source:'custom_config',editable:true,

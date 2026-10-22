@@ -253,6 +253,21 @@ describe('server task UI (mock HTTP)',()=>{
   expect(api.continueServerTask.mock.calls[1][0].revision).toBe(1)
   expect(api.continueServerTask.mock.calls[1][1].expected_revision).toBe(1)
  }) 
+ it.each(['cs','en'] as const)('surfaces actual action-required tasks first without claiming a healthy worker (%s)',async language=>{
+  const active={...taskExample(),task_id:'queued-other',state:'active',
+    needs_operator_action:false,checkpoint:null,heartbeat_health:'stale'}
+  const blocked={...taskExample(),task_id:'needs-decision',state:'awaiting_operator',
+    checkpoint:'week_preparation_required',needs_operator_action:true}
+  api.getServerTasks.mockResolvedValue([active,blocked])
+  open(language,<FullSimulationServerTasks/>)
+  await screen.findByText('needs-decision')
+  const items=screen.getAllByRole('listitem').filter(node=>node.hasAttribute('data-task-id'))
+  expect(items[0]).toHaveAttribute('data-task-id','needs-decision')
+  const counts=screen.getByRole('status')
+  expect(counts).toHaveTextContent(language==='cs'?'Vyžaduje zásah operátora: 1':'Operator action required: 1')
+  expect(counts).toHaveTextContent(language==='cs'?'zdraví procesu nepotvrzeno':'health unconfirmed')
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
  it.each(['cs','en'] as const)('opens the exact linked task first without inventing an action (%s)',async language=>{
   const other={...taskExample(),task_id:'other',parent_command_id:'other-parent'}
   api.getServerTasks.mockResolvedValue([other,taskExample()])

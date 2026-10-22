@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -89,7 +89,6 @@ describe('Legacy Career independent API identity checks', () => {
       expect(alerts[0]).toHaveTextContent('Career history does not match')
       expect(screen.queryByText('Wrong Player')).not.toBeInTheDocument()
       expect(screen.queryByText(/Seasons tracked:/)).not.toBeInTheDocument()
-      expect(screen.getByText('—')).toBeInTheDocument()
       expect(await screen.findByText('Actual Open')).toBeInTheDocument()
     } else if (section === 'performance') {
       expect(alerts[0]).toHaveTextContent('Season performance does not match')

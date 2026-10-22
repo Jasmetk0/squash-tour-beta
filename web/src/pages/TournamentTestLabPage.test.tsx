@@ -6,15 +6,20 @@ import { TournamentTestLabPage } from './TournamentTestLabPage'
 import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
+  listRunContainers: vi.fn().mockResolvedValue({run_containers: []}),
+  listRunBranches: vi.fn().mockResolvedValue({run_branches: []}),
+  listSavedRevisionHistory: vi.fn().mockResolvedValue({saved_revisions: []}),
   getTournamentLabBuiltInScenarios: vi.fn(),
   getTournamentLabSessions: vi.fn(),
   createTournamentLabSession: vi.fn(),
   updateTournamentLabSession: vi.fn(),
   runTournamentLabSession: vi.fn(),
   inspectTournamentLabScenario: vi.fn(),
-  runTournamentTestLab: vi.fn()
+  runTournamentTestLab: vi.fn(),
+  copySavedRevisionTournamentToLab: vi.fn()
 }))
 vi.mock('../api/client', () => api)
+vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en', t: (key: string) => key})}))
 
 const participant = (id: string, base: number) => ({
   player: {

@@ -7,6 +7,8 @@ import { TournamentTestLabPage } from './TournamentTestLabPage'
 import { renderWithRoute } from '../test/testUtils'
 
 const api = vi.hoisted(() => ({
+  listRunContainers: vi.fn(), listRunBranches: vi.fn(), listSavedRevisionHistory: vi.fn(),
+  copySavedRevisionTournamentToLab: vi.fn(),
   getMatchLabBuiltInScenarios: vi.fn(), getMatchLabSessions: vi.fn(),
   createMatchLabSession: vi.fn(), updateMatchLabSession: vi.fn(),
   runMatchLabSession: vi.fn(), runMatchTestLab: vi.fn(), importMatchLabSavedRevisionPlayer: vi.fn(),
@@ -16,6 +18,7 @@ const api = vi.hoisted(() => ({
   inspectTournamentLabScenario: vi.fn(), previewTournamentLabRunDraft: vi.fn(), applyTournamentLabRunDraft: vi.fn()
 }))
 vi.mock('../api/client', () => api)
+vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en', t: (key: string) => key})}))
 
 function deferred<T>() {
   let resolve!: (value: T) => void

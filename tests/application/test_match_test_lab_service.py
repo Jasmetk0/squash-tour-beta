@@ -407,10 +407,27 @@ class _HistoricalRepository:
         return self.history
 
 
-def test_saved_revision_player_import_copies_validated_historical_state_without_live_link(tmp_path) -> None:
+def test_saved_revision_player_import_copies_validated_historical_state_without_live_link(tmp_path, monkeypatch) -> None:
     engine, factory, base_service = _persistent_service(tmp_path)
     try:
         payload = _historical_payload(factory)
+        from contextlib import contextmanager
+        from types import SimpleNamespace
+        from beta_engine.application.historical_lab_source import HistoricalLabSource
+        from beta_engine.domain.calendar.run_calendar import RunCalendar
+        from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+        from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
+        from beta_engine.infrastructure.db.player_sporting_state import load_saved_sporting_bundle
+        @contextmanager
+        def source_copy(repository, **kwargs):
+            # Component contract test: actual lineage/dependency proofs live in API acceptance.
+            revision = repository.history.saved_revisions[0]
+            world = load_saved_initial_world(payload, run_id=revision.run_id, branch_id=revision.branch_id)
+            sporting = load_saved_sporting_bundle(payload, run_id=revision.run_id, branch_id=revision.branch_id)[0][-1]
+            yield HistoricalLabSource(revision, revision.branch_id,
+                SimpleNamespace(world=world, lifecycle=None, health=None, prospects=None), sporting,
+                RunWeekPosition(calendar=RunCalendar.legacy_fax(), season_index=0, week=1))
+        monkeypatch.setattr("beta_engine.application.match_test_lab_service.historical_lab_source", source_copy)
         service = MatchTestLabService(
             factory,
             base_service._id_factory,
@@ -463,10 +480,27 @@ def test_saved_revision_player_import_copies_validated_historical_state_without_
         engine.dispose()
 
 
-def test_saved_revision_player_import_is_stale_safe_and_initial_world_only(tmp_path) -> None:
+def test_saved_revision_player_import_is_stale_safe_and_rejects_absent_player(tmp_path, monkeypatch) -> None:
     engine, factory, base_service = _persistent_service(tmp_path)
     try:
         payload = _historical_payload(factory)
+        from contextlib import contextmanager
+        from types import SimpleNamespace
+        from beta_engine.application.historical_lab_source import HistoricalLabSource
+        from beta_engine.domain.calendar.run_calendar import RunCalendar
+        from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+        from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
+        from beta_engine.infrastructure.db.player_sporting_state import load_saved_sporting_bundle
+        @contextmanager
+        def source_copy(repository, **kwargs):
+            # Component contract test: actual lineage/dependency proofs live in API acceptance.
+            revision = repository.history.saved_revisions[0]
+            world = load_saved_initial_world(payload, run_id=revision.run_id, branch_id=revision.branch_id)
+            sporting = load_saved_sporting_bundle(payload, run_id=revision.run_id, branch_id=revision.branch_id)[0][-1]
+            yield HistoricalLabSource(revision, revision.branch_id,
+                SimpleNamespace(world=world, lifecycle=None, health=None, prospects=None), sporting,
+                RunWeekPosition(calendar=RunCalendar.legacy_fax(), season_index=0, week=1))
+        monkeypatch.setattr("beta_engine.application.match_test_lab_service.historical_lab_source", source_copy)
         service = MatchTestLabService(
             factory,
             base_service._id_factory,
@@ -492,7 +526,7 @@ def test_saved_revision_player_import_is_stale_safe_and_initial_world_only(tmp_p
                 ),
             )
 
-        with pytest.raises(ValueError, match="not present in its Initial World"):
+        with pytest.raises(ValueError, match="no sporting record"):
             service.import_saved_revision_player(
                 created.session_id,
                 MatchLabSavedRevisionPlayerImportRequest(

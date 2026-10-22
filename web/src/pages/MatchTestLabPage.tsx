@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import { HistoricalLabSourcePicker } from '../components/HistoricalLabSourcePicker'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
@@ -125,6 +126,8 @@ export function MatchTestLabPage(): JSX.Element {
   const [importRevisionId, setImportRevisionId] = useState('')
   const [importPlayerId, setImportPlayerId] = useState('')
   const [importSide, setImportSide] = useState<'player_a' | 'player_b'>('player_a')
+  const importSelection = useRef('')
+  importSelection.current = JSON.stringify([importRunId, importBranchId, importRevisionId, importPlayerId, importSide])
   const [localError, setLocalError] = useState<string | null>(null)
 
   const parsedPreview = useMemo(() => {
@@ -188,17 +191,17 @@ export function MatchTestLabPage(): JSX.Element {
   })
   const importMutation = useMutation({
     mutationKey: ['match-lab-write'],
-    mutationFn: async (input: { session: MatchLabSession; runId: string; branchId: string; revisionId: string; playerId: string; side: 'player_a' | 'player_b'; ticket: LabEditorTicket }) =>
+    mutationFn: async (input: { session: MatchLabSession; runId: string; branchId: string; revisionId: string; playerId: string; side: 'player_a' | 'player_b'; sourceSelection: string; ticket: LabEditorTicket }) =>
       validateLabSession(await importMatchLabSavedRevisionPlayer(input.session.session_id, {
         expected_session_fingerprint: input.session.session_fingerprint,
         product_run_id: input.runId, branch_id: input.branchId,
         saved_revision_id: input.revisionId, player_id: input.playerId, side: input.side
       }), input.session.session_id),
-    onSuccess: (updated, { ticket }) => {
+    onSuccess: (updated, { ticket, sourceSelection }) => {
       recordSession(updated)
       // Import transforms participant data, so later local edits cannot be
       // silently rebased onto its new provenance. Require explicit review.
-      if (ticket && editor.acceptSession(updated, ticket, false)) runMutation.reset()
+      if (sourceSelection === importSelection.current && ticket && editor.acceptSession(updated, ticket, false)) runMutation.reset()
     }
   })
   const writePending = useIsMutating({ mutationKey: ['match-lab-write'] }) > 0
@@ -293,6 +296,8 @@ export function MatchTestLabPage(): JSX.Element {
         Copies one validated historical player profile + saved sporting state into this Test Session.
         The source Run/Saved Revision is never mutated or live-linked.
       </p>
+      <HistoricalLabSourcePicker lab="Match Lab" run={importRunId} branch={importBranchId} revision={importRevisionId}
+        onChange={(run, branch, revision) => {setImportRunId(run); setImportBranchId(branch); setImportRevisionId(revision)}} />
       <label>Product Run ID
         <input aria-label="Match Lab import Run ID" value={importRunId} onChange={(e) => setImportRunId(e.target.value)} />
       </label>
@@ -315,7 +320,7 @@ export function MatchTestLabPage(): JSX.Element {
         type="button"
         disabled={writePending || Boolean(sessionConflict) || sessionHasUnsavedChanges || !importRunId.trim() || !importBranchId.trim() || !importRevisionId.trim() || !importPlayerId.trim()}
         onClick={() => { if (selectedSession && !writePending && !sessionConflict && !sessionHasUnsavedChanges) importMutation.mutate({
-          ticket: editor.captureEditor(), session: selectedSession, runId: importRunId.trim(), branchId: importBranchId.trim(), revisionId: importRevisionId.trim(), playerId: importPlayerId.trim(), side: importSide
+          sourceSelection: importSelection.current, ticket: editor.captureEditor(), session: selectedSession, runId: importRunId.trim(), branchId: importBranchId.trim(), revisionId: importRevisionId.trim(), playerId: importPlayerId.trim(), side: importSide
         }) }}
       >
         {importMutation.isPending ? 'Importing…' : 'Import historical player'}

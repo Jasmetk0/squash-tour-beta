@@ -7,6 +7,12 @@ on:
     paths:
       - '.github/workflows/lab-workflows-browser.yml'
       - 'scripts/lab_workflows_browser.py'
+      - 'scripts/historical_lab_browser.py'
+      - 'tests/api/test_historical_lab_copies.py'
+      - 'tests/support/historical_lab.py'
+      - 'src/beta_engine/application/historical_lab_source.py'
+      - 'src/beta_engine/application/player_lab_sessions.py'
+      - 'web/src/components/HistoricalLabSourcePicker.tsx'
       - 'web/src/pages/*TestLabPage*'
       - 'web/src/components/Lab*'
       - 'web/src/api/client.ts'
@@ -55,4 +61,45 @@ jobs:
         with:
           name: lab-workflows-${{ github.run_id }}
           path: work/lab-workflows/
+          retention-days: 14
+
+  historical:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: Historical native Run copies / three Labs / real HTTP Chromium restart
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: python -m pip install -e . pytest playwright
+      - run: npm --prefix web ci
+      - name: Authenticated historical API copies and corruption rejection
+        run: |
+          GITHUB_EVENT_NAME=historical_lab_acceptance SQUASH_LAB_FIXTURE_ROOT=work/historical-source \
+            python -m pytest tests/api/test_historical_lab_copies.py -vv --maxfail=1 --durations=5
+      - name: Historical source selection, experiments, Sessions, restart and replay
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: |
+          if [ ! -x "$CHROME_BIN" ]; then
+            python -m playwright install --with-deps chromium
+            export CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')
+          fi
+          python scripts/historical_lab_browser.py --root work/historical-browser --fixture work/historical-source
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: historical-lab-${{ github.run_id }}
+          path: |
+            work/historical-browser/
+            work/historical-source/source.json
           retention-days: 14

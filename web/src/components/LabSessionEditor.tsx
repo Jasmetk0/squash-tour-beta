@@ -35,6 +35,11 @@ export function useLabSessionEditor<T extends Session>(inventory: T[] | undefine
       selectSnapshot(session ?? null)
     },
     reloadSession: () => { if (inventoryReady && remote) selectSnapshot(remote) },
+    acceptScenario: (text: string, ticket: LabEditorTicket): boolean => {
+      if (current.current.selection !== ticket.selection || current.current.edit !== ticket.edit) return false
+      change({...current.current, session: null, text, selection: current.current.selection + 1, edit: 0})
+      return true
+    },
     captureEditor: (): LabEditorTicket => ({ selection: current.current.selection, edit: current.current.edit }),
     acceptSession: (session: T, ticket: LabEditorTicket, rebaseEdits = true): boolean => {
       const previous = current.current

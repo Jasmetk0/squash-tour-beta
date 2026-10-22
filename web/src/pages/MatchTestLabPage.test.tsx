@@ -5,8 +5,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MatchTestLabPage } from './MatchTestLabPage'
 import { renderWithRoute } from '../test/testUtils'
 
-const api = vi.hoisted(() => ({ runMatchTestLab: vi.fn(), getMatchLabBuiltInScenarios: vi.fn(), getMatchLabSessions: vi.fn(), createMatchLabSession: vi.fn(), updateMatchLabSession: vi.fn(), runMatchLabSession: vi.fn(), importMatchLabSavedRevisionPlayer: vi.fn() }))
+const api = vi.hoisted(() => ({
+  listRunContainers: vi.fn().mockResolvedValue({run_containers: []}),
+  listRunBranches: vi.fn().mockResolvedValue({run_branches: []}),
+  listSavedRevisionHistory: vi.fn().mockResolvedValue({saved_revisions: []}), runMatchTestLab: vi.fn(), getMatchLabBuiltInScenarios: vi.fn(), getMatchLabSessions: vi.fn(), createMatchLabSession: vi.fn(), updateMatchLabSession: vi.fn(), runMatchLabSession: vi.fn(), importMatchLabSavedRevisionPlayer: vi.fn() }))
 vi.mock('../api/client', () => api)
+vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en', t: (key: string) => key})}))
 
 const result = {
   schema_version: 'match_test_lab_result.v1',

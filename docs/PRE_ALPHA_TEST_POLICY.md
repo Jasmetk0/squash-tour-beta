@@ -3,6 +3,18 @@
 This file records the current engineering test policy for Squash Engine pre-alpha work.
 It is an implementation/development policy, not sporting product canon.
 
+## Historical Run-to-Lab copies — 22 October 2026
+
+Changes to the historical Lab adapter, Player Session boundary or historical
+source controls require the additional `Historical native Run copies / three
+Labs / real HTTP Chromium restart` Ready/manual job. It runs actual reachable
+source/dependency rejection and all three Lab APIs, then real Admin source
+selection, a born native W52 player, delayed import delivery, independent Session
+Save, SQLite reopen and exact replay. One immutable production fixture is reused
+through isolated SQLite backups; proof validations and negative checks remain.
+This complements the existing Lab workflow gate and relevant native/Saved gates.
+As elsewhere, final evidence must match the final head; Draft skips are not passes.
+
 ## Isolated Lab workflow acceptance — 22 October 2026
 
 The scoped `Test Lab Session and Run Proposal Browser` Ready/manual workflow

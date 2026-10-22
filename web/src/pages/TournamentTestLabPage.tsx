@@ -1,8 +1,11 @@
+import { HistoricalLabSourcePicker } from '../components/HistoricalLabSourcePicker'
+import { useLanguage } from '../i18n/LanguageContext'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
   applyTournamentLabRunDraft,
+  copySavedRevisionTournamentToLab,
   createTournamentLabSession,
   getTournamentLabBuiltInScenarios,
   getTournamentLabSessions,
@@ -200,6 +203,10 @@ export function TournamentTestLabPage(): JSX.Element {
     queryFn: getTournamentLabSessions,
     retry: false
   })
+  const {language} = useLanguage(), cs = language === 'cs'
+  const [source, setSource] = useState({run: '', branch: '', revision: '', event: ''})
+  const sourceSelection = useRef('')
+  sourceSelection.current = JSON.stringify(source)
   const client = useQueryClient()
   const editor = useLabSessionEditor(sessions.data, sessions.isSuccess, '', 'New Tournament Test Session')
   const { selectedSession, selectedSessionId, setSelectedSessionId, scenarioText, setScenarioText,
@@ -278,6 +285,15 @@ export function TournamentTestLabPage(): JSX.Element {
   const resetEvidence = () => {
     inspectMutation.reset(); runMutation.reset(); runDraftPreviewMutation.reset(); runDraftApplyMutation.reset()
   }
+  const copyMutation = useMutation({
+    mutationKey: ['tournament-lab-write'],
+    mutationFn: async (input: {source: typeof source; selection: string; ticket: LabEditorTicket}) => validateLabSession(await copySavedRevisionTournamentToLab({
+      display_name: `Historical ${input.source.event}`, product_run_id: input.source.run, branch_id: input.source.branch,
+      saved_revision_id: input.source.revision, event_id: input.source.event})),
+    onSuccess: (created, input) => { recordSession(created)
+      if (input.selection === sourceSelection.current && editor.acceptSession(created, input.ticket, false)) resetEvidence()
+    }
+  })
   const createMutation = useMutation({
     mutationKey: ['tournament-lab-write'],
     mutationFn: (input: { request: Parameters<typeof createTournamentLabSession>[0]; ticket: LabEditorTicket }) => createTournamentLabSession(input.request),
@@ -383,6 +399,17 @@ export function TournamentTestLabPage(): JSX.Element {
     />
 
     <LabNavigation active="tournament" />
+    <SectionCard title={cs ? 'Historický turnaj → nezávislá Session' : 'Historical tournament → independent Session'}>
+      <HistoricalLabSourcePicker lab="Tournament Lab" run={source.run} branch={source.branch} revision={source.revision}
+        onChange={(run, branch, revision) => setSource({...source, run, branch, revision})} />
+      {(['run', 'branch', 'revision', 'event'] as const).map(key => <label key={key}>{cs ? ({run: 'Run', branch: 'Větev', revision: 'Uložená revize', player: 'Hráč', event: 'Turnaj'})[key] : key}
+        <input aria-label={`Tournament Lab import ${key}`} value={source[key]} onChange={e => setSource({...source, [key]: e.target.value})} />
+      </label>)}
+      <button type="button" disabled={writePending || sessionHasUnsavedChanges || Boolean(sessionConflict) || !Object.values(source).every(Boolean)}
+        onClick={() => copyMutation.mutate({source, selection: sourceSelection.current, ticket: editor.captureEditor()})}>{cs ? 'Zkopírovat historický turnaj' : 'Copy historical tournament'}</button>
+      {copyMutation.isError && <p role="alert">{String(copyMutation.error)}</p>}
+      {parsedScenario?.source_snapshot && <p>{cs ? 'Zdroj' : 'Source'}: {parsedScenario.source_reference} · {cs ? 'Uložený stav účastníků, bez změny původních výsledků.' : 'Saved participant states; source results remain unchanged.'}</p>}
+    </SectionCard>
     <SectionCard title="Isolation boundary">
       <p>
         Tournament Lab Sessions exist outside Runs. Inspect/Run remain isolated; only the separate reviewed

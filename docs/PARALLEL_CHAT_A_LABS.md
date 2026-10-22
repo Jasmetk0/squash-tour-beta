@@ -9,13 +9,14 @@
 
 ## Implemented
 1. Shared guided authoring connected to the unchanged LabSessionEditor text buffer in Match, Tournament and Player pages. Existing raw JSON stays available and opens initially for test/keyboard compatibility; a one-click guided form and explicit mode switch are available.
-2. Supported existing fields: scenario ID; Match seed, best-of, games-to, win-by, upset variance; Tournament name, draw seed, match seed and match format; Player v2 seed and unified 1–61 week experiment duration.
-3. Player duration changes all variants together; added weeks explicitly carry zero completed competitive matches. A scenario with an explicit Health timeline blocks guided duration edits instead of fabricating new medical history. Backend alone validates calendar horizon and sporting semantics.
+2. Supported existing fields: scenario ID; Match seed, best-of, games-to, win-by, upset variance; Tournament name, draw seed, match seed and match format; Player v2 seed, per-variant existing weekly competitive-match counts (0–32 per week), and unified 1–61 week experiment duration.
+3. Weekly workload edits require one explicit Apply and preserve all other variants and any original Health timeline. Player duration also requires an explicit Apply after typing, avoiding accidental truncation on partially entered numbers; it changes all variants together and added weeks carry zero completed competitive matches. A scenario with an explicit Health timeline blocks guided duration edits instead of fabricating new medical history. Backend alone validates calendar horizon and sporting semantics.
 4. Guided field patches preserve nested unknown data, source_snapshot, source_reference, source_fingerprint and other provenance untouched. No new simulation authority, Run live link or browser-stored fingerprint.
 5. Import a scenario JSON file (not a Session or result), validate Lab kind/schema version and basic shape, limit file to 2 MiB and refuse delayed reads if local editor or Session changed meanwhile. Import only edits the draft buffer; no Save/Run.
 6. Explicit JSON export from current editor; Saved Session change review by changed JSON paths and display name. Scratch, Session and historical-copy states labeled separately.
 7. Existing concurrent Save/import selection tickets, backend fingerprint checks and isolated sources remain intact.
-8. Pure/frontend regression tests added for version checks, exact unrelated-field/provenance preservation, numeric bounds, Player Health-duration guard, form/JSON switch, invalid file rejection and late file read. These are not real API integration tests.
+8. Form inputs cannot trigger an implicit Run via the Enter key. Staged Player inputs reset when another scenario edit or Session selection supersedes them.
+9. Pure/frontend regression tests added for version checks, exact unrelated-field/provenance preservation, numeric bounds, Player Health-duration guard, weekly-match editing, explicit duration Apply, form/JSON switch, successful and invalid file import, saved-Session change review and late file read. These are not real API integration tests.
 
 ## Status and merge policy
 - This PR is intentionally **Draft** and NOT merge-ready.

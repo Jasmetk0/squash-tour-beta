@@ -156,7 +156,8 @@ describe('built-in World cloning', () => {
     })
 
     const router = createMemoryRouter([
-      {path:'/world/:worldId',element:<WorldLibraryDetailPage />}
+      {path:'/world/:worldId',element:<WorldLibraryDetailPage />},
+      {path:'/admin/world/library/editable_earth',element:<p>Custom clone opened</p>}
     ],{initialEntries:['/world/real_world']})
     render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
       <RouterProvider router={router} />
@@ -169,6 +170,7 @@ describe('built-in World cloning', () => {
     expect(screen.getByText(/must start with a lowercase letter or digit/)).toBeInTheDocument()
     expect(api.cloneWorldPackage).not.toHaveBeenCalled()
     fireEvent.change(screen.getByPlaceholderText('my_custom_world'), { target: { value: 'editable_earth' } })
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'A personally edited description' } })
     fireEvent.click(screen.getByRole('button', { name: 'Review custom copy' }))
     expect(screen.getAllByText('real-world-head').length).toBeGreaterThan(0)
     expect(api.cloneWorldPackage).not.toHaveBeenCalled()
@@ -176,8 +178,14 @@ describe('built-in World cloning', () => {
 
     await waitFor(() => expect(api.cloneWorldPackage).toHaveBeenCalledWith(
       'real_world',
-      expect.objectContaining({ new_world_id: 'editable_earth', name: 'Editable Earth', dry_run: false })
+      expect.objectContaining({
+        new_world_id: 'editable_earth', name: 'Editable Earth',
+        description: 'A personally edited description', dry_run: false
+      })
     ))
+    fireEvent.click(await screen.findByRole('link', {name:'Open new Custom World detail'}))
+    expect(await screen.findByText('Custom clone opened')).toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
   })
 })
 

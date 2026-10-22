@@ -82,6 +82,19 @@ describe('World Package validation diagnostics', () => {
     expect(screen.getByText('Errors:')).toBeInTheDocument()
   })
 
+  it('rejects validation results whose World ID is not the opened package', async () => {
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'foreign-world', status: 'errors', error_count: 1, warning_count: 1,
+      info_count: 1, checks,
+    })
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Validation response does not belong to this World Package.'
+    )
+    expect(screen.queryByText('Invalid country code')).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'World package validation checks' })).not.toBeInTheDocument()
+  })
+
   it('distinguishes a source with no validation checks from filtered-out results', async () => {
     api.getWorldPackageValidation.mockResolvedValue({
       world_id: 'custom', status: 'valid', error_count: 0, warning_count: 0,

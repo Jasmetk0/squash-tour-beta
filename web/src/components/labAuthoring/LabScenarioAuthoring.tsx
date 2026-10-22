@@ -661,6 +661,8 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const [pendingImport, setPendingImport] = useState<{ file: string; json: string; scenario: JsonObject; identity: string } | null>(null)
+  // A one-step, editor-only undo of the last guided Apply. Never a Session/Run rollback.
+  const [undoEntry, setUndoEntry] = useState<{ before: string; after: string; selection: string } | null>(null)
   const identity = selection + ':' + revision + ':' + text
   const latest = useRef(identity)
   latest.current = identity
@@ -676,6 +678,7 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
     if (selection !== prior.selection || revision !== prior.revision || text !== prior.text) {
       if (selection !== prior.selection || guidedWrite.current !== text) {
         setSourceEpoch(value => value + 1)
+        setUndoEntry(null)
       }
       // A file that was read before any intervening edit/selection cannot revive,
       // even if the editor later returns to byte-for-byte identical JSON (ABA).
@@ -704,6 +707,11 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
   }
   const nameChanged = savedName !== undefined && sessionName !== undefined && savedName !== sessionName
   const edit = (next: string, origin: 'guided' | 'replacement' = 'guided') => {
+    if (origin === 'guided' && next !== text) {
+      setUndoEntry({ before: text, after: next, selection })
+    } else if (origin === 'replacement') {
+      setUndoEntry(null)
+    }
     guidedWrite.current = origin === 'guided' ? next : null
     ++readIndex.current
     setPendingImport(null)
@@ -714,6 +722,15 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
   const applyField = (field: Field, raw: string) => {
     try { edit(changeLabField(text, kind, field, raw)) }
     catch (reason) { setError(explain(reason, cs)) }
+  }
+  const canUndo = undoEntry !== null && undoEntry.after === text && undoEntry.selection === selection
+  const undoGuided = () => {
+    if (!canUndo || busy || !undoEntry) return
+    // A replacement edit intentionally clears staged guided values and import proposals.
+    edit(undoEntry.before, 'replacement')
+    setNotice(cs
+      ? 'Vrácena pouze poslední změna pracovního scénáře. Uložená Session ani Run se nezměnily.'
+      : 'Reverted the last local guided edit only. Saved Session and Run are unchanged.')
   }
   const importFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -758,6 +775,15 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
   }
 
   return <div aria-label={kind + ' Lab scenario authoring'}>
+    <div>
+      <button type="button" aria-label={kind + ' Lab undo last guided edit'}
+        disabled={busy || !canUndo} onClick={undoGuided}>
+        {cs ? 'Vrátit poslední změnu formuláře' : 'Undo last guided edit'}
+      </button>
+      <span className="status">{cs
+        ? ' Vrací pouze poslední potvrzenou místní úpravu; nikdy uloženou Session či Run.'
+        : ' Reverts one applied local guided change, never a saved Session or Run.'}</span>
+    </div>
     <p className="status">{cs
       ? 'Strukturované úpravy mění jen uvedená pole; ostatní JSON a provenience zůstávají zachovány. Konečnou validaci provádí backend.'
       : 'Guided edits change only the displayed fields; all other JSON and provenance are preserved. The backend remains the final validator.'}</p>

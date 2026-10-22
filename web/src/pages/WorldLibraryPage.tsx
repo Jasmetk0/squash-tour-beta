@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
@@ -8,6 +8,8 @@ import type { CountryRecord, WorldPackage, WorldPackageClonePayload, WorldPackag
 import { SectionCard } from '../components/RunScopedUi'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
+import { fieldChanges, isFingerprintConflict, parseInteger, parsePopulations, parseRating, populationChanges, requiredName } from '../components/worldPackageAuthoring/review'
+import type { ReviewChange } from '../components/worldPackageAuthoring/review'
 
 function yesNo(value: boolean, yes: string, no: string): string {
   return value ? yes : no
@@ -782,77 +784,182 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   </form></section>
 }
 
+
+type CountryWrite = { worldId: string; countryCode: string; payload: WorldPackageCountryUpdatePayload }
+type PopulationWrite = { worldId: string; countryCode: string; payload: WorldPackageCountryPopulationUpdatePayload }
+type DeleteWrite = { worldId: string; countryCode: string; fingerprint: string }
+
+function useUnsavedWorldPackageWarning(active: boolean): void {
+  useEffect(() => {
+    if (!active) return
+    const warning = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warning)
+    return () => window.removeEventListener('beforeunload', warning)
+  }, [active])
+}
+
+function ConfirmWorldPackageChanges({ title, worldId, countryCode, fingerprint, changes, saving, cs, onBack, onConfirm }: {
+  title: string; worldId: string; countryCode: string; fingerprint: string; changes: ReviewChange[];
+  saving: boolean; cs: boolean; onBack: () => void; onConfirm: () => void
+}): JSX.Element {
+  return <div aria-label="World Package change review">
+    <h3>{title}</h3>
+    <p>{cs ? 'Zkontrolujte přesný cíl a změny před uložením.' : 'Check the exact destination and changes before saving.'}</p>
+    <p><strong>World Package:</strong> <code>{worldId}</code> · <strong>{cs ? 'Země' : 'Country'}:</strong> <code>{countryCode}</code></p>
+    <p><strong>{cs ? 'Očekávaný fingerprint' : 'Expected fingerprint'}:</strong> <code>{fingerprint}</code></p>
+    {changes.length === 0
+      ? <p role="status">{cs ? 'Žádné změny k uložení.' : 'No changes to save.'}</p>
+      : <table><thead><tr><th>{cs ? 'Údaj' : 'Field'}</th><th>{cs ? 'Původní' : 'Before'}</th><th>{cs ? 'Nová hodnota' : 'After'}</th></tr></thead>
+          <tbody>{changes.map(change => <tr key={change.field}><td>{change.field}</td><td>{change.before}</td><td>{change.after}</td></tr>)}</tbody></table>}
+    <p><button type="button" disabled={saving} onClick={onBack}>{cs ? 'Zpět k úpravě' : 'Back to editing'}</button>{' '}
+      <button type="button" disabled={saving || changes.length === 0} onClick={onConfirm}>
+        {saving ? (cs ? 'Ukládání…' : 'Saving…') : (cs ? 'Potvrdit a uložit' : 'Confirm and save')}
+      </button></p>
+  </div>
+}
+
 export function WorldPackageCountryDetailPage(): JSX.Element {
   const { worldId = '', countryCode = '' } = useParams()
+  const { language } = useLanguage()
+  const cs = language === 'cs'
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const routeKey = `${worldId}/${countryCode}`
+  const activeRoute = useRef(routeKey)
+  activeRoute.current = routeKey
   const [editing, setEditing] = useState(false)
   const [populationEditing, setPopulationEditing] = useState(false)
   const [success, setSuccess] = useState('')
+  const [writeError, setWriteError] = useState<unknown>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  useEffect(() => {
+    setEditing(false); setPopulationEditing(false); setSuccess(''); setWriteError(null); setConfirmDelete(false)
+  }, [routeKey])
+  useUnsavedWorldPackageWarning(editing || populationEditing)
   const query = useQuery({ queryKey: ['world-package-country', worldId, countryCode], queryFn: () => getWorldPackageCountry(worldId, countryCode), enabled: Boolean(worldId && countryCode), retry: false })
   const geographyQuery = useQuery({ queryKey: ['world-package-geography', worldId], queryFn: () => getWorldPackageGeography(worldId), enabled: Boolean(worldId), retry: false })
+  const refresh = async (targetWorldId: string, targetCountryCode: string) => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['world-package-country', targetWorldId, targetCountryCode] }),
+      queryClient.invalidateQueries({ queryKey: ['world-package-countries', targetWorldId] }),
+      queryClient.invalidateQueries({ queryKey: ['world-package', targetWorldId] }),
+      queryClient.invalidateQueries({ queryKey: ['world-package-validation', targetWorldId] }),
+      queryClient.invalidateQueries({ queryKey: ['world-packages'] })
+    ])
+  }
   const mutation = useMutation({
-    mutationFn: (payload: WorldPackageCountryUpdatePayload) => updateWorldPackageCountry(worldId, countryCode, payload),
-    onSuccess: async (response) => {
-      queryClient.setQueryData(['world-package-country', worldId, countryCode], response.country_detail)
-      setEditing(false); setSuccess(`Country changes saved. Validation status: ${response.validation.status}.`)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }),
-        queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
-        queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] }),
-        queryClient.invalidateQueries({ queryKey: ['world-packages'] })
-      ])
+    mutationFn: ({ worldId: targetWorldId, countryCode: targetCode, payload }: CountryWrite) => updateWorldPackageCountry(targetWorldId, targetCode, payload),
+    onSuccess: (response, command) => {
+      queryClient.setQueryData(['world-package-country', command.worldId, command.countryCode], response.country_detail)
+      void refresh(command.worldId, command.countryCode)
+      if (activeRoute.current === `${command.worldId}/${command.countryCode}`) {
+        setEditing(false)
+        setWriteError(null)
+        setSuccess(cs ? `Země uložena. Stav validace: ${response.validation.status}.` : `Country saved. Validation status: ${response.validation.status}.`)
+      }
+    },
+    onError: (error, command) => {
+      if (activeRoute.current === `${command.worldId}/${command.countryCode}`) setWriteError(error)
     }
   })
   const populationMutation = useMutation({
-    mutationFn: (payload: WorldPackageCountryPopulationUpdatePayload) => updateWorldPackageCountryPopulation(worldId, countryCode, payload),
-    onSuccess: async (response) => {
-      queryClient.setQueryData(['world-package-country', worldId, countryCode], response.country_detail)
-      setPopulationEditing(false); setSuccess(`Population saved. Validation status: ${response.validation.status}.`)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['world-package-country', worldId, countryCode] }),
-        queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
-        queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-packages'] })
-      ])
+    mutationFn: ({ worldId: targetWorldId, countryCode: targetCode, payload }: PopulationWrite) => updateWorldPackageCountryPopulation(targetWorldId, targetCode, payload),
+    onSuccess: (response, command) => {
+      queryClient.setQueryData(['world-package-country', command.worldId, command.countryCode], response.country_detail)
+      void refresh(command.worldId, command.countryCode)
+      if (activeRoute.current === `${command.worldId}/${command.countryCode}`) {
+        setPopulationEditing(false)
+        setWriteError(null)
+        setSuccess(cs ? `Populace uložena. Stav validace: ${response.validation.status}.` : `Population saved. Validation status: ${response.validation.status}.`)
+      }
+    },
+    onError: (error, command) => {
+      if (activeRoute.current === `${command.worldId}/${command.countryCode}`) setWriteError(error)
     }
   })
   const deleteMutation = useMutation({
-    mutationFn: () => deleteWorldPackageCountry(worldId, countryCode, data!.package.fingerprint),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['world-package-country', worldId, countryCode] }),
-        queryClient.invalidateQueries({ queryKey: ['world-package-countries', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-package', worldId] }),
-        queryClient.invalidateQueries({ queryKey: ['world-package-validation', worldId] }), queryClient.invalidateQueries({ queryKey: ['world-packages'] })
-      ])
-      navigate(`/admin/world/library/${encodeURIComponent(worldId)}/countries`)
+    mutationFn: ({ worldId: targetWorldId, countryCode: targetCode, fingerprint }: DeleteWrite) => deleteWorldPackageCountry(targetWorldId, targetCode, fingerprint),
+    onSuccess: (_response, command) => {
+      void refresh(command.worldId, command.countryCode)
+      if (activeRoute.current === `${command.worldId}/${command.countryCode}`) {
+        navigate(`/admin/world/library/${encodeURIComponent(command.worldId)}/countries`)
+      }
+    },
+    onError: (error, command) => {
+      if (activeRoute.current === `${command.worldId}/${command.countryCode}`) setWriteError(error)
     }
   })
-  const data = query.data
+  const raw = query.data
+  const data = raw?.package.world_id === worldId && raw.country.code === countryCode ? raw : undefined
   const canEdit = data?.package.type === 'custom' && data.package.source === 'custom_config' && data.package.editable
-  const timeline = Object.entries(data?.country.population_by_year ?? {}).filter(([, value]) => value != null).sort(([a], [b]) => Number(a) - Number(b))
+  const pending = mutation.isPending || populationMutation.isPending || deleteMutation.isPending
+  const timeline = Object.entries(data?.country.population_by_year ?? {}).filter((entry): entry is [string, number] => entry[1] != null).sort(([a], [b]) => Number(a) - Number(b))
+  const reloadAfterConflict = async () => {
+    if (pending) return
+    if (!window.confirm(cs ? 'Načíst aktuální data a zahodit neuloženou úpravu?' : 'Reload current data and discard the unsaved edit?')) return
+    setEditing(false); setPopulationEditing(false); setConfirmDelete(false); setWriteError(null)
+    await refresh(worldId, countryCode)
+  }
+  const handleCountrySave = (payload: WorldPackageCountryUpdatePayload) => {
+    if (!canEdit || !data || pending) return
+    if (payload.expected_package_fingerprint !== data.package.fingerprint) {
+      setWriteError({ status: 409, message: 'World Package changed before confirmation.' })
+      return
+    }
+    setWriteError(null)
+    mutation.mutate({ worldId, countryCode, payload })
+  }
+  const handlePopulationSave = (payload: WorldPackageCountryPopulationUpdatePayload) => {
+    if (!canEdit || !data || pending) return
+    if (payload.expected_package_fingerprint !== data.package.fingerprint) {
+      setWriteError({ status: 409, message: 'World Package changed before confirmation.' })
+      return
+    }
+    setWriteError(null)
+    populationMutation.mutate({ worldId, countryCode, payload })
+  }
   return <section className="panel">
     <p><Link to="/admin/world/library">World Packages</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}`}>{data?.package.name ?? worldId}</Link> → <Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries`}>Countries</Link>{data ? ` → ${data.country.name}` : ''}</p>
-    {query.isLoading && <p className="status">Loading country...</p>}
-    {query.error && <p className="error">Failed to load country: {formatApiError(query.error)}</p>}
+    {query.isLoading && <p className="status">{cs ? 'Načítám zemi…' : 'Loading country...'}</p>}
+    {query.error && <p className="error">{cs ? 'Nepodařilo se načíst zemi: ' : 'Failed to load country: '}{formatApiError(query.error)}</p>}
     {data && <>
       <div className="page-intro"><h2>{data.country.name}</h2><p className="subtitle"><code>{data.country.code}</code></p></div>
       <p><strong>{data.package.name} · {data.package.type === 'custom' ? 'Custom' : 'Built-in'} · {canEdit ? 'Editable source' : 'Read-only'}</strong></p>
-      {canEdit && !editing && !populationEditing && <button type="button" onClick={() => { setEditing(true); setSuccess(''); mutation.reset() }}>Edit country</button>}
-      {canEdit && !editing && !populationEditing && <button type="button" onClick={() => { setConfirmDelete(true); deleteMutation.reset() }}>Delete country</button>}
-      {confirmDelete && <SectionCard title={`Delete ${data.country.code} — ${data.country.name}?`}><p>This removes the Country from this Custom World source.<br />Existing Runs are not changed.</p>{deleteMutation.error && <p className="error" role="alert">{formatApiError(deleteMutation.error)}</p>}<button type="button" disabled={deleteMutation.isPending} onClick={() => deleteMutation.mutate()}>Delete country</button> <button type="button" disabled={deleteMutation.isPending} onClick={() => setConfirmDelete(false)}>Cancel</button></SectionCard>}
+      {canEdit && !editing && !populationEditing && <button type="button" disabled={pending} onClick={() => { setEditing(true); setSuccess(''); setWriteError(null) }}>{cs ? 'Upravit zemi' : 'Edit country'}</button>}
+      {canEdit && !editing && !populationEditing && <button type="button" disabled={pending} onClick={() => { setConfirmDelete(true); setWriteError(null) }}>{cs ? 'Smazat zemi' : 'Delete country'}</button>}
+      {canEdit && confirmDelete && <SectionCard title={`${cs ? 'Smazat' : 'Delete'} ${data.country.code} — ${data.country.name}?`}>
+        <p>{cs ? 'Tím se země odstraní z vlastní kopie World Package. Existující Runy se nezmění.' : 'This removes the country from this custom World Package. Existing Runs are unchanged.'}</p>
+        <p>World Package: <code>{worldId}</code> · Fingerprint: <code>{data.package.fingerprint}</code></p>
+        <button type="button" disabled={pending} onClick={() => {
+          if (!window.confirm(cs ? 'Opravdu smazat tuto zemi?' : 'Delete this country?')) return
+          deleteMutation.mutate({ worldId, countryCode, fingerprint: data.package.fingerprint })
+        }}>{cs ? 'Potvrdit smazání' : 'Confirm deletion'}</button>{' '}
+        <button type="button" disabled={pending} onClick={() => setConfirmDelete(false)}>{cs ? 'Zrušit' : 'Cancel'}</button>
+      </SectionCard>}
       {success && <p className="status" role="status">{success}</p>}
-      {editing && <CountryEditForm detail={data} geography={geographyQuery.data} saving={mutation.isPending} error={mutation.error} onCancel={() => { setEditing(false); mutation.reset() }} onSave={(payload) => mutation.mutate(payload)} />}
+      {writeError != null && <p className="error" role="alert">{isFingerprintConflict(writeError)
+        ? (cs ? 'World Package se mezitím změnil. Nic nebylo znovu odesláno. Načtěte aktuální stav a zkontrolujte změny znovu.' : 'The World Package changed meanwhile. No write was retried. Reload current data and review your edits again.')
+        : formatApiError(writeError)}{' '}
+        {isFingerprintConflict(writeError) && <button type="button" disabled={pending} onClick={() => void reloadAfterConflict()}>{cs ? 'Načíst aktuální data' : 'Reload current data'}</button>}
+      </p>}
+      {canEdit && editing && <CountryEditForm key={`${routeKey}:${data.package.fingerprint}`} detail={data} geography={geographyQuery.data} saving={pending} cs={cs}
+        onCancel={() => { if (window.confirm(cs ? 'Zahodit rozpracovanou úpravu?' : 'Discard unsaved changes?')) setEditing(false) }}
+        onSave={handleCountrySave} />}
       {!editing && <SectionCard title="Overview">
         <DetailRow label="Package" value={data.package.name} /><DetailRow label="Region" value={data.region?.name ?? data.country.region} /><DetailRow label="Travel Region" value={data.travel_region?.name ?? data.country.travel_region ?? '—'} /><DetailRow label="Timezone Area" value={data.timezone_area?.name ?? data.country.timezone_area ?? 'Not assigned'} /><DetailRow label="Area" value={`${formatNumber(data.country.area_km2)} km²`} /><DetailRow label="Current/default population" value={formatNumber(data.country.default_population ?? data.country.population)} />
         {data.country.notes && <DetailRow label="Notes" value={data.country.notes} />}
       </SectionCard>}
       {!populationEditing && <SectionCard title="Population">
-        {canEdit && !editing && <button type="button" onClick={() => { setPopulationEditing(true); setSuccess(''); populationMutation.reset() }}>Edit population</button>}
+        {canEdit && !editing && <button type="button" disabled={pending} onClick={() => { setPopulationEditing(true); setSuccess(''); setWriteError(null) }}>{cs ? 'Upravit populaci' : 'Edit population'}</button>}
         <DetailRow label="Effective/default population" value={formatNumber(data.country.default_population ?? data.country.population)} /><DetailRow label="Default authored year" value={data.country.default_population_year ?? '—'} /><DetailRow label="Authored population years" value={timeline.length} /><DetailRow label="Earliest authored year" value={timeline[0]?.[0] ?? '—'} /><DetailRow label="Latest authored year" value={timeline[timeline.length - 1]?.[0] ?? '—'} />
         <div style={{maxHeight: '28rem', overflowY: 'auto'}}><table aria-label="Authored population timeline"><thead><tr><th>Year</th><th>Population</th></tr></thead><tbody>{timeline.map(([year, value]) => <tr key={year}><td>{year}{year === '2020' ? ' · Default year' : ''}</td><td>{formatNumber(value)}</td></tr>)}</tbody></table></div>
       </SectionCard>}
-      {populationEditing && <PopulationEditForm detail={data} saving={populationMutation.isPending} error={populationMutation.error} onCancel={() => { setPopulationEditing(false); populationMutation.reset() }} onSave={payload => populationMutation.mutate(payload)} />}
+      {canEdit && populationEditing && <PopulationEditForm key={`${routeKey}:${data.package.fingerprint}`} detail={data} saving={pending} cs={cs}
+        onCancel={() => { if (window.confirm(cs ? 'Zahodit rozpracovanou úpravu?' : 'Discard unsaved changes?')) setPopulationEditing(false) }}
+        onSave={handlePopulationSave} />}
       <SectionCard title="Geography"><DetailRow label="Area km²" value={formatNumber(data.country.area_km2)} /><DetailRow label="Region" value={data.region ? `${data.region.name} (${data.region.code})` : data.country.region} /><DetailRow label="Continent" value={data.continent?.name ?? '—'} /><DetailRow label="Travel Region" value={data.travel_region ? `${data.travel_region.name} (${data.travel_region.code})` : data.country.travel_region ?? '—'} /></SectionCard>
       <SectionCard title="Squash / Country strength">
         <DetailRow label="Squash Popularity" value={data.country.squash_popularity} /><DetailRow label="Squash Access" value={data.country.squash_access} /><DetailRow label="Development Quality" value={data.country.development_quality} /><DetailRow label="Competition Quality" value={data.country.competition_quality} /><DetailRow label="Elite Support" value={data.country.elite_support} /><DetailRow label="Squash Tradition" value={data.country.squash_tradition} />
@@ -863,60 +970,127 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
 }
 
 type PopulationRow = { year: string, population: string }
-function PopulationEditForm({ detail, saving, error, onCancel, onSave }: { detail: WorldPackageCountryDetail, saving: boolean, error: unknown, onCancel: () => void, onSave: (payload: WorldPackageCountryPopulationUpdatePayload) => void }): JSX.Element {
+function PopulationEditForm({ detail, saving, cs, onCancel, onSave }: {
+  detail: WorldPackageCountryDetail; saving: boolean; cs: boolean; onCancel: () => void;
+  onSave: (payload: WorldPackageCountryPopulationUpdatePayload) => void
+}): JSX.Element {
   const initial = Object.entries(detail.country.population_by_year ?? {}).filter((entry): entry is [string, number] => entry[1] != null).map(([year, population]) => ({ year, population: String(population) }))
   const [rows, setRows] = useState<PopulationRow[]>(initial)
   const [newYear, setNewYear] = useState('')
   const [newPopulation, setNewPopulation] = useState('')
   const [validationError, setValidationError] = useState('')
+  const [review, setReview] = useState<{ payload: WorldPackageCountryPopulationUpdatePayload; changes: ReviewChange[] } | null>(null)
   const sorted = [...rows].sort((a, b) => Number(a.year) - Number(b.year))
   const add = () => {
-    const year = Number(newYear), population = Number(newPopulation)
-    if (!Number.isInteger(year) || year < 1955 || year > 2050) return setValidationError('Year must be an integer from 1955 to 2050.')
-    if (!Number.isInteger(population) || population <= 0) return setValidationError('Population must be a positive integer.')
-    if (rows.some(row => row.year === String(year))) return setValidationError(`Year ${year} is already authored.`)
-    setRows(current => [...current, { year: String(year), population: String(population) }]); setNewYear(''); setNewPopulation(''); setValidationError('')
+    try {
+      const year = parseInteger(newYear, cs ? 'Rok' : 'Year', cs, 1955, 2050)
+      const population = parseInteger(newPopulation, cs ? 'Populace' : 'Population', cs, 1)
+      if (rows.some(row => Number(row.year) === year)) throw new Error(cs ? `Rok ${year} už existuje.` : `Year ${year} is already authored.`)
+      setRows(current => [...current, { year: String(year), population: String(population) }])
+      setNewYear(''); setNewPopulation(''); setValidationError('')
+    } catch (error) { setValidationError(formatApiError(error)) }
   }
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    const invalid = rows.find(row => !Number.isInteger(Number(row.population)) || Number(row.population) <= 0)
-    if (invalid) return setValidationError(`Population for ${invalid.year} must be a positive integer.`)
-    onSave({ values_by_year: Object.fromEntries(sorted.map(row => [row.year, Number(row.population)])), expected_package_fingerprint: detail.package.fingerprint })
+    try {
+      if (newYear.trim() || newPopulation.trim()) throw new Error(cs ? 'Nejdříve přidejte rozepsaný rok nebo obě pole vymažte.' : 'Add the pending year first, or clear both new-year fields.')
+      const values_by_year = parsePopulations(rows, cs)
+      const changes = populationChanges(detail.country.population_by_year, values_by_year)
+      setReview({ payload: { values_by_year, expected_package_fingerprint: detail.package.fingerprint }, changes })
+      setValidationError('')
+    } catch (error) { setValidationError(formatApiError(error)) }
   }
-  return <SectionCard title="Population"><form onSubmit={submit}>
-    <p><strong>Default year: 2020</strong></p>{(validationError || error != null) && <p className="error" role="alert">{validationError || formatApiError(error)}</p>}
-    <table aria-label="Edit authored population timeline"><thead><tr><th>Year</th><th>Population</th><th /></tr></thead><tbody>{sorted.map(row => <tr key={row.year}><td>{row.year}{row.year === '2020' ? ' · Default year' : ''}</td><td><input aria-label={`Population ${row.year}`} type="number" min="1" step="1" required value={row.population} onChange={event => setRows(current => current.map(item => item.year === row.year ? {...item, population: event.target.value} : item))} /></td><td>{row.year !== '2020' && <button type="button" onClick={() => setRows(current => current.filter(item => item.year !== row.year))}>Remove {row.year}</button>}</td></tr>)}</tbody></table>
-    <fieldset><legend>Add authored year</legend><label>Year<input aria-label="New population year" type="number" min="1955" max="2050" step="1" value={newYear} onChange={event => setNewYear(event.target.value)} /></label><label>Population<input aria-label="New population value" type="number" min="1" step="1" value={newPopulation} onChange={event => setNewPopulation(event.target.value)} /></label><button type="button" onClick={add}>+ Add authored year</button></fieldset>
-    <p><button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save population'}</button> <button type="button" disabled={saving} onClick={onCancel}>Cancel</button></p>
-  </form></SectionCard>
+  return <SectionCard title={cs ? 'Populační historie' : 'Population'}>
+    <p><strong>World Package: <code>{detail.package.world_id}</code> · {cs ? 'Země' : 'Country'}: <code>{detail.country.code}</code></strong></p>
+    {(validationError) && <p className="error" role="alert">{validationError}</p>}
+    {review ? <ConfirmWorldPackageChanges title={cs ? 'Kontrola změn populace' : 'Review population changes'}
+      worldId={detail.package.world_id} countryCode={detail.country.code} fingerprint={detail.package.fingerprint}
+      changes={review.changes} saving={saving} cs={cs} onBack={() => setReview(null)} onConfirm={() => onSave(review.payload)} />
+      : <form onSubmit={submit}>
+        <fieldset disabled={saving}><p><strong>{cs ? 'Výchozí rok: 2020' : 'Default year: 2020'}</strong></p>
+          <table aria-label="Edit authored population timeline"><thead><tr><th>{cs ? 'Rok' : 'Year'}</th><th>{cs ? 'Populace' : 'Population'}</th><th /></tr></thead>
+            <tbody>{sorted.map(row => <tr key={row.year}><td>{row.year}{row.year === '2020' ? ' · Default year' : ''}</td>
+              <td><input aria-label={`Population ${row.year}`} type="number" min="1" step="1" required value={row.population} onChange={event => setRows(current => current.map(item => item.year === row.year ? {...item, population: event.target.value} : item))} /></td>
+              <td>{row.year !== '2020' && <button type="button" onClick={() => setRows(current => current.filter(item => item.year !== row.year))}>{cs ? 'Odebrat' : 'Remove'} {row.year}</button>}</td></tr>)}</tbody></table>
+          <fieldset><legend>{cs ? 'Přidat rok' : 'Add authored year'}</legend>
+            <label>{cs ? 'Rok' : 'Year'}<input aria-label="New population year" type="number" min="1955" max="2050" step="1" value={newYear} onChange={event => setNewYear(event.target.value)} /></label>
+            <label>{cs ? 'Populace' : 'Population'}<input aria-label="New population value" type="number" min="1" step="1" value={newPopulation} onChange={event => setNewPopulation(event.target.value)} /></label>
+            <button type="button" onClick={add}>{cs ? '+ Přidat rok' : '+ Add authored year'}</button>
+          </fieldset>
+          <p><button type="submit">{cs ? 'Zkontrolovat změny' : 'Review changes'}</button>{' '}
+            <button type="button" onClick={onCancel}>{cs ? 'Zrušit' : 'Cancel'}</button></p>
+        </fieldset>
+      </form>}
+  </SectionCard>
 }
 
-function CountryEditForm({ detail, geography, saving, error, onCancel, onSave }: { detail: WorldPackageCountryDetail, geography?: WorldPackageGeography, saving: boolean, error: unknown, onCancel: () => void, onSave: (payload: WorldPackageCountryUpdatePayload) => void }): JSX.Element {
+function CountryEditForm({ detail, geography, saving, cs, onCancel, onSave }: {
+  detail: WorldPackageCountryDetail; geography?: WorldPackageGeography; saving: boolean; cs: boolean;
+  onCancel: () => void; onSave: (payload: WorldPackageCountryUpdatePayload) => void
+}): JSX.Element {
   const country = detail.country
-  const ratingMaximum = country.rating_scale === "country_ratings_1_10.v2" ? 10 : 5
-  const ratingStep = ratingMaximum === 10 ? 0.1 : "any"
+  const scale = country.rating_scale === 'country_ratings_1_10.v2' ? 'country_ratings_1_10.v2' : 'country_ratings_1_5.v1'
+  const ratingMaximum = scale === 'country_ratings_1_10.v2' ? 10 : 5
   const [name, setName] = useState(country.name)
   const [notes, setNotes] = useState(country.notes ?? '')
   const [area, setArea] = useState(country.area_km2 == null ? '' : String(country.area_km2))
   const [region, setRegion] = useState(country.region)
   const [travelRegion, setTravelRegion] = useState(country.travel_region ?? '')
   const [timezoneArea, setTimezoneArea] = useState(country.timezone_area ?? '')
-  const [values, setValues] = useState({ squash_popularity: String(country.squash_popularity), squash_access: String(country.squash_access), development_quality: String(country.development_quality), competition_quality: String(country.competition_quality), elite_support: String(country.elite_support), squash_tradition: String(country.squash_tradition), court_count: country.court_count == null ? '' : String(country.court_count) })
+  const [values, setValues] = useState({
+    squash_popularity: String(country.squash_popularity), squash_access: String(country.squash_access),
+    development_quality: String(country.development_quality), competition_quality: String(country.competition_quality),
+    elite_support: String(country.elite_support), squash_tradition: String(country.squash_tradition)
+  })
+  const [validationError, setValidationError] = useState('')
+  const [review, setReview] = useState<{ payload: WorldPackageCountryUpdatePayload; changes: ReviewChange[] } | null>(null)
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    onSave({ rating_scale: country.rating_scale, name, notes: notes || null, area_km2: area ? Number(area) : null, region, travel_region: travelRegion || null, timezone_area: timezoneArea || null,
-      squash_popularity: Number(values.squash_popularity), squash_access: Number(values.squash_access), development_quality: Number(values.development_quality), competition_quality: Number(values.competition_quality), elite_support: Number(values.elite_support), squash_tradition: Number(values.squash_tradition), court_count: values.court_count === '' ? null : Number(values.court_count), expected_package_fingerprint: detail.package.fingerprint })
+    try {
+      const payload: WorldPackageCountryUpdatePayload = {
+        rating_scale: scale,
+        name: requiredName(name, cs ? 'Název' : 'Name', cs),
+        notes: notes.trim() ? notes : null,
+        area_km2: parseInteger(area, cs ? 'Plocha' : 'Area', cs, 1, undefined, true),
+        region: requiredName(region, cs ? 'Region' : 'Region', cs),
+        travel_region: travelRegion || null, timezone_area: timezoneArea || null,
+        squash_popularity: parseRating(values.squash_popularity, 'Squash Popularity', cs, scale),
+        squash_access: parseRating(values.squash_access, 'Squash Access', cs, scale),
+        development_quality: parseRating(values.development_quality, 'Development Quality', cs, scale),
+        competition_quality: parseRating(values.competition_quality, 'Competition Quality', cs, scale),
+        elite_support: parseRating(values.elite_support, 'Elite Support', cs, scale),
+        squash_tradition: parseRating(values.squash_tradition, 'Squash Tradition', cs, scale),
+        court_count: country.court_count,
+        expected_package_fingerprint: detail.package.fingerprint
+      }
+      if (geography && !geography.regions.some(item => item.code === payload.region)) throw new Error(cs ? 'Region není v registru zemí.' : 'Region is not in the geography registry.')
+      if (geography && payload.travel_region && !geography.travel_regions.some(item => item.code === payload.travel_region)) throw new Error(cs ? 'Cestovní region není v registru.' : 'Travel Region is not in the registry.')
+      if (geography && payload.timezone_area && !geography.timezone_areas.some(item => item.code === payload.timezone_area)) throw new Error(cs ? 'Časová oblast není v registru.' : 'Timezone Area is not in the registry.')
+      const fields = ['name','notes','area_km2','region','travel_region','timezone_area','squash_popularity','squash_access','development_quality','competition_quality','elite_support','squash_tradition'] as const
+      setReview({payload, changes: fieldChanges(country, payload, fields)})
+      setValidationError('')
+    } catch (error) { setValidationError(formatApiError(error)) }
   }
-  const numeric = (key: keyof typeof values, label: string, min: number, max?: number, step: number | 'any' = 'any') => <label>{label}<input type="number" required min={min} max={max} step={step} value={values[key]} onChange={event => setValues(current => ({ ...current, [key]: event.target.value }))} /></label>
-  return <SectionCard title="Edit country"><form onSubmit={submit}>
-    {error != null && <p className="error" role="alert">{formatApiError(error)}</p>}
-    <label>Name<input required value={name} onChange={event => setName(event.target.value)} /></label>
-    <label>Notes<textarea value={notes} onChange={event => setNotes(event.target.value)} /></label>
-    <label>Area km²<input type="number" min="1" value={area} onChange={event => setArea(event.target.value)} /></label>
-    <label>Region<select value={region} onChange={event => setRegion(event.target.value)}>{geography?.regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
-    <label>Travel Region<select value={travelRegion} onChange={event => setTravelRegion(event.target.value)}><option value="">None</option>{geography?.travel_regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
-    <label>Timezone Area<select value={timezoneArea} onChange={event => setTimezoneArea(event.target.value)}><option value="">Not assigned</option>{(geography?.timezone_areas ?? []).map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
-    {numeric('squash_popularity', 'Squash Popularity', 1, ratingMaximum, ratingStep)}{numeric('squash_access', 'Squash Access', 1, ratingMaximum, ratingStep)}{numeric('development_quality', 'Development Quality', 1, ratingMaximum, ratingStep)}{numeric('competition_quality', 'Competition Quality', 1, ratingMaximum, ratingStep)}{numeric('elite_support', 'Elite Support', 1, ratingMaximum, ratingStep)}{numeric('squash_tradition', 'Squash Tradition', 1, ratingMaximum, ratingStep)}
-    <p>{country.rating_history && <span>Historical ratings require an explicit year and evidence; edit the versioned history through import/API. </span>}<button type="submit" disabled={saving || Boolean(country.rating_history)}>{saving ? 'Saving…' : 'Save changes'}</button> <button type="button" disabled={saving} onClick={onCancel}>Cancel</button></p>
-  </form></SectionCard>
+  const numeric = (key: keyof typeof values, label: string) => <label>{label}<input type="number" required min={1} max={ratingMaximum} step={scale === 'country_ratings_1_10.v2' ? 0.1 : 'any'} value={values[key]} onChange={event => setValues(current => ({ ...current, [key]: event.target.value }))} /></label>
+  return <SectionCard title={cs ? 'Upravit zemi' : 'Edit country'}>
+    {validationError && <p className="error" role="alert">{validationError}</p>}
+    {review ? <ConfirmWorldPackageChanges title={cs ? 'Kontrola změn země' : 'Review country changes'}
+      worldId={detail.package.world_id} countryCode={country.code} fingerprint={detail.package.fingerprint}
+      changes={review.changes} saving={saving} cs={cs} onBack={() => setReview(null)} onConfirm={() => onSave(review.payload)} />
+      : <form onSubmit={submit}><fieldset disabled={saving}>
+        <label>{cs ? 'Název' : 'Name'}<input required value={name} onChange={event => setName(event.target.value)} /></label>
+        <label>{cs ? 'Poznámky' : 'Notes'}<textarea value={notes} onChange={event => setNotes(event.target.value)} /></label>
+        <label>{cs ? 'Plocha km²' : 'Area km²'}<input type="number" min="1" step="1" value={area} onChange={event => setArea(event.target.value)} /></label>
+        <label>Region<select required value={region} onChange={event => setRegion(event.target.value)}><option value="">{cs ? 'Vyberte region' : 'Select region'}</option>{geography?.regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
+        <label>Travel Region<select value={travelRegion} onChange={event => setTravelRegion(event.target.value)}><option value="">{cs ? 'Žádný' : 'None'}</option>{geography?.travel_regions.map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
+        <label>Timezone Area<select value={timezoneArea} onChange={event => setTimezoneArea(event.target.value)}><option value="">{cs ? 'Nepřiřazeno' : 'Not assigned'}</option>{(geography?.timezone_areas ?? []).map(item => <option key={item.code} value={item.code}>{item.name} ({item.code})</option>)}</select></label>
+        {numeric('squash_popularity', 'Squash Popularity')}{numeric('squash_access', 'Squash Access')}
+        {numeric('development_quality', 'Development Quality')}{numeric('competition_quality', 'Competition Quality')}
+        {numeric('elite_support', 'Elite Support')}{numeric('squash_tradition', 'Squash Tradition')}
+        <p>{country.rating_history && <span>{cs ? 'Historické ratingy vyžadují rok a podklady; použijte import/API. ' : 'Historical ratings require an explicit year and evidence; edit the versioned history through import/API. '}</span>}
+          <button type="submit" disabled={Boolean(country.rating_history)}>{cs ? 'Zkontrolovat změny' : 'Review changes'}</button>{' '}
+          <button type="button" onClick={onCancel}>{cs ? 'Zrušit' : 'Cancel'}</button>
+        </p>
+      </fieldset></form>}
+  </SectionCard>
 }

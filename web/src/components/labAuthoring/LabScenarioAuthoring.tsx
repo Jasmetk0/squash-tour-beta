@@ -418,15 +418,16 @@ function VariantMatchCountsEditor({ id, values, index, cs, busy, onApply }: {
 }): JSX.Element {
   const original = values.join(', ')
   const [weekIndex, setWeekIndex] = useState(0)
+  const selectedWeek = Math.min(weekIndex, Math.max(0, values.length - 1))
   const [weekDraft, setWeekDraft] = useState(String(values[0] ?? 0))
   const [draft, setDraft] = useState(original)
-  useEffect(() => { setWeekDraft(String(values[weekIndex] ?? 0)) }, [values, weekIndex])
+  useEffect(() => { setWeekDraft(String(values[selectedWeek] ?? 0)) }, [values, selectedWeek])
   useEffect(() => { setDraft(original) }, [original])
   return <div>
     <strong>{cs ? 'Varianta' : 'Variant'} <code>{id}</code></strong>
     <div>
       <label>{cs ? 'Vybraný týden' : 'Selected week'}{' '}
-        <select aria-label={'player Lab variant ' + id + ' selected week'} value={weekIndex}
+        <select aria-label={'player Lab variant ' + id + ' selected week'} value={selectedWeek}
           disabled={busy} onChange={event => setWeekIndex(Number(event.target.value))}>
           {values.map((_, i) => <option key={i} value={i}>{cs ? 'Týden' : 'Week'} {i + 1}</option>)}
         </select>
@@ -438,9 +439,9 @@ function VariantMatchCountsEditor({ id, values, index, cs, busy, onApply }: {
           onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }} />
       </label>{' '}
       <button type="button" aria-label={'player Lab variant ' + id + ' apply selected week'}
-        disabled={busy || weekDraft === String(values[weekIndex])}
+        disabled={busy || weekDraft === String(values[selectedWeek])}
         onClick={() => onApply(index, values.map((count, i) =>
-          i === weekIndex ? weekDraft : String(count)).join(', '))}>
+          i === selectedWeek ? weekDraft : String(count)).join(', '))}>
         {cs ? 'Použít vybraný týden' : 'Apply selected week'}
       </button>
     </div>
@@ -587,7 +588,7 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
         kind={kind} value={fieldValue(parsed!, field.path)} cs={cs} busy={busy}
         onApply={applyField} />)}
       {(kind === 'match' || kind === 'tournament') && participants.length > 0 &&
-        <ParticipantModifierEditor key={selection + ':' + revision} kind={kind}
+        <ParticipantModifierEditor key={selection + ':' + String(parsed.scenario_id)} kind={kind}
           participants={participants} cs={cs} busy={busy}
           onApply={(target, key, value) => {
             try { edit(changeLabParticipantModifier(text, kind, target, key, value)) }
@@ -607,7 +608,7 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
           catch (reason) { setError(explain(reason, cs)) }
         }} />}
       {kind === 'player' && variants.map((variant, index) => <VariantMatchCountsEditor
-        key={String(variant.variant_id) + ':' + selection + ':' + revision} id={String(variant.variant_id)}
+        key={String(variant.variant_id) + ':' + selection} id={String(variant.variant_id)}
         values={variant.competitive_match_counts as number[]} index={index} cs={cs} busy={busy}
         onApply={(position, draft) => {
           try { edit(changePlayerMatchCounts(text, position, draft)) }

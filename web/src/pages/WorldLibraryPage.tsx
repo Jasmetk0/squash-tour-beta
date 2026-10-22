@@ -385,45 +385,117 @@ function PackageCountriesTable({ countries, worldId }: { countries: CountryRecor
   )
 }
 
+const COUNTRY_LIST_PAGE_SIZE = 50
+
 export function WorldPackageCountriesPage(): JSX.Element {
   const { worldId = '' } = useParams()
+  const { language } = useLanguage()
+  const cs = language === 'cs'
   const countriesQuery = useQuery({
     queryKey: ['world-package-countries', worldId],
     queryFn: () => getWorldPackageCountries(worldId),
     enabled: Boolean(worldId),
     retry: false
   })
-  const data = countriesQuery.data
+  const data = countriesQuery.data?.world_id === worldId ? countriesQuery.data : null
   const [search, setSearch] = useState('')
-  const visibleCountries = (data?.countries ?? [])
-    .filter((country) => `${country.code} ${country.name}`.toLowerCase().includes(search.trim().toLowerCase()))
-    .sort((left, right) => left.name.localeCompare(right.name) || left.code.localeCompare(right.code))
+  const [region, setRegion] = useState('')
+  const [sortBy, setSortBy] = useState<'name' | 'code'>('name')
+  const [page, setPage] = useState(0)
+  const sourceCountries = data?.countries ?? []
+  const regions = Array.from(new Set(sourceCountries.map(country => country.region).filter(Boolean)))
+    .sort((left, right) => left.localeCompare(right))
+  const normalizedSearch = search.trim().toLocaleLowerCase()
+  const visibleCountries = sourceCountries
+    .filter(country =>
+      (region === '' || country.region === region) &&
+      `${country.code} ${country.name}`.toLocaleLowerCase().includes(normalizedSearch)
+    )
+    .sort((left, right) => sortBy === 'code'
+      ? left.code.localeCompare(right.code) || left.name.localeCompare(right.name)
+      : left.name.localeCompare(right.name) || left.code.localeCompare(right.code))
+  const pageCount = Math.max(1, Math.ceil(visibleCountries.length / COUNTRY_LIST_PAGE_SIZE))
+  const currentPage = Math.min(page, pageCount - 1)
+  const pageCountries = visibleCountries.slice(
+    currentPage * COUNTRY_LIST_PAGE_SIZE, (currentPage + 1) * COUNTRY_LIST_PAGE_SIZE
+  )
+  const clearFilters = () => {
+    setSearch('')
+    setRegion('')
+    setSortBy('name')
+    setPage(0)
+  }
 
   return (
     <section className="panel">
       <div className="page-intro">
-        <h2>World Package Countries</h2>
-        <p className="subtitle">Assembled typed view of the countries in the selected World Package.</p>
+        <h2>{cs ? 'Země ve World Package' : 'World Package Countries'}</h2>
+        <p className="subtitle">{cs
+          ? 'Přehled zemí z vybraného World Package.'
+          : 'Assembled typed view of the countries in the selected World Package.'}</p>
       </div>
-      <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}`}>Back to World Package detail</Link></p>
-      {countriesQuery.isLoading && <p className="status">Loading package countries...</p>}
-      {countriesQuery.error && <p className="error">Failed to load package countries: {formatApiError(countriesQuery.error)}</p>}
+      <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}`}>{cs
+        ? 'Zpět na detail World Package' : 'Back to World Package detail'}</Link></p>
+      {countriesQuery.isLoading && <p className="status">{cs ? 'Načítám země…' : 'Loading package countries...'}</p>}
+      {countriesQuery.error && <p className="error">{cs ? 'Nepodařilo se načíst země: ' : 'Failed to load package countries: '}{formatApiError(countriesQuery.error)}</p>}
+      {countriesQuery.isSuccess && !data && <p role="alert" className="error">{cs
+        ? 'Odpověď nepatří vybranému World Package.' : 'Response does not belong to the selected World Package.'}</p>}
       {data && (
         <>
-          <SectionCard title="Package">
-            <DetailRow label="World name" value={data.world_name} />
+          <SectionCard title={cs ? 'Balíček' : 'Package'}>
+            <DetailRow label={cs ? 'Název světa' : 'World name'} value={data.world_name} />
             <DetailRow label="World ID" value={<code>{data.world_id}</code>} />
-            <DetailRow label="Type" value={data.type} />
-            <DetailRow label="Source" value={data.source} />
-            <DetailRow label="Country count" value={data.country_count} />
-            <DetailRow label="Package mode" value={`${data.type === 'custom' ? 'Custom' : 'Built-in'} · ${data.read_only ? 'Read-only' : 'Editable source'}`} />
+            <DetailRow label={cs ? 'Typ' : 'Type'} value={data.type} />
+            <DetailRow label={cs ? 'Zdroj' : 'Source'} value={data.source} />
+            <DetailRow label={cs ? 'Počet zemí' : 'Country count'} value={data.country_count} />
+            <DetailRow label={cs ? 'Režim balíčku' : 'Package mode'} value={`${data.type === 'custom' ? (cs ? 'Vlastní' : 'Custom') : (cs ? 'Vestavěný' : 'Built-in')} · ${data.read_only ? (cs ? 'Jen pro čtení' : 'Read-only') : (cs ? 'Upravitelný zdroj' : 'Editable source')}`} />
           </SectionCard>
-          <SectionCard title="Package countries">
-            <p className="status">This inspection screen does not currently provide bulk edit, import, or export actions.</p>
-            {data.type === 'custom' && data.source === 'custom_config' && !data.read_only && <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/new`}>+ Add country</Link></p>}
-            <label>Search by country name or code<input aria-label="Search countries" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
-            <p>{visibleCountries.length} {visibleCountries.length === 1 ? 'country' : 'countries'}</p>
-            <PackageCountriesTable countries={visibleCountries} worldId={worldId} />
+          <SectionCard title={cs ? 'Země v balíčku' : 'Package countries'}>
+            <p className="status">{cs
+              ? 'Tato stránka zatím nepodporuje hromadné úpravy, import ani export.'
+              : 'This inspection screen does not currently provide bulk edit, import, or export actions.'}</p>
+            {data.type === 'custom' && data.source === 'custom_config' && !data.read_only && <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/new`}>{cs ? '+ Přidat zemi' : '+ Add country'}</Link></p>}
+            <div className="form-grid">
+              <label>{cs ? 'Hledat podle názvu nebo kódu země' : 'Search by country name or code'}
+                <input type="search" aria-label={cs ? 'Hledat země' : 'Search countries'} value={search}
+                  onChange={event => { setSearch(event.target.value); setPage(0) }} />
+              </label>
+              <label>{cs ? 'Region' : 'Region'}
+                <select aria-label={cs ? 'Filtrovat podle regionu' : 'Filter by region'} value={region}
+                  onChange={event => { setRegion(event.target.value); setPage(0) }}>
+                  <option value="">{cs ? 'Všechny regiony' : 'All regions'}</option>
+                  {regions.map(value => <option key={value} value={value}>{value}</option>)}
+                </select>
+              </label>
+              <label>{cs ? 'Řazení zemí' : 'Sort countries'}
+                <select value={sortBy} onChange={event => { setSortBy(event.target.value as typeof sortBy); setPage(0) }}>
+                  <option value="name">{cs ? 'Název (A–Z)' : 'Name (A–Z)'}</option>
+                  <option value="code">{cs ? 'Kód (A–Z)' : 'Code (A–Z)'}</option>
+                </select>
+              </label>
+            </div>
+            <button type="button" disabled={!search && !region && sortBy === 'name'} onClick={clearFilters}>
+              {cs ? 'Vymazat filtry a řazení' : 'Clear filters and sorting'}
+            </button>
+            <p role="status">{cs
+              ? `Zobrazeno ${visibleCountries.length} z ${sourceCountries.length} zemí`
+              : `Showing ${visibleCountries.length} of ${sourceCountries.length} countries`}</p>
+            {visibleCountries.length === 0 ? <p className="status">{cs
+              ? (sourceCountries.length === 0 ? 'Balíček neobsahuje žádné země.' : 'Žádná země neodpovídá filtrům.')
+              : (sourceCountries.length === 0 ? 'This package has no countries.' : 'No countries match your filters.')}</p>
+              : <>
+                <PackageCountriesTable countries={pageCountries} worldId={worldId} />
+                <div className="actions">
+                  <button type="button" disabled={currentPage === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>
+                    {cs ? '← Předchozí' : '← Previous'}
+                  </button>
+                  <span>{cs ? 'Strana' : 'Page'} {currentPage + 1} / {pageCount}</span>
+                  <button type="button" disabled={currentPage >= pageCount - 1}
+                    onClick={() => setPage(value => Math.min(pageCount - 1, value + 1))}>
+                    {cs ? 'Další →' : 'Next →'}
+                  </button>
+                </div>
+              </>}
           </SectionCard>
         </>
       )}

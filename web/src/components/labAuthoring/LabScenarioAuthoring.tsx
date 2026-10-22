@@ -398,7 +398,7 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
           catch (reason) { setError(explain(reason, cs)) }
         }} />}
     </div> : (text.trim()
-      ? <p role="alert">{cs ? 'Neplatný nebo nepodporovaný scénář; opravte jej v pokročilém JSON editoru.' : 'Invalid or unsupported scenario; repair it in Advanced JSON.'}</p>
+      ? <p className="error">{cs ? 'Neplatný nebo nepodporovaný scénář; opravte jej v pokročilém JSON editoru.' : 'Invalid or unsupported scenario; repair it in Advanced JSON.'}</p>
       : <p className="status">{cs ? 'Nejdříve načtěte vestavěný scénář nebo importujte JSON soubor.' : 'Load a built-in scenario or import a JSON file to start editing.'}</p>))}
     {mode !== 'form' && <textarea aria-label={jsonLabel} rows={mode === 'combined' ? 12 : 24}
       style={{ width: '100%', fontFamily: 'monospace' }} disabled={busy} value={text}

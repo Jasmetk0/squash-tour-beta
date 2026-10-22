@@ -989,9 +989,9 @@ function useUnsavedWorldPackageWarning(active: boolean): void {
   }, [active])
 }
 
-function ConfirmWorldPackageChanges({ title, worldId, countryCode, fingerprint, changes, saving, cs, onBack, onConfirm }: {
+function ConfirmWorldPackageChanges({ title, worldId, countryCode, fingerprint, changes, saving, locked = false, cs, onBack, onConfirm }: {
   title: string; worldId: string; countryCode: string; fingerprint: string; changes: ReviewChange[];
-  saving: boolean; cs: boolean; onBack: () => void; onConfirm: () => void
+  saving: boolean; locked?: boolean; cs: boolean; onBack: () => void; onConfirm: () => void
 }): JSX.Element {
   return <div aria-label="World Package change review">
     <h3>{title}</h3>
@@ -1003,7 +1003,7 @@ function ConfirmWorldPackageChanges({ title, worldId, countryCode, fingerprint, 
       : <table><thead><tr><th>{cs ? 'Údaj' : 'Field'}</th><th>{cs ? 'Původní' : 'Before'}</th><th>{cs ? 'Nová hodnota' : 'After'}</th></tr></thead>
           <tbody>{changes.map(change => <tr key={change.field}><td>{change.field}</td><td>{change.before}</td><td>{change.after}</td></tr>)}</tbody></table>}
     <p><button type="button" disabled={saving} onClick={onBack}>{cs ? 'Zpět k úpravě' : 'Back to editing'}</button>{' '}
-      <button type="button" disabled={saving || changes.length === 0} onClick={onConfirm}>
+      <button type="button" disabled={saving || locked || changes.length === 0} onClick={onConfirm}>
         {saving ? (cs ? 'Ukládání…' : 'Saving…') : (cs ? 'Potvrdit a uložit' : 'Confirm and save')}
       </button></p>
   </div>
@@ -1160,7 +1160,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
         : formatApiError(writeError)}{' '}
         {isFingerprintConflict(writeError) && <button type="button" disabled={pending} onClick={() => void reloadAfterConflict()}>{cs ? 'Načíst aktuální data' : 'Reload current data'}</button>}
       </p>}
-      {canEdit && editing && <CountryEditForm key={routeKey} detail={data} geography={geographyQuery.data} saving={pending || isFingerprintConflict(writeError)} cs={cs}
+      {canEdit && editing && <CountryEditForm key={routeKey} detail={data} geography={geographyQuery.data} saving={pending} blocked={isFingerprintConflict(writeError)} cs={cs}
         onCancel={() => { if (window.confirm(cs ? 'Zahodit rozpracovanou úpravu?' : 'Discard unsaved changes?')) setEditing(false) }}
         onSave={handleCountrySave} />}
       {!editing && <SectionCard title="Overview">
@@ -1172,7 +1172,7 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
         <DetailRow label="Effective/default population" value={formatNumber(data.country.default_population ?? data.country.population)} /><DetailRow label="Default authored year" value={data.country.default_population_year ?? '—'} /><DetailRow label="Authored population years" value={timeline.length} /><DetailRow label="Earliest authored year" value={timeline[0]?.[0] ?? '—'} /><DetailRow label="Latest authored year" value={timeline[timeline.length - 1]?.[0] ?? '—'} />
         <div style={{maxHeight: '28rem', overflowY: 'auto'}}><table aria-label="Authored population timeline"><thead><tr><th>Year</th><th>Population</th></tr></thead><tbody>{timeline.map(([year, value]) => <tr key={year}><td>{year}{year === '2020' ? ' · Default year' : ''}</td><td>{formatNumber(value)}</td></tr>)}</tbody></table></div>
       </SectionCard>}
-      {canEdit && populationEditing && <PopulationEditForm key={routeKey} detail={data} saving={pending || isFingerprintConflict(writeError)} cs={cs}
+      {canEdit && populationEditing && <PopulationEditForm key={routeKey} detail={data} saving={pending} blocked={isFingerprintConflict(writeError)} cs={cs}
         onCancel={() => { if (window.confirm(cs ? 'Zahodit rozpracovanou úpravu?' : 'Discard unsaved changes?')) setPopulationEditing(false) }}
         onSave={handlePopulationSave} />}
       <SectionCard title="Geography"><DetailRow label="Area km²" value={formatNumber(data.country.area_km2)} /><DetailRow label="Region" value={data.region ? `${data.region.name} (${data.region.code})` : data.country.region} /><DetailRow label="Continent" value={data.continent?.name ?? '—'} /><DetailRow label="Travel Region" value={data.travel_region ? `${data.travel_region.name} (${data.travel_region.code})` : data.country.travel_region ?? '—'} /></SectionCard>
@@ -1185,8 +1185,8 @@ export function WorldPackageCountryDetailPage(): JSX.Element {
 }
 
 type PopulationRow = { year: string, population: string }
-function PopulationEditForm({ detail, saving, cs, onCancel, onSave }: {
-  detail: WorldPackageCountryDetail; saving: boolean; cs: boolean; onCancel: () => void;
+function PopulationEditForm({ detail, saving, blocked, cs, onCancel, onSave }: {
+  detail: WorldPackageCountryDetail; saving: boolean; blocked: boolean; cs: boolean; onCancel: () => void;
   onSave: (payload: WorldPackageCountryPopulationUpdatePayload) => void
 }): JSX.Element {
   const [baseline] = useState(detail)
@@ -1221,9 +1221,9 @@ function PopulationEditForm({ detail, saving, cs, onCancel, onSave }: {
     {(validationError) && <p className="error" role="alert">{validationError}</p>}
     {review ? <ConfirmWorldPackageChanges title={cs ? 'Kontrola změn populace' : 'Review population changes'}
       worldId={baseline.package.world_id} countryCode={baseline.country.code} fingerprint={baseline.package.fingerprint}
-      changes={review.changes} saving={saving} cs={cs} onBack={() => setReview(null)} onConfirm={() => onSave(review.payload)} />
+      changes={review.changes} saving={saving} locked={blocked} cs={cs} onBack={() => setReview(null)} onConfirm={() => onSave(review.payload)} />
       : <form onSubmit={submit}>
-        <fieldset disabled={saving}><p><strong>{cs ? 'Výchozí rok: 2020' : 'Default year: 2020'}</strong></p>
+        <fieldset disabled={saving || blocked}><p><strong>{cs ? 'Výchozí rok: 2020' : 'Default year: 2020'}</strong></p>
           <table aria-label="Edit authored population timeline"><thead><tr><th>{cs ? 'Rok' : 'Year'}</th><th>{cs ? 'Populace' : 'Population'}</th><th /></tr></thead>
             <tbody>{sorted.map(row => <tr key={row.year}><td>{row.year}{row.year === '2020' ? ' · Default year' : ''}</td>
               <td><input aria-label={`Population ${row.year}`} type="number" min="1" step="1" required value={row.population} onChange={event => setRows(current => current.map(item => item.year === row.year ? {...item, population: event.target.value} : item))} /></td>
@@ -1240,8 +1240,8 @@ function PopulationEditForm({ detail, saving, cs, onCancel, onSave }: {
   </SectionCard>
 }
 
-function CountryEditForm({ detail, geography, saving, cs, onCancel, onSave }: {
-  detail: WorldPackageCountryDetail; geography?: WorldPackageGeography; saving: boolean; cs: boolean;
+function CountryEditForm({ detail, geography, saving, blocked, cs, onCancel, onSave }: {
+  detail: WorldPackageCountryDetail; geography?: WorldPackageGeography; saving: boolean; blocked: boolean; cs: boolean;
   onCancel: () => void; onSave: (payload: WorldPackageCountryUpdatePayload) => void
 }): JSX.Element {
   const [baseline] = useState(detail)
@@ -1293,8 +1293,8 @@ function CountryEditForm({ detail, geography, saving, cs, onCancel, onSave }: {
     {validationError && <p className="error" role="alert">{validationError}</p>}
     {review ? <ConfirmWorldPackageChanges title={cs ? 'Kontrola změn země' : 'Review country changes'}
       worldId={baseline.package.world_id} countryCode={country.code} fingerprint={baseline.package.fingerprint}
-      changes={review.changes} saving={saving} cs={cs} onBack={() => setReview(null)} onConfirm={() => onSave(review.payload)} />
-      : <form onSubmit={submit}><fieldset disabled={saving}>
+      changes={review.changes} saving={saving} locked={blocked} cs={cs} onBack={() => setReview(null)} onConfirm={() => onSave(review.payload)} />
+      : <form onSubmit={submit}><fieldset disabled={saving || blocked}>
         <label>{cs ? 'Název' : 'Name'}<input required value={name} onChange={event => setName(event.target.value)} /></label>
         <label>{cs ? 'Poznámky' : 'Notes'}<textarea value={notes} onChange={event => setNotes(event.target.value)} /></label>
         <label>{cs ? 'Plocha km²' : 'Area km²'}<input type="number" min="1" step="1" value={area} onChange={event => setArea(event.target.value)} /></label>

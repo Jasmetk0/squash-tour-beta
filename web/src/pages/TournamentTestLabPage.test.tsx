@@ -381,8 +381,7 @@ describe('TournamentTestLabPage', () => {
       {
         display_name: 'Standard four-player — Test Session',
         built_in_scenario_id: 'standard-four-player'
-      },
-      expect.anything()
+      }
     )
     expect(await screen.findByDisplayValue('Standard four-player — Test Session')).toBeInTheDocument()
     expect(screen.getByText('isolated Test Session')).toBeInTheDocument()

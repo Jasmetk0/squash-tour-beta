@@ -250,8 +250,7 @@ describe('MatchTestLabPage', () => {
       {
         display_name: 'Standard even match — Test Session',
         built_in_scenario_id: 'standard-even-match'
-      },
-      expect.anything()
+      }
     )
     expect(await screen.findByDisplayValue('Standard even match — Test Session')).toBeInTheDocument()
 

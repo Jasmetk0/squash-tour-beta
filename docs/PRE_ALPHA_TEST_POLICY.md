@@ -3,6 +3,19 @@
 This file records the current engineering test policy for Squash Engine pre-alpha work.
 It is an implementation/development policy, not sporting product canon.
 
+## Isolated Lab workflow acceptance — 22 October 2026
+
+The scoped `Test Lab Session and Run Proposal Browser` Ready/manual workflow
+runs genuine Match, Tournament and Player Lab calculations, persistent sessions,
+a concurrent second session writer, delayed delivery of a real Save response,
+non-Lab SQLite isolation, a separately reviewed Lab-to-Run proposal, normal Save
+and physical database reopen. It fabricates no API result. Focused frontend tests
+cover delayed replies, lost sessions, reload consent, exact uncertain-command
+retry and blocked duplicate in-flight calculations. Existing Lab API/application
+regressions retain real transaction rollback and immutable Saved assertions.
+This gate does not replace relevant Run/native fork/browser acceptance, and its
+Draft skip never counts as an executed pass.
+
 ## Native fork iteration and unrelated catalog work — 21 October 2026
 
 The real public native fork scenario runs in its own parallel Ready/manual job,

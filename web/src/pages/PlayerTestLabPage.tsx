@@ -1,7 +1,7 @@
 import {InitialPopulationComparisonPanel} from '../components/InitialPopulationComparisonPanel'
 import { LabNavigation } from '../components/LabNavigation'
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useIsMutating, useMutation, useQuery } from '@tanstack/react-query'
 
 import { getPlayerLabBuiltInScenarios, runPlayerTestLab } from '../api/client'
 import type { PlayerLabResult, PlayerLabScenario } from '../api/types'
@@ -136,7 +136,9 @@ export function PlayerTestLabPage(): JSX.Element {
     } catch { return null }
   }, [scenarioText])
 
+  const runPending = useIsMutating({ mutationKey: ['player-lab-run'] }) > 0
   const runMutation = useMutation({
+    mutationKey: ['player-lab-run'],
     mutationFn: (scenario: PlayerLabScenario) => runPlayerTestLab({ scenario })
   })
 
@@ -157,6 +159,7 @@ export function PlayerTestLabPage(): JSX.Element {
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
+    if (runPending) return
     setLocalError(null)
     runMutation.reset()
     try {
@@ -219,11 +222,11 @@ export function PlayerTestLabPage(): JSX.Element {
           rows={30}
           style={{ width: '100%', fontFamily: 'monospace' }}
         />
-        <button type="button" onClick={formatScenario} disabled={runMutation.isPending || !parsedPreview}>
+        <button type="button" onClick={formatScenario} disabled={runPending || !parsedPreview}>
           Format JSON
         </button>{' '}
-        <button type="submit" disabled={runMutation.isPending || !parsedPreview}>
-          {runMutation.isPending ? 'Running…' : 'Run scenario'}
+        <button type="submit" disabled={runPending || !parsedPreview}>
+          {runPending ? 'Running…' : 'Run scenario'}
         </button>
         {localError ? <p className="error">{localError}</p> : null}
         {runMutation.isError ? <p className="error">Player Lab failed: {String(runMutation.error)}</p> : null}

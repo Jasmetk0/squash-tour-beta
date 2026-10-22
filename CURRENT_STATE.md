@@ -1,3 +1,41 @@
+# Admin and Test Lab workflow review candidate — 22 October 2026
+
+Baseline `buuk` is `aecec53c560f8a850f82358158e9606da12483a4`, containing
+owner-merged #1576. That prior final head had 53 successful checks and only the
+inapplicable docs-only check skipped. Its older pending notes below are history.
+
+The follow-up Admin UI work has been reviewed beyond its original happy-path
+component checks. Saved Match/Tournament Sessions now retain an explicit editor
+baseline. Inventory refresh never replaces local text; remote changes/removal
+block session commands until explicit reload, with confirmed local discard when
+needed. Late Save/create/import replies respect subsequent selection and edits.
+An in-flight calculation stays pending after input invalidation, so a second
+expensive run cannot silently start and an old result cannot reappear.
+
+Tournament proposals authenticate the exact selected Session and target in the
+UI, keep the same command for uncertain Apply retries, and stage only after the
+separate reviewed action. Actual production API testing exposed a missing flush
+before the aggregate SELECT in a session with autoflush disabled. The explicit
+transactional flush fixes first Apply; late-failure rollback, retry and normal
+Save remain covered. Unsupported native-v2 component edits are blocked before
+staging, matching the existing Package boundary.
+
+Evidence for this candidate: focused frontend regression/build checks, 66 real
+Lab API/application checks (62.34s), and genuine Chromium Match/Tournament/Player
+flows including concurrent real session writes, delayed real Save delivery,
+Run isolation, reviewed Apply/Save and physical SQLite restart. A new scoped
+Ready/manual Chromium workflow preserves that acceptance. The expanded native
+fork corruption/continuation scenario and final-head hosted gates must also pass
+before this candidate is called merge-ready; Draft skips are not passes.
+
+This is workflow correctness, not a claim of calibrated realism or a complete
+pre-alpha. Native-v2 general component authoring remains unsupported. A subsequent
+bounded integration should review historical Run-to-Lab copies against modern
+Run calendars, born players and native Saved authority rather than substituting
+legacy 61-week assumptions or Initial World-only biographies.
+
+---
+
 # Native public Saved fork continuation candidate — 21 October 2026
 
 The public reviewed writer now installs an active independent v2 native Branch

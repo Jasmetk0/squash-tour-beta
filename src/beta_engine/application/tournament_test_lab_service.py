@@ -64,6 +64,7 @@ from beta_engine.domain.tournaments.topology_authority import (
     TournamentTopologyAuthorityBuilder,
 )
 from beta_engine.infrastructure.db.models import (
+    BranchSavedRevisionModel,
     BranchWorkingDraftModel,
     RunBranchModel,
     RunContainerModel,
@@ -975,6 +976,12 @@ class TournamentTestLabService:
 
         compatibility = self.inspect(current.scenario)
         issues = list(compatibility.issues)
+        head = self._repository.get_branch_saved_revision(revision_id=state.saved_head_revision_id)
+        if head is not None and head.payload_schema_version == "native_fork_saved_root.v2":
+            issues.append(TournamentLabIssue(
+                severity="error", code="TARGET_COMPONENT_UNSUPPORTED",
+                message="Lab proposal component editing is not supported by this versioned native fork runtime; no changes were staged.",
+            ))
         if state.working_draft.status != "clean":
             issues.append(
                 TournamentLabIssue(
@@ -1077,6 +1084,9 @@ class TournamentTestLabService:
                 raise ValueError("Target Working Draft changed since preview")
             if draft_row.status != "clean":
                 raise ValueError("Target Working Draft must be clean before applying a Lab draft")
+            head = db.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
+            if head is not None and head.payload_schema_version == "native_fork_saved_root.v2":
+                raise ValueError("Lab proposal component editing is not supported by this versioned native fork runtime; no changes were staged")
 
             compatibility = self.inspect(current.scenario)
             scenario = current.scenario
@@ -1140,6 +1150,10 @@ class TournamentTestLabService:
                 candidate_fingerprint=candidate.fingerprint,
             )
             put_run_tournament_lab_draft(db, proposal)
+            # This session deliberately disables autoflush. The following
+            # aggregate SELECT must see our new row inside this transaction;
+            # a later failure still rolls back proposal, draft and receipt.
+            db.flush()
             state = capture_run_tournament_lab_draft_state(
                 db,
                 run_id=request.product_run_id,

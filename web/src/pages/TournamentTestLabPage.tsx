@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
   applyTournamentLabRunDraft,
@@ -23,6 +23,7 @@ import type {
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 import { prettyLabJson } from '../components/LabJson'
 import { LabNavigation } from '../components/LabNavigation'
+import { LabSessionConflict, useLabSessionEditor, validateLabSession, type LabEditorTicket } from '../components/LabSessionEditor'
 import { newCommandId } from '../admin/branchSimulation'
 
 function parseSeeds(value: string): number[] {
@@ -199,23 +200,16 @@ export function TournamentTestLabPage(): JSX.Element {
     queryFn: getTournamentLabSessions,
     retry: false
   })
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
-  const selectedSession = sessions.data?.find((item) => item.session_id === selectedSessionId) ?? null
-  const [scenarioText, setScenarioText] = useState('')
-  const [sessionName, setSessionName] = useState('New Tournament Test Session')
+  const client = useQueryClient()
+  const editor = useLabSessionEditor(sessions.data, sessions.isSuccess, '', 'New Tournament Test Session')
+  const { selectedSession, selectedSessionId, setSelectedSessionId, scenarioText, setScenarioText,
+    sessionName, setSessionName, sessionHasUnsavedChanges, sessionConflict } = editor
   const [batchText, setBatchText] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
   const [targetRunId, setTargetRunId] = useState('')
   const [targetBranchId, setTargetBranchId] = useState('')
   const [targetEventId, setTargetEventId] = useState('')
-  const [runDraftCommandId, setRunDraftCommandId] = useState(() => newCommandId())
-
-  useEffect(() => {
-    if (selectedSession) {
-      setScenarioText(JSON.stringify(selectedSession.scenario, null, 2))
-      setSessionName(selectedSession.display_name)
-    }
-  }, [selectedSession?.session_id, selectedSession?.version])
+  const runDraftCommands = useRef(new Map<string, string>())
 
   const parsedScenario = useMemo(() => {
     try {
@@ -224,19 +218,16 @@ export function TournamentTestLabPage(): JSX.Element {
       return null
     }
   }, [scenarioText])
-  const sessionHasUnsavedChanges = Boolean(selectedSession && (
-    sessionName !== selectedSession.display_name ||
-    JSON.stringify(parsedScenario) !== JSON.stringify(selectedSession.scenario)
-  ))
-
   const inspectMutation = useMutation({
     mutationFn: inspectTournamentLabScenario
   })
+  const runPending = useIsMutating({ mutationKey: ['tournament-lab-run'] }) > 0
   const runMutation = useMutation({
-    mutationFn: async (payload: TournamentLabRequest) => {
-      if (selectedSession) {
-        return runTournamentLabSession(selectedSession.session_id, {
-          expected_session_fingerprint: selectedSession.session_fingerprint,
+    mutationKey: ['tournament-lab-run'],
+    mutationFn: async ({ payload, session }: { payload: TournamentLabRequest; session: TournamentLabSession | null }) => {
+      if (session) {
+        return runTournamentLabSession(session.session_id, {
+          expected_session_fingerprint: session.session_fingerprint,
           batch_match_seeds: payload.batch_match_seeds
         })
       }
@@ -244,66 +235,77 @@ export function TournamentTestLabPage(): JSX.Element {
     }
   })
   const runDraftPreviewMutation = useMutation({
-    mutationFn: async (target: { runId: string; branchId: string; eventId: string }) => {
-      if (!selectedSession) throw new Error('Open a persistent Tournament Test Session first.')
-      return previewTournamentLabRunDraft(selectedSession.session_id, {
-        expected_session_fingerprint: selectedSession.session_fingerprint,
-        product_run_id: target.runId,
-        branch_id: target.branchId,
-        event_id: target.eventId
+    mutationFn: async (target: { runId: string; branchId: string; eventId: string; session: TournamentLabSession }) => {
+      const preview = await previewTournamentLabRunDraft(target.session.session_id, {
+        expected_session_fingerprint: target.session.session_fingerprint,
+        product_run_id: target.runId, branch_id: target.branchId, event_id: target.eventId
       })
-    },
-    onSuccess: () => {
-      setRunDraftCommandId(newCommandId())
+      if (preview.session_id !== target.session.session_id || preview.session_fingerprint !== target.session.session_fingerprint
+        || preview.product_run_id !== target.runId || preview.branch_id !== target.branchId || preview.event_id !== target.eventId
+        || preview.schema_version !== 'tournament_test_lab_run_draft_preview.v1' || preview.mutation_performed !== false) {
+        throw new Error('Run proposal preview does not match the reviewed Test Session and target.')
+      }
+      return preview
     }
   })
   const runDraftApplyMutation = useMutation({
+    mutationKey: ['tournament-lab-write'],
     mutationFn: async (preview: TournamentLabRunDraftPreview) => {
-      if (!selectedSession) throw new Error('Open a persistent Tournament Test Session first.')
-      return applyTournamentLabRunDraft(selectedSession.session_id, {
-        command_id: runDraftCommandId,
-        expected_session_fingerprint: selectedSession.session_fingerprint,
-        product_run_id: preview.product_run_id,
-        branch_id: preview.branch_id,
-        event_id: preview.event_id,
+      const identity = `${preview.session_id}:${preview.session_fingerprint}:${preview.preview_fingerprint}`
+      let commandId = runDraftCommands.current.get(identity)
+      if (!commandId) { commandId = newCommandId(); runDraftCommands.current.set(identity, commandId) }
+      const applied = await applyTournamentLabRunDraft(preview.session_id, {
+        command_id: commandId, expected_session_fingerprint: preview.session_fingerprint,
+        product_run_id: preview.product_run_id, branch_id: preview.branch_id, event_id: preview.event_id,
         expected_saved_revision_id: preview.target_saved_revision_id,
         expected_working_draft_version: preview.target_working_draft_version,
         expected_preview_fingerprint: preview.preview_fingerprint,
         expected_candidate_fingerprint: preview.candidate_fingerprint
       })
+      if (applied.product_run_id !== preview.product_run_id || applied.branch_id !== preview.branch_id
+        || applied.event_id !== preview.event_id || applied.command_id !== commandId
+        || applied.candidate_fingerprint !== preview.candidate_fingerprint || applied.mutation_performed !== true) {
+        throw new Error('Run proposal response does not match the submitted target. Inspect the Working Draft before continuing.')
+      }
+      return applied
     }
   })
+  const recordSession = (session: TournamentLabSession) => {
+    client.setQueryData<TournamentLabSession[]>(['tournament-lab-sessions'], previous =>
+      [...(previous ?? []).filter(item => item.session_id !== session.session_id), session])
+    void sessions.refetch()
+  }
+  const resetEvidence = () => {
+    inspectMutation.reset(); runMutation.reset(); runDraftPreviewMutation.reset(); runDraftApplyMutation.reset()
+  }
   const createMutation = useMutation({
-    mutationFn: createTournamentLabSession,
-    onSuccess: async (created) => {
-      await sessions.refetch()
-      setSelectedSessionId(created.session_id)
-      setScenarioText(JSON.stringify(created.scenario, null, 2))
-      setSessionName(created.display_name)
-      inspectMutation.reset()
-      runMutation.reset()
-      runDraftPreviewMutation.reset()
-      runDraftApplyMutation.reset()
+    mutationKey: ['tournament-lab-write'],
+    mutationFn: (input: { request: Parameters<typeof createTournamentLabSession>[0]; ticket: LabEditorTicket }) => createTournamentLabSession(input.request),
+    onSuccess: (response, { ticket }) => {
+      const created = validateLabSession(response)
+      recordSession(created)
+      if (ticket && editor.acceptSession(created, ticket)) resetEvidence()
     }
   })
   const saveMutation = useMutation({
-    mutationFn: async ({ session, scenario }: { session: TournamentLabSession; scenario: TournamentLabScenario }) =>
-      updateTournamentLabSession(session.session_id, {
+    mutationKey: ['tournament-lab-write'],
+    mutationFn: async ({ session, scenario, displayName }: { session: TournamentLabSession; scenario: TournamentLabScenario; displayName: string; ticket: LabEditorTicket }) =>
+      validateLabSession(await updateTournamentLabSession(session.session_id, {
         expected_session_fingerprint: session.session_fingerprint,
-        display_name: sessionName,
-        scenario
-      }),
-    onSuccess: async (updated) => {
-      await sessions.refetch()
-      setSelectedSessionId(updated.session_id)
-      setScenarioText(JSON.stringify(updated.scenario, null, 2))
-      setSessionName(updated.display_name)
-      inspectMutation.reset()
-      runMutation.reset()
-      runDraftPreviewMutation.reset()
-      runDraftApplyMutation.reset()
+        display_name: displayName, scenario
+      }), session.session_id),
+    onSuccess: (updated, { ticket }) => {
+      recordSession(updated)
+      if (ticket && editor.acceptSession(updated, ticket)) resetEvidence()
     }
   })
+  const writePending = useIsMutating({ mutationKey: ['tournament-lab-write'] }) > 0
+  useEffect(() => { resetEvidence() }, [selectedSessionId, selectedSession?.session_fingerprint, sessionConflict])
+  const preview = runDraftPreviewMutation.data
+  const reviewedPreview = preview && !sessionConflict && !sessionHasUnsavedChanges
+    && preview.session_id === selectedSessionId && preview.session_fingerprint === selectedSession?.session_fingerprint
+    && preview.product_run_id === targetRunId.trim() && preview.branch_id === targetBranchId.trim()
+    && preview.event_id === targetEventId.trim() ? preview : null
 
   const editScenario = (value: string) => {
     setScenarioText(value)
@@ -343,11 +345,11 @@ export function TournamentTestLabPage(): JSX.Element {
   }
 
   const save = () => {
-    if (!selectedSession) return
+    if (!selectedSession || sessionConflict || writePending) return
     setLocalError(null)
     try {
       const scenario = JSON.parse(scenarioText) as TournamentLabScenario
-      saveMutation.mutate({ session: selectedSession, scenario })
+      saveMutation.mutate({ session: selectedSession, scenario, displayName: sessionName, ticket: editor.captureEditor() })
     } catch (error) {
       setLocalError(error instanceof Error ? error.message : String(error))
     }
@@ -355,6 +357,7 @@ export function TournamentTestLabPage(): JSX.Element {
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
+    if (writePending || runPending) return
     setLocalError(null)
     try {
       const scenario = JSON.parse(scenarioText) as TournamentLabScenario
@@ -365,7 +368,9 @@ export function TournamentTestLabPage(): JSX.Element {
         scenario,
         batch_match_seeds: parseSeeds(batchText)
       }
-      runMutation.mutate(payload)
+      if (sessionConflict) throw new Error('Refresh and reload the saved Test Session before running.')
+      if (writePending || runPending) return
+      runMutation.mutate({ payload, session: selectedSession })
     } catch (error) {
       setLocalError(error instanceof Error ? error.message : String(error))
     }
@@ -404,10 +409,10 @@ export function TournamentTestLabPage(): JSX.Element {
         <p>{item.description}</p>
         <p className="status"><code>{item.scenario_fingerprint.slice(0, 12)}</code> · read-only baseline</p>
         <button type="button" onClick={() => useBuiltIn(item.scenario)}>Load scratch copy</button>
-        <button type="button" onClick={() => createMutation.mutate({
+        <button type="button" disabled={writePending} onClick={() => createMutation.mutate({ ticket: editor.captureEditor(), request: {
           display_name: `${item.display_name} — Test Session`,
           built_in_scenario_id: item.scenario_id
-        })}>New Test Session from {item.display_name}</button>
+        }})}>New Test Session from {item.display_name}</button>
       </article>)}
       {builtIns.isError ? <p className="error">Tournament Lab built-ins unavailable.</p> : null}
     </SectionCard>
@@ -429,6 +434,8 @@ export function TournamentTestLabPage(): JSX.Element {
           }}
         >
           <option value="">Portable scratch scenario</option>
+          {selectedSession && !sessions.data?.some(item => item.session_id === selectedSessionId)
+            ? <option value={selectedSession.session_id}>{selectedSession.display_name} · loaded v{selectedSession.version} (unavailable)</option> : null}
           {sessions.data?.map((item) => <option key={item.session_id} value={item.session_id}>
             {item.display_name} · v{item.version}
           </option>)}
@@ -438,6 +445,8 @@ export function TournamentTestLabPage(): JSX.Element {
       {sessions.isError ? <p role="alert" className="error">Saved Tournament Test Sessions unavailable.</p> : null}
       {sessions.isSuccess && sessions.data.length === 0
         ? <p className="status">No saved Tournament Test Sessions yet. Scratch mode remains available.</p> : null}
+      <LabSessionConflict key={`${selectedSessionId}:${selectedSession?.session_fingerprint}:${sessionConflict}:${editor.editorEdit}`}
+        conflict={sessionConflict} dirty={sessionHasUnsavedChanges} canReload={editor.canReloadSession} onReload={editor.reloadSession} />
       {selectedSession ? <SummaryPills items={[
         { label: 'Session', value: selectedSession.display_name },
         { label: 'Version', value: selectedSession.version },
@@ -492,10 +501,11 @@ export function TournamentTestLabPage(): JSX.Element {
           !targetRunId.trim() ||
           !targetBranchId.trim() ||
           !targetEventId.trim() ||
-          runDraftPreviewMutation.isPending ||
+          runDraftPreviewMutation.isPending || writePending || Boolean(sessionConflict) ||
           sessionHasUnsavedChanges
         }
-        onClick={() => runDraftPreviewMutation.mutate({
+        onClick={() => selectedSession && runDraftPreviewMutation.mutate({
+          session: selectedSession,
           runId: targetRunId.trim(),
           branchId: targetBranchId.trim(),
           eventId: targetEventId.trim()
@@ -503,23 +513,23 @@ export function TournamentTestLabPage(): JSX.Element {
       >
         {runDraftPreviewMutation.isPending ? 'Reviewing Run draft…' : 'Preview Run draft'}
       </button>
-      {runDraftPreviewMutation.data ? <>
+      {reviewedPreview ? <>
         <SummaryPills items={[
-          { label: 'Ready', value: runDraftPreviewMutation.data.ready_for_draft ? 'yes' : 'no' },
-          { label: 'Saved Head', value: runDraftPreviewMutation.data.target_saved_revision_id },
-          { label: 'Draft version', value: runDraftPreviewMutation.data.target_working_draft_version },
-          { label: 'Preview', value: runDraftPreviewMutation.data.preview_fingerprint.slice(0, 12) },
-          { label: 'Candidate', value: runDraftPreviewMutation.data.candidate_fingerprint.slice(0, 12) }
+          { label: 'Ready', value: reviewedPreview.ready_for_draft ? 'yes' : 'no' },
+          { label: 'Saved Head', value: reviewedPreview.target_saved_revision_id },
+          { label: 'Draft version', value: reviewedPreview.target_working_draft_version },
+          { label: 'Preview', value: reviewedPreview.preview_fingerprint.slice(0, 12) },
+          { label: 'Candidate', value: reviewedPreview.candidate_fingerprint.slice(0, 12) }
         ]} />
-        {runDraftPreviewMutation.data.issues.length ? <ul>
-          {runDraftPreviewMutation.data.issues.map((issue) => <li key={issue.code}>
+        {reviewedPreview.issues.length ? <ul>
+          {reviewedPreview.issues.map((issue) => <li key={issue.code}>
             <code>{issue.code}</code>: {issue.message}
           </li>)}
         </ul> : null}
         <button
           type="button"
-          disabled={!runDraftPreviewMutation.data.ready_for_draft || runDraftApplyMutation.isPending || sessionHasUnsavedChanges}
-          onClick={() => runDraftApplyMutation.mutate(runDraftPreviewMutation.data)}
+          disabled={!reviewedPreview.ready_for_draft || writePending || sessionHasUnsavedChanges}
+          onClick={() => runDraftApplyMutation.mutate(reviewedPreview)}
         >
           {runDraftApplyMutation.isPending ? 'Applying reviewed proposal…' : 'Apply to Run Working Draft'}
         </button>
@@ -568,15 +578,15 @@ export function TournamentTestLabPage(): JSX.Element {
             placeholder="100, 101, 102"
           />
         </label>
-        <button type="button" onClick={formatScenario} disabled={runMutation.isPending || saveMutation.isPending}>Format JSON</button>
-        {selectedSession ? <button type="button" onClick={save} disabled={saveMutation.isPending || !scenarioText}>
+        <button type="button" onClick={formatScenario} disabled={runPending || writePending}>Format JSON</button>
+        {selectedSession ? <button type="button" onClick={save} disabled={writePending || Boolean(sessionConflict) || !scenarioText}>
           {saveMutation.isPending ? 'Saving…' : 'Save Test Session'}
         </button> : null}
         <button type="button" onClick={inspect} disabled={!scenarioText || inspectMutation.isPending}>
           {inspectMutation.isPending ? 'Inspecting…' : 'Inspect compatibility'}
         </button>
-        <button type="submit" disabled={!scenarioText || runMutation.isPending || sessionHasUnsavedChanges}>
-          {runMutation.isPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run tournament scenario'}
+        <button type="submit" disabled={!scenarioText || runPending || writePending || Boolean(sessionConflict) || sessionHasUnsavedChanges}>
+          {runPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run tournament scenario'}
         </button>
         {sessionHasUnsavedChanges ? <p role="status">Unsaved Tournament Test Session changes. Save before running or reviewing a Run proposal.</p> : null}
         {localError ? <p className="error">{localError}</p> : null}

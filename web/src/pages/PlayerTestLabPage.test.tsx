@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -169,6 +169,24 @@ describe('PlayerTestLabPage', () => {
       scenario
     }])
     api.runPlayerTestLab.mockResolvedValue(result)
+  })
+
+  it('retains in-flight status after editing and never publishes the detached old result', async () => {
+    const user = userEvent.setup()
+    let resolve!: (value: typeof result) => void
+    const pending = new Promise<typeof result>(done => { resolve = done })
+    api.runPlayerTestLab.mockImplementation(() => pending)
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Run scenario' })).toBeEnabled())
+    await user.click(screen.getByRole('button', { name: 'Run scenario' }))
+    const editor = screen.getByLabelText('Player Lab scenario JSON')
+    fireEvent.change(editor, { target: { value: JSON.stringify({ ...scenario, scenario_id: 'newer-input' }) } })
+    expect(screen.getByRole('button', { name: 'Running…' })).toBeDisabled()
+    fireEvent.submit(editor.closest('form')!)
+    expect(api.runPlayerTestLab).toHaveBeenCalledTimes(1)
+    await act(async () => { resolve(result); await pending })
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Run scenario' })).toBeEnabled())
+    expect(screen.queryByRole('table', { name: 'Player Lab variant comparison' })).not.toBeInTheDocument()
   })
 
   it('loads a built-in and renders shared-kernel diagnostics', async () => {

@@ -43,6 +43,13 @@
 - The original player contexts, historical source metadata, match settings, Saved Session and Run remain untouched. Normal backend compatibility inspection remains authoritative.
 - Pure/UI tests cover edge positions, unknown/duplicate IDs, reversible swaps, and provenance preservation.
 
+### Independent guided staging and ABA-safe import (22 October 2026)
+
+- Guided fields now retain independently typed but unapplied values when a *different* guided field is explicitly applied and the parent editor revision advances. Previously, keys tied to every revision silently discarded other staged values.
+- Switching Session, receiving an externally replaced JSON/source, and applying a reviewed file import reset staged form inputs. Existing variant/player selection is still retained across a normal one-field Apply, and never crosses source replacement.
+- In-flight JSON file reads carry a monotonic read ticket. Editor changes and Session/source transitions increment the ticket, so a late read cannot stage an old file even after an A → B → A return to identical text/selection (ABA protection).
+- Regression tests cover multiple independently staged fields with parent revision, external source replacement with the same scratch ID, and delayed file read across Session A → B → A. No backend/API/fingerprint modifications.
+
 ## Status and merge policy
 - This PR is intentionally **Draft** and NOT merge-ready.
 - Dedicated genuine Lab API/Chromium acceptance skips Draft PRs. Skipped jobs are not passes.

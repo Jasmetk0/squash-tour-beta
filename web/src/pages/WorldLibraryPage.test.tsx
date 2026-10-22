@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { RouterProvider, createMemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { WorldLibraryDetailPage, WorldPackageCountryCreatePage } from './WorldLibraryPage'
@@ -133,7 +133,7 @@ describe('custom World Package geography navigation', () => {
     const router = createMemoryRouter([
       {path:'/world/:worldId',element:<WorldLibraryDetailPage />},
       {path:'/admin/world/library',element:<p>Library opened</p>}
-    ],{initialEntries:['/world/custom']})
+    ],{initialEntries:['/admin/world/library','/world/custom'],initialIndex:1})
     render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
       <RouterProvider router={router} />
     </QueryClientProvider>)
@@ -143,6 +143,11 @@ describe('custom World Package geography navigation', () => {
     expect(screen.queryByText('Library opened')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button',{name:'Stay and keep editing'}))
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    // POP (browser Back) must be guarded just like an in-app Link.
+    await act(async () => { await router.navigate(-1) })
+    expect(await screen.findByRole('alertdialog',{name:'Unsaved World Package changes'})).toBeInTheDocument()
+    expect(screen.queryByText('Library opened')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Stay and keep editing'}))
     fireEvent.click(screen.getByRole('link',{name:'Back to World Library'}))
     fireEvent.click(await screen.findByRole('button',{name:'Discard and leave'}))
     expect(await screen.findByText('Library opened')).toBeInTheDocument()

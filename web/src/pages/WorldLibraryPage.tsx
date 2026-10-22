@@ -764,9 +764,9 @@ export function WorldLibraryDetailPage(): JSX.Element {
             <DetailRow label="Archivable" value={yesNo(pkg.archivable, 'Archivable', 'Not archivable')} />
             <p className="status">Built-in World Packages are protected repository inputs. Custom clones are independent editable sources; existing Runs keep their own saved snapshots.</p>
           </SectionCard>
-          {pkg.type === 'official' && pkg.source === 'built_in' && <CloneBuiltInWorldSection key={pkg.world_id} source={pkg} onDirtyChange={setCloneDirty} />}
+          {pkg.type === 'official' && pkg.source === 'built_in' && <CloneBuiltInWorldSection key={`clone:${pkg.world_id}`} source={pkg} onDirtyChange={setCloneDirty} />}
           <SectionCard title="Contents">
-            <DetailRow label="Countries" value={<><span>{pkg.country_count}</span> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`}>Open package countries</Link></>} />
+            <DetailRow label="Countries" value={<><span>{pkg.country_count}</span> · <Link to={`/admin/world/library/${encodeURIComponent(pkg.world_id)}/countries`} onClick={confirmNavigate}>Open package countries</Link></>} />
             <DetailRow label="Continents" value={pkg.continent_count} />
             <DetailRow label="Regions" value={pkg.region_count} />
             <DetailRow label="Travel regions" value={pkg.travel_region_count} />
@@ -779,7 +779,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
           {geographyQuery.isLoading && <p className="status">Loading geography...</p>}
           {geographyQuery.error && <p className="error">Failed to load geography: {formatApiError(geographyQuery.error)}</p>}
           {geographyQuery.data?.world_id === pkg.world_id &&
-            <GeographySection key={pkg.world_id} geography={geographyQuery.data} pkg={pkg} onDirtyChange={setGeographyDirty} />}
+            <GeographySection key={`geography:${pkg.world_id}`} geography={geographyQuery.data} pkg={pkg} onDirtyChange={setGeographyDirty} />}
           <div id="validation" />
           {validationQuery.isLoading && (
             <SectionCard title="World Package Validation">
@@ -794,7 +794,7 @@ export function WorldLibraryDetailPage(): JSX.Element {
           {validationQuery.data && validationQuery.data.world_id !== pkg.world_id &&
             <p role="alert" className="error">Validation response does not belong to this World Package.</p>}
           {validationQuery.data?.world_id === pkg.world_id &&
-            <ValidationSection key={pkg.world_id} validation={validationQuery.data} />}
+            <ValidationSection key={`validation:${pkg.world_id}`} validation={validationQuery.data} />}
         </>
       )}
     </section>

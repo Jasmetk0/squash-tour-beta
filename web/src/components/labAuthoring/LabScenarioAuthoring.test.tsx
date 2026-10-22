@@ -115,6 +115,21 @@ describe('Lab scenario authoring boundaries', () => {
       'match', 'a', 'form_modifier', '')).toThrow('modifier')
   })
 
+  it('reviews precise participant and per-week scalar changes without leaking a whole snapshot', () => {
+    const participantUpdate = JSON.parse(changeLabParticipantModifier(
+      JSON.stringify(tournamentWithPlayers), 'tournament', 1, 'sharpness_modifier', '0.24'))
+    expect(labChangedPaths(tournamentWithPlayers, participantUpdate)).toEqual(['participants.1.sharpness_modifier'])
+    expect(labChangeDetails(tournamentWithPlayers, participantUpdate)).toEqual([
+      {path: 'participants.1.sharpness_modifier', before: '0.1', after: '0.24'}
+    ])
+    const weeklyUpdate = JSON.parse(changePlayerMatchCounts(JSON.stringify(player), 1, '0, 3'))
+    expect(labChangedPaths(player, weeklyUpdate)).toEqual(['variants.1.competitive_match_counts.1'])
+    expect(labChangeDetails(player, weeklyUpdate)).toEqual([
+      {path: 'variants.1.competitive_match_counts.1', before: '0', after: '3'}
+    ])
+    expect(labChangedPaths(player, {...player, variants: []})).toEqual(['variants'])
+  })
+
   it('allows an explicit optional round limit with backend-aligned bounds and preserved evidence', () => {
     const limited = JSON.parse(changeTournamentStopRound(JSON.stringify(tournamentWithPlayers), '3'))
     expect(limited.stop_after_round).toBe(3)

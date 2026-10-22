@@ -133,6 +133,11 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
   const [targetSeasonLabel, setTargetSeasonLabel] = useState('2006/07')
   const [targetSource, setTargetSource] = useState<CalendarTemplateCompareTargetSource>('payload')
   const [dryRunResponse, setDryRunResponse] = useState<CalendarTemplateCompareDryRunResponse | null>(null)
+  const [reviewedInputs, setReviewedInputs] = useState<{
+    sourceTemplateId: string
+    targetSeasonLabel: string
+    targetSource: CalendarTemplateCompareTargetSource
+  } | null>(null)
   const [requestedBy, setRequestedBy] = useState('')
   const [auditReason, setAuditReason] = useState('')
   const [explicitConfirmation, setExplicitConfirmation] = useState('')
@@ -146,8 +151,13 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
   const targetEvents = TARGET_PREVIEW_EVENTS.map(toCalendarTemplateEventRecord)
   const compareMutation = useMutation({
     mutationFn: compareCalendarTemplateDryRun,
-    onSuccess: (response) => {
+    onSuccess: (response, submitted) => {
       setDryRunResponse(response)
+      setReviewedInputs({
+        sourceTemplateId: submitted.source_template_id,
+        targetSeasonLabel: submitted.target_season_label,
+        targetSource: submitted.target_source
+      })
       setApplyResponse(null)
     }
   })
@@ -181,7 +191,13 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
     }
   }, [planningCalendars, targetSeasonLabel, targetSource])
 
-  const canShowApplyUi = targetSource === 'planning_calendar'
+  const reviewMatchesSelection =
+    reviewedInputs?.sourceTemplateId === sourceTemplateId &&
+    reviewedInputs?.targetSeasonLabel === targetSeasonLabel &&
+    reviewedInputs?.targetSource === targetSource
+
+  const canShowApplyUi = reviewMatchesSelection
+    && targetSource === 'planning_calendar'
     && Boolean(sourceTemplateId)
     && Boolean(targetSeasonLabel)
     && Boolean(dryRunResponse)
@@ -199,6 +215,7 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
   function handleCompareSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     setDryRunResponse(null)
+    setReviewedInputs(null)
     setApplyResponse(null)
     compareMutation.mutate(targetSource === 'planning_calendar' ? {
       target_season_label: targetSeasonLabel,
@@ -394,6 +411,9 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
           </form>
         ) : null}
         {compareMutation.error ? <p className="error">Backend compare dry-run failed: {formatApiError(compareMutation.error)}{targetSource === 'planning_calendar' ? ' The selected planning calendar was not found or may not exist yet.' : ''}</p> : null}
+        {dryRunResponse && !reviewMatchesSelection
+          ? <p role="status">The selected source, target season or target type differs from the reviewed dry-run. Run a new compare before applying changes.</p>
+          : null}
         {dryRunResponse ? (
           <div>
             <div className="dashboard-grid">
@@ -448,7 +468,11 @@ export function AdminTourSeasonsComparePage(): JSX.Element {
             <article className="metric-card"><span>conflict_count</span><strong>{dryRunResponse.summary.conflict_count}</strong></article>
             <article className="metric-card"><span>locked_target_preserved_count</span><strong>{dryRunResponse.summary.locked_target_preserved_count}</strong></article>
           </div>
-          <form className="form-grid" onSubmit={(event) => { event.preventDefault(); applyMutation.mutate() }}>
+          <form className="form-grid" onSubmit={(event) => {
+            event.preventDefault()
+            if (!canApplyReviewedDiff) return
+            applyMutation.mutate()
+          }}>
             <label>requested_by<input value={requestedBy} onChange={(event) => setRequestedBy(event.target.value)} /></label>
             <label>audit_reason<textarea value={auditReason} onChange={(event) => setAuditReason(event.target.value)} /></label>
             <label>explicit_confirmation<input value={explicitConfirmation} onChange={(event) => setExplicitConfirmation(event.target.value)} /></label>

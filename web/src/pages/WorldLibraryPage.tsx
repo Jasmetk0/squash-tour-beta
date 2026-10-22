@@ -352,12 +352,26 @@ function CountryCell({ value }: { value: ReactNode }): JSX.Element {
   return <td>{value === null || value === undefined || value === '' ? '—' : value}</td>
 }
 
-function PackageCountriesTable({ countries, worldId }: { countries: CountryRecord[], worldId: string }): JSX.Element {
+function PackageCountriesTable({ countries, worldId, cs }: { countries: CountryRecord[], worldId: string, cs: boolean }): JSX.Element {
   return (
-    <table>
+    <table aria-label={cs ? 'Země ve World Package' : 'World Package countries table'}>
       <thead>
         <tr>
-          <th>Code</th><th>Name</th><th>Region</th><th>Population</th><th>Population coverage</th><th>Area km²</th><th>Travel Region</th><th>Timezone Area</th><th>Squash Popularity</th><th>Squash Access</th><th>Development Quality</th><th>Competition Quality</th><th>Elite Support</th><th>Squash Tradition</th><th>Action</th>
+          <th>{cs ? 'Kód' : 'Code'}</th>
+          <th>{cs ? 'Název' : 'Name'}</th>
+          <th>Region</th>
+          <th>{cs ? 'Populace' : 'Population'}</th>
+          <th>{cs ? 'Historie populace' : 'Population coverage'}</th>
+          <th>{cs ? 'Rozloha km²' : 'Area km²'}</th>
+          <th>{cs ? 'Cestovní region' : 'Travel Region'}</th>
+          <th>{cs ? 'Časová oblast' : 'Timezone Area'}</th>
+          <th>{cs ? 'Popularita squashe' : 'Squash Popularity'}</th>
+          <th>{cs ? 'Dostupnost squashe' : 'Squash Access'}</th>
+          <th>{cs ? 'Kvalita rozvoje' : 'Development Quality'}</th>
+          <th>{cs ? 'Kvalita soutěží' : 'Competition Quality'}</th>
+          <th>{cs ? 'Podpora elity' : 'Elite Support'}</th>
+          <th>{cs ? 'Tradice squashe' : 'Squash Tradition'}</th>
+          <th>{cs ? 'Akce' : 'Action'}</th>
         </tr>
       </thead>
       <tbody>
@@ -377,7 +391,7 @@ function PackageCountriesTable({ countries, worldId }: { countries: CountryRecor
             <CountryCell value={country.competition_quality} />
             <CountryCell value={country.elite_support} />
             <CountryCell value={country.squash_tradition} />
-            <td><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(country.code)}`}>Open</Link></td>
+            <td><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries/${encodeURIComponent(country.code)}`}>{cs ? 'Otevřít' : 'Open'}</Link></td>
           </tr>
         ))}
       </tbody>
@@ -400,7 +414,7 @@ export function WorldPackageCountriesPage(): JSX.Element {
   const data = countriesQuery.data?.world_id === worldId ? countriesQuery.data : null
   const [search, setSearch] = useState('')
   const [region, setRegion] = useState('')
-  const [sortBy, setSortBy] = useState<'name' | 'code'>('name')
+  const [sortBy, setSortBy] = useState<'name' | 'code' | 'population'>('name')
   const [page, setPage] = useState(0)
   const sourceCountries = data?.countries ?? []
   const regions = Array.from(new Set(sourceCountries.map(country => country.region).filter(Boolean)))
@@ -413,7 +427,9 @@ export function WorldPackageCountriesPage(): JSX.Element {
     )
     .sort((left, right) => sortBy === 'code'
       ? left.code.localeCompare(right.code) || left.name.localeCompare(right.name)
-      : left.name.localeCompare(right.name) || left.code.localeCompare(right.code))
+      : sortBy === 'population'
+        ? right.population - left.population || left.code.localeCompare(right.code)
+        : left.name.localeCompare(right.name) || left.code.localeCompare(right.code))
   const pageCount = Math.max(1, Math.ceil(visibleCountries.length / COUNTRY_LIST_PAGE_SIZE))
   const currentPage = Math.min(page, pageCount - 1)
   const pageCountries = visibleCountries.slice(
@@ -471,6 +487,7 @@ export function WorldPackageCountriesPage(): JSX.Element {
                 <select value={sortBy} onChange={event => { setSortBy(event.target.value as typeof sortBy); setPage(0) }}>
                   <option value="name">{cs ? 'Název (A–Z)' : 'Name (A–Z)'}</option>
                   <option value="code">{cs ? 'Kód (A–Z)' : 'Code (A–Z)'}</option>
+                  <option value="population">{cs ? 'Populace (sestupně)' : 'Population (descending)'}</option>
                 </select>
               </label>
             </div>
@@ -484,12 +501,14 @@ export function WorldPackageCountriesPage(): JSX.Element {
               ? (sourceCountries.length === 0 ? 'Balíček neobsahuje žádné země.' : 'Žádná země neodpovídá filtrům.')
               : (sourceCountries.length === 0 ? 'This package has no countries.' : 'No countries match your filters.')}</p>
               : <>
-                <PackageCountriesTable countries={pageCountries} worldId={worldId} />
+                <PackageCountriesTable countries={pageCountries} worldId={worldId} cs={cs} />
                 <div className="actions">
                   <button type="button" disabled={currentPage === 0} onClick={() => setPage(value => Math.max(0, value - 1))}>
                     {cs ? '← Předchozí' : '← Previous'}
                   </button>
-                  <span>{cs ? 'Strana' : 'Page'} {currentPage + 1} / {pageCount}</span>
+                  <span>{cs ? 'Strana' : 'Page'} {currentPage + 1} / {pageCount}
+                    {' · '}{currentPage * COUNTRY_LIST_PAGE_SIZE + 1}–{Math.min((currentPage + 1) * COUNTRY_LIST_PAGE_SIZE, visibleCountries.length)}
+                    {' / '}{visibleCountries.length}</span>
                   <button type="button" disabled={currentPage >= pageCount - 1}
                     onClick={() => setPage(value => Math.min(pageCount - 1, value + 1))}>
                     {cs ? 'Další →' : 'Next →'}

@@ -16,9 +16,9 @@ import {
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 function parseToSeasonParam(toSeasonParam: string | undefined): number | null {
-  if (!toSeasonParam) return null
+  if (!toSeasonParam || !/^[0-9]+$/.test(toSeasonParam)) return null
   const parsed = Number(toSeasonParam)
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
 }
 
 export function RolloverSeasonDetailPage(): JSX.Element {
@@ -83,7 +83,7 @@ export function RolloverSeasonDetailPage(): JSX.Element {
       <SectionCard title="Rollover season context">
         <MetadataList
           items={[
-            { label: 'Overview', value: <Link to={`/runs/${runId}/rollover`}>Back to rollover overview</Link> },
+            { label: 'Overview', value: <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>Back to rollover overview</Link> },
             { label: 'Run', value: runId || 'unknown' },
             { label: 'To season parameter', value: toSeasonParam ?? 'missing' }
           ]}

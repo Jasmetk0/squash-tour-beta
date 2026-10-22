@@ -926,24 +926,26 @@ export function WorldPackageCountryCreatePage(): JSX.Element {
   }
   if (packageQuery.isLoading || geographyQuery.isLoading) return <p className="status">{cs ? 'Načítám formulář země…' : 'Loading country form...'}</p>
   if (packageQuery.error || geographyQuery.error) return <p className="error">{cs ? 'Nepodařilo se načíst podklady formuláře: ' : 'Failed to load country form resources: '}{formatApiError(packageQuery.error ?? geographyQuery.error)}</p>
+  const countryAlreadyExists = isFingerprintConflict(requestError) && /country .* already exists/i.test(formatApiError(requestError))
+  const sourceChanged = isFingerprintConflict(requestError) && !countryAlreadyExists
   if (!allowed) return <section className="panel"><p className="error">{cs ? 'Země lze vytvářet jen v upravitelné vlastní kopii World Package.' : 'Countries can only be created in an editable Custom World source.'}</p></section>
   return <section className="panel">
     <UnsavedWorldPackageNavigationGuard active={dirty} cs={cs} bypassRef={bypassNavigation} />
     <p><Link to={`/admin/world/library/${encodeURIComponent(worldId)}/countries`}>{cs ? 'Zpět na země' : 'Back to countries'}</Link></p>
     <h2>{cs ? 'Přidat zemi' : 'Add country'}</h2>
     {validationError && <p className="error" role="alert">{validationError}</p>}
-    {requestError != null && <p className="error" role="alert">{isFingerprintConflict(requestError)
-      ? (formatApiError(requestError).includes('already exists')
-        ? (cs ? 'Země s tímto kódem již existuje.' : 'A country with this code already exists.')
-        : (cs ? 'Balíček se mezitím změnil. Bez automatického opakování zápisu načtěte aktuální stav a zkontrolujte úpravu znovu.' : 'The package changed. No write was retried: reload current data and review the edit again.'))
-      : formatApiError(requestError)}{' '}
-      {isFingerprintConflict(requestError) && <button type="button" disabled={mutation.isPending} onClick={() => void reload()}>{cs ? 'Načíst aktuální data' : 'Reload current data'}</button>}
+    {requestError != null && <p className="error" role="alert">{countryAlreadyExists
+      ? (cs ? 'Země s tímto kódem již existuje. Vraťte se k formuláři a zvolte jiný kód.' : 'A country with this code already exists. Return to the form and choose a different code.')
+      : sourceChanged
+        ? (cs ? 'Balíček se mezitím změnil. Bez automatického opakování zápisu načtěte aktuální stav a zkontrolujte úpravu znovu.' : 'The package changed. No write was retried: reload current data and review the edit again.')
+        : formatApiError(requestError)}{' '}
+      {sourceChanged && <button type="button" disabled={mutation.isPending} onClick={() => void reload()}>{cs ? 'Načíst aktuální data' : 'Reload current data'}</button>}
     </p>}
     {review
       ? <SectionCard title={cs ? 'Před uložením' : 'Before saving'}>
           <ConfirmWorldPackageChanges title={cs ? 'Kontrola nové země' : 'Review new country'}
             worldId={review.worldId} countryCode={review.payload.code} fingerprint={review.payload.expected_package_fingerprint}
-            changes={review.changes} cs={cs} saving={mutation.isPending} onBack={() => setReview(null)} onConfirm={save} />
+            changes={review.changes} cs={cs} saving={mutation.isPending} locked={sourceChanged || countryAlreadyExists} onBack={() => setReview(null)} onConfirm={save} />
         </SectionCard>
       : <form onSubmit={submit}><fieldset disabled={mutation.isPending}>
           <fieldset><legend>{cs ? 'Identita' : 'Identity'}</legend>

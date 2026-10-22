@@ -55,14 +55,14 @@ describe('World Package country inventory', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next →' }))
     expect(screen.getByText('Country 050')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Open' })).toHaveLength(3)
-    expect(screen.getByText('Page 2 / 2')).toBeInTheDocument()
+    expect(screen.getByText(/Page 2 \/ 2/)).toBeInTheDocument()
 
     fireEvent.change(screen.getByRole('combobox', { name: 'Filter by region' }),
       { target: { value: 'R1' } })
     expect(screen.getByText('Country 019')).toBeInTheDocument()
     expect(screen.queryByText('Country 020')).not.toBeInTheDocument()
     expect(screen.getByText('Showing 20 of 53 countries')).toBeInTheDocument()
-    expect(screen.getByText('Page 1 / 1')).toBeInTheDocument()
+    expect(screen.getByText(/Page 1 \/ 1/)).toBeInTheDocument()
 
     fireEvent.change(screen.getByRole('searchbox', { name: 'Search countries' }),
       { target: { value: ' c005 ' } })
@@ -72,7 +72,7 @@ describe('World Package country inventory', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters and sorting' }))
     expect(screen.getByText('Showing 53 of 53 countries')).toBeInTheDocument()
-    expect(screen.getByText('Page 1 / 2')).toBeInTheDocument()
+    expect(screen.getByText(/Page 1 \/ 2/)).toBeInTheDocument()
     expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
   })
 
@@ -104,6 +104,34 @@ describe('World Package country inventory', () => {
     expect(screen.queryByRole('link', { name: 'Open' })).not.toBeInTheDocument()
   })
 
+  it('sorts countries by descending population with deterministic ties', async () => {
+    api.getWorldPackageCountries.mockResolvedValue({
+      world_id: 'world-a', world_name: 'Earth copy', type: 'official',
+      source: 'built_in', read_only: true, country_count: 3,
+      countries: [
+        { ...country(1), code: 'AAA', name: 'Alpha', population: 1_000_000 },
+        { ...country(2), code: 'ZZZ', name: 'Zulu', population: 2_000_000 },
+        { ...country(3), code: 'BBB', name: 'Beta', population: 2_000_000 },
+      ],
+    })
+    mount()
+    expect(await screen.findByText('Alpha')).toBeInTheDocument()
+    const hrefs = () => screen.getAllByRole('link', { name: 'Open' }).map(el => el.getAttribute('href'))
+    expect(hrefs()).toEqual([
+      '/admin/world/library/world-a/countries/AAA',
+      '/admin/world/library/world-a/countries/BBB',
+      '/admin/world/library/world-a/countries/ZZZ',
+    ])
+    fireEvent.change(screen.getByRole('combobox', { name: 'Sort countries' }),
+      { target: { value: 'population' } })
+    expect(hrefs()).toEqual([
+      '/admin/world/library/world-a/countries/BBB',
+      '/admin/world/library/world-a/countries/ZZZ',
+      '/admin/world/library/world-a/countries/AAA',
+    ])
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+  })
+
   it('rejects a country inventory belonging to a different World Package', async () => {
     api.getWorldPackageCountries.mockResolvedValue({
       world_id: 'foreign-world', countries, country_count: 53,
@@ -111,6 +139,23 @@ describe('World Package country inventory', () => {
     mount()
     expect(await screen.findByRole('alert')).toHaveTextContent('Response does not belong')
     expect(screen.queryByText('Country 000')).not.toBeInTheDocument()
+  })
+
+  it('translates actual table headers and country open links without modifying values', async () => {
+    locale.language = 'cs'
+    api.getWorldPackageCountries.mockResolvedValue({
+      world_id: 'world-a', world_name: 'Český svět', type: 'official',
+      source: 'built_in', read_only: true, country_count: 1,
+      countries: [country(0)],
+    })
+    mount()
+    expect(await screen.findByText('Country 000')).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Země ve World Package' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Kvalita rozvoje' })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Populace' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Otevřít' }))
+      .toHaveAttribute('href', '/admin/world/library/world-a/countries/C000')
+    expect(screen.getByText('1 / 1')).toBeInTheDocument()
   })
 
   it('renders translated Czech controls and the true empty-package state', async () => {
@@ -124,6 +169,8 @@ describe('World Package country inventory', () => {
     expect(screen.getByRole('searchbox', { name: 'Hledat země' })).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Filtrovat podle regionu' })).toBeInTheDocument()
     expect(screen.getByText('Zobrazeno 0 z 0 zemí')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Řazení zemí' })).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Země ve World Package' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Další →' })).not.toBeInTheDocument()
   })
 })

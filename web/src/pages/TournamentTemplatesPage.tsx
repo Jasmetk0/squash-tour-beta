@@ -92,6 +92,8 @@ export function TournamentTemplatesPage(): JSX.Element {
   const queryClient = useQueryClient()
   const [mode, setMode] = useState<Mode>('create')
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
+  const [listSearch, setListSearch] = useState('')
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [luckyLoserText, setLuckyLoserText] = useState(formatJson(EMPTY_FORM.lucky_loser_rules))
   const [pointsText, setPointsText] = useState('null')
@@ -111,6 +113,13 @@ export function TournamentTemplatesPage(): JSX.Element {
   const sortedTemplates = useMemo(
     () => [...(templatesQuery.data?.templates ?? [])].sort((left, right) => left.template_id.localeCompare(right.template_id)),
     [templatesQuery.data?.templates]
+  )
+  const normalizedListSearch = listSearch.trim().toLocaleLowerCase()
+  const visibleTemplates = sortedTemplates.filter(template =>
+    (activeFilter === 'all' ||
+      (activeFilter === 'active' ? template.active !== false : template.active === false)) &&
+    (!normalizedListSearch || `${template.template_id} ${template.category} ${template.tour_level}`
+      .toLocaleLowerCase().includes(normalizedListSearch))
   )
 
   const refetchAll = async () => {
@@ -402,11 +411,32 @@ export function TournamentTemplatesPage(): JSX.Element {
       <div className="grid two-column-grid">
         <SectionCard title="Existing templates">
           <p className="status">Select, duplicate, or delete reusable tournament category definitions.</p>
+          <div className="form-grid">
+            <label>Search tournament templates
+              <input type="search" value={listSearch} onChange={event => setListSearch(event.target.value)}
+                placeholder="Template ID, category or tour" />
+            </label>
+            <label>Filter active templates
+              <select value={activeFilter} onChange={event => setActiveFilter(event.target.value as typeof activeFilter)}>
+                <option value="all">All templates</option>
+                <option value="active">Active only</option>
+                <option value="inactive">Inactive only</option>
+              </select>
+            </label>
+          </div>
+          <button type="button" disabled={!listSearch && activeFilter === 'all'}
+            onClick={() => { setListSearch(''); setActiveFilter('all') }}>Clear template list filters</button>
+          {templatesQuery.data
+            ? <p role="status">Showing {visibleTemplates.length} of {sortedTemplates.length} tournament templates</p>
+            : null}
           {templatesQuery.isLoading ? <p className="status">Loading templates…</p> : null}
           {templatesQuery.isError ? <p className="error">Could not load tournament templates.</p> : null}
-          {!templatesQuery.isLoading && sortedTemplates.length === 0 ? <EmptyState message="No tournament templates. Create the first user-defined template with the form." /> : null}
-          {sortedTemplates.length > 0 ? (
-            <table className="data-table">
+          {!templatesQuery.isLoading && !templatesQuery.isError && sortedTemplates.length === 0
+            ? <EmptyState message="No tournament templates. Create the first user-defined template with the form." /> : null}
+          {sortedTemplates.length > 0 && visibleTemplates.length === 0
+            ? <EmptyState message="No tournament templates match the current filters." /> : null}
+          {visibleTemplates.length > 0 ? (
+            <div className="table-responsive"><table className="data-table" aria-label="Tournament template inventory">
               <thead>
                 <tr>
                   <th>Template ID</th>
@@ -422,7 +452,7 @@ export function TournamentTemplatesPage(): JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {sortedTemplates.map((template) => (
+                {visibleTemplates.map((template) => (
                   <tr key={template.template_id}>
                     <td>{template.template_id}</td>
                     <td>{template.tour_level}</td>
@@ -440,7 +470,7 @@ export function TournamentTemplatesPage(): JSX.Element {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           ) : null}
         </SectionCard>
 

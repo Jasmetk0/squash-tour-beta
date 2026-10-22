@@ -45,6 +45,7 @@ describe('World Package library local filters', () => {
     mount()
     expect(await screen.findByText('FAX World')).toBeInTheDocument()
     expect(screen.getByText('Showing 3 of 3 World Packages')).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'World packages table' }).parentElement).toHaveClass('table-responsive')
 
     const search = screen.getByRole('searchbox', { name: 'Search World Packages' })
     fireEvent.change(search, { target: { value: ' FaX ' } })

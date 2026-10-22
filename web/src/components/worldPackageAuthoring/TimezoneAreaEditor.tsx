@@ -39,18 +39,6 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
   const dirty = timezoneAreaChanges(snapshot.areas, currentDraft).length > 0
   const stale = snapshot.fingerprint !== pkg.fingerprint || snapshot.worldId !== pkg.world_id
 
-  // A remote refresh may replace a clean editor. It never overwrites an unsaved
-  // proposal or supplies a new fingerprint to a previously reviewed command.
-  useEffect(() => {
-    if (!dirty && !review && !refreshing && snapshot.worldId === pkg.world_id && !mutation.isPending &&
-      (snapshot.fingerprint !== pkg.fingerprint ||
-        timezoneAreaChanges(snapshot.areas, geography.timezone_areas).length > 0)) {
-      setSnapshot({worldId: pkg.world_id, fingerprint: pkg.fingerprint, areas: geography.timezone_areas})
-      setAreas(copyAreas(geography.timezone_areas))
-      setSuccess('')
-    }
-  }, [pkg.world_id, pkg.fingerprint, geography.timezone_areas, dirty, review, snapshot, refreshing])
-
   useEffect(() => {
     onDirtyChange?.(dirty)
     return () => onDirtyChange?.(false)
@@ -98,6 +86,18 @@ export function TimezoneAreaEditor({ pkg, geography, onDirtyChange }: {
       if (routeRef.current === command.worldId) { setError(failure); setSuccess('') }
     }
   })
+
+  // A remote refresh may replace a clean editor. It never overwrites an unsaved
+  // proposal or supplies a new fingerprint to a previously reviewed command.
+  useEffect(() => {
+    if (!dirty && !review && !refreshing && snapshot.worldId === pkg.world_id && !mutation.isPending &&
+      (snapshot.fingerprint !== pkg.fingerprint ||
+        timezoneAreaChanges(snapshot.areas, geography.timezone_areas).length > 0)) {
+      setSnapshot({worldId: pkg.world_id, fingerprint: pkg.fingerprint, areas: geography.timezone_areas})
+      setAreas(copyAreas(geography.timezone_areas))
+      setSuccess('')
+    }
+  }, [pkg.world_id, pkg.fingerprint, geography.timezone_areas, dirty, review, snapshot, refreshing])
 
   async function reload(): Promise<void> {
     if (mutation.isPending || refreshing) return

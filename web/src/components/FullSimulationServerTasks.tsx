@@ -25,7 +25,7 @@ const copy={
   needsCount:'Operator action required',liveCount:'Queued / executing / pause requested (health unconfirmed)',otherCount:'Other task states',
   search:'Find a server task',searchHint:'Run, Branch, task, parent command or checkpoint',filter:'Task category',
   allTasks:'All tasks',attentionTasks:'Operator action required',liveTasks:'Queued / active / pausing',otherTasks:'Other states',
-  shown:'Displayed tasks',noMatches:'No tasks match the current search and category. Clear the filters to see all stored tasks.',pinned:'Linked task stays visible regardless of filters.',
+  clearFilters:'Clear filters',shown:'Displayed tasks',noMatches:'No tasks match the current search and category. Clear the filters to see all stored tasks.',pinned:'Linked task stays visible regardless of filters.',
   desired:'Requested task state',lease:'Lease expiry (not proof of a live worker)',selected:'Task selected from the link',missing:'The linked task was not found in this Run / Branch.',contextChanged:'The reviewed request belongs to a different Run, Branch or command. Return to that context to retry; this screen will not redirect it.'},
  cs:{title:'Serverové simulační úlohy',start:'Spustit jako serverovou úlohu',ack:'Serverová úloha přijata',refresh:'Obnovit údaje úloh',
   truth:'Úloha se živým workerem může pokračovat i po zavření stránky; samotný záznam ani lease běh nedokazují. Save a schválení zůstávají ruční. Po restartu serveru úlohu zkontrolujte a výslovně obnovte.',
@@ -41,7 +41,7 @@ const copy={
   needsCount:'Vyžaduje zásah operátora',liveCount:'Fronta / běží / pozastavuje (zdraví procesu nepotvrzeno)',otherCount:'Ostatní stavy úloh',
   search:'Najít serverovou úlohu',searchHint:'Run, větev, úloha, původní příkaz nebo checkpoint',filter:'Kategorie úloh',
   allTasks:'Všechny úlohy',attentionTasks:'Vyžaduje zásah operátora',liveTasks:'Ve frontě / aktivní / pozastavuje se',otherTasks:'Ostatní stavy',
-  shown:'Zobrazené úlohy',noMatches:'Hledání a kategorie neodpovídá žádná úloha. Zrušením filtrů zobrazíte všechny uložené úlohy.',pinned:'Úloha vybraná z odkazu zůstává viditelná bez ohledu na filtry.',
+  clearFilters:'Zrušit filtry',shown:'Zobrazené úlohy',noMatches:'Hledání a kategorie neodpovídá žádná úloha. Zrušením filtrů zobrazíte všechny uložené úlohy.',pinned:'Úloha vybraná z odkazu zůstává viditelná bez ohledu na filtry.',
   desired:'Požadovaný stav úlohy',lease:'Konec platnosti lease (nikoli důkaz živého workeru)',selected:'Úloha vybraná z odkazu',missing:'Odkazovaná úloha nebyla nalezena v tomto Runu / větvi.',contextChanged:'Schválený požadavek patří jinému Runu, větvi nebo příkazu. Pro opakování se vraťte do původního kontextu; tato obrazovka jej nepřesměruje.'}
 } as const
 export function useServerTasks(run?:string,branch?:string,enabled=true){
@@ -206,6 +206,7 @@ export function FullSimulationServerTasks({runId,branchId}:{runId?:string;branch
     <option value="all">{t.allTasks}</option><option value="attention">{t.attentionTasks}</option>
     <option value="live">{t.liveTasks}</option><option value="other">{t.otherTasks}</option>
    </select></label>
+   {filtered&&<button type="button" onClick={()=>{setSearch('');setCategory('all')}}>{t.clearFilters}</button>}
   </div>
   {query.isPending && <p role="status">{t.loading}</p>}
   {query.error && <p role="alert">{formatApiError(query.error)}</p>}

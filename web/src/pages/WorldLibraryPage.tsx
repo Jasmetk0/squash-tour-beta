@@ -414,6 +414,8 @@ export function WorldPackageCountriesPage(): JSX.Element {
   const data = countriesQuery.data?.world_id === worldId ? countriesQuery.data : null
   const [search, setSearch] = useState('')
   const [region, setRegion] = useState('')
+  const [missingTravelRegion, setMissingTravelRegion] = useState(false)
+  const [missingTimezoneArea, setMissingTimezoneArea] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'code' | 'population'>('name')
   const [page, setPage] = useState(0)
   const sourceCountries = data?.countries ?? []
@@ -423,6 +425,8 @@ export function WorldPackageCountriesPage(): JSX.Element {
   const visibleCountries = sourceCountries
     .filter(country =>
       (region === '' || country.region === region) &&
+      (!missingTravelRegion || !country.travel_region) &&
+      (!missingTimezoneArea || !country.timezone_area) &&
       `${country.code} ${country.name}`.toLocaleLowerCase().includes(normalizedSearch)
     )
     .sort((left, right) => sortBy === 'code'
@@ -438,6 +442,8 @@ export function WorldPackageCountriesPage(): JSX.Element {
   const clearFilters = () => {
     setSearch('')
     setRegion('')
+    setMissingTravelRegion(false)
+    setMissingTimezoneArea(false)
     setSortBy('name')
     setPage(0)
   }
@@ -491,7 +497,17 @@ export function WorldPackageCountriesPage(): JSX.Element {
                 </select>
               </label>
             </div>
-            <button type="button" disabled={!search && !region && sortBy === 'name'} onClick={clearFilters}>
+            <div className="actions">
+              <label><input type="checkbox" checked={missingTravelRegion}
+                onChange={event => { setMissingTravelRegion(event.target.checked); setPage(0) }} />
+                {' '}{cs ? 'Bez cestovního regionu' : 'Unassigned travel region'}
+              </label>
+              <label><input type="checkbox" checked={missingTimezoneArea}
+                onChange={event => { setMissingTimezoneArea(event.target.checked); setPage(0) }} />
+                {' '}{cs ? 'Bez časové oblasti' : 'Unassigned timezone area'}
+              </label>
+            </div>
+            <button type="button" disabled={!search && !region && !missingTravelRegion && !missingTimezoneArea && sortBy === 'name'} onClick={clearFilters}>
               {cs ? 'Vymazat filtry a řazení' : 'Clear filters and sorting'}
             </button>
             <p role="status">{cs

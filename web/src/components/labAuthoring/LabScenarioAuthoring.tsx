@@ -244,6 +244,8 @@ const messages: Record<string, [string, string]> = {
   health: ['Duration cannot be changed here because the explicit Health timeline must stay aligned. Use advanced JSON.', 'Délku zde nelze změnit: explicitní Health časová osa musí zůstat sladěná. Použijte pokročilý JSON.'],
   size: ['JSON file exceeds the 2 MB limit.', 'Soubor JSON překračuje limit 2 MB.'],
   stale: ['The editor changed while the file was being read. No file was applied.', 'Editor se během čtení souboru změnil. Soubor nebyl použit.'],
+  modifier: ['Modifier must be between −0.35 and +0.35.', 'Modifikátor musí být od −0,35 do +0,35.'],
+  round: ['Choose no limit or a round from 1 to 7.', 'Vyberte bez omezení nebo kolo 1 až 7.'],
   file: ['Could not read the JSON file.', 'Soubor JSON se nepodařilo načíst.']
 }
 
@@ -252,6 +254,71 @@ function explain(error: unknown, cs: boolean): string {
   return (messages[key] ?? messages.file)[cs ? 1 : 0]
 }
 
+
+function ParticipantModifierEditor({ kind, participants, cs, busy, onApply }: {
+  kind: 'match' | 'tournament'; participants: ParticipantOption[]; cs: boolean; busy: boolean
+  onApply: (target: ParticipantOption['target'], key: ParticipantModifier, raw: string) => void
+}): JSX.Element {
+  const [selected, setSelected] = useState(0)
+  const [key, setKey] = useState<ParticipantModifier>('form_modifier')
+  const current = participants[selected] ?? participants[0]
+  const original = String(current?.modifier[key] ?? 0)
+  const [draft, setDraft] = useState(original)
+  useEffect(() => { setDraft(original) }, [original, selected, key])
+  return <fieldset>
+    <legend>{cs ? 'Kontext účastníků' : 'Participant context modifiers'}</legend>
+    <p className="status">{cs
+      ? 'Úprava ovlivní jen jeden kontextový modifikátor (−0,35 až +0,35), ne profil hráče nebo historický zdroj.'
+      : 'Changes one context modifier (−0.35 to +0.35), not the player profile or historical source.'}</p>
+    <label>{cs ? 'Hráč' : 'Player'}{' '}
+      <select aria-label={kind + ' Lab modifier player'} value={participants.indexOf(current)}
+        disabled={busy} onChange={event => setSelected(Number(event.target.value))}>
+        {participants.map((participant, index) =>
+          <option key={String(participant.target)} value={index}>{participant.name} ({participant.id})</option>)}
+      </select>
+    </label>{' '}
+    <label>{cs ? 'Modifikátor' : 'Modifier'}{' '}
+      <select aria-label={kind + ' Lab modifier kind'} disabled={busy} value={key}
+        onChange={event => setKey(event.target.value as ParticipantModifier)}>
+        {modifierOptions.map(option =>
+          <option key={option.key} value={option.key}>{cs ? option.cs : option.en}</option>)}
+      </select>
+    </label>{' '}
+    <label>{cs ? 'Hodnota' : 'Value'}{' '}
+      <input aria-label={kind + ' Lab modifier value'} type="number" min={-0.35} max={0.35}
+        step="0.01" disabled={busy} value={draft}
+        onChange={event => setDraft(event.target.value)}
+        onKeyDown={event => { if (event.key === 'Enter') event.preventDefault() }} />
+    </label>{' '}
+    <button type="button" aria-label={kind + ' Lab apply modifier'}
+      disabled={busy || draft === original}
+      onClick={() => onApply(current.target, key, draft)}>
+      {cs ? 'Použít modifikátor' : 'Apply modifier'}
+    </button>
+  </fieldset>
+}
+
+function TournamentStopRoundEditor({ current, cs, busy, onApply }: {
+  current: unknown; cs: boolean; busy: boolean; onApply: (raw: string) => void
+}): JSX.Element {
+  const original = current == null ? '' : String(current)
+  const [draft, setDraft] = useState(original)
+  useEffect(() => { setDraft(original) }, [original])
+  return <div>
+    <label>{cs ? 'Ukončení po kole' : 'Stop after round'}{' '}
+      <select aria-label="tournament Lab stop after round" disabled={busy} value={draft}
+        onChange={event => setDraft(event.target.value)}>
+        <option value="">{cs ? 'Bez omezení (celý turnaj)' : 'No limit (full tournament)'}</option>
+        {Array.from({ length: 7 }, (_, i) =>
+          <option value={i + 1} key={i}>{cs ? 'Kolo' : 'Round'} {i + 1}</option>)}
+      </select>
+    </label>{' '}
+    <button type="button" aria-label="tournament Lab apply stop after round"
+      disabled={busy || draft === original} onClick={() => onApply(draft)}>
+      {cs ? 'Použít limit kol' : 'Apply round limit'}
+    </button>
+  </div>
+}
 
 function GuidedFieldEditor({ field, kind, value, cs, busy, onApply }: {
   field: Field; kind: LabKind; value: unknown; cs: boolean; busy: boolean
@@ -369,6 +436,7 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
   let parsed: JsonObject | null = null
   try { parsed = readLabScenario(text, kind) } catch { /* malformed advanced JSON is retained verbatim */ }
   const fields = parsed ? fieldsFor(kind, parsed) : []
+  const participants = parsed ? participantOptions(kind, parsed) : []
   const variants = kind === 'player' && parsed ? parsed.variants as JsonObject[] : []
   const weeks = variants.length ? (variants[0].competitive_match_counts as number[]).length : 0
   const healthLocked = variants.some(variant => variant.health_timeline != null)
@@ -449,6 +517,19 @@ export function LabScenarioAuthoring({ kind, text, onChange, savedScenario, save
         key={selection + ':' + revision + ':' + field.path.join('.')} field={field}
         kind={kind} value={fieldValue(parsed!, field.path)} cs={cs} busy={busy}
         onApply={applyField} />)}
+      {(kind === 'match' || kind === 'tournament') && participants.length > 0 &&
+        <ParticipantModifierEditor key={selection + ':' + revision} kind={kind}
+          participants={participants} cs={cs} busy={busy}
+          onApply={(target, key, value) => {
+            try { edit(changeLabParticipantModifier(text, kind, target, key, value)) }
+            catch (reason) { setError(explain(reason, cs)) }
+          }} />}
+      {kind === 'tournament' && <TournamentStopRoundEditor
+        key={selection + ':' + revision} current={parsed.stop_after_round}
+        cs={cs} busy={busy} onApply={raw => {
+          try { edit(changeTournamentStopRound(text, raw)) }
+          catch (reason) { setError(explain(reason, cs)) }
+        }} />}
       {kind === 'player' && variants.map((variant, index) => <VariantMatchCountsEditor
         key={String(variant.variant_id) + ':' + selection + ':' + revision} id={String(variant.variant_id)}
         values={variant.competitive_match_counts as number[]} index={index} cs={cs} busy={busy}

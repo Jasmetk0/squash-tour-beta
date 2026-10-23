@@ -15,7 +15,7 @@ export function HistoricalLabSourcePicker({ lab, run, branch, revision, onChange
   const history = useQuery({queryKey: ['lab-source-history', run, branch], queryFn: () => listSavedRevisionHistory(run, branch, {limit: 200}), enabled: open && Boolean(run && branch), retry: false})
   return <details onToggle={event => setOpen(event.currentTarget.open)}>
     <summary>{cs ? 'Vybrat uložený historický zdroj' : 'Choose a saved historical source'}</summary>
-    <label>Run <select aria-label={`${lab} source Run`} value={run} onChange={e => onChange(e.target.value, '', '')}>
+    <label>{cs ? 'Run' : 'Run'} <select aria-label={`${lab} source Run`} value={run} onChange={e => onChange(e.target.value, '', '')}>
       <option value="">—</option>{runs.data?.run_containers.map(item => <option key={item.run_id} value={item.run_id}>{item.display_name}</option>)}
     </select></label>
     <label>{cs ? 'Větev' : 'Branch'} <select aria-label={`${lab} source Branch`} value={branch} onChange={e => onChange(run, e.target.value, '')}>
@@ -24,7 +24,15 @@ export function HistoricalLabSourcePicker({ lab, run, branch, revision, onChange
     <label>{cs ? 'Uložená revize' : 'Saved Revision'} <select aria-label={`${lab} source Saved Revision`} value={revision} onChange={e => onChange(run, branch, e.target.value)}>
       <option value="">—</option>{history.data?.saved_revisions.map(item => <option key={item.revision_id} value={item.revision_id}>#{item.sequence} · {item.revision_id}</option>)}
     </select></label>
+    {open && runs.isPending && <p role="status">{cs ? 'Načítám Runy…' : 'Loading Runs…'}</p>}
+    {open && runs.isSuccess && runs.data.run_containers.length === 0 && <p role="status">{cs ? 'Žádné Runy v inventáři.' : 'No Runs in the source inventory.'}</p>}
+    {open && run && branches.isPending && <p role="status">{cs ? 'Načítám větve…' : 'Loading Branches…'}</p>}
+    {open && run && branches.isSuccess && branches.data.run_branches.length === 0 && <p role="status">{cs ? 'Vybraný Run nemá dostupné větve.' : 'No Branches available for the selected Run.'}</p>}
+    {open && run && branch && history.isPending && <p role="status">{cs ? 'Načítám uložené revize…' : 'Loading Saved Revisions…'}</p>}
+    {open && run && branch && history.isSuccess && history.data.saved_revisions.length === 0 && <p role="status">{cs ? 'V této větvi nejsou žádné dostupné uložené revize.' : 'No Saved Revisions available for this Branch.'}</p>}
     {history.data?.has_more_older && <p>{cs ? 'Starší revizi lze zadat jejím ID.' : 'An older revision can be entered by its ID.'}</p>}
-    {(runs.isError || branches.isError || history.isError) && <p role="alert">{cs ? 'Zdroj nelze ověřit.' : 'Source inventory could not be verified.'}</p>}
+    {runs.isError && <p role="alert">{cs ? 'Nepodařilo se načíst seznam Runů.' : 'Failed to load Runs.'}</p>}
+    {run && branches.isError && <p role="alert">{cs ? 'Nepodařilo se načíst větve.' : 'Failed to load Branches.'}</p>}
+    {run && branch && history.isError && <p role="alert">{cs ? 'Nepodařilo se načíst uložené revize.' : 'Failed to load Saved Revisions.'}</p>}
   </details>
 }

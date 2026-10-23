@@ -321,6 +321,7 @@ describe('built-in World cloning', () => {
       validation: {status: 'valid', error_count: 0, warning_count: 1, info_count: 0},
     }))
     const client = new QueryClient({defaultOptions: {queries: {retry: false}}})
+    const invalidate = vi.spyOn(client, 'invalidateQueries')
     const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
       {initialEntries: ['/world/real_world']})
     render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
@@ -382,6 +383,9 @@ describe('built-in World cloning', () => {
       new_world_id: 'local_world', name: 'Original authored name',
       description: 'Custom world cloned from Real World.', dry_run: false,
     })
+    expect(invalidate).toHaveBeenCalledWith({queryKey: ['world-packages']})
+    expect(invalidate).toHaveBeenCalledWith({queryKey: ['world-package', 'local_world']})
+    expect(invalidate).toHaveBeenCalledWith({queryKey: ['world-package-validation', 'local_world']})
     switchLanguage('cs')
     expect(screen.getByText('Úspěch:')).toBeInTheDocument()
     expect(screen.getByText('Vytvořený balíček')).toBeInTheDocument()

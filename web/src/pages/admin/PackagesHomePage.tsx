@@ -25,6 +25,14 @@ function statusText(value: string, cs: boolean): string {
   if (value === 'info') return cs ? 'informace' : 'info'
   return value
 }
+/** Show the recorded check outcome as well as severity; preserve API status codes. */
+function validationOutcome(value: string, cs: boolean): string {
+  if (!cs) return value
+  const labels: Record<string,string> = {
+    passed: 'splněno', warning: 'varování', failed: 'nesplněno'
+  }
+  return labels[value] ? `${labels[value]} (${value})` : value
+}
 function sourceText(value: string, cs: boolean): string {
   if (value === 'built_in') return cs ? 'vestavěný' : 'built-in'
   if (value === 'custom') return cs ? 'vlastní' : 'custom'
@@ -152,6 +160,7 @@ export function PackageWorldDetailPage():JSX.Element {
   const [params,setParams]=useSearchParams(),tab=params.get('tab')||'overview'
   const active=tab==='contents'||tab==='validation'?tab:'overview'
   const [countrySearch,setCountrySearch]=useState('')
+  const [countrySort,setCountrySort]=useState<'source'|'name'|'population'>('source')
   const [severityFilter,setSeverityFilter]=useState('all')
   const q=useQuery({queryKey:['world-package',worldId],queryFn:()=>getWorldPackage(worldId),enabled:Boolean(worldId),retry:false})
   const countriesQuery=useQuery({queryKey:['world-package-countries',worldId],queryFn:()=>getWorldPackageCountries(worldId),enabled:active!=='overview',retry:false})
@@ -162,7 +171,11 @@ export function PackageWorldDetailPage():JSX.Element {
   const geo=geoQuery.data?.world_id===worldId?geoQuery.data:null
   const validation=valQuery.data?.world_id===worldId?valQuery.data:null
   const countryTerm=normalizeCatalogSearch(countrySearch)
-  const visibleCountries=countries?.filter(c=>normalizeCatalogSearch([c.name,c.code,c.region].join(' ')).includes(countryTerm))??[]
+  // Sort a filtered copy only; never mutate the query cache's authoritative order.
+  const visibleCountries=(countries?.filter(c=>normalizeCatalogSearch([c.name,c.code,c.region].join(' ')).includes(countryTerm))??[])
+    .sort((a,b)=>countrySort==='name'
+      ? a.name.localeCompare(b.name,cs?'cs-CZ':'en-US')||a.code.localeCompare(b.code)
+      : countrySort==='population' ? b.population-a.population||a.code.localeCompare(b.code) : 0)
   const visibleChecks=validation?.checks.filter(c=>severityFilter==='all'||c.severity===severityFilter)??[]
   const source='/admin/world/library/'+encodeURIComponent(worldId)
   return <section className="panel package-index">
@@ -195,8 +208,13 @@ export function PackageWorldDetailPage():JSX.Element {
         {countriesQuery.isPending&&<p role="status">{cs ? "Načítám země…" : "Loading countries…"}</p>}
         {countriesQuery.isError&&<><p role="alert" className="error">{cs ? 'Země se nepodařilo načíst: ' : 'Failed to load countries: '}{formatApiError(countriesQuery.error)}</p><RetryRead cs={cs} what="countries" fetching={countriesQuery.isFetching} onRetry={() => { void countriesQuery.refetch() }} /></>}
         {countries&&<><p role="status" className="status">{cs ? 'Ověřený seznam zemí' : 'Verified country inventory'}: {countries.length}</p><label>{cs?'Hledat zemi, kód nebo region':'Search countries, codes or regions'}<input type="search" value={countrySearch} onChange={e=>setCountrySearch(e.target.value)}/></label>
+          <label>{cs?'Seřadit země':'Sort countries'}<select aria-label="Package country sort" value={countrySort} onChange={e=>setCountrySort(e.target.value as typeof countrySort)}>
+            <option value="source">{cs?'Původní pořadí':'Source order'}</option>
+            <option value="name">{cs?'Podle názvu A–Z':'By name A–Z'}</option>
+            <option value="population">{cs?'Podle populace sestupně':'By population descending'}</option>
+          </select></label>
           {countryTerm&&<p role="status" className="status">{cs ? `Zobrazeno ${visibleCountries.length} z ${countries.length} zemí. Filtr nemění obsah balíčku.` : `Showing ${visibleCountries.length} of ${countries.length} countries. Filtering does not change the package.`}</p>}
-          <ul className="package-index-countries">{visibleCountries.map(c=>
+          <ul className="package-index-countries" aria-label="World package countries">{visibleCountries.map(c=>
             <li key={c.code}><Link to={source+'/countries/'+encodeURIComponent(c.code)}>{c.name} ({c.code})</Link>
               <span className="status">{c.region} · {c.population.toLocaleString(cs ? 'cs-CZ' : 'en-US')}</span></li>)}</ul>
           {countries.length === 0 ? <p role="status">{cs ? "V balíčku nejsou žádné země." : "This package contains no countries."}</p> : visibleCountries.length === 0 ? <p role="status">{cs ? "Žádná země neodpovídá hledání." : "No country matches the search."}</p> : null}</>}
@@ -225,6 +243,7 @@ export function PackageWorldDetailPage():JSX.Element {
           <ul className="package-index-checks">{visibleChecks.map((check,i)=>{
             const country=resolveCountry(check,countries?.map(c=>c.code)??[])
             return <li key={check.code+':'+i}><strong>{cs ? statusText(check.severity, true).toUpperCase() : check.severity.toUpperCase()} · {check.code}</strong>
+              <p className="status">{cs?'Výsledek kontroly':'Check outcome'}: {validationOutcome(check.status,cs)}</p>
               <p>{check.message}</p><small className="status">{check.path}{check.field&&' · '+check.field}</small>
               {country&&<p><Link to={source+'/countries/'+encodeURIComponent(country)}>{cs?'Otevřít dotčenou zemi':'Open affected country'}: {country} →</Link></p>}</li>
           })}</ul>

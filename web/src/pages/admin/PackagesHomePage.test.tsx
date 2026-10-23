@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -181,6 +181,30 @@ describe('source-backed Packages frontend',()=>{
     expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
   })
 
+  it('sorts filtered countries by localized name or population without modifying API inventory',async()=>{
+    api.getWorldPackageCountries.mockResolvedValue({world_id:'demo',countries:[
+      {code:'USA',name:'United States',region:'North America',population:200},
+      {code:'CZE',name:'Česko',region:'Europe',population:100},
+      {code:'BWA',name:'Botswana',region:'Africa',population:300}
+    ]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    expect(await screen.findByRole('link',{name:'Česko (CZE)'})).toBeInTheDocument()
+    const countries=screen.getByRole('list',{name:'World package countries'})
+    const names=()=>within(countries).getAllByRole('link').map(x=>x.textContent)
+    expect(names()).toEqual(['United States (USA)','Česko (CZE)','Botswana (BWA)'])
+    const sorter=screen.getByRole('combobox',{name:'Package country sort'})
+    await userEvent.selectOptions(sorter,'name')
+    expect(names()).toEqual(['Botswana (BWA)','Česko (CZE)','United States (USA)'])
+    await userEvent.selectOptions(sorter,'population')
+    expect(names()).toEqual(['Botswana (BWA)','United States (USA)','Česko (CZE)'])
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(sorter).toHaveValue('population')
+    expect(names()).toEqual(['Botswana (BWA)','United States (USA)','Česko (CZE)'])
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+  })
+
   it('filters validation severity without changing original counts or diagnostic messages',async()=>{
     api.getWorldPackageValidation.mockResolvedValue({world_id:'demo',status:'errors',error_count:1,warning_count:1,info_count:1,checks:[
       {code:'broken_country',severity:'error',status:'failed',message:'Country is invalid',path:'countries/CZE/data.json',field:'name'},
@@ -194,14 +218,17 @@ describe('source-backed Packages frontend',()=>{
     expect(screen.getByText(/1 chyba · 1 varování · 1 informace/)).toBeInTheDocument()
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package validation severity filter'}),'error')
     expect(screen.getByText('Country is invalid')).toBeInTheDocument()
+    expect(screen.getByText('Výsledek kontroly: nesplněno (failed)')).toBeInTheDocument()
     expect(screen.queryByText('Country detail to inspect')).not.toBeInTheDocument()
     expect(screen.getByText(/Zobrazeno 1 z 3 kontrol/)).toBeInTheDocument()
     expect(screen.getByText(/1 chyba · 1 varování · 1 informace/)).toBeInTheDocument()
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package validation severity filter'}),'info')
     expect(screen.getByText('Imported as supplied')).toBeInTheDocument()
+    expect(screen.getByText('Výsledek kontroly: splněno (passed)')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
     expect(screen.getByRole('combobox',{name:'Package validation severity filter'})).toHaveValue('info')
     expect(screen.getByText('Imported as supplied')).toBeInTheDocument()
+    expect(screen.getByText('Check outcome: passed')).toBeInTheDocument()
     expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
   })
 

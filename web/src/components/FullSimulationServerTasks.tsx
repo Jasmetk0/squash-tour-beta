@@ -1,4 +1,4 @@
-import { taskCalendarPosition } from '../api/fullSimulationTasksCalendar'
+import { serverTaskCalendar, taskCalendarPosition } from '../api/fullSimulationTasksCalendar'
 import { BoundaryDescription } from './FullSimulationBoundaryTargets'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
@@ -10,6 +10,7 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import { FullSimulationSummary } from './FullSimulationSummary'
 import { FullSimulationWeekScheduleReview } from './FullSimulationWeekScheduleReview'
+import { supportedCalendarSeason } from './RunPackageSetupPanel'
 
 const copy={
  en:{title:'Server simulation tasks',start:'Start as server task',ack:'Server task accepted',refresh:'Refresh task evidence',
@@ -27,6 +28,7 @@ const copy={
   search:'Find a server task',searchHint:'Run, Branch, task, parent command or checkpoint',filter:'Task category',
   allTasks:'All tasks',attentionTasks:'Operator action required',liveTasks:'Queued / active / pausing',otherTasks:'Other states',
   uncertainAfterProgress:'Server evidence changed while the original continuation response was uncertain. Do not create a new request here. Replay only the identical frozen request ID, or cancel and inspect the current task evidence before authorizing a new intent.',clearFilters:'Clear filters',scopeMissing:'Select a valid Run and Branch before inspecting scoped server tasks. No global inventory was requested.',shown:'Displayed tasks',noMatches:'No tasks match the current search and category. Clear the filters to see all stored tasks.',pinned:'Linked task stays visible regardless of filters.',
+  unsupportedCalendarHandoff:'The source Calendar picker does not support this original clock or season. The link selects this Branch only; inspect its calendar without assuming a source was selected.',
   clock:'Original task calendar',season:'Season',year:'Calendar year',yearWeek:'Year week',calendarRevision:'Calendar Saved Revision',legacyClock:'Legacy FAX calendar contract',desired:'Requested task state',lease:'Lease expiry (not proof of a live worker)',selected:'Task selected from the link',missing:'The linked task was not found in this Run / Branch.',contextChanged:'The reviewed request belongs to a different Run, Branch or command. Return to that context to retry; this screen will not redirect it.'},
  cs:{title:'Serverové simulační úlohy',start:'Spustit jako serverovou úlohu',ack:'Serverová úloha přijata',refresh:'Obnovit údaje úloh',
   truth:'Úloha se živým workerem může pokračovat i po zavření stránky; samotný záznam ani lease běh nedokazují. Save a schválení zůstávají ruční. Po restartu serveru úlohu zkontrolujte a výslovně obnovte.',
@@ -43,6 +45,7 @@ const copy={
   search:'Najít serverovou úlohu',searchHint:'Run, větev, úloha, původní příkaz nebo checkpoint',filter:'Kategorie úloh',
   allTasks:'Všechny úlohy',attentionTasks:'Vyžaduje zásah operátora',liveTasks:'Ve frontě / aktivní / pozastavuje se',otherTasks:'Ostatní stavy',
   uncertainAfterProgress:'Stav úlohy se změnil, ale odpověď na původní pokračování nebyla potvrzena. Nevytvářejte nový požadavek. Lze pouze opakovat původní uzamčené ID a údaje nebo opakování zrušit a před novým rozhodnutím zkontrolovat současný stav.',clearFilters:'Zrušit filtry',scopeMissing:'Před zobrazením úloh vyberte platný Run a větev. Globální přehled nebyl vyžádán.',shown:'Zobrazené úlohy',noMatches:'Hledání a kategorie neodpovídá žádná úloha. Zrušením filtrů zobrazíte všechny uložené úlohy.',pinned:'Úloha vybraná z odkazu zůstává viditelná bez ohledu na filtry.',
+  unsupportedCalendarHandoff:'Výběr zdrojového kalendáře nepodporuje tento původní časový základ nebo sezonu. Odkaz vybere pouze tuto větev; zkontrolujte kalendář bez předpokladu, že byl vybrán zdroj.',
   clock:'Původní kalendář úlohy',season:'Sezona',year:'Kalendářní rok',yearWeek:'Týden roku',calendarRevision:'Saved Revision kalendáře',legacyClock:'Historický kalendářní kontrakt FAX',desired:'Požadovaný stav úlohy',lease:'Konec platnosti lease (nikoli důkaz živého workeru)',selected:'Úloha vybraná z odkazu',missing:'Odkazovaná úloha nebyla nalezena v tomto Runu / větvi.',contextChanged:'Schválený požadavek patří jinému Runu, větvi nebo příkazu. Pro opakování se vraťte do původního kontextu; tato obrazovka jej nepřesměruje.'}
 } as const
 export function useServerTasks(run?:string,branch?:string,enabled=true){
@@ -110,8 +113,14 @@ export function taskCalendarHandoff(task:ServerTask):string|null{
  if(task.state!=='awaiting_operator'||!['week_preparation_required','season_preparation_required','week61_preparation_required','final_week_preparation_required'].includes(task.checkpoint??'')||
    !task.current_week)return null
  const base=`/admin/runs/${encodeURIComponent(task.run_id)}/manage?branch=${encodeURIComponent(task.branch_id)}`
- return task.schema_version==='full_simulation_task_view.v2'
-  ? base+`&calendarSeason=${taskCalendarPosition(task,task.current_week).seasonStartYear}` : base
+ if(task.schema_version!=='full_simulation_task_view.v2')return base
+ // The existing source picker consumes FAX season keys, not numeric years or
+ // arbitrary Run clocks. Never translate W52/W80 into a plausible FAX source.
+ const clock=serverTaskCalendar(task)
+ if(clock.weeks_per_year!==61||clock.season_start_year_week!==37)return base
+ const startYear=taskCalendarPosition(task,task.current_week).seasonStartYear
+ const source=supportedCalendarSeason(`${startYear}-${startYear+1}`)
+ return source ? base+`&calendarSeason=${encodeURIComponent(source)}` : base
 }
 function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
  const {language}=useLanguage();const t=copy[language];const client=useQueryClient()
@@ -175,6 +184,7 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
   </details>}
   {task.error && <p role="alert">{task.error}</p>}
   {calendarHandoff && <p><Link to={calendarHandoff}>{t.calendarPrep}</Link> · {t.calendarPrepNote}</p>}
+  {calendarHandoff && task.schema_version==='full_simulation_task_view.v2' && !calendarHandoff.includes('&calendarSeason=') && <p role="status">{t.unsupportedCalendarHandoff}</p>}
   {task.needs_operator_action && <>{requiresNewWeekReview
    ? <p role="alert">{checkpointGuidance(task.checkpoint,language)}</p>
    : <><p>{t.manual}</p>{task.state==='awaiting_operator' && <p>{checkpointGuidance(currentCheckpoint,language)}</p>}

@@ -3,7 +3,8 @@
 Verified base `buuk` `26e67903` contains owner-merged #1632–1634. Server task
 views now expose an authenticated original Saved calendar and revision in a v2
 read DTO. Progress calculations use its W/horizon; CS/EN rows show the true
-season/year/week, and v2 preparation links select the actual season start year.
+season/year/week. Compatible v2 preparation links select the actual source season;
+unsupported source-picker clocks remain explicit Branch-only handoffs.
 Old v1 client responses retain explicit legacy semantics. GET never rewrites
 Saved history, task storage, commands, audit or idempotency receipts; a later
 Run horizon cannot silently replace the original task clock.

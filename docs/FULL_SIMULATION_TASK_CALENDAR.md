@@ -39,9 +39,12 @@ back to v1. W52/W61/W80, a one-week year, long horizons and numeric overflow
 boundaries have focused read-contract tests.
 
 Task rows show the original season label, calendar year and year-week in CS/EN.
-For v2 season-preparation handoffs, `calendarSeason` uses the actual season start
-year from this original clock, including a season that crosses a calendar year.
-Old v1 responses retain Branch-only links.
+For v2 season-preparation handoffs compatible with the existing FAX source
+picker, `calendarSeason` uses the actual season start year in its accepted
+`YYYY-YYYY` format. Unsupported W/offsets or source years keep Branch-only links
+with explicit CS/EN guidance; W52/W80 is never translated into FAX.
+Old v1 responses retain Branch-only links. A destination-parser contract test
+prevents a plausible numeric year query being silently ignored by the consumer.
 
 ## Preserved execution limits
 

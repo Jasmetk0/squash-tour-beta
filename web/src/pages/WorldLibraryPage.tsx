@@ -281,15 +281,18 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const [newWorldId, setNewWorldId] = useState('')
   const [name, setName] = useState('')
-  const [description, setDescription] = useState(`Custom world cloned from ${source.name}.`)
+  const defaultDescription = useRef(`Custom world cloned from ${source.name}.`)
+  const [description, setDescription] = useState(defaultDescription.current)
   const [result, setResult] = useState<WorldPackageCloneResponse | null>(null)
   const [apiError, setApiError] = useState<CloneUiError | null>(null)
   const [review, setReview] = useState<{ sourceWorldId: string; sourceFingerprint: string; locationKey: string; payload: WorldPackageClonePayload } | null>(null)
   useEffect(() => {
-    setNewWorldId(''); setName(''); setDescription(`Custom world cloned from ${source.name}.`)
+    // Re-fetches may rename the same source; never discard the user's draft for that.
+    defaultDescription.current = `Custom world cloned from ${source.name}.`
+    setNewWorldId(''); setName(''); setDescription(defaultDescription.current)
     setResult(null); setApiError(null); setReview(null)
-  }, [source.world_id, source.name])
-  const cloneHasDraft = Boolean(newWorldId || name || description !== `Custom world cloned from ${source.name}.` || review)
+  }, [source.world_id])
+  const cloneHasDraft = Boolean(newWorldId || name || description !== defaultDescription.current || review)
   useUnsavedWorldPackageWarning(cloneHasDraft)
   useEffect(() => { onDirtyChange(cloneHasDraft); return () => onDirtyChange(false) }, [cloneHasDraft, onDirtyChange])
   const mutation = useMutation({
@@ -319,7 +322,8 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
       setResult(response)
       setApiError(null)
       if (response.ok && !response.dry_run) {
-        setReview(null); setNewWorldId(''); setName(''); setDescription(`Custom world cloned from ${source.name}.`)
+        defaultDescription.current = `Custom world cloned from ${source.name}.`
+        setReview(null); setNewWorldId(''); setName(''); setDescription(defaultDescription.current)
       }
     },
     onError: (error, command) => {

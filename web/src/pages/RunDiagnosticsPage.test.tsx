@@ -25,6 +25,15 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../api/client', () => api)
 
+const finalsQualification = (runId: string, season = 2028) => ({
+  run_id: runId, season, source_as_of_season: season, source_as_of_week: 60,
+  qualification: { qualified_players: [] }
+})
+const finalsResult = (runId: string, season = 2028) => ({
+  run_id: runId, season, event_id: 'FINALS', source_as_of_season: season,
+  source_as_of_week: 60, result: { champion_player_id: 'P1' }
+})
+
 describe('RunDiagnosticsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -96,7 +105,7 @@ describe('RunDiagnosticsPage', () => {
       }
     })
     api.getFinalsSummary.mockResolvedValueOnce({
-      run_id: 'run x/y', season: 2028, qualification: { qualified_players: [] }, result: null,
+      run_id: 'run x/y', season: 2028, qualification: finalsQualification('run x/y'), result: null,
     })
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run%20x%2Fy/diagnostics')
     expect(await screen.findByRole('link', { name: 'Run Detail' })).toHaveAttribute(
@@ -297,7 +306,9 @@ describe('RunDiagnosticsPage', () => {
       if (resource === 'finals') {
         api.getFinalsSummary.mockResolvedValueOnce({
           run_id: 'FOREIGN_RUN', season: 2099,
-          qualification: { qualified_players: [] }, result: { champion_player_id: 'FOREIGN_CHAMPION' }
+          qualification: finalsQualification('FOREIGN_RUN', 2099), result: {
+            ...finalsResult('FOREIGN_RUN', 2099), result: { champion_player_id: 'FOREIGN_CHAMPION' }
+          }
         })
       }
       if (resource === 'rollover') {
@@ -345,6 +356,28 @@ describe('RunDiagnosticsPage', () => {
     },
   )
 
+  it.each([
+    { issue: 'foreign qualification Run', qualification: finalsQualification('another-run'), result: null },
+    { issue: 'wrong qualification season', qualification: finalsQualification('run-a', 2029), result: null },
+    { issue: 'foreign result Run', qualification: finalsQualification('run-a'), result: finalsResult('another-run') },
+    { issue: 'wrong result season', qualification: finalsQualification('run-a'), result: finalsResult('run-a', 2029) },
+  ])('rejects nested Finals identity: $issue', async ({qualification, result}) => {
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2028, qualification, result
+    })
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Finals summary belongs to another Run. Its status and inspection links are hidden.'
+    )
+    expect(screen.queryByRole('link', {name: /Inspect Finals (result|qualification)/}))
+      .not.toBeInTheDocument()
+    expect(screen.getByRole('link', {name: 'Inspect latest completed event (E5)'}))
+      .toHaveAttribute('href', '/runs/run-a/events/E5')
+    expect(screen.getByRole('link', {name: 'Inspect latest rollover details'}))
+      .toHaveAttribute('href', '/runs/run-a/rollover')
+  })
+
   it('renders availability and artifact-state statuses', async () => {
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-availability/diagnostics')
 
@@ -362,7 +395,7 @@ describe('RunDiagnosticsPage', () => {
     api.getFinalsSummary.mockResolvedValueOnce({
       run_id: 'run-links',
       season: 2028,
-      qualification: { qualified_players: [] },
+      qualification: finalsQualification('run-links'),
       result: null
     })
     api.listEvents.mockResolvedValueOnce({ run_id: 'run-links',
@@ -423,8 +456,8 @@ describe('RunDiagnosticsPage', () => {
     api.getFinalsSummary.mockResolvedValueOnce({
       run_id: 'run-links',
       season: 2028,
-      qualification: { qualified_players: [] },
-      result: { champion_player_id: 'P1' }
+      qualification: finalsQualification('run-links'),
+      result: finalsResult('run-links')
     })
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-links/diagnostics')
 

@@ -30,6 +30,12 @@ function sourceText(value: string, cs: boolean): string {
   if (value === 'custom') return cs ? 'vlastní' : 'custom'
   return value
 }
+/** UI wording only: values, filters, IDs and API data remain numeric/raw. */
+function quantity(count: number, cs: boolean, cz: [string,string,string], en: [string,string]): string {
+  const label = cs ? (count === 1 ? cz[0] : count >= 2 && count <= 4 ? cz[1] : cz[2])
+    : (count === 1 ? en[0] : en[1])
+  return `${count} ${label}`
+}
 const tools: Partial<Record<PackageCategory,string>> = {
   world:'/admin/world/library',countries:'/admin/world/library',
   category:'/admin/tour-seasons/categories',series:'/admin/tour-seasons/tournaments',
@@ -93,7 +99,7 @@ export function PackagesHomePage():JSX.Element {
           : cat==='players'
             ? (cs?'Přenosný obsah hráčských balíčků zatím není definován.':'Portable Player-package payload is not specified yet.')
             : (cs?'Otevřít seznam této kategorie.':'Browse this category.')}</p>
-        <small className="status">{(cat==='world'||cat==='countries') && query.isSuccess ? inCategory(items,cat).length+(cs?' registrovaných':' registered') : (cs ? (cat==='world'||cat==='countries' ? (query.isPending ? 'Načítám registr…' : 'Registr není ověřen') : 'Samostatný registr není dostupný') : (cat==='world'||cat==='countries' ? (query.isPending ? 'Loading registry…' : 'Registry unverified') : 'Independent registry unavailable'))}</small>
+        <small className="status">{(cat==='world'||cat==='countries') && query.isSuccess ? quantity(inCategory(items,cat).length,cs,['registrovaný','registrované','registrovaných'],['registered package','registered packages']) : (cs ? (cat==='world'||cat==='countries' ? (query.isPending ? 'Načítám registr…' : 'Registr není ověřen') : 'Samostatný registr není dostupný') : (cat==='world'||cat==='countries' ? (query.isPending ? 'Loading registry…' : 'Registry unverified') : 'Independent registry unavailable'))}</small>
       </Link>)}</div>
     <SourceNote />
   </section>
@@ -167,7 +173,7 @@ export function PackageWorldDetailPage():JSX.Element {
           <dt>{cs ? "Otisk" : "Fingerprint"}</dt><dd><code>{pkg.fingerprint}</code></dd>
           <dt>{cs?'Použití':'Usage'}</dt><dd>{pkg.used_by_run_count??(cs?'Nedostupné':'Unavailable')}</dd></dl>
         <h3>{cs?'Skutečně obsažené části':'Actual contents'}</h3>
-        <p>{pkg.country_count} {cs ? "zemí" : "countries"} · {pkg.continent_count} {cs ? "kontinentů" : "continents"} · {pkg.region_count} {cs ? "regionů" : "regions"} · {pkg.travel_region_count} {cs ? "cestovních regionů" : "travel regions"} · {pkg.timezone_area_count} {cs ? "časových oblastí" : "timezone areas"}</p>
+        <p>{quantity(pkg.country_count,cs,['země','země','zemí'],['country','countries'])} · {quantity(pkg.continent_count,cs,['kontinent','kontinenty','kontinentů'],['continent','continents'])} · {quantity(pkg.region_count,cs,['region','regiony','regionů'],['region','regions'])} · {quantity(pkg.travel_region_count,cs,['cestovní region','cestovní regiony','cestovních regionů'],['travel region','travel regions'])} · {quantity(pkg.timezone_area_count,cs,['časová oblast','časové oblasti','časových oblastí'],['timezone area','timezone areas'])}</p>
         <p><Link to={source}>{pkg.editable?(cs?'Upravit zdroj':'Edit custom source'):(cs?'Vytvořit vlastní kopii':'Create custom copy')} →</Link></p>
         <p><Link to={'/admin/packages/world/'+encodeURIComponent(worldId)+'/apply'}>{cs?'Použít v Runu — vybrat obsah':'Apply to Run — select contents'} →</Link></p>
         <p className="status">{cs?'Selektivní import funguje pro World entity; export tohoto konkrétního zdroje zatím není hotový.':'Selective import supports World entities; source-specific export is not yet available.'}</p>
@@ -180,7 +186,7 @@ export function PackageWorldDetailPage():JSX.Element {
         {countries&&<><p role="status" className="status">{cs ? 'Ověřený seznam zemí' : 'Verified country inventory'}: {countries.length}</p><label>{cs?'Hledat zemi':'Search countries'}<input type="search" value={countrySearch} onChange={e=>setCountrySearch(e.target.value)}/></label>
           <ul className="package-index-countries">{countries.filter(c=>(c.name+' '+c.code).toLowerCase().includes(countrySearch.toLowerCase())).map(c=>
             <li key={c.code}><Link to={source+'/countries/'+encodeURIComponent(c.code)}>{c.name} ({c.code})</Link>
-              <span className="status">{c.region} · {c.population.toLocaleString()}</span></li>)}</ul>
+              <span className="status">{c.region} · {c.population.toLocaleString(cs ? 'cs-CZ' : 'en-US')}</span></li>)}</ul>
           {countries.length === 0 ? <p role="status">{cs ? "V balíčku nejsou žádné země." : "This package contains no countries."}</p> : countries.every(c => !(c.name+" "+c.code).toLowerCase().includes(countrySearch.toLowerCase())) ? <p role="status">{cs ? "Žádná země neodpovídá hledání." : "No country matches the search."}</p> : null}</>}
         <h3>{cs?'Geografie':'Geography'}</h3>
         {geoQuery.isPending&&<p role="status">{cs ? "Načítám geografii…" : "Loading geography…"}</p>}
@@ -196,7 +202,7 @@ export function PackageWorldDetailPage():JSX.Element {
         <h3>{cs?'Skutečné výsledky kontroly':'Actual validation results'}</h3>
         {valQuery.isPending&&<p role="status">{cs ? "Načítám výsledky kontroly…" : "Loading validation…"}</p>}
         {valQuery.isError&&<><p role="alert" className="error">{cs ? 'Kontrolu se nepodařilo načíst: ' : 'Failed to load validation: '}{formatApiError(valQuery.error)}</p><RetryRead cs={cs} what="validation" fetching={valQuery.isFetching} onRetry={() => { void valQuery.refetch() }} /></>}
-        {validation&&<><p className="status">{cs ? "Diagnostické zprávy jsou zobrazeny v původním znění." : "Diagnostic messages are shown verbatim."}</p><p>{statusText(validation.status,cs)} · {validation.error_count} {cs ? "chyb" : "errors"} · {validation.warning_count} {cs ? "varování" : "warnings"} · {validation.info_count} info</p>
+        {validation&&<><p className="status">{cs ? "Diagnostické zprávy jsou zobrazeny v původním znění." : "Diagnostic messages are shown verbatim."}</p><p>{statusText(validation.status,cs)} · {quantity(validation.error_count,cs,['chyba','chyby','chyb'],['error','errors'])} · {quantity(validation.warning_count,cs,['varování','varování','varování'],['warning','warnings'])} · {quantity(validation.info_count,cs,['informace','informace','informací'],['info','info'])}</p>
           <ul className="package-index-checks">{validation.checks.map((check,i)=>{
             const country=resolveCountry(check,countries?.map(c=>c.code)??[])
             return <li key={check.code+':'+i}><strong>{cs ? statusText(check.severity, true).toUpperCase() : check.severity.toUpperCase()} · {check.code}</strong>

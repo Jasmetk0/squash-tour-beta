@@ -52,7 +52,7 @@ describe('source-backed Packages frontend',()=>{
     expect(await screen.findByRole('heading',{name:'Balíčky'})).toBeInTheDocument()
     expect(screen.getByRole('link',{name:/Všechny balíčky/})).toHaveAttribute('href','/admin/packages/all')
     expect(screen.getByRole('link',{name:/Hybridní/})).toHaveAttribute('href','/admin/packages/category/hybrid')
-    await waitFor(()=>expect(screen.getByRole('link',{name:/Země/})).toHaveTextContent('1 registrovaných'))
+    await waitFor(()=>expect(screen.getByRole('link',{name:/Země/})).toHaveTextContent('1 registrovaný'))
     expect(screen.queryByText('Demo World')).not.toBeInTheDocument()
   })
   it('deduplicates All, searches and filters World packages without fake hybrid sources',async()=>{
@@ -83,6 +83,22 @@ describe('source-backed Packages frontend',()=>{
     expect(screen.getByRole('link',{name:/Otevřít dotčenou zemi/})).toHaveAttribute('href','/admin/world/library/demo/countries/CZE')
     expect(api.getWorldPackageValidation).toHaveBeenCalledWith('demo')
   })
+  it('formats population and content totals in the selected language without changing data',async()=>{
+    api.getWorldPackageCountries.mockResolvedValue({world_id:'demo',countries:[
+      {code:'CZE',name:'Czechia',population:1234567,region:'Europe'}
+    ]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    expect(screen.getByText(/2 země · 1 kontinent · 1 region/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    const czPopulation = new Intl.NumberFormat('cs-CZ').format(1234567)
+    expect(await screen.findByText(`Europe · ${czPopulation}`)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(screen.getByText(/2 countries · 1 continent · 1 region/)).toBeInTheDocument()
+    expect(screen.getByText('Europe · 1,234,567')).toBeInTheDocument()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+  })
+
   it('switches languages without changing a filtered catalog or making write requests',async()=>{
     mount('/admin/packages/all')
     expect(await screen.findByText('Demo World')).toBeInTheDocument()
@@ -127,6 +143,32 @@ describe('source-backed Packages frontend',()=>{
     await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
     expect(await screen.findByRole('alert')).toHaveTextContent('country service offline')
     expect(screen.queryByText('V balíčku nejsou žádné země.')).not.toBeInTheDocument()
+  })
+
+  it('retries a failed package detail request without navigating away',async()=>{
+    api.getWorldPackage.mockRejectedValueOnce(new Error('detail temporarily offline'))
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('alert')).toHaveTextContent('detail temporarily offline')
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst detail balíčku'}))
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    expect(api.getWorldPackage).toHaveBeenCalledTimes(2)
+  })
+  it('can reload failed geography and validation separately without changing the active source',async()=>{
+    api.getWorldPackageGeography.mockRejectedValueOnce(new Error('geography offline'))
+    api.getWorldPackageValidation.mockRejectedValueOnce(new Error('validation offline'))
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('geography offline')
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst geografii'}))
+    expect(await screen.findByText('Kontinenty (1)')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('validation offline')
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst kontrolu'}))
+    expect(await screen.findByText('Country detail to inspect')).toBeInTheDocument()
+    expect(api.getWorldPackageGeography).toHaveBeenCalledTimes(2)
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(2)
+    expect(api.getWorldPackage).toHaveBeenCalledTimes(1)
   })
 
   it('recovers an unavailable World registry through a read-only retry in both languages',async()=>{

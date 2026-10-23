@@ -12,6 +12,7 @@ import type { PlayerLabResult, PlayerLabScenario, PlayerLabSession } from '../ap
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 
 function ResultPanels({ data }: { data: PlayerLabResult }): JSX.Element {
+  const {language} = useLanguage(), cs = language === 'cs'
   const [variantFilter, setVariantFilter] = useState('all')
   const [weekLimit, setWeekLimit] = useState<'all' | '10' | '25'>('all')
   const selectedVariant = data.variants.some(variant => variant.variant_id === variantFilter) ? variantFilter : 'all'
@@ -19,23 +20,23 @@ function ResultPanels({ data }: { data: PlayerLabResult }): JSX.Element {
     ? data.variants : data.variants.filter(variant => variant.variant_id === selectedVariant)
 
   return <>
-    <SectionCard title="Compatibility & isolation">
+    <SectionCard title={cs ? "Kompatibilita a izolace" : "Compatibility & isolation"}>
       <SummaryPills items={[
-        { label: 'Variants', value: data.diagnostics.variant_count },
-        { label: 'Weeks', value: data.diagnostics.duration_weeks },
-        { label: 'Distinct final states', value: data.diagnostics.distinct_final_state_count },
-        { label: 'Health', value: data.compatibility.health_supported ? 'supported' : 'not yet supported' },
-        { label: 'Training Load', value: data.compatibility.training_load_supported ? 'supported' : 'not yet supported' },
-        { label: 'Career AI', value: data.compatibility.career_ai_supported ? 'supported' : 'not yet supported' }
+        { label: cs ? 'Varianty' : 'Variants', value: data.diagnostics.variant_count },
+        { label: cs ? 'Týdny' : 'Weeks', value: data.diagnostics.duration_weeks },
+        { label: cs ? 'Různé konečné stavy' : 'Distinct final states', value: data.diagnostics.distinct_final_state_count },
+        { label: 'Health', value: data.compatibility.health_supported ? (cs ? 'podporováno' : 'supported') : (cs ? 'dosud nepodporováno' : 'not yet supported') },
+        { label: 'Training Load', value: data.compatibility.training_load_supported ? (cs ? 'podporováno' : 'supported') : (cs ? 'dosud nepodporováno' : 'not yet supported') },
+        { label: 'Career AI', value: data.compatibility.career_ai_supported ? (cs ? 'podporováno' : 'supported') : (cs ? 'dosud nepodporováno' : 'not yet supported') }
       ]} />
-      <p className="status">Shared production kernels: <code>{data.compatibility.production_kernels.join(' + ')}</code></p>
+      <p className="status">{cs ? "Sdílená produkční jádra" : "Shared production kernels"}: <code>{data.compatibility.production_kernels.join(" + ")}</code></p>
       <ul>{data.compatibility.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
     </SectionCard>
 
-    <SectionCard title="Compare variant outcomes">
-      <p className="status">All Lab variants are included. Changes compare first and last recorded snapshots, not the initial player state. Filters below change only the displayed timelines.</p>
+    <SectionCard title={cs ? "Porovnání výsledků variant" : "Compare variant outcomes"}>
+      <p className="status">{cs ? "Porovnání zahrnuje všechny varianty. Změny měří rozdíl mezi prvním a posledním uloženým snapshotem, nikoli vůči počátečnímu stavu hráče. Filtr mění pouze zobrazení časových os." : "All Lab variants are included. Changes compare first and last recorded snapshots, not the initial player state. Filters below change only the displayed timelines."}</p>
       {data.variants.length > 0 ? <table aria-label="Player Lab variant comparison">
-        <thead><tr><th>Variant</th><th>Snapshots</th><th>Final OVR</th><th>OVR change</th><th>Final sharpness</th><th>Sharpness change</th><th>Final fatigue</th><th>Final state</th></tr></thead>
+        <thead><tr><th>{cs ? "Varianta" : "Variant"}</th><th>{cs ? "Snapshoty" : "Snapshots"}</th><th>{cs ? "Konečné OVR" : "Final OVR"}</th><th>{cs ? "Změna OVR" : "OVR change"}</th><th>{cs ? "Konečná připravenost" : "Final sharpness"}</th><th>{cs ? "Změna připravenosti" : "Sharpness change"}</th><th>{cs ? "Konečná únava" : "Final fatigue"}</th><th>{cs ? "Konečný stav" : "Final state"}</th></tr></thead>
         <tbody>{data.variants.map(variant => {
           const first = variant.snapshots[0]
           const last = variant.snapshots[variant.snapshots.length - 1]
@@ -53,43 +54,43 @@ function ResultPanels({ data }: { data: PlayerLabResult }): JSX.Element {
             <td><code>{variant.final_state_fingerprint.slice(0, 12)}</code></td>
           </tr>
         })}</tbody>
-      </table> : <p className="status">No variant results were returned.</p>}
+      </table> : <p className="status">{cs ? "Nejsou dostupné výsledky žádné varianty." : "No variant results were returned."}</p>}
     </SectionCard>
 
-    <SectionCard title="Timeline display options">
-      <label>Show variants
+    <SectionCard title={cs ? "Nastavení zobrazení časové osy" : "Timeline display options"}>
+      <label>{cs ? "Zobrazit varianty" : "Show variants"}
         <select aria-label="Player Lab variant filter" value={selectedVariant} onChange={event => setVariantFilter(event.target.value)}>
-          <option value="all">All variants</option>
+          <option value="all">{cs ? "Všechny varianty" : "All variants"}</option>
           {data.variants.map(variant => <option key={variant.variant_id} value={variant.variant_id}>{variant.display_name}</option>)}
         </select>
       </label>
-      <label>Timeline weeks
+      <label>{cs ? "Počet zobrazených snapshotů" : "Timeline weeks"}
         <select aria-label="Player Lab timeline limit" value={weekLimit} onChange={event => setWeekLimit(event.target.value as typeof weekLimit)}>
-          <option value="all">All snapshots</option>
-          <option value="10">Last 10 snapshots</option>
-          <option value="25">Last 25 snapshots</option>
+          <option value="all">{cs ? "Všechny snapshoty" : "All snapshots"}</option>
+          <option value="10">{cs ? "Posledních 10 snapshotů" : "Last 10 snapshots"}</option>
+          <option value="25">{cs ? "Posledních 25 snapshotů" : "Last 25 snapshots"}</option>
         </select>
       </label>
-      <p className="status">Showing {visibleVariants.length} of {data.variants.length} variants. Filters do not recalculate development.</p>
+      <p role="status" className="status">{cs ? `Zobrazeno ${visibleVariants.length} z ${data.variants.length} variant` : `Showing ${visibleVariants.length} of ${data.variants.length} variants`}. {cs ? "Filtry nespouští nový výpočet vývoje." : "Filters do not recalculate development."}</p>
     </SectionCard>
 
     {visibleVariants.map((variant) => <SectionCard key={variant.variant_id} title={variant.display_name}>
       <SummaryPills items={[
-        { label: 'Variant', value: variant.variant_id },
-        { label: 'Final OVR', value: variant.snapshots[variant.snapshots.length - 1]?.ovr ?? '—' },
-        { label: 'Final sharpness', value: variant.snapshots[variant.snapshots.length - 1]?.match_sharpness ?? '—' },
-        { label: 'Final fatigue', value: variant.snapshots[variant.snapshots.length - 1]?.long_term_fatigue ?? '—' },
-        { label: 'Final Health severity', value: variant.snapshots[variant.snapshots.length - 1]?.health_projection.highest_current_severity ?? 0 },
-        { label: 'Health numeric effect', value: variant.snapshots[variant.snapshots.length - 1]?.health_projection.numeric_effect_applied ? 'active' : 'not calibrated' },
-        { label: 'Final state', value: variant.final_state_fingerprint.slice(0, 12) }
+        { label: cs ? 'Varianta' : 'Variant', value: variant.variant_id },
+        { label: cs ? 'Konečné OVR' : 'Final OVR', value: variant.snapshots[variant.snapshots.length - 1]?.ovr ?? '—' },
+        { label: cs ? 'Konečná připravenost' : 'Final sharpness', value: variant.snapshots[variant.snapshots.length - 1]?.match_sharpness ?? '—' },
+        { label: cs ? 'Konečná únava' : 'Final fatigue', value: variant.snapshots[variant.snapshots.length - 1]?.long_term_fatigue ?? '—' },
+        { label: cs ? 'Konečná závažnost Health' : 'Final Health severity', value: variant.snapshots[variant.snapshots.length - 1]?.health_projection.highest_current_severity ?? 0 },
+        { label: cs ? 'Číselný vliv Health' : 'Health numeric effect', value: variant.snapshots[variant.snapshots.length - 1]?.health_projection.numeric_effect_applied ? (cs ? 'aktivní' : 'active') : (cs ? 'nenakalibrováno' : 'not calibrated') },
+        { label: cs ? 'Konečný stav' : 'Final state', value: variant.final_state_fingerprint.slice(0, 12) }
       ]} />
       <p className="status">
-        Showing {weekLimit === 'all' ? variant.snapshots.length : Math.min(variant.snapshots.length, Number(weekLimit))} of {variant.snapshots.length} saved snapshots.
+        {cs ? "Zobrazeno" : "Showing"} {weekLimit === "all" ? variant.snapshots.length : Math.min(variant.snapshots.length, Number(weekLimit))} {cs ? "z" : "of"} {variant.snapshots.length} {cs ? "uložených snapshotů." : "saved snapshots."}
       </p>
       <table aria-label={`Player Lab ${variant.variant_id} timeline`}>
         <thead><tr>
-          <th>Week</th><th>Age</th><th>Matches</th><th>OVR</th><th>Potential</th>
-          <th>Form</th><th>Sharpness</th><th>Fatigue</th><th>Health severity</th><th>Health domains</th><th>Changed attrs</th><th>Δ attributes</th>
+          <th>{cs ? "Týden" : "Week"}</th><th>{cs ? "Věk" : "Age"}</th><th>{cs ? "Zápasy" : "Matches"}</th><th>OVR</th><th>{cs ? "Potenciál" : "Potential"}</th>
+          <th>{cs ? "Forma" : "Form"}</th><th>{cs ? "Připravenost" : "Sharpness"}</th><th>{cs ? "Únava" : "Fatigue"}</th><th>{cs ? "Závažnost Health" : "Health severity"}</th><th>{cs ? "Oblasti Health" : "Health domains"}</th><th>{cs ? "Změněné atributy" : "Changed attrs"}</th><th>{cs ? "Δ atributů" : "Δ attributes"}</th>
         </tr></thead>
         <tbody>{(weekLimit === 'all' ? variant.snapshots : variant.snapshots.slice(-Number(weekLimit))).map((snapshot) => <tr key={snapshot.state_fingerprint}>
           <td>S{snapshot.week.season_index + 1} W{snapshot.week.week}</td>

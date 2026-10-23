@@ -293,13 +293,18 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   const mutation = useMutation({
     mutationFn: (command: { sourceWorldId: string; sourceFingerprint: string; locationKey: string; payload: WorldPackageClonePayload }) => cloneWorldPackage(command.sourceWorldId, command.payload),
     onSuccess: (response, command) => {
-      if (response.ok && !response.dry_run) {
+      const responseMatchesRequest = response.source_world_id === command.sourceWorldId &&
+        response.new_world_id === command.payload.new_world_id &&
+        response.dry_run === command.payload.dry_run
+      // A late, genuine successful write must still refresh the cache after navigation.
+      // A mismatched response must never invalidate data for an unrelated World Package.
+      if (responseMatchesRequest && response.ok && !response.dry_run) {
         void queryClient.invalidateQueries({ queryKey: ['world-packages'] })
         void queryClient.invalidateQueries({ queryKey: ['world-package', response.new_world_id] })
         void queryClient.invalidateQueries({ queryKey: ['world-package-validation', response.new_world_id] })
       }
       if (!mounted.current || sourceRef.current !== command.sourceWorldId || activeLocationKey.current !== command.locationKey) return
-      if (response.source_world_id !== command.sourceWorldId || response.new_world_id !== command.payload.new_world_id || response.dry_run !== command.payload.dry_run) {
+      if (!responseMatchesRequest) {
         setApiError({ kind: 'responseMismatch' })
         return
       }

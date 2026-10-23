@@ -18,8 +18,10 @@ from collections import Counter
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
+from beta_engine.application import full_simulation_tasks as tasks
 from beta_engine.application import native_full_simulation as native
 from beta_engine.domain.calendar.run_calendar import RunCalendar
+from scripts.profile_native_full_simulation_metrics import measure_calls
 from tests.api import test_calendar_tour_flow as tour
 from tests.api import test_native_fork_public_continuation as fork_module
 from tests.api import test_native_full_simulation_tasks as case
@@ -48,6 +50,8 @@ rows = []
 sql = Counter()
 lock = threading.Lock()
 contexts = []
+read_cost = measure_calls(tasks, "_project")
+heartbeat_cost = measure_calls(tasks.FullSimulationTaskWorker, "_heartbeat")
 
 
 def count(conn, cursor, statement, parameters, context, many):
@@ -171,6 +175,8 @@ finally:
         "native_context_calls": len(contexts),
         "native_context_seconds": sum(contexts),
         "rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+        "task_read_cost": read_cost,
+        "task_heartbeat_cost": heartbeat_cost,
         "python": sys.version,
         "platform": platform.platform(),
         "git_sha": subprocess.check_output(

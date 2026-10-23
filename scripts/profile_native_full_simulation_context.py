@@ -15,6 +15,7 @@ from collections import Counter
 
 from sqlalchemy import event, text
 
+from beta_engine.application.full_simulation_tasks import inspect_tasks
 from beta_engine.application.native_full_simulation import (
     native_context,
 )
@@ -91,6 +92,20 @@ with factory() as session, native_read_proof_scope():
             "week": ctx["week"],
         }
     )
+sql.clear()
+fetches.clear()
+start = time.perf_counter()
+progress = inspect_tasks(factory, run_id="run", branch_id=a.branch)
+records.append(
+    {
+        "label": "task_progress",
+        "seconds": time.perf_counter() - start,
+        "sql": dict(sql),
+        "fetched": dict(fetches),
+        "tasks": len(progress["tasks"]),
+        "rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+    }
+)
 (a.root / "timings.json").write_text(json.dumps(records, indent=2))
 if a.profile:
     for label in ["cold", "warm"]:

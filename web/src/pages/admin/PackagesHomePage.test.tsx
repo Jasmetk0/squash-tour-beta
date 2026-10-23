@@ -129,6 +129,31 @@ describe('source-backed Packages frontend',()=>{
     expect(screen.queryByText('V balíčku nejsou žádné země.')).not.toBeInTheDocument()
   })
 
+  it('recovers an unavailable World registry through a read-only retry in both languages',async()=>{
+    api.listWorldPackages.mockRejectedValueOnce(new Error('temporary outage'))
+      .mockResolvedValue({packages:[world]})
+    mount('/admin/packages/all')
+    expect(await screen.findByRole('alert')).toHaveTextContent('temporary outage')
+    expect(screen.queryByText('Demo World')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    await userEvent.click(screen.getByRole('button',{name:'Retry package catalog'}))
+    expect(await screen.findByText('Demo World')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(api.listWorldPackages).toHaveBeenCalledTimes(2)
+    expect(api.getWorldPackage).not.toHaveBeenCalled()
+  })
+  it('retries failed country inventory without substituting an empty list',async()=>{
+    api.getWorldPackageCountries.mockRejectedValueOnce(new Error('temporary country outage'))
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('temporary country outage')
+    expect(screen.queryByText('V balíčku nejsou žádné země.')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst země'}))
+    expect(await screen.findByRole('link',{name:'Czechia (CZE)'})).toBeInTheDocument()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(2)
+  })
+
   it('does not substitute fabricated empty inventory on source API failure',async()=>{
     api.listWorldPackages.mockRejectedValue(new Error('registry offline'))
     mount('/admin/packages/all')

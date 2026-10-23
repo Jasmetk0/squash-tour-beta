@@ -165,7 +165,8 @@ export function MatchTestLabPage(): JSX.Element {
     try {
       editScenario(prettyLabJson(scenarioText))
     } catch (error) {
-      setLocalError(error instanceof Error ? error.message : String(error))
+      const detail = error instanceof Error ? error.message : String(error)
+      setLocalError(cs ? `JSON nelze formátovat. ${detail}` : detail)
     }
   }
 

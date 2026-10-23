@@ -283,7 +283,7 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   const [name, setName] = useState('')
   const defaultDescription = useRef(`Custom world cloned from ${source.name}.`)
   const [description, setDescription] = useState(defaultDescription.current)
-  const [result, setResult] = useState<WorldPackageCloneResponse | null>(null)
+  const [result, setResult] = useState<{ response: WorldPackageCloneResponse; sourceFingerprint: string } | null>(null)
   const [apiError, setApiError] = useState<CloneUiError | null>(null)
   const [review, setReview] = useState<{ sourceWorldId: string; sourceFingerprint: string; locationKey: string; payload: WorldPackageClonePayload } | null>(null)
   useEffect(() => {
@@ -320,7 +320,7 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
         setApiError({ kind: 'responseMismatch' })
         return
       }
-      setResult(response)
+      setResult({ response, sourceFingerprint: command.sourceFingerprint })
       setApiError(null)
       if (response.ok && !response.dry_run) {
         defaultDescription.current = `Custom world cloned from ${source.name}.`
@@ -399,7 +399,9 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
       </fieldset>
     </form>}
     {apiError && <p className="error" role="alert">{cs ? 'Kopírování se nezdařilo: ' : 'Clone request failed: '}{cloneUiErrorText(apiError, cs)}</p>}
-    {result && <CloneResultCard result={result} />}
+    {result?.response.dry_run && result.sourceFingerprint !== source.fingerprint
+      ? <p className="error" role="alert">{cloneUiErrorText({ kind: 'changedSource' }, cs)}</p>
+      : result && <CloneResultCard result={result.response} />}
   </SectionCard>
 }
 

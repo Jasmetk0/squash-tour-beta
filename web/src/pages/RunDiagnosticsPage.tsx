@@ -175,22 +175,24 @@ export function RunDiagnosticsPage(): JSX.Element {
           <p className="error">Failed to load status summary: {formatApiError(statusSummaryQuery.error)}</p>
         )}
         {statusMismatch && <p role="alert" className="error">Status summary belongs to another Run. Its progress and counts are hidden.</p>}
-        {safeRun && (
+        {(safeRun || safeStatus) && (
           <>
             <CompactSummaryCard
               items={[
-                { label: 'Run ID', value: safeRun.run.run_id },
-                { label: 'Season', value: safeStatus?.season ?? safeRun.run.season },
-                { label: 'Seed', value: safeStatus?.seed ?? safeRun.run.seed },
+                { label: 'Run ID', value: safeRun?.run.run_id ?? safeStatus?.run_id ?? '—' },
+                { label: 'Season', value: safeStatus?.season ?? safeRun?.run.season ?? '—' },
+                { label: 'Seed', value: safeStatus?.seed ?? safeRun?.run.seed ?? '—' },
                 {
                   label: 'Progress',
                   value: safeStatus
                     ? `${safeStatus.progress.next_event_index} / ${safeStatus.progress.total_events}`
-                    : `${safeRun.run.next_event_index} / ${safeRun.run.total_events}`
+                    : safeRun
+                      ? `${safeRun.run.next_event_index} / ${safeRun.run.total_events}`
+                      : '—'
                 },
                 {
                   label: 'Completed events',
-                  value: safeStatus?.progress.completed_event_count ?? safeRun.run.completed_event_ids.length
+                  value: safeStatus?.progress.completed_event_count ?? safeRun?.run.completed_event_ids.length ?? '—'
                 }
               ]}
             />

@@ -415,8 +415,8 @@ export function TournamentTestLabPage(): JSX.Element {
 
   return <section className="panel">
     <PageIntro
-      title="Tournament Test Lab"
-      subtitle="Global isolated tournament sandbox with persistent editable Test Sessions over shared Tournament Format, canonical Draw authority and production Match Engine kernels."
+      title={cs ? "Testovací laboratoř turnajů" : "Tournament Test Lab"}
+      subtitle={cs ? "Samostatné turnajové scénáře a trvalé upravitelné Test Sessions využívající sdílený Tournament Format, kanonický los a Match Engine." : "Global isolated tournament sandbox with persistent editable Test Sessions over shared Tournament Format, canonical Draw authority and production Match Engine kernels."}
     />
 
     <LabNavigation active="tournament" />
@@ -431,45 +431,38 @@ export function TournamentTestLabPage(): JSX.Element {
       {copyMutation.isError && <p role="alert">{String(copyMutation.error)}</p>}
       {parsedScenario?.source_snapshot && <p>{cs ? 'Zdroj' : 'Source'}: {parsedScenario.source_reference} · {cs ? 'Uložený stav účastníků, bez změny původních výsledků.' : 'Saved participant states; source results remain unchanged.'}</p>}
     </SectionCard>
-    <SectionCard title="Isolation boundary">
-      <p>
-        Tournament Lab Sessions exist outside Runs. Inspect/Run remain isolated; only the separate reviewed
-        Apply workflow may stage a proposal into a target Run Working Draft. An invalid draft never becomes
-        a fabricated authoritative result.
-      </p>
+    <SectionCard title={cs ? "Hranice izolace" : "Isolation boundary"}>
+      <p>{cs ? "Turnajové Test Sessions existují mimo Runy. Kontrola ani spuštění Run nemění. Teprve samostatně zkontrolované potvrzení může vložit návrh do Working Draft cílového Runu; neplatný návrh se tím nestává autoritativním výsledkem." : "Tournament Lab Sessions exist outside Runs. Inspect/Run remain isolated; only the separate reviewed Apply workflow may stage a proposal into a target Run Working Draft. An invalid draft never becomes a fabricated authoritative result."}</p>
       <SummaryPills items={[
-        { label: 'Lab execution mutation', value: 'never' },
-        { label: 'Reviewed draft apply', value: 'explicit only' },
-        { label: 'Executable formats', value: 'knockout · groups · groups→knockout' },
-        { label: 'Selected mode', value: selectedSession ? 'isolated Test Session' : 'portable scratch scenario' }
+        { label: cs ? 'Zápis během testu' : 'Lab execution mutation', value: cs ? 'nikdy' : 'never' },
+        { label: cs ? 'Vložení návrhu' : 'Reviewed draft apply', value: cs ? 'pouze po potvrzení' : 'explicit only' },
+        { label: cs ? 'Spustitelné formáty' : 'Executable formats', value: cs ? 'pavouk · skupiny · skupiny→pavouk' : 'knockout · groups · groups→knockout' },
+        { label: cs ? 'Vybraný režim' : 'Selected mode', value: selectedSession ? (cs ? 'samostatná Test Session' : 'isolated Test Session') : (cs ? 'pracovní přenosný scénář' : 'portable scratch scenario') }
       ]} />
-      <p className="status">
-        Knockout, Qualification, pure groups and groups→knockout are executable. Run→Lab copy and reviewed
-        Lab→Run Working Draft proposal are available; withdrawals/replacements and ranking consequences remain
-        separate shared-authority slices.
-      </p>
+      <p className="status">{cs ? "Spustit lze pavouk, kvalifikaci, skupiny a skupiny→pavouk. Kopie Run→Lab a kontrolovaný návrh Lab→Working Draft existují; odstoupení, nahrazení a žebříčkové dopady zůstávají samostatnými úkoly." : "Knockout, Qualification, pure groups and groups→knockout are executable. Run→Lab copy and reviewed Lab→Run Working Draft proposal are available; withdrawals/replacements and ranking consequences remain separate shared-authority slices."}</p>
     </SectionCard>
 
-    <SectionCard title="Built-in read-only scenarios">
-      {builtIns.isLoading ? <p className="status">Loading scenarios…</p> : null}
+    <SectionCard title={cs ? "Vestavěné scénáře pouze ke čtení" : "Built-in read-only scenarios"}>
+      {builtIns.isLoading ? <p role="status" className="status">{cs ? "Načítám scénáře…" : "Loading scenarios…"}</p> : null}
       {builtIns.data?.map((item) => <article key={item.scenario_id}>
         <strong>{item.display_name}</strong>
         <p>{item.description}</p>
-        <p className="status"><code>{item.scenario_fingerprint.slice(0, 12)}</code> · read-only baseline</p>
-        <button type="button" onClick={() => useBuiltIn(item.scenario)}>Load scratch copy</button>
+        <p className="status"><code>{item.scenario_fingerprint.slice(0, 12)}</code> · {cs ? "výchozí scénář pouze ke čtení" : "read-only baseline"}</p>
+        <button type="button" onClick={() => useBuiltIn(item.scenario)}>{cs ? "Načíst pracovní kopii" : "Load scratch copy"}</button>
         <button type="button" disabled={writePending} onClick={() => createMutation.mutate({ ticket: editor.captureEditor(), request: {
           display_name: `${item.display_name} — Test Session`,
           built_in_scenario_id: item.scenario_id
-        }})}>New Test Session from {item.display_name}</button>
+        }})}>{cs ? "Nová Test Session ze scénáře" : "New Test Session from"} {item.display_name}</button>
       </article>)}
-      {builtIns.isError ? <p className="error">Tournament Lab built-ins unavailable.</p> : null}
+      {builtIns.isError ? <p role="alert" className="error">{cs ? "Vestavěné turnajové scénáře nejsou dostupné." : "Tournament Lab built-ins unavailable."}</p> : null}
+      {builtIns.isSuccess && builtIns.data?.length === 0 ? <p role="status" className="status">{cs ? "Žádné vestavěné turnajové scénáře." : "No built-in Tournament Lab scenarios."}</p> : null}
     </SectionCard>
 
-    <SectionCard title="Tournament Test Sessions">
+    <SectionCard title={cs ? "Turnajové Test Sessions" : "Tournament Test Sessions"}>
       <button type="button" disabled={sessions.isFetching} onClick={() => { void sessions.refetch() }}>
-        {sessions.isFetching ? 'Refreshing Test Sessions…' : 'Refresh Test Sessions'}
+        {sessions.isFetching ? (cs ? 'Obnovuji seznam Test Sessions…' : 'Refreshing Test Sessions…') : (cs ? 'Obnovit seznam Test Sessions' : 'Refresh Test Sessions')}
       </button>
-      <label>Open Test Session
+      <label>{cs ? "Otevřít Test Session" : "Open Test Session"}
         <select
           aria-label="Open Tournament Test Session"
           value={selectedSessionId ?? ''}
@@ -481,35 +474,31 @@ export function TournamentTestLabPage(): JSX.Element {
             runDraftApplyMutation.reset()
           }}
         >
-          <option value="">Portable scratch scenario</option>
+          <option value="">{cs ? "Pracovní přenosný scénář" : "Portable scratch scenario"}</option>
           {selectedSession && !sessions.data?.some(item => item.session_id === selectedSessionId)
-            ? <option value={selectedSession.session_id}>{selectedSession.display_name} · loaded v{selectedSession.version} (unavailable)</option> : null}
+            ? <option value={selectedSession.session_id}>{selectedSession.display_name} · v{selectedSession.version} ({cs ? "nedostupná v seznamu" : "unavailable"})</option> : null}
           {sessions.data?.map((item) => <option key={item.session_id} value={item.session_id}>
             {item.display_name} · v{item.version}
           </option>)}
         </select>
       </label>
-      {sessions.isLoading ? <p role="status">Loading saved Tournament Test Sessions…</p> : null}
-      {sessions.isError ? <p role="alert" className="error">Saved Tournament Test Sessions unavailable.</p> : null}
+      {sessions.isLoading ? <p role="status">{cs ? "Načítám uložené turnajové Sessions…" : "Loading saved Tournament Test Sessions…"}</p> : null}
+      {sessions.isError ? <p role="alert" className="error">{cs ? "Seznam uložených turnajových Sessions není dostupný." : "Saved Tournament Test Sessions unavailable."}</p> : null}
       {sessions.isSuccess && sessions.data.length === 0
-        ? <p className="status">No saved Tournament Test Sessions yet. Scratch mode remains available.</p> : null}
+        ? <p className="status">{cs ? "Zatím žádná uložená Session; pracovní režim je dostupný." : "No saved Tournament Test Sessions yet. Scratch mode remains available."}</p> : null}
       <LabSessionConflict key={`${selectedSessionId}:${selectedSession?.session_fingerprint}:${sessionConflict}:${editor.editorEdit}`}
         conflict={sessionConflict} dirty={sessionHasUnsavedChanges} canReload={editor.canReloadSession} onReload={editor.reloadSession} />
       {selectedSession ? <SummaryPills items={[
         { label: 'Session', value: selectedSession.display_name },
-        { label: 'Version', value: selectedSession.version },
-        { label: 'Source', value: selectedSession.scenario.source_kind },
-        { label: 'Session fingerprint', value: selectedSession.session_fingerprint.slice(0, 12) }
-      ]} /> : <p className="status">Scratch mode is non-persistent. Create a Test Session to keep an editable isolated tournament draft.</p>}
+        { label: cs ? 'Verze' : 'Version', value: selectedSession.version },
+        { label: cs ? 'Zdroj' : 'Source', value: selectedSession.scenario.source_kind },
+        { label: cs ? 'Otisk Session' : 'Session fingerprint', value: selectedSession.session_fingerprint.slice(0, 12) }
+      ]} /> : <p className="status">{cs ? "Pracovní režim se neukládá. Pro trvalou kopii vytvoř Test Session." : "Scratch mode is non-persistent. Create a Test Session to keep an editable isolated tournament draft."}</p>}
     </SectionCard>
 
-    <SectionCard title="Reviewed Lab → Run Working Draft proposal">
-      <p>
-        Copy the currently saved Test Session into one Run-owned event proposal. Preview is read-only;
-        Apply only stages a reviewed proposal in the target Working Draft. It does not create Entry,
-        Draw, Result or ranking authority and does not bypass their provenance rules.
-      </p>
-      <label>Target Product Run ID
+    <SectionCard title={cs ? "Zkontrolovaný návrh Lab → Working Draft Runu" : "Reviewed Lab → Run Working Draft proposal"}>
+      <p>{cs ? "Z uložené Test Session lze připravit návrh pro událost Runu. Náhled je pouze ke čtení. Potvrzení vloží zkontrolovaný návrh pouze do Working Draft; nevytváří Entry, los, výsledky ani žebříčkovou autoritu a neobchází kontrolu původu. K vytvoření uložené revize je potřebný samostatný Run Save." : "Copy the currently saved Test Session into one Run-owned event proposal. Preview is read-only; Apply only stages a reviewed proposal in the target Working Draft. It does not create Entry, Draw, Result or ranking authority and does not bypass their provenance rules."}</p>
+      <label>{cs ? "ID cílového Runu" : "Target Product Run ID"}
         <input
           aria-label="Tournament Lab target Run ID"
           value={targetRunId}
@@ -520,7 +509,7 @@ export function TournamentTestLabPage(): JSX.Element {
           }}
         />
       </label>
-      <label>Target Branch ID
+      <label>{cs ? "ID cílové větve" : "Target Branch ID"}
         <input
           aria-label="Tournament Lab target Branch ID"
           value={targetBranchId}
@@ -531,7 +520,7 @@ export function TournamentTestLabPage(): JSX.Element {
           }}
         />
       </label>
-      <label>Target event ID
+      <label>{cs ? "ID cílové události" : "Target event ID"}
         <input
           aria-label="Tournament Lab target event ID"
           value={targetEventId}
@@ -559,15 +548,15 @@ export function TournamentTestLabPage(): JSX.Element {
           eventId: targetEventId.trim()
         })}
       >
-        {runDraftPreviewMutation.isPending ? 'Reviewing Run draft…' : 'Preview Run draft'}
+        {runDraftPreviewMutation.isPending ? (cs ? 'Kontroluji návrh…' : 'Reviewing Run draft…') : (cs ? 'Zobrazit náhled návrhu' : 'Preview Run draft')}
       </button>
       {reviewedPreview ? <>
         <SummaryPills items={[
-          { label: 'Ready', value: reviewedPreview.ready_for_draft ? 'yes' : 'no' },
-          { label: 'Saved Head', value: reviewedPreview.target_saved_revision_id },
-          { label: 'Draft version', value: reviewedPreview.target_working_draft_version },
-          { label: 'Preview', value: reviewedPreview.preview_fingerprint.slice(0, 12) },
-          { label: 'Candidate', value: reviewedPreview.candidate_fingerprint.slice(0, 12) }
+          { label: cs ? 'Připraveno' : 'Ready', value: reviewedPreview.ready_for_draft ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
+          { label: cs ? 'Uložený základ' : 'Saved Head', value: reviewedPreview.target_saved_revision_id },
+          { label: cs ? 'Verze návrhu' : 'Draft version', value: reviewedPreview.target_working_draft_version },
+          { label: cs ? 'Otisk náhledu' : 'Preview', value: reviewedPreview.preview_fingerprint.slice(0, 12) },
+          { label: cs ? 'Otisk kandidáta' : 'Candidate', value: reviewedPreview.candidate_fingerprint.slice(0, 12) }
         ]} />
         {reviewedPreview.issues.length ? <ul>
           {reviewedPreview.issues.map((issue) => <li key={issue.code}>
@@ -579,14 +568,14 @@ export function TournamentTestLabPage(): JSX.Element {
           disabled={!reviewedPreview.ready_for_draft || writePending || sessionHasUnsavedChanges}
           onClick={() => runDraftApplyMutation.mutate(reviewedPreview)}
         >
-          {runDraftApplyMutation.isPending ? 'Applying reviewed proposal…' : 'Apply to Run Working Draft'}
+          {runDraftApplyMutation.isPending ? (cs ? 'Vkládám zkontrolovaný návrh…' : 'Applying reviewed proposal…') : (cs ? 'Vložit návrh do Working Draft' : 'Apply to Run Working Draft')}
         </button>
       </> : null}
       {runDraftPreviewMutation.isError ? <p className="error">
-        Run draft preview failed: {String(runDraftPreviewMutation.error)}
+        {cs ? 'Náhled návrhu selhal' : 'Run draft preview failed'}: {String(runDraftPreviewMutation.error)}
       </p> : null}
       {runDraftApplyMutation.isError ? <p className="error">
-        Run draft apply failed: {String(runDraftApplyMutation.error)}
+        {cs ? 'Vložení návrhu selhalo' : 'Run draft apply failed'}: {String(runDraftApplyMutation.error)}
       </p> : null}
       {runDraftApplyMutation.data ? <SummaryPills items={[
         { label: 'Proposal version', value: runDraftApplyMutation.data.proposal_version },
@@ -594,15 +583,12 @@ export function TournamentTestLabPage(): JSX.Element {
         { label: 'Working Draft version', value: runDraftApplyMutation.data.working_draft_version },
         { label: 'Replay', value: runDraftApplyMutation.data.already_applied ? 'idempotent' : 'new mutation' }
       ]} /> : null}
-      {runDraftApplyMutation.data ? <p className="status">
-        Proposal is staged in the target Run Working Draft. Use the normal Run Save workflow to create
-        its immutable Saved Revision before authoritative adoption.
-      </p> : null}
+      {runDraftApplyMutation.data ? <p role="status" className="status">{cs ? "Návrh je vložen pouze do Working Draft cílového Runu. Autoritativní uložená revize vznikne až samostatným potvrzeným Run Save." : "Proposal is staged in the target Run Working Draft. Use normal Run Save to create an immutable Saved Revision before authoritative adoption."}</p> : null}
     </SectionCard>
 
     <form onSubmit={submit}>
-      <SectionCard title={selectedSession ? 'Editable Tournament Test Session' : 'Portable Tournament Lab scenario JSON'}>
-        {selectedSession ? <label>Session name
+      <SectionCard title={selectedSession ? (cs ? 'Upravitelná turnajová Test Session' : 'Editable Tournament Test Session') : (cs ? 'JSON pracovního turnajového scénáře' : 'Portable Tournament Lab scenario JSON')}>
+        {selectedSession ? <label>{cs ? "Název Session" : "Session name"}
           <input aria-label="Tournament Lab session name" value={sessionName} onChange={(event) => {
             setSessionName(event.target.value)
             runMutation.reset()
@@ -610,7 +596,7 @@ export function TournamentTestLabPage(): JSX.Element {
             runDraftApplyMutation.reset()
           }} />
         </label> : null}
-        {!selectedSession ? <label>Tournament Lab new Session name
+        {!selectedSession ? <label>{cs ? "Název nové turnajové Session" : "Tournament Lab new Session name"}
           <input aria-label="Tournament Lab new Session name" value={scratchName} onChange={event => {
             setScratchName(event.target.value)
             editor.setSessionName(event.target.value)
@@ -620,7 +606,7 @@ export function TournamentTestLabPage(): JSX.Element {
           jsonLabel="Tournament Lab scenario JSON" selection={selectedSession ? `${selectedSession.session_id}:${selectedSession.session_fingerprint}` : 'scratch'} revision={editor.editorEdit}
           savedScenario={selectedSession?.scenario} savedName={selectedSession?.display_name}
           sessionName={editor.sessionName} />
-        <label>Batch match seeds (optional, comma-separated; max 100)
+        <label>{cs ? "Seedy dávky zápasů (volitelné, oddělené čárkami, max. 100)" : "Batch match seeds (optional, comma-separated; max 100)"}
           <input
             aria-label="Tournament Lab batch match seeds"
             value={batchText}
@@ -628,26 +614,26 @@ export function TournamentTestLabPage(): JSX.Element {
             placeholder="100, 101, 102"
           />
         </label>
-        <button type="button" onClick={formatScenario} disabled={runPending || writePending}>Format JSON</button>
+        <button type="button" onClick={formatScenario} disabled={runPending || writePending}>{cs ? "Formátovat JSON" : "Format JSON"}</button>
         {!selectedSession ? <button type="button" onClick={createFromDraft} disabled={writePending || !scenarioText.trim()}>
           {cs ? 'Vytvořit Session z pracovního scénáře' : 'Create Test Session from scratch'}
         </button> : null}
         {selectedSession ? <button type="button" onClick={save} disabled={writePending || Boolean(sessionConflict) || !scenarioText}>
-          {saveMutation.isPending ? 'Saving…' : 'Save Test Session'}
+          {saveMutation.isPending ? (cs ? 'Ukládám…' : 'Saving…') : (cs ? 'Uložit Test Session' : 'Save Test Session')}
         </button> : null}
         <button type="button" onClick={inspect} disabled={!scenarioText || inspectMutation.isPending}>
-          {inspectMutation.isPending ? 'Inspecting…' : 'Inspect compatibility'}
+          {inspectMutation.isPending ? (cs ? 'Kontroluji…' : 'Inspecting…') : (cs ? 'Zkontrolovat kompatibilitu' : 'Inspect compatibility')}
         </button>
         <button type="submit" disabled={!scenarioText || runPending || writePending || Boolean(sessionConflict) || sessionHasUnsavedChanges}>
-          {runPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run tournament scenario'}
+          {runPending ? (cs ? 'Spouštím…' : 'Running…') : selectedSession ? (cs ? 'Spustit Test Session' : 'Run Test Session') : (cs ? 'Spustit turnajový scénář' : 'Run tournament scenario')}
         </button>
-        {sessionHasUnsavedChanges ? <p role="status">Unsaved Tournament Test Session changes. Save before running or reviewing a Run proposal.</p> : null}
+        {sessionHasUnsavedChanges ? <p role="status">{cs ? "Neuložené změny Session. Ulož je před spuštěním či náhledem návrhu pro Run." : "Unsaved Tournament Test Session changes. Save before running or reviewing a Run proposal."}</p> : null}
         {localError ? <p className="error">{localError}</p> : null}
-        {inspectMutation.isError ? <p className="error">Inspection failed: {String(inspectMutation.error)}</p> : null}
-        {createMutation.isError ? <p className="error">Session creation failed: {String(createMutation.error)}</p> : null}
-        {saveMutation.isError ? <p className="error">Session save failed: {String(saveMutation.error)}</p> : null}
-        {runMutation.isError ? <p className="error">Tournament Lab failed: {String(runMutation.error)}</p> : null}
-        <p className="status">Scenario: {parsedScenario?.scenario_id ?? (scenarioText ? 'invalid JSON' : 'none loaded')}</p>
+        {inspectMutation.isError ? <p className="error">{cs ? 'Kontrola selhala' : 'Inspection failed'}: {String(inspectMutation.error)}</p> : null}
+        {createMutation.isError ? <p className="error">{cs ? 'Vytvoření Session selhalo' : 'Session creation failed'}: {String(createMutation.error)}</p> : null}
+        {saveMutation.isError ? <p className="error">{cs ? 'Uložení Session selhalo' : 'Session save failed'}: {String(saveMutation.error)}</p> : null}
+        {runMutation.isError ? <p className="error">{cs ? 'Turnajová laboratoř selhala' : 'Tournament Lab failed'}: {String(runMutation.error)}</p> : null}
+        <p className="status">{cs ? 'Scénář' : 'Scenario'}: {parsedScenario?.scenario_id ?? (scenarioText ? (cs ? 'neplatný JSON' : 'invalid JSON') : (cs ? 'nic nenačteno' : 'none loaded'))}</p>
       </SectionCard>
     </form>
 

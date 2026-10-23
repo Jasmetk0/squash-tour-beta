@@ -263,7 +263,7 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Latest completed event',
               value: eventsQuery.isLoading
                 ? 'Loading...'
-                : eventsQuery.error || eventsMismatch
+                : eventsQuery.error
                   ? `Error: ${formatApiError(eventsQuery.error)}`
                   : eventsMismatch
                     ? 'Run mismatch'
@@ -282,7 +282,7 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Latest ranking snapshot',
               value: rankingSnapshotsQuery.isLoading
                 ? 'Loading...'
-                : rankingSnapshotsQuery.error || rankingsMismatch
+                : rankingSnapshotsQuery.error
                   ? `Error: ${formatApiError(rankingSnapshotsQuery.error)}`
                   : rankingsMismatch
                     ? 'Run mismatch'
@@ -301,7 +301,7 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Latest race snapshot',
               value: raceSnapshotsQuery.isLoading
                 ? 'Loading...'
-                : raceSnapshotsQuery.error || racesMismatch
+                : raceSnapshotsQuery.error
                   ? `Error: ${formatApiError(raceSnapshotsQuery.error)}`
                   : racesMismatch
                     ? 'Run mismatch'
@@ -385,7 +385,7 @@ export function RunDiagnosticsPage(): JSX.Element {
                 ? 'Loading...'
                 : eventsQuery.error || eventsMismatch
                   ? 'Error'
-                  : (safeEvents.length ?? 0) > 0
+                  : safeEvents.length > 0
                     ? 'Available'
                     : 'None yet'
             },
@@ -395,7 +395,7 @@ export function RunDiagnosticsPage(): JSX.Element {
                 ? 'Loading...'
                 : rankingSnapshotsQuery.error || rankingsMismatch
                   ? 'Error'
-                  : (safeRankingSnapshots.length ?? 0) > 0
+                  : safeRankingSnapshots.length > 0
                     ? 'Available'
                     : 'None yet'
             },
@@ -405,7 +405,7 @@ export function RunDiagnosticsPage(): JSX.Element {
                 ? 'Loading...'
                 : raceSnapshotsQuery.error || racesMismatch
                   ? 'Error'
-                  : (safeRaceSnapshots.length ?? 0) > 0
+                  : safeRaceSnapshots.length > 0
                     ? 'Available'
                     : 'None yet'
             }

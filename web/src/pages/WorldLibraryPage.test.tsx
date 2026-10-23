@@ -655,6 +655,71 @@ describe('built-in World cloning', () => {
   })
 
   it.each([
+    {previewOk: true, initialHeading: 'Preview only:'},
+    {previewOk: false, initialHeading: 'Preview failed:'},
+  ])('hides an already completed clone preview when its source changes (ok=$previewOk)', async ({previewOk, initialHeading}) => {
+    const source = {
+      world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'original-fingerprint',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    }
+    api.getWorldPackage.mockResolvedValue(source)
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    api.cloneWorldPackage.mockImplementation(async (worldId: string, payload: {new_world_id: string; dry_run: boolean}) => ({
+      ok: previewOk, dry_run: payload.dry_run, source_world_id: worldId,
+      new_world_id: payload.new_world_id,
+      target_path: 'config/world_packages/custom/' + payload.new_world_id,
+      created_files: ['world.json'], package: null, validation: null,
+      errors: previewOk ? [] : [{field: 'new_world_id', message: 'OLD_SOURCE_DIAGNOSTIC'}],
+    }))
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}, mutations: {retry: false}}})
+    const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
+      {initialEntries: ['/world/real_world']})
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'local_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Authored name'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Preview clone'}))
+    expect(await screen.findByText(initialHeading)).toBeInTheDocument()
+    expect(screen.getByLabelText('Clone result')).toBeInTheDocument()
+    expect(screen.getByText('world.json')).toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+
+    // A re-fetch happens after the preview completed: never leave its old contents visible.
+    act(() => client.setQueryData(['world-package', 'real_world'], {...source, fingerprint: 'fresh-fingerprint'}))
+    expect(await screen.findByText('fresh-fingerprint')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('The source World Package changed. Review the clone again.')
+    expect(screen.queryByLabelText('Clone result')).not.toBeInTheDocument()
+    expect(screen.queryByText(initialHeading)).not.toBeInTheDocument()
+    expect(screen.queryByText('world.json')).not.toBeInTheDocument()
+    expect(screen.queryByText('OLD_SOURCE_DIAGNOSTIC')).not.toBeInTheDocument()
+    expect(screen.getByPlaceholderText('my_custom_world')).toHaveValue('local_world')
+    expect(screen.getByPlaceholderText('My Custom World')).toHaveValue('Authored name')
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+
+    act(() => {
+      locale.language = 'cs'
+      for (const listener of [...locale.listeners]) listener()
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent('Zdroj World Package se změnil.')
+    expect(screen.queryByLabelText('Výsledek kopírování')).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByRole('button', {name: 'Náhled kopírování'}))
+    expect(await screen.findByText(previewOk ? 'Pouze náhled:' : 'Náhled se nezdařil:')).toBeInTheDocument()
+    expect(screen.getByLabelText('Výsledek kopírování')).toBeInTheDocument()
+    expect(screen.queryByText('Zdroj World Package se změnil. Návrh zkontrolujte znovu.')).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(2)
+  })
+
+  it.each([
     {caseName: 'successful', rejectRequest: false},
     {caseName: 'rejected', rejectRequest: true},
   ])('ignores an old $caseName preview after the source fingerprint changes', async ({rejectRequest}) => {

@@ -48,10 +48,10 @@ describe('RunDiagnosticsPage', () => {
       lineage: { child_run_count: 1 },
       history_counts: { events: 5, ranking_snapshots: 7, race_snapshots: 6 }
     }))
-    api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2028, qualification: null, result: null })
-    api.getLatestRollover.mockResolvedValue({
-      rollover: { run_id: 'run-a', from_season: 2028, to_season: 2029, transitioned_players: 64, metadata: {} }
-    })
+    api.getFinalsSummary.mockImplementation(async (runId: string) => ({ run_id: runId, season: 2028, qualification: null, result: null }))
+    api.getLatestRollover.mockImplementation(async (runId: string) => ({
+      rollover: { run_id: runId, from_season: 2028, to_season: 2029, transitioned_players: 64, metadata: {} }
+    }))
     api.getRunSource.mockResolvedValue({
       source: {
         source_type: 'new_run',
@@ -61,9 +61,9 @@ describe('RunDiagnosticsPage', () => {
         source_rollover_to_season: null
       }
     })
-    api.getRunLineage.mockResolvedValue({
+    api.getRunLineage.mockImplementation(async (runId: string) => ({
       lineage: {
-        run_id: 'run-a',
+        run_id: runId,
         source: {
           source_type: 'new_run',
           parent_run_id: null,
@@ -73,7 +73,7 @@ describe('RunDiagnosticsPage', () => {
         },
         children: ['run-child-1']
       }
-    })
+    }))
     api.listEvents.mockImplementation(async (runId: string) => ({ run_id: runId,
       events: [
         { event_sequence: 5, event_id: 'E5', season: 2028, week: 12, template_id: null, tournament_result: { done: true } },
@@ -291,6 +291,60 @@ describe('RunDiagnosticsPage', () => {
     },
   )
 
+  it.each(['finals', 'rollover', 'lineage'] as const)(
+    'rejects %s from another Run without misrepresenting available artifacts',
+    async (resource) => {
+      if (resource === 'finals') {
+        api.getFinalsSummary.mockResolvedValueOnce({
+          run_id: 'FOREIGN_RUN', season: 2099,
+          qualification: { qualified_players: [] }, result: { champion_player_id: 'FOREIGN_CHAMPION' }
+        })
+      }
+      if (resource === 'rollover') {
+        api.getLatestRollover.mockResolvedValueOnce({
+          rollover: { run_id: 'FOREIGN_RUN', from_season: 2098, to_season: 2099,
+            transitioned_players: 999, metadata: {} }
+        })
+      }
+      if (resource === 'lineage') {
+        api.getRunLineage.mockResolvedValueOnce({
+          lineage: { run_id: 'FOREIGN_RUN',
+            source: { source_type: 'new_run', parent_run_id: null,
+              source_rollover_run_id: null, source_rollover_from_season: null, source_rollover_to_season: null },
+            children: ['FOREIGN_CHILD'] }
+        })
+      }
+      renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+      const warning = {
+        finals: 'Finals summary belongs to another Run. Its status and inspection links are hidden.',
+        rollover: 'Rollover summary belongs to another Run. Its result and inspection link are hidden.',
+        lineage: 'Lineage belongs to another Run. Child count and season-chain inspection link are hidden.',
+      }[resource]
+      expect(await screen.findByRole('alert')).toHaveTextContent(warning)
+      expect(screen.queryByText('2099')).not.toBeInTheDocument()
+      expect(screen.queryByText('999')).not.toBeInTheDocument()
+      expect(screen.queryByText('FOREIGN_CHILD')).not.toBeInTheDocument()
+      expect(screen.queryByText('FOREIGN_CHAMPION')).not.toBeInTheDocument()
+
+      if (resource === 'finals') {
+        expect(screen.queryByRole('link', { name: /Inspect Finals (result|qualification)/ })).not.toBeInTheDocument()
+        expect(screen.getByRole('link', { name: 'Inspect latest rollover details' })).toBeInTheDocument()
+      }
+      if (resource === 'rollover') {
+        expect(screen.queryByRole('link', { name: 'Inspect latest rollover details' })).not.toBeInTheDocument()
+        expect(screen.queryByText('Transitioned players')).not.toBeInTheDocument()
+        expect(screen.getByRole('link', { name: /Inspect season chain/ })).toBeInTheDocument()
+      }
+      if (resource === 'lineage') {
+        expect(screen.queryByRole('link', { name: /Inspect season chain/ })).not.toBeInTheDocument()
+        expect(screen.getByText('Child run count')).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: 'Inspect latest rollover details' })).toBeInTheDocument()
+      }
+      expect(screen.getByRole('link', { name: 'Inspect latest completed event (E5)' }))
+        .toHaveAttribute('href', '/runs/run-a/events/E5')
+    },
+  )
+
   it('renders availability and artifact-state statuses', async () => {
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-availability/diagnostics')
 
@@ -306,7 +360,7 @@ describe('RunDiagnosticsPage', () => {
 
   it('renders most relevant next inspection links from loaded data', async () => {
     api.getFinalsSummary.mockResolvedValueOnce({
-      run_id: 'run-a',
+      run_id: 'run-links',
       season: 2028,
       qualification: { qualified_players: [] },
       result: null
@@ -367,7 +421,7 @@ describe('RunDiagnosticsPage', () => {
 
   it('uses finals result detail in diagnostics when finals result exists', async () => {
     api.getFinalsSummary.mockResolvedValueOnce({
-      run_id: 'run-a',
+      run_id: 'run-links',
       season: 2028,
       qualification: { qualified_players: [] },
       result: { champion_player_id: 'P1' }

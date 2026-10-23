@@ -125,11 +125,10 @@ def capture_terminal_summary(session, receipt, frozen, position):
 
 def stored_terminal_summary(receipt, frozen):
     if frozen.get("schema_version") == "authoritative_full_simulation_operation.v2":
-        from beta_engine.domain.run_packages import canonical_hash
         summary = frozen.get("terminal_summary")
         if summary is None:
             return None
-        if summary.get("summary_fingerprint") != canonical_hash({k: v for k, v in summary.items() if k != "summary_fingerprint"}) or (summary.get("run_id"), summary.get("branch_id"), summary.get("command_id"), summary.get("status")) != (receipt.run_id, receipt.branch_id, receipt.command_id, receipt.status):
+        if summary.get("summary_fingerprint") != fingerprint({k: v for k, v in summary.items() if k != "summary_fingerprint"}) or (summary.get("run_id"), summary.get("branch_id"), summary.get("command_id"), summary.get("status")) != (receipt.run_id, receipt.branch_id, receipt.command_id, receipt.status):
             raise ValueError("Native terminal summary is corrupt")
         return summary
     summary = frozen.get("terminal_summary")

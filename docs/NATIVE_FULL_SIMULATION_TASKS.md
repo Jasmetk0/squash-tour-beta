@@ -69,6 +69,10 @@ lease, approve a child or grant writer readiness. Full production source replay
 and physical dependency checks still run at sporting/Save authorities. Original
 v1 slot/group counters retain their original meaning; native match counters are
 separate and identify their source fingerprint.
+Sporting, Tour and native-fork component hashes retain their existing canonical
+UTF-8 serialization; parent/task/terminal-summary fingerprints retain their own
+historical serialization. Czech audit labels and Unicode command IDs exercise
+both contracts through actual execution and SQLite reopen, without rewriting data.
 
 An independent native Branch aggregate is explicitly rejected by legacy sporting
 and Full Simulation writers, even if W/offset/start/horizon numerically equal
@@ -111,6 +115,7 @@ results already executed (earlier source-tree states; not final-head claims):
 | Actual legacy precise-boundary Chromium, process death, CS/EN and frozen summaries | passed locally; two earlier hosted duplicate-GET attempts failed with ECONNRESET and are not counted as passes |
 | Legacy boundary Chromium using the actual Admin review response, with all sporting assertions preserved | passed locally, 134.90 s; latest-head hosted rerun required |
 | Rehashed unsupported Tour version, read non-mutation, target Save and restart regression | 1 passed, 46.94 s |
+| Czech audit / Unicode task ID, actual original and native-fork execution, summary, Save/restore/horizon/restart | 2 passed, 117.38 s; pre-fix mismatch reproduced through real HTTP and retained as failed evidence |
 | Closing Ranking unit contracts plus original task-calendar regressions | 18 passed, 2.33 s |
 | Focused existing/new frontend contracts | 121 passed, 7.81 s (five files; API mocks/component contracts, not sporting integration) |
 | Native seed/action/audit integrity, Closing Ranking and original calendar contracts | 35 passed, 7.23 s |
@@ -120,6 +125,7 @@ results already executed (earlier source-tree states; not final-head claims):
 The finalized W52/W61/W80 matrix walks every actual week using small isolated
 production fixtures; a genuine late-season four-player tournament proves matches,
 points, rollover, original source preservation and cold SQLite restart. A separate
+matrix artifact preserves each actual SQLite fixture, including failed runs. The
 short original-Branch case and actual native fork/extension/independent-continuation
 case cover the two writer authorities. The real Chromium script performs reviewed
 Start, three MatchEngine matches, result approval, manual Saves, final closure and
@@ -140,7 +146,10 @@ summaries and final closure ancestry. It found and corrected two additional
 boundaries: a target cannot settle before its separate manual Save, and every
 persisted/pending child must preserve the original parent's derived seed, audit
 identity and allowed sporting action. An idle stop must also settle the task
-ledger, not merely its parent. Focused regressions exercise those cases; final
+ledger, not merely its parent. Unicode review also found and corrected a mixed
+JSON hash contract in progress and terminal-summary reads; actual Czech-audit
+original/fork regressions first reproduced the error and then passed. Focused
+regressions exercise those cases; final
 hosted evidence remains required above. Parallel World Package files and the
 Master remain untouched.
 

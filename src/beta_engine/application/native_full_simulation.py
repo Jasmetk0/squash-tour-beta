@@ -25,6 +25,7 @@ from beta_engine.application.run_calendar_read_authority import (
 )
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.simulation_slots import fingerprint
 from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     ACTIVE_FULL_SIMULATION_GUARD,
@@ -186,6 +187,8 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
     Like legacy task progress, this counts actual persisted Branch receipts.
     Polling must not replay MatchEngine or re-prove every historical match. The
     production native context still performs that proof before every writer.
+    Sporting components use their canonical UTF-8 hash; the task control/audit
+    keeps its existing fingerprint contract. Unicode must not mix the two.
     """
     from beta_engine.infrastructure.db.models import (
         BranchSavedRevisionModel,
@@ -211,7 +214,7 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
             if component["state"]["baseline"] != saved["state"]["baseline"] or component["state"]["root_saved_revision_id"] != saved["state"]["root_saved_revision_id"]:
                 raise ValueError("Native task progress Working Draft changed its original source")
         state = component["state"]
-        if set(component) != {"state", "fingerprint"} or component["fingerprint"] != fingerprint(state) or state["schema_version"] != "native_fork_runtime.v1":
+        if set(component) != {"state", "fingerprint"} or component["fingerprint"] != canonical_hash(state) or state["schema_version"] != "native_fork_runtime.v1":
             raise ValueError("Native task progress runtime hash/schema is corrupt")
         tour = state["tour"]
         if state["lifecycle"]["week"] != tour["week"] or tour["schema_version"] != "native_fork_tour.v1":
@@ -225,7 +228,7 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
         state, tour = json.loads(checkpoint_row.payload_json), json.loads(tour_row.payload_json)
         if state.get("schema_version") not in {f"calendar_sporting_checkpoint.v{i}" for i in range(1, 13)} or tour.get("schema_version") not in {"calendar_tour_authority.v1", "calendar_tour_authority.v2"}:
             raise ValueError("Native task progress sporting/Tour schema is unsupported")
-        if fingerprint(state) != checkpoint_row.fingerprint or fingerprint(tour) != tour_row.fingerprint or tour["checkpoint_fingerprint"] != checkpoint_row.fingerprint or state["week"] != tour["week"]:
+        if canonical_hash(state) != checkpoint_row.fingerprint or canonical_hash(tour) != tour_row.fingerprint or tour["checkpoint_fingerprint"] != checkpoint_row.fingerprint or state["week"] != tour["week"]:
             raise ValueError("Native task progress sporting/Tour hash or position is corrupt")
         source_fingerprint = fingerprint({"checkpoint": checkpoint_row.fingerprint, "tour": tour_row.fingerprint})
     owner = state.get("baseline", state)

@@ -44,7 +44,7 @@ def execute_tour(server, command):
 
 def reviewed(server, target=None, name="native-full"):
     request = {"schema_version": "authoritative_full_simulation_command.v2", "command_id": name,
-        "seed": 231, "operator_label": "Admin", "audit_reason": "Real native server task acceptance",
+        "seed": 231, "operator_label": "Správce Žan", "audit_reason": "Ověření skutečné serverové úlohy a neměnného zdroje",
         "target_week": target}
     code, preview = _request("POST", scope(server) + "/native/preview", request)
     assert code == 200, preview
@@ -97,13 +97,13 @@ def approve_draw(server, name="worker-cup"):
 def test_native_task_real_transition_save_target_restart_and_original_replay(tmp_path):
     import json
 
-    from beta_engine.domain.simulation_slots import fingerprint
+    from beta_engine.domain.run_packages import canonical_hash
     from beta_engine.infrastructure.db.models import CalendarTourAuthorityModel
 
     db = f"sqlite:///{tmp_path / 'native-task.db'}"
     with ApiServer(database_url=db) as server:
         repo, _ = setup(server, RunCalendar(4, 4, 2030, 3), count=4)
-        command = reviewed(server, {"season_index": 0, "week": 3})
+        command = reviewed(server, {"season_index": 0, "week": 3}, name="úloha-žluťoučký-kůň")
         task = start(server, command)
         assert task["checkpoint"] == "native_manual_save_required"
         assert task["current_week"] == {"season_index": 0, "week": 3}
@@ -117,7 +117,7 @@ def test_native_task_real_transition_save_target_restart_and_original_replay(tmp
             original_tour, original_hash = row.payload_json, row.fingerprint
             corrupt = json.loads(original_tour)
             corrupt["schema_version"] = "calendar_tour_authority.v3"
-            row.payload_json, row.fingerprint = json.dumps(corrupt), fingerprint(corrupt)
+            row.payload_json, row.fingerprint = json.dumps(corrupt), canonical_hash(corrupt)
         assert _request("GET", scope(server) + "/tasks/" + task["task_id"])[0] == 409
         with repo._session_factory.begin() as session:
             row = session.get(CalendarTourAuthorityModel, ("run", "branch"))
@@ -133,7 +133,7 @@ def test_native_task_real_transition_save_target_restart_and_original_replay(tmp
         assert task["state"] == "target_reached"
         assert task["original_command"] == command
         assert len(inspect(restarted)["state"]["transitions"]) == 1
-        assert _request("POST", scope(restarted) + "/tasks", {"request_id": "start-native-full", "command": command})[0] == 202
+        assert _request("POST", scope(restarted) + "/tasks", {"request_id": "start-" + command["command_id"], "command": command})[0] == 202
         assert len(inspect(restarted)["state"]["transitions"]) == 1
 
 

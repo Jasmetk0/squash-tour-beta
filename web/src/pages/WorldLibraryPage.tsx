@@ -203,9 +203,9 @@ function CloneResultCard({ result }: { result: WorldPackageCloneResponse }): JSX
   const cs = language === 'cs'
   return (
     <div className={result.ok ? 'status' : 'error'} aria-label={cs ? 'Výsledek kopírování' : 'Clone result'}>
-      {result.ok && result.dry_run && <p><strong>{cs ? 'Pouze náhled:' : 'Preview only:'}</strong> {cs ? 'Žádné soubory nebyly zapsány.' : 'no files were written.'}</p>}
-      {result.ok && !result.dry_run && <p><strong>{cs ? 'Úspěch:' : 'Success:'}</strong> {cs ? 'Vlastní World Package byl vytvořen.' : 'Custom World package created.'}</p>}
-      {!result.ok && <p><strong>{cs
+      {result.ok && result.dry_run && <p role="status"><strong>{cs ? 'Pouze náhled:' : 'Preview only:'}</strong> {cs ? 'Žádné soubory nebyly zapsány.' : 'no files were written.'}</p>}
+      {result.ok && !result.dry_run && <p role="status"><strong>{cs ? 'Úspěch:' : 'Success:'}</strong> {cs ? 'Vlastní World Package byl vytvořen.' : 'Custom World package created.'}</p>}
+      {!result.ok && <p role="alert"><strong>{cs
         ? (result.dry_run ? 'Náhled se nezdařil:' : 'Kopírování se nezdařilo:')
         : (result.dry_run ? 'Preview failed:' : 'Clone failed:')}</strong> {cs ? 'Vytvoření kopie nebylo potvrzeno.' : 'The clone was not confirmed as created.'}</p>}
       <DetailRow label={cs ? 'Cílová cesta' : 'Target path'} value={<code>{result.target_path}</code>} />

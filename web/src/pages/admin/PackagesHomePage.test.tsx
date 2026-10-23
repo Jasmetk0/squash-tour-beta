@@ -287,7 +287,7 @@ describe('source-backed Packages frontend',()=>{
     mount('/admin/packages/world/demo')
     expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
-    expect((await screen.findAllByRole('alert')).length).toBe(2)
+    await waitFor(()=>expect(screen.getAllByRole('alert')).toHaveLength(2))
     expect(screen.queryByText('Foreign Country (OTH)')).not.toBeInTheDocument()
     expect(screen.queryByText('Foreign Continent')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button',{name:'Znovu načíst země'}))
@@ -308,6 +308,22 @@ describe('source-backed Packages frontend',()=>{
     await userEvent.click(screen.getByRole('button',{name:'Znovu načíst kontrolu'}))
     expect(await screen.findByText('Country detail to inspect')).toBeInTheDocument()
     expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not create links from a foreign country response on the validation tab',async()=>{
+    api.getWorldPackageCountries.mockResolvedValueOnce({world_id:'other',countries:[
+      {code:'CZE',name:'Impostor',population:10,region:'Fake'}
+    ]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(await screen.findByText('Country detail to inspect')).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent('požadováno demo, vráceno other')
+    expect(screen.queryByRole('link',{name:/Otevřít dotčenou zemi/})).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst země'}))
+    expect(await screen.findByRole('link',{name:/Otevřít dotčenou zemi/})).toHaveAttribute('href','/admin/world/library/demo/countries/CZE')
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(2)
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
   })
 
   it('can reload failed geography and validation separately without changing the active source',async()=>{

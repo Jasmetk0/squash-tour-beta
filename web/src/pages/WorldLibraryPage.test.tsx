@@ -404,7 +404,7 @@ describe('built-in World cloning', () => {
         country_count: 2, continent_count: 1, region_count: 1, travel_region_count: 1,
         fingerprint: '0123456789abcdefghijklmnop',
       },
-      validation: {status: 'valid', error_count: 0, warning_count: 1, info_count: 0},
+      validation: {world_id: 'local_world', status: 'valid', error_count: 0, warning_count: 1, info_count: 0},
     }))
     const client = new QueryClient({defaultOptions: {queries: {retry: false}}})
     const invalidate = vi.spyOn(client, 'invalidateQueries')
@@ -597,9 +597,10 @@ describe('built-in World cloning', () => {
   })
 
   it.each([
-    { caseName: 'top-level destination', newWorldId: 'unexpected_world', packageWorldId: null },
-    { caseName: 'nested package summary', newWorldId: 'expected_world', packageWorldId: 'unrelated_world' },
-  ])('rejects a mismatch in $caseName without invalidating unrelated package caches', async ({newWorldId, packageWorldId}) => {
+    { caseName: 'top-level destination', newWorldId: 'unexpected_world', packageWorldId: null, validationWorldId: null },
+    { caseName: 'nested package summary', newWorldId: 'expected_world', packageWorldId: 'unrelated_world', validationWorldId: null },
+    { caseName: 'validation summary', newWorldId: 'expected_world', packageWorldId: null, validationWorldId: 'unrelated_world' },
+  ])('rejects a mismatch in $caseName without invalidating unrelated package caches', async ({newWorldId, packageWorldId, validationWorldId}) => {
     api.getWorldPackage.mockResolvedValue({
       world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
       status: 'active', editable: false, fingerprint: 'source-fingerprint',
@@ -620,7 +621,10 @@ describe('built-in World cloning', () => {
         world_id: packageWorldId, type: 'custom', source: 'custom_config',
         country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
         fingerprint: 'unexpected-package-fingerprint',
-      } : null, validation: null, errors: [],
+      } : null, validation: validationWorldId ? {
+        world_id: validationWorldId, status: 'valid', error_count: 0,
+        warning_count: 0, info_count: 0, checks: [],
+      } : null, errors: [],
     })
     const client = new QueryClient({defaultOptions: {queries: {retry: false}, mutations: {retry: false}}})
     const invalidate = vi.spyOn(client, 'invalidateQueries')

@@ -5,8 +5,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WorldLibraryDetailPage, WorldPackageCountryCreatePage } from './WorldLibraryPage'
 
 const api = vi.hoisted(() => ({ getWorldPackage: vi.fn(), getWorldPackageGeography: vi.fn(), getWorldPackageValidation: vi.fn(), createWorldPackageCountry: vi.fn(), cloneWorldPackage: vi.fn() }))
-const locale = vi.hoisted(() => ({ language: 'en' as 'cs' | 'en' }))
-vi.mock('../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: locale.language }) }))
+const locale = vi.hoisted(() => ({ language: 'en' as 'cs' | 'en', listeners: new Set<() => void>() }))
+vi.mock('../i18n/LanguageContext', async () => {
+  const { useSyncExternalStore } = await import('react')
+  return {
+    useLanguage: () => ({
+      language: useSyncExternalStore(
+        (listener) => { locale.listeners.add(listener); return () => { locale.listeners.delete(listener) } },
+        () => locale.language
+      )
+    })
+  }
+})
 vi.mock('../api/client', async importOriginal => ({ ...(await importOriginal<object>()), ...api }))
 
 beforeEach(() => { vi.clearAllMocks(); locale.language = 'en' })
@@ -313,10 +323,12 @@ describe('built-in World cloning', () => {
     const client = new QueryClient({defaultOptions: {queries: {retry: false}}})
     const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
       {initialEntries: ['/world/real_world']})
-    const view = render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
     function switchLanguage(language: 'cs' | 'en') {
-      locale.language = language
-      view.rerender(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+      act(() => {
+        locale.language = language
+        for (const listener of [...locale.listeners]) listener()
+      })
     }
 
     expect(await screen.findByText('Clone Built-in World')).toBeInTheDocument()

@@ -475,6 +475,48 @@ describe('source-backed Packages frontend',()=>{
     expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
   })
 
+  it('hides stale validation data after failed manual refresh and restores on recovery',async()=>{
+    api.getWorldPackageValidation.mockResolvedValueOnce({world_id:'demo',status:'warnings',error_count:0,warning_count:1,info_count:0,checks:[
+      {code:'old',severity:'warning',status:'warning',message:'Old warning',path:'countries/CZE/attributes.json',field:null}
+    ]}).mockRejectedValueOnce(new Error('validation offline')).mockResolvedValue({world_id:'demo',status:'valid',error_count:0,warning_count:0,info_count:1,checks:[
+      {code:'new',severity:'info',status:'passed',message:'New validation result',path:null,field:null}
+    ]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(await screen.findByText('Old warning')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst kontrolu'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('validation offline')
+    expect(screen.queryByText('Old warning')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:/Otevřít dotčenou zemi/})).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst kontrolu'}))
+    expect(await screen.findByText('New validation result')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(3)
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides cached country links after failed manual inventory refresh',async()=>{
+    api.getWorldPackageCountries.mockResolvedValueOnce({world_id:'demo',countries:[
+      {code:'CZE',name:'Czechia',population:100,region:'Europe'}
+    ]}).mockRejectedValueOnce(new Error('country registry offline'))
+      .mockResolvedValue({world_id:'demo',countries:[
+        {code:'USA',name:'United States',population:200,region:'America'}
+      ]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    expect(await screen.findByRole('link',{name:'Czechia (CZE)'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst země'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('country registry offline')
+    expect(screen.queryByRole('link',{name:'Czechia (CZE)'})).not.toBeInTheDocument()
+    expect(screen.queryByText('V balíčku nejsou žádné země.')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst země'}))
+    expect(await screen.findByRole('link',{name:'United States (USA)'})).toBeInTheDocument()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(3)
+    expect(api.getWorldPackageGeography).toHaveBeenCalledTimes(1)
+  })
+
   it('refreshes a successful validation read without mutating World data',async()=>{
     api.getWorldPackageValidation.mockResolvedValueOnce({
       world_id:'demo',status:'warnings',error_count:0,warning_count:1,info_count:0,

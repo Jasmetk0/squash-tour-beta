@@ -209,10 +209,12 @@ export function PackageWorldDetailPage():JSX.Element {
   const countriesQuery=useQuery({queryKey:['world-package-countries',worldId],queryFn:()=>getWorldPackageCountries(worldId),enabled:active!=='overview',retry:false})
   const geoQuery=useQuery({queryKey:['world-package-geography',worldId],queryFn:()=>getWorldPackageGeography(worldId),enabled:active==='contents',retry:false})
   const valQuery=useQuery({queryKey:['world-package-validation',worldId],queryFn:()=>getWorldPackageValidation(worldId),enabled:active==='validation',retry:false})
-  const pkg=q.data?.world_id===worldId?q.data:null
-  const countries=countriesQuery.data?.world_id===worldId?countriesQuery.data.countries:null
-  const geo=geoQuery.data?.world_id===worldId?geoQuery.data:null
-  const validation=valQuery.data?.world_id===worldId?valQuery.data:null
+  // React Query retains last successful data after a failed refetch.
+  // Do not present an old snapshot as current after the latest read failed.
+  const pkg=q.isSuccess && q.data.world_id===worldId?q.data:null
+  const countries=countriesQuery.isSuccess && countriesQuery.data.world_id===worldId?countriesQuery.data.countries:null
+  const geo=geoQuery.isSuccess && geoQuery.data.world_id===worldId?geoQuery.data:null
+  const validation=valQuery.isSuccess && valQuery.data.world_id===worldId?valQuery.data:null
   const detailMismatch=q.isSuccess && q.data.world_id!==worldId
   const countriesMismatch=countriesQuery.isSuccess && countriesQuery.data.world_id!==worldId
   const geoMismatch=geoQuery.isSuccess && geoQuery.data.world_id!==worldId

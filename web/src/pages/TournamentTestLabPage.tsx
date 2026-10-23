@@ -459,6 +459,9 @@ export function TournamentTestLabPage(): JSX.Element {
     </SectionCard>
 
     <SectionCard title={cs ? "Vestavěné scénáře pouze ke čtení" : "Built-in read-only scenarios"}>
+      <button type="button" disabled={builtIns.isFetching} onClick={() => { void builtIns.refetch() }}>
+        {builtIns.isFetching ? (cs ? 'Načítám turnajové scénáře…' : 'Refreshing Tournament Lab scenarios…') : (cs ? 'Obnovit vestavěné scénáře' : 'Refresh built-in scenarios')}
+      </button>
       {builtIns.isLoading ? <p role="status" className="status">{cs ? "Načítám scénáře…" : "Loading scenarios…"}</p> : null}
       {builtIns.data?.map((item) => <article key={item.scenario_id}>
         <strong>{item.display_name}</strong>
@@ -470,7 +473,7 @@ export function TournamentTestLabPage(): JSX.Element {
           built_in_scenario_id: item.scenario_id
         }})}>{cs ? "Nová Test Session ze scénáře" : "New Test Session from"} {item.display_name}</button>
       </article>)}
-      {builtIns.isError ? <p role="alert" className="error">{cs ? "Vestavěné turnajové scénáře nejsou dostupné." : "Tournament Lab built-ins unavailable."}</p> : null}
+      {builtIns.isError ? <p role="alert" className="error">{cs ? "Vestavěné turnajové scénáře nejsou dostupné." : "Tournament Lab built-ins unavailable."} {String(builtIns.error)}</p> : null}
       {builtIns.isSuccess && builtIns.data?.length === 0 ? <p role="status" className="status">{cs ? "Žádné vestavěné turnajové scénáře." : "No built-in Tournament Lab scenarios."}</p> : null}
     </SectionCard>
 

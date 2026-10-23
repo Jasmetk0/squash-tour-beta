@@ -268,7 +268,7 @@ export function PlayerTestLabPage(): JSX.Element {
         {builtIns.isFetching ? (cs ? 'Obnovuji scénáře…' : 'Refreshing Player Lab scenarios…') : (cs ? 'Obnovit vestavěné scénáře' : 'Refresh built-in scenarios')}
       </button>
       {builtIns.isLoading ? <p role="status">{cs ? "Načítám vestavěné scénáře…" : "Loading built-in scenarios…"}</p> : null}
-      {builtIns.isError ? <p role="alert" className="error">{cs ? "Vestavěné scénáře Player Lab nejsou dostupné." : "Built-in Player Lab scenarios unavailable."}</p> : null}
+      {builtIns.isError ? <p role="alert" className="error">{cs ? "Vestavěné scénáře Player Lab nejsou dostupné." : "Built-in Player Lab scenarios unavailable."} {String(builtIns.error)}</p> : null}
       {builtIns.isSuccess && builtIns.data.length === 0
         ? <p className="status">{cs ? "Nejsou dostupné žádné vestavěné scénáře Player Lab." : "No built-in Player Lab scenarios are available."}</p> : null}
       {builtIns.data?.map((item) => <article key={item.scenario_id}>

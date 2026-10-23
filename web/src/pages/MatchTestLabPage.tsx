@@ -271,6 +271,9 @@ export function MatchTestLabPage(): JSX.Element {
     </SectionCard>
 
     <SectionCard title={cs ? "Vestavěné scénáře pouze ke čtení" : "Built-in read-only scenarios"}>
+      <button type="button" disabled={builtIns.isFetching} onClick={() => { void builtIns.refetch() }}>
+        {builtIns.isFetching ? (cs ? 'Načítám scénáře…' : 'Refreshing built-in scenarios…') : (cs ? 'Obnovit vestavěné scénáře' : 'Refresh built-in scenarios')}
+      </button>
       {builtIns.isLoading ? <p role="status" className="status">{cs ? "Načítám vestavěné scénáře…" : "Loading built-in scenarios…"}</p> : null}
       {builtIns.data?.map((item) => <article key={item.scenario_id}>
         <strong>{item.display_name}</strong>
@@ -281,7 +284,7 @@ export function MatchTestLabPage(): JSX.Element {
           built_in_scenario_id: item.scenario_id
         }})}>{cs ? "Nová Test Session ze scénáře" : "New Test Session from"} {item.display_name}</button>
       </article>)}
-      {builtIns.isError ? <p role="alert" className="error">{cs ? "Vestavěné scénáře nelze načíst." : "Built-in scenarios unavailable."}</p> : null}
+      {builtIns.isError ? <p role="alert" className="error">{cs ? "Vestavěné scénáře nelze načíst." : "Built-in scenarios unavailable."} {String(builtIns.error)}</p> : null}
       {builtIns.isSuccess && builtIns.data?.length === 0 ? <p className="status">{cs ? "Registr neobsahuje žádné vestavěné scénáře." : "No built-in scenarios were returned."}</p> : null}
       {createMutation.isError ? <p role="alert" className="error">{cs ? "Vytvoření Session selhalo" : "Session creation failed"}: {String(createMutation.error)}</p> : null}
     </SectionCard>

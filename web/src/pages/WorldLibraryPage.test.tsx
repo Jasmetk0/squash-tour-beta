@@ -354,6 +354,7 @@ describe('built-in World cloning', () => {
     expect(await screen.findByText('Pouze náhled:')).toBeInTheDocument()
     expect(screen.getByText('Žádné soubory nebyly zapsány.')).toBeInTheDocument()
     expect(screen.getByText('Náhled balíčku')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Výsledek kopírování')).getByRole('status')).toHaveTextContent('Pouze náhled:')
     expect(screen.getByText('Počty:')).toBeInTheDocument()
     expect(within(screen.getByLabelText('Výsledek kopírování')).getByText('Varování:')).toBeInTheDocument()
     expect(screen.getByText('countries/AAA.json')).toBeInTheDocument()
@@ -374,6 +375,7 @@ describe('built-in World cloning', () => {
     fireEvent.click(screen.getByRole('button', {name: 'Confirm custom copy'}))
     expect(await screen.findByText('Success:')).toBeInTheDocument()
     expect(screen.getByText('Created package')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Clone result')).getByRole('status')).toHaveTextContent('Success:')
     expect(screen.getByRole('link', {name: 'Open new Custom World detail'}))
       .toHaveAttribute('href', '/admin/world/library/local_world')
     expect(api.cloneWorldPackage).toHaveBeenNthCalledWith(2, 'real_world', {
@@ -424,6 +426,7 @@ describe('built-in World cloning', () => {
     fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Editable'}})
     fireEvent.click(screen.getByRole('button', {name: 'Náhled kopírování'}))
     expect(await screen.findByText('Náhled se nezdařil:')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Výsledek kopírování')).getByRole('alert')).toHaveTextContent('Náhled se nezdařil:')
     expect(screen.getByText('Chyby kopírování:')).toBeInTheDocument()
     expect(screen.getByText('new_world_id: DUPLICATE_WORLD_ID: preserved verbatim')).toBeInTheDocument()
     expect(screen.queryByText('Úspěch:')).not.toBeInTheDocument()
@@ -435,6 +438,7 @@ describe('built-in World cloning', () => {
     expect(await screen.findByText('Kopírování se nezdařilo:')).toBeInTheDocument()
     expect(screen.getByText('Soubory uvedené v odpovědi:')).toBeInTheDocument()
     expect(screen.getByText('Údaje balíčku (nepotvrzeno)')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Výsledek kopírování')).getByRole('alert')).toHaveTextContent('Kopírování se nezdařilo:')
     expect(screen.getByText('countries/AAA.json')).toBeInTheDocument()
     expect(screen.getByText('new_world_id: DUPLICATE_WORLD_ID: preserved verbatim')).toBeInTheDocument()
     expect(screen.queryByText('Vytvořený balíček')).not.toBeInTheDocument()
@@ -452,6 +456,43 @@ describe('built-in World cloning', () => {
     expect(screen.queryByText('Success:')).not.toBeInTheDocument()
     expect(screen.queryByRole('link', {name: 'Open new Custom World detail'})).not.toBeInTheDocument()
     expect(api.cloneWorldPackage).toHaveBeenCalledTimes(2)
+  })
+
+  it('preserves thrown API diagnostics while translating the failure prefix and never claiming success', async () => {
+    api.getWorldPackage.mockResolvedValue({
+      world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'source-fingerprint',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    })
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    api.cloneWorldPackage.mockRejectedValue(new Error('HTTP 409: SOURCE_FINGERPRINT_CHANGED'))
+    const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
+      {initialEntries: ['/world/real_world']})
+    render(<QueryClientProvider client={new QueryClient({defaultOptions: {queries: {retry: false, mutations: {retry: false}}}})}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>)
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'local_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Editable'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Preview clone'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Clone request failed: HTTP 409: SOURCE_FINGERPRINT_CHANGED')
+    expect(screen.queryByLabelText('Clone result')).not.toBeInTheDocument()
+    act(() => {
+      locale.language = 'cs'
+      for (const listener of [...locale.listeners]) listener()
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent('Kopírování se nezdařilo: HTTP 409: SOURCE_FINGERPRINT_CHANGED')
+    expect(screen.getByLabelText('Popis')).toHaveValue('Custom world cloned from Real World.')
+    expect(screen.queryByRole('link', {name: /Otevřít detail nového/})).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+    expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', expect.objectContaining({dry_run: true}))
   })
 
   it('keeps an in-flight preview and localizes a late mismatched response in the active language', async () => {

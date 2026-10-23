@@ -130,7 +130,15 @@ export function RunDiagnosticsPage(): JSX.Element {
     .slice().sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0]
   const latestRaceSnapshot = safeRaceSnapshots
     .slice().sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0]
-  const nextPlannedEvent = safeRun?.season_state.ordered_events[safeRun.season_state.next_event_index] ?? null
+  // The Run endpoint builds its summary and season state from separate reads.
+  // If a concurrent update made them inconsistent, do not link to an obsolete week.
+  const seasonStateMismatch = Boolean(safeRun && (
+    safeRun.season_state.season !== safeRun.run.season ||
+    safeRun.season_state.next_event_index !== safeRun.run.next_event_index
+  ))
+  const candidateNextEvent = safeRun?.season_state.ordered_events[safeRun.season_state.next_event_index] ?? null
+  const nextEventSeasonMismatch = Boolean(candidateNextEvent && candidateNextEvent.season !== safeRun?.run.season)
+  const nextPlannedEvent = seasonStateMismatch || nextEventSeasonMismatch ? null : candidateNextEvent
   const nextPlannedWeek = nextPlannedEvent?.week ?? null
   const hasLineageChildren = (safeLineage?.lineage.children.length ?? 0) > 0
   const finalsInspectionRoute = getFinalsInspectionRoute({
@@ -171,6 +179,9 @@ export function RunDiagnosticsPage(): JSX.Element {
         {runQuery.isLoading && <p className="status">Loading run diagnostics...</p>}
         {runQuery.error && <p className="error">Failed to load run details: {formatApiError(runQuery.error)}</p>}
         {runMismatch && <p role="alert" className="error">Run details belong to another Run. Its progress and planned week are hidden.</p>}
+        {(seasonStateMismatch || nextEventSeasonMismatch) && (
+          <p role="alert" className="error">Run calendar and progress disagree. Current-week links are hidden.</p>
+        )}
         {statusSummaryQuery.error && (
           <p className="error">Failed to load status summary: {formatApiError(statusSummaryQuery.error)}</p>
         )}

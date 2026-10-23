@@ -453,10 +453,10 @@ describe('built-in World cloning', () => {
     fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'local_world'}})
     fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'My authored name'}})
     fireEvent.click(screen.getByRole('button', {name: 'Preview clone'}))
-    expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', {
+    await waitFor(() => expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', {
       new_world_id: 'local_world', name: 'My authored name',
       description: 'Custom world cloned from Original World.', dry_run: true,
-    })
+    }))
     switchLanguage('cs')
     expect(screen.getByLabelText('Popis')).toHaveValue('Custom world cloned from Original World.')
     expect(screen.getByRole('button', {name: 'Náhled kopírování'})).toBeDisabled()

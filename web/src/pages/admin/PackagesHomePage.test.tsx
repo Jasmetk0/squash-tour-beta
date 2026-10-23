@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider, useLanguage } from '../../i18n/LanguageContext'
 import { PackagesHomePage, PackagesListPage, PackageWorldDetailPage } from './PackagesHomePage'
@@ -23,9 +23,9 @@ function LanguageSwitch():JSX.Element {
   const {language,setLanguage}=useLanguage()
   return <button type="button" onClick={()=>setLanguage(language==='cs'?'en':'cs')}>Switch language</button>
 }
-function mount(path:string):void {
+function mount(path:string, worldJumpTab?:'contents'|'validation'):void {
   render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
-    <MemoryRouter initialEntries={[path]}><LanguageProvider><LanguageSwitch /><Routes>
+    <MemoryRouter initialEntries={[path]}><LanguageProvider><LanguageSwitch />{worldJumpTab&&<Link to={'/admin/packages/world/other?tab='+worldJumpTab}>Open another World</Link>}<Routes>
       <Route path="/admin/packages" element={<PackagesHomePage/>}/>
       <Route path="/admin/packages/all" element={<PackagesListPage/>}/>
       <Route path="/admin/packages/category/:categoryId" element={<PackagesListPage/>}/>
@@ -158,6 +158,27 @@ describe('source-backed Packages frontend',()=>{
     expect(await screen.findByText('Kontrola nevrátila žádné jednotlivé záznamy.')).toBeInTheDocument()
     expect(screen.getByText(/platné · 0 chyb · 0 varování/)).toBeInTheDocument()
   })
+  it('resets local country search and ordering when router reuses the detail for another World',async()=>{
+    api.getWorldPackage.mockImplementation(async(id:string)=>id==='demo'?world:{...world,world_id:'other',name:'Other World'})
+    api.getWorldPackageCountries.mockImplementation(async(id:string)=>({world_id:id,countries:[
+      {code:'CZE',name:'Czechia',population:100,region:'Europe'},
+      {code:'USA',name:'United States',population:200,region:'America'}
+    ]}))
+    api.getWorldPackageGeography.mockImplementation(async(id:string)=>({world_id:id,continents:[],regions:[],travel_regions:[],timezone_areas:[]}))
+    mount('/admin/packages/world/demo?tab=contents','contents')
+    expect(await screen.findByRole('link',{name:'Czechia (CZE)'})).toBeInTheDocument()
+    const search=screen.getByRole('searchbox',{name:'Hledat zemi, kód nebo region'})
+    await userEvent.type(search,'cesko-nonexistent')
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package country sort'}),'population')
+    expect(screen.getByText('Žádná země neodpovídá hledání.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('link',{name:'Open another World'}))
+    expect(await screen.findByRole('heading',{name:'Other World'})).toBeInTheDocument()
+    await waitFor(()=>expect(screen.getByRole('searchbox',{name:'Hledat zemi, kód nebo region'})).toHaveValue(''))
+    expect(screen.getByRole('combobox',{name:'Package country sort'})).toHaveValue('source')
+    expect(await screen.findByRole('link',{name:'Czechia (CZE)'})).toBeInTheDocument()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(2)
+  })
+
   it('searches country names, codes and regions without accents or inventory writes',async()=>{
     api.getWorldPackageCountries.mockResolvedValue({world_id:'demo',countries:[
       {code:'CZE',name:'Česko',region:'Střední Evropa',population:100},
@@ -210,6 +231,23 @@ describe('source-backed Packages frontend',()=>{
     expect(sorter).toHaveValue('population')
     expect(names()).toEqual(['Botswana (BWA)','United States (USA)','Česko (CZE)'])
     expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not retain validation severity filters after navigating to another World',async()=>{
+    api.getWorldPackage.mockImplementation(async(id:string)=>id==='demo'?world:{...world,world_id:'other',name:'Other World'})
+    api.getWorldPackageCountries.mockImplementation(async(id:string)=>({world_id:id,countries:[]}))
+    api.getWorldPackageValidation.mockImplementation(async(id:string)=>({world_id:id,status:'warnings',error_count:0,warning_count:1,info_count:0,checks:[
+      {code:'review',severity:'warning',status:'warning',message:id+' warning',path:null,field:null}
+    ]}))
+    mount('/admin/packages/world/demo?tab=validation','validation')
+    expect(await screen.findByText('demo warning')).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package validation severity filter'}),'error')
+    expect(screen.getByText('Zvolenému filtru neodpovídají žádné záznamy kontroly.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('link',{name:'Open another World'}))
+    expect(await screen.findByRole('heading',{name:'Other World'})).toBeInTheDocument()
+    await waitFor(()=>expect(screen.getByRole('combobox',{name:'Package validation severity filter'})).toHaveValue('all'))
+    expect(await screen.findByText('other warning')).toBeInTheDocument()
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(2)
   })
 
   it('filters validation severity without changing original counts or diagnostic messages',async()=>{

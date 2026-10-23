@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { getWorldPackage, getWorldPackageCountries, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages } from '../../api/client'
 import type { WorldPackageValidationCheck } from '../../api/types'
@@ -172,6 +172,13 @@ export function PackageWorldDetailPage():JSX.Element {
   const [countrySearch,setCountrySearch]=useState('')
   const [countrySort,setCountrySort]=useState<'source'|'name'|'population'>('source')
   const [severityFilter,setSeverityFilter]=useState('all')
+  // The router can reuse this component for another World ID: local display
+  // filters belong to that World, not to the previous package's inventory.
+  useEffect(()=>{
+    setCountrySearch('')
+    setCountrySort('source')
+    setSeverityFilter('all')
+  },[worldId])
   const q=useQuery({queryKey:['world-package',worldId],queryFn:()=>getWorldPackage(worldId),enabled:Boolean(worldId),retry:false})
   const countriesQuery=useQuery({queryKey:['world-package-countries',worldId],queryFn:()=>getWorldPackageCountries(worldId),enabled:active!=='overview',retry:false})
   const geoQuery=useQuery({queryKey:['world-package-geography',worldId],queryFn:()=>getWorldPackageGeography(worldId),enabled:active==='contents',retry:false})

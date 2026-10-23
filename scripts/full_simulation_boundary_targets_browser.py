@@ -168,13 +168,17 @@ def acceptance(root, port, base_url, chromium):
                         if language == "en"
                         else "Prověřit přesné cíle"
                     )
-                    page.get_by_role("button", name=review, exact=True).click()
-                    options = request(
-                        "GET",
-                        scope
-                        + "/full-simulation/target-options?command_id="
-                        + ack["parent_command_id"],
-                    )
+                    # Use the real review delivered to this Admin. A second
+                    # synchronous API-context read duplicated this UI request
+                    # and hit ECONNRESET after SIGKILL/restart in CI.
+                    options_url = api + scope + "/full-simulation/target-options?command_id=" + ack["parent_command_id"]
+                    with page.expect_response(
+                        lambda response, expected_url=options_url: response.url == expected_url and response.request.method == "GET",
+                        timeout=60000,
+                    ) as reviewed_targets:
+                        page.get_by_role("button", name=review, exact=True).click()
+                    assert reviewed_targets.value.status == 200, reviewed_targets.value.text()
+                    options = reviewed_targets.value.json()
                     selected = next(o for o in options["options"] if o["kind"] == kind)
                     page.get_by_label(
                         "Target boundary" if language == "en" else "Cílová hranice",
@@ -411,6 +415,8 @@ def acceptance(root, port, base_url, chromium):
                 context.tracing.stop(path=str(artifacts / "trace.zip"))
                 browser.close()
     finally:
+        if process.poll() is not None:
+            print(f"BROWSER: backend exited before cleanup: {process.returncode}", flush=True)
         process.terminate()
         try:
             process.wait(timeout=10)

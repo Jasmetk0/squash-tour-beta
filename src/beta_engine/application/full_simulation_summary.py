@@ -124,6 +124,13 @@ def capture_terminal_summary(session, receipt, frozen, position):
 
 
 def stored_terminal_summary(receipt, frozen):
+    if frozen.get("schema_version") == "authoritative_full_simulation_operation.v2":
+        summary = frozen.get("terminal_summary")
+        if summary is None:
+            return None
+        if summary.get("summary_fingerprint") != fingerprint({k: v for k, v in summary.items() if k != "summary_fingerprint"}) or (summary.get("run_id"), summary.get("branch_id"), summary.get("command_id"), summary.get("status")) != (receipt.run_id, receipt.branch_id, receipt.command_id, receipt.status):
+            raise ValueError("Native terminal summary is corrupt")
+        return summary
     summary = frozen.get("terminal_summary")
     if summary is None:
         return None  # Never infer a historical endpoint from the current Branch.
@@ -187,6 +194,13 @@ def inspect_terminal_summary(factory, *, run_id, branch_id, command_id):
         if receipt is None:
             raise ValueError("Full Simulation parent was not found")
         frozen = json.loads(receipt.result_json)
+        if frozen.get("schema_version") == "authoritative_full_simulation_operation.v2":
+            from beta_engine.application.native_full_simulation import validate_native_parent
+            validate_native_parent(session, receipt, frozen)
+            summary = stored_terminal_summary(receipt, frozen)
+            return {"schema_version": "full_simulation_terminal_summary_response.v2", "run_id": run_id,
+                "branch_id": branch_id, "command_id": command_id, "status": receipt.status,
+                "available": summary is not None, "summary": summary}
         if frozen.get("schema_version") not in (
             "authoritative_full_simulation_operation.v1", "authoritative_full_simulation_result.v1",
         ):

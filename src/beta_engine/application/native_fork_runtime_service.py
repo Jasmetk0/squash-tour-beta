@@ -281,6 +281,9 @@ class NativeForkRuntimeService:
             _, _, revision, draft, signed, current, _, sources = self._context(
                 session, run_id, branch_id
             )
+            from beta_engine.application.native_full_simulation_closure import saved_native_closure
+            if saved_native_closure(revision.payload, branch_id=branch_id, calendar=sources.execution_calendar):
+                raise ValueError("This native Branch is completed; extend the Run before new Tour work")
             if draft.status == "dirty" and draft.draft_schema_version != DRAFT_SCHEMA:
                 raise ValueError(
                     "Save the other Working Draft change before a Tour command"
@@ -310,6 +313,9 @@ class NativeForkRuntimeService:
                             "Command ID already has another request or confirmation"
                         )
                     return event.result
+            from beta_engine.application.native_full_simulation_closure import saved_native_closure
+            if saved_native_closure(revision.payload, branch_id=branch_id, calendar=sources.execution_calendar):
+                raise ValueError("This native Branch is completed; extend the Run before new Tour work")
             if draft.status == "dirty" and draft.draft_schema_version != DRAFT_SCHEMA:
                 raise ValueError(
                     "Save the other Working Draft change before a Tour command"
@@ -521,6 +527,11 @@ class NativeForkRuntimeService:
         )
         target = next((r for r in lineage if r.revision_id == target_id), None)
         blockers = []
+        from beta_engine.infrastructure.db.full_simulation_command_scope import pending_native_task_parents
+        if pending_native_task_parents(session, run_id=run_id, branch_id=branch_id):
+            blockers.append(SavedRevisionRestorePreflightBlocker(
+                "pending_native_full_simulation", "Stop the pending native Full Simulation before restoring this Branch"
+            ))
         if (
             target is None
             or target.branch_id != branch_id

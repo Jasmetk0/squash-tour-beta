@@ -2221,6 +2221,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         )
         .order_by(AuthoritativeSimulationCommandModel.command_id)
     ).all()
+    from beta_engine.infrastructure.db.full_simulation_command_scope import sporting_simulation_commands
+    commands = sporting_simulation_commands(session, commands)
     authorities = session.scalars(
         select(AdoptedTournamentAuthorityModel)
         .where(
@@ -3293,6 +3295,8 @@ def _live_component_with_saved_shape(
         )
         .order_by(AuthoritativeSimulationCommandModel.command_id)
     ).all()
+    from beta_engine.infrastructure.db.full_simulation_command_scope import sporting_simulation_commands
+    commands = sporting_simulation_commands(session, commands)
     authorities = session.scalars(
         select(AdoptedTournamentAuthorityModel)
         .where(
@@ -3665,6 +3669,10 @@ def restore_saved_simulation_slots(
         )
         .order_by(AuthoritativeSimulationCommandModel.command_id)
     ).all()
+    from beta_engine.infrastructure.db.full_simulation_command_scope import sporting_simulation_commands
+    all_command_ids = {row.command_id for row in live_commands}
+    live_commands = sporting_simulation_commands(session, live_commands)
+    native_control_ids = all_command_ids - {row.command_id for row in live_commands}
     live_authorities = session.scalars(
         select(AdoptedTournamentAuthorityModel)
         .where(
@@ -4363,6 +4371,7 @@ def restore_saved_simulation_slots(
         delete(AuthoritativeSimulationCommandModel).where(
             AuthoritativeSimulationCommandModel.run_id == run_id,
             AuthoritativeSimulationCommandModel.branch_id == branch_id,
+            AuthoritativeSimulationCommandModel.command_id.not_in(native_control_ids),
         )
     )
     session.execute(
@@ -4382,6 +4391,12 @@ def restore_saved_simulation_slots(
     for value in (target or {}).get("groups", []):
         session.add(SimulationEventGroupModel(**value))
     for value in (target or {}).get("commands", []):
+        if json.loads(value["result_json"]).get("schema_version") == "authoritative_full_simulation_operation.v2":
+            from beta_engine.infrastructure.db.full_simulation_command_scope import native_task_parent
+            existing = session.get(AuthoritativeSimulationCommandModel, (run_id, branch_id, value["command_id"]))
+            if existing is None or existing.request_fingerprint != value["request_fingerprint"] or native_task_parent(session, existing) is None:
+                raise ValueError("Historical sporting restore cannot create/replace native task control")
+            continue
         session.add(AuthoritativeSimulationCommandModel(**value))
     for value in (target or {}).get("authorities", []):
         session.add(AdoptedTournamentAuthorityModel(**value))

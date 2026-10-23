@@ -143,7 +143,10 @@ def acceptance(root, port, base_url, chromium):
                     value = predicate()
                     if value:
                         return value
-                    time.sleep(0.1)
+                    # The real Task Center polls every two seconds. Do not keep
+                    # its worker CPU-bound on full task/source reads between
+                    # each genuine weekly transaction during recovery.
+                    time.sleep(1)
                 raise AssertionError(label)
 
             try:
@@ -478,6 +481,15 @@ def acceptance(root, port, base_url, chromium):
                 proc.wait()
         for log in logs:
             log.close()
+        database = root / "browser.sqlite"
+        if database.is_file():
+            # Preserve the genuine database after all writers have stopped,
+            # including on failed assertions; screenshots alone cannot prove
+            # the recovered task's persisted checkpoint or child receipts.
+            with sqlite3.connect(database) as source, sqlite3.connect(
+                artifacts / "actual-browser.sqlite"
+            ) as destination:
+                source.backup(destination)
 
 
 if __name__ == "__main__":

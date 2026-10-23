@@ -50,14 +50,14 @@ class CalendarStandaloneMatchService:
 
     _engine_player = staticmethod(calendar_engine_player)
 
-    def _context(self, session, *, run_id: str, branch_id: str, allow_calendar_health: bool = False, allow_calendar_sporting: bool = False, _sporting_component_proofs=None):
+    def _context(self, session, *, run_id: str, branch_id: str, allow_calendar_health: bool = False, allow_calendar_sporting: bool = False, _sporting_component_proofs=None, allow_completed: bool = False):
         run = session.get(RunContainerModel, run_id)
         branch = session.get(RunBranchModel, branch_id)
         if run is None or branch is None or branch.run_id != run_id:
             raise KeyError("Calendar match Run/Branch not found")
         if (
             run.read_only or run.storage_kind != "custom_local"
-            or run.status != "working" or branch.read_only
+            or run.status not in {"working", "completed"} or branch.read_only
             or branch.status != "active"
         ):
             raise ValueError("Calendar match requires an active writable custom Run/Branch")
@@ -68,6 +68,9 @@ class CalendarStandaloneMatchService:
             session=session, branch=branch,
             sporting_component_proofs=_sporting_component_proofs,
         )
+        from beta_engine.application.native_full_simulation_closure import saved_native_closure
+        if not allow_completed and saved_native_closure(state.saved_revision.payload, branch_id=branch_id, calendar=clock):
+            raise ValueError("This native Branch is completed; explicitly extend the Run before new sporting work")
         if state.working_draft.status != "clean":
             raise ValueError("Save or discard pending Working Draft before calendar match")
         world = get_initial_world(session, run_id=run_id, branch_id=branch_id)

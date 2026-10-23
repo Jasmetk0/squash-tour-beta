@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { continueServerTask, getServerTasks, startServerTask } from '../api/fullSimulationTasks'
 import type { ContinueTask, ServerTask } from '../api/fullSimulationTasks'
-import type { AuthoritativeFullSimulationCommandPayload } from '../api/types'
+import {NativeTaskActions,NativeTaskSummary} from './FullSimulationTasksNative'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import { FullSimulationSummary } from './FullSimulationSummary'
@@ -55,9 +55,9 @@ export function useServerTasks(run?:string,branch?:string,enabled=true){
  return useQuery({queryKey:['server-simulation-tasks',run??null,branch??null],queryFn:()=>getServerTasks(run,branch),retry:false,refetchInterval:2000,enabled:enabled&&scopeValid})
 }
 type StartRequest = {
- runId:string; branchId:string; requestId:string; command:AuthoritativeFullSimulationCommandPayload
+ runId:string; branchId:string; requestId:string; command:import('../api/fullSimulationTasks').ServerTaskCommand
 }
-export function StartServerTask({runId,branchId,command,disabled,onAccepted}:{runId:string;branchId:string;command:AuthoritativeFullSimulationCommandPayload;disabled:boolean;onAccepted:()=>void}){
+export function StartServerTask({runId,branchId,command,disabled,onAccepted}:{runId:string;branchId:string;command:import('../api/fullSimulationTasks').ServerTaskCommand;disabled:boolean;onAccepted:()=>void}){
  const {language}=useLanguage();const t=copy[language];const client=useQueryClient()
  const currentContext=useRef({runId,branchId,commandId:command.command_id})
  currentContext.current={runId,branchId,commandId:command.command_id}
@@ -75,7 +75,7 @@ export function StartServerTask({runId,branchId,command,disabled,onAccepted}:{ru
  return <div><p>{t.truth}</p>
   <button type="button" disabled={(disabled&&!frozen)||!sameContext||mutation.isPending||mutation.isSuccess} onClick={()=>{
    const snapshot=frozen??{runId,branchId,requestId:'server-start-'+command.command_id.slice(0,100),
-    command:{...command,expected_start_week:{...command.expected_start_week}}}
+    command:structuredClone(command)}
    setFrozen(snapshot);mutation.mutate(snapshot)
   }}>{mutation.isError?t.retry:t.start}</button>
   {!sameContext&&<p role="alert">{t.contextChanged}</p>}
@@ -85,6 +85,11 @@ export function StartServerTask({runId,branchId,command,disabled,onAccepted}:{ru
 }
 const checkpointGuidance = (checkpoint:string|null,language:'cs'|'en') => {
  const code=checkpoint??''
+ if(code==='native_entry_review_required')return language==='cs'?'V nativní Tour zkontrolujte přihlášky, výslovně schvalte field a los a proveďte ruční Save. Potom pokračujte ve stejné úloze.':'In native Tour, review applications, explicitly approve the field and draw, then manually Save. Continue this same task afterwards.'
+ if(code==='native_result_review_required')return language==='cs'?'Prohlédněte skutečně odehrané zápasy a body v nativní Tour. Výslovně potvrďte výsledky, proveďte ruční Save a pokračujte ve stejné úloze.':'Inspect the actually played matches and points in native Tour. Explicitly confirm results, manually Save and continue this same task.'
+ if(code==='native_season_transition_review_required')return language==='cs'?'Zde zkontrolujte samostatný odcházející Closing Ranking a přechod do Weeku 1, výslovně jej schvalte a pokračujte ve stejné úloze.':'Review the separate outgoing Closing Ranking and transition to Week 1 here, explicitly approve it and continue this same task.'
+ if(code==='native_final_week_edition_unsupported')return language==='cs'?'Edition v posledním týdnu Runu vyžaduje dosud nepodporovaný zdroj bodů pouze pro Closing Ranking. Úloha ji nepřeskočí ani nevytvoří další týden.':'An Edition in the final Run week requires an unsupported closing-only result source. The task will neither skip it nor create another week.'
+ if(code==='native_transition_review_required')return language==='cs'?'Nativní přechod blokují uvedené skutečné závislosti. Vyřešte je v této větvi; žádný chybějící sportovní nebo zdravotní výsledek se nevytváří automaticky.':'The listed actual dependencies block the native transition. Resolve them in this Branch; missing sporting or Health authority is not invented.'
  if(code==='week_schedule_extension_approved')return language==='cs'?'Rozšířený rozpis je výslovně schválený. Pro pokračování stejné úlohy zadejte operátora a důvod; nic se nespustí automaticky.':'The extended week schedule was explicitly approved. Provide operator and reason to resume the same task; execution never starts automatically.'
  if(code==='group_phase_review_required')return language==='cs'?'Tento turnaj má dosud nevyřešenou skupinovou fázi. V administraci nejprve odehrajte skupinové zápasy, výslovně potvrďte tabulky a vytvořte postupující a knockout pavouk. Potom můžete obnovit stejnou serverovou úlohu; výsledky se nesmějí domýšlet ani schvalovat automaticky.':'This tournament has an unresolved group phase. Play real group matches in Run Admin, explicitly confirm standings and freeze the entrants/knockout bracket. Then explicitly resume this same server task; no results or approvals are invented.'
  if(code==='group_postphase_review_required')return language==='cs'?'Skupinová fáze vyžaduje další výslovné rozhodnutí: tabulky, případné pořadí při shodě, postupující, knockout nebo bodování. Zkontrolujte přesné překážky v této větvi; pak výslovně pokračujte ve stejné úloze.':'The group phase requires an explicit decision about standings, ties, entrants, knockout or points. Inspect this Branch’s actual blockers, then explicitly resume the same task.'
@@ -99,7 +104,7 @@ const checkpointGuidance = (checkpoint:string|null,language:'cs'|'en') => {
 
 function storedDriverEvidence(task:ServerTask){
  const data=task.progress
- if(!data || data.schema_version!=='authoritative_full_simulation_progress.v1')return null
+ if(!data || !['authoritative_full_simulation_progress.v1','authoritative_full_simulation_progress.v2'].includes(String(data.schema_version)))return null
  return {
   detail:typeof data.detail==='string' && data.detail.trim()?data.detail:null,
   checkpoint:typeof data.checkpoint==='string'?data.checkpoint:null,
@@ -164,14 +169,16 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
   <p>{t.health}: {t[task.heartbeat_health]}{task.heartbeat_unix>0 && <> · {new Date(task.heartbeat_unix*1000).toLocaleString(language)}</>}</p>
   {task.lease_expires_at_unix!==null&&<p>{t.lease}: {new Date(task.lease_expires_at_unix*1000).toLocaleString(language)}</p>}
   {task.effective_boundary_target && <p><BoundaryDescription target={task.effective_boundary_target}/></p>}
-  {task.current_week && <p>S{task.current_week.season_index} W{task.current_week.week}</p>}
+  {task.current_week && <p>S{task.current_week.season_index+1} W{task.current_week.week}</p>}
   {clockPosition&&<p>{t.clock}: {t.season} {clockPosition.seasonLabel} · {t.year} {clockPosition.calendarYear} · {t.yearWeek} {clockPosition.yearWeek}</p>}
   {task.schema_version==='full_simulation_task_view.v2'
    ? <p>{t.calendarRevision}: <code>{task.calendar_revision_id}</code></p>
    : <p>{t.legacyClock}</p>}
   <p>{task.progress_evidence.kind==='terminal_frozen'?t.frozen:task.progress_evidence.kind==='unavailable'?t.unavailable:t.measured}</p>
   {task.progress_evidence.weeks_advanced_since_start!==null && <p>{t.advanced}: {task.progress_evidence.weeks_advanced_since_start}</p>}
-  {task.progress_evidence.kind==='live_branch' && <p>{t.slots}: {task.progress_evidence.completed_slot_receipts_this_week} · {t.groups}: {task.progress_evidence.committed_group_receipts_this_week}</p>}
+  {task.progress_evidence.kind==='live_branch' && (task.progress_evidence.native_match_receipts_this_week!==undefined
+   ?<p>{language==='cs'?'Uložené nativní zápasy v aktuálním týdnu':'Persisted native matches in current week'}: {task.progress_evidence.native_match_receipts_this_week}</p>
+   :<p>{t.slots}: {task.progress_evidence.completed_slot_receipts_this_week} · {t.groups}: {task.progress_evidence.committed_group_receipts_this_week}</p>)}
   {currentCheckpoint && <p>{t.checkpoint}: <code>{currentCheckpoint}</code></p>}
   {safePauseCheckpoint && <p>{t.pauseCheckpoint}: <code>{safePauseCheckpoint}</code></p>}
   {task.checkpoint&&!currentCheckpoint&&!safePauseCheckpoint && <details><summary>{t.lastCheckpoint}</summary><code>{task.checkpoint}</code></details>}
@@ -183,6 +190,7 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
    {driver.checkpoint && driver.checkpoint!==currentCheckpoint&&<p>{t.lastCheckpoint}: <code>{driver.checkpoint}</code></p>}
   </details>}
   {task.error && <p role="alert">{task.error}</p>}
+  {'schema_version' in task.original_command&&task.original_command.schema_version==='authoritative_full_simulation_command.v2'&&<NativeTaskActions key={task.task_id} task={task}/>}
   {calendarHandoff && <p><Link to={calendarHandoff}>{t.calendarPrep}</Link> · {t.calendarPrepNote}</p>}
   {calendarHandoff && task.schema_version==='full_simulation_task_view.v2' && !calendarHandoff.includes('&calendarSeason=') && <p role="status">{t.unsupportedCalendarHandoff}</p>}
   {task.needs_operator_action && <>{requiresNewWeekReview
@@ -210,7 +218,8 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
   {requiresNewWeekReview && <FullSimulationWeekScheduleReview runId={task.run_id} branchId={task.branch_id} taskId={task.task_id} taskRevision={task.revision}/>}
   <Link to={`/admin/runs/${encodeURIComponent(task.run_id)}/simulate?branch=${encodeURIComponent(task.branch_id)}&task=${encodeURIComponent(task.task_id)}`}>{t.open}</Link>
   {terminal && <details onToggle={e=>setSummaryOpen(e.currentTarget.open)}><summary>{t.detail}</summary>
-   {summaryOpen&&<FullSimulationSummary runId={task.run_id} branchId={task.branch_id} commandId={task.parent_command_id}/>}
+   {summaryOpen&&(!('schema_version' in task.original_command)||task.original_command.schema_version!=='authoritative_full_simulation_command.v2')&&<FullSimulationSummary runId={task.run_id} branchId={task.branch_id} commandId={task.parent_command_id}/>}
+   {summaryOpen&&'schema_version' in task.original_command&&task.original_command.schema_version==='authoritative_full_simulation_command.v2'&&<NativeTaskSummary task={task}/>}
   </details>}
  </li>
 }

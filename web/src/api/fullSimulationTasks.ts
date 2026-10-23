@@ -4,6 +4,8 @@ import { isBoundaryTarget } from './fullSimulationBoundaryTargets'
 import type { BoundaryTarget } from './fullSimulationBoundaryTargets'
 import { ApiError } from './client'
 import type { AuthoritativeFullSimulationCommandPayload } from './types'
+import type {NativeTaskCommand} from './fullSimulationTasksNative'
+export type ServerTaskCommand=AuthoritativeFullSimulationCommandPayload|NativeTaskCommand
 
 export type ServerTask = {
   schema_version:'full_simulation_task_view.v1'|'full_simulation_task_view.v2';
@@ -21,8 +23,10 @@ export type ServerTask = {
     completed_slot_receipts_this_week:number|null
     committed_group_receipts_this_week:number|null
     receipt_scope:'branch_current_week'|null
+    native_match_receipts_this_week?:number
+    native_progress_source_fingerprint?:string
   }
-  error:string|null; needs_operator_action:boolean; original_command:AuthoritativeFullSimulationCommandPayload
+  error:string|null; needs_operator_action:boolean; original_command:ServerTaskCommand
   events:{revision:number;previous:string|null;state:string;reason:string;at_unix:number;fingerprint:string}[]
 }
 export type TaskAck = {schema_version:'full_simulation_task_ack.v1';task_id:string;run_id:string;branch_id:string;
@@ -62,6 +66,14 @@ export function validateTasks(value:unknown,run?:string,branch?:string):ServerTa
     if(!t)throw Error('Invalid server task evidence')
     const calendar=serverTaskCalendar(t)
     const week=(v:unknown)=>validTaskWeek(v,calendar)
+    const original=t.original_command as unknown as Record<string,unknown>
+    if(original&&'schema_version' in original){
+      if(original.schema_version!=='authoritative_full_simulation_command.v2'||t.schema_version!=='full_simulation_task_view.v2'||
+        original.run_id!==t.run_id||original.branch_id!==t.branch_id||!Number.isSafeInteger(original.seed)||Number(original.seed)<0||
+        !original.execution_calendar||Object.entries(calendar).some(([key,value])=>(original.execution_calendar as Record<string,unknown>)[key]!==value)||
+        !(original.target_week===null||week(original.target_week)))throw Error('Invalid native server task command')
+      if(t.progress_evidence?.kind==='live_branch'&&(!Number.isSafeInteger(t.progress_evidence.native_match_receipts_this_week)||(t.progress_evidence.native_match_receipts_this_week??-1)<0||!hash(t.progress_evidence.native_progress_source_fingerprint)))throw Error('Invalid native match receipt evidence')
+    }
     if(!t || !['full_simulation_task_view.v1','full_simulation_task_view.v2'].includes(t.schema_version) || ![t.task_id,t.run_id,t.branch_id,t.parent_command_id].every(id) ||
       (run!==undefined && (t.run_id!==run || t.branch_id!==branch)) || ids.has(t.task_id) ||
       !Number.isInteger(t.revision) || t.revision<1 || !desired.includes(t.desired_state) ||
@@ -99,7 +111,7 @@ function ack(value:unknown,run:string,branch:string,request:string,parent?:strin
     !Number.isInteger(a.accepted_revision) || a.accepted_revision<1)throw Error('Invalid server task acknowledgement')
   return a
 }
-export async function startServerTask(run:string,branch:string,request_id:string,command:AuthoritativeFullSimulationCommandPayload){
+export async function startServerTask(run:string,branch:string,request_id:string,command:ServerTaskCommand){
   return ack(await send(scope(run,branch),{request_id,command}),run,branch,request_id,command.command_id)
 }
 export async function continueServerTask(t:ServerTask,body:ContinueTask){

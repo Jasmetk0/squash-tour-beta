@@ -12,7 +12,10 @@ import json
 from sqlalchemy.orm import Session
 
 from beta_engine.domain.calendar.run_calendar import RunCalendar
-from beta_engine.domain.run_revisions import CONTENT_HASH_ALGORITHM, saved_revision_content_hash
+from beta_engine.domain.run_revisions import (
+    CONTENT_HASH_ALGORITHM,
+    saved_revision_content_hash,
+)
 
 
 def _json_object(raw: str, *, label: str) -> dict:
@@ -83,7 +86,8 @@ def resolve_saved_run_calendar(
     # Loading db.models executes db.__init__, which imports sporting writers.
     # Defer this boundary until the authority module has finished initializing.
     from beta_engine.infrastructure.db.models import (
-        RunBranchModel, RunContainerModel,
+        RunBranchModel,
+        RunContainerModel,
     )
 
     run = session.get(RunContainerModel, run_id)
@@ -134,6 +138,14 @@ def require_supported_legacy_sporting_calendar(
     calendar = resolve_saved_run_calendar(
         session, run_id=run_id, branch_id=branch_id
     )
+    from beta_engine.infrastructure.db.models import (
+        BranchSavedRevisionModel,
+        RunBranchModel,
+    )
+    branch = session.get(RunBranchModel, branch_id)
+    head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id) if branch and branch.saved_head_revision_id else None
+    if head and head.payload_schema_version in {"native_fork_saved_root.v1", "native_fork_saved_root.v2"}:
+        raise ValueError(f"{operation} cannot reinterpret an independent native Branch aggregate as legacy FAX state")
     if (
         calendar.weeks_per_year != 61
         or calendar.season_start_year_week != 37
@@ -148,7 +160,10 @@ def require_supported_legacy_sporting_calendar(
     # Numeric equality with reference FAX never grants legacy ownership of a
     # native checkpoint. A later native transition must consume it explicitly.
     from sqlalchemy import select
-    from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
+
+    from beta_engine.infrastructure.db.models import (
+        CalendarPlayerSportingCheckpointModel,
+    )
     if session.scalar(select(CalendarPlayerSportingCheckpointModel.run_id).where(
             CalendarPlayerSportingCheckpointModel.run_id == run_id,
             CalendarPlayerSportingCheckpointModel.branch_id == branch_id).limit(1)) is not None:

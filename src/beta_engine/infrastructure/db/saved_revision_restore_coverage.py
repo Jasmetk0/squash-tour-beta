@@ -291,6 +291,10 @@ SUPPORTED_CONTENT_KEYS = frozenset(
 
 
 def _has_scoped_rows(session, model: type[Any], *, run_id: str, branch_id: str) -> bool:
+    if model is AuthoritativeSimulationCommandModel:
+        from beta_engine.infrastructure.db.full_simulation_command_scope import sporting_simulation_commands
+        rows = session.scalars(select(model).where(model.run_id == run_id, model.branch_id == branch_id)).all()
+        return bool(sporting_simulation_commands(session, rows))
     return (
         session.scalar(
             select(model.run_id)
@@ -357,7 +361,9 @@ def active_transient_restore_blockers(
 ) -> tuple[RestoreTransientBlocker, ...]:
     """Return unsaved authoring state that cannot cross a historical restore."""
 
-    return tuple(
+    from beta_engine.infrastructure.db.full_simulation_command_scope import pending_native_task_parents
+    native = (RestoreTransientBlocker(label="pending native Full Simulation", models=(AuthoritativeSimulationCommandModel,)),) if pending_native_task_parents(session, run_id=run_id, branch_id=branch_id) else ()
+    return native + tuple(
         blocker
         for blocker in TRANSIENT_RESTORE_BLOCKERS
         if any(

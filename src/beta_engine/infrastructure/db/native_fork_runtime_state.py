@@ -5,6 +5,9 @@ import json
 from contextlib import contextmanager
 from contextvars import ContextVar
 
+from sqlalchemy import event as sqlalchemy_event
+from sqlalchemy.engine import Engine
+
 from beta_engine.application.calendar_tour_service import CalendarTourCommit
 from beta_engine.application.native_fork_runtime_reducer import (
     initial_runtime,
@@ -23,6 +26,38 @@ KEY = "native_fork_runtime"
 SAVED_SCHEMA = "native_fork_saved_root.v2"
 DRAFT_SCHEMA = "native_fork_runtime_draft.v1"
 _proofs = ContextVar("native_read_proofs", default=None)
+_MAX_DEPENDENCY_PROOFS = 256
+
+
+@sqlalchemy_event.listens_for(Engine, "before_cursor_execute")
+def _invalidate_physical_read_cache(connection, cursor, statement, parameters, context, executemany):
+    memo = _proofs.get()
+    if memo is None or statement.lstrip().upper().startswith("SELECT"):
+        return
+    # Includes SAVEPOINT/ROLLBACK TO and direct SQL writes, not just ORM flushes.
+    key = ("native_dependency_sql_generation", connection.connection.driver_connection)
+    memo[key] = memo.get(key, 0) + 1
+
+
+def _physical_read_cache(session):
+    """Reuse actual bytes only inside one unchanged SQLite read snapshot.
+
+    This is not a validation proof or a cross-request cache. Every new transaction
+    rereads all dependencies. Own writes (including direct SQL and savepoint
+    rollback) invalidate it; pending ORM work disables it until flushed.
+    """
+    memo = _proofs.get()
+    if memo is None or session.new or session.dirty or session.deleted:
+        return None
+    connection = session.connection().connection.driver_connection
+    if not getattr(connection, "in_transaction", False) or type(getattr(connection, "total_changes", None)) is not int:
+        return None
+    key = (
+        "native_dependency_physical_rows", session, session.get_transaction(),
+        session.get_nested_transaction(), connection, connection.total_changes,
+        memo.get(("native_dependency_sql_generation", connection), 0),
+    )
+    return memo.setdefault(key, {"owners": {}, "revisions": {}})
 
 
 @contextmanager
@@ -241,10 +276,13 @@ def actual_dependency_signature(session, revision):
         BranchSavedRevisionModel.payload_json,
         BranchSavedRevisionModel.change_summary_json,
     )
-    owners = {}
+    read_cache = _physical_read_cache(session)
+    owners = read_cache["owners"] if read_cache is not None else {}
+    revisions = read_cache["revisions"] if read_cache is not None else {}
 
     def actual_owner(branch_id):
-        if branch_id not in owners:
+        key = (revision.run_id, branch_id)
+        if key not in owners:
             row = session.execute(
                 select(
                     RunBranchModel.branch_id,
@@ -259,8 +297,32 @@ def actual_dependency_signature(session, revision):
                     RunBranchModel.branch_id == branch_id,
                 )
             ).first()
-            owners[branch_id] = tuple(row) if row is not None else None
-        return owners[branch_id]
+            owners[key] = tuple(row) if row is not None else None
+        return owners[key]
+
+    def actual_revision(revision_id):
+        key = (revision.run_id, revision_id)
+        if key not in revisions:
+            actual = session.execute(
+                select(*fields).where(
+                    BranchSavedRevisionModel.run_id == revision.run_id,
+                    BranchSavedRevisionModel.revision_id == revision_id,
+                )
+            ).first()
+            row = tuple(actual) if actual is not None else None
+            if row is None:
+                revisions[key] = (None, None, ())
+            else:
+                content = json.loads(row[9]).get("content", {})
+                baseline = content.get("native_fork_baseline", {}).get("state")
+                branch_ids = {baseline.get("selected_source_branch_id")} if isinstance(baseline, dict) else set()
+                if "calendar_tour_authority" in content:
+                    branch_ids.add(row[2])
+                revisions[key] = (
+                    row, hashlib.sha256(canonical_json(row).encode("utf-8")).hexdigest(),
+                    tuple(branch_ids),
+                )
+        return revisions[key]
 
     pending, visited, graph, source_heads = [revision.revision_id], set(), [], {}
     while pending:
@@ -268,13 +330,7 @@ def actual_dependency_signature(session, revision):
         if revision_id in visited:
             continue
         visited.add(revision_id)
-        actual = session.execute(
-            select(*fields).where(
-                BranchSavedRevisionModel.run_id == revision.run_id,
-                BranchSavedRevisionModel.revision_id == revision_id,
-            )
-        ).first()
-        row = tuple(actual) if actual is not None else None
+        row, digest, branch_ids = actual_revision(revision_id)
         if revision_id == revision.revision_id and hasattr(revision, "payload_json"):
             expected = tuple(getattr(revision, field.key) for field in fields)
             if row != expected:
@@ -288,21 +344,12 @@ def actual_dependency_signature(session, revision):
         graph.append(
             (
                 revision_id,
-                hashlib.sha256(canonical_json(row).encode("utf-8")).hexdigest(),
+                digest,
                 owner[:-1] if owner else None,
             )
         )
         if row[4]:
             pending.append(row[4])
-        content = json.loads(row[9]).get("content", {})
-        baseline = content.get("native_fork_baseline", {}).get("state")
-        branch_ids = (
-            {baseline.get("selected_source_branch_id")}
-            if isinstance(baseline, dict)
-            else set()
-        )
-        if "calendar_tour_authority" in content:
-            branch_ids.add(row[2])
         for branch_id in branch_ids:
             source = actual_owner(branch_id)
             source_heads[branch_id] = source
@@ -315,18 +362,53 @@ def actual_dependency_signature(session, revision):
     )
 
 
+def has_actual_dependency_proof(repository, signature, *, run_id, branch_id):
+    """A history walk must not evict the complete current-HEAD proof."""
+    proof_key = _dependency_proof_key(signature)
+    with repository._revision_validation_lock:
+        heads = getattr(repository, "_native_head_dependency_proofs", {})
+        key = (run_id, branch_id)
+        if heads.get(key) == proof_key:
+            heads[key] = heads.pop(key)  # bounded, recently used Branch heads
+            return True
+        proofs = getattr(repository, "_native_dependency_proofs", {})
+        return proof_key in proofs
+
+
+def _dependency_proof_key(signature):
+    # Keep only a compact cryptographic digest of the COMPLETE actual graph,
+    # never mutable payloads. Longer histories can retain their proven prefixes
+    # without an unbounded collection of overlapping graph tuples.
+    return hashlib.sha256(canonical_json(signature).encode("utf-8")).hexdigest()
+
+
 def verify_with_actual_dependencies(repository, session, revision, verify):
     """Reuse a complete proof only when its entire actual dependency graph matches."""
     signature = actual_dependency_signature(session, revision)
-    with repository._revision_validation_lock:
-        proofs = getattr(repository, "_native_dependency_proofs", {})
-        if signature in proofs:
-            return
+    if has_actual_dependency_proof(repository, signature, run_id=revision.run_id, branch_id=revision.branch_id):
+        return
     verify()
+    proof_key = _dependency_proof_key(signature)
+    from sqlalchemy import select
+
+    from beta_engine.infrastructure.db.models import RunBranchModel
+
+    actual_head = session.scalar(select(RunBranchModel.saved_head_revision_id).where(
+        RunBranchModel.run_id == revision.run_id, RunBranchModel.branch_id == revision.branch_id,
+    ))
     with repository._revision_validation_lock:
         proofs = getattr(repository, "_native_dependency_proofs", None)
         if proofs is None:
             proofs = repository._native_dependency_proofs = {}
-        proofs[signature] = True
-        while len(proofs) > 16:
+        proofs[proof_key] = True
+        while len(proofs) > _MAX_DEPENDENCY_PROOFS:
             proofs.pop(next(iter(proofs)))
+        if actual_head == revision.revision_id:
+            heads = getattr(repository, "_native_head_dependency_proofs", None)
+            if heads is None:
+                heads = repository._native_head_dependency_proofs = {}
+            key = (revision.run_id, revision.branch_id)
+            heads.pop(key, None)
+            heads[key] = proof_key
+            while len(heads) > 16:
+                heads.pop(next(iter(heads)))

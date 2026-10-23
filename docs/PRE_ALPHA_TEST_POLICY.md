@@ -46,6 +46,16 @@ cache or change to fingerprint values. Browser shutdown explicitly drains its
 real API thread and reports a bounded teardown failure instead of leaving native
 work running during interpreter destruction.
 
+## Native Full Simulation task acceptance — 23 October 2026
+
+Native v2 task changes require `Pre-alpha Native Full Simulation`: real HTTP/SQLite
+control, final-closure, recovery, independent fork/horizon/restore scenarios; the
+short/W52/W61/W80 complete week-to-season matrix with actual MatchEngine/points;
+and the genuine Chromium Admin flow. Unit DTO/ranking/client contracts are separate
+evidence. Every new native runtime/helper is watched by that workflow. Its Draft
+skips do not count as passes. Shared legacy control/persistence changes also retain
+their existing FAX task/browser and native Tour/Save acceptance gates.
+
 ## Draft feedback and review acceptance — 21 October 2026
 
 During implementation, keep the PR in Draft. Fast CI and CodeQL still run on

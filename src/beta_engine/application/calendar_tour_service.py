@@ -159,6 +159,7 @@ class CalendarTourService:
             branch_id=branch_id,
             allow_calendar_health=True,
             allow_calendar_sporting=True,
+            allow_completed=True,
             _sporting_component_proofs=proofs,
         )
         # CalendarStandaloneMatchService._context has just authenticated this
@@ -555,6 +556,9 @@ class CalendarTourService:
             loaded if loaded is not None else self._context(session, run_id, branch_id)
         )
         _clock, rev, _world, _health, cp, saved, evidence = ctx
+        from beta_engine.application.native_full_simulation_closure import saved_native_closure
+        if saved_native_closure(rev.saved_revision.payload, branch_id=branch_id, calendar=_clock):
+            raise ValueError("This native Branch has a Saved final closure; explicitly extend the Run before new Tour work")
         if (
             cp is None
             or cp != saved

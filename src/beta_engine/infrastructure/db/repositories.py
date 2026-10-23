@@ -2546,15 +2546,20 @@ class SimulationPersistenceRepository:
         token = _active_saved_revision_proofs.set(active | {key})
         try:
             if model.payload_schema_version == "native_fork_saved_root.v2":
-                from beta_engine.infrastructure.db.native_fork_runtime_state import actual_dependency_signature
+                from beta_engine.infrastructure.db.native_fork_runtime_state import (
+                    actual_dependency_signature,
+                    has_actual_dependency_proof,
+                )
                 dependency_signature = actual_dependency_signature(session, model)
-                with self._revision_validation_lock:
-                    complete = dependency_signature in getattr(self, "_native_dependency_proofs", {})
+                complete = has_actual_dependency_proof(self, dependency_signature,
+                    run_id=model.run_id, branch_id=model.branch_id)
                 if complete:
                     # The cache proves COMPLETE actual dependency bytes, owners,
                     # topology and source reachability, not just this row's hash.
                     # Reparse JSON for isolation; never share mutable payloads.
                     revision = self._to_branch_saved_revision(model, validate_components=False, validate_native_root=False)
+                    from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
+                    verify_saved_native_closure(self, session, revision)
                     if not materialize_payload:
                         revision = replace(revision, payload={}, change_summary={})
                     memo[proof_key] = revision
@@ -2572,6 +2577,9 @@ class SimulationPersistenceRepository:
                 verify_native_fork_saved_root(
                     self, session, revision=revision, baseline=baseline
                 )
+            from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
+            verify_saved_native_closure(self, session, revision)
+            if baseline is not None:
                 memo[(id(session), signature, True)] = revision
                 if not materialize_payload:
                     revision = replace(revision, payload={}, change_summary={})

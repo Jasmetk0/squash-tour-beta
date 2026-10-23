@@ -231,7 +231,7 @@ function CloneResultCard({ result }: { result: WorldPackageCloneResponse }): JSX
           <DetailRow label={cs ? 'Typ' : 'Type'} value={result.package.type} />
           <DetailRow label={cs ? 'Zdroj' : 'Source'} value={result.package.source} />
           <DetailRow label={cs ? 'Počty' : 'Counts'} value={<>
-            {result.package.country_count} {cs ? 'zemí' : 'countries'}, {result.package.continent_count} {cs ? 'kontinentů' : 'continents'}, {result.package.region_count} {cs ? 'regionů' : 'regions'}, {result.package.travel_region_count} {cs ? 'cestovních regionů' : 'travel regions'}
+            {cs ? 'Země' : 'Countries'}: {result.package.country_count} · {cs ? 'Kontinenty' : 'Continents'}: {result.package.continent_count} · {cs ? 'Regiony' : 'Regions'}: {result.package.region_count} · {cs ? 'Cestovní regiony' : 'Travel regions'}: {result.package.travel_region_count}
           </>} />
           <DetailRow label={cs ? 'Otisk' : 'Fingerprint'} value={<code title={result.package.fingerprint}>{shortFingerprint(result.package.fingerprint)}</code>} />
         </div>

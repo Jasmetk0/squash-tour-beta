@@ -74,18 +74,18 @@ describe('RunDiagnosticsPage', () => {
         children: ['run-child-1']
       }
     })
-    api.listEvents.mockResolvedValue({
+    api.listEvents.mockImplementation(async (runId: string) => ({ run_id: runId,
       events: [
         { event_sequence: 5, event_id: 'E5', season: 2028, week: 12, template_id: null, tournament_result: { done: true } },
         { event_sequence: 4, event_id: 'E4', season: 2028, week: 11, template_id: null, tournament_result: null }
       ]
-    })
-    api.listRankingSnapshots.mockResolvedValue({
+    }))
+    api.listRankingSnapshots.mockImplementation(async (runId: string) => ({ run_id: runId,
       snapshots: [{ snapshot_sequence: 17, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }]
-    })
-    api.listRaceSnapshots.mockResolvedValue({
+    }))
+    api.listRaceSnapshots.mockImplementation(async (runId: string) => ({ run_id: runId,
       snapshots: [{ snapshot_sequence: 14, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }]
-    })
+    }))
   })
 
   it('encodes Run and parent Run IDs in all diagnostics navigation while retaining raw API identity', async () => {
@@ -128,13 +128,13 @@ describe('RunDiagnosticsPage', () => {
   })
 
   it('renders richer latest-activity summaries with direct detail links', async () => {
-    api.listEvents.mockResolvedValueOnce({
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-rich',
       events: [{ event_sequence: 5, event_id: 'E5', season: 2028, week: 12, template_id: null, tournament_result: { done: true } }]
     })
-    api.listRankingSnapshots.mockResolvedValueOnce({
+    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'run-rich',
       snapshots: [{ snapshot_sequence: 17, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }]
     })
-    api.listRaceSnapshots.mockResolvedValueOnce({
+    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'run-rich',
       snapshots: [{ snapshot_sequence: 14, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }]
     })
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-rich/diagnostics')
@@ -165,11 +165,11 @@ describe('RunDiagnosticsPage', () => {
         { snapshot_sequence: 16, snapshot_kind: 'WEEK', source_event_id: 'E8', payload: {} },
         { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} },
       ]
-      api.listEvents.mockResolvedValueOnce({ events: order === 'ascending'
+      api.listEvents.mockResolvedValueOnce({ run_id: 'run-a', events: order === 'ascending'
         ? events : [events[3], events[0], events[4], events[1], events[2]] })
-      api.listRankingSnapshots.mockResolvedValueOnce({ snapshots: order === 'ascending'
+      api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'run-a', snapshots: order === 'ascending'
         ? [rankings[0], rankings[2], rankings[1]] : rankings })
-      api.listRaceSnapshots.mockResolvedValueOnce({ snapshots: order === 'ascending'
+      api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'run-a', snapshots: order === 'ascending'
         ? [races[0], races[2], races[1]] : races })
       renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
 
@@ -224,13 +224,13 @@ describe('RunDiagnosticsPage', () => {
       qualification: { qualified_players: [] },
       result: null
     })
-    api.listEvents.mockResolvedValueOnce({
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-links',
       events: [{ event_sequence: 5, event_id: 'E5', season: 2028, week: 12, template_id: null, tournament_result: { done: true } }]
     })
-    api.listRankingSnapshots.mockResolvedValueOnce({
+    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'run-links',
       snapshots: [{ snapshot_sequence: 17, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }]
     })
-    api.listRaceSnapshots.mockResolvedValueOnce({
+    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'run-links',
       snapshots: [{ snapshot_sequence: 14, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }]
     })
     api.getRun.mockResolvedValueOnce({
@@ -297,9 +297,9 @@ describe('RunDiagnosticsPage', () => {
     api.getLatestRollover.mockRejectedValueOnce({ status: 404, message: 'not found' })
     api.getRunSource.mockRejectedValueOnce({ status: 404, message: 'not found' })
     api.getRunLineage.mockRejectedValueOnce({ status: 404, message: 'not found' })
-    api.listEvents.mockResolvedValueOnce({ events: [] })
-    api.listRankingSnapshots.mockResolvedValueOnce({ snapshots: [] })
-    api.listRaceSnapshots.mockResolvedValueOnce({ snapshots: [] })
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-a', events: [] })
+    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'run-a', snapshots: [] })
+    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'run-a', snapshots: [] })
 
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
 
@@ -330,9 +330,9 @@ describe('RunDiagnosticsPage', () => {
   })
 
   it('keeps true empty states for latest snapshots when snapshot queries succeed with no data', async () => {
-    api.listEvents.mockResolvedValueOnce({ events: [] })
-    api.listRankingSnapshots.mockResolvedValueOnce({ snapshots: [] })
-    api.listRaceSnapshots.mockResolvedValueOnce({ snapshots: [] })
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-a', events: [] })
+    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'run-a', snapshots: [] })
+    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'run-a', snapshots: [] })
 
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
 

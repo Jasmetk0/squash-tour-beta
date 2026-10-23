@@ -410,6 +410,15 @@ describe('RunDiagnosticsPage', () => {
   })
 
   it('renders most relevant next inspection links from loaded data', async () => {
+    api.getRunStatusSummary.mockResolvedValueOnce({
+      run_id: 'run-links', season: 2028, seed: 11,
+      progress: { next_event_index: 1, total_events: 24, completed_event_count: 5 },
+      finals: { qualification_available: false, result_available: false },
+      rollover: null, source: { source_type: 'new_run', parent_run_id: null },
+      lineage: { child_run_count: 1 },
+      history_counts: { events: 5, ranking_snapshots: 7, race_snapshots: 6 }
+    })
+
     api.getFinalsSummary.mockResolvedValueOnce({
       run_id: 'run-links',
       season: 2028,
@@ -554,6 +563,40 @@ describe('RunDiagnosticsPage', () => {
   })
 
   it.each([
+    { issue: 'season', statusSeason: 2029, statusIndex: 0, statusTotal: 24 },
+    { issue: 'next-event cursor', statusSeason: 2028, statusIndex: 1, statusTotal: 24 },
+    { issue: 'total-event count', statusSeason: 2028, statusIndex: 0, statusTotal: 25 },
+  ])('hides current-week navigation when Run detail and status summary disagree on $issue',
+    async ({statusSeason, statusIndex, statusTotal}) => {
+      api.getRun.mockResolvedValueOnce({
+        run: { run_id: 'run-a', season: 2028, seed: 11, next_event_index: 0,
+          total_events: 24, completed_event_ids: [] },
+        season_state: { season: 2028, next_event_index: 0, completed_event_ids: [],
+          ordered_events: [{ event_id: 'NEXT', season: 2028, week: 8,
+            tour: 'WORLD', category: 'GOLD', template_id: 'TMP-1' }] }
+      })
+      api.getRunStatusSummary.mockResolvedValueOnce({
+        run_id: 'run-a', season: statusSeason, seed: 11,
+        progress: { next_event_index: statusIndex, total_events: statusTotal, completed_event_count: 5 },
+        finals: { qualification_available: false, result_available: false },
+        rollover: null, source: { source_type: 'new_run', parent_run_id: null },
+        lineage: { child_run_count: 1 },
+        history_counts: { events: 5, ranking_snapshots: 7, race_snapshots: 6 }
+      })
+      renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Run detail and status summary disagree on season or progress. Current-week links are hidden.'
+      )
+      expect(screen.getByText('Week Detail (current week unavailable)')).toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: 'Week Detail (current week)' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: /Inspect current week detail/ })).not.toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Inspect latest completed event (E5)' }))
+        .toHaveAttribute('href', '/runs/run-a/events/E5')
+    },
+  )
+
+  it.each([
     { caseName: 'season state from a different season', runIndex: 0, stateIndex: 0, stateSeason: 2029, eventSeason: 2029 },
     { caseName: 'stale next-event index', runIndex: 1, stateIndex: 0, stateSeason: 2028, eventSeason: 2028 },
     { caseName: 'planned event from another season', runIndex: 0, stateIndex: 0, stateSeason: 2028, eventSeason: 2029 }
@@ -567,6 +610,15 @@ describe('RunDiagnosticsPage', () => {
           tour: 'WORLD', category: 'GOLD', template_id: 'STALE'}]
       }
     })
+    api.getRunStatusSummary.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2028, seed: 11,
+      progress: { next_event_index: ${runIndex}, total_events: 24, completed_event_count: 5 },
+      finals: { qualification_available: false, result_available: false },
+      rollover: null, source: { source_type: 'new_run', parent_run_id: null },
+      lineage: { child_run_count: 1 },
+      history_counts: { events: 5, ranking_snapshots: 7, race_snapshots: 6 }
+    })
+
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
@@ -582,6 +634,15 @@ describe('RunDiagnosticsPage', () => {
   })
 
   it('includes a targeted week detail quick-navigation link when next planned week is available', async () => {
+    api.getRunStatusSummary.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2028, seed: 11,
+      progress: { next_event_index: 0, total_events: 24, completed_event_count: 5 },
+      finals: { qualification_available: false, result_available: false },
+      rollover: null, source: { source_type: 'new_run', parent_run_id: null },
+      lineage: { child_run_count: 1 },
+      history_counts: { events: 5, ranking_snapshots: 7, race_snapshots: 6 }
+    })
+
     api.getRun.mockResolvedValueOnce({
       run: { run_id: 'run-a', season: 2028, seed: 11, next_event_index: 0, total_events: 24, completed_event_ids: [] },
       season_state: {

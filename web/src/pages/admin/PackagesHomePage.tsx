@@ -20,6 +20,9 @@ function statusText(value: string, cs: boolean): string {
   if (value === 'archived') return cs ? 'archivovaný' : 'archived'
   if (value === 'warnings') return cs ? 'varování' : 'warnings'
   if (value === 'valid') return cs ? 'platné' : 'valid'
+  if (value === 'error') return cs ? 'chyba' : 'error'
+  if (value === 'warning') return cs ? 'varování' : 'warning'
+  if (value === 'info') return cs ? 'informace' : 'info'
   return value
 }
 function sourceText(value: string, cs: boolean): string {
@@ -68,9 +71,9 @@ export function PackagesHomePage():JSX.Element {
       <Link key={cat} className="package-index-category" to={'/admin/packages/category/'+cat}>
         <h3>{categories[cat][language]} →</h3>
         <p>{cat==='hybrid'
-          ? (cs?'Jen balíčky s ověřeným vícetypovým obsahem.':'Verified multi-type packages only.')
+          ? (cs?'Samostatný hybridní registr není podporován; závislosti z balíčku nedělají hybridní balíček.':'No independent hybrid registry is supported; dependencies do not constitute a hybrid package.')
           : cat==='players'
-            ? (cs?'Payload zatím není schválen.':'Payload not yet specified.')
+            ? (cs?'Přenosný obsah hráčských balíčků zatím není definován.':'Portable Player-package payload is not specified yet.')
             : (cs?'Otevřít seznam této kategorie.':'Browse this category.')}</p>
         <small className="status">{(cat==='world'||cat==='countries') && query.isSuccess ? inCategory(items,cat).length+(cs?' registrovaných':' registered') : (cs ? (cat==='world'||cat==='countries' ? (query.isPending ? 'Načítám registr…' : 'Registr není ověřen') : 'Samostatný registr není dostupný') : (cat==='world'||cat==='countries' ? (query.isPending ? 'Loading registry…' : 'Registry unverified') : 'Independent registry unavailable'))}</small>
       </Link>)}</div>
@@ -132,7 +135,7 @@ export function PackageWorldDetailPage():JSX.Element {
     <div className="page-intro"><p className="eyebrow">WORLD PACKAGE · {worldId}</p><h2>{pkg?.name??worldId}</h2>
       <p className="subtitle">{pkg?.description}</p></div>
     {q.isPending&&<p role="status">{cs?'Načítám zdroj…':'Loading source…'}</p>}
-    {q.isError&&<p className="error" role="alert">{formatApiError(q.error)}</p>}
+    {q.isError&&<p className="error" role="alert">{cs ? 'Detail balíčku se nepodařilo načíst: ' : 'Failed to load package details: '}{formatApiError(q.error)}</p>}
     {pkg && <>
       <nav className="package-index-tabs" aria-label={cs ? "Záložky balíčku" : "Package tabs"}>{(['overview','contents','validation'] as const).map(k=>
         <button type="button" key={k} aria-current={active===k?'page':undefined} onClick={()=>setParams({tab:k})}>
@@ -163,22 +166,22 @@ export function PackageWorldDetailPage():JSX.Element {
           {countries.length === 0 ? <p role="status">{cs ? "V balíčku nejsou žádné země." : "This package contains no countries."}</p> : countries.every(c => !(c.name+" "+c.code).toLowerCase().includes(countrySearch.toLowerCase())) ? <p role="status">{cs ? "Žádná země neodpovídá hledání." : "No country matches the search."}</p> : null}</>}
         <h3>{cs?'Geografie':'Geography'}</h3>
         {geoQuery.isPending&&<p role="status">{cs ? "Načítám geografii…" : "Loading geography…"}</p>}
-        {geoQuery.isError&&<p className="error" role="alert">{formatApiError(geoQuery.error)}</p>}
+        {geoQuery.isError&&<p className="error" role="alert">{cs ? 'Geografii se nepodařilo načíst: ' : 'Failed to load geography: '}{formatApiError(geoQuery.error)}</p>}
         {geo&&<div>{([
           [cs ? 'Kontinenty' : 'Continents',geo.continents.map(x=>x.code+' '+x.name)],
           [cs ? 'Regiony' : 'Regions',geo.regions.map(x=>x.code+' '+x.name)],
           [cs ? 'Cestovní regiony' : 'Travel regions',geo.travel_regions.map(x=>x.code+' '+x.name)],
           [cs ? 'Časové oblasti' : 'Timezone areas',geo.timezone_areas.map(x=>x.code+' '+x.name)]
-        ] as [string,string[]][]).map(([name,values])=><details key={name}><summary>{name} ({values.length})</summary><ul>{values.map(x=><li key={x}>{x}</li>)}</ul></details>)}</div>}
+        ] as [string,string[]][]).map(([name,values])=><details key={name}><summary>{name} ({values.length})</summary>{values.length ? <ul>{values.map(x=><li key={x}>{x}</li>)}</ul> : <p role="status">{cs ? 'V této části nejsou žádné položky.' : 'No entries in this section.'}</p>}</details>)}</div>}
       </article>}
       {active==='validation'&&<article className="package-index-detail">
         <h3>{cs?'Skutečné výsledky kontroly':'Actual validation results'}</h3>
         {valQuery.isPending&&<p role="status">{cs ? "Načítám výsledky kontroly…" : "Loading validation…"}</p>}
-        {valQuery.isError&&<p role="alert" className="error">{formatApiError(valQuery.error)}</p>}
+        {valQuery.isError&&<p role="alert" className="error">{cs ? 'Kontrolu se nepodařilo načíst: ' : 'Failed to load validation: '}{formatApiError(valQuery.error)}</p>}
         {validation&&<><p className="status">{cs ? "Diagnostické zprávy jsou zobrazeny v původním znění." : "Diagnostic messages are shown verbatim."}</p><p>{statusText(validation.status,cs)} · {validation.error_count} {cs ? "chyb" : "errors"} · {validation.warning_count} {cs ? "varování" : "warnings"} · {validation.info_count} info</p>
           <ul className="package-index-checks">{validation.checks.map((check,i)=>{
             const country=resolveCountry(check,countries?.map(c=>c.code)??[])
-            return <li key={check.code+':'+i}><strong>{check.severity.toUpperCase()} · {check.code}</strong>
+            return <li key={check.code+':'+i}><strong>{cs ? statusText(check.severity, true).toUpperCase() : check.severity.toUpperCase()} · {check.code}</strong>
               <p>{check.message}</p><small className="status">{check.path}{check.field&&' · '+check.field}</small>
               {country&&<p><Link to={source+'/countries/'+encodeURIComponent(country)}>{cs?'Otevřít dotčenou zemi':'Open affected country'}: {country} →</Link></p>}</li>
           })}</ul>

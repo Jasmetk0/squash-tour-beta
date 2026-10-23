@@ -14,6 +14,19 @@ const categories: Record<PackageCategory,{cs:string,en:string}> = {
   calendar:{cs:'Kalendáře',en:'Calendar'}, setup:{cs:'Nastavení',en:'Setup'},
   players:{cs:'Hráči',en:'Players'}, hybrid:{cs:'Hybridní',en:'Hybrid'}
 }
+/** Presentation only: unknown future registry values stay byte-for-byte visible. */
+function statusText(value: string, cs: boolean): string {
+  if (value === 'active') return cs ? 'aktivní' : 'active'
+  if (value === 'archived') return cs ? 'archivovaný' : 'archived'
+  if (value === 'warnings') return cs ? 'varování' : 'warnings'
+  if (value === 'valid') return cs ? 'platné' : 'valid'
+  return value
+}
+function sourceText(value: string, cs: boolean): string {
+  if (value === 'built_in') return cs ? 'vestavěný' : 'built-in'
+  if (value === 'custom') return cs ? 'vlastní' : 'custom'
+  return value
+}
 const tools: Partial<Record<PackageCategory,string>> = {
   world:'/admin/world/library',countries:'/admin/world/library',
   category:'/admin/tour-seasons/categories',series:'/admin/tour-seasons/tournaments',
@@ -37,7 +50,7 @@ function PackageRow({item}:{item:CatalogItem}): JSX.Element {
   return <li className="package-index-row">
     <div><strong><Link to={catalogPath(item)}>{item.name}</Link></strong>
       <p className="status">{item.description}</p>
-      <small className="status">{item.key} · {item.status} · {item.version} · {item.editable?(cs?'vlastní':'custom'):(cs?'chráněný':'protected')}</small>
+      <small className="status">{item.key} · {sourceText(item.origin,cs)} · {statusText(item.status,cs)} · {item.version} · {item.editable?(cs?'vlastní':'custom'):(cs?'chráněný':'protected')}</small>
       <div className="package-index-tags">{item.categories.map(cat => <span key={cat}>{categories[cat][language]}</span>)}</div>
     </div>
     <Link to={catalogPath(item)}>{cs?'Detail':'Details'} →</Link>
@@ -47,7 +60,7 @@ export function PackagesHomePage():JSX.Element {
   const {language}=useLanguage(), cs=language==='cs', {query,items}=Inventory()
   return <section className="panel package-index">
     <div className="page-intro"><h2>{cs?'Balíčky':'Packages'}</h2>
-      <p className="subtitle">{cs?'Rozcestník ověřených zdrojových dat, bez aktivního Runu.':'Verified source content categories, without an active Run.'}</p></div>
+      <p className="subtitle">{cs?'Rozcestník zdrojových kategorií bez otevřeného Runu. Aktuální přenosný registr obsahuje pouze World Packages.':'Source-category hub without an active Run. Only World Packages have a portable registry today.'}</p></div>
     <p><Link className="button-link" to="/admin/packages/all">{cs?'Všechny balíčky':'All packages'} →</Link></p>
     {query.isPending && <p role="status">{cs?'Načítám registry…':'Loading registry…'}</p>}
     {query.isError && <p className="error" role="alert">{formatApiError(query.error)}</p>}
@@ -59,7 +72,7 @@ export function PackagesHomePage():JSX.Element {
           : cat==='players'
             ? (cs?'Payload zatím není schválen.':'Payload not yet specified.')
             : (cs?'Otevřít seznam této kategorie.':'Browse this category.')}</p>
-        <small className="status">{(cat==='world'||cat==='countries') && query.isSuccess ? inCategory(items,cat).length+(cs?' registrovaných':' registered') : (cs?'Registr zatím není dostupný':'Registry not available')}</small>
+        <small className="status">{(cat==='world'||cat==='countries') && query.isSuccess ? inCategory(items,cat).length+(cs?' registrovaných':' registered') : (cs ? (cat==='world'||cat==='countries' ? (query.isPending ? 'Načítám registr…' : 'Registr není ověřen') : 'Samostatný registr není dostupný') : (cat==='world'||cat==='countries' ? (query.isPending ? 'Loading registry…' : 'Registry unverified') : 'Independent registry unavailable'))}</small>
       </Link>)}</div>
     <SourceNote />
   </section>
@@ -72,7 +85,8 @@ export function PackagesListPage():JSX.Element {
   const {query,items}=Inventory()
   const [search,setSearch]=useState(''),[origin,setOrigin]=useState('any'),[status,setStatus]=useState('any')
   const cat:PackageFilter|null=resolvedCategory==='all'||packageCategories.some(c=>c===resolvedCategory) ? resolvedCategory as PackageFilter : null
-  if(!cat) return <section className="panel"><h2>{cs?'Neznámá kategorie':'Unknown category'}</h2><Link to="/admin/packages">Packages</Link></section>
+  if(!cat) return <section className="panel"><h2>{cs?'Neznámá kategorie':'Unknown category'}</h2><Link to="/admin/packages">{cs ? "Balíčky" : "Packages"}</Link></section>
+  const registrySupported = cat === 'all' || cat === 'world' || cat === 'countries'
   const members=inCategory(items,cat)
   const shown=members.filter(item=>(origin==='any'||(origin==='custom'?item.editable:!item.editable))
     &&(status==='any'||item.status===status)
@@ -83,14 +97,14 @@ export function PackagesListPage():JSX.Element {
       <p className="subtitle">{cs?'Jedna identita = jedna položka.':'One identity, one inventory row.'}</p></div>
     <div className="package-index-filters">
       <label>{cs?'Hledání':'Search'}<input type="search" value={search} onChange={e=>setSearch(e.target.value)} /></label>
-      <label>{cs?'Původ':'Origin'}<select aria-label="Package origin" value={origin} onChange={e=>setOrigin(e.target.value)}><option value="any">{cs?'Vše':'All'}</option><option value="custom">{cs?'Vlastní':'Custom'}</option><option value="protected">{cs?'Chráněné':'Protected'}</option></select></label>
-      <label>{cs?'Stav':'Status'}<select aria-label="Package status" value={status} onChange={e=>setStatus(e.target.value)}><option value="any">{cs?'Vše':'All'}</option><option value="active">Active</option><option value="archived">Archived</option></select></label>
+      <label>{cs?'Typ přístupu':'Access type'}<select aria-label="Package origin" value={origin} onChange={e=>setOrigin(e.target.value)}><option value="any">{cs?'Vše':'All'}</option><option value="custom">{cs?'Vlastní':'Custom'}</option><option value="protected">{cs?'Chráněné':'Protected'}</option></select></label>
+      <label>{cs?'Stav':'Status'}<select aria-label="Package status" value={status} onChange={e=>setStatus(e.target.value)}><option value="any">{cs?'Vše':'All'}</option><option value="active">{cs ? "Aktivní" : "Active"}</option><option value="archived">{cs ? "Archivované" : "Archived"}</option></select></label>
     </div>
     {query.isPending && <p role="status">{cs?'Načítám…':'Loading…'}</p>}
     {query.isError && <p role="alert" className="error">{formatApiError(query.error)}</p>}
-    {query.isSuccess && <><p className="status">{cat==='all'||cat==='world'||cat==='countries'?shown.length+' / '+members.length:(cs?'Samostatný registr této kategorie zatím není dostupný.':'No independent registry for this category yet.')}</p>
-      {shown.length ? <ul className="package-index-list">{shown.map(item=><PackageRow key={item.key} item={item}/>)}</ul>
-      : <p>{cat==='all'||cat==='world'||cat==='countries' ? (cs?'Žádný evidovaný balíček neodpovídá filtru.':'No indexed packages match this filter.') : (cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.')}</p>}</>}
+    {query.isSuccess && <><p className="status">{registrySupported?shown.length+' / '+members.length:(cs?'Samostatný registr této kategorie zatím není dostupný.':'No independent registry for this category yet.')}</p>
+      {registrySupported && shown.length ? <ul className="package-index-list">{shown.map(item=><PackageRow key={item.key} item={item}/>)}</ul>
+      : <p>{registrySupported ? (members.length === 0 ? (cs ? 'Registr nevrátil žádný balíček v této kategorii.' : 'The registry returned no packages in this category.') : (cs?'Žádný evidovaný balíček neodpovídá filtru.':'No indexed packages match this filter.')) : (cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.')}</p>}</>}
     {cat!=='all' && <SourceNote category={cat} />}
   </section>
 }
@@ -120,19 +134,19 @@ export function PackageWorldDetailPage():JSX.Element {
     {q.isPending&&<p role="status">{cs?'Načítám zdroj…':'Loading source…'}</p>}
     {q.isError&&<p className="error" role="alert">{formatApiError(q.error)}</p>}
     {pkg && <>
-      <nav className="package-index-tabs" aria-label="Package tabs">{(['overview','contents','validation'] as const).map(k=>
+      <nav className="package-index-tabs" aria-label={cs ? "Záložky balíčku" : "Package tabs"}>{(['overview','contents','validation'] as const).map(k=>
         <button type="button" key={k} aria-current={active===k?'page':undefined} onClick={()=>setParams({tab:k})}>
           {k==='overview'?(cs?'Přehled':'Overview'):k==='contents'?(cs?'Obsah':'Contents'):(cs?'Kontrola':'Validation')}
         </button>)}</nav>
       {active==='overview'&&<article className="package-index-detail">
         <h3>{cs?'Informace a původ':'Metadata and provenance'}</h3>
         <dl><dt>ID</dt><dd>{pkg.world_id}</dd><dt>{cs?'Verze':'Version'}</dt><dd>{pkg.version}</dd>
-          <dt>{cs?'Zdroj':'Source'}</dt><dd>{pkg.source} · {pkg.type}</dd>
-          <dt>Status</dt><dd>{pkg.status} · {pkg.editable?'Editable':'Protected'}</dd>
-          <dt>Fingerprint</dt><dd><code>{pkg.fingerprint}</code></dd>
+          <dt>{cs ? "Zdroj" : "Source"}</dt><dd>{sourceText(pkg.source,cs)} · {pkg.type}</dd>
+          <dt>{cs ? "Stav" : "Status"}</dt><dd>{statusText(pkg.status,cs)} · {pkg.editable ? (cs ? "upravitelný" : "Editable") : (cs ? "chráněný" : "Protected")}</dd>
+          <dt>{cs ? "Otisk" : "Fingerprint"}</dt><dd><code>{pkg.fingerprint}</code></dd>
           <dt>{cs?'Použití':'Usage'}</dt><dd>{pkg.used_by_run_count??(cs?'Nedostupné':'Unavailable')}</dd></dl>
         <h3>{cs?'Skutečně obsažené části':'Actual contents'}</h3>
-        <p>{pkg.country_count} countries · {pkg.continent_count} continents · {pkg.region_count} regions · {pkg.travel_region_count} travel regions · {pkg.timezone_area_count} timezone areas</p>
+        <p>{pkg.country_count} {cs ? "zemí" : "countries"} · {pkg.continent_count} {cs ? "kontinentů" : "continents"} · {pkg.region_count} {cs ? "regionů" : "regions"} · {pkg.travel_region_count} {cs ? "cestovních regionů" : "travel regions"} · {pkg.timezone_area_count} {cs ? "časových oblastí" : "timezone areas"}</p>
         <p><Link to={source}>{pkg.editable?(cs?'Upravit zdroj':'Edit custom source'):(cs?'Vytvořit vlastní kopii':'Create custom copy')} →</Link></p>
         <p><Link to={'/admin/packages/world/'+encodeURIComponent(worldId)+'/apply'}>{cs?'Použít v Runu — vybrat obsah':'Apply to Run — select contents'} →</Link></p>
         <p className="status">{cs?'Selektivní import funguje pro World entity; export tohoto konkrétního zdroje zatím není hotový.':'Selective import supports World entities; source-specific export is not yet available.'}</p>
@@ -140,27 +154,28 @@ export function PackageWorldDetailPage():JSX.Element {
       </article>}
       {active==='contents'&&<article className="package-index-detail">
         <h3>{cs?'Země':'Countries'} ({pkg.country_count})</h3>
-        {countriesQuery.isPending&&<p role="status">Loading countries…</p>}
+        {countriesQuery.isPending&&<p role="status">{cs ? "Načítám země…" : "Loading countries…"}</p>}
         {countriesQuery.isError&&<p role="alert" className="error">{formatApiError(countriesQuery.error)}</p>}
-        {countries&&<><label>{cs?'Hledat zemi':'Search countries'}<input type="search" value={countrySearch} onChange={e=>setCountrySearch(e.target.value)}/></label>
+        {countries&&<><p role="status" className="status">{cs ? 'Ověřený seznam zemí' : 'Verified country inventory'}: {countries.length}</p><label>{cs?'Hledat zemi':'Search countries'}<input type="search" value={countrySearch} onChange={e=>setCountrySearch(e.target.value)}/></label>
           <ul className="package-index-countries">{countries.filter(c=>(c.name+' '+c.code).toLowerCase().includes(countrySearch.toLowerCase())).map(c=>
             <li key={c.code}><Link to={source+'/countries/'+encodeURIComponent(c.code)}>{c.name} ({c.code})</Link>
-              <span className="status">{c.region} · {c.population.toLocaleString()}</span></li>)}</ul></>}
+              <span className="status">{c.region} · {c.population.toLocaleString()}</span></li>)}</ul>
+          {countries.length === 0 ? <p role="status">{cs ? "V balíčku nejsou žádné země." : "This package contains no countries."}</p> : countries.every(c => !(c.name+" "+c.code).toLowerCase().includes(countrySearch.toLowerCase())) ? <p role="status">{cs ? "Žádná země neodpovídá hledání." : "No country matches the search."}</p> : null}</>}
         <h3>{cs?'Geografie':'Geography'}</h3>
-        {geoQuery.isPending&&<p role="status">Loading geography…</p>}
+        {geoQuery.isPending&&<p role="status">{cs ? "Načítám geografii…" : "Loading geography…"}</p>}
         {geoQuery.isError&&<p className="error" role="alert">{formatApiError(geoQuery.error)}</p>}
         {geo&&<div>{([
-          ['Continents',geo.continents.map(x=>x.code+' '+x.name)],
-          ['Regions',geo.regions.map(x=>x.code+' '+x.name)],
-          ['Travel regions',geo.travel_regions.map(x=>x.code+' '+x.name)],
-          ['Timezone areas',geo.timezone_areas.map(x=>x.code+' '+x.name)]
+          [cs ? 'Kontinenty' : 'Continents',geo.continents.map(x=>x.code+' '+x.name)],
+          [cs ? 'Regiony' : 'Regions',geo.regions.map(x=>x.code+' '+x.name)],
+          [cs ? 'Cestovní regiony' : 'Travel regions',geo.travel_regions.map(x=>x.code+' '+x.name)],
+          [cs ? 'Časové oblasti' : 'Timezone areas',geo.timezone_areas.map(x=>x.code+' '+x.name)]
         ] as [string,string[]][]).map(([name,values])=><details key={name}><summary>{name} ({values.length})</summary><ul>{values.map(x=><li key={x}>{x}</li>)}</ul></details>)}</div>}
       </article>}
       {active==='validation'&&<article className="package-index-detail">
         <h3>{cs?'Skutečné výsledky kontroly':'Actual validation results'}</h3>
-        {valQuery.isPending&&<p role="status">Loading validation…</p>}
+        {valQuery.isPending&&<p role="status">{cs ? "Načítám výsledky kontroly…" : "Loading validation…"}</p>}
         {valQuery.isError&&<p role="alert" className="error">{formatApiError(valQuery.error)}</p>}
-        {validation&&<><p>{validation.status} · {validation.error_count} errors · {validation.warning_count} warnings · {validation.info_count} info</p>
+        {validation&&<><p className="status">{cs ? "Diagnostické zprávy jsou zobrazeny v původním znění." : "Diagnostic messages are shown verbatim."}</p><p>{statusText(validation.status,cs)} · {validation.error_count} {cs ? "chyb" : "errors"} · {validation.warning_count} {cs ? "varování" : "warnings"} · {validation.info_count} info</p>
           <ul className="package-index-checks">{validation.checks.map((check,i)=>{
             const country=resolveCountry(check,countries?.map(c=>c.code)??[])
             return <li key={check.code+':'+i}><strong>{check.severity.toUpperCase()} · {check.code}</strong>

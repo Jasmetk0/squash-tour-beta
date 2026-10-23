@@ -168,15 +168,15 @@ export function RunDiagnosticsPage(): JSX.Element {
             />
             <SummaryPills
               items={[
-                { label: 'Events', value: statusSummaryQuery.data?.history_counts.events ?? safeEvents.length ?? '—' },
+                { label: 'Events', value: statusSummaryQuery.data?.history_counts.events ?? (eventsQuery.data?.run_id === runId ? safeEvents.length : '—') },
                 {
                   label: 'Ranking snapshots',
                   value:
-                    statusSummaryQuery.data?.history_counts.ranking_snapshots ?? safeRankingSnapshots.length ?? '—'
+                    statusSummaryQuery.data?.history_counts.ranking_snapshots ?? (rankingSnapshotsQuery.data?.run_id === runId ? safeRankingSnapshots.length : '—')
                 },
                 {
                   label: 'Race snapshots',
-                  value: statusSummaryQuery.data?.history_counts.race_snapshots ?? safeRaceSnapshots.length ?? '—'
+                  value: statusSummaryQuery.data?.history_counts.race_snapshots ?? (raceSnapshotsQuery.data?.run_id === runId ? safeRaceSnapshots.length : '—')
                 }
               ]}
             />

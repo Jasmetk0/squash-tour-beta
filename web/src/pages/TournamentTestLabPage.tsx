@@ -59,6 +59,16 @@ function visibleMatchStatus(status: string, cs: boolean): string {
   return translations[status] ? `${translations[status]} (${status})` : status
 }
 
+/** Assertion status is display-only; technical keys and result data stay unchanged. */
+function visibleAssertionStatus(status: string, cs: boolean): string {
+  if (!cs) return status
+  const translations: Record<string, string> = {
+    passed: 'splněno', failed: 'nesplněno', skipped: 'přeskočeno',
+    blocked: 'blokováno'
+  }
+  return translations[status] ? `${translations[status]} (${status})` : status
+}
+
 function CompatibilityPanel({ compatibility }: { compatibility: TournamentLabCompatibility }): JSX.Element {
   const {language} = useLanguage(), cs = language === 'cs'
   return <SectionCard title={cs ? "Diagnostika kompatibility" : "Compatibility diagnostics"}>
@@ -201,7 +211,7 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
       {firstRun.assertions.length ? <table aria-label="Tournament Lab assertions">
         <thead><tr><th>{cs ? "Kontrola" : "Assertion"}</th><th>{cs ? "Stav" : "Status"}</th><th>{cs ? "Očekáváno" : "Expected"}</th><th>{cs ? "Skutečnost" : "Actual"}</th></tr></thead>
         <tbody>{firstRun.assertions.map((row) => <tr key={row.assertion}>
-          <td>{row.assertion}</td><td>{row.status}</td><td>{row.expected}</td><td>{row.actual ?? '—'}</td>
+          <td>{row.assertion}</td><td>{visibleAssertionStatus(row.status, cs)}</td><td>{row.expected}</td><td>{row.actual ?? '—'}</td>
         </tr>)}</tbody>
       </table> : null}
     </SectionCard> : null}

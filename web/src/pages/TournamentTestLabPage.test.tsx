@@ -342,6 +342,19 @@ describe('TournamentTestLabPage', () => {
     expect(api.createTournamentLabSession).not.toHaveBeenCalled()
   })
 
+  it('localizes assertion status in Czech while preserving the original result and single execution', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<LocalizedPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', {name: 'Load scratch copy'}))
+    await user.click(screen.getByRole('button', {name: 'Run tournament scenario'}))
+    const table = await screen.findByRole('table', {name: 'Tournament Lab assertions'})
+    expect(within(table).getByRole('cell', {name: 'passed'})).toBeInTheDocument()
+    await user.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    expect(within(table).getByRole('cell', {name: 'splněno (passed)'})).toBeInTheDocument()
+    expect(api.runTournamentTestLab).toHaveBeenCalledTimes(1)
+    expect(api.createTournamentLabSession).not.toHaveBeenCalled()
+  })
+
   it('hides previous inspection and run evidence when the editable scenario changes', async () => {
     const user = userEvent.setup()
     renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')

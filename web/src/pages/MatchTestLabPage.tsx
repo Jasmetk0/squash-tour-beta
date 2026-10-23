@@ -56,6 +56,16 @@ function parseSeeds(value: string, cs: boolean): number[] {
   return seeds
 }
 
+/** Translate only visible status text; canonical result codes are never rewritten. */
+function visibleTerminationReason(reason: string, cs: boolean): string {
+  if (!cs) return reason
+  const translations: Record<string, string> = {
+    COMPLETED: 'dohráno', RETIREMENT: 'skreč', RETIRED: 'skreč',
+    WALKOVER: 'bez boje', FORFEIT: 'kontumace'
+  }
+  return translations[reason] ? `${translations[reason]} (${reason})` : reason
+}
+
 function ResultPanels({ data }: { data: MatchLabResult }): JSX.Element {
   const {language} = useLanguage(), cs = language === 'cs'
   const [winnerFilter, setWinnerFilter] = useState('all')
@@ -104,13 +114,13 @@ function ResultPanels({ data }: { data: MatchLabResult }): JSX.Element {
       <p role="status" className="status">{cs ? `Zobrazeno ${displayed.length} z ${data.results.length} výsledků` : `Showing ${displayed.length} of ${data.results.length} results`} · {cs ? "Souhrn dávky zahrnuje všechny zápasy." : "Batch diagnostics above include all matches."}</p>
       {data.results.length === 0 ? <p className="status">{cs ? "Dávka nemá žádné výsledky." : "This batch has no results."}</p> : displayed.length === 0 ? <p className="status">{cs ? "Filtru neodpovídají žádné výsledky." : "No results match this filter."}</p> : null}
       <table aria-label="Match Lab results"><thead><tr>
-        <th>Seed</th><th>{cs ? "Vítěz" : "Winner"}</th><th>{cs ? "Sety" : "Sets"}</th><th>{cs ? "Skóre setů (A–B)" : "Set scores (A-B)"}</th><th>{cs ? "Výměny" : "Rallies"}</th><th>{cs ? "Doba" : "Elapsed"}</th><th>{cs ? "Otisk výsledku" : "Result fingerprint"}</th>
+        <th>Seed</th><th>{cs ? "Vítěz" : "Winner"}</th><th>{cs ? "Sety" : "Sets"}</th><th>{cs ? "Skóre setů (A–B)" : "Set scores (A-B)"}</th><th>{cs ? "Výměny" : "Rallies"}</th><th>{cs ? "Doba" : "Elapsed"}</th><th>{cs ? "Ukončení" : "Termination"}</th><th>{cs ? "Otisk výsledku" : "Result fingerprint"}</th>
       </tr></thead><tbody>
         {displayed.map((result) => <tr key={result.seed}>
           <td>{result.seed}</td><td>{result.winner_player_id}</td>
           <td>{Object.entries(result.sets_won).map(([player, sets]) => `${player} ${sets}`).join(' / ')}</td>
           <td>{result.set_scores.join(', ')}</td><td>{result.rally_count}</td><td>{result.elapsed_seconds.toFixed(1)} s</td>
-          <td><code>{result.result_fingerprint.slice(0, 12)}</code></td>
+          <td>{visibleTerminationReason(result.termination_reason, cs)}</td><td><code>{result.result_fingerprint.slice(0, 12)}</code></td>
         </tr>)}
       </tbody></table>
     </SectionCard>

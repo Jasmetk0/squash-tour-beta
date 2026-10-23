@@ -164,6 +164,18 @@ describe('MatchTestLabPage', () => {
     expect(screen.getByText(/LAB-B: 1/)).toBeInTheDocument()
   })
 
+  it('shows localized completion reason without altering canonical Match results or recomputing', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<LocalizedMatchPage />, '/admin/labs/match')
+    await user.click(screen.getByRole('button', {name: 'Run scenario'}))
+    const table = await screen.findByRole('table', {name: 'Match Lab results'})
+    expect(within(table).getAllByRole('cell', {name: 'COMPLETED'})).toHaveLength(2)
+    await user.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    expect(within(table).getAllByRole('cell', {name: 'dohráno (COMPLETED)'})).toHaveLength(2)
+    expect(api.runMatchTestLab).toHaveBeenCalledTimes(1)
+    expect(api.createMatchLabSession).not.toHaveBeenCalled()
+  })
+
   it('filters Match Lab batch results by winner without changing diagnostics or rerunning the API', async () => {
     const user = userEvent.setup()
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')

@@ -94,7 +94,19 @@ export function RunDiagnosticsPage(): JSX.Element {
   const safeRun = runQuery.data?.run.run_id === runId ? runQuery.data : null
   const safeStatus = statusSummaryQuery.data?.run_id === runId ? statusSummaryQuery.data : null
 
-  const finalsMismatch = Boolean(finalsSummaryQuery.data && finalsSummaryQuery.data.run_id !== runId)
+  // Finals include independently identified qualification and result records.
+  // A matching outer summary must not conceal a foreign or cross-season artifact.
+  const finalsMismatch = Boolean(finalsSummaryQuery.data && (
+    finalsSummaryQuery.data.run_id !== runId ||
+    (finalsSummaryQuery.data.qualification && (
+      finalsSummaryQuery.data.qualification.run_id !== runId ||
+      finalsSummaryQuery.data.qualification.season !== finalsSummaryQuery.data.season
+    )) ||
+    (finalsSummaryQuery.data.result && (
+      finalsSummaryQuery.data.result.run_id !== runId ||
+      finalsSummaryQuery.data.result.season !== finalsSummaryQuery.data.season
+    ))
+  ))
   const rolloverMismatch = Boolean(latestRolloverQuery.data && latestRolloverQuery.data.rollover.run_id !== runId)
   const lineageMismatch = Boolean(lineageQuery.data && lineageQuery.data.lineage.run_id !== runId)
   const safeFinals = finalsSummaryQuery.data?.run_id === runId ? finalsSummaryQuery.data : null

@@ -21,6 +21,7 @@ function statusText(value: string, cs: boolean): string {
   if (value === 'warnings') return cs ? 'varování' : 'warnings'
   if (value === 'valid') return cs ? 'platné' : 'valid'
   if (value === 'error') return cs ? 'chyba' : 'error'
+  if (value === 'errors') return cs ? 'chyby' : 'errors'
   if (value === 'warning') return cs ? 'varování' : 'warning'
   if (value === 'info') return cs ? 'informace' : 'info'
   return value
@@ -175,9 +176,13 @@ export function PackagesListPage():JSX.Element {
 function normalizeCatalogSearch(value:string):string {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()
 }
+/** Only canonical countries/<CODE>/... storage paths identify a country.
+ * Never turn an arbitrary status, field name or unrelated directory into a link. */
 function resolveCountry(check:WorldPackageValidationCheck,codes:string[]):string|null {
-  const raw=[check.path,check.field].filter(Boolean).join('/')
-  return codes.find(code => raw.split(/[^A-Za-z0-9]+/).some(part => part.toUpperCase()===code.toUpperCase())) ?? null
+  if (!check.path) return null
+  const match=/(?:^|[\\/])countries[\\/]([A-Za-z]{3})(?=$|[\\/])/i.exec(check.path)
+  if (!match) return null
+  return codes.find(code=>code.toUpperCase()===match[1].toUpperCase())??null
 }
 export function PackageWorldDetailPage():JSX.Element {
   const {worldId=''}=useParams()

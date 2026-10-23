@@ -445,6 +445,31 @@ describe('source-backed Packages frontend',()=>{
     expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
   })
 
+  it('only links validation findings with a genuine known country directory',async()=>{
+    api.getWorldPackageValidation.mockResolvedValue({world_id:'demo',status:'errors',error_count:6,warning_count:0,info_count:0,checks:[
+      {code:'in_directory',severity:'error',status:'failed',message:'Country in canonical directory',path:'/storage/demo/countries/CZE/attributes/region.json',field:'region'},
+      {code:'windows_directory',severity:'error',status:'failed',message:'Windows path to country',path:'C:\\packages\\demo\\countries\\usa\\attributes\\region.json',field:null},
+      {code:'foreign_file',severity:'error',status:'failed',message:'Country code in unrelated filename',path:'/storage/demo/geography/USA/index.json',field:null},
+      {code:'field_only',severity:'error',status:'failed',message:'Country-looking field',path:'/storage/demo/geography/regions.json',field:'CZE'},
+      {code:'unknown_country',severity:'error',status:'failed',message:'Country not present in inventory',path:'countries/ZZZ/attributes/region.json',field:null},
+      {code:'folder_only',severity:'error',status:'failed',message:'Countries directory without code',path:'/storage/demo/countries',field:'USA'}
+    ]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(await screen.findByText('Country in canonical directory')).toBeInTheDocument()
+    const links=screen.getAllByRole('link',{name:/Otevřít dotčenou zemi/})
+    expect(links).toHaveLength(2)
+    expect(links[0]).toHaveAttribute('href','/admin/world/library/demo/countries/CZE')
+    expect(links[1]).toHaveAttribute('href','/admin/world/library/demo/countries/USA')
+    expect(screen.getByText(/chyby · 6 chyb/)).toBeInTheDocument()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(screen.getAllByRole('link',{name:/Open affected country/})).toHaveLength(2)
+    expect(screen.getByText(/errors · 6 errors/)).toBeInTheDocument()
+  })
+
   it('rejects a detail response from another World instead of showing foreign metadata',async()=>{
     api.getWorldPackage.mockResolvedValueOnce({...world,world_id:'other',name:'Wrong World'})
     mount('/admin/packages/world/demo')

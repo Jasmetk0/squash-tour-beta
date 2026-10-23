@@ -327,7 +327,7 @@ describe('RunDiagnosticsPage', () => {
       }
       renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
       const warning = {
-        finals: 'Finals summary belongs to another Run. Its status and inspection links are hidden.',
+        finals: 'Finals summary contains mismatched Run or season data. Its status and inspection links are hidden.',
         rollover: 'Rollover summary belongs to another Run. Its result and inspection link are hidden.',
         lineage: 'Lineage belongs to another Run. Child count and season-chain inspection link are hidden.',
       }[resource]
@@ -368,7 +368,7 @@ describe('RunDiagnosticsPage', () => {
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Finals summary belongs to another Run. Its status and inspection links are hidden.'
+      'Finals summary contains mismatched Run or season data. Its status and inspection links are hidden.'
     )
     expect(screen.queryByRole('link', {name: /Inspect Finals (result|qualification)/}))
       .not.toBeInTheDocument()

@@ -287,56 +287,56 @@ export function MatchTestLabPage(): JSX.Element {
 
     <SectionCard title="Test Sessions">
       <button type="button" disabled={sessions.isFetching} onClick={() => { void sessions.refetch() }}>
-        {sessions.isFetching ? 'Refreshing Test Sessions…' : 'Refresh Test Sessions'}
+        {sessions.isFetching ? (cs ? 'Obnovuji seznam Test Sessions…' : 'Refreshing Test Sessions…') : (cs ? 'Obnovit seznam Test Sessions' : 'Refresh Test Sessions')}
       </button>
-      <label>Open Test Session
+      <label>{cs ? 'Otevřít Test Session' : 'Open Test Session'}
         <select aria-label="Open Match Test Session" value={selectedSessionId ?? ''} onChange={(e) => {
           setSelectedSessionId(e.target.value || null)
           runMutation.reset()
         }}>
-          <option value="">Portable scratch scenario</option>
+          <option value="">{cs ? "Pracovní přenosný scénář" : "Portable scratch scenario"}</option>
           {selectedSession && !sessions.data?.some(item => item.session_id === selectedSessionId)
-            ? <option value={selectedSession.session_id}>{selectedSession.display_name} · loaded v{selectedSession.version} (unavailable)</option> : null}
+            ? <option value={selectedSession.session_id}>{selectedSession.display_name} · v{selectedSession.version} ({cs ? "nedostupná v seznamu" : "unavailable"})</option> : null}
           {sessions.data?.map((item) => <option key={item.session_id} value={item.session_id}>{item.display_name} · v{item.version}</option>)}
         </select>
       </label>
-      {sessions.isLoading ? <p role="status">Loading saved Match Test Sessions…</p> : null}
-      {sessions.isError ? <p role="alert" className="error">Saved Match Test Sessions unavailable.</p> : null}
+      {sessions.isLoading ? <p role="status">{cs ? "Načítám uložené Match Test Sessions…" : "Loading saved Match Test Sessions…"}</p> : null}
+      {sessions.isError ? <p role="alert" className="error">{cs ? "Seznam uložených Match Test Sessions není dostupný." : "Saved Match Test Sessions unavailable."}</p> : null}
       {sessions.isSuccess && sessions.data.length === 0
-        ? <p className="status">No saved Match Test Sessions yet. Scratch mode remains available.</p> : null}
+        ? <p className="status">{cs ? "Zatím žádná uložená Session. Pracovní režim je nadále dostupný." : "No saved Match Test Sessions yet. Scratch mode remains available."}</p> : null}
       <LabSessionConflict key={`${selectedSessionId}:${selectedSession?.session_fingerprint}:${sessionConflict}:${editor.editorEdit}`}
         conflict={sessionConflict} dirty={sessionHasUnsavedChanges} canReload={editor.canReloadSession} onReload={editor.reloadSession} />
       {selectedSession ? <SummaryPills items={[
         { label: 'Session', value: selectedSession.display_name },
-        { label: 'Version', value: selectedSession.version },
-        { label: 'Source', value: selectedSession.scenario.source_kind },
-        { label: 'Session fingerprint', value: selectedSession.session_fingerprint.slice(0, 12) }
-      ]} /> : <p className="status">Scratch mode is non-persistent. Create a Test Session to keep an editable isolated copy.</p>}
+        { label: cs ? 'Verze' : 'Version', value: selectedSession.version },
+        { label: cs ? 'Zdroj' : 'Source', value: selectedSession.scenario.source_kind },
+        { label: cs ? 'Otisk Session' : 'Session fingerprint', value: selectedSession.session_fingerprint.slice(0, 12) }
+      ]} /> : <p className="status">{cs ? "Pracovní režim se neukládá. Pro trvalou upravitelnou kopii vytvoř Test Session." : "Scratch mode is non-persistent. Create a Test Session to keep an editable isolated copy."}</p>}
     </SectionCard>
 
-    {selectedSession ? <SectionCard title="Import player from Saved Revision">
+    {selectedSession ? <SectionCard title={cs ? "Import hráče z uložené revize" : "Import player from Saved Revision"}>
       <p className="status">
         Copies one validated historical player profile + saved sporting state into this Test Session.
         The source Run/Saved Revision is never mutated or live-linked.
       </p>
       <HistoricalLabSourcePicker lab="Match Lab" run={importRunId} branch={importBranchId} revision={importRevisionId}
         onChange={(run, branch, revision) => {setImportRunId(run); setImportBranchId(branch); setImportRevisionId(revision)}} />
-      <label>Product Run ID
+      <label>{cs ? "ID Runu" : "Product Run ID"}
         <input aria-label="Match Lab import Run ID" value={importRunId} onChange={(e) => setImportRunId(e.target.value)} />
       </label>
-      <label>Branch ID
+      <label>{cs ? "ID větve" : "Branch ID"}
         <input aria-label="Match Lab import Branch ID" value={importBranchId} onChange={(e) => setImportBranchId(e.target.value)} />
       </label>
-      <label>Saved Revision ID
+      <label>{cs ? "ID uložené revize" : "Saved Revision ID"}
         <input aria-label="Match Lab import Saved Revision ID" value={importRevisionId} onChange={(e) => setImportRevisionId(e.target.value)} />
       </label>
-      <label>Player ID
+      <label>{cs ? "ID hráče" : "Player ID"}
         <input aria-label="Match Lab import Player ID" value={importPlayerId} onChange={(e) => setImportPlayerId(e.target.value)} />
       </label>
-      <label>Replace participant
+      <label>{cs ? "Nahradit účastníka" : "Replace participant"}
         <select aria-label="Match Lab import side" value={importSide} onChange={(e) => setImportSide(e.target.value as 'player_a' | 'player_b')}>
-          <option value="player_a">Player A</option>
-          <option value="player_b">Player B</option>
+          <option value="player_a">{cs ? "Hráč A" : "Player A"}</option>
+          <option value="player_b">{cs ? "Hráč B" : "Player B"}</option>
         </select>
       </label>
       <button
@@ -346,13 +346,13 @@ export function MatchTestLabPage(): JSX.Element {
           sourceSelection: importSelection.current, ticket: editor.captureEditor(), session: selectedSession, runId: importRunId.trim(), branchId: importBranchId.trim(), revisionId: importRevisionId.trim(), playerId: importPlayerId.trim(), side: importSide
         }) }}
       >
-        {importMutation.isPending ? 'Importing…' : 'Import historical player'}
+        {importMutation.isPending ? (cs ? 'Importuji…' : 'Importing…') : (cs ? 'Importovat historického hráče' : 'Import historical player')}
       </button>
-      {importMutation.isError ? <p className="error">Import failed: {String(importMutation.error)}</p> : null}
+      {importMutation.isError ? <p role="alert" className="error">{cs ? "Import selhal" : "Import failed"}: {String(importMutation.error)}</p> : null}
       {(selectedSession.participant_imports ?? []).length > 0 ? <table aria-label="Match Lab historical imports">
-        <thead><tr><th>Side</th><th>Player</th><th>Source</th><th>Week</th><th>Revision hash</th></tr></thead>
+        <thead><tr><th>{cs ? "Strana" : "Side"}</th><th>{cs ? "Hráč" : "Player"}</th><th>{cs ? "Zdroj" : "Source"}</th><th>{cs ? "Týden" : "Week"}</th><th>{cs ? "Hash revize" : "Revision hash"}</th></tr></thead>
         <tbody>{selectedSession.participant_imports.map((item) => <tr key={item.side}>
-          <td>{item.side === 'player_a' ? 'Player A' : 'Player B'}</td>
+          <td>{item.side === 'player_a' ? (cs ? 'Hráč A' : 'Player A') : (cs ? 'Hráč B' : 'Player B')}</td>
           <td>{item.player_id}</td>
           <td>{item.product_run_id} / {item.branch_id} / {item.saved_revision_id}</td>
           <td>{item.sporting_week_ordinal}</td>
@@ -362,11 +362,11 @@ export function MatchTestLabPage(): JSX.Element {
     </SectionCard> : null}
 
     <form onSubmit={submit}>
-      <SectionCard title={selectedSession ? 'Editable Test Session scenario' : 'Portable scratch scenario JSON'}>
-        {selectedSession ? <label>Session name
+      <SectionCard title={selectedSession ? (cs ? 'Upravitelný scénář Test Session' : 'Editable Test Session scenario') : (cs ? 'JSON pracovního přenosného scénáře' : 'Portable scratch scenario JSON')}>
+        {selectedSession ? <label>{cs ? "Název Session" : "Session name"}
           <input aria-label="Match Lab session name" value={sessionName} onChange={(e) => { setSessionName(e.target.value); runMutation.reset() }} />
         </label> : null}
-        {!selectedSession ? <label>Match Lab new Session name
+        {!selectedSession ? <label>{cs ? "Název nové Match Lab Session" : "Match Lab new Session name"}
           <input aria-label="Match Lab new Session name" value={scratchName} onChange={event => {
             setScratchName(event.target.value)
             editor.setSessionName(event.target.value)
@@ -376,20 +376,20 @@ export function MatchTestLabPage(): JSX.Element {
           jsonLabel="Match Lab scenario JSON" selection={selectedSession ? `${selectedSession.session_id}:${selectedSession.session_fingerprint}` : 'scratch'} revision={editor.editorEdit}
           savedScenario={selectedSession?.scenario} savedName={selectedSession?.display_name}
           sessionName={editor.sessionName} />
-        <label>Batch seeds (optional, comma-separated; max 100)
+        <label>{cs ? "Seedy dávky (volitelné; oddělené čárkou; max. 100)" : "Batch seeds (optional, comma-separated; max 100)"}
           <input aria-label="Match Lab batch seeds" value={batchText} onChange={(e) => { setBatchText(e.target.value); runMutation.reset() }} placeholder="100, 101, 102" />
         </label>
-        <button type="button" onClick={formatScenario} disabled={runPending || writePending}>Format JSON</button>
+        <button type="button" onClick={formatScenario} disabled={runPending || writePending}>{cs ? "Formátovat JSON" : "Format JSON"}</button>
         {!selectedSession ? <button type="button" onClick={createFromDraft} disabled={writePending || !scenarioText.trim()}>
           {cs ? 'Vytvořit Session z pracovního scénáře' : 'Create Test Session from scratch'}
         </button> : null}
-        {selectedSession ? <button type="button" onClick={save} disabled={writePending || Boolean(sessionConflict)}>Save Test Session</button> : null}
-        <button type="submit" disabled={runPending || writePending || Boolean(sessionConflict) || sessionHasUnsavedChanges}>{runPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run scenario'}</button>
-        {sessionHasUnsavedChanges ? <p role="status">Unsaved Test Session changes. Save before running.</p> : null}
+        {selectedSession ? <button type="button" onClick={save} disabled={writePending || Boolean(sessionConflict)}>{cs ? "Uložit Test Session" : "Save Test Session"}</button> : null}
+        <button type="submit" disabled={runPending || writePending || Boolean(sessionConflict) || sessionHasUnsavedChanges}>{runPending ? (cs ? 'Spouštím…' : 'Running…') : selectedSession ? (cs ? 'Spustit Test Session' : 'Run Test Session') : (cs ? 'Spustit scénář' : 'Run scenario')}</button>
+        {sessionHasUnsavedChanges ? <p role="status">{cs ? "Neuložené změny Test Session. Před spuštěním je ulož." : "Unsaved Test Session changes. Save before running."}</p> : null}
         {localError ? <p role="alert" className="error">{localError}</p> : null}
-        {saveMutation.isError ? <p className="error">Save failed for {saveMutation.variables?.session.display_name}: {String(saveMutation.error)}</p> : null}
-        {runMutation.isError ? <p className="error">Lab failed: {String(runMutation.error)}</p> : null}
-        <p className="status">Scenario: {parsedPreview?.scenario_id ?? 'invalid JSON'} · seed {parsedPreview?.seed ?? '—'}</p>
+        {saveMutation.isError ? <p role="alert" className="error">{cs ? "Uložení selhalo pro" : "Save failed for"} {saveMutation.variables?.session.display_name}: {String(saveMutation.error)}</p> : null}
+        {runMutation.isError ? <p role="alert" className="error">{cs ? "Výpočet selhal" : "Lab failed"}: {String(runMutation.error)}</p> : null}
+        <p className="status">{cs ? "Scénář" : "Scenario"}: {parsedPreview?.scenario_id ?? (cs ? "neplatný JSON" : "invalid JSON")} · seed {parsedPreview?.seed ?? "—"}</p>
       </SectionCard>
     </form>
 

@@ -199,46 +199,53 @@ function DetailRow({ label, value }: { label: string, value: ReactNode }): JSX.E
 
 
 function CloneResultCard({ result }: { result: WorldPackageCloneResponse }): JSX.Element {
+  const { language } = useLanguage()
+  const cs = language === 'cs'
   return (
-    <div className={result.ok && !result.dry_run ? 'status' : result.ok ? 'status' : 'error'} aria-label="Clone result">
-      {result.ok && result.dry_run && <p><strong>Preview only:</strong> no files were written.</p>}
-      {result.ok && !result.dry_run && <p><strong>Success:</strong> Custom World package created.</p>}
-      <DetailRow label="Target path" value={<code>{result.target_path}</code>} />
-      <DetailRow label="Source world ID" value={<code>{result.source_world_id}</code>} />
-      <DetailRow label="New world ID" value={<code>{result.new_world_id}</code>} />
-      <DetailRow label="Dry run" value={String(result.dry_run)} />
-      <p><strong>Created files:</strong></p>
-      <ul>
+    <div className={result.ok ? 'status' : 'error'} aria-label={cs ? 'Výsledek kopírování' : 'Clone result'}>
+      {result.ok && result.dry_run && <p><strong>{cs ? 'Pouze náhled:' : 'Preview only:'}</strong> {cs ? 'Žádné soubory nebyly zapsány.' : 'no files were written.'}</p>}
+      {result.ok && !result.dry_run && <p><strong>{cs ? 'Úspěch:' : 'Success:'}</strong> {cs ? 'Vlastní World Package byl vytvořen.' : 'Custom World package created.'}</p>}
+      {!result.ok && <p><strong>{cs
+        ? (result.dry_run ? 'Náhled se nezdařil:' : 'Kopírování se nezdařilo:')
+        : (result.dry_run ? 'Preview failed:' : 'Clone failed:')}</strong> {cs ? 'Vytvoření kopie nebylo potvrzeno.' : 'The clone was not confirmed as created.'}</p>}
+      <DetailRow label={cs ? 'Cílová cesta' : 'Target path'} value={<code>{result.target_path}</code>} />
+      <DetailRow label={cs ? 'ID zdrojového světa' : 'Source world ID'} value={<code>{result.source_world_id}</code>} />
+      <DetailRow label={cs ? 'Nové ID světa' : 'New world ID'} value={<code>{result.new_world_id}</code>} />
+      <DetailRow label={cs ? 'Pouze náhled' : 'Dry run'} value={result.dry_run ? (cs ? 'Ano' : 'Yes') : (cs ? 'Ne' : 'No')} />
+      <p><strong>{result.dry_run ? (cs ? 'Soubory uvedené v náhledu:' : 'Files listed in preview:') : (cs ? 'Vytvořené soubory:' : 'Created files:')}</strong></p>
+      {result.created_files.length > 0 ? <ul>
         {result.created_files.map((file) => <li key={file}><code>{file}</code></li>)}
-      </ul>
+      </ul> : <p>{cs ? 'Žádné soubory nejsou uvedeny.' : 'No files listed.'}</p>}
       {result.errors.length > 0 && (
         <>
-          <p><strong>Clone errors:</strong></p>
+          <p><strong>{cs ? 'Chyby kopírování:' : 'Clone errors:'}</strong></p>
           <ul>
-            {result.errors.map((error, index) => <li key={`${error.field ?? 'root'}-${index}`}>{error.field ? `${error.field}: ` : ''}{error.message}</li>)}
+            {result.errors.map((error, index) => <li key={(error.field ?? 'root') + '-' + index}>{error.field ? error.field + ': ' : ''}{error.message}</li>)}
           </ul>
         </>
       )}
       {result.package && (
-        <div aria-label="Created package summary">
-          <h4>Created package</h4>
+        <div aria-label={cs ? 'Souhrn balíčku po kopírování' : 'Clone package summary'}>
+          <h4>{result.dry_run ? (cs ? 'Náhled balíčku' : 'Package preview') : result.ok ? (cs ? 'Vytvořený balíček' : 'Created package') : (cs ? 'Údaje balíčku' : 'Package details')}</h4>
           <DetailRow label="World ID" value={<code>{result.package.world_id}</code>} />
-          <DetailRow label="Type" value={result.package.type} />
-          <DetailRow label="Source" value={result.package.source} />
-          <DetailRow label="Counts" value={`${result.package.country_count} countries, ${result.package.continent_count} continents, ${result.package.region_count} regions, ${result.package.travel_region_count} travel regions`} />
-          <DetailRow label="Fingerprint" value={<code title={result.package.fingerprint}>{shortFingerprint(result.package.fingerprint)}</code>} />
+          <DetailRow label={cs ? 'Typ' : 'Type'} value={result.package.type} />
+          <DetailRow label={cs ? 'Zdroj' : 'Source'} value={result.package.source} />
+          <DetailRow label={cs ? 'Počty' : 'Counts'} value={<>
+            {result.package.country_count} {cs ? 'zemí' : 'countries'}, {result.package.continent_count} {cs ? 'kontinentů' : 'continents'}, {result.package.region_count} {cs ? 'regionů' : 'regions'}, {result.package.travel_region_count} {cs ? 'cestovních regionů' : 'travel regions'}
+          </>} />
+          <DetailRow label={cs ? 'Otisk' : 'Fingerprint'} value={<code title={result.package.fingerprint}>{shortFingerprint(result.package.fingerprint)}</code>} />
         </div>
       )}
       {result.validation && (
-        <div aria-label="Clone validation summary">
-          <h4>Validation</h4>
-          <DetailRow label="Status" value={result.validation.status} />
-          <DetailRow label="Errors" value={result.validation.error_count} />
-          <DetailRow label="Warnings" value={result.validation.warning_count} />
-          <DetailRow label="Info" value={result.validation.info_count} />
+        <div aria-label={cs ? 'Souhrn validace kopie' : 'Clone validation summary'}>
+          <h4>{cs ? 'Validace' : 'Validation'}</h4>
+          <DetailRow label={cs ? 'Stav' : 'Status'} value={result.validation.status} />
+          <DetailRow label={cs ? 'Chyby' : 'Errors'} value={result.validation.error_count} />
+          <DetailRow label={cs ? 'Varování' : 'Warnings'} value={result.validation.warning_count} />
+          <DetailRow label={cs ? 'Informace' : 'Info'} value={result.validation.info_count} />
         </div>
       )}
-      {result.ok && !result.dry_run && <p><Link to={`/admin/world/library/${encodeURIComponent(result.new_world_id)}`}>Open new Custom World detail</Link></p>}
+      {result.ok && !result.dry_run && <p><Link to={'/admin/world/library/' + encodeURIComponent(result.new_world_id)}>{cs ? 'Otevřít detail nového vlastního World Package' : 'Open new Custom World detail'}</Link></p>}
     </div>
   )
 }
@@ -327,7 +334,7 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   return <SectionCard title={cs ? 'Vytvořit vlastní kopii World Package' : 'Clone Built-in World'}>
     <p>{cs ? 'Nezávislá vlastní kopie vestavěného zdroje' : 'Create an independent Custom World from'} <strong>{source.name}</strong>. {cs ? 'Originál ani existující Runy se nezmění.' : 'The original and existing Runs are never changed.'}</p>
     <p className="status">{cs ? 'Kopie zachová úplný obsah včetně historických zdrojových dat.' : 'The clone preserves the complete package tree, including historical evidence.'}</p>
-    {review ? <div aria-label="Review World Package clone">
+    {review ? <div aria-label={cs ? 'Kontrola vytvoření kopie World Package' : 'Review World Package clone'}>
       <p><strong>{cs ? 'Zdroj' : 'Source'}:</strong> <code>{review.sourceWorldId}</code> · <strong>{cs ? 'Fingerprint zdroje' : 'Source fingerprint'}:</strong> <code>{review.sourceFingerprint}</code> · <strong>{cs ? 'Nová kopie' : 'New copy'}:</strong> <code>{review.payload.new_world_id}</code></p>
       <p><strong>{cs ? 'Název' : 'Name'}:</strong> {review.payload.name}</p>
       <p><strong>{cs ? 'Popis' : 'Description'}:</strong> {review.payload.description ?? '—'}</p>

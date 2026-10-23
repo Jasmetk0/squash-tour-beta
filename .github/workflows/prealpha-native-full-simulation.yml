@@ -1,0 +1,116 @@
+name: Pre-alpha Native Full Simulation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - '.github/workflows/prealpha-native-full-simulation.yml'
+      - 'src/beta_engine/application/native_full_simulation*.py'
+      - 'src/beta_engine/application/full_simulation_tasks.py'
+      - 'src/beta_engine/application/full_simulation_summary.py'
+      - 'src/beta_engine/application/calendar_tour*.py'
+      - 'src/beta_engine/application/calendar_standalone_match_service.py'
+      - 'src/beta_engine/application/calendar_sporting_week_service.py'
+      - 'src/beta_engine/application/native_fork_runtime*.py'
+      - 'src/beta_engine/domain/rankings/calendar*.py'
+      - 'src/beta_engine/domain/tournaments/calendar_tour.py'
+      - 'src/beta_engine/domain/calendar/*.py'
+      - 'src/beta_engine/domain/native_fork_runtime.py'
+      - 'src/beta_engine/infrastructure/db/full_simulation*.py'
+      - 'src/beta_engine/infrastructure/db/calendar*.py'
+      - 'src/beta_engine/infrastructure/db/native_fork*.py'
+      - 'src/beta_engine/infrastructure/db/repositories.py'
+      - 'src/beta_engine/infrastructure/db/simulation_slot_state.py'
+      - 'src/beta_engine/infrastructure/db/saved_revision_restore_coverage.py'
+      - 'src/beta_engine/api/routers/admin_authoritative_simulation.py'
+      - 'src/beta_engine/api/routers/run_containers.py'
+      - 'tests/api/test_native_full_simulation_tasks.py'
+      - 'tests/application/test_native_full_simulation_contract.py'
+      - 'tests/domain/test_calendar_season_closing.py'
+      - 'scripts/native_full_simulation_browser.py'
+      - 'web/src/api/fullSimulationTasks*'
+      - 'web/src/components/FullSimulation*'
+      - 'web/src/pages/CalendarTourPanel*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-full-simulation-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  native-task-controls:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: Native task Save / final closure / recovery / real SQLite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install -e . pytest
+      - name: Execute actual production controls, closure and recovery
+        run: GITHUB_EVENT_NAME=native_full_simulation_acceptance python -m pytest tests/api/test_native_full_simulation_tasks.py -k 'not actual_match_points' --maxfail=1 --durations=10
+
+  native-calendar:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: Native worker ${{ matrix.calendar }} / match / points / real Season Transition
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        calendar: [short, w52, w61, w80]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install -e . pytest
+      - name: Real complete calendar-native sporting boundary
+        run: GITHUB_EVENT_NAME=native_full_simulation_acceptance python -m pytest tests/api/test_native_full_simulation_tasks.py -k '${{ matrix.calendar }}' -vv -s --maxfail=1 --durations=10
+
+  native-task-browser:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: Native Full Simulation / actual Admin Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: python -m pip install -e . pytest playwright
+      - run: npm --prefix web ci
+      - name: Prepare actual Chromium
+        run: |
+          if [ -x /usr/bin/google-chrome ]; then
+            echo "CHROME_BIN=/usr/bin/google-chrome" >> "$GITHUB_ENV"
+          else
+            python -m playwright install --with-deps chromium
+            echo "CHROME_BIN=$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')" >> "$GITHUB_ENV"
+          fi
+      - name: Genuine Admin worker, matches, manual approvals and final Save
+        run: python scripts/native_full_simulation_browser.py --root "$RUNNER_TEMP/native-full-simulation" --chromium "$CHROME_BIN"
+      - name: Preserve real browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-full-simulation-${{ github.run_id }}
+          path: ${{ runner.temp }}/native-full-simulation/
+          if-no-files-found: error
+          retention-days: 7

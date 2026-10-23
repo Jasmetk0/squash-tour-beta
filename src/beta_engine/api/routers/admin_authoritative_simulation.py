@@ -2549,6 +2549,85 @@ class FullSimulationTaskContinue(BaseModel):
         return value.strip()
 
 
+class NativeClosureAction(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    request_id: str = Field(min_length=1, max_length=128)
+    review_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    operator_label: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+    explicit_confirmation: Literal[True]
+
+    @field_validator("operator_label", "audit_reason", "request_id")
+    @classmethod
+    def nonempty(cls, value):
+        if not value.strip() or value != value.strip():
+            raise ValueError("Closure audit/identity must be nonempty and trimmed")
+        return value
+
+
+def _native_closure_service(runtime, run_id, branch_id, command_id):
+    from beta_engine.application.native_full_simulation_closure import NativeFullSimulationClosureService
+    from beta_engine.infrastructure.db.models import AuthoritativeSimulationCommandModel
+    with runtime.repository._session_factory() as session:
+        row = session.get(AuthoritativeSimulationCommandModel, (run_id, branch_id, command_id))
+        if row is None:
+            raise ValueError("Native task parent is unavailable in this exact scope")
+        command = NativeFullSimulationCommand.model_validate(json.loads(row.result_json)["resume_command"])
+        if (command.run_id, command.branch_id, command.command_id) != (run_id, branch_id, command_id):
+            raise ValueError("Native task parent scope is corrupt")
+    return NativeFullSimulationClosureService(runtime.repository), command
+
+
+@router.get("/full-simulation/native/{command_id}/closure")
+def review_native_final_closure(run_id: str, branch_id: str, command_id: str,
+        runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        service, command = _native_closure_service(runtime, run_id, branch_id, command_id)
+        return service.review(command)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(409, detail=str(exc)) from exc
+
+
+@router.get("/full-simulation/native/{command_id}/season-transition")
+def review_native_task_season_transition(run_id: str, branch_id: str, command_id: str,
+        runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        service, command = _native_closure_service(runtime, run_id, branch_id, command_id)
+        return service.driver.review_season_transition(command)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(409, detail=str(exc)) from exc
+
+
+@router.post("/full-simulation/native/{command_id}/season-transition/approve")
+def approve_native_task_season_transition(run_id: str, branch_id: str, command_id: str, payload: NativeClosureAction,
+        runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        service, command = _native_closure_service(runtime, run_id, branch_id, command_id)
+        return service.driver.approve_season_transition(command, payload.model_dump(mode="json"))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(409, detail=str(exc)) from exc
+
+
+@router.post("/full-simulation/native/{command_id}/closure/approve")
+def approve_native_final_closure(run_id: str, branch_id: str, command_id: str, payload: NativeClosureAction,
+        runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        service, command = _native_closure_service(runtime, run_id, branch_id, command_id)
+        return service.approve(command, payload.model_dump(mode="json"))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(409, detail=str(exc)) from exc
+
+
+@router.post("/full-simulation/native/{command_id}/closure/save", status_code=201)
+def save_native_final_closure(run_id: str, branch_id: str, command_id: str, payload: NativeClosureAction,
+        runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        service, command = _native_closure_service(runtime, run_id, branch_id, command_id)
+        return service.save(command, payload.model_dump(mode="json"))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(409, detail=str(exc)) from exc
+
+
 @router.post("/full-simulation/tasks", status_code=202)
 def start_full_simulation_task(run_id: str, branch_id: str, payload: FullSimulationTaskStart,
         request: Request, runtime: Annotated[ApiRuntime, Depends(get_runtime)],

@@ -7,6 +7,7 @@ import {newCommandId} from '../admin/branchSimulation'
 import {tourWeekOffset,scheduleTourEdition} from '../api/nativeTourCalendar'
 import {useLanguage} from '../i18n/LanguageContext'
 import {NativeTransitionReadinessPanel} from './NativeTransitionReadinessPanel'
+import {NativeFullSimulationPanel} from '../components/FullSimulationTasksNative'
 import {formatApiError} from '../utils/apiErrors'
 import type {RunBranchListResponse} from '../api/types'
 
@@ -282,6 +283,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         })}
         <h3>{cs?'Připravenost týdne':'Week readiness'}</h3>
         <NativeTransitionReadinessPanel view={view} disabled={busy}/>
+        <NativeFullSimulationPanel key={`${runId}|${branchId}|${head}`} runId={runId} branchId={branchId} head={head} saved={view.saved}/>
         {view.transition_blockers.length?<ul>{view.transition_blockers.map(b=><li key={b}>{b.startsWith('edition_not_terminal:')?`${cs?'Edition není dokončena':'Edition is not complete'}: ${b.slice(21)}`:blockerLabels[b]?.[cs?0:1]??b}</li>)}</ul>:<p>{cs?'Povinné Edition dokončeny.':'Mandatory Editions completed.'}</p>}
         <button disabled={!ready||!view.saved||view.transition_blockers.length>0} onClick={()=>void perform('transition')}>{cs?'Zkontrolovat Week Transition':'Review Week Transition'}</button>
         {view.state.week.week===view.state.week.calendar.weeks_per_year&&<section aria-label="Native Season Transition readiness">

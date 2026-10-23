@@ -1,3 +1,35 @@
+# Native Full Simulation integration candidate — 23 October 2026
+
+Base `buuk` `79affb0e5e8b76d58535d01d50acd5a8ec7577fa` includes owner-merged
+#1635. Implementation continues in the single PR #1637 on
+`feat/native-full-simulation-20261023`; only the owner merges.
+
+Native v2 commands use the existing server task worker, singleton lease and stale
+writer fences, with the original hash-bound Saved calendar, seed and frozen target.
+Actual Tour matches/awards and Week/Season services own sporting changes. Entry,
+results, separate Season Transition review/approval and manual Save remain explicit.
+Native final closure has its own review, approval and manual immutable Save, with
+an outgoing Closing Ranking and summary; it opens no extra week. A native Branch
+aggregate cannot be consumed by the legacy FAX driver, even on reference numbers.
+
+The Admin exposes native review/start, same-task continuation, safe pause/stop,
+season approval and final Save. Polling checks actual stored receipt identities
+and hashes without running MatchEngine; the writers still authenticate/replay
+complete production sources. See docs/NATIVE_FULL_SIMULATION_TASKS.md for the
+precise supported boundary and verification ledger.
+
+**WAIT:** implementation acceptance is still running. The actual short sporting
+season, native Save/target/restart, final closure/rollback, explicit seasonal
+approval/restart and recovery/stale/concurrent cases have executed locally, along
+with legacy task regressions and frontend contracts/build. The W52/W61/W80 full
+production matrix, genuine Chromium and all relevant checks on the eventual
+final SHA must actually pass. Draft skips are not evidence. No merge readiness
+is claimed. Final-week native Editions requiring a closing-only result adapter,
+unsupported Health/calibration and other existing native Tour formats remain
+explicitly blocked; no result or prerequisite is invented.
+
+---
+
 # Original-calendar task evidence — 22 October 2026 candidate
 
 Verified base `buuk` `26e67903` contains owner-merged #1632–1634. Server task

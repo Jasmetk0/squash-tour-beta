@@ -140,6 +140,7 @@ def _load_runtime_root(revision):
             )
     elif revision.kind not in {
         "native_fork_save",
+        "native_final_run_closure",
         "branch_restore",
         "run_calendar_horizon_extension",
     }:

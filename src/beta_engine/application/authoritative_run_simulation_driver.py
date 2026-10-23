@@ -10930,6 +10930,10 @@ class AuthoritativeRunSimulationDriver:
             session, run_id=request.run_id, branch_id=request.branch_id,
         )
         require_supported_full_simulation_calendar(run_calendar)
+        require_supported_legacy_sporting_calendar(
+            session, run_id=request.run_id, branch_id=request.branch_id,
+            operation="Legacy Full Simulation",
+        )
         run_final_week = RankingWeek(
             season_index=run_calendar.season_count - 1,
             week=run_calendar.weeks_per_year,

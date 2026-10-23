@@ -2555,6 +2555,8 @@ class SimulationPersistenceRepository:
                     # topology and source reachability, not just this row's hash.
                     # Reparse JSON for isolation; never share mutable payloads.
                     revision = self._to_branch_saved_revision(model, validate_components=False, validate_native_root=False)
+                    from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
+                    verify_saved_native_closure(self, session, revision)
                     if not materialize_payload:
                         revision = replace(revision, payload={}, change_summary={})
                     memo[proof_key] = revision
@@ -2572,6 +2574,9 @@ class SimulationPersistenceRepository:
                 verify_native_fork_saved_root(
                     self, session, revision=revision, baseline=baseline
                 )
+            from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
+            verify_saved_native_closure(self, session, revision)
+            if baseline is not None:
                 memo[(id(session), signature, True)] = revision
                 if not materialize_payload:
                     revision = replace(revision, payload={}, change_summary={})

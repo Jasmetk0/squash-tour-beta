@@ -23,7 +23,6 @@ from beta_engine.application.authoritative_run_simulation_driver import (
 from beta_engine.application.native_full_simulation import (
     OPERATION_SCHEMA,
     NativeFullSimulationCommand,
-    native_context,
     parse_full_simulation_command,
     validate_native_parent,
 )
@@ -63,7 +62,7 @@ STATES = {
 }
 TERMINAL = {"stopped", "target_reached", "complete"}
 EDGES = {
-    "queued": {"queued", "active", "failed"},
+    "queued": {"queued", "active", "failed", "stopped"},
     "active": {
         "queued",
         "paused",
@@ -73,9 +72,9 @@ EDGES = {
         "complete",
         "failed",
     },
-    "paused": {"queued"},
-    "awaiting_operator": {"queued", "paused", "awaiting_operator"},
-    "failed": {"queued"},
+    "paused": {"queued", "stopped"},
+    "awaiting_operator": {"queued", "paused", "awaiting_operator", "stopped"},
+    "failed": {"queued", "stopped"},
     "stopped": set(),
     "target_reached": set(),
     "complete": set(),
@@ -226,6 +225,8 @@ def _parent(session, row, data):
     ):
         raise ValueError("Task parent identity/fingerprint mismatch")
     payload = json.loads(parent.result_json)
+    if data.get("state") in TERMINAL and parent.status != data["state"]:
+        raise ValueError("Task terminal state differs from its authoritative parent")
     if isinstance(parse_full_simulation_command(data["command"]), NativeFullSimulationCommand):
         validate_native_parent(session, parent, payload)
         if payload["resume_command"] != data["command"]:
@@ -391,8 +392,10 @@ def _project(session, row, observer_instance=None, calendar_cache=None):
         )
     command = parse_full_simulation_command(data["command"])
     if isinstance(command, NativeFullSimulationCommand) and parent.status not in TERMINAL:
-        ctx = native_context(_task_repository(session), session, row.run_id, row.branch_id)
-        ordinal = ctx["calendar"].ordinal(ctx["week"]["season_index"], ctx["week"]["week"])
+        from beta_engine.application.native_full_simulation import (
+            read_native_task_progress,
+        )
+        ordinal, native_count, native_source = read_native_task_progress(session, run_id=row.run_id, branch_id=row.branch_id, parent=frozen)
     # The immutable command selects its original Saved clock. Today's Run/head
     # may have been extended/restored; never use it to reinterpret this task.
     calendar_key = (row.run_id, command.expected_revision_id)
@@ -404,6 +407,9 @@ def _project(session, row, observer_instance=None, calendar_cache=None):
         )
     calendar = calendar_cache[calendar_key]
     evidence = _progress_evidence(session, row, parent, frozen, command, ordinal, calendar)
+    if isinstance(command, NativeFullSimulationCommand) and evidence["kind"] == "live_branch":
+        evidence["native_match_receipts_this_week"] = native_count
+        evidence["native_progress_source_fingerprint"] = native_source
     current_week = evidence["week"]
     return {
         "schema_version": "full_simulation_task_view.v2",
@@ -438,20 +444,6 @@ def _project(session, row, observer_instance=None, calendar_cache=None):
         "events": data["events"],
         "original_command": data["command"],
     }
-
-
-def _task_repository(session):
-    from sqlalchemy.orm import sessionmaker
-
-    from beta_engine.infrastructure.db.repositories import (
-        SimulationPersistenceRepository,
-    )
-    if "native_task_read_repository" not in session.info:
-        engine = session.get_bind()
-        session.info["native_task_read_repository"] = SimulationPersistenceRepository(
-            engine=engine, session_factory=sessionmaker(bind=engine, expire_on_commit=False)
-        )
-    return session.info["native_task_read_repository"]
 
 
 def inspect_tasks(
@@ -686,7 +678,7 @@ class FullSimulationTaskWorker:
         return ack
 
     def acknowledge_idle_pause(self, driver, command):
-        if command.action != "pause":
+        if command.action not in {"pause", "stop"}:
             return
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
@@ -703,6 +695,12 @@ class FullSimulationTaskWorker:
             data = _read(row)
             parent, frozen = _parent(session, row, data)
             lease = session.get(FullSimulationExecutionLeaseModel, LEASE_SCOPE)
+            if command.action == "stop":
+                if parent.status == "stopped" and data["state"] not in TERMINAL and not _owned(lease, row, data, int(time.time())):
+                    data["checkpoint"], data["error"] = "operator_stopped", None
+                    _event(data, "stopped", "idle_safe_stop_acknowledged")
+                    _write(row, data)
+                return
             if data["state"] != "awaiting_operator" or _owned(
                 lease, row, data, int(time.time())
             ):

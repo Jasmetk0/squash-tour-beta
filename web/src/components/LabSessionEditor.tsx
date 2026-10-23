@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
 
 type Session = { session_id: string; display_name: string; version: number; session_fingerprint: string; scenario: unknown }
 export type LabEditorTicket = { selection: number; edit: number }
@@ -70,18 +71,19 @@ export function LabSessionConflict({ conflict, dirty, canReload, onReload }: {
   conflict: string | null; dirty: boolean; canReload: boolean; onReload: () => void
 }): JSX.Element | null {
   const [discardApproved, setDiscardApproved] = useState(false)
+  const {language} = useLanguage(), cs = language === 'cs'
   if (!conflict) return null
   return <div>
     <p role="alert" className="error">{conflict === 'changed'
-      ? 'The saved Test Session changed. Local editor contents were preserved.'
-      : conflict === 'missing' ? 'The selected Test Session is no longer in the inventory. Local editor contents were preserved.'
-        : 'The saved Test Session could not be verified. Local editor contents were preserved.'}
-      {' '}Refresh the inventory and explicitly reload the saved version before running or saving.</p>
+      ? (cs ? 'Uložená Test Session se změnila. Místní obsah editoru zůstal zachován.' : 'The saved Test Session changed. Local editor contents were preserved.')
+      : conflict === 'missing' ? (cs ? 'Vybraná Test Session už není v seznamu. Místní obsah editoru zůstal zachován.' : 'The selected Test Session is no longer in the inventory. Local editor contents were preserved.')
+        : (cs ? 'Uloženou Test Session nelze ověřit. Místní obsah editoru zůstal zachován.' : 'The saved Test Session could not be verified. Local editor contents were preserved.')}
+      {' '}{cs ? 'Před spuštěním nebo uložením obnovte seznam a výslovně načtěte uloženou verzi.' : 'Refresh the inventory and explicitly reload the saved version before running or saving.'}</p>
     {canReload && <>
       {dirty && <label><input type="checkbox" checked={discardApproved}
-        onChange={event => setDiscardApproved(event.target.checked)} /> Discard local edits when reloading</label>}
+        onChange={event => setDiscardApproved(event.target.checked)} /> {cs ? 'Při obnovení zahodit místní úpravy' : 'Discard local edits when reloading'}</label>}
       <button type="button" disabled={dirty && !discardApproved} onClick={() => { setDiscardApproved(false); onReload() }}>
-        Reload saved Test Session
+        {cs ? 'Znovu načíst uloženou Test Session' : 'Reload saved Test Session'}
       </button>
     </>}
   </div>

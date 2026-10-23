@@ -132,6 +132,10 @@ results already executed (earlier source-tree states; not final-head claims):
 | Captured actual W80 source at the failed boundary | cold full native context 76.64 → 19.72 s; warm 3.72 s; profiling with all source/replay checks retained |
 | Native HTTP/SQLite core after transaction-scoped read reuse and head-proof retention | 5 passed, 353.00 s; compact historical proof retention verified separately afterward |
 | Preserved legacy task/lease/summary after dependency read correction | 14 passed, 78.20 s |
+| Actual native controls plus physical snapshot contracts on `30c497a99` | 10 passed, 330.85 s in hosted CI |
+| Complete fresh W52 / W61 worker sporting and seasonal scenarios on `30c497a99` | 1 passed each, 1255.49 / 1617.27 s; all weeks, actual matches/points, separate approvals/Saves, source immutability and SQLite reopen |
+| Captured genuine W80 task continued from its idle W62 checkpoint | passed, 2228.69 s; actual cup/points, 79 total transitions, original next-season target, unchanged source/seed and physical SQLite reopen; distinct from fresh full-calendar acceptance |
+| Legacy SIGKILL recovery browser after matching polling to practical UI cadence | passed locally, 445.96 s Chromium trace; exact uninterrupted equivalence, real manual checkpoint, terminal Stop/summary and preserved actual SQLite |
 | Closing Ranking unit contracts plus original task-calendar regressions | 18 passed, 2.33 s |
 | Focused existing/new frontend contracts | 121 passed, 7.81 s (five files; API mocks/component contracts, not sporting integration) |
 | Native seed/action/audit integrity, Closing Ranking and original calendar contracts | 35 passed, 7.23 s |
@@ -182,3 +186,12 @@ The integration wait still has its original 90-second deadline and now polls onc
 per second (the actual Admin polls every two seconds), avoiding artificial reader
 CPU saturation while the worker runs. Actual full-calendar latest-head acceptance
 remains required; profiling or partial recovered continuation is not a matrix pass.
+
+The legacy server-task browser also retains its original 240-second checkpoint
+deadline while polling once per second instead of every 0.1 seconds. A failed
+hosted attempt on `30c497a99` showed the genuinely recovered worker still advancing
+at W50 with a valid heartbeat, without a sporting/lease error. That failed attempt
+remains recorded; the corrected full local scenario passed through the real W61
+manual checkpoint and exact uninterrupted comparison. All HTTP status, sporting,
+Saved, recovery and summary assertions remain. After every writer stops, including
+on failure, the browser preserves a real SQLite backup alongside its trace.

@@ -295,7 +295,8 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
     onSuccess: (response, command) => {
       const responseMatchesRequest = response.source_world_id === command.sourceWorldId &&
         response.new_world_id === command.payload.new_world_id &&
-        response.dry_run === command.payload.dry_run
+        response.dry_run === command.payload.dry_run &&
+        (!response.package || response.package.world_id === command.payload.new_world_id)
       // A late, genuine successful write must still refresh the cache after navigation.
       // A mismatched response must never invalidate data for an unrelated World Package.
       if (responseMatchesRequest && response.ok && !response.dry_run) {

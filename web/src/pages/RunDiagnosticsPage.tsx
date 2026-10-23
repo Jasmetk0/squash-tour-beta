@@ -301,11 +301,11 @@ export function RunDiagnosticsPage(): JSX.Element {
         />
         <PreviewListCard
           title="Recent events"
-          subtitle="Shows latest events in API order."
+          subtitle="Shows the three newest persisted events by sequence."
           isLoading={eventsQuery.isLoading}
           loadingText="Loading recent events..."
           errorText={eventsQuery.error ? `Failed to load events: ${formatApiError(eventsQuery.error)}` : undefined}
-          items={(eventsQuery.data?.events ?? []).slice(0, 3)}
+          items={(eventsQuery.data?.events ?? []).slice().sort((a, b) => b.event_sequence - a.event_sequence).slice(0, 3)}
           emptyText="No events are available yet."
           listAriaLabel="Diagnostics recent events"
           getKey={(event) => event.event_id}

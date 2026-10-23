@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RunDiagnosticsPage } from './RunDiagnosticsPage'
@@ -149,9 +149,11 @@ describe('RunDiagnosticsPage', () => {
     'uses the greatest persisted sequences for latest diagnostics when API lists are %s',
     async (order) => {
       const events = [
+        { event_sequence: 1, event_id: 'E1', season: 2028, week: 1, template_id: null, tournament_result: { done: true } },
         { event_sequence: 2, event_id: 'E2', season: 2028, week: 3, template_id: null, tournament_result: { done: true } },
         { event_sequence: 8, event_id: 'E8', season: 2028, week: 14, template_id: null, tournament_result: { done: true } },
         { event_sequence: 9, event_id: 'E9', season: 2028, week: 15, template_id: null, tournament_result: null },
+        { event_sequence: 10, event_id: 'E10', season: 2028, week: 16, template_id: null, tournament_result: null },
       ]
       const rankings = [
         { snapshot_sequence: 1, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} },
@@ -164,7 +166,7 @@ describe('RunDiagnosticsPage', () => {
         { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} },
       ]
       api.listEvents.mockResolvedValueOnce({ events: order === 'ascending'
-        ? events : [events[2], events[0], events[1]] })
+        ? events : [events[3], events[0], events[4], events[1], events[2]] })
       api.listRankingSnapshots.mockResolvedValueOnce({ snapshots: order === 'ascending'
         ? [rankings[0], rankings[2], rankings[1]] : rankings })
       api.listRaceSnapshots.mockResolvedValueOnce({ snapshots: order === 'ascending'
@@ -187,6 +189,18 @@ describe('RunDiagnosticsPage', () => {
         .not.toBeInTheDocument()
       expect(screen.queryByRole('link', { name: 'Inspect latest completed event (E2)' }))
         .not.toBeInTheDocument()
+      const recentEvents = within(screen.getByRole('list', { name: 'Diagnostics recent events' }))
+        .getAllByRole('link')
+      expect(recentEvents.map(link => link.textContent)).toEqual([
+        'E10 • Seq 10',
+        'E9 • Seq 9',
+        'E8 • Seq 8',
+      ])
+      expect(recentEvents.map(link => link.getAttribute('href'))).toEqual([
+        '/runs/run-a/events/E10',
+        '/runs/run-a/events/E9',
+        '/runs/run-a/events/E8',
+      ])
     },
   )
 

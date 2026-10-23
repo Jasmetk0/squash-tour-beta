@@ -392,6 +392,17 @@ describe('built-in World cloning', () => {
     expect(screen.getByRole('link', {name: 'Otevřít detail nového vlastního World Package'}))
       .toHaveAttribute('href', '/admin/world/library/local_world')
     expect(api.cloneWorldPackage).toHaveBeenCalledTimes(2)
+
+    // The next (invalid) attempt must not still present the last successful copy.
+    fireEvent.click(screen.getByRole('button', {name: 'Zkontrolovat vytvoření kopie'}))
+    expect(screen.getByRole('alert')).toHaveTextContent('ID musí začínat malým písmenem nebo číslicí')
+    expect(screen.queryByText('Úspěch:')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Výsledek kopírování')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Otevřít detail nového vlastního World Package'})).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(2)
+    switchLanguage('en')
+    expect(screen.getByRole('alert')).toHaveTextContent('World ID must start with a lowercase letter or digit')
+    expect(screen.queryByText('Success:')).not.toBeInTheDocument()
   })
 
   it('translates a failed clone preview without rewriting server diagnostics or offering a created package', async () => {

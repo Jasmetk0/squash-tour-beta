@@ -112,6 +112,28 @@ describe('source-backed Packages frontend',()=>{
     expect(api.getWorldPackage).not.toHaveBeenCalled()
     expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
   })
+  it('finds accented catalog names and clears empty-result filters without refetching',async()=>{
+    api.listWorldPackages.mockResolvedValue({packages:[
+      {...world,world_id:'czworld',name:'České země'},
+      empty
+    ]})
+    mount('/admin/packages/all')
+    expect(await screen.findByText('České země')).toBeInTheDocument()
+    const search=screen.getByRole('searchbox',{name:'Hledání'})
+    await userEvent.type(search,' CESKE ')
+    expect(screen.getByText('České země')).toBeInTheDocument()
+    expect(screen.queryByText('Empty World')).not.toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package origin'}),'custom')
+    expect(screen.getByText(/Žádný evidovaný balíček neodpovídá filtru/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Vymazat filtry'}))
+    expect(search).toHaveValue('')
+    expect(screen.getByRole('combobox',{name:'Package origin'})).toHaveValue('any')
+    expect(screen.getByRole('combobox',{name:'Package status'})).toHaveValue('any')
+    expect(screen.getByText('České země')).toBeInTheDocument()
+    expect(screen.getByText('Empty World')).toBeInTheDocument()
+    expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
+  })
+
   it('distinguishes a filtered-out inventory from a truly empty category',async()=>{
     mount('/admin/packages/all')
     expect(await screen.findByText('Demo World')).toBeInTheDocument()

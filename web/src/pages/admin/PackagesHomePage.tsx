@@ -115,9 +115,10 @@ export function PackagesListPage():JSX.Element {
   if(!cat) return <section className="panel"><h2>{cs?'Neznámá kategorie':'Unknown category'}</h2><Link to="/admin/packages">{cs ? "Balíčky" : "Packages"}</Link></section>
   const registrySupported = cat === 'all' || cat === 'world' || cat === 'countries'
   const members=inCategory(items,cat)
+  const searchTerm=normalizeCatalogSearch(search)
   const shown=members.filter(item=>(origin==='any'||(origin==='custom'?item.editable:!item.editable))
     &&(status==='any'||item.status===status)
-    &&[item.key,item.name,item.description].some(s=>s.toLowerCase().includes(search.toLowerCase().trim())))
+    &&[item.key,item.name,item.description].some(s=>normalizeCatalogSearch(s).includes(searchTerm)))
   return <section className="panel package-index">
     <p><Link to="/admin/packages">← {cs?'Kategorie':'Categories'}</Link></p>
     <div className="page-intro"><h2>{cat==='all'?(cs?'Všechny balíčky':'All packages'):categories[cat][language]}</h2>
@@ -131,7 +132,9 @@ export function PackagesListPage():JSX.Element {
     {query.isError && <><p role="alert" className="error">{cs ? 'Registr balíčků se nepodařilo načíst: ' : 'Package registry failed to load: '}{formatApiError(query.error)}</p><RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} /></>}
     {query.isSuccess && <><p className="status">{registrySupported?shown.length+' / '+members.length:(cs?'Samostatný registr této kategorie zatím není dostupný.':'No independent registry for this category yet.')}</p>
       {registrySupported && shown.length ? <ul className="package-index-list">{shown.map(item=><PackageRow key={item.key} item={item}/>)}</ul>
-      : <p>{registrySupported ? (members.length === 0 ? (cs ? 'Registr nevrátil žádný balíček v této kategorii.' : 'The registry returned no packages in this category.') : (cs?'Žádný evidovaný balíček neodpovídá filtru.':'No indexed packages match this filter.')) : (cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.')}</p>}</>}
+      : <p>{registrySupported ? (members.length === 0 ? (cs ? 'Registr nevrátil žádný balíček v této kategorii.' : 'The registry returned no packages in this category.') : (cs?'Žádný evidovaný balíček neodpovídá filtru.':'No indexed packages match this filter.')) : (cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.')}</p>}
+      {registrySupported && members.length>0 && shown.length===0 && (searchTerm || origin!=='any' || status!=='any')
+        ? <button type="button" onClick={()=>{setSearch('');setOrigin('any');setStatus('any')}}>{cs?'Vymazat filtry':'Clear filters'}</button> : null}</>}
     {cat!=='all' && <SourceNote category={cat} />}
   </section>
 }

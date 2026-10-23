@@ -185,6 +185,7 @@ export function PackageWorldDetailPage():JSX.Element {
               <p>{check.message}</p><small className="status">{check.path}{check.field&&' · '+check.field}</small>
               {country&&<p><Link to={source+'/countries/'+encodeURIComponent(country)}>{cs?'Otevřít dotčenou zemi':'Open affected country'}: {country} →</Link></p>}</li>
           })}</ul>
+          {validation.checks.length === 0 && <p role="status">{cs ? "Kontrola nevrátila žádné jednotlivé záznamy." : "Validation returned no individual checks."}</p>}
           {countriesQuery.isError&&<p className="status">{cs?'Odkazy na jednotlivé země nejsou dostupné.':'Country links cannot be verified.'}</p>}
         </>}
       </article>}

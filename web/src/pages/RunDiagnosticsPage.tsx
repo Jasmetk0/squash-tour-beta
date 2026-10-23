@@ -138,7 +138,15 @@ export function RunDiagnosticsPage(): JSX.Element {
   ))
   const candidateNextEvent = safeRun?.season_state.ordered_events[safeRun.season_state.next_event_index] ?? null
   const nextEventSeasonMismatch = Boolean(candidateNextEvent && candidateNextEvent.season !== safeRun?.run.season)
-  const nextPlannedEvent = seasonStateMismatch || nextEventSeasonMismatch ? null : candidateNextEvent
+  // Different read times can leave the detail and status-summary endpoints at
+  // different seasons or progress cursors, even though their Run IDs match.
+  const runStatusProgressMismatch = Boolean(safeRun && safeStatus && (
+    safeRun.run.season !== safeStatus.season ||
+    safeRun.run.next_event_index !== safeStatus.progress.next_event_index ||
+    safeRun.run.total_events !== safeStatus.progress.total_events
+  ))
+  const nextPlannedEvent = seasonStateMismatch || nextEventSeasonMismatch || runStatusProgressMismatch
+    ? null : candidateNextEvent
   const nextPlannedWeek = nextPlannedEvent?.week ?? null
   const hasLineageChildren = (safeLineage?.lineage.children.length ?? 0) > 0
   const finalsInspectionRoute = getFinalsInspectionRoute({
@@ -181,6 +189,9 @@ export function RunDiagnosticsPage(): JSX.Element {
         {runMismatch && <p role="alert" className="error">Run details belong to another Run. Its progress and planned week are hidden.</p>}
         {(seasonStateMismatch || nextEventSeasonMismatch) && (
           <p role="alert" className="error">Run calendar and progress disagree. Current-week links are hidden.</p>
+        )}
+        {runStatusProgressMismatch && (
+          <p role="alert" className="error">Run detail and status summary disagree on season or progress. Current-week links are hidden.</p>
         )}
         {statusSummaryQuery.error && (
           <p className="error">Failed to load status summary: {formatApiError(statusSummaryQuery.error)}</p>

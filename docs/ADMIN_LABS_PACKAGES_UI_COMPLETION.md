@@ -9,7 +9,7 @@ Updated: 23 October 2026. Scope: frontend presentation only; base `buuk` `e39d96
 - **Player Lab (17–20):** existing configurable parameters and constraints kept; localized built-ins, session availability and safety descriptions; comparison metrics, variant filter and displayed saved-snapshot limits (all / 10 / 25); raw variant identifiers and state fingerprints intact.
 - **Shared (1, 2, 21, 23, 24):** localized current-page Lab navigation and landing cards; conflict alert, explicit discard consent and reload label; historical Run/Branch/Saved Revision picker now separately reports loading, failures and genuinely empty inventories, using existing query responses. Native controls and stable technical ARIA selectors are retained.
 - **Packages (25–27):** category labels and availability boundary: only World Packages currently have a portable registry. Source and status presentation on list/detail; separate loading/error/unavailable-category/zero-members/filter-empty states; localized World detail counts, tabs, geography and validation summary. Raw validation messages, unknown status codes, source metadata, IDs, versions and fingerprints remain unchanged.
-- **Language safety (28):** all added language branches affect text only, without touching query keys, mutation handlers, values, forms or API payload shapes. Regression tests cover CS/EN navigation, a Match scratch scenario + batch seeds across a language re-render and a Packages filter preserved across a genuine LanguageProvider switch.
+- **Language safety (28):** all added language branches affect text only, without touching query keys, mutation handlers, values, forms or API payload shapes. Regression tests cover CS/EN navigation, Match and Tournament scratch scenarios/batch seeds, a selected Player Session, and a Packages filter across language changes (real LanguageProvider used for navigation, Packages and historical inventory tests).
 
 ## Verified already present / deliberately left intact
 
@@ -24,7 +24,7 @@ Updated: 23 October 2026. Scope: frontend presentation only; base `buuk` `e39d96
 
 - Raw backend and validation diagnostics may be in English; they are intentionally preserved verbatim. Some old local parsing errors and status enum values also remain English technical strings.
 - System-origin built-in scenario names and descriptions are data and are displayed unchanged rather than rewritten to a chosen language.
-- The existing technical `aria-label` strings (including selector names for automation) remain stable while visible labels are localized; changing these requires coordinated browser selector review.
+- Technical field/table `aria-label` strings (including source-picker and existing automation selectors) remain stable. **LabNavigation's landmark `aria-label` now becomes `Navigace Test Labů` in CS**, and visible navigation link texts change in CS; repository code search found the previous landmark string only in this component and its focused test (updated). External browser scripts selecting those names need review.
 - Native-v2 tournament compatibility is determined by existing backend inspection only; Lab success does not certify a valid Run tournament.
 - Wider Run, server-side registry, simulator, API and complex session-concurrency issues are outside this PR.
 - Full real-browser verification and production build are required before owner merge; **Draft skips are not test passes**.
@@ -33,6 +33,7 @@ Updated: 23 October 2026. Scope: frontend presentation only; base `buuk` `e39d96
 
 Affected focused tests:
 `web/src/components/LabNavigation.test.tsx`,
+`web/src/components/HistoricalLabSourcePicker.test.tsx`,
 `web/src/pages/MatchTestLabPage.test.tsx`,
 `web/src/pages/TournamentTestLabPage.test.tsx`,
 `web/src/pages/PlayerTestLabPage.test.tsx`,
@@ -43,8 +44,8 @@ Affected focused tests:
 Suggested local commands from `web/`:
 
 ```sh
-npm test -- --run src/components/LabNavigation.test.tsx src/pages/MatchTestLabPage.test.tsx src/pages/TournamentTestLabPage.test.tsx src/pages/PlayerTestLabPage.test.tsx src/pages/LabSessionConcurrency.test.tsx src/pages/admin/PackagesHomePage.test.tsx src/components/labAuthoring/LabScenarioAuthoring.test.tsx
+npm test -- src/components/HistoricalLabSourcePicker.test.tsx src/components/LabNavigation.test.tsx src/pages/MatchTestLabPage.test.tsx src/pages/TournamentTestLabPage.test.tsx src/pages/PlayerTestLabPage.test.tsx src/pages/LabSessionConcurrency.test.tsx src/pages/admin/PackagesHomePage.test.tsx src/components/labAuthoring/LabScenarioAuthoring.test.tsx
 npm run build
 ```
 
-**Verification record:** connector-only edits cannot execute npm locally in this environment. Do not claim the commands above have run; check actual head CI and have Work run the scoped suite/build before Ready.
+**Verification record:** npm cannot execute locally in this connector-only environment. GitHub Fast CI on prior head `1c5705f` passed 200 critical baseline tests, 50 changed/colocated tests and the production TS/Vite build. A later head adding two language-switch tests exposed one asynchronous assertion timing failure; its test assertion was corrected. **Reverify the exact final head**; earlier-head passes are not final acceptance. Draft browser/real HTTP gates remain skipped until Ready/manual dispatch.

@@ -109,7 +109,7 @@ export function RunDiagnosticsPage(): JSX.Element {
   ))
   const rolloverMismatch = Boolean(latestRolloverQuery.data && latestRolloverQuery.data.rollover.run_id !== runId)
   const lineageMismatch = Boolean(lineageQuery.data && lineageQuery.data.lineage.run_id !== runId)
-  const safeFinals = finalsSummaryQuery.data?.run_id === runId ? finalsSummaryQuery.data : null
+  const safeFinals = !finalsMismatch && finalsSummaryQuery.data?.run_id === runId ? finalsSummaryQuery.data : null
   const safeRollover = latestRolloverQuery.data?.rollover.run_id === runId ? latestRolloverQuery.data : null
   const safeLineage = lineageQuery.data?.lineage.run_id === runId ? lineageQuery.data : null
 

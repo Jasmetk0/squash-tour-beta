@@ -259,7 +259,7 @@ export function RunDiagnosticsPage(): JSX.Element {
                   'No parent run'
                 )
               },
-              { label: 'Child run count', value: safeLineage?.lineage.children.length ?? 0 }
+              { label: 'Child run count', value: safeLineage?.lineage.children.length ?? '—' }
             ]}
           />
         )}
@@ -365,7 +365,7 @@ export function RunDiagnosticsPage(): JSX.Element {
               value: finalsSummaryQuery.isLoading
                 ? 'Loading...'
                 : finalsSummaryQuery.error || finalsMismatch
-                  ? isApiNotFound(finalsSummaryQuery.error)
+                  ? finalsMismatch ? 'Error' : isApiNotFound(finalsSummaryQuery.error)
                     ? 'Missing'
                     : 'Error'
                   : safeFinals?.qualification
@@ -377,7 +377,7 @@ export function RunDiagnosticsPage(): JSX.Element {
               value: finalsSummaryQuery.isLoading
                 ? 'Loading...'
                 : finalsSummaryQuery.error || finalsMismatch
-                  ? isApiNotFound(finalsSummaryQuery.error)
+                  ? finalsMismatch ? 'Error' : isApiNotFound(finalsSummaryQuery.error)
                     ? 'Missing'
                     : 'Error'
                   : safeFinals?.result
@@ -389,7 +389,7 @@ export function RunDiagnosticsPage(): JSX.Element {
               value: latestRolloverQuery.isLoading
                 ? 'Loading...'
                 : latestRolloverQuery.error || rolloverMismatch
-                  ? isApiNotFound(latestRolloverQuery.error)
+                  ? rolloverMismatch ? 'Error' : isApiNotFound(latestRolloverQuery.error)
                     ? 'Missing'
                     : 'Error'
                   : safeRollover?.rollover
@@ -397,7 +397,7 @@ export function RunDiagnosticsPage(): JSX.Element {
                     : 'None yet'
             },
             { label: 'Source metadata', value: artifactAvailability({ isLoading: sourceQuery.isLoading, error: sourceQuery.error, availableLabel: sourceQuery.data ? 'Available' : '', noneLabel: 'None yet' }) },
-            { label: 'Lineage metadata', value: artifactAvailability({ isLoading: lineageQuery.isLoading, error: lineageQuery.error, availableLabel: safeLineage ? 'Available' : '', noneLabel: 'None yet' }) },
+            { label: 'Lineage metadata', value: artifactAvailability({ isLoading: lineageQuery.isLoading, error: lineageMismatch ? new Error('Run mismatch') : lineageQuery.error, availableLabel: safeLineage ? 'Available' : '', noneLabel: 'None yet' }) },
             {
               label: 'Events',
               value: eventsQuery.isLoading

@@ -217,7 +217,7 @@ export function RunDiagnosticsPage(): JSX.Element {
         {finalsSummaryQuery.error && !isApiNotFound(finalsSummaryQuery.error) && (
           <p className="error">Failed to load Finals summary: {formatApiError(finalsSummaryQuery.error)}</p>
         )}
-        {finalsMismatch && <p role="alert" className="error">Finals summary belongs to another Run. Its status and inspection links are hidden.</p>}
+        {finalsMismatch && <p role="alert" className="error">Finals summary contains mismatched Run or season data. Its status and inspection links are hidden.</p>}
         {rolloverMismatch && <p role="alert" className="error">Rollover summary belongs to another Run. Its result and inspection link are hidden.</p>}
         {safeFinals && (
           <MetadataList

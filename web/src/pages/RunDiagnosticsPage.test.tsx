@@ -612,7 +612,7 @@ describe('RunDiagnosticsPage', () => {
     })
     api.getRunStatusSummary.mockResolvedValueOnce({
       run_id: 'run-a', season: 2028, seed: 11,
-      progress: { next_event_index: ${runIndex}, total_events: 24, completed_event_count: 5 },
+      progress: { next_event_index: runIndex, total_events: 24, completed_event_count: 5 },
       finals: { qualification_available: false, result_available: false },
       rollover: null, source: { source_type: 'new_run', parent_run_id: null },
       lineage: { child_run_count: 1 },
@@ -628,7 +628,7 @@ describe('RunDiagnosticsPage', () => {
     expect(screen.queryByRole('link', {name: /Inspect current week detail/})).not.toBeInTheDocument()
     expect(screen.queryByRole('link', {name: 'Week Detail (current week)'})).not.toBeInTheDocument()
     expect(screen.queryByText(/STALE_EVENT/)).not.toBeInTheDocument()
-    expect(screen.getByText('6 / 24')).toBeInTheDocument()
+    expect(screen.getByText(`${runIndex} / 24`)).toBeInTheDocument()
     expect(screen.getByRole('link', {name: 'Inspect latest completed event (E5)'}))
       .toHaveAttribute('href', '/runs/run-a/events/E5')
   })

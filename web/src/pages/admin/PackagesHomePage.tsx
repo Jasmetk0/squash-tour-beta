@@ -254,7 +254,9 @@ export function PackageWorldDetailPage():JSX.Element {
             <p role="status">{cs ? "Zvolenému filtru neodpovídají žádné záznamy kontroly." : "No validation checks match this filter."}</p>
             <button type="button" onClick={()=>setSeverityFilter('all')}>{cs?'Zobrazit všechny kontroly':'Show all checks'}</button>
           </> : null}
-          {countriesQuery.isError&&<p className="status">{cs?'Odkazy na jednotlivé země nejsou dostupné.':'Country links cannot be verified.'}</p>}
+          {countriesQuery.isPending&&<p role="status" className="status">{cs?'Ověřuji odkazy na jednotlivé země…':'Verifying country links…'}</p>}
+          {countriesQuery.isError&&<><p className="status">{cs?'Odkazy na jednotlivé země nejsou dostupné.':'Country links cannot be verified.'} {formatApiError(countriesQuery.error)}</p>
+            <RetryRead cs={cs} what="countries" fetching={countriesQuery.isFetching} onRetry={() => { void countriesQuery.refetch() }} /></>}
         </>}
       </article>}
     </>}

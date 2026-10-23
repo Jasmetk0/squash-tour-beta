@@ -301,6 +301,20 @@ describe('source-backed Packages frontend',()=>{
     expect(api.listWorldPackages).toHaveBeenCalledTimes(2)
     expect(api.getWorldPackage).not.toHaveBeenCalled()
   })
+  it('recovers validation country links independently without rerunning validation',async()=>{
+    api.getWorldPackageCountries.mockRejectedValueOnce(new Error('country lookup offline'))
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(await screen.findByText('Country detail to inspect')).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:/Otevřít dotčenou zemi/})).not.toBeInTheDocument()
+    expect(await screen.findByText(/Odkazy na jednotlivé země nejsou dostupné/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst země'}))
+    expect(await screen.findByRole('link',{name:/Otevřít dotčenou zemi/})).toHaveAttribute('href','/admin/world/library/demo/countries/CZE')
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(2)
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
+  })
+
   it('retries failed country inventory without substituting an empty list',async()=>{
     api.getWorldPackageCountries.mockRejectedValueOnce(new Error('temporary country outage'))
     mount('/admin/packages/world/demo')

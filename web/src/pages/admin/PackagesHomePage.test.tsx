@@ -262,6 +262,17 @@ describe('source-backed Packages frontend',()=>{
     expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
   })
 
+  it('rejects a detail response from another World instead of showing foreign metadata',async()=>{
+    api.getWorldPackage.mockResolvedValueOnce({...world,world_id:'other',name:'Wrong World'})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('alert')).toHaveTextContent('požadováno demo, vráceno other')
+    expect(screen.queryByRole('heading',{name:'Wrong World'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Obsah'})).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst detail balíčku'}))
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    expect(api.getWorldPackage).toHaveBeenCalledTimes(2)
+  })
+
   it('retries a failed package detail request without navigating away',async()=>{
     api.getWorldPackage.mockRejectedValueOnce(new Error('detail temporarily offline'))
     mount('/admin/packages/world/demo')
@@ -270,6 +281,35 @@ describe('source-backed Packages frontend',()=>{
     expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
     expect(api.getWorldPackage).toHaveBeenCalledTimes(2)
   })
+  it('rejects foreign country and geography data with independent recovery',async()=>{
+    api.getWorldPackageCountries.mockResolvedValueOnce({world_id:'other',countries:[{code:'OTH',name:'Foreign Country',population:1,region:'Other'}]})
+    api.getWorldPackageGeography.mockResolvedValueOnce({world_id:'other',continents:[{code:'XX',name:'Foreign Continent'}],regions:[],travel_regions:[],timezone_areas:[]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    expect((await screen.findAllByRole('alert')).length).toBe(2)
+    expect(screen.queryByText('Foreign Country (OTH)')).not.toBeInTheDocument()
+    expect(screen.queryByText('Foreign Continent')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst země'}))
+    expect(await screen.findByRole('link',{name:'Czechia (CZE)'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst geografii'}))
+    expect(await screen.findByText('Kontinenty (1)')).toBeInTheDocument()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(2)
+    expect(api.getWorldPackageGeography).toHaveBeenCalledTimes(2)
+  })
+
+  it('rejects mismatched validation results without showing foreign checks',async()=>{
+    api.getWorldPackageValidation.mockResolvedValueOnce({world_id:'other',status:'valid',error_count:0,warning_count:0,info_count:0,checks:[{code:'foreign',severity:'info',status:'passed',message:'Foreign check',path:null,field:null}]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('požadováno demo, vráceno other')
+    expect(screen.queryByText('Foreign check')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst kontrolu'}))
+    expect(await screen.findByText('Country detail to inspect')).toBeInTheDocument()
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(2)
+  })
+
   it('can reload failed geography and validation separately without changing the active source',async()=>{
     api.getWorldPackageGeography.mockRejectedValueOnce(new Error('geography offline'))
     api.getWorldPackageValidation.mockRejectedValueOnce(new Error('validation offline'))

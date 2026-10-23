@@ -80,6 +80,16 @@ describe('MatchTestLabPage', () => {
   })
 
 
+  it('shows Czech batch-seed validation without issuing a Match request', async () => {
+    renderWithRoute(<LocalizedMatchPage />, '/admin/labs/match')
+    fireEvent.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    fireEvent.change(screen.getByLabelText('Match Lab batch seeds'), {target: {value: '1, 1'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Spustit scénář'}))
+    expect(screen.getByRole('alert')).toHaveTextContent('Seedy dávky se nesmí opakovat.')
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+    expect(api.createMatchLabSession).not.toHaveBeenCalled()
+  })
+
   it('keeps the scratch JSON, seed and request intact when switching to Czech', async () => {
     renderWithRoute(<LocalizedMatchPage />, '/admin/labs/match')
     const editor = screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement

@@ -196,6 +196,17 @@ describe('TournamentTestLabPage', () => {
 
 
 
+  it('rejects malformed batch seeds with localized feedback but no Tournament execution', async () => {
+    renderWithRoute(<LocalizedPage />, '/admin/labs/tournament')
+    fireEvent.click(await screen.findByRole('button', {name: 'Load scratch copy'}))
+    fireEvent.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    fireEvent.change(screen.getByLabelText('Tournament Lab batch match seeds'), {target: {value: '2, broken'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Spustit turnajový scénář'}))
+    expect(screen.getByRole('alert')).toHaveTextContent('Seedy zápasů musí být celá čísla oddělená čárkami.')
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+    expect(api.createTournamentLabSession).not.toHaveBeenCalled()
+  })
+
   it('switches CS/EN without changing scratch tournament JSON, batch seeds or writes', async () => {
     renderWithRoute(<LocalizedPage />, '/admin/labs/tournament')
     fireEvent.click(await screen.findByRole('button', {name: 'Load scratch copy'}))

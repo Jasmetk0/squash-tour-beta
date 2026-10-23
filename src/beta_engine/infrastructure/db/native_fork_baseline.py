@@ -181,9 +181,9 @@ def verify_native_fork_baseline_in_session(
         target.forked_from_saved_revision_id,
     ) != (run_id, source_branch_id, source_revision_id):
         raise ValueError("Native fork baseline target has a different declared origin")
-    from beta_engine.infrastructure.db.native_fork_runtime_state import _proofs
+    from beta_engine.infrastructure.db.native_fork_runtime_state import snapshot_proofs
 
-    memo = _proofs.get()
+    memo = snapshot_proofs(session)
     # A completed actual-source proof is shared ONLY inside this transaction.
     # Caller scope and the actual target origin were independently checked above.
     key = ("complete_native_baseline", id(session), baseline.model_dump_json())

@@ -2528,6 +2528,11 @@ class SimulationPersistenceRepository:
     ) -> BranchSavedRevisionRecord:
         """Load one immutable revision and validate its stored owner and hash."""
 
+        from beta_engine.infrastructure.db.native_fork_runtime_state import assert_current_saved_row
+        try:
+            assert_current_saved_row(session, model)
+        except (TypeError, ValueError) as exc:
+            raise BranchRevisionStateConflictError(str(exc)) from exc
         signature = _saved_revision_validation_signature(model)
         work_lock = self._revision_validation_work_locks[
             hash(signature) % len(self._revision_validation_work_locks)
@@ -2538,8 +2543,8 @@ class SimulationPersistenceRepository:
             raise BranchRevisionStateConflictError(
                 "Saved Revision source authority contains a cycle"
             )
-        from beta_engine.infrastructure.db.native_fork_runtime_state import _proofs
-        memo = _proofs.get()
+        from beta_engine.infrastructure.db.native_fork_runtime_state import snapshot_proofs
+        memo = snapshot_proofs(session)
         proof_key = (id(session), signature, materialize_payload)
         if proof_key in memo:
             return memo[proof_key]

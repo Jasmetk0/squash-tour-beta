@@ -148,3 +148,93 @@ def test_current_head_proof_survives_history_walk_but_not_changed_actual_ancesto
 
         with pytest.raises(ValueError, match="actual source changed"):
             verify_with_actual_dependencies(repository, session, head, reject_changed_source)
+
+
+def test_completed_operation_proofs_follow_snapshot_writes_and_pending_orm(source):
+    from beta_engine.infrastructure.db.native_fork_runtime_state import snapshot_proofs
+    _engine, factory = source
+    with factory() as session, native_read_proof_scope():
+        session.execute(text('BEGIN IMMEDIATE'))
+        first = snapshot_proofs(session)
+        first['completed'] = True
+        assert snapshot_proofs(session) is first
+        owner = session.get(RunBranchModel, 'branch')
+        owner.read_only = True
+        assert 'completed' not in snapshot_proofs(session)
+        session.flush()
+        second = snapshot_proofs(session)
+        assert second is not first
+        second['completed'] = True
+        session.execute(text('SAVEPOINT proof_boundary'))
+        third = snapshot_proofs(session)
+        assert third is not second
+        third['completed'] = True
+        session.execute(text('ROLLBACK TO SAVEPOINT proof_boundary'))
+        assert snapshot_proofs(session) is not third
+        session.rollback()
+        session.execute(text('BEGIN'))
+        assert 'completed' not in snapshot_proofs(session)
+
+
+def test_malformed_physical_json_fails_closed_without_caching(source):
+    _engine, factory = source
+    with factory() as session, native_read_proof_scope():
+        session.execute(text('BEGIN IMMEDIATE'))
+        row = session.get(BranchSavedRevisionModel, 'saved')
+        actual_dependency_signature(session, row)
+        session.execute(text("UPDATE branch_saved_revisions SET payload_json='{' WHERE revision_id='saved'"))
+        with pytest.raises(ValueError, match='malformed JSON'):
+            actual_dependency_signature(session, row)
+
+
+def test_direct_driver_savepoint_rollback_and_transaction_restart_invalidate(source):
+    from beta_engine.infrastructure.db.native_fork_runtime_state import snapshot_proofs
+    _engine, factory = source
+    with factory() as session, native_read_proof_scope():
+        session.execute(text('BEGIN IMMEDIATE'))
+        driver = session.connection().connection.driver_connection
+        row = session.get(BranchSavedRevisionModel, 'saved')
+        first = actual_dependency_signature(session, row)
+        driver.execute('SAVEPOINT direct_driver')
+        driver.execute("UPDATE run_branches SET read_only=1 WHERE branch_id='branch'")
+        assert actual_dependency_signature(session, row) != first
+        changed = snapshot_proofs(session)
+        changes = driver.total_changes
+        driver.execute('ROLLBACK TO SAVEPOINT direct_driver')
+        assert driver.total_changes == changes
+        assert snapshot_proofs(session) is not changed
+        assert actual_dependency_signature(session, row) == first
+        before = snapshot_proofs(session)
+        driver.execute('COMMIT')
+        driver.execute('BEGIN')
+        assert snapshot_proofs(session) is not before
+
+
+def test_stale_original_orm_cannot_reuse_completed_validation_after_sql_rehash(source):
+    from beta_engine.infrastructure.db.repositories import (
+        BranchRevisionStateConflictError,
+    )
+    engine, factory = source
+    repo = SimulationPersistenceRepository(engine=engine, session_factory=factory)
+    with factory() as session, native_read_proof_scope():
+        session.execute(text('BEGIN IMMEDIATE'))
+        row = session.get(BranchSavedRevisionModel, 'saved')
+        repo._validated_saved_revision_in_session(session=session, model=row)
+        actual_dependency_signature(session, row)
+        repo._validated_saved_revision_in_session(session=session, model=row)
+        rewrite_source(session, 'Rehashed actual original while ORM remains stale')
+        with pytest.raises(BranchRevisionStateConflictError, match='actual stored bytes'):
+            repo._validated_saved_revision_in_session(session=session, model=row)
+
+
+def test_stale_loaded_owner_cannot_certify_changed_actual_origin(source):
+    _engine, factory = source
+    with factory() as session, native_read_proof_scope():
+        session.execute(text('BEGIN IMMEDIATE'))
+        owner = session.get(RunBranchModel, 'branch')
+        row = session.get(BranchSavedRevisionModel, 'saved')
+        actual_dependency_signature(session, row)
+        session.execute(text("UPDATE run_branches SET read_only=1 WHERE branch_id='branch'"))
+        assert not owner.read_only
+        with pytest.raises(ValueError, match='Branch owner differs'):
+            actual_dependency_signature(session, row)

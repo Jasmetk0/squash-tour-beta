@@ -144,3 +144,23 @@ def test_v2_format_fails_closed(case):
         c["native_fork_runtime"]["state"]["tour"]["branch_id"] = "foreign"
     with pytest.raises(ValueError):
         load_native_fork_saved_root(revision)
+
+
+def test_parsed_runtime_cache_is_bounded_and_never_accepts_a_declared_hash(monkeypatch):
+    from beta_engine.infrastructure.db import native_fork_runtime_state as storage
+    runtime, revision = runtime_root()
+    with storage.native_read_proof_scope() as memo:
+        for index in range(storage._MAX_PARSED_RUNTIMES + 3):
+            from beta_engine.application.native_fork_runtime_reducer import cohere
+            changed = cohere(runtime, root_saved_revision_id=f'root-{index}')
+            assert load_runtime({'content': {'native_fork_runtime': component(changed)}}) == changed
+        assert len(memo['parsed_native_runtimes']) == storage._MAX_PARSED_RUNTIMES
+        payload = deepcopy(revision.payload)
+        load_runtime(payload)
+        payload['content']['native_fork_runtime']['state']['tour']['slot_cursor'] += 1
+        with pytest.raises(ValueError, match='fingerprint differs'):
+            load_runtime(payload)
+    monkeypatch.setattr(storage, '_MAX_PARSED_RUNTIME_BYTES', 1)
+    with storage.native_read_proof_scope() as memo:
+        assert load_runtime(revision.payload) == runtime
+        assert memo['parsed_native_runtimes'] == {}

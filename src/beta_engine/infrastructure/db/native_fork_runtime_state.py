@@ -7,6 +7,7 @@ from contextvars import ContextVar
 
 from sqlalchemy import event as sqlalchemy_event
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import OperationalError
 
 from beta_engine.application.calendar_tour_service import CalendarTourCommit
 from beta_engine.application.native_fork_runtime_reducer import (
@@ -27,12 +28,14 @@ SAVED_SCHEMA = "native_fork_saved_root.v2"
 DRAFT_SCHEMA = "native_fork_runtime_draft.v1"
 _proofs = ContextVar("native_read_proofs", default=None)
 _MAX_DEPENDENCY_PROOFS = 256
+_MAX_PARSED_RUNTIMES = 8
+_MAX_PARSED_RUNTIME_BYTES = 8 * 1024 * 1024
 
 
 @sqlalchemy_event.listens_for(Engine, "before_cursor_execute")
 def _invalidate_physical_read_cache(connection, cursor, statement, parameters, context, executemany):
     memo = _proofs.get()
-    if memo is None or statement.lstrip().upper().startswith("SELECT"):
+    if memo is None or statement.lstrip()[:6].upper() == "SELECT":
         return
     # Includes SAVEPOINT/ROLLBACK TO and direct SQL writes, not just ORM flushes.
     key = ("native_dependency_sql_generation", connection.connection.driver_connection)
@@ -49,15 +52,62 @@ def _physical_read_cache(session):
     memo = _proofs.get()
     if memo is None or session.new or session.dirty or session.deleted:
         return None
-    connection = session.connection().connection.driver_connection
+    sqlalchemy_connection = session.connection()
+    connection = sqlalchemy_connection.connection.driver_connection
     if not getattr(connection, "in_transaction", False) or type(getattr(connection, "total_changes", None)) is not int:
         return None
-    key = (
-        "native_dependency_physical_rows", session, session.get_transaction(),
+    if not sqlalchemy_connection.info.get("native_dependency_trace_installed"):
+        # total_changes does not change on ROLLBACK TO. Observe SQLite itself so
+        # direct driver savepoints/transactions cannot reuse an earlier snapshot.
+        def trace(statement):
+            current = _proofs.get()
+            if current is not None and statement.lstrip()[:6].upper() != "SELECT":
+                key = ("native_dependency_sql_generation", connection)
+                current[key] = current.get(key, 0) + 1
+        connection.set_trace_callback(trace)
+        sqlalchemy_connection.info["native_dependency_trace_installed"] = True
+    snapshot = (
+        session.get_transaction(),
         session.get_nested_transaction(), connection, connection.total_changes,
         memo.get(("native_dependency_sql_generation", connection), 0),
     )
-    return memo.setdefault(key, {"owners": {}, "revisions": {}})
+    key = ("native_dependency_physical_rows", session)
+    previous = memo.get(key)
+    if previous is None or previous[0] != snapshot:
+        previous = memo[key] = (snapshot, {"owners": {}, "revisions": {}, "proofs": {}})
+    return previous[1]
+
+
+def snapshot_proofs(session):
+    """Completed operation proofs cannot outlive their actual read snapshot."""
+    cache = _physical_read_cache(session)
+    return cache["proofs"] if cache is not None else {}
+
+
+def assert_current_saved_row(session, revision):
+    """A source ORM identity is not evidence of its current physical bytes."""
+    memo = _proofs.get()
+    if memo is None or not memo.get("native_actual_reads"):
+        return
+    from sqlalchemy import select
+
+    fields = _physical_revision_fields()
+    cache = _physical_read_cache(session)
+    cached = cache["revisions"].get((revision.run_id, revision.revision_id)) if cache is not None else None
+    actual = cached[0] if cached is not None else session.execute(
+        select(*fields).where(BranchSavedRevisionModel.revision_id == revision.revision_id)
+    ).first()
+    expected = tuple(getattr(revision, field.key) for field in fields)
+    if actual is None or tuple(actual) != expected:
+        raise ValueError("Native Saved row differs from its actual stored bytes")
+
+
+def _physical_revision_fields():
+    return tuple(getattr(BranchSavedRevisionModel, key) for key in (
+        "revision_id", "run_id", "branch_id", "sequence", "parent_revision_id",
+        "kind", "payload_schema_version", "content_hash_algorithm", "content_hash",
+        "payload_json", "change_summary_json",
+    ))
 
 
 @contextmanager
@@ -74,16 +124,22 @@ def load_runtime(payload):
     raw = payload.get("content", {}).get(KEY)
     if not isinstance(raw, dict) or set(raw) != {"state", "fingerprint"}:
         raise ValueError("Malformed native fork runtime component")
-    signature = canonical_json(raw)
+    serialized = canonical_json(raw).encode("utf-8")
+    signature = hashlib.sha256(serialized).digest()
     memo = _proofs.get()
-    key = ("parsed_native_runtime", signature)
-    if memo is not None and key in memo:
-        return memo[key]
+    cache = memo.setdefault("parsed_native_runtimes", {}) if memo is not None else {}
+    prior = cache.pop(signature, None)
+    if prior is not None:
+        cache[signature] = prior
+        return prior[1]
     runtime = NativeForkRuntime.model_validate_json(canonical_json(raw["state"]))
     if runtime.fingerprint != raw["fingerprint"]:
         raise ValueError("Native fork runtime fingerprint differs")
-    if memo is not None:
-        memo[key] = runtime
+    size = len(serialized)
+    if memo is not None and size <= _MAX_PARSED_RUNTIME_BYTES:
+        cache[signature] = (size, runtime)
+        while len(cache) > _MAX_PARSED_RUNTIMES or sum(item[0] for item in cache.values()) > _MAX_PARSED_RUNTIME_BYTES:
+            cache.pop(next(iter(cache)))
     return runtime
 
 
@@ -259,23 +315,14 @@ def actual_dependency_signature(session, revision):
     need not invalidate an immutable prefix; a change to ANY dependency does.
     Only successfully completed proofs enter the bounded repository cache.
     """
-    from sqlalchemy import select
+    from sqlalchemy import func, select
 
     from beta_engine.infrastructure.db.models import RunBranchModel
 
-    fields = (
-        BranchSavedRevisionModel.revision_id,
-        BranchSavedRevisionModel.run_id,
-        BranchSavedRevisionModel.branch_id,
-        BranchSavedRevisionModel.sequence,
-        BranchSavedRevisionModel.parent_revision_id,
-        BranchSavedRevisionModel.kind,
-        BranchSavedRevisionModel.payload_schema_version,
-        BranchSavedRevisionModel.content_hash_algorithm,
-        BranchSavedRevisionModel.content_hash,
-        BranchSavedRevisionModel.payload_json,
-        BranchSavedRevisionModel.change_summary_json,
-    )
+    fields = _physical_revision_fields()
+    memo = _proofs.get()
+    if memo is not None:
+        memo["native_actual_reads"] = True
     read_cache = _physical_read_cache(session)
     owners = read_cache["owners"] if read_cache is not None else {}
     revisions = read_cache["revisions"] if read_cache is not None else {}
@@ -298,28 +345,55 @@ def actual_dependency_signature(session, revision):
                 )
             ).first()
             owners[key] = tuple(row) if row is not None else None
+            loaded = session.identity_map.get((RunBranchModel, (branch_id,), None))
+            if loaded is not None and (
+                row is None or tuple(getattr(loaded, name) for name in (
+                    "branch_id", "run_id", "forked_from_branch_id",
+                    "forked_from_saved_revision_id", "status", "read_only",
+                    "saved_head_revision_id",
+                )) != tuple(row)
+            ):
+                raise ValueError("Native Branch owner differs from its actual stored bytes")
         return owners[key]
 
     def actual_revision(revision_id):
         key = (revision.run_id, revision_id)
         if key not in revisions:
-            actual = session.execute(
-                select(*fields).where(
-                    BranchSavedRevisionModel.run_id == revision.run_id,
-                    BranchSavedRevisionModel.revision_id == revision_id,
-                )
-            ).first()
-            row = tuple(actual) if actual is not None else None
+            try:
+                actual = session.execute(
+                    select(
+                        *fields,
+                        func.json_extract(BranchSavedRevisionModel.payload_json,
+                            "$.content.native_fork_baseline.state.selected_source_branch_id"),
+                        func.json_type(BranchSavedRevisionModel.payload_json,
+                            "$.content.calendar_tour_authority"),
+                    ).where(
+                        BranchSavedRevisionModel.run_id == revision.run_id,
+                        BranchSavedRevisionModel.revision_id == revision_id,
+                    )
+                ).first()
+            except OperationalError as exc:
+                if "malformed JSON" in str(exc.orig):
+                    raise ValueError("Native Saved row contains malformed JSON") from exc
+                raise
+            row = tuple(actual[:len(fields)]) if actual is not None else None
             if row is None:
                 revisions[key] = (None, None, ())
             else:
-                content = json.loads(row[9]).get("content", {})
-                baseline = content.get("native_fork_baseline", {}).get("state")
-                branch_ids = {baseline.get("selected_source_branch_id")} if isinstance(baseline, dict) else set()
-                if "calendar_tour_authority" in content:
+                # SQLite extracts only the dependency references. Do not allocate
+                # every historical match/journal just to discover these two keys.
+                # Every byte still contributes to the physical-row digest below.
+                branch_ids = {actual[len(fields)]} if actual[len(fields)] is not None else set()
+                if actual[len(fields) + 1] is not None:
                     branch_ids.add(row[2])
+                digest = hashlib.sha256()
+                for value in row:
+                    raw = canonical_json(value).encode("utf-8") if not isinstance(value, str) else value.encode("utf-8")
+                    digest.update(b"s" if isinstance(value, str) else b"j")
+                    digest.update(len(raw).to_bytes(8, "big"))
+                    digest.update(raw)
                 revisions[key] = (
-                    row, hashlib.sha256(canonical_json(row).encode("utf-8")).hexdigest(),
+                    row, digest.hexdigest(),
                     tuple(branch_ids),
                 )
         return revisions[key]

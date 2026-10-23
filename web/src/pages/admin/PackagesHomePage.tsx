@@ -110,6 +110,7 @@ export function PackagesHomePage():JSX.Element {
     <p><Link className="button-link" to="/admin/packages/all">{cs?'Všechny balíčky':'All packages'} →</Link></p>
     {query.isPending && <p role="status">{cs?'Načítám registry…':'Loading registry…'}</p>}
     {query.isError && <><p className="error" role="alert">{cs ? 'Registr balíčků se nepodařilo načíst: ' : 'Package registry failed to load: '}{formatApiError(query.error)}</p><RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} /></>}
+    {query.isSuccess && <RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} />}
     <div className="package-index-categories">{packageCategories.map(cat =>
       <Link key={cat} className="package-index-category" to={'/admin/packages/category/'+cat}>
         <h3>{categories[cat][language]} →</h3>
@@ -164,6 +165,7 @@ export function PackagesListPage():JSX.Element {
     {!registrySupported && <p role="status" className="status">{cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.'}</p>}
     {registrySupported && query.isPending && <p role="status">{cs?'Načítám…':'Loading…'}</p>}
     {registrySupported && query.isError && <><p role="alert" className="error">{cs ? 'Registr balíčků se nepodařilo načíst: ' : 'Package registry failed to load: '}{formatApiError(query.error)}</p><RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} /></>}
+    {registrySupported && query.isSuccess && <RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} />}
     {registrySupported && query.isSuccess && <><p className="status">{registrySupported?shown.length+' / '+members.length:(cs?'Samostatný registr této kategorie zatím není dostupný.':'No independent registry for this category yet.')}</p>
       {registrySupported && shown.length ? <ul className="package-index-list" aria-label="World package catalog">{shown.map(item=><PackageRow key={item.key} item={item}/>)}</ul>
       : <p>{registrySupported ? (members.length === 0 ? (cs ? 'Registr nevrátil žádný balíček v této kategorii.' : 'The registry returned no packages in this category.') : (cs?'Žádný evidovaný balíček neodpovídá filtru.':'No indexed packages match this filter.')) : (cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.')}</p>}

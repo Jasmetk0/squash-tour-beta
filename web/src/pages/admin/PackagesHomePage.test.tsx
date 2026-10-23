@@ -97,6 +97,36 @@ describe('source-backed Packages frontend',()=>{
     expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
   })
 
+  it('refreshes the loaded package list but preserves client filters and ordering',async()=>{
+    api.listWorldPackages.mockResolvedValueOnce({packages:[world,empty]})
+      .mockResolvedValue({packages:[world,empty,{...world,world_id:'new',name:'New World',country_count:5}]})
+    mount('/admin/packages/all')
+    expect(await screen.findByText('Demo World')).toBeInTheDocument()
+    const search=screen.getByRole('searchbox',{name:'Hledání'})
+    await userEvent.type(search,'world')
+    const sorter=screen.getByRole('combobox',{name:'Package catalog sort'})
+    await userEvent.selectOptions(sorter,'countries')
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst seznam balíčků'}))
+    expect(await screen.findByText('New World')).toBeInTheDocument()
+    expect(search).toHaveValue('world')
+    expect(sorter).toHaveValue('countries')
+    expect(api.listWorldPackages).toHaveBeenCalledTimes(2)
+    expect(api.getWorldPackage).not.toHaveBeenCalled()
+  })
+
+  it('refreshes the loaded package hub without opening a World or writing',async()=>{
+    api.listWorldPackages.mockResolvedValueOnce({packages:[world]})
+      .mockResolvedValue({packages:[world,empty]})
+    mount('/admin/packages')
+    expect(await screen.findByRole('heading',{name:'Balíčky'})).toBeInTheDocument()
+    expect(await screen.findByRole('button',{name:'Znovu načíst seznam balíčků'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst seznam balíčků'}))
+    expect(api.listWorldPackages).toHaveBeenCalledTimes(2)
+    expect(api.getWorldPackage).not.toHaveBeenCalled()
+    expect(screen.getByRole('link',{name:/Svět/})).toHaveTextContent('2 registrované')
+    expect(screen.getByRole('link',{name:/Země/})).toHaveTextContent('1 registrovaný')
+  })
+
   it('does not list Country-less World packages under Countries or any hybrid',async()=>{
     mount('/admin/packages/category/countries')
     expect(await screen.findByText('Demo World')).toBeInTheDocument()

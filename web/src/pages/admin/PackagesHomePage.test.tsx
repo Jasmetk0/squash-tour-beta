@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Link, MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider, useLanguage } from '../../i18n/LanguageContext'
 import { PackagesHomePage, PackagesListPage, PackageWorldDetailPage } from './PackagesHomePage'
@@ -23,9 +23,13 @@ function LanguageSwitch():JSX.Element {
   const {language,setLanguage}=useLanguage()
   return <button type="button" onClick={()=>setLanguage(language==='cs'?'en':'cs')}>Switch language</button>
 }
-function mount(path:string, worldJumpTab?:'contents'|'validation', categoryJump?:string):void {
+function CurrentUrl():JSX.Element {
+  const location=useLocation()
+  return <output aria-label="Package test current URL">{location.pathname+location.search}</output>
+}
+function mount(path:string, worldJumpTab?:'contents'|'validation', categoryJump?:string, reportUrl=false):void {
   render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
-    <MemoryRouter initialEntries={[path]}><LanguageProvider><LanguageSwitch />{worldJumpTab&&<Link to={'/admin/packages/world/other?tab='+worldJumpTab}>Open another World</Link>}{categoryJump&&<Link to={categoryJump}>Open another category</Link>}<Routes>
+    <MemoryRouter initialEntries={[path]}><LanguageProvider><LanguageSwitch />{reportUrl&&<CurrentUrl/>}{worldJumpTab&&<Link to={'/admin/packages/world/other?tab='+worldJumpTab}>Open another World</Link>}{categoryJump&&<Link to={categoryJump}>Open another category</Link>}<Routes>
       <Route path="/admin/packages" element={<PackagesHomePage/>}/>
       <Route path="/admin/packages/all" element={<PackagesListPage/>}/>
       <Route path="/admin/packages/category/:categoryId" element={<PackagesListPage/>}/>
@@ -534,6 +538,21 @@ describe('source-backed Packages frontend',()=>{
     expect(screen.queryByText('Outdated warning')).not.toBeInTheDocument()
     expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(2)
     expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+    expect(api.getWorldPackage).toHaveBeenCalledTimes(1)
+  })
+
+  it('preserves unrelated URL context while navigating World detail tabs',async()=>{
+    mount('/admin/packages/world/demo?source=run%2Falpha&tab=overview&return=admin',undefined,undefined,true)
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    expect(screen.getByRole('status',{name:'Package test current URL'})).toHaveTextContent('source=run%2Falpha')
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    const url=screen.getByRole('status',{name:'Package test current URL'})
+    expect(url).toHaveTextContent('source=run%2Falpha')
+    expect(url).toHaveTextContent('return=admin')
+    expect(url).toHaveTextContent('tab=contents')
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(url).toHaveTextContent('tab=validation')
+    expect(url).toHaveTextContent('source=run%2Falpha')
     expect(api.getWorldPackage).toHaveBeenCalledTimes(1)
   })
 

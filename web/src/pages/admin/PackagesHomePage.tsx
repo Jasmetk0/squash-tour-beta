@@ -241,7 +241,7 @@ export function PackageWorldDetailPage():JSX.Element {
     {detailMismatch&&<WrongWorldResponse cs={cs} expected={worldId} actual={q.data?.world_id ?? ''} what="detail" fetching={q.isFetching} onRetry={()=>{void q.refetch()}}/>}
     {pkg && <>
       <nav className="package-index-tabs" aria-label={cs ? "Záložky balíčku" : "Package tabs"}>{(['overview','contents','validation'] as const).map(k=>
-        <button type="button" key={k} aria-current={active===k?'page':undefined} onClick={()=>setParams({tab:k})}>
+        <button type="button" key={k} aria-current={active===k?'page':undefined} onClick={()=>setParams(previous=>{const next=new URLSearchParams(previous);next.set('tab',k);return next})}>
           {k==='overview'?(cs?'Přehled':'Overview'):k==='contents'?(cs?'Obsah':'Contents'):(cs?'Kontrola':'Validation')}
         </button>)}</nav>
       {active==='overview'&&<article className="package-index-detail">

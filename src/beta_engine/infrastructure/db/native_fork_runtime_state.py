@@ -7,7 +7,6 @@ from contextvars import ContextVar
 
 from sqlalchemy import event as sqlalchemy_event
 from sqlalchemy.engine import Engine
-from sqlalchemy.exc import OperationalError
 
 from beta_engine.application.calendar_tour_service import CalendarTourCommit
 from beta_engine.application.native_fork_runtime_reducer import (
@@ -28,6 +27,7 @@ SAVED_SCHEMA = "native_fork_saved_root.v2"
 DRAFT_SCHEMA = "native_fork_runtime_draft.v1"
 _proofs = ContextVar("native_read_proofs", default=None)
 _MAX_DEPENDENCY_PROOFS = 256
+_MAX_DEPENDENCY_REFERENCE_HINTS = 4096
 _MAX_PARSED_RUNTIMES = 8
 _MAX_PARSED_RUNTIME_BYTES = 8 * 1024 * 1024
 
@@ -309,7 +309,40 @@ def verify_runtime(repository, session, *, runtime, revision, original, working=
     return runtime
 
 
-def actual_dependency_signature(session, revision):
+def _dependency_references(repository, row, digest):
+    """Bounded parse hints, never a validation proof or a stored hash shortcut.
+
+    The caller just reread and hashed every actual physical field. Owners, heads
+    and graph topology are still rebuilt from the current transaction below.
+    Python's duplicate-key semantics must match the Saved JSON verifier; SQLite
+    json_extract chooses a different value when duplicate keys are present.
+    """
+    if repository is not None:
+        with repository._revision_validation_lock:
+            hints = getattr(repository, "_native_dependency_reference_hints", {})
+            if digest in hints:
+                return hints[digest]
+    try:
+        content = json.loads(row[9]).get("content", {})
+        baseline = content.get("native_fork_baseline", {}).get("state")
+        branches = {baseline.get("selected_source_branch_id")} if isinstance(baseline, dict) else set()
+        if "calendar_tour_authority" in content:
+            branches.add(row[2])
+        result = tuple(branches)
+    except (TypeError, ValueError, AttributeError) as exc:
+        raise ValueError("Native Saved row contains malformed JSON dependency data") from exc
+    if repository is not None:
+        with repository._revision_validation_lock:
+            hints = getattr(repository, "_native_dependency_reference_hints", None)
+            if hints is None:
+                hints = repository._native_dependency_reference_hints = {}
+            hints[digest] = result
+            while len(hints) > _MAX_DEPENDENCY_REFERENCE_HINTS:
+                hints.pop(next(iter(hints)))
+    return result
+
+
+def actual_dependency_signature(session, revision, *, repository=None):
     """Exact physical dependency graph, rebuilt before any cross-read proof reuse.
 
     A self-declared hash is insufficient. Include complete stored bytes, topology,
@@ -317,7 +350,7 @@ def actual_dependency_signature(session, revision):
     need not invalidate an immutable prefix; a change to ANY dependency does.
     Only successfully completed proofs enter the bounded repository cache.
     """
-    from sqlalchemy import func, select
+    from sqlalchemy import select
 
     from beta_engine.infrastructure.db.models import RunBranchModel
 
@@ -361,43 +394,24 @@ def actual_dependency_signature(session, revision):
     def actual_revision(revision_id):
         key = (revision.run_id, revision_id)
         if key not in revisions:
-            try:
-                actual = session.execute(
-                    select(
-                        *fields,
-                        func.json_extract(BranchSavedRevisionModel.payload_json,
-                            "$.content.native_fork_baseline.state.selected_source_branch_id"),
-                        func.json_type(BranchSavedRevisionModel.payload_json,
-                            "$.content.calendar_tour_authority"),
-                    ).where(
-                        BranchSavedRevisionModel.run_id == revision.run_id,
-                        BranchSavedRevisionModel.revision_id == revision_id,
-                    )
-                ).first()
-            except OperationalError as exc:
-                if "malformed JSON" in str(exc.orig):
-                    raise ValueError("Native Saved row contains malformed JSON") from exc
-                raise
+            actual = session.execute(
+                select(*fields).where(
+                    BranchSavedRevisionModel.run_id == revision.run_id,
+                    BranchSavedRevisionModel.revision_id == revision_id,
+                )
+            ).first()
             row = tuple(actual[:len(fields)]) if actual is not None else None
             if row is None:
                 revisions[key] = (None, None, ())
             else:
-                # SQLite extracts only the dependency references. Do not allocate
-                # every historical match/journal just to discover these two keys.
-                # Every byte still contributes to the physical-row digest below.
-                branch_ids = {actual[len(fields)]} if actual[len(fields)] is not None else set()
-                if actual[len(fields) + 1] is not None:
-                    branch_ids.add(row[2])
                 digest = hashlib.sha256()
                 for value in row:
                     raw = canonical_json(value).encode("utf-8") if not isinstance(value, str) else value.encode("utf-8")
                     digest.update(b"s" if isinstance(value, str) else b"j")
                     digest.update(len(raw).to_bytes(8, "big"))
                     digest.update(raw)
-                revisions[key] = (
-                    row, digest.hexdigest(),
-                    tuple(branch_ids),
-                )
+                signature = digest.hexdigest()
+                revisions[key] = (row, signature, _dependency_references(repository, row, signature))
         return revisions[key]
 
     pending, visited, graph, source_heads = [revision.revision_id], set(), [], {}
@@ -460,7 +474,7 @@ def _dependency_proof_key(signature):
 
 def verify_with_actual_dependencies(repository, session, revision, verify):
     """Reuse a complete proof only when its entire actual dependency graph matches."""
-    signature = actual_dependency_signature(session, revision)
+    signature = actual_dependency_signature(session, revision, repository=repository)
     if has_actual_dependency_proof(repository, signature, run_id=revision.run_id, branch_id=revision.branch_id):
         return
     verify()

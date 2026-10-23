@@ -31,10 +31,14 @@ are not successful acceptance evidence.
   memory has additional overhead. Oversized inputs bypass retention. Defensive
   copies prevent callers from mutating retained models. This cache grants no
   owner, lineage, source-head or physical-row authority.
-- Extract only dependency references with SQLite JSON functions instead of
-  allocating all historical match/journal JSON. Hash every physical field using
-  type-tagged, length-delimited UTF-8 bytes. These are ephemeral proof keys only;
-  persisted content hashes, serialization and Saved schemas do not change.
+- Reread and hash every physical field using type-tagged, length-delimited UTF-8
+  bytes. Reuse only the parsed dependency references for those exact current
+  bytes, retaining at most 4,096 compact hints per repository. Actual owners,
+  source heads and complete dependency topology are still reauthenticated in each
+  new snapshot. Python JSON parsing preserves the verifier's duplicate-key
+  semantics; SQLite json_extract would choose a different duplicate value.
+  These are ephemeral keys only; persisted content hashes, serialization and
+  Saved schemas do not change.
 - Replace obsolete physical snapshots instead of retaining every write generation.
   Completed operation proofs follow that same transaction/snapshot. SQLite trace
   invalidation also observes raw driver rollback/savepoints and transaction

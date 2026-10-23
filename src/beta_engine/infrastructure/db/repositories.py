@@ -2555,7 +2555,7 @@ class SimulationPersistenceRepository:
                     actual_dependency_signature,
                     has_actual_dependency_proof,
                 )
-                dependency_signature = actual_dependency_signature(session, model)
+                dependency_signature = actual_dependency_signature(session, model, repository=self)
                 complete = has_actual_dependency_proof(self, dependency_signature,
                     run_id=model.run_id, branch_id=model.branch_id)
                 if complete:

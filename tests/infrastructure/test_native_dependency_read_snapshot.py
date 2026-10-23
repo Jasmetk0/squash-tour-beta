@@ -254,3 +254,37 @@ def test_driver_rollback_from_another_context_invalidates_connection_snapshot(so
         with ThreadPoolExecutor(max_workers=1) as executor:
             executor.submit(driver.execute, 'ROLLBACK TO SAVEPOINT other_context').result()
         assert actual_dependency_signature(session, row) == first
+
+
+@pytest.mark.parametrize(('raw', 'expected'), [
+    ('{"content":{"calendar_tour_authority":{}},"content":{}}', ()),
+    ('{"content":{},"content":{"calendar_tour_authority":{}}}', ('branch',)),
+    ('{"content":{"native_fork_baseline":{"state":{"selected_source_branch_id":"wrong"}}},' +
+     '"\\u0063ontent":{"native_fork_baseline":{"state":{"selected_source_branch_id":"right"}}}}', ('right',)),
+    ('{"content":{"native_fork_baseline":{"state":{"selected_source_branch_id":"wrong"},' +
+     '"state":{"selected_source_branch_id":"right"}}}}', ('right',)),
+])
+def test_dependency_reference_hints_preserve_python_duplicate_key_semantics(raw, expected):
+    from threading import Lock
+    from types import SimpleNamespace
+
+    from beta_engine.infrastructure.db.native_fork_runtime_state import (
+        _dependency_references,
+    )
+    row = (None, None, 'branch', None, None, None, None, None, None, raw)
+    repo = SimpleNamespace(_revision_validation_lock=Lock())
+    assert _dependency_references(repo, row, 'actual-byte-digest') == expected
+    assert _dependency_references(repo, row, 'actual-byte-digest') == expected
+
+
+def test_dependency_reference_hint_retention_is_compact_and_bounded(monkeypatch):
+    from threading import Lock
+    from types import SimpleNamespace
+
+    from beta_engine.infrastructure.db import native_fork_runtime_state as storage
+    monkeypatch.setattr(storage, '_MAX_DEPENDENCY_REFERENCE_HINTS', 2)
+    repo = SimpleNamespace(_revision_validation_lock=Lock())
+    for index in range(5):
+        row = (None, None, 'branch', None, None, None, None, None, None, '{"content":{}}')
+        assert storage._dependency_references(repo, row, str(index)) == ()
+    assert repo._native_dependency_reference_hints == {'3': (), '4': ()}

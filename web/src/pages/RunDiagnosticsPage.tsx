@@ -87,16 +87,72 @@ export function RunDiagnosticsPage(): JSX.Element {
     enabled: Boolean(runId)
   })
 
-  const latestCompletedEvent = eventsQuery.data?.events.find((event) => event.tournament_result)
-  const latestRankingSnapshot = rankingSnapshotsQuery.data?.snapshots[0]
-  const latestRaceSnapshot = raceSnapshotsQuery.data?.snapshots[0]
-  const nextPlannedEvent = runQuery.data?.season_state.ordered_events[runQuery.data.season_state.next_event_index] ?? null
+  // Run and status summaries must belong to the currently selected route.
+  // Other independently valid diagnostics remain available if either is wrong.
+  const runMismatch = Boolean(runQuery.data && runQuery.data.run.run_id !== runId)
+  const statusMismatch = Boolean(statusSummaryQuery.data && statusSummaryQuery.data.run_id !== runId)
+  const safeRun = runQuery.data?.run.run_id === runId ? runQuery.data : null
+  const safeStatus = statusSummaryQuery.data?.run_id === runId ? statusSummaryQuery.data : null
+
+  // Finals include independently identified qualification and result records.
+  // A matching outer summary must not conceal a foreign or cross-season artifact.
+  const finalsMismatch = Boolean(finalsSummaryQuery.data && (
+    finalsSummaryQuery.data.run_id !== runId ||
+    (finalsSummaryQuery.data.qualification && (
+      finalsSummaryQuery.data.qualification.run_id !== runId ||
+      finalsSummaryQuery.data.qualification.season !== finalsSummaryQuery.data.season
+    )) ||
+    (finalsSummaryQuery.data.result && (
+      finalsSummaryQuery.data.result.run_id !== runId ||
+      finalsSummaryQuery.data.result.season !== finalsSummaryQuery.data.season
+    ))
+  ))
+  const rolloverMismatch = Boolean(latestRolloverQuery.data && latestRolloverQuery.data.rollover.run_id !== runId)
+  const lineageMismatch = Boolean(lineageQuery.data && lineageQuery.data.lineage.run_id !== runId)
+  const safeFinals = !finalsMismatch && finalsSummaryQuery.data?.run_id === runId ? finalsSummaryQuery.data : null
+  const safeRollover = latestRolloverQuery.data?.rollover.run_id === runId ? latestRolloverQuery.data : null
+  const safeLineage = lineageQuery.data?.lineage.run_id === runId ? lineageQuery.data : null
+
+  // Every history response has a Run ID; never display another Run's artifacts.
+  const eventsMismatch = Boolean(eventsQuery.data && eventsQuery.data.run_id !== runId)
+  const rankingsMismatch = Boolean(rankingSnapshotsQuery.data && rankingSnapshotsQuery.data.run_id !== runId)
+  const racesMismatch = Boolean(raceSnapshotsQuery.data && raceSnapshotsQuery.data.run_id !== runId)
+  const safeEvents = eventsQuery.data?.run_id === runId ? eventsQuery.data.events : []
+  const safeRankingSnapshots = rankingSnapshotsQuery.data?.run_id === runId ? rankingSnapshotsQuery.data.snapshots : []
+  const safeRaceSnapshots = raceSnapshotsQuery.data?.run_id === runId ? raceSnapshotsQuery.data.snapshots : []
+
+  // History endpoints return ascending sequences; the first item is the oldest.
+  // Select by persisted sequence rather than relying on response array order.
+  const latestCompletedEvent = safeEvents
+    .filter((event) => Boolean(event.tournament_result))
+    .sort((a, b) => b.event_sequence - a.event_sequence)[0]
+  const latestRankingSnapshot = safeRankingSnapshots
+    .slice().sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0]
+  const latestRaceSnapshot = safeRaceSnapshots
+    .slice().sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0]
+  // The Run endpoint builds its summary and season state from separate reads.
+  // If a concurrent update made them inconsistent, do not link to an obsolete week.
+  const seasonStateMismatch = Boolean(safeRun && (
+    safeRun.season_state.season !== safeRun.run.season ||
+    safeRun.season_state.next_event_index !== safeRun.run.next_event_index
+  ))
+  const candidateNextEvent = safeRun?.season_state.ordered_events[safeRun.season_state.next_event_index] ?? null
+  const nextEventSeasonMismatch = Boolean(candidateNextEvent && candidateNextEvent.season !== safeRun?.run.season)
+  // Different read times can leave the detail and status-summary endpoints at
+  // different seasons or progress cursors, even though their Run IDs match.
+  const runStatusProgressMismatch = Boolean(safeRun && safeStatus && (
+    safeRun.run.season !== safeStatus.season ||
+    safeRun.run.next_event_index !== safeStatus.progress.next_event_index ||
+    safeRun.run.total_events !== safeStatus.progress.total_events
+  ))
+  const nextPlannedEvent = seasonStateMismatch || nextEventSeasonMismatch || runStatusProgressMismatch
+    ? null : candidateNextEvent
   const nextPlannedWeek = nextPlannedEvent?.week ?? null
-  const hasLineageChildren = (lineageQuery.data?.lineage.children.length ?? 0) > 0
+  const hasLineageChildren = (safeLineage?.lineage.children.length ?? 0) > 0
   const finalsInspectionRoute = getFinalsInspectionRoute({
     runId,
-    hasQualification: Boolean(finalsSummaryQuery.data?.qualification),
-    hasResult: Boolean(finalsSummaryQuery.data?.result)
+    hasQualification: Boolean(safeFinals?.qualification),
+    hasResult: Boolean(safeFinals?.result)
   })
 
   return (
@@ -111,18 +167,18 @@ export function RunDiagnosticsPage(): JSX.Element {
       </p>
       <CurrentContextStrip
         items={[
-          { label: 'Season', value: statusSummaryQuery.data?.season ?? runQuery.data?.run.season ?? '—' },
+          { label: 'Season', value: safeStatus?.season ?? safeRun?.run.season ?? '—' },
           {
             label: 'Progress',
-            value: statusSummaryQuery.data
-              ? `${statusSummaryQuery.data.progress.next_event_index}/${statusSummaryQuery.data.progress.total_events}`
-              : runQuery.data
-                ? `${runQuery.data.run.next_event_index}/${runQuery.data.run.total_events}`
+            value: safeStatus
+              ? `${safeStatus.progress.next_event_index}/${safeStatus.progress.total_events}`
+              : safeRun
+                ? `${safeRun.run.next_event_index}/${safeRun.run.total_events}`
                 : '—'
           },
           {
             label: 'Completed events',
-            value: statusSummaryQuery.data?.progress.completed_event_count ?? runQuery.data?.run.completed_event_ids.length ?? '—'
+            value: safeStatus?.progress.completed_event_count ?? safeRun?.run.completed_event_ids.length ?? '—'
           }
         ]}
       />
@@ -130,39 +186,49 @@ export function RunDiagnosticsPage(): JSX.Element {
       <SectionCard title="Run diagnostics summary">
         {runQuery.isLoading && <p className="status">Loading run diagnostics...</p>}
         {runQuery.error && <p className="error">Failed to load run details: {formatApiError(runQuery.error)}</p>}
+        {runMismatch && <p role="alert" className="error">Run details belong to another Run. Its progress and planned week are hidden.</p>}
+        {(seasonStateMismatch || nextEventSeasonMismatch) && (
+          <p role="alert" className="error">Run calendar and progress disagree. Current-week links are hidden.</p>
+        )}
+        {runStatusProgressMismatch && (
+          <p role="alert" className="error">Run detail and status summary disagree on season or progress. Current-week links are hidden.</p>
+        )}
         {statusSummaryQuery.error && (
           <p className="error">Failed to load status summary: {formatApiError(statusSummaryQuery.error)}</p>
         )}
-        {runQuery.data && (
+        {statusMismatch && <p role="alert" className="error">Status summary belongs to another Run. Its progress and counts are hidden.</p>}
+        {(safeRun || safeStatus) && (
           <>
             <CompactSummaryCard
               items={[
-                { label: 'Run ID', value: runQuery.data.run.run_id },
-                { label: 'Season', value: statusSummaryQuery.data?.season ?? runQuery.data.run.season },
-                { label: 'Seed', value: statusSummaryQuery.data?.seed ?? runQuery.data.run.seed },
+                { label: 'Run ID', value: safeRun?.run.run_id ?? safeStatus?.run_id ?? '—' },
+                { label: 'Season', value: safeStatus?.season ?? safeRun?.run.season ?? '—' },
+                { label: 'Seed', value: safeStatus?.seed ?? safeRun?.run.seed ?? '—' },
                 {
                   label: 'Progress',
-                  value: statusSummaryQuery.data
-                    ? `${statusSummaryQuery.data.progress.next_event_index} / ${statusSummaryQuery.data.progress.total_events}`
-                    : `${runQuery.data.run.next_event_index} / ${runQuery.data.run.total_events}`
+                  value: safeStatus
+                    ? `${safeStatus.progress.next_event_index} / ${safeStatus.progress.total_events}`
+                    : safeRun
+                      ? `${safeRun.run.next_event_index} / ${safeRun.run.total_events}`
+                      : '—'
                 },
                 {
                   label: 'Completed events',
-                  value: statusSummaryQuery.data?.progress.completed_event_count ?? runQuery.data.run.completed_event_ids.length
+                  value: safeStatus?.progress.completed_event_count ?? safeRun?.run.completed_event_ids.length ?? '—'
                 }
               ]}
             />
             <SummaryPills
               items={[
-                { label: 'Events', value: statusSummaryQuery.data?.history_counts.events ?? eventsQuery.data?.events.length ?? '—' },
+                { label: 'Events', value: safeStatus?.history_counts.events ?? (eventsQuery.data?.run_id === runId ? safeEvents.length : '—') },
                 {
                   label: 'Ranking snapshots',
                   value:
-                    statusSummaryQuery.data?.history_counts.ranking_snapshots ?? rankingSnapshotsQuery.data?.snapshots.length ?? '—'
+                    safeStatus?.history_counts.ranking_snapshots ?? (rankingSnapshotsQuery.data?.run_id === runId ? safeRankingSnapshots.length : '—')
                 },
                 {
                   label: 'Race snapshots',
-                  value: statusSummaryQuery.data?.history_counts.race_snapshots ?? raceSnapshotsQuery.data?.snapshots.length ?? '—'
+                  value: safeStatus?.history_counts.race_snapshots ?? (raceSnapshotsQuery.data?.run_id === runId ? safeRaceSnapshots.length : '—')
                 }
               ]}
             />
@@ -175,30 +241,32 @@ export function RunDiagnosticsPage(): JSX.Element {
         {finalsSummaryQuery.error && !isApiNotFound(finalsSummaryQuery.error) && (
           <p className="error">Failed to load Finals summary: {formatApiError(finalsSummaryQuery.error)}</p>
         )}
-        {finalsSummaryQuery.data && (
+        {finalsMismatch && <p role="alert" className="error">Finals summary contains mismatched Run or season data. Its status and inspection links are hidden.</p>}
+        {rolloverMismatch && <p role="alert" className="error">Rollover summary belongs to another Run. Its result and inspection link are hidden.</p>}
+        {safeFinals && (
           <MetadataList
             items={[
               {
                 label: 'Finals qualification',
-                value: finalsSummaryQuery.data.qualification ? 'Available' : 'Not generated yet'
+                value: safeFinals.qualification ? 'Available' : 'Not generated yet'
               },
-              { label: 'Finals result', value: finalsSummaryQuery.data.result ? 'Available' : 'Not simulated yet' }
+              { label: 'Finals result', value: safeFinals.result ? 'Available' : 'Not simulated yet' }
             ]}
           />
         )}
-        {!finalsSummaryQuery.data && isApiNotFound(finalsSummaryQuery.error) && (
+        {!safeFinals && isApiNotFound(finalsSummaryQuery.error) && (
           <EmptyState message="No Finals summary available for this run." />
         )}
 
-        {latestRolloverQuery.data && (
+        {safeRollover && (
           <MetadataList
             items={[
-              { label: 'Latest rollover to season', value: latestRolloverQuery.data.rollover.to_season },
-              { label: 'Transitioned players', value: latestRolloverQuery.data.rollover.transitioned_players }
+              { label: 'Latest rollover to season', value: safeRollover.rollover.to_season },
+              { label: 'Transitioned players', value: safeRollover.rollover.transitioned_players }
             ]}
           />
         )}
-        {!latestRolloverQuery.data && isApiNotFound(latestRolloverQuery.error) && (
+        {!safeRollover && isApiNotFound(latestRolloverQuery.error) && (
           <EmptyState message="No rollover has been executed for this run yet." />
         )}
         {latestRolloverQuery.error && !isApiNotFound(latestRolloverQuery.error) && (
@@ -214,6 +282,7 @@ export function RunDiagnosticsPage(): JSX.Element {
         {lineageQuery.error && !isApiNotFound(lineageQuery.error) && (
           <p className="error">Failed to load run lineage: {formatApiError(lineageQuery.error)}</p>
         )}
+        {lineageMismatch && <p role="alert" className="error">Lineage belongs to another Run. Child count and season-chain inspection link are hidden.</p>}
         {sourceQuery.data && (
           <CompactSummaryCard
             items={[
@@ -226,15 +295,20 @@ export function RunDiagnosticsPage(): JSX.Element {
                   'No parent run'
                 )
               },
-              { label: 'Child run count', value: lineageQuery.data?.lineage.children.length ?? 0 }
+              { label: 'Child run count', value: safeLineage?.lineage.children.length ?? '—' }
             ]}
           />
         )}
         {!sourceQuery.data && isApiNotFound(sourceQuery.error) && <EmptyState message="No source metadata available." />}
-        {!lineageQuery.data && isApiNotFound(lineageQuery.error) && <EmptyState message="No lineage metadata available." />}
+        {!safeLineage && isApiNotFound(lineageQuery.error) && <EmptyState message="No lineage metadata available." />}
       </SectionCard>
 
       <SectionCard title="Recent activity">
+        {(eventsMismatch || rankingsMismatch || racesMismatch) && (
+          <p role="alert" className="error">
+            History response belongs to another Run. Unrelated artifacts and inspection links are hidden.
+          </p>
+        )}
         <p>
           <Link to={`/runs/${encodeURIComponent(runId)}/activity`}>Open aggregated run activity feed</Link>
         </p>
@@ -246,7 +320,9 @@ export function RunDiagnosticsPage(): JSX.Element {
                 ? 'Loading...'
                 : eventsQuery.error
                   ? `Error: ${formatApiError(eventsQuery.error)}`
-                  : latestCompletedEvent
+                  : eventsMismatch
+                    ? 'Run mismatch'
+                    : latestCompletedEvent
                     ? (
                         <>
                           Available —{' '}
@@ -263,7 +339,9 @@ export function RunDiagnosticsPage(): JSX.Element {
                 ? 'Loading...'
                 : rankingSnapshotsQuery.error
                   ? `Error: ${formatApiError(rankingSnapshotsQuery.error)}`
-                  : latestRankingSnapshot
+                  : rankingsMismatch
+                    ? 'Run mismatch'
+                    : latestRankingSnapshot
                     ? (
                         <>
                           Available —{' '}
@@ -280,7 +358,9 @@ export function RunDiagnosticsPage(): JSX.Element {
                 ? 'Loading...'
                 : raceSnapshotsQuery.error
                   ? `Error: ${formatApiError(raceSnapshotsQuery.error)}`
-                  : latestRaceSnapshot
+                  : racesMismatch
+                    ? 'Run mismatch'
+                    : latestRaceSnapshot
                     ? (
                         <>
                           Available —{' '}
@@ -295,11 +375,12 @@ export function RunDiagnosticsPage(): JSX.Element {
         />
         <PreviewListCard
           title="Recent events"
-          subtitle="Shows latest events in API order."
+          subtitle="Shows the three newest persisted events by sequence."
           isLoading={eventsQuery.isLoading}
           loadingText="Loading recent events..."
-          errorText={eventsQuery.error ? `Failed to load events: ${formatApiError(eventsQuery.error)}` : undefined}
-          items={(eventsQuery.data?.events ?? []).slice(0, 3)}
+          errorText={eventsMismatch ? 'Event history belongs to a different Run.' :
+            eventsQuery.error ? `Failed to load events: ${formatApiError(eventsQuery.error)}` : undefined}
+          items={safeEvents.slice().sort((a, b) => b.event_sequence - a.event_sequence).slice(0, 3)}
           emptyText="No events are available yet."
           listAriaLabel="Diagnostics recent events"
           getKey={(event) => event.event_id}
@@ -319,11 +400,11 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Finals qualification',
               value: finalsSummaryQuery.isLoading
                 ? 'Loading...'
-                : finalsSummaryQuery.error
-                  ? isApiNotFound(finalsSummaryQuery.error)
+                : finalsSummaryQuery.error || finalsMismatch
+                  ? finalsMismatch ? 'Error' : isApiNotFound(finalsSummaryQuery.error)
                     ? 'Missing'
                     : 'Error'
-                  : finalsSummaryQuery.data?.qualification
+                  : safeFinals?.qualification
                     ? 'Available'
                     : 'None yet'
             },
@@ -331,11 +412,11 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Finals result',
               value: finalsSummaryQuery.isLoading
                 ? 'Loading...'
-                : finalsSummaryQuery.error
-                  ? isApiNotFound(finalsSummaryQuery.error)
+                : finalsSummaryQuery.error || finalsMismatch
+                  ? finalsMismatch ? 'Error' : isApiNotFound(finalsSummaryQuery.error)
                     ? 'Missing'
                     : 'Error'
-                  : finalsSummaryQuery.data?.result
+                  : safeFinals?.result
                     ? 'Available'
                     : 'None yet'
             },
@@ -343,23 +424,23 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Latest rollover',
               value: latestRolloverQuery.isLoading
                 ? 'Loading...'
-                : latestRolloverQuery.error
-                  ? isApiNotFound(latestRolloverQuery.error)
+                : latestRolloverQuery.error || rolloverMismatch
+                  ? rolloverMismatch ? 'Error' : isApiNotFound(latestRolloverQuery.error)
                     ? 'Missing'
                     : 'Error'
-                  : latestRolloverQuery.data?.rollover
+                  : safeRollover?.rollover
                     ? 'Available'
                     : 'None yet'
             },
             { label: 'Source metadata', value: artifactAvailability({ isLoading: sourceQuery.isLoading, error: sourceQuery.error, availableLabel: sourceQuery.data ? 'Available' : '', noneLabel: 'None yet' }) },
-            { label: 'Lineage metadata', value: artifactAvailability({ isLoading: lineageQuery.isLoading, error: lineageQuery.error, availableLabel: lineageQuery.data ? 'Available' : '', noneLabel: 'None yet' }) },
+            { label: 'Lineage metadata', value: artifactAvailability({ isLoading: lineageQuery.isLoading, error: lineageMismatch ? new Error('Run mismatch') : lineageQuery.error, availableLabel: safeLineage ? 'Available' : '', noneLabel: 'None yet' }) },
             {
               label: 'Events',
               value: eventsQuery.isLoading
                 ? 'Loading...'
-                : eventsQuery.error
+                : eventsQuery.error || eventsMismatch
                   ? 'Error'
-                  : (eventsQuery.data?.events.length ?? 0) > 0
+                  : safeEvents.length > 0
                     ? 'Available'
                     : 'None yet'
             },
@@ -367,9 +448,9 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Ranking snapshots',
               value: rankingSnapshotsQuery.isLoading
                 ? 'Loading...'
-                : rankingSnapshotsQuery.error
+                : rankingSnapshotsQuery.error || rankingsMismatch
                   ? 'Error'
-                  : (rankingSnapshotsQuery.data?.snapshots.length ?? 0) > 0
+                  : safeRankingSnapshots.length > 0
                     ? 'Available'
                     : 'None yet'
             },
@@ -377,9 +458,9 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Race snapshots',
               value: raceSnapshotsQuery.isLoading
                 ? 'Loading...'
-                : raceSnapshotsQuery.error
+                : raceSnapshotsQuery.error || racesMismatch
                   ? 'Error'
-                  : (raceSnapshotsQuery.data?.snapshots.length ?? 0) > 0
+                  : safeRaceSnapshots.length > 0
                     ? 'Available'
                     : 'None yet'
             }
@@ -417,32 +498,32 @@ export function RunDiagnosticsPage(): JSX.Element {
               </Link>
             </li>
           ) : null}
-          {finalsSummaryQuery.data?.qualification || finalsSummaryQuery.data?.result ? (
+          {safeFinals?.qualification || safeFinals?.result ? (
             <li>
               <Link to={finalsInspectionRoute}>
-                {finalsSummaryQuery.data?.result
+                {safeFinals?.result
                   ? 'Inspect Finals result detail (result available)'
                   : 'Inspect Finals qualification detail (qualification available, result pending)'}
               </Link>
             </li>
           ) : null}
-          {latestRolloverQuery.data?.rollover ? (
+          {safeRollover?.rollover ? (
             <li>
               <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>Inspect latest rollover details</Link>
             </li>
           ) : null}
           {hasLineageChildren ? (
             <li>
-              <Link to={`/runs/${encodeURIComponent(runId)}/season-chain`}>Inspect season chain ({lineageQuery.data?.lineage.children.length} child run(s))</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/season-chain`}>Inspect season chain ({safeLineage?.lineage.children.length} child run(s))</Link>
             </li>
           ) : null}
           {!latestCompletedEvent &&
           !latestRankingSnapshot &&
           !latestRaceSnapshot &&
           !(nextPlannedEvent && nextPlannedWeek !== null) &&
-          !latestRolloverQuery.data?.rollover &&
+          !safeRollover?.rollover &&
           !hasLineageChildren &&
-          !(finalsSummaryQuery.data?.qualification || finalsSummaryQuery.data?.result) ? (
+          !(safeFinals?.qualification || safeFinals?.result) ? (
             <li>
               <span className="status">No targeted inspection links yet. Use quick navigation below.</span>
             </li>

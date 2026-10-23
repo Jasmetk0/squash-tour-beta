@@ -553,6 +553,34 @@ describe('RunDiagnosticsPage', () => {
     expect(screen.getByRole('link', { name: 'Race snapshots' })).toHaveAttribute('href', '/runs/run-a/snapshots/race')
   })
 
+  it.each([
+    { caseName: 'season state from a different season', runIndex: 0, stateIndex: 0, stateSeason: 2029, eventSeason: 2029 },
+    { caseName: 'stale next-event index', runIndex: 1, stateIndex: 0, stateSeason: 2028, eventSeason: 2028 },
+    { caseName: 'planned event from another season', runIndex: 0, stateIndex: 0, stateSeason: 2028, eventSeason: 2029 }
+  ])('hides current-week links for $caseName', async ({runIndex, stateIndex, stateSeason, eventSeason}) => {
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2028, seed: 11, next_event_index: runIndex,
+        total_events: 24, completed_event_ids: [] },
+      season_state: {
+        season: stateSeason, next_event_index: stateIndex, completed_event_ids: [],
+        ordered_events: [{event_id: 'STALE_EVENT', season: eventSeason, week: 99,
+          tour: 'WORLD', category: 'GOLD', template_id: 'STALE'}]
+      }
+    })
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Run calendar and progress disagree. Current-week links are hidden.'
+    )
+    expect(screen.getByText('Week Detail (current week unavailable)')).toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: /Inspect current week detail/})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Week Detail (current week)'})).not.toBeInTheDocument()
+    expect(screen.queryByText(/STALE_EVENT/)).not.toBeInTheDocument()
+    expect(screen.getByText('6 / 24')).toBeInTheDocument()
+    expect(screen.getByRole('link', {name: 'Inspect latest completed event (E5)'}))
+      .toHaveAttribute('href', '/runs/run-a/events/E5')
+  })
+
   it('includes a targeted week detail quick-navigation link when next planned week is available', async () => {
     api.getRun.mockResolvedValueOnce({
       run: { run_id: 'run-a', season: 2028, seed: 11, next_event_index: 0, total_events: 24, completed_event_ids: [] },

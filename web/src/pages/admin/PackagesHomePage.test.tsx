@@ -84,12 +84,14 @@ describe('source-backed Packages frontend',()=>{
     const search=screen.getByRole('searchbox',{name:'Hledání'})
     await userEvent.type(search,'empty')
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package origin'}),'custom')
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package catalog sort'}),'countries')
     expect(screen.getByText('Žádný evidovaný balíček neodpovídá filtru.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('link',{name:'Open another category'}))
     expect(await screen.findByRole('heading',{name:'Svět'})).toBeInTheDocument()
     expect(screen.getByRole('searchbox',{name:'Hledání'})).toHaveValue('')
     expect(screen.getByRole('combobox',{name:'Package origin'})).toHaveValue('any')
     expect(screen.getByRole('combobox',{name:'Package status'})).toHaveValue('any')
+    expect(screen.getByRole('combobox',{name:'Package catalog sort'})).toHaveValue('source')
     expect(screen.getByText('Demo World')).toBeInTheDocument()
     expect(screen.getByText('Empty World')).toBeInTheDocument()
     expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
@@ -162,6 +164,29 @@ describe('source-backed Packages frontend',()=>{
     expect(screen.getByText('České země')).toBeInTheDocument()
     expect(screen.getByText('Empty World')).toBeInTheDocument()
     expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
+  })
+
+  it('sorts a read-only copy of the package catalog by name or country count',async()=>{
+    api.listWorldPackages.mockResolvedValue({packages:[
+      {...world,world_id:'alpha',name:'Alpha World',country_count:2},
+      {...world,world_id:'zeta',name:'Zeta World',country_count:8},
+      empty
+    ]})
+    mount('/admin/packages/all')
+    expect(await screen.findByText('Alpha World')).toBeInTheDocument()
+    const catalog=screen.getByRole('list',{name:'World package catalog'})
+    const names=()=>within(catalog).getAllByRole('listitem').map(el=>el.querySelector('strong')?.textContent)
+    expect(names()).toEqual(['Alpha World','Zeta World','Empty World'])
+    const sorter=screen.getByRole('combobox',{name:'Package catalog sort'})
+    await userEvent.selectOptions(sorter,'name')
+    expect(names()).toEqual(['Alpha World','Empty World','Zeta World'])
+    await userEvent.selectOptions(sorter,'countries')
+    expect(names()).toEqual(['Zeta World','Alpha World','Empty World'])
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(sorter).toHaveValue('countries')
+    expect(names()).toEqual(['Zeta World','Alpha World','Empty World'])
+    expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
+    expect(api.getWorldPackage).not.toHaveBeenCalled()
   })
 
   it('distinguishes a filtered-out inventory from a truly empty category',async()=>{

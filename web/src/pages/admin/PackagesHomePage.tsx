@@ -128,9 +128,10 @@ export function PackagesListPage():JSX.Element {
   const resolvedCategory=pathname==='/admin/packages/all'?'all':categoryId
   const {language}=useLanguage(),cs=language==='cs'
   const [search,setSearch]=useState(''),[origin,setOrigin]=useState('any'),[status,setStatus]=useState('any')
+  const [sort,setSort]=useState<'source'|'name'|'countries'>('source')
   // The router may reuse this list when selecting another source category.
   // Do not let stale local filters hide a different category's inventory.
-  useEffect(()=>{setSearch('');setOrigin('any');setStatus('any')},[resolvedCategory])
+  useEffect(()=>{setSearch('');setOrigin('any');setStatus('any');setSort('source')},[resolvedCategory])
   const cat:PackageFilter|null=resolvedCategory==='all'||packageCategories.some(c=>c===resolvedCategory) ? resolvedCategory as PackageFilter : null
   const registrySupported = cat === 'all' || cat === 'world' || cat === 'countries'
   // Unsupported categories must not make a misleading World-registry request.
@@ -142,6 +143,9 @@ export function PackagesListPage():JSX.Element {
   const shown=members.filter(item=>(origin==='any'||(origin==='custom'?item.editable:!item.editable))
     &&(status==='any'||item.status===status)
     &&[item.key,item.name,item.description].some(s=>normalizeCatalogSearch(s).includes(searchTerm)))
+    .sort((a,b)=>sort==='name'
+      ? a.name.localeCompare(b.name,cs?'cs-CZ':'en-US')||a.key.localeCompare(b.key)
+      : sort==='countries' ? b.countryCount-a.countryCount||a.key.localeCompare(b.key) : 0)
   return <section className="panel package-index">
     <p><Link to="/admin/packages">← {cs?'Kategorie':'Categories'}</Link></p>
     <div className="page-intro"><h2>{cat==='all'?(cs?'Všechny balíčky':'All packages'):categories[cat][language]}</h2>
@@ -150,12 +154,17 @@ export function PackagesListPage():JSX.Element {
       <label>{cs?'Hledání':'Search'}<input type="search" value={search} onChange={e=>setSearch(e.target.value)} /></label>
       <label>{cs?'Typ přístupu':'Access type'}<select aria-label="Package origin" value={origin} onChange={e=>setOrigin(e.target.value)}><option value="any">{cs?'Vše':'All'}</option><option value="custom">{cs?'Vlastní':'Custom'}</option><option value="protected">{cs?'Chráněné':'Protected'}</option></select></label>
       <label>{cs?'Stav':'Status'}<select aria-label="Package status" value={status} onChange={e=>setStatus(e.target.value)}><option value="any">{cs?'Vše':'All'}</option><option value="active">{cs ? "Aktivní" : "Active"}</option><option value="archived">{cs ? "Archivované" : "Archived"}</option></select></label>
+      <label>{cs?'Řadit balíčky':'Sort packages'}<select aria-label="Package catalog sort" value={sort} onChange={e=>setSort(e.target.value as typeof sort)}>
+        <option value="source">{cs?'Původní pořadí':'Source order'}</option>
+        <option value="name">{cs?'Podle názvu A–Z':'By name A–Z'}</option>
+        <option value="countries">{cs?'Podle počtu zemí sestupně':'By country count descending'}</option>
+      </select></label>
     </div>}
     {!registrySupported && <p role="status" className="status">{cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.'}</p>}
     {registrySupported && query.isPending && <p role="status">{cs?'Načítám…':'Loading…'}</p>}
     {registrySupported && query.isError && <><p role="alert" className="error">{cs ? 'Registr balíčků se nepodařilo načíst: ' : 'Package registry failed to load: '}{formatApiError(query.error)}</p><RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} /></>}
     {registrySupported && query.isSuccess && <><p className="status">{registrySupported?shown.length+' / '+members.length:(cs?'Samostatný registr této kategorie zatím není dostupný.':'No independent registry for this category yet.')}</p>
-      {registrySupported && shown.length ? <ul className="package-index-list">{shown.map(item=><PackageRow key={item.key} item={item}/>)}</ul>
+      {registrySupported && shown.length ? <ul className="package-index-list" aria-label="World package catalog">{shown.map(item=><PackageRow key={item.key} item={item}/>)}</ul>
       : <p>{registrySupported ? (members.length === 0 ? (cs ? 'Registr nevrátil žádný balíček v této kategorii.' : 'The registry returned no packages in this category.') : (cs?'Žádný evidovaný balíček neodpovídá filtru.':'No indexed packages match this filter.')) : (cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.')}</p>}
       {registrySupported && members.length>0 && shown.length===0 && (searchTerm || origin!=='any' || status!=='any')
         ? <button type="button" onClick={()=>{setSearch('');setOrigin('any');setStatus('any')}}>{cs?'Vymazat filtry':'Clear filters'}</button> : null}</>}

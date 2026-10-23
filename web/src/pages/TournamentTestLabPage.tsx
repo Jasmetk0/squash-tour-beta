@@ -49,25 +49,27 @@ function parseSeeds(value: string): number[] {
 }
 
 function CompatibilityPanel({ compatibility }: { compatibility: TournamentLabCompatibility }): JSX.Element {
-  return <SectionCard title="Compatibility diagnostics">
+  const {language} = useLanguage(), cs = language === 'cs'
+  return <SectionCard title={cs ? "Diagnostika kompatibility" : "Compatibility diagnostics"}>
     <SummaryPills items={[
-      { label: 'Runnable in Lab', value: compatibility.runnable_in_lab ? 'yes' : 'no' },
-      { label: 'Normal Run compatible', value: compatibility.normal_run_compatible ? 'yes' : 'no' },
-      { label: 'Run mutation', value: compatibility.run_mutation_performed ? 'yes' : 'no' },
-      { label: 'Live Run link', value: compatibility.run_live_link ? 'yes' : 'no' }
+      { label: cs ? 'Spustitelné v Labu' : 'Runnable in Lab', value: compatibility.runnable_in_lab ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
+      { label: cs ? 'Kompatibilní s běžným Runem' : 'Normal Run compatible', value: compatibility.normal_run_compatible ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
+      { label: cs ? 'Zápis do Runu' : 'Run mutation', value: compatibility.run_mutation_performed ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
+      { label: cs ? 'Živé propojení' : 'Live Run link', value: compatibility.run_live_link ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') }
     ]} />
-    <p className="status">Shared authorities:</p>
+    <p className="status">{cs ? "Sdílené autority:" : "Shared authorities:"}</p>
     <ul>{compatibility.shared_authorities.map((item) => <li key={item}><code>{item}</code></li>)}</ul>
     {compatibility.issues.length ? <table aria-label="Tournament Lab compatibility issues">
-      <thead><tr><th>Severity</th><th>Code</th><th>Explanation</th></tr></thead>
+      <thead><tr><th>{cs ? "Závažnost" : "Severity"}</th><th>{cs ? "Kód" : "Code"}</th><th>{cs ? "Vysvětlení" : "Explanation"}</th></tr></thead>
       <tbody>{compatibility.issues.map((issue) => <tr key={issue.code}>
         <td>{issue.severity}</td><td><code>{issue.code}</code></td><td>{issue.message}</td>
       </tr>)}</tbody>
-    </table> : <p className="status">No compatibility issues.</p>}
+    </table> : <p className="status">{cs ? "Nejsou hlášeny problémy s kompatibilitou." : "No compatibility issues."}</p>}
   </SectionCard>
 }
 
 function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.Element {
+  const {language} = useLanguage(), cs = language === 'cs'
   const firstRun = data.runs[0]
   const [statusFilter, setStatusFilter] = useState('all')
   const statuses = useMemo<string[]>(
@@ -78,10 +80,10 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
   const displayedMatches = firstRun?.match_results.filter(row => activeFilter === 'all' || row.status === activeFilter) ?? []
   return <>
     <CompatibilityPanel compatibility={data.compatibility} />
-    <SectionCard title="Replay identity">
+    <SectionCard title={cs ? "Identita opakování" : "Replay identity"}>
       <SummaryPills items={[
-        { label: 'Scenario', value: data.scenario_fingerprint.slice(0, 12) },
-        { label: 'Request', value: data.request_fingerprint.slice(0, 12) },
+        { label: cs ? 'Scénář' : 'Scenario', value: data.scenario_fingerprint.slice(0, 12) },
+        { label: cs ? 'Požadavek' : 'Request', value: data.request_fingerprint.slice(0, 12) },
         { label: 'Format authority', value: data.format_authority_fingerprint?.slice(0, 12) ?? 'not built' },
         { label: 'Draw input', value: data.draw_input_fingerprint?.slice(0, 12) ?? 'not built' },
         { label: 'Draw authority', value: data.draw_authority_fingerprint?.slice(0, 12) ?? 'not built' },
@@ -89,25 +91,25 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         { label: 'Group schedule', value: data.group_schedule_fingerprint?.slice(0, 12) ?? 'not built' }
       ]} />
     </SectionCard>
-    <SectionCard title="Batch diagnostics">
+    <SectionCard title={cs ? "Diagnostika dávky" : "Batch diagnostics"}>
       <SummaryPills items={[
-        { label: 'Runs', value: data.diagnostics.run_count },
-        { label: 'Completed', value: data.diagnostics.completed_run_count },
-        { label: 'Assertion failures', value: data.diagnostics.assertion_failure_count },
-        { label: 'Avg played matches', value: data.diagnostics.average_played_match_count.toFixed(1) }
+        { label: cs ? 'Běhy' : 'Runs', value: data.diagnostics.run_count },
+        { label: cs ? 'Dokončeno' : 'Completed', value: data.diagnostics.completed_run_count },
+        { label: cs ? 'Neúspěšné kontroly' : 'Assertion failures', value: data.diagnostics.assertion_failure_count },
+        { label: cs ? 'Průměr zápasů' : 'Avg played matches', value: data.diagnostics.average_played_match_count.toFixed(1) }
       ]} />
-      <p>Champions: {Object.entries(data.diagnostics.champions).map(([player, count]) => `${player}: ${count}`).join(' · ') || '—'}</p>
+      <p>{cs ? "Vítězové" : "Champions"}: {Object.entries(data.diagnostics.champions).map(([player, count]) => `${player}: ${count}`).join(' · ') || '—'}</p>
     </SectionCard>
-    {data.draw ? <SectionCard title="Canonical Main Draw">
+    {data.draw ? <SectionCard title={cs ? "Kanonický hlavní los" : "Canonical Main Draw"}>
       <SummaryPills items={[
-        { label: 'Bracket size', value: data.draw.main.bracket_size },
+        { label: cs ? 'Velikost pavouka' : 'Bracket size', value: data.draw.main.bracket_size },
         { label: 'Algorithm', value: data.draw.algorithm_version },
         { label: 'BYEs', value: data.draw.main.bye_slot_indexes.length },
         { label: 'Q sections', value: data.draw.qualification_sections?.length ?? (data.draw.qualification ? 1 : 0) },
-        { label: 'Nodes', value: data.draw.main.nodes.length }
+        { label: cs ? 'Uzly' : 'Nodes', value: data.draw.main.nodes.length }
       ]} />
       <table aria-label="Tournament Lab draw slots">
-        <thead><tr><th>Slot</th><th>Entrant</th><th>Player</th><th>Seed</th></tr></thead>
+        <thead><tr><th>{cs ? "Pozice" : "Slot"}</th><th>{cs ? "Účastník" : "Entrant"}</th><th>{cs ? "Hráč" : "Player"}</th><th>Seed</th></tr></thead>
         <tbody>{data.draw.main.slots.map((slot) => <tr key={slot.slot_index}>
           <td>{slot.slot_index}</td>
           <td>{slot.entrant_kind}</td>
@@ -116,9 +118,9 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         </tr>)}</tbody>
       </table>
     </SectionCard> : null}
-    {firstRun && (firstRun.qualification_results?.length ?? 0) > 0 ? <SectionCard title="Qualification progression">
+    {firstRun && (firstRun.qualification_results?.length ?? 0) > 0 ? <SectionCard title={cs ? "Průběh kvalifikace" : "Qualification progression"}>
       <table aria-label="Tournament Lab qualification results">
-        <thead><tr><th>Section</th><th>Winner</th><th>Played</th><th>BYE advances</th></tr></thead>
+        <thead><tr><th>{cs ? "Sekce" : "Section"}</th><th>{cs ? "Vítěz" : "Winner"}</th><th>{cs ? "Odehráno" : "Played"}</th><th>{cs ? "Postupy díky BYE" : "BYE advances"}</th></tr></thead>
         <tbody>{firstRun.qualification_results?.map((row) => <tr key={row.section_id}>
           <td>{row.section_id}</td>
           <td>{row.winner_player_id ?? '—'}</td>
@@ -127,10 +129,10 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         </tr>)}</tbody>
       </table>
     </SectionCard> : null}
-    {firstRun?.group_stage ? <SectionCard title="Group stage">
+    {firstRun?.group_stage ? <SectionCard title={cs ? "Skupinová fáze" : "Group stage"}>
       <SummaryPills items={[
-        { label: 'Match days', value: firstRun.group_stage.match_day_count },
-        { label: 'Group matches', value: firstRun.group_stage.match_results.length },
+        { label: cs ? 'Hrací dny' : 'Match days', value: firstRun.group_stage.match_day_count },
+        { label: cs ? 'Zápasy skupin' : 'Group matches', value: firstRun.group_stage.match_results.length },
         { label: 'Standings', value: firstRun.group_stage.standings ? 'resolved' : 'blocked' },
         { label: 'Hybrid bracket', value: firstRun.hybrid_knockout_bracket ? `${firstRun.hybrid_knockout_bracket.entrant_count} entrants` : 'none' }
       ]} />
@@ -141,7 +143,7 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         key={group.group_index}
         aria-label={`Tournament Lab group ${group.group_index} standings`}
       >
-        <thead><tr><th>Pos</th><th>Player</th><th>W</th><th>L</th><th>Pts</th><th>Games</th><th>Points</th></tr></thead>
+        <thead><tr><th>{cs ? "Pořadí" : "Pos"}</th><th>{cs ? "Hráč" : "Player"}</th><th>{cs ? "V" : "W"}</th><th>{cs ? "P" : "L"}</th><th>{cs ? "Body" : "Pts"}</th><th>{cs ? "Sety" : "Games"}</th><th>{cs ? "Míčky" : "Points"}</th></tr></thead>
         <tbody>{group.rows.map((row) => <tr key={row.player_id}>
           <td>{row.position}</td>
           <td>{row.player_id}</td>
@@ -153,26 +155,27 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         </tr>)}</tbody>
       </table>)}
     </SectionCard> : null}
-    {firstRun ? <SectionCard title="First batch run">
+    {firstRun ? <SectionCard title={cs ? "První běh dávky" : "First batch run"}>
       <SummaryPills items={[
-        { label: 'Match seed', value: firstRun.match_seed },
-        { label: 'Completed rounds', value: firstRun.completed_rounds },
+        { label: cs ? 'Seed zápasů' : 'Match seed', value: firstRun.match_seed },
+        { label: cs ? 'Dokončená kola' : 'Completed rounds', value: firstRun.completed_rounds },
         { label: 'Tournament complete', value: firstRun.tournament_complete ? 'yes' : 'no' },
-        { label: 'Champion', value: firstRun.champion_player_id ?? 'not resolved' },
-        { label: 'Played matches', value: firstRun.played_match_count },
+        { label: cs ? 'Vítěz' : 'Champion', value: firstRun.champion_player_id ?? (cs ? 'neurčeno' : 'not resolved') },
+        { label: cs ? 'Odehrané zápasy' : 'Played matches', value: firstRun.played_match_count },
         { label: 'Q sections resolved', value: firstRun.qualification_results?.length ?? 0 },
         { label: 'Group stage', value: firstRun.group_stage ? 'yes' : 'no' },
         { label: 'BYE advances', value: firstRun.bye_advance_count }
       ]} />
-      <label>Filter first-run matches by status
+      <label>{cs ? "Filtrovat zápasy prvního běhu podle stavu" : "Filter first-run matches by status"}
         <select aria-label="Tournament Lab match status filter" value={activeFilter} onChange={event => setStatusFilter(event.target.value)}>
-          <option value="all">All match statuses</option>
+          <option value="all">{cs ? "Všechny stavy" : "All match statuses"}</option>
           {statuses.map(status => <option key={status} value={status}>{status}</option>)}
         </select>
       </label>
-      <p className="status">Showing {displayedMatches.length} of {firstRun.match_results.length} first-run matches · Batch totals remain unchanged.</p>
+      <p role="status" className="status">{cs ? `Zobrazeno ${displayedMatches.length} z ${firstRun.match_results.length} zápasů prvního běhu` : `Showing ${displayedMatches.length} of ${firstRun.match_results.length} first-run matches`} · {cs ? "Souhrn dávky se filtrem nemění." : "Batch totals remain unchanged."}</p>
+      {firstRun.match_results.length === 0 ? <p className="status">{cs ? "První běh neobsahuje výsledky zápasů." : "No match results in the first run."}</p> : displayedMatches.length === 0 ? <p className="status">{cs ? "Zvolenému stavu neodpovídá žádný zápas." : "No matches match this status filter."}</p> : null}
       <table aria-label="Tournament Lab match results">
-        <thead><tr><th>Round</th><th>Node</th><th>Players</th><th>Status</th><th>Winner</th><th>Score</th><th>Rallies</th></tr></thead>
+        <thead><tr><th>{cs ? "Kolo" : "Round"}</th><th>{cs ? "Uzel" : "Node"}</th><th>{cs ? "Hráči" : "Players"}</th><th>{cs ? "Stav" : "Status"}</th><th>{cs ? "Vítěz" : "Winner"}</th><th>{cs ? "Skóre" : "Score"}</th><th>{cs ? "Výměny" : "Rallies"}</th></tr></thead>
         <tbody>{displayedMatches.map((row) => <tr key={row.node_id}>
           <td>{row.round_number}</td>
           <td>{row.node_id}</td>
@@ -184,7 +187,7 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         </tr>)}</tbody>
       </table>
       {firstRun.assertions.length ? <table aria-label="Tournament Lab assertions">
-        <thead><tr><th>Assertion</th><th>Status</th><th>Expected</th><th>Actual</th></tr></thead>
+        <thead><tr><th>{cs ? "Kontrola" : "Assertion"}</th><th>{cs ? "Stav" : "Status"}</th><th>{cs ? "Očekáváno" : "Expected"}</th><th>{cs ? "Skutečnost" : "Actual"}</th></tr></thead>
         <tbody>{firstRun.assertions.map((row) => <tr key={row.assertion}>
           <td>{row.assertion}</td><td>{row.status}</td><td>{row.expected}</td><td>{row.actual ?? '—'}</td>
         </tr>)}</tbody>

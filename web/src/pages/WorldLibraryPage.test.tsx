@@ -332,6 +332,12 @@ describe('built-in World cloning', () => {
     }
 
     expect(await screen.findByText('Clone Built-in World')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', {name: 'Review custom copy'}))
+    expect(screen.getByText(/World ID must start with a lowercase letter or digit/)).toBeInTheDocument()
+    switchLanguage('cs')
+    expect(screen.getByText(/ID musí začínat malým písmenem nebo číslicí/)).toBeInTheDocument()
+    expect(api.cloneWorldPackage).not.toHaveBeenCalled()
+    switchLanguage('en')
     fireEvent.change(screen.getByPlaceholderText('my_custom_world'), {target: {value: 'local_world'}})
     fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Original authored name'}})
     fireEvent.click(screen.getByRole('button', {name: 'Review custom copy'}))
@@ -417,6 +423,55 @@ describe('built-in World cloning', () => {
     expect(screen.queryByText('Úspěch:')).not.toBeInTheDocument()
     expect(screen.queryByRole('link', {name: /Otevřít detail nového/})).not.toBeInTheDocument()
     expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', expect.objectContaining({dry_run: true}))
+  })
+
+  it('keeps an in-flight preview and localizes a late mismatched response in the active language', async () => {
+    api.getWorldPackage.mockResolvedValue({
+      world_id: 'real_world', name: 'Original World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'immutable-source-fingerprint',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    })
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    let finish!: (response: unknown) => void
+    api.cloneWorldPackage.mockImplementation(() => new Promise<unknown>(resolve => { finish = resolve }))
+    const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
+      {initialEntries: ['/world/real_world']})
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}}})
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+    const switchLanguage = (language: 'cs' | 'en') => act(() => {
+      locale.language = language
+      for (const listener of [...locale.listeners]) listener()
+    })
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'local_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'My authored name'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Preview clone'}))
+    expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', {
+      new_world_id: 'local_world', name: 'My authored name',
+      description: 'Custom world cloned from Original World.', dry_run: true,
+    })
+    switchLanguage('cs')
+    expect(screen.getByLabelText('Popis')).toHaveValue('Custom world cloned from Original World.')
+    expect(screen.getByRole('button', {name: 'Náhled kopírování'})).toBeDisabled()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+
+    await act(async () => finish({
+      ok: true, dry_run: true, source_world_id: 'unrelated_world', new_world_id: 'local_world',
+      target_path: 'config/world_packages/custom/local_world',
+      created_files: [], package: null, validation: null, errors: [],
+    }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Odpověď nepatří kontrolované kopii.')
+    expect(screen.queryByText('Úspěch:')).not.toBeInTheDocument()
+    switchLanguage('en')
+    expect(screen.getByRole('alert')).toHaveTextContent('The response does not match the reviewed clone.')
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
   })
 
 })

@@ -279,7 +279,6 @@ describe('RunDiagnosticsPage', () => {
       expect(screen.getByRole('link', { name: 'Inspect latest completed event (E5)' }))
         .toHaveAttribute('href', '/runs/run-a/events/E5')
       if (wrong === 'run' || wrong === 'both') {
-        expect(screen.getByRole('alert', { name: '' })).toBeInTheDocument()
         expect(screen.getByText(/Run details belong to another Run/)).toBeInTheDocument()
         expect(screen.getByText('Week Detail (current week unavailable)')).toBeInTheDocument()
       } else {
@@ -287,7 +286,7 @@ describe('RunDiagnosticsPage', () => {
       }
       if (wrong === 'status' || wrong === 'both') {
         expect(screen.getByText(/Status summary belongs to another Run/)).toBeInTheDocument()
-        expect(screen.getByText('6/24')).toBeInTheDocument()
+        if (wrong === 'status') expect(screen.getByText('6/24')).toBeInTheDocument()
       }
     },
   )

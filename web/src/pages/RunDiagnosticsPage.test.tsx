@@ -204,6 +204,51 @@ describe('RunDiagnosticsPage', () => {
     },
   )
 
+  it.each(['events', 'ranking', 'race'] as const)(
+    'rejects %s history from another Run without exposing its inspection links',
+    async (history) => {
+      if (history === 'events') {
+        api.listEvents.mockResolvedValueOnce({ run_id: 'another-run', events: [
+          { event_sequence: 99, event_id: 'FOREIGN', season: 2030, week: 1,
+            template_id: null, tournament_result: { done: true } }
+        ] })
+      }
+      if (history === 'ranking') {
+        api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'another-run', snapshots: [
+          { snapshot_sequence: 99, snapshot_kind: 'WEEK', source_event_id: 'FOREIGN', payload: {} }
+        ] })
+      }
+      if (history === 'race') {
+        api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'another-run', snapshots: [
+          { snapshot_sequence: 99, snapshot_kind: 'WEEK', source_event_id: 'FOREIGN', payload: {} }
+        ] })
+      }
+
+      renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'History response belongs to another Run. Unrelated artifacts and inspection links are hidden.',
+      )
+      expect(screen.queryByRole('link', { name: /FOREIGN/ })).not.toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: /Seq 99/ })).not.toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: /Inspect latest.*FOREIGN/ })).not.toBeInTheDocument()
+      if (history === 'events') {
+        expect(screen.getByText('Event history belongs to a different Run.')).toBeInTheDocument()
+        expect(screen.queryByRole('list', { name: 'Diagnostics recent events' })).not.toBeInTheDocument()
+        expect(screen.getByText('Run mismatch')).toBeInTheDocument()
+        expect(screen.getByRole('link', { name: 'Inspect latest ranking snapshot (Seq 17)' }))
+          .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/17')
+      } else {
+        expect(screen.getByRole('link', { name: 'Inspect latest completed event (E5)' }))
+          .toHaveAttribute('href', '/runs/run-a/events/E5')
+        expect(screen.getByText('Run mismatch')).toBeInTheDocument()
+        const stillValidSnapshot = history === 'ranking' ? 'race' : 'ranking'
+        expect(screen.getByRole('link', {
+          name: `Inspect latest ${stillValidSnapshot} snapshot (Seq ${stillValidSnapshot === 'race' ? 14 : 17})`,
+        })).toBeInTheDocument()
+      }
+    },
+  )
+
   it('renders availability and artifact-state statuses', async () => {
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-availability/diagnostics')
 

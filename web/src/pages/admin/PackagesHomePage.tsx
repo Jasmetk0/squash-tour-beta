@@ -217,7 +217,10 @@ export function PackageWorldDetailPage():JSX.Element {
           <ul className="package-index-countries" aria-label="World package countries">{visibleCountries.map(c=>
             <li key={c.code}><Link to={source+'/countries/'+encodeURIComponent(c.code)}>{c.name} ({c.code})</Link>
               <span className="status">{c.region} · {c.population.toLocaleString(cs ? 'cs-CZ' : 'en-US')}</span></li>)}</ul>
-          {countries.length === 0 ? <p role="status">{cs ? "V balíčku nejsou žádné země." : "This package contains no countries."}</p> : visibleCountries.length === 0 ? <p role="status">{cs ? "Žádná země neodpovídá hledání." : "No country matches the search."}</p> : null}</>}
+          {countries.length === 0 ? <p role="status">{cs ? "V balíčku nejsou žádné země." : "This package contains no countries."}</p> : visibleCountries.length === 0 ? <>
+            <p role="status">{cs ? "Žádná země neodpovídá hledání." : "No country matches the search."}</p>
+            <button type="button" onClick={()=>setCountrySearch('')}>{cs?'Vymazat hledání zemí':'Clear country search'}</button>
+          </> : null}</>}
         <h3>{cs?'Geografie':'Geography'}</h3>
         {geoQuery.isPending&&<p role="status">{cs ? "Načítám geografii…" : "Loading geography…"}</p>}
         {geoQuery.isError&&<><p className="error" role="alert">{cs ? 'Geografii se nepodařilo načíst: ' : 'Failed to load geography: '}{formatApiError(geoQuery.error)}</p><RetryRead cs={cs} what="geography" fetching={geoQuery.isFetching} onRetry={() => { void geoQuery.refetch() }} /></>}
@@ -247,7 +250,10 @@ export function PackageWorldDetailPage():JSX.Element {
               <p>{check.message}</p><small className="status">{check.path}{check.field&&' · '+check.field}</small>
               {country&&<p><Link to={source+'/countries/'+encodeURIComponent(country)}>{cs?'Otevřít dotčenou zemi':'Open affected country'}: {country} →</Link></p>}</li>
           })}</ul>
-          {validation.checks.length === 0 ? <p role="status">{cs ? "Kontrola nevrátila žádné jednotlivé záznamy." : "Validation returned no individual checks."}</p> : visibleChecks.length===0 ? <p role="status">{cs ? "Zvolenému filtru neodpovídají žádné záznamy kontroly." : "No validation checks match this filter."}</p> : null}
+          {validation.checks.length === 0 ? <p role="status">{cs ? "Kontrola nevrátila žádné jednotlivé záznamy." : "Validation returned no individual checks."}</p> : visibleChecks.length===0 ? <>
+            <p role="status">{cs ? "Zvolenému filtru neodpovídají žádné záznamy kontroly." : "No validation checks match this filter."}</p>
+            <button type="button" onClick={()=>setSeverityFilter('all')}>{cs?'Zobrazit všechny kontroly':'Show all checks'}</button>
+          </> : null}
           {countriesQuery.isError&&<p className="status">{cs?'Odkazy na jednotlivé země nejsou dostupné.':'Country links cannot be verified.'}</p>}
         </>}
       </article>}

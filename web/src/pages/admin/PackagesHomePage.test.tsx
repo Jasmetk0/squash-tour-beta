@@ -178,6 +178,13 @@ describe('source-backed Packages frontend',()=>{
     await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
     expect(screen.getByRole('searchbox',{name:'Search countries, codes or regions'})).toHaveValue(' stredni ')
     expect(screen.getByRole('link',{name:'Česko (CZE)'})).toBeInTheDocument()
+    const englishSearch=screen.getByRole('searchbox',{name:'Search countries, codes or regions'})
+    await userEvent.clear(englishSearch)
+    await userEvent.type(englishSearch,'not-an-existing-country')
+    expect(screen.getByText('No country matches the search.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Clear country search'}))
+    expect(englishSearch).toHaveValue('')
+    expect(screen.getByRole('link',{name:'United States (USA)'})).toBeInTheDocument()
     expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
   })
 
@@ -249,6 +256,9 @@ describe('source-backed Packages frontend',()=>{
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package validation severity filter'}),'error')
     expect(screen.getByText('Zvolenému filtru neodpovídají žádné záznamy kontroly.')).toBeInTheDocument()
     expect(screen.queryByText('Kontrola nevrátila žádné jednotlivé záznamy.')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Zobrazit všechny kontroly'}))
+    expect(screen.getByRole('combobox',{name:'Package validation severity filter'})).toHaveValue('all')
+    expect(screen.getByText('Country detail to inspect')).toBeInTheDocument()
     expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
   })
 

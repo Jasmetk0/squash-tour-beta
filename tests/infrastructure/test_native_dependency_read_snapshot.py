@@ -238,3 +238,19 @@ def test_stale_loaded_owner_cannot_certify_changed_actual_origin(source):
         assert not owner.read_only
         with pytest.raises(ValueError, match='Branch owner differs'):
             actual_dependency_signature(session, row)
+
+
+def test_driver_rollback_from_another_context_invalidates_connection_snapshot(source):
+    from concurrent.futures import ThreadPoolExecutor
+    _engine, factory = source
+    with factory() as session, native_read_proof_scope():
+        session.execute(text('BEGIN IMMEDIATE'))
+        driver = session.connection().connection.driver_connection
+        row = session.get(BranchSavedRevisionModel, 'saved')
+        first = actual_dependency_signature(session, row)
+        driver.execute('SAVEPOINT other_context')
+        driver.execute("UPDATE run_branches SET read_only=1 WHERE branch_id='branch'")
+        assert actual_dependency_signature(session, row) != first
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            executor.submit(driver.execute, 'ROLLBACK TO SAVEPOINT other_context').result()
+        assert actual_dependency_signature(session, row) == first

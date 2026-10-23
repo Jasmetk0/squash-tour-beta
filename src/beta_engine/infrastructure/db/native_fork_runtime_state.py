@@ -59,17 +59,19 @@ def _physical_read_cache(session):
     if not sqlalchemy_connection.info.get("native_dependency_trace_installed"):
         # total_changes does not change on ROLLBACK TO. Observe SQLite itself so
         # direct driver savepoints/transactions cannot reuse an earlier snapshot.
+        connection_info = sqlalchemy_connection.info
         def trace(statement):
-            current = _proofs.get()
-            if current is not None and statement.lstrip()[:6].upper() != "SELECT":
-                key = ("native_dependency_sql_generation", connection)
-                current[key] = current.get(key, 0) + 1
+            if statement.lstrip()[:6].upper() != "SELECT":
+                # Connection-local, including calls from another Python context.
+                # Do not retain SQL text, parameters, rows or request objects.
+                connection_info["native_dependency_sqlite_generation"] = connection_info.get("native_dependency_sqlite_generation", 0) + 1
         connection.set_trace_callback(trace)
         sqlalchemy_connection.info["native_dependency_trace_installed"] = True
     snapshot = (
         session.get_transaction(),
         session.get_nested_transaction(), connection, connection.total_changes,
         memo.get(("native_dependency_sql_generation", connection), 0),
+        sqlalchemy_connection.info.get("native_dependency_sqlite_generation", 0),
     )
     key = ("native_dependency_physical_rows", session)
     previous = memo.get(key)

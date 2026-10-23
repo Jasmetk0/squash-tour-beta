@@ -64,7 +64,9 @@ def wait(server, task_id, *, allow_failed=False):
         if task["state"] in {"awaiting_operator", "paused", "failed", "target_reached", "complete", "stopped"} and task["lease_expires_at_unix"] is None:
             assert allow_failed or task["state"] != "failed", task
             return task
-        time.sleep(0.15)
+        # The Admin polls every two seconds. Keep this faster than the UI without
+        # saturating the same worker with repeated full-size progress reads.
+        time.sleep(1)
     raise AssertionError(task)
 
 

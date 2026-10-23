@@ -74,6 +74,17 @@ UTF-8 serialization; parent/task/terminal-summary fingerprints retain their own
 historical serialization. Czech audit labels and Unicode command IDs exercise
 both contracts through actual execution and SQLite reopen, without rewriting data.
 
+Native dependency reads reuse exact physical rows only within one explicit,
+unchanged SQLite transaction. A new transaction, own SQL write or savepoint
+rollback invalidates that read reuse; pending ORM changes disable it. Complete
+current-HEAD proofs have bounded retention separate from historical proofs, so
+walking old revisions cannot evict the current proof. Reuse still requires the
+entire actual graph of bytes, owners, origins and source heads to match. Neither
+cache accepts a self-declared component hash as source authority.
+Historical proofs retain at most 256 compact SHA-256 digests of that complete
+verified graph, and at most 16 current Branch heads. These are ephemeral proof
+keys; persisted fingerprints, payloads and replay rules are unchanged.
+
 An independent native Branch aggregate is explicitly rejected by legacy sporting
 and Full Simulation writers, even if W/offset/start/horizon numerically equal
 reference FAX. Existing v1 historical execution remains available unchanged.
@@ -116,6 +127,11 @@ results already executed (earlier source-tree states; not final-head claims):
 | Legacy boundary Chromium using the actual Admin review response, with all sporting assertions preserved | passed locally, 134.90 s; latest-head hosted rerun required |
 | Rehashed unsupported Tour version, read non-mutation, target Save and restart regression | 1 passed, 46.94 s |
 | Czech audit / Unicode task ID, actual original and native-fork execution, summary, Save/restore/horizon/restart | 2 passed, 117.38 s; pre-fix mismatch reproduced through real HTTP and retained as failed evidence |
+| c99cef0ea long-calendar candidate | W80 exceeded the unchanged 90 s step deadline near W40; W52/W61 near W45; failed actual SQLite fixtures retained |
+| Physical dependency snapshot, rehashed bytes, savepoint rollback, new snapshot and head-proof retention plus native format guards | 37 passed, 1.54 s (storage contracts, not sporting execution) |
+| Captured actual W80 source at the failed boundary | cold full native context 76.64 → 19.72 s; warm 3.72 s; profiling with all source/replay checks retained |
+| Native HTTP/SQLite core after transaction-scoped read reuse and head-proof retention | 5 passed, 353.00 s; compact historical proof retention verified separately afterward |
+| Preserved legacy task/lease/summary after dependency read correction | 14 passed, 78.20 s |
 | Closing Ranking unit contracts plus original task-calendar regressions | 18 passed, 2.33 s |
 | Focused existing/new frontend contracts | 121 passed, 7.81 s (five files; API mocks/component contracts, not sporting integration) |
 | Native seed/action/audit integrity, Closing Ranking and original calendar contracts | 35 passed, 7.23 s |
@@ -158,3 +174,11 @@ triggered by its UI button, rather than issuing a duplicate synchronous GET thro
 the separate API context after process death/restart. It retains every sporting,
 target, CS/EN, Saved and recovery assertion, and records unexpected backend exits.
 No HTTP failure/status or sporting assertion is retried or suppressed by this change.
+
+The long-calendar performance correction was developed against the failed W80
+SQLite artifact and its exact original task, continuing through normal audited
+Save/resume APIs. No accepted match, transition or closure result was inserted.
+The integration wait still has its original 90-second deadline and now polls once
+per second (the actual Admin polls every two seconds), avoiding artificial reader
+CPU saturation while the worker runs. Actual full-calendar latest-head acceptance
+remains required; profiling or partial recovered continuation is not a matrix pass.

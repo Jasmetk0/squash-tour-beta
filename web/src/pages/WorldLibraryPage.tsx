@@ -199,48 +199,71 @@ function DetailRow({ label, value }: { label: string, value: ReactNode }): JSX.E
 
 
 function CloneResultCard({ result }: { result: WorldPackageCloneResponse }): JSX.Element {
+  const { language } = useLanguage()
+  const cs = language === 'cs'
   return (
-    <div className={result.ok && !result.dry_run ? 'status' : result.ok ? 'status' : 'error'} aria-label="Clone result">
-      {result.ok && result.dry_run && <p><strong>Preview only:</strong> no files were written.</p>}
-      {result.ok && !result.dry_run && <p><strong>Success:</strong> Custom World package created.</p>}
-      <DetailRow label="Target path" value={<code>{result.target_path}</code>} />
-      <DetailRow label="Source world ID" value={<code>{result.source_world_id}</code>} />
-      <DetailRow label="New world ID" value={<code>{result.new_world_id}</code>} />
-      <DetailRow label="Dry run" value={String(result.dry_run)} />
-      <p><strong>Created files:</strong></p>
-      <ul>
+    <div className={result.ok ? 'status' : 'error'} aria-label={cs ? 'Výsledek kopírování' : 'Clone result'}>
+      {result.ok && result.dry_run && <p role="status"><strong>{cs ? 'Pouze náhled:' : 'Preview only:'}</strong> {cs ? 'Žádné soubory nebyly zapsány.' : 'no files were written.'}</p>}
+      {result.ok && !result.dry_run && <p role="status"><strong>{cs ? 'Úspěch:' : 'Success:'}</strong> {cs ? 'Vlastní World Package byl vytvořen.' : 'Custom World package created.'}</p>}
+      {!result.ok && <p role="alert"><strong>{cs
+        ? (result.dry_run ? 'Náhled se nezdařil:' : 'Kopírování se nezdařilo:')
+        : (result.dry_run ? 'Preview failed:' : 'Clone failed:')}</strong> {cs ? 'Vytvoření kopie nebylo potvrzeno.' : 'The clone was not confirmed as created.'}</p>}
+      <DetailRow label={cs ? 'Cílová cesta' : 'Target path'} value={<code>{result.target_path}</code>} />
+      <DetailRow label={cs ? 'ID zdrojového světa' : 'Source world ID'} value={<code>{result.source_world_id}</code>} />
+      <DetailRow label={cs ? 'Nové ID světa' : 'New world ID'} value={<code>{result.new_world_id}</code>} />
+      <DetailRow label={cs ? 'Režim náhledu' : 'Dry run'} value={result.dry_run ? (cs ? 'Ano' : 'Yes') : (cs ? 'Ne' : 'No')} />
+      <p><strong>{result.dry_run ? (cs ? 'Soubory uvedené v náhledu:' : 'Files listed in preview:') : result.ok ? (cs ? 'Vytvořené soubory:' : 'Created files:') : (cs ? 'Soubory uvedené v odpovědi:' : 'Files reported in response:')}</strong></p>
+      {result.created_files.length > 0 ? <ul>
         {result.created_files.map((file) => <li key={file}><code>{file}</code></li>)}
-      </ul>
+      </ul> : <p>{cs ? 'Žádné soubory nejsou uvedeny.' : 'No files listed.'}</p>}
       {result.errors.length > 0 && (
         <>
-          <p><strong>Clone errors:</strong></p>
+          <p><strong>{cs ? 'Chyby kopírování:' : 'Clone errors:'}</strong></p>
           <ul>
-            {result.errors.map((error, index) => <li key={`${error.field ?? 'root'}-${index}`}>{error.field ? `${error.field}: ` : ''}{error.message}</li>)}
+            {result.errors.map((error, index) => <li key={(error.field ?? 'root') + '-' + index}>{error.field ? error.field + ': ' : ''}{error.message}</li>)}
           </ul>
         </>
       )}
       {result.package && (
-        <div aria-label="Created package summary">
-          <h4>Created package</h4>
+        <div aria-label={cs ? 'Souhrn balíčku po kopírování' : 'Clone package summary'}>
+          <h4>{result.ok ? (result.dry_run ? (cs ? 'Náhled balíčku' : 'Package preview') : (cs ? 'Vytvořený balíček' : 'Created package')) : (cs ? 'Údaje balíčku (nepotvrzeno)' : 'Package details (unconfirmed)')}</h4>
           <DetailRow label="World ID" value={<code>{result.package.world_id}</code>} />
-          <DetailRow label="Type" value={result.package.type} />
-          <DetailRow label="Source" value={result.package.source} />
-          <DetailRow label="Counts" value={`${result.package.country_count} countries, ${result.package.continent_count} continents, ${result.package.region_count} regions, ${result.package.travel_region_count} travel regions`} />
-          <DetailRow label="Fingerprint" value={<code title={result.package.fingerprint}>{shortFingerprint(result.package.fingerprint)}</code>} />
+          <DetailRow label={cs ? 'Typ' : 'Type'} value={result.package.type} />
+          <DetailRow label={cs ? 'Zdroj' : 'Source'} value={result.package.source} />
+          <DetailRow label={cs ? 'Počty' : 'Counts'} value={<>
+            {cs ? 'Země' : 'Countries'}: {result.package.country_count} · {cs ? 'Kontinenty' : 'Continents'}: {result.package.continent_count} · {cs ? 'Regiony' : 'Regions'}: {result.package.region_count} · {cs ? 'Cestovní regiony' : 'Travel regions'}: {result.package.travel_region_count}
+          </>} />
+          <DetailRow label={cs ? 'Otisk' : 'Fingerprint'} value={<code title={result.package.fingerprint}>{shortFingerprint(result.package.fingerprint)}</code>} />
         </div>
       )}
       {result.validation && (
-        <div aria-label="Clone validation summary">
-          <h4>Validation</h4>
-          <DetailRow label="Status" value={result.validation.status} />
-          <DetailRow label="Errors" value={result.validation.error_count} />
-          <DetailRow label="Warnings" value={result.validation.warning_count} />
-          <DetailRow label="Info" value={result.validation.info_count} />
+        <div aria-label={cs ? 'Souhrn validace kopie' : 'Clone validation summary'}>
+          <h4>{cs ? 'Validace' : 'Validation'}</h4>
+          <DetailRow label={cs ? 'Stav' : 'Status'} value={result.validation.status} />
+          <DetailRow label={cs ? 'Chyby' : 'Errors'} value={result.validation.error_count} />
+          <DetailRow label={cs ? 'Varování' : 'Warnings'} value={result.validation.warning_count} />
+          <DetailRow label={cs ? 'Informace' : 'Info'} value={result.validation.info_count} />
         </div>
       )}
-      {result.ok && !result.dry_run && <p><Link to={`/admin/world/library/${encodeURIComponent(result.new_world_id)}`}>Open new Custom World detail</Link></p>}
+      {result.ok && !result.dry_run && <p><Link to={'/admin/world/library/' + encodeURIComponent(result.new_world_id)}>{cs ? 'Otevřít detail nového vlastního World Package' : 'Open new Custom World detail'}</Link></p>}
     </div>
   )
+}
+
+type CloneUiError =
+  | { kind: 'invalidWorldId' | 'missingName' | 'changedSource' | 'responseMismatch' }
+  | { kind: 'server'; message: string }
+
+function cloneUiErrorText(error: CloneUiError, cs: boolean): string {
+  if (error.kind === 'server') return error.message
+  if (error.kind === 'invalidWorldId') return cs
+    ? 'ID musí začínat malým písmenem nebo číslicí (3–64 znaků, dále také podtržítko).'
+    : 'World ID must start with a lowercase letter or digit (3–64 characters, then underscores also allowed).'
+  if (error.kind === 'missingName') return cs ? 'Název vlastní kopie je povinný.' : 'A name is required for the custom copy.'
+  if (error.kind === 'changedSource') return cs
+    ? 'Zdroj World Package se změnil. Návrh zkontrolujte znovu.'
+    : 'The source World Package changed. Review the clone again.'
+  return cs ? 'Odpověď nepatří kontrolované kopii.' : 'The response does not match the reviewed clone.'
 }
 
 function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPackage; onDirtyChange: (dirty: boolean) => void }): JSX.Element {
@@ -249,6 +272,8 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   const cs = language === 'cs'
   const sourceRef = useRef(source.world_id)
   sourceRef.current = source.world_id
+  const sourceFingerprintRef = useRef(source.fingerprint)
+  sourceFingerprintRef.current = source.fingerprint
   const locationKey = useLocation().key
   const activeLocationKey = useRef(locationKey)
   activeLocationKey.current = locationKey
@@ -256,57 +281,79 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const [newWorldId, setNewWorldId] = useState('')
   const [name, setName] = useState('')
-  const [description, setDescription] = useState(`Custom world cloned from ${source.name}.`)
-  const [result, setResult] = useState<WorldPackageCloneResponse | null>(null)
-  const [apiError, setApiError] = useState<string | null>(null)
+  const defaultDescription = useRef(`Custom world cloned from ${source.name}.`)
+  const [description, setDescription] = useState(defaultDescription.current)
+  const [result, setResult] = useState<{ response: WorldPackageCloneResponse; sourceFingerprint: string } | null>(null)
+  const [apiError, setApiError] = useState<CloneUiError | null>(null)
   const [review, setReview] = useState<{ sourceWorldId: string; sourceFingerprint: string; locationKey: string; payload: WorldPackageClonePayload } | null>(null)
   useEffect(() => {
-    setNewWorldId(''); setName(''); setDescription(`Custom world cloned from ${source.name}.`)
+    // Re-fetches may rename the same source; never discard the user's draft for that.
+    defaultDescription.current = `Custom world cloned from ${source.name}.`
+    setNewWorldId(''); setName(''); setDescription(defaultDescription.current)
     setResult(null); setApiError(null); setReview(null)
-  }, [source.world_id, source.name])
-  const cloneHasDraft = Boolean(newWorldId || name || description !== `Custom world cloned from ${source.name}.` || review)
+  }, [source.world_id])
+  const cloneHasDraft = Boolean(newWorldId || name || description !== defaultDescription.current || review)
   useUnsavedWorldPackageWarning(cloneHasDraft)
   useEffect(() => { onDirtyChange(cloneHasDraft); return () => onDirtyChange(false) }, [cloneHasDraft, onDirtyChange])
   const mutation = useMutation({
     mutationFn: (command: { sourceWorldId: string; sourceFingerprint: string; locationKey: string; payload: WorldPackageClonePayload }) => cloneWorldPackage(command.sourceWorldId, command.payload),
     onSuccess: (response, command) => {
-      if (response.ok && !response.dry_run) {
+      const responseMatchesRequest = response.source_world_id === command.sourceWorldId &&
+        response.new_world_id === command.payload.new_world_id &&
+        response.dry_run === command.payload.dry_run &&
+        (!response.package || response.package.world_id === command.payload.new_world_id) &&
+        (!response.validation || response.validation.world_id === command.payload.new_world_id)
+      // A late, genuine successful write must still refresh the cache after navigation.
+      // A mismatched response must never invalidate data for an unrelated World Package.
+      if (responseMatchesRequest && response.ok && !response.dry_run) {
         void queryClient.invalidateQueries({ queryKey: ['world-packages'] })
         void queryClient.invalidateQueries({ queryKey: ['world-package', response.new_world_id] })
         void queryClient.invalidateQueries({ queryKey: ['world-package-validation', response.new_world_id] })
       }
       if (!mounted.current || sourceRef.current !== command.sourceWorldId || activeLocationKey.current !== command.locationKey) return
-      if (response.source_world_id !== command.sourceWorldId || response.new_world_id !== command.payload.new_world_id || response.dry_run !== command.payload.dry_run) {
-        setApiError(cs ? 'Odpověď nepatří kontrolované kopii.' : 'The response does not match the reviewed clone.')
+      if (command.payload.dry_run && sourceFingerprintRef.current !== command.sourceFingerprint) {
+        // This preview describes the old source revision; it is not a fresh review.
+        setApiError({ kind: 'changedSource' })
         return
       }
-      setResult(response)
+      if (!responseMatchesRequest) {
+        setApiError({ kind: 'responseMismatch' })
+        return
+      }
+      setResult({ response, sourceFingerprint: command.sourceFingerprint })
       setApiError(null)
       if (response.ok && !response.dry_run) {
-        setReview(null); setNewWorldId(''); setName(''); setDescription(`Custom world cloned from ${source.name}.`)
+        defaultDescription.current = `Custom world cloned from ${source.name}.`
+        setReview(null); setNewWorldId(''); setName(''); setDescription(defaultDescription.current)
       }
     },
     onError: (error, command) => {
       if (!mounted.current || sourceRef.current !== command.sourceWorldId || activeLocationKey.current !== command.locationKey) return
       setResult(null)
-      setApiError(formatApiError(error))
+      if (command.payload.dry_run && sourceFingerprintRef.current !== command.sourceFingerprint) {
+        setApiError({ kind: 'changedSource' })
+        return
+      }
+      setApiError({ kind: 'server', message: formatApiError(error) })
     }
   })
   function prepare(dryRun: boolean): void {
     if (mutation.isPending) return
+    // Starting another attempt must not leave the previous success beside a validation error.
+    setResult(null)
     const id = newWorldId.trim()
     if (!/^[a-z0-9][a-z0-9_]{2,63}$/.test(id)) {
-      setApiError(cs ? 'ID musí začínat malým písmenem nebo číslicí (3–64 znaků, dále také podtržítko).' : 'World ID must start with a lowercase letter or digit (3–64 characters, then underscores also allowed).')
+      setApiError({ kind: 'invalidWorldId' })
       return
     }
     if (!name.trim()) {
-      setApiError(cs ? 'Název vlastní kopie je povinný.' : 'A name is required for the custom copy.')
+      setApiError({ kind: 'missingName' })
       return
     }
     const payload: WorldPackageClonePayload = {
       new_world_id: id, name: name.trim(), description: description.trim() || null, dry_run: dryRun
     }
-    setResult(null); setApiError(null)
+    setApiError(null)
     if (dryRun) {
       setReview(null)
       mutation.mutate({ sourceWorldId: source.world_id, sourceFingerprint: source.fingerprint, locationKey, payload })
@@ -318,8 +365,7 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
     if (!review || mutation.isPending) return
     if (review.sourceWorldId !== source.world_id || review.sourceFingerprint !== source.fingerprint ||
         review.locationKey !== locationKey) {
-      setApiError(cs ? 'Zdroj World Package se změnil. Návrh zkontrolujte znovu.' :
-        'The source World Package changed. Review the clone again.')
+      setApiError({ kind: 'changedSource' })
       return
     }
     mutation.mutate(review)
@@ -327,7 +373,7 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   return <SectionCard title={cs ? 'Vytvořit vlastní kopii World Package' : 'Clone Built-in World'}>
     <p>{cs ? 'Nezávislá vlastní kopie vestavěného zdroje' : 'Create an independent Custom World from'} <strong>{source.name}</strong>. {cs ? 'Originál ani existující Runy se nezmění.' : 'The original and existing Runs are never changed.'}</p>
     <p className="status">{cs ? 'Kopie zachová úplný obsah včetně historických zdrojových dat.' : 'The clone preserves the complete package tree, including historical evidence.'}</p>
-    {review ? <div aria-label="Review World Package clone">
+    {review ? <div aria-label={cs ? 'Kontrola vytvoření kopie World Package' : 'Review World Package clone'}>
       <p><strong>{cs ? 'Zdroj' : 'Source'}:</strong> <code>{review.sourceWorldId}</code> · <strong>{cs ? 'Fingerprint zdroje' : 'Source fingerprint'}:</strong> <code>{review.sourceFingerprint}</code> · <strong>{cs ? 'Nová kopie' : 'New copy'}:</strong> <code>{review.payload.new_world_id}</code></p>
       <p><strong>{cs ? 'Název' : 'Name'}:</strong> {review.payload.name}</p>
       <p><strong>{cs ? 'Popis' : 'Description'}:</strong> {review.payload.description ?? '—'}</p>
@@ -352,8 +398,10 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
         </div>
       </fieldset>
     </form>}
-    {apiError && <p className="error" role="alert">{cs ? 'Kopírování se nezdařilo: ' : 'Clone request failed: '}{apiError}</p>}
-    {result && <CloneResultCard result={result} />}
+    {apiError && <p className="error" role="alert">{cs ? 'Kopírování se nezdařilo: ' : 'Clone request failed: '}{cloneUiErrorText(apiError, cs)}</p>}
+    {result?.response.dry_run && result.sourceFingerprint !== source.fingerprint
+      ? <p className="error" role="alert">{cloneUiErrorText({ kind: 'changedSource' }, cs)}</p>
+      : result && <CloneResultCard result={result.response} />}
   </SectionCard>
 }
 

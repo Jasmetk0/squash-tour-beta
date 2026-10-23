@@ -1,14 +1,25 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { RouterProvider, createMemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WorldLibraryDetailPage, WorldPackageCountryCreatePage } from './WorldLibraryPage'
 
 const api = vi.hoisted(() => ({ getWorldPackage: vi.fn(), getWorldPackageGeography: vi.fn(), getWorldPackageValidation: vi.fn(), createWorldPackageCountry: vi.fn(), cloneWorldPackage: vi.fn() }))
-vi.mock('../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }))
+const locale = vi.hoisted(() => ({ language: 'en' as 'cs' | 'en', listeners: new Set<() => void>() }))
+vi.mock('../i18n/LanguageContext', async () => {
+  const { useSyncExternalStore } = await import('react')
+  return {
+    useLanguage: () => ({
+      language: useSyncExternalStore(
+        (listener) => { locale.listeners.add(listener); return () => { locale.listeners.delete(listener) } },
+        () => locale.language
+      )
+    })
+  }
+})
 vi.mock('../api/client', async importOriginal => ({ ...(await importOriginal<object>()), ...api }))
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => { vi.clearAllMocks(); locale.language = 'en' })
 
 describe('new-scale country creation', () => {
   it('authors explicit tenths on 1–10 without a court-count input', async () => {
@@ -192,6 +203,92 @@ describe('late new-country create response', () => {
 })
 
 describe('built-in World cloning', () => {
+  it('keeps a pristine clone form unchanged and clean when its source display name refreshes', async () => {
+    const source = {
+      world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'same-fingerprint',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    }
+    api.getWorldPackage.mockResolvedValue(source)
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}}})
+    const router = createMemoryRouter([
+      {path: '/world/:worldId', element: <WorldLibraryDetailPage />},
+      {path: '/admin/world/library', element: <p>Library opened</p>},
+    ], {initialEntries: ['/world/real_world']})
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+    expect(await screen.findByLabelText('Description')).toHaveValue('Custom world cloned from Real World.')
+
+    act(() => client.setQueryData(['world-package', 'real_world'], {...source, name: 'Renamed World'}))
+    expect(await screen.findByRole('heading', {name: 'Renamed World'})).toBeInTheDocument()
+    expect(screen.getByLabelText('Description')).toHaveValue('Custom world cloned from Real World.')
+    expect(api.cloneWorldPackage).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('link', {name: 'Back to World Library'}))
+    expect(await screen.findByText('Library opened')).toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+  })
+
+  it('preserves an authored clone review across same-source renames and resets cleanly after creation', async () => {
+    const source = {
+      world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'stable-source-head',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    }
+    api.getWorldPackage.mockResolvedValue(source)
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    api.cloneWorldPackage.mockImplementation(async (worldId: string, payload: {dry_run: boolean; new_world_id: string}) => ({
+      ok: true, dry_run: payload.dry_run,
+      source_world_id: worldId, new_world_id: payload.new_world_id,
+      target_path: 'config/world_packages/custom/' + payload.new_world_id,
+      created_files: [], package: null, validation: null, errors: [],
+    }))
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}}})
+    const router = createMemoryRouter([
+      {path: '/world/:worldId', element: <WorldLibraryDetailPage />},
+      {path: '/admin/world/library/retained_world', element: <p>Retained clone opened</p>},
+    ], {initialEntries: ['/world/real_world']})
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'retained_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Authored copy'}})
+    fireEvent.change(screen.getByLabelText('Description'), {target: {value: 'Authored description'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Review custom copy'}))
+    expect(screen.getByText('Authored description')).toBeInTheDocument()
+    expect(screen.getByRole('button', {name: 'Confirm custom copy'})).toBeEnabled()
+
+    act(() => client.setQueryData(['world-package', 'real_world'], {...source, name: 'Renamed source'}))
+    expect(await screen.findByRole('heading', {name: 'Renamed source'})).toBeInTheDocument()
+    expect(screen.getByText('Authored copy')).toBeInTheDocument()
+    expect(screen.getByText('Authored description')).toBeInTheDocument()
+    expect(screen.getByRole('button', {name: 'Confirm custom copy'})).toBeEnabled()
+    expect(api.cloneWorldPackage).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', {name: 'Confirm custom copy'}))
+    await waitFor(() => expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', {
+      new_world_id: 'retained_world', name: 'Authored copy',
+      description: 'Authored description', dry_run: false,
+    }))
+    expect(await screen.findByText('Success:')).toBeInTheDocument()
+    expect(screen.getByLabelText('Description')).toHaveValue('Custom world cloned from Renamed source.')
+    fireEvent.click(screen.getByRole('link', {name: 'Open new Custom World detail'}))
+    expect(await screen.findByText('Retained clone opened')).toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+  })
+
   it('clones the built-in package currently being inspected, not a hard-coded FAX source', async () => {
     api.getWorldPackage.mockResolvedValue({
       world_id: 'real_world',
@@ -280,6 +377,459 @@ describe('built-in World cloning', () => {
     expect(await screen.findByText('Custom clone opened')).toBeInTheDocument()
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
   })
+
+  it('translates preview, review and confirmed results without changing the requested clone', async () => {
+    const source = {
+      world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'original-fingerprint',
+      country_count: 2, continent_count: 1, region_count: 1, travel_region_count: 1,
+    }
+    api.getWorldPackage.mockResolvedValue(source)
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    api.cloneWorldPackage.mockImplementation(async (worldId: string, payload: {dry_run: boolean}) => ({
+      ok: true, dry_run: payload.dry_run,
+      source_world_id: worldId, new_world_id: 'local_world',
+      target_path: 'config/world_packages/custom/local_world',
+      created_files: ['countries/AAA.json'],
+      errors: [],
+      package: {
+        world_id: 'local_world', type: 'custom', source: 'custom_config',
+        country_count: 2, continent_count: 1, region_count: 1, travel_region_count: 1,
+        fingerprint: '0123456789abcdefghijklmnop',
+      },
+      validation: {world_id: 'local_world', status: 'valid', error_count: 0, warning_count: 1, info_count: 0},
+    }))
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}}})
+    const invalidate = vi.spyOn(client, 'invalidateQueries')
+    const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
+      {initialEntries: ['/world/real_world']})
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+    function switchLanguage(language: 'cs' | 'en') {
+      act(() => {
+        locale.language = language
+        for (const listener of [...locale.listeners]) listener()
+      })
+    }
+
+    expect(await screen.findByText('Clone Built-in World')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', {name: 'Review custom copy'}))
+    expect(screen.getByText(/World ID must start with a lowercase letter or digit/)).toBeInTheDocument()
+    switchLanguage('cs')
+    expect(screen.getByText(/ID musí začínat malým písmenem nebo číslicí/)).toBeInTheDocument()
+    expect(api.cloneWorldPackage).not.toHaveBeenCalled()
+    switchLanguage('en')
+    fireEvent.change(screen.getByPlaceholderText('my_custom_world'), {target: {value: 'local_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Original authored name'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Review custom copy'}))
+    expect(screen.getByText('Custom world cloned from Real World.')).toBeInTheDocument()
+    switchLanguage('cs')
+    expect(screen.getByRole('button', {name: 'Potvrdit vytvoření kopie'})).toBeInTheDocument()
+    expect(screen.getByText('Custom world cloned from Real World.')).toBeInTheDocument()
+    expect(screen.getAllByText('original-fingerprint').length).toBeGreaterThan(0)
+    expect(api.cloneWorldPackage).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', {name: 'Zpět k formuláři'}))
+    expect(screen.getByLabelText('Popis')).toHaveValue('Custom world cloned from Real World.')
+    fireEvent.click(screen.getByRole('button', {name: 'Náhled kopírování'}))
+    expect(await screen.findByText('Pouze náhled:')).toBeInTheDocument()
+    expect(screen.getByText('Žádné soubory nebyly zapsány.')).toBeInTheDocument()
+    expect(screen.getByText('Náhled balíčku')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Výsledek kopírování')).getByRole('status')).toHaveTextContent('Pouze náhled:')
+    expect(screen.getByText('Počty:')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Výsledek kopírování')).getByText('Varování:')).toBeInTheDocument()
+    expect(screen.getByText('countries/AAA.json')).toBeInTheDocument()
+    expect(screen.getByText('config/world_packages/custom/local_world')).toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: /Otevřít detail nového/})).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', {
+      new_world_id: 'local_world', name: 'Original authored name',
+      description: 'Custom world cloned from Real World.', dry_run: true,
+    })
+    switchLanguage('en')
+    expect(screen.getByText('Preview only:')).toBeInTheDocument()
+    expect(screen.getByText('Package preview')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Clone result')).getByText('Warnings:')).toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByRole('button', {name: 'Review custom copy'}))
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', {name: 'Confirm custom copy'}))
+    expect(await screen.findByText('Success:')).toBeInTheDocument()
+    expect(screen.getByText('Created package')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Clone result')).getByRole('status')).toHaveTextContent('Success:')
+    expect(screen.getByRole('link', {name: 'Open new Custom World detail'}))
+      .toHaveAttribute('href', '/admin/world/library/local_world')
+    expect(api.cloneWorldPackage).toHaveBeenNthCalledWith(2, 'real_world', {
+      new_world_id: 'local_world', name: 'Original authored name',
+      description: 'Custom world cloned from Real World.', dry_run: false,
+    })
+    expect(invalidate).toHaveBeenCalledWith({queryKey: ['world-packages']})
+    expect(invalidate).toHaveBeenCalledWith({queryKey: ['world-package', 'local_world']})
+    expect(invalidate).toHaveBeenCalledWith({queryKey: ['world-package-validation', 'local_world']})
+    switchLanguage('cs')
+    expect(screen.getByText('Úspěch:')).toBeInTheDocument()
+    expect(screen.getByText('Vytvořený balíček')).toBeInTheDocument()
+    expect(screen.getByRole('link', {name: 'Otevřít detail nového vlastního World Package'}))
+      .toHaveAttribute('href', '/admin/world/library/local_world')
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(2)
+
+    // The next (invalid) attempt must not still present the last successful copy.
+    fireEvent.click(screen.getByRole('button', {name: 'Zkontrolovat vytvoření kopie'}))
+    expect(screen.getByRole('alert')).toHaveTextContent('ID musí začínat malým písmenem nebo číslicí')
+    expect(screen.queryByText('Úspěch:')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Výsledek kopírování')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Otevřít detail nového vlastního World Package'})).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(2)
+    switchLanguage('en')
+    expect(screen.getByRole('alert')).toHaveTextContent('World ID must start with a lowercase letter or digit')
+    expect(screen.queryByText('Success:')).not.toBeInTheDocument()
+  })
+
+  it('translates a failed clone preview without rewriting server diagnostics or offering a created package', async () => {
+    locale.language = 'cs'
+    api.getWorldPackage.mockResolvedValue({
+      world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'source-fingerprint',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    })
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    api.cloneWorldPackage.mockImplementation(async (_worldId: string, payload: {dry_run: boolean}) => ({
+      ok: false, dry_run: payload.dry_run, source_world_id: 'real_world', new_world_id: 'local_world',
+      target_path: 'config/world_packages/custom/local_world',
+      created_files: payload.dry_run ? [] : ['countries/AAA.json'],
+      package: payload.dry_run ? null : {
+        world_id: 'local_world', type: 'custom', source: 'custom_config',
+        country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+        fingerprint: 'unconfirmed-fingerprint',
+      },
+      validation: null,
+      errors: [{field: 'new_world_id', message: 'DUPLICATE_WORLD_ID: preserved verbatim'}],
+    }))
+    const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
+      {initialEntries: ['/world/real_world']})
+    render(<QueryClientProvider client={new QueryClient({defaultOptions: {queries: {retry: false}}})}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>)
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'local_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Editable'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Náhled kopírování'}))
+    expect(await screen.findByText('Náhled se nezdařil:')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Výsledek kopírování')).getByRole('alert')).toHaveTextContent('Náhled se nezdařil:')
+    expect(screen.getByText('Chyby kopírování:')).toBeInTheDocument()
+    expect(screen.getByText('new_world_id: DUPLICATE_WORLD_ID: preserved verbatim')).toBeInTheDocument()
+    expect(screen.queryByText('Úspěch:')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: /Otevřít detail nového/})).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', expect.objectContaining({dry_run: true}))
+
+    fireEvent.click(screen.getByRole('button', {name: 'Zkontrolovat vytvoření kopie'}))
+    fireEvent.click(screen.getByRole('button', {name: 'Potvrdit vytvoření kopie'}))
+    expect(await screen.findByText('Kopírování se nezdařilo:')).toBeInTheDocument()
+    expect(screen.getByText('Soubory uvedené v odpovědi:')).toBeInTheDocument()
+    expect(screen.getByText('Údaje balíčku (nepotvrzeno)')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Výsledek kopírování')).getByRole('alert')).toHaveTextContent('Kopírování se nezdařilo:')
+    expect(screen.getByText('countries/AAA.json')).toBeInTheDocument()
+    expect(screen.getByText('new_world_id: DUPLICATE_WORLD_ID: preserved verbatim')).toBeInTheDocument()
+    expect(screen.queryByText('Vytvořený balíček')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: /Otevřít detail nového/})).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenNthCalledWith(2, 'real_world', expect.objectContaining({dry_run: false}))
+
+    act(() => {
+      locale.language = 'en'
+      for (const listener of [...locale.listeners]) listener()
+    })
+    expect(screen.getByText('Clone failed:')).toBeInTheDocument()
+    expect(screen.getByText('Files reported in response:')).toBeInTheDocument()
+    expect(screen.getByText('Package details (unconfirmed)')).toBeInTheDocument()
+    expect(screen.getByText('new_world_id: DUPLICATE_WORLD_ID: preserved verbatim')).toBeInTheDocument()
+    expect(screen.queryByText('Success:')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Open new Custom World detail'})).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(2)
+  })
+
+  it('preserves thrown API diagnostics while translating the failure prefix and never claiming success', async () => {
+    api.getWorldPackage.mockResolvedValue({
+      world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'source-fingerprint',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    })
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    api.cloneWorldPackage.mockRejectedValue(new Error('HTTP 409: SOURCE_FINGERPRINT_CHANGED'))
+    const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
+      {initialEntries: ['/world/real_world']})
+    render(<QueryClientProvider client={new QueryClient({defaultOptions: {queries: {retry: false}, mutations: {retry: false}}})}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>)
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'local_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Editable'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Preview clone'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Clone request failed: HTTP 409: SOURCE_FINGERPRINT_CHANGED')
+    expect(screen.queryByLabelText('Clone result')).not.toBeInTheDocument()
+    act(() => {
+      locale.language = 'cs'
+      for (const listener of [...locale.listeners]) listener()
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent('Kopírování se nezdařilo: HTTP 409: SOURCE_FINGERPRINT_CHANGED')
+    expect(screen.getByLabelText('Popis')).toHaveValue('Custom world cloned from Real World.')
+    expect(screen.queryByRole('link', {name: /Otevřít detail nového/})).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+    expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', expect.objectContaining({dry_run: true}))
+  })
+
+  it.each([
+    { caseName: 'top-level destination', newWorldId: 'unexpected_world', packageWorldId: null, validationWorldId: null },
+    { caseName: 'nested package summary', newWorldId: 'expected_world', packageWorldId: 'unrelated_world', validationWorldId: null },
+    { caseName: 'validation summary', newWorldId: 'expected_world', packageWorldId: null, validationWorldId: 'unrelated_world' },
+  ])('rejects a mismatch in $caseName without invalidating unrelated package caches', async ({newWorldId, packageWorldId, validationWorldId}) => {
+    api.getWorldPackage.mockResolvedValue({
+      world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'source-fingerprint',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    })
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    api.cloneWorldPackage.mockResolvedValue({
+      ok: true, dry_run: false, source_world_id: 'real_world', new_world_id: newWorldId,
+      target_path: 'config/world_packages/custom/' + newWorldId,
+      created_files: [], package: packageWorldId ? {
+        world_id: packageWorldId, type: 'custom', source: 'custom_config',
+        country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+        fingerprint: 'unexpected-package-fingerprint',
+      } : null, validation: validationWorldId ? {
+        world_id: validationWorldId, status: 'valid', error_count: 0,
+        warning_count: 0, info_count: 0, checks: [],
+      } : null, errors: [],
+    })
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}, mutations: {retry: false}}})
+    const invalidate = vi.spyOn(client, 'invalidateQueries')
+    const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
+      {initialEntries: ['/world/real_world']})
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'expected_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Authored title'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Review custom copy'}))
+    expect(api.cloneWorldPackage).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name: 'Confirm custom copy'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('The response does not match the reviewed clone.')
+    expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', {
+      new_world_id: 'expected_world', name: 'Authored title',
+      description: 'Custom world cloned from Real World.', dry_run: false,
+    })
+    expect(invalidate).not.toHaveBeenCalled()
+    expect(screen.queryByLabelText('Clone result')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Open new Custom World detail'})).not.toBeInTheDocument()
+    act(() => {
+      locale.language = 'cs'
+      for (const listener of [...locale.listeners]) listener()
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent('Odpověď nepatří kontrolované kopii.')
+    expect(invalidate).not.toHaveBeenCalled()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    {previewOk: true, initialHeading: 'Preview only:'},
+    {previewOk: false, initialHeading: 'Preview failed:'},
+  ])('hides an already completed clone preview when its source changes (ok=$previewOk)', async ({previewOk, initialHeading}) => {
+    const source = {
+      world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'original-fingerprint',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    }
+    api.getWorldPackage.mockResolvedValue(source)
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    api.cloneWorldPackage.mockImplementation(async (worldId: string, payload: {new_world_id: string; dry_run: boolean}) => ({
+      ok: previewOk, dry_run: payload.dry_run, source_world_id: worldId,
+      new_world_id: payload.new_world_id,
+      target_path: 'config/world_packages/custom/' + payload.new_world_id,
+      created_files: ['world.json'], package: null, validation: null,
+      errors: previewOk ? [] : [{field: 'new_world_id', message: 'OLD_SOURCE_DIAGNOSTIC'}],
+    }))
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}, mutations: {retry: false}}})
+    const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
+      {initialEntries: ['/world/real_world']})
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'local_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Authored name'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Preview clone'}))
+    expect(await screen.findByText(initialHeading)).toBeInTheDocument()
+    expect(screen.getByLabelText('Clone result')).toBeInTheDocument()
+    expect(screen.getByText('world.json')).toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+
+    // A re-fetch happens after the preview completed: never leave its old contents visible.
+    act(() => client.setQueryData(['world-package', 'real_world'], {...source, fingerprint: 'fresh-fingerprint'}))
+    expect(await screen.findByText('fresh-fingerprint')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('The source World Package changed. Review the clone again.')
+    expect(screen.queryByLabelText('Clone result')).not.toBeInTheDocument()
+    expect(screen.queryByText(initialHeading)).not.toBeInTheDocument()
+    expect(screen.queryByText('world.json')).not.toBeInTheDocument()
+    expect(screen.queryByText('OLD_SOURCE_DIAGNOSTIC')).not.toBeInTheDocument()
+    expect(screen.getByPlaceholderText('my_custom_world')).toHaveValue('local_world')
+    expect(screen.getByPlaceholderText('My Custom World')).toHaveValue('Authored name')
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+
+    act(() => {
+      locale.language = 'cs'
+      for (const listener of [...locale.listeners]) listener()
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent('Zdroj World Package se změnil.')
+    expect(screen.queryByLabelText('Výsledek kopírování')).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByRole('button', {name: 'Náhled kopírování'}))
+    expect(await screen.findByText(previewOk ? 'Pouze náhled:' : 'Náhled se nezdařil:')).toBeInTheDocument()
+    expect(screen.getByLabelText('Výsledek kopírování')).toBeInTheDocument()
+    expect(screen.queryByText('Zdroj World Package se změnil. Návrh zkontrolujte znovu.')).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(2)
+  })
+
+  it.each([
+    {caseName: 'successful', rejectRequest: false},
+    {caseName: 'rejected', rejectRequest: true},
+  ])('ignores an old $caseName preview after the source fingerprint changes', async ({rejectRequest}) => {
+    const source = {
+      world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'before-refresh',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    }
+    api.getWorldPackage.mockResolvedValue(source)
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    let resolvePreview!: (response: unknown) => void
+    let rejectPreview!: (error: unknown) => void
+    api.cloneWorldPackage.mockImplementation(() => new Promise<unknown>((resolve, reject) => {
+      resolvePreview = resolve
+      rejectPreview = reject
+    }))
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}, mutations: {retry: false}}})
+    const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
+      {initialEntries: ['/world/real_world']})
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'local_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Authored name'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Preview clone'}))
+    await waitFor(() => expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', {
+      new_world_id: 'local_world', name: 'Authored name',
+      description: 'Custom world cloned from Real World.', dry_run: true,
+    }))
+    act(() => client.setQueryData(['world-package', 'real_world'], {...source, fingerprint: 'after-refresh'}))
+    expect(await screen.findByText('after-refresh')).toBeInTheDocument()
+
+    await act(async () => {
+      if (rejectRequest) rejectPreview(new Error('diagnostic for the old revision'))
+      else resolvePreview({
+        ok: true, dry_run: true, source_world_id: 'real_world', new_world_id: 'local_world',
+        target_path: 'config/world_packages/custom/local_world',
+        created_files: [], package: null, validation: null, errors: [],
+      })
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent('The source World Package changed. Review the clone again.')
+    expect(screen.queryByLabelText('Clone result')).not.toBeInTheDocument()
+    expect(screen.queryByText('Preview only:')).not.toBeInTheDocument()
+    expect(screen.queryByText('diagnostic for the old revision')).not.toBeInTheDocument()
+    expect(screen.getByPlaceholderText('my_custom_world')).toHaveValue('local_world')
+    expect(screen.getByPlaceholderText('My Custom World')).toHaveValue('Authored name')
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+    act(() => {
+      locale.language = 'cs'
+      for (const listener of [...locale.listeners]) listener()
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent('Zdroj World Package se změnil.')
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps an in-flight preview and localizes a late mismatched response in the active language', async () => {
+    api.getWorldPackage.mockResolvedValue({
+      world_id: 'real_world', name: 'Original World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'immutable-source-fingerprint',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    })
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    let finish!: (response: unknown) => void
+    api.cloneWorldPackage.mockImplementation(() => new Promise<unknown>(resolve => { finish = resolve }))
+    const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
+      {initialEntries: ['/world/real_world']})
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}}})
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+    const switchLanguage = (language: 'cs' | 'en') => act(() => {
+      locale.language = language
+      for (const listener of [...locale.listeners]) listener()
+    })
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'local_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'My authored name'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Preview clone'}))
+    await waitFor(() => expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', {
+      new_world_id: 'local_world', name: 'My authored name',
+      description: 'Custom world cloned from Original World.', dry_run: true,
+    }))
+    switchLanguage('cs')
+    expect(screen.getByLabelText('Popis')).toHaveValue('Custom world cloned from Original World.')
+    expect(screen.getByRole('button', {name: 'Náhled kopírování'})).toBeDisabled()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+
+    await act(async () => finish({
+      ok: true, dry_run: true, source_world_id: 'unrelated_world', new_world_id: 'local_world',
+      target_path: 'config/world_packages/custom/local_world',
+      created_files: [], package: null, validation: null, errors: [],
+    }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Odpověď nepatří kontrolované kopii.')
+    expect(screen.queryByText('Úspěch:')).not.toBeInTheDocument()
+    switchLanguage('en')
+    expect(screen.getByRole('alert')).toHaveTextContent('The response does not match the reviewed clone.')
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+  })
+
 })
 
 

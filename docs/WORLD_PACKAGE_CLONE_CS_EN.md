@@ -1,0 +1,25 @@
+# World Package cloning: CS/EN result handoff
+
+Scope: frontend presentation of the existing built-in World Package clone flow. This change deliberately does **not** touch cloning commands, payloads, API schemas, server implementation, stored defaults, global language infrastructure or simulation.
+
+## UI behavior
+
+- `CloneResultCard` reads the existing `LanguageContext` and displays CS/EN labels, status explanations, file listings, package counts, validation headings and the created-package detail link.
+- A dry-run result is always identified as **preview**, including its package/file headings. A write-success banner and navigation link require an `ok && !dry_run` response.
+- Failure remains visibly distinct from a confirmed creation. Source/target IDs, paths, package fields, fingerprints, raw validation status and server error field/message values are never translated.
+- The adjacent confirmation review's accessibility label follows the selected language. The stored default clone description remains the original stable English string.
+- Re-fetching the **same source World ID** with a revised display name does not reset an authored draft, an open confirmation review, or an in-flight mutation. The original default description stays stable for that draft and does not create a false unsaved-change warning; a completed clone refreshes the default for the next attempt.
+- No mutation, form reset, review re-approval, or data fetch is driven by a language toggle; the existing source-fingerprint, late-response, explicit confirmation and unsaved-navigation safeguards remain unchanged.
+- Starting a **new** review or preview attempt clears any previous result before client-side validation. This prevents a prior successful creation and an invalid follow-up attempt appearing together; simply toggling language still does not clear the completed result.
+- A server reply's source ID, destination ID, dry-run flag, any nested `package.world_id`, and any `validation.world_id` must match the command **before** a reported successful write can invalidate World Package caches or be presented as confirmed.
+- If the **source fingerprint refreshes during or after a dry-run preview**, its stale result (success or failure) is hidden behind a localized changed-source warning; authored fields are retained. A new explicit preview uses the refreshed source and can replace the warning. Genuine confirmed writes still refresh caches and report their result even when source metadata refreshes after confirmation. A genuine matching write still refreshes its package and list caches, including after navigation; a mismatched reply cannot refresh an unrelated package.
+
+## Focused verification
+
+- `cd web && npm run test -- src/pages/WorldLibraryPage.test.tsx src/pages/WorldPackageValidation.test.tsx`
+- `cd web && npm run build` (TypeScript project build + Vite production build)
+- PR Fast CI also runs the existing frontend critical baseline and changed-file/colocated tests, followed by the production build.
+
+Targeted clone tests cover CS/EN switching while reviewing, dry-run vs confirmed response, identical request content and default description, preservation of server diagnostics, protection against changed source fingerprints, and cache invalidation only for identity-matching confirmed writes. These are component-level mocked API checks, **not** real HTTP/SQLite or browser acceptance.
+
+Final-head hosted checks must be inspected separately. Skipped Draft-only acceptance checks are not passes; full pre-alpha release validation remains separate.

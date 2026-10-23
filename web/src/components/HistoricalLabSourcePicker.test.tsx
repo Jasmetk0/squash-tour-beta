@@ -15,15 +15,15 @@ const api = vi.hoisted(() => ({
 }))
 vi.mock('../api/client', () => api)
 
-function StatefulPicker(): JSX.Element {
-  const [selection, setSelection] = useState({run: '', branch: '', revision: ''})
+function StatefulPicker({initial}:{initial?:{run:string;branch:string;revision:string}}): JSX.Element {
+  const [selection, setSelection] = useState(initial??{run: '', branch: '', revision: ''})
   return <HistoricalLabSourcePicker lab="Match Lab" {...selection}
     onChange={(run, branch, revision) => setSelection({run, branch, revision})} />
 }
-function mount(): void {
+function mount(initial?:{run:string;branch:string;revision:string}): void {
   const client = new QueryClient({defaultOptions: {queries: {retry: false}}})
   render(<QueryClientProvider client={client}><LanguageProvider>
-    <StatefulPicker />
+    <StatefulPicker initial={initial} />
   </LanguageProvider></QueryClientProvider>)
 }
 
@@ -85,6 +85,36 @@ describe('historical Lab source inventory states', () => {
     expect(screen.getByRole('combobox', {name: 'Match Lab source Run'})).toHaveValue('season1')
     expect(screen.getByRole('combobox', {name: 'Match Lab source Branch'})).toHaveValue('main')
     expect(api.listSavedRevisionHistory).toHaveBeenCalledWith('season1', 'main', {limit: 200})
+  })
+
+  it('preserves an older manually entered revision that is outside the returned 200 items', async () => {
+    api.listRunContainers.mockResolvedValue({run_containers: [{run_id:'season1',display_name:'Season 1'}]})
+    api.listRunBranches.mockResolvedValue({run_branches: [{branch_id:'main',display_name:'Main'}]})
+    api.listSavedRevisionHistory.mockResolvedValue({saved_revisions:[
+      {revision_id:'recent-rev',sequence:200}
+    ],has_more_older:true})
+    mount({run:'season1',branch:'main',revision:'old-rev'})
+    await userEvent.click(screen.getByText('Vybrat uložený historický zdroj'))
+    expect(await screen.findByRole('option',{name:'Ručně zadaná revize – mimo seznam · old-rev'})).toBeInTheDocument()
+    expect(screen.getByRole('combobox',{name:'Match Lab source Saved Revision'})).toHaveValue('old-rev')
+    expect(screen.getByText('Starší revizi lze zadat jejím ID.')).toBeInTheDocument()
+    expect(api.listSavedRevisionHistory).toHaveBeenCalledWith('season1','main',{limit:200})
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Match Lab source Saved Revision'}),'recent-rev')
+    expect(screen.getByRole('combobox',{name:'Match Lab source Saved Revision'})).toHaveValue('recent-rev')
+    expect(screen.queryByText(/Ručně zadaná revize/)).not.toBeInTheDocument()
+  })
+
+  it('labels manually entered Run and Branch IDs as unverified rather than dropping their selections', async () => {
+    api.listRunContainers.mockResolvedValue({run_containers:[]})
+    api.listRunBranches.mockResolvedValue({run_branches:[]})
+    mount({run:'legacy-run',branch:'legacy-branch',revision:''})
+    await userEvent.click(screen.getByText('Vybrat uložený historický zdroj'))
+    expect(await screen.findByRole('option',{name:'Ručně zadaný Run – mimo seznam · legacy-run'})).toBeInTheDocument()
+    expect(await screen.findByRole('option',{name:'Ručně zadaná větev – mimo seznam · legacy-branch'})).toBeInTheDocument()
+    expect(screen.getByRole('combobox',{name:'Match Lab source Run'})).toHaveValue('legacy-run')
+    expect(screen.getByRole('combobox',{name:'Match Lab source Branch'})).toHaveValue('legacy-branch')
+    expect(api.listRunContainers).toHaveBeenCalledTimes(1)
+    expect(api.listRunBranches).toHaveBeenCalledWith('legacy-run')
   })
 
   it('uses existing inventory queries in English without writing anything', async () => {

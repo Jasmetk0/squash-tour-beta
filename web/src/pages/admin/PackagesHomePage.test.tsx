@@ -242,10 +242,13 @@ describe('source-backed Packages frontend',()=>{
     mount('/admin/packages/world/demo?tab=validation','validation')
     expect(await screen.findByText('demo warning')).toBeInTheDocument()
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package validation severity filter'}),'error')
+    const checkSearch=screen.getByRole('searchbox',{name:'Package validation search'})
+    await userEvent.type(checkSearch,'old-world')
     expect(screen.getByText('Zvolenému filtru neodpovídají žádné záznamy kontroly.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('link',{name:'Open another World'}))
     expect(await screen.findByRole('heading',{name:'Other World'})).toBeInTheDocument()
     await waitFor(()=>expect(screen.getByRole('combobox',{name:'Package validation severity filter'})).toHaveValue('all'))
+    expect(screen.getByRole('searchbox',{name:'Package validation search'})).toHaveValue('')
     expect(await screen.findByText('other warning')).toBeInTheDocument()
     expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(2)
   })
@@ -274,6 +277,59 @@ describe('source-backed Packages frontend',()=>{
     expect(screen.getByRole('combobox',{name:'Package validation severity filter'})).toHaveValue('info')
     expect(screen.getByText('Imported as supplied')).toBeInTheDocument()
     expect(screen.getByText('Check outcome: passed')).toBeInTheDocument()
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
+  })
+
+  it('searches validation code, message, path and field without refetching or changing totals',async()=>{
+    api.getWorldPackageValidation.mockResolvedValue({world_id:'demo',status:'errors',error_count:1,warning_count:1,info_count:1,checks:[
+      {code:'country_error',severity:'error',status:'failed',message:'Chybí název země',path:'countries/CZE/název.json',field:'display_name'},
+      {code:'population_warning',severity:'warning',status:'warning',message:'Population incomplete',path:'countries/USA/population.json',field:'population_by_year'},
+      {code:'source_info',severity:'info',status:'passed',message:'Source verified',path:null,field:null}
+    ]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(await screen.findByText('Chybí název země')).toBeInTheDocument()
+    const search=screen.getByRole('searchbox',{name:'Package validation search'})
+    await userEvent.type(search,' NAZEV ')
+    expect(screen.getByText('Chybí název země')).toBeInTheDocument()
+    expect(screen.queryByText('Population incomplete')).not.toBeInTheDocument()
+    expect(screen.getByText(/Zobrazeno 1 z 3 kontrol/)).toBeInTheDocument()
+    expect(screen.getByText(/1 chyba · 1 varování · 1 informace/)).toBeInTheDocument()
+    await userEvent.clear(search)
+    await userEvent.type(search,'population_by_year')
+    expect(screen.getByText('Population incomplete')).toBeInTheDocument()
+    await userEvent.clear(search)
+    await userEvent.type(search,'country_error')
+    expect(screen.getByText('Chybí název země')).toBeInTheDocument()
+    await userEvent.clear(search)
+    await userEvent.type(search,'CZE/nazev.json')
+    expect(screen.getByText('Chybí název země')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(search).toHaveValue('CZE/nazev.json')
+    expect(screen.getByText('Chybí název země')).toBeInTheDocument()
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
+  })
+
+  it('composes validation search with severity and clears both filters on no results',async()=>{
+    api.getWorldPackageValidation.mockResolvedValue({world_id:'demo',status:'errors',error_count:1,warning_count:1,info_count:0,checks:[
+      {code:'missing',severity:'error',status:'failed',message:'Missing country',path:'countries/CZE',field:null},
+      {code:'warn',severity:'warning',status:'warning',message:'Population warning',path:'countries/USA',field:null}
+    ]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(await screen.findByText('Missing country')).toBeInTheDocument()
+    const search=screen.getByRole('searchbox',{name:'Package validation search'})
+    await userEvent.type(search,'Population')
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package validation severity filter'}),'error')
+    expect(screen.getByText('Zvolenému filtru neodpovídají žádné záznamy kontroly.')).toBeInTheDocument()
+    expect(screen.queryByText('Population warning')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Zobrazit všechny kontroly'}))
+    expect(search).toHaveValue('')
+    expect(screen.getByRole('combobox',{name:'Package validation severity filter'})).toHaveValue('all')
+    expect(screen.getByText('Missing country')).toBeInTheDocument()
+    expect(screen.getByText('Population warning')).toBeInTheDocument()
     expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
   })
 

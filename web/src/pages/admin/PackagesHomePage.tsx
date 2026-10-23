@@ -172,12 +172,14 @@ export function PackageWorldDetailPage():JSX.Element {
   const [countrySearch,setCountrySearch]=useState('')
   const [countrySort,setCountrySort]=useState<'source'|'name'|'population'>('source')
   const [severityFilter,setSeverityFilter]=useState('all')
+  const [checkSearch,setCheckSearch]=useState('')
   // The router can reuse this component for another World ID: local display
   // filters belong to that World, not to the previous package's inventory.
   useEffect(()=>{
     setCountrySearch('')
     setCountrySort('source')
     setSeverityFilter('all')
+    setCheckSearch('')
   },[worldId])
   const q=useQuery({queryKey:['world-package',worldId],queryFn:()=>getWorldPackage(worldId),enabled:Boolean(worldId),retry:false})
   const countriesQuery=useQuery({queryKey:['world-package-countries',worldId],queryFn:()=>getWorldPackageCountries(worldId),enabled:active!=='overview',retry:false})
@@ -197,7 +199,11 @@ export function PackageWorldDetailPage():JSX.Element {
     .sort((a,b)=>countrySort==='name'
       ? a.name.localeCompare(b.name,cs?'cs-CZ':'en-US')||a.code.localeCompare(b.code)
       : countrySort==='population' ? b.population-a.population||a.code.localeCompare(b.code) : 0)
-  const visibleChecks=validation?.checks.filter(c=>severityFilter==='all'||c.severity===severityFilter)??[]
+  const checkTerm=normalizeCatalogSearch(checkSearch)
+  // Presentation-only combination: API validation result and counts remain unmodified.
+  const visibleChecks=validation?.checks.filter(c=>
+    (severityFilter==='all'||c.severity===severityFilter) &&
+    [c.code,c.message,c.path??'',c.field??''].some(value=>normalizeCatalogSearch(value).includes(checkTerm)))??[]
   const source='/admin/world/library/'+encodeURIComponent(worldId)
   return <section className="panel package-index">
     <p><Link to="/admin/packages/category/world">← {cs?'World balíčky':'World packages'}</Link></p>
@@ -267,6 +273,7 @@ export function PackageWorldDetailPage():JSX.Element {
             <option value="warning">{cs?'Varování':'Warnings'}</option>
             <option value="info">{cs?'Informace':'Information'}</option>
           </select></label>
+          <label>{cs?'Hledat kód, zprávu, cestu nebo pole kontroly':'Search check code, message, path or field'}<input type="search" aria-label="Package validation search" value={checkSearch} onChange={e=>setCheckSearch(e.target.value)}/></label>
           <p role="status" className="status">{cs ? `Zobrazeno ${visibleChecks.length} z ${validation.checks.length} kontrol. Souhrn validace se filtrem nemění.` : `Showing ${visibleChecks.length} of ${validation.checks.length} checks. Validation totals remain unchanged.`}</p>
           <ul className="package-index-checks">{visibleChecks.map((check,i)=>{
             const country=resolveCountry(check,countries?.map(c=>c.code)??[])
@@ -277,7 +284,7 @@ export function PackageWorldDetailPage():JSX.Element {
           })}</ul>
           {validation.checks.length === 0 ? <p role="status">{cs ? "Kontrola nevrátila žádné jednotlivé záznamy." : "Validation returned no individual checks."}</p> : visibleChecks.length===0 ? <>
             <p role="status">{cs ? "Zvolenému filtru neodpovídají žádné záznamy kontroly." : "No validation checks match this filter."}</p>
-            <button type="button" onClick={()=>setSeverityFilter('all')}>{cs?'Zobrazit všechny kontroly':'Show all checks'}</button>
+            <button type="button" onClick={()=>{setSeverityFilter('all');setCheckSearch('')}}>{cs?'Zobrazit všechny kontroly':'Show all checks'}</button>
           </> : null}
           {countriesQuery.isPending&&<p role="status" className="status">{cs?'Ověřuji odkazy na jednotlivé země…':'Verifying country links…'}</p>}
           {countriesQuery.isError&&<><p className="status">{cs?'Odkazy na jednotlivé země nejsou dostupné.':'Country links cannot be verified.'} {formatApiError(countriesQuery.error)}</p>

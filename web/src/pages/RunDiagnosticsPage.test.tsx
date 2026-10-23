@@ -145,6 +145,51 @@ describe('RunDiagnosticsPage', () => {
     expect(await screen.findByRole('link', { name: 'Seq 14' })).toHaveAttribute('href', '/runs/run-rich/snapshots/race/14')
   })
 
+  it.each(['ascending', 'unordered'] as const)(
+    'uses the greatest persisted sequences for latest diagnostics when API lists are %s',
+    async (order) => {
+      const events = [
+        { event_sequence: 2, event_id: 'E2', season: 2028, week: 3, template_id: null, tournament_result: { done: true } },
+        { event_sequence: 8, event_id: 'E8', season: 2028, week: 14, template_id: null, tournament_result: { done: true } },
+        { event_sequence: 9, event_id: 'E9', season: 2028, week: 15, template_id: null, tournament_result: null },
+      ]
+      const rankings = [
+        { snapshot_sequence: 1, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} },
+        { snapshot_sequence: 12, snapshot_kind: 'WEEK', source_event_id: 'E8', payload: {} },
+        { snapshot_sequence: 7, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} },
+      ]
+      const races = [
+        { snapshot_sequence: 3, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} },
+        { snapshot_sequence: 16, snapshot_kind: 'WEEK', source_event_id: 'E8', payload: {} },
+        { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} },
+      ]
+      api.listEvents.mockResolvedValueOnce({ events: order === 'ascending'
+        ? events : [events[2], events[0], events[1]] })
+      api.listRankingSnapshots.mockResolvedValueOnce({ snapshots: order === 'ascending'
+        ? [rankings[0], rankings[2], rankings[1]] : rankings })
+      api.listRaceSnapshots.mockResolvedValueOnce({ snapshots: order === 'ascending'
+        ? [races[0], races[2], races[1]] : races })
+      renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+
+      expect(await screen.findByRole('link', { name: 'E8 (Seq 8)' }))
+        .toHaveAttribute('href', '/runs/run-a/events/E8')
+      expect(screen.getByRole('link', { name: 'Seq 12' }))
+        .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/12')
+      expect(screen.getByRole('link', { name: 'Seq 16' }))
+        .toHaveAttribute('href', '/runs/run-a/snapshots/race/16')
+      expect(screen.getByRole('link', { name: 'Inspect latest completed event (E8)' }))
+        .toHaveAttribute('href', '/runs/run-a/events/E8')
+      expect(screen.getByRole('link', { name: 'Inspect latest ranking snapshot (Seq 12)' }))
+        .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/12')
+      expect(screen.getByRole('link', { name: 'Inspect latest race snapshot (Seq 16)' }))
+        .toHaveAttribute('href', '/runs/run-a/snapshots/race/16')
+      expect(screen.queryByRole('link', { name: 'Inspect latest completed event (E9)' }))
+        .not.toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: 'Inspect latest completed event (E2)' }))
+        .not.toBeInTheDocument()
+    },
+  )
+
   it('renders availability and artifact-state statuses', async () => {
     renderWithRoute(<RunDiagnosticsPage />, '/runs/run-availability/diagnostics')
 

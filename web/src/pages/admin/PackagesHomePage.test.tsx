@@ -445,6 +445,45 @@ describe('source-backed Packages frontend',()=>{
     expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
   })
 
+  it('refreshes a successful validation read without mutating World data',async()=>{
+    api.getWorldPackageValidation.mockResolvedValueOnce({
+      world_id:'demo',status:'warnings',error_count:0,warning_count:1,info_count:0,
+      checks:[{code:'before',severity:'warning',status:'warning',message:'Outdated warning',path:'countries/CZE/attributes.json',field:null}]
+    }).mockResolvedValue({
+      world_id:'demo',status:'valid',error_count:0,warning_count:0,info_count:1,
+      checks:[{code:'after',severity:'info',status:'passed',message:'Fresh validation',path:null,field:null}]
+    })
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(await screen.findByText('Outdated warning')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst kontrolu'}))
+    expect(await screen.findByText('Fresh validation')).toBeInTheDocument()
+    expect(screen.queryByText('Outdated warning')).not.toBeInTheDocument()
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(2)
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+    expect(api.getWorldPackage).toHaveBeenCalledTimes(1)
+  })
+
+  it('refreshes successful country inventory independently after external edits',async()=>{
+    api.getWorldPackageCountries.mockResolvedValueOnce({
+      world_id:'demo',countries:[{code:'CZE',name:'Czechia',population:100,region:'Europe'}]
+    }).mockResolvedValue({world_id:'demo',countries:[
+      {code:'CZE',name:'Czechia',population:100,region:'Europe'},
+      {code:'USA',name:'United States',population:200,region:'America'}
+    ]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    expect(await screen.findByRole('link',{name:'Czechia (CZE)'})).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'United States (USA)'})).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst země'}))
+    expect(await screen.findByRole('link',{name:'United States (USA)'})).toBeInTheDocument()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(2)
+    expect(api.getWorldPackageGeography).toHaveBeenCalledTimes(1)
+    expect(api.getWorldPackageValidation).not.toHaveBeenCalled()
+  })
+
   it('only links validation findings with a genuine known country directory',async()=>{
     api.getWorldPackageValidation.mockResolvedValue({world_id:'demo',status:'errors',error_count:6,warning_count:0,info_count:0,checks:[
       {code:'in_directory',severity:'error',status:'failed',message:'Country in canonical directory',path:'/storage/demo/countries/CZE/attributes/region.json',field:'region'},

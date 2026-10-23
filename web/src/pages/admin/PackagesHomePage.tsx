@@ -259,7 +259,9 @@ export function PackageWorldDetailPage():JSX.Element {
         {countriesQuery.isPending&&<p role="status">{cs ? "Načítám země…" : "Loading countries…"}</p>}
         {countriesQuery.isError&&<><p role="alert" className="error">{cs ? 'Země se nepodařilo načíst: ' : 'Failed to load countries: '}{formatApiError(countriesQuery.error)}</p><RetryRead cs={cs} what="countries" fetching={countriesQuery.isFetching} onRetry={() => { void countriesQuery.refetch() }} /></>}
         {countriesMismatch&&<WrongWorldResponse cs={cs} expected={worldId} actual={countriesQuery.data?.world_id ?? ''} what="countries" fetching={countriesQuery.isFetching} onRetry={()=>{void countriesQuery.refetch()}}/>}
-        {countries&&<><p role="status" className="status">{cs ? 'Ověřený seznam zemí' : 'Verified country inventory'}: {countries.length}</p><label>{cs?'Hledat zemi, kód nebo region':'Search countries, codes or regions'}<input type="search" value={countrySearch} onChange={e=>setCountrySearch(e.target.value)}/></label>
+        {countries&&<><p role="status" className="status">{cs ? 'Ověřený seznam zemí' : 'Verified country inventory'}: {countries.length}</p>
+          <RetryRead cs={cs} what="countries" fetching={countriesQuery.isFetching} onRetry={()=>{void countriesQuery.refetch()}} />
+          <label>{cs?'Hledat zemi, kód nebo region':'Search countries, codes or regions'}<input type="search" value={countrySearch} onChange={e=>setCountrySearch(e.target.value)}/></label>
           <label>{cs?'Seřadit země':'Sort countries'}<select aria-label="Package country sort" value={countrySort} onChange={e=>setCountrySort(e.target.value as typeof countrySort)}>
             <option value="source">{cs?'Původní pořadí':'Source order'}</option>
             <option value="name">{cs?'Podle názvu A–Z':'By name A–Z'}</option>
@@ -289,7 +291,8 @@ export function PackageWorldDetailPage():JSX.Element {
         {valQuery.isPending&&<p role="status">{cs ? "Načítám výsledky kontroly…" : "Loading validation…"}</p>}
         {valQuery.isError&&<><p role="alert" className="error">{cs ? 'Kontrolu se nepodařilo načíst: ' : 'Failed to load validation: '}{formatApiError(valQuery.error)}</p><RetryRead cs={cs} what="validation" fetching={valQuery.isFetching} onRetry={() => { void valQuery.refetch() }} /></>}
         {valMismatch&&<WrongWorldResponse cs={cs} expected={worldId} actual={valQuery.data?.world_id ?? ''} what="validation" fetching={valQuery.isFetching} onRetry={()=>{void valQuery.refetch()}}/>}
-        {validation&&<><p className="status">{cs ? "Diagnostické zprávy jsou zobrazeny v původním znění." : "Diagnostic messages are shown verbatim."}</p><p>{statusText(validation.status,cs)} · {quantity(validation.error_count,cs,['chyba','chyby','chyb'],['error','errors'])} · {quantity(validation.warning_count,cs,['varování','varování','varování'],['warning','warnings'])} · {quantity(validation.info_count,cs,['informace','informace','informací'],['info','info'])}</p>
+        {validation&&<><p className="status">{cs ? "Diagnostické zprávy jsou zobrazeny v původním znění." : "Diagnostic messages are shown verbatim."}</p>
+          <RetryRead cs={cs} what="validation" fetching={valQuery.isFetching} onRetry={()=>{void valQuery.refetch()}} /><p>{statusText(validation.status,cs)} · {quantity(validation.error_count,cs,['chyba','chyby','chyb'],['error','errors'])} · {quantity(validation.warning_count,cs,['varování','varování','varování'],['warning','warnings'])} · {quantity(validation.info_count,cs,['informace','informace','informací'],['info','info'])}</p>
           <label>{cs?'Filtrovat kontroly podle závažnosti':'Filter checks by severity'}<select aria-label="Package validation severity filter" value={severityFilter} onChange={event=>setSeverityFilter(event.target.value)}>
             <option value="all">{cs?'Všechny kontroly':'All checks'}</option>
             <option value="error">{cs?'Chyby':'Errors'}</option>

@@ -495,6 +495,53 @@ describe('built-in World cloning', () => {
     expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', expect.objectContaining({dry_run: true}))
   })
 
+  it('rejects a mismatched successful write without invalidating unrelated package caches', async () => {
+    api.getWorldPackage.mockResolvedValue({
+      world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'source-fingerprint',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    })
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    api.cloneWorldPackage.mockResolvedValue({
+      ok: true, dry_run: false, source_world_id: 'real_world', new_world_id: 'unexpected_world',
+      target_path: 'config/world_packages/custom/unexpected_world',
+      created_files: [], package: null, validation: null, errors: [],
+    })
+    const client = new QueryClient({defaultOptions: {queries: {retry: false}, mutations: {retry: false}}})
+    const invalidate = vi.spyOn(client, 'invalidateQueries')
+    const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
+      {initialEntries: ['/world/real_world']})
+    render(<QueryClientProvider client={client}><RouterProvider router={router} /></QueryClientProvider>)
+
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'expected_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Authored title'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Review custom copy'}))
+    expect(api.cloneWorldPackage).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name: 'Confirm custom copy'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('The response does not match the reviewed clone.')
+    expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', {
+      new_world_id: 'expected_world', name: 'Authored title',
+      description: 'Custom world cloned from Real World.', dry_run: false,
+    })
+    expect(invalidate).not.toHaveBeenCalled()
+    expect(screen.queryByLabelText('Clone result')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Open new Custom World detail'})).not.toBeInTheDocument()
+    act(() => {
+      locale.language = 'cs'
+      for (const listener of [...locale.listeners]) listener()
+    })
+    expect(screen.getByRole('alert')).toHaveTextContent('Odpověď nepatří kontrolované kopii.')
+    expect(invalidate).not.toHaveBeenCalled()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
+  })
+
   it('keeps an in-flight preview and localizes a late mismatched response in the active language', async () => {
     api.getWorldPackage.mockResolvedValue({
       world_id: 'real_world', name: 'Original World', type: 'official', source: 'built_in',

@@ -475,7 +475,7 @@ describe('built-in World cloning', () => {
     api.cloneWorldPackage.mockRejectedValue(new Error('HTTP 409: SOURCE_FINGERPRINT_CHANGED'))
     const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
       {initialEntries: ['/world/real_world']})
-    render(<QueryClientProvider client={new QueryClient({defaultOptions: {queries: {retry: false, mutations: {retry: false}}}})}>
+    render(<QueryClientProvider client={new QueryClient({defaultOptions: {queries: {retry: false}, mutations: {retry: false}}})}>
       <RouterProvider router={router} />
     </QueryClientProvider>)
 

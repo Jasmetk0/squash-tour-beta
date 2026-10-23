@@ -9,6 +9,7 @@ Scope: frontend presentation of the existing built-in World Package clone flow. 
 - Failure remains visibly distinct from a confirmed creation. Source/target IDs, paths, package fields, fingerprints, raw validation status and server error field/message values are never translated.
 - The adjacent confirmation review's accessibility label follows the selected language. The stored default clone description remains the original stable English string.
 - No mutation, form reset, review re-approval, or data fetch is driven by a language toggle; the existing source-fingerprint, late-response, explicit confirmation and unsaved-navigation safeguards remain unchanged.
+- A server reply's source ID, destination ID and dry-run flag must match the command **before** a reported successful write can invalidate World Package caches. A genuine matching write still refreshes its package and list caches, including after navigation; a mismatched reply cannot refresh an unrelated package.
 
 ## Focused verification
 
@@ -16,6 +17,6 @@ Scope: frontend presentation of the existing built-in World Package clone flow. 
 - `cd web && npm run build` (TypeScript project build + Vite production build)
 - PR Fast CI also runs the existing frontend critical baseline and changed-file/colocated tests, followed by the production build.
 
-Targeted clone tests cover CS/EN switching while reviewing, dry-run vs confirmed response, identical request content and default description, preservation of server diagnostics, and protection against changed source fingerprints. These are component-level mocked API checks, **not** real HTTP/SQLite or browser acceptance.
+Targeted clone tests cover CS/EN switching while reviewing, dry-run vs confirmed response, identical request content and default description, preservation of server diagnostics, protection against changed source fingerprints, and cache invalidation only for identity-matching confirmed writes. These are component-level mocked API checks, **not** real HTTP/SQLite or browser acceptance.
 
 Final-head hosted checks must be inspected separately. Skipped Draft-only acceptance checks are not passes; full pre-alpha release validation remains separate.

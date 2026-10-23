@@ -22,8 +22,8 @@ precise supported boundary and verification ledger.
 season, native Save/target/restart, final closure/rollback, explicit seasonal
 approval/restart and recovery/stale/concurrent cases have executed locally, along
 with legacy task regressions and frontend contracts/build. The W52/W61/W80 full
-production matrix, genuine Chromium and all relevant checks on the eventual
-final SHA must actually pass. Draft skips are not evidence. No merge readiness
+production matrix and all relevant hosted checks on the eventual final SHA
+must actually pass. Genuine native Chromium has passed locally. Draft skips are not evidence. No merge readiness
 is claimed. Final-week native Editions requiring a closing-only result adapter,
 unsupported Health/calibration and other existing native Tour formats remain
 explicitly blocked; no result or prerequisite is invented.

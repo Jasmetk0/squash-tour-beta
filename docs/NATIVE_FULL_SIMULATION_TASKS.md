@@ -106,6 +106,10 @@ results already executed (earlier source-tree states; not final-head claims):
 | Preserved actual legacy task/control/lease/summary regressions | 14 passed, 123.40 s |
 | Repeated legacy regressions after native metadata separation | 14 passed, 112.91 s |
 | Actual native fork, horizon Save, both restores, independent continuation, source rehash rejection and restart | 1 passed, 116.12 s |
+| Consolidated native HTTP/SQLite target, final closure, recovery, seasonal approval and fork/horizon/restore | 5 passed, about 428.4 s |
+| Final candidate legacy task/lease/summary regressions | 14 passed, 69.97 s |
+| Actual legacy precise-boundary Chromium, process death, CS/EN and frozen summaries | passed locally; first hosted attempt failed with ECONNRESET and is not counted as a pass |
+| Rehashed unsupported Tour version, read non-mutation, target Save and restart regression | 1 passed, 46.94 s |
 | Closing Ranking unit contracts plus original task-calendar regressions | 18 passed, 2.33 s |
 | Focused existing/new frontend contracts | 121 passed, 7.81 s (five files; API mocks/component contracts, not sporting integration) |
 | Native seed/action/audit integrity, Closing Ranking and original calendar contracts | 35 passed, 7.23 s |

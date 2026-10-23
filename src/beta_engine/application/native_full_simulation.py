@@ -223,7 +223,7 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
         if checkpoint_row is None or tour_row is None:
             raise ValueError("Native task progress lacks its sporting/Tour owner")
         state, tour = json.loads(checkpoint_row.payload_json), json.loads(tour_row.payload_json)
-        if state.get("schema_version") not in {f"calendar_sporting_checkpoint.v{i}" for i in range(1, 13)} or tour.get("schema_version") not in {f"calendar_tour_authority.v{i}" for i in range(1, 5)}:
+        if state.get("schema_version") not in {f"calendar_sporting_checkpoint.v{i}" for i in range(1, 13)} or tour.get("schema_version") not in {"calendar_tour_authority.v1", "calendar_tour_authority.v2"}:
             raise ValueError("Native task progress sporting/Tour schema is unsupported")
         if fingerprint(state) != checkpoint_row.fingerprint or fingerprint(tour) != tour_row.fingerprint or tour["checkpoint_fingerprint"] != checkpoint_row.fingerprint or state["week"] != tour["week"]:
             raise ValueError("Native task progress sporting/Tour hash or position is corrupt")

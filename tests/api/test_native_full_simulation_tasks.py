@@ -95,9 +95,14 @@ def approve_draw(server, name="worker-cup"):
 
 
 def test_native_task_real_transition_save_target_restart_and_original_replay(tmp_path):
+    import json
+
+    from beta_engine.domain.simulation_slots import fingerprint
+    from beta_engine.infrastructure.db.models import CalendarTourAuthorityModel
+
     db = f"sqlite:///{tmp_path / 'native-task.db'}"
     with ApiServer(database_url=db) as server:
-        setup(server, RunCalendar(4, 4, 2030, 3), count=4)
+        repo, _ = setup(server, RunCalendar(4, 4, 2030, 3), count=4)
         command = reviewed(server, {"season_index": 0, "week": 3})
         task = start(server, command)
         assert task["checkpoint"] == "native_manual_save_required"
@@ -107,6 +112,17 @@ def test_native_task_real_transition_save_target_restart_and_original_replay(tmp
         assert task["state"] == "awaiting_operator"
         assert task["checkpoint"] == "native_manual_save_required"
         assert len(inspect(server)["state"]["transitions"]) == 1
+        with repo._session_factory.begin() as session:
+            row = session.get(CalendarTourAuthorityModel, ("run", "branch"))
+            original_tour, original_hash = row.payload_json, row.fingerprint
+            corrupt = json.loads(original_tour)
+            corrupt["schema_version"] = "calendar_tour_authority.v3"
+            row.payload_json, row.fingerprint = json.dumps(corrupt), fingerprint(corrupt)
+        assert _request("GET", scope(server) + "/tasks/" + task["task_id"])[0] == 409
+        with repo._session_factory.begin() as session:
+            row = session.get(CalendarTourAuthorityModel, ("run", "branch"))
+            assert row.payload_json == json.dumps(corrupt)  # GET did not repair storage.
+            row.payload_json, row.fingerprint = original_tour, original_hash
         save_tour(server)
         task = resume(server, task, "after-week-save")
         assert task["state"] == "target_reached"

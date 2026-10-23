@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -208,10 +208,10 @@ describe('TournamentTestLabPage', () => {
     expect(api.updateTournamentLabSession).not.toHaveBeenCalled()
     expect(api.runTournamentTestLab).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', {name: 'Spustit turnajový scénář'}))
-    expect(api.runTournamentTestLab).toHaveBeenCalledWith(expect.objectContaining({
+    await waitFor(() => expect(api.runTournamentTestLab).toHaveBeenCalledWith(expect.objectContaining({
       batch_match_seeds: [31, 32],
       scenario: expect.objectContaining({scenario_id: 'standard-four-player'})
-    }))
+    })))
   })
 
   it('creates an isolated Session from a scratch tournament without applying a Run proposal', async () => {

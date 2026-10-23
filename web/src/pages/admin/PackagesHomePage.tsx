@@ -193,6 +193,7 @@ export function PackageWorldDetailPage():JSX.Element {
   const active=tab==='contents'||tab==='validation'?tab:'overview'
   const [countrySearch,setCountrySearch]=useState('')
   const [countrySort,setCountrySort]=useState<'source'|'name'|'population'>('source')
+  const [geographySearch,setGeographySearch]=useState('')
   const [severityFilter,setSeverityFilter]=useState('all')
   const [outcomeFilter,setOutcomeFilter]=useState<'all'|'passed'|'warning'|'failed'>('all')
   const [checkSearch,setCheckSearch]=useState('')
@@ -201,6 +202,7 @@ export function PackageWorldDetailPage():JSX.Element {
   useEffect(()=>{
     setCountrySearch('')
     setCountrySort('source')
+    setGeographySearch('')
     setSeverityFilter('all')
     setOutcomeFilter('all')
     setCheckSearch('')
@@ -225,6 +227,17 @@ export function PackageWorldDetailPage():JSX.Element {
     .sort((a,b)=>countrySort==='name'
       ? a.name.localeCompare(b.name,cs?'cs-CZ':'en-US')||a.code.localeCompare(b.code)
       : countrySort==='population' ? b.population-a.population||a.code.localeCompare(b.code) : 0)
+  const geoTerm=normalizeCatalogSearch(geographySearch)
+  const geoGroups = geo ? ([
+    [cs ? 'Kontinenty' : 'Continents',geo.continents.map(x=>x.code+' '+x.name)],
+    [cs ? 'Regiony' : 'Regions',geo.regions.map(x=>x.code+' '+x.name)],
+    [cs ? 'Cestovní regiony' : 'Travel regions',geo.travel_regions.map(x=>x.code+' '+x.name)],
+    [cs ? 'Časové oblasti' : 'Timezone areas',geo.timezone_areas.map(x=>x.code+' '+x.name)]
+  ] as [string,string[]][]).map(([name,values])=>({
+    name,values,matches:values.filter(value=>normalizeCatalogSearch(value).includes(geoTerm))
+  })) : []
+  const geoTotal=geoGroups.reduce((sum,group)=>sum+group.values.length,0)
+  const geoMatches=geoGroups.reduce((sum,group)=>sum+group.matches.length,0)
   const checkTerm=normalizeCatalogSearch(checkSearch)
   // Presentation-only combination: API validation result and counts remain unmodified.
   const visibleChecks=validation?.checks.filter(c=>
@@ -284,12 +297,20 @@ export function PackageWorldDetailPage():JSX.Element {
         {geoQuery.isPending&&<p role="status">{cs ? "Načítám geografii…" : "Loading geography…"}</p>}
         {geoQuery.isError&&<><p className="error" role="alert">{cs ? 'Geografii se nepodařilo načíst: ' : 'Failed to load geography: '}{formatApiError(geoQuery.error)}</p><RetryRead cs={cs} what="geography" fetching={geoQuery.isFetching} onRetry={() => { void geoQuery.refetch() }} /></>}
         {geoMismatch&&<WrongWorldResponse cs={cs} expected={worldId} actual={geoQuery.data?.world_id ?? ''} what="geography" fetching={geoQuery.isFetching} onRetry={()=>{void geoQuery.refetch()}}/>}
-        {geo&&<div><RetryRead cs={cs} what="geography" fetching={geoQuery.isFetching} onRetry={()=>{void geoQuery.refetch()}}/>{([
-          [cs ? 'Kontinenty' : 'Continents',geo.continents.map(x=>x.code+' '+x.name)],
-          [cs ? 'Regiony' : 'Regions',geo.regions.map(x=>x.code+' '+x.name)],
-          [cs ? 'Cestovní regiony' : 'Travel regions',geo.travel_regions.map(x=>x.code+' '+x.name)],
-          [cs ? 'Časové oblasti' : 'Timezone areas',geo.timezone_areas.map(x=>x.code+' '+x.name)]
-        ] as [string,string[]][]).map(([name,values])=><details key={name}><summary>{name} ({values.length})</summary>{values.length ? <ul>{values.map(x=><li key={x}>{x}</li>)}</ul> : <p role="status">{cs ? 'V této části nejsou žádné položky.' : 'No entries in this section.'}</p>}</details>)}</div>}
+        {geo&&<div>
+          <RetryRead cs={cs} what="geography" fetching={geoQuery.isFetching} onRetry={()=>{void geoQuery.refetch()}}/>
+          <label>{cs?'Hledat geografický kód nebo název':'Search geography code or name'}
+            <input type="search" aria-label="Package geography search" value={geographySearch} onChange={e=>setGeographySearch(e.target.value)}/>
+          </label>
+          {geoTerm&&<p role="status" className="status">{cs?`Zobrazeno ${geoMatches} z ${geoTotal} geografických položek.`:`Showing ${geoMatches} of ${geoTotal} geography entries.`}</p>}
+          {geoGroups.filter(group=>!geoTerm||group.matches.length>0).map(({name,values,matches})=>
+            <details key={name}><summary>{name} ({geoTerm?`${matches.length} / ${values.length}`:values.length})</summary>
+              {matches.length ? <ul>{matches.map(value=><li key={value}>{value}</li>)}</ul>
+                : <p role="status">{cs?'V této části nejsou žádné položky.':'No entries in this section.'}</p>}
+            </details>)}
+          {geoTerm&&geoMatches===0&&<><p role="status">{cs?'Žádná geografická položka neodpovídá hledání.':'No geography entries match the search.'}</p>
+            <button type="button" onClick={()=>setGeographySearch('')}>{cs?'Vymazat hledání geografie':'Clear geography search'}</button></>}
+        </div>}
       </article>}
       {active==='validation'&&<article className="package-index-detail">
         <h3>{cs?'Skutečné výsledky kontroly':'Actual validation results'}</h3>

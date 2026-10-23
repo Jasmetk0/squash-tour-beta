@@ -247,6 +247,51 @@ describe('source-backed Packages frontend',()=>{
     expect(await screen.findByText('Kontrola nevrátila žádné jednotlivé záznamy.')).toBeInTheDocument()
     expect(screen.getByText(/platné · 0 chyb · 0 varování/)).toBeInTheDocument()
   })
+  it('filters all four geography groups by accent-insensitive code or name without changing source counts',async()=>{
+    api.getWorldPackageGeography.mockResolvedValue({world_id:'demo',
+      continents:[{code:'EU',name:'Evropa'},{code:'AS',name:'Asie'}],
+      regions:[{code:'CE',name:'Střední Evropa'}],
+      travel_regions:[{code:'TR',name:'Východní oblast'}],
+      timezone_areas:[{code:'UTC',name:'Greenwich'}]
+    })
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    expect(await screen.findByText('Kontinenty (2)')).toBeInTheDocument()
+    const search=screen.getByRole('searchbox',{name:'Package geography search'})
+    await userEvent.type(search,'EVROPA')
+    expect(screen.getByText('Kontinenty (1 / 2)')).toBeInTheDocument()
+    expect(screen.getByText('Regiony (1 / 1)')).toBeInTheDocument()
+    expect(screen.queryByText('Cestovní regiony (1 / 1)')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByText('Regiony (1 / 1)'))
+    expect(screen.getByText('CE Střední Evropa')).toBeInTheDocument()
+    expect(screen.getByText('Zobrazeno 2 z 5 geografických položek.')).toBeInTheDocument()
+    await userEvent.clear(search)
+    await userEvent.type(search,'UTC')
+    expect(screen.getByText('Časové oblasti (1 / 1)')).toBeInTheDocument()
+    expect(screen.queryByText('Kontinenty (1 / 2)')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(search).toHaveValue('UTC')
+    expect(screen.getByText('Timezone areas (1 / 1)')).toBeInTheDocument()
+    expect(api.getWorldPackageGeography).toHaveBeenCalledTimes(1)
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+  })
+
+  it('distinguishes filtered geography with zero matches from truly empty source groups',async()=>{
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    expect(await screen.findByText('Kontinenty (1)')).toBeInTheDocument()
+    const search=screen.getByRole('searchbox',{name:'Package geography search'})
+    await userEvent.type(search,'no-such-region')
+    expect(screen.getByText('Žádná geografická položka neodpovídá hledání.')).toBeInTheDocument()
+    expect(screen.queryByText('Kontinenty (1)')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Vymazat hledání geografie'}))
+    expect(search).toHaveValue('')
+    expect(screen.getByText('Kontinenty (1)')).toBeInTheDocument()
+    expect(api.getWorldPackageGeography).toHaveBeenCalledTimes(1)
+  })
+
   it('resets local country search and ordering when router reuses the detail for another World',async()=>{
     api.getWorldPackage.mockImplementation(async(id:string)=>id==='demo'?world:{...world,world_id:'other',name:'Other World'})
     api.getWorldPackageCountries.mockImplementation(async(id:string)=>({world_id:id,countries:[
@@ -259,11 +304,14 @@ describe('source-backed Packages frontend',()=>{
     const search=screen.getByRole('searchbox',{name:'Hledat zemi, kód nebo region'})
     await userEvent.type(search,'cesko-nonexistent')
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package country sort'}),'population')
+    const geographySearch=screen.getByRole('searchbox',{name:'Package geography search'})
+    await userEvent.type(geographySearch,'other-geography')
     expect(screen.getByText('Žádná země neodpovídá hledání.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('link',{name:'Open another World'}))
     expect(await screen.findByRole('heading',{name:'Other World'})).toBeInTheDocument()
     await waitFor(()=>expect(screen.getByRole('searchbox',{name:'Hledat zemi, kód nebo region'})).toHaveValue(''))
     expect(screen.getByRole('combobox',{name:'Package country sort'})).toHaveValue('source')
+    expect(screen.getByRole('searchbox',{name:'Package geography search'})).toHaveValue('')
     expect(await screen.findByRole('link',{name:'Czechia (CZE)'})).toBeInTheDocument()
     expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(2)
   })

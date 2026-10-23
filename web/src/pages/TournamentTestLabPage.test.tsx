@@ -302,6 +302,35 @@ describe('TournamentTestLabPage', () => {
     expect(api.runTournamentTestLab).toHaveBeenCalledTimes(1)
   })
 
+  it('localizes known match statuses without altering selected filter or rerunning the experiment', async () => {
+    const user = userEvent.setup()
+    api.runTournamentTestLab.mockResolvedValue({
+      ...result,
+      runs: [{
+        ...result.runs[0],
+        match_results: [
+          ...result.runs[0].match_results,
+          {...result.runs[0].match_results[0], node_id: 'R1-BYE', status: 'bye',
+            winner_player_id: 'P2', set_scores: [], rally_count: 0}
+        ]
+      }]
+    })
+    renderWithRoute(<LocalizedPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', {name: 'Load scratch copy'}))
+    await user.click(screen.getByRole('button', {name: 'Run tournament scenario'}))
+    const filter = await screen.findByRole('combobox', {name: 'Tournament Lab match status filter'})
+    await user.selectOptions(filter, 'bye')
+    expect(filter).toHaveValue('bye')
+    await user.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    expect(filter).toHaveValue('bye')
+    expect(screen.getByRole('option', {name: 'volný postup (bye)'})).toBeInTheDocument()
+    const table = screen.getByRole('table', {name: 'Tournament Lab match results'})
+    expect(within(table).getByRole('cell', {name: 'volný postup (bye)'})).toBeInTheDocument()
+    expect(within(table).queryByRole('cell', {name: 'R1-M1'})).not.toBeInTheDocument()
+    expect(api.runTournamentTestLab).toHaveBeenCalledTimes(1)
+    expect(api.createTournamentLabSession).not.toHaveBeenCalled()
+  })
+
   it('hides previous inspection and run evidence when the editable scenario changes', async () => {
     const user = userEvent.setup()
     renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')

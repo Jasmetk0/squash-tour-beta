@@ -17,11 +17,22 @@ from uuid import uuid4
 from sqlalchemy import func, select, text
 
 from beta_engine.application.authoritative_run_simulation_driver import (
-    AuthoritativeFullSimulationCommand,
     AuthoritativeFullSimulationControlCommand,
     fingerprint,
 )
-from beta_engine.application.run_calendar_read_authority import resolve_revision_run_calendar
+from beta_engine.application.native_full_simulation import (
+    OPERATION_SCHEMA,
+    NativeFullSimulationCommand,
+    native_context,
+    parse_full_simulation_command,
+    validate_native_parent,
+)
+from beta_engine.application.native_full_simulation import (
+    _write as write_native_parent,
+)
+from beta_engine.application.run_calendar_read_authority import (
+    resolve_revision_run_calendar,
+)
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.infrastructure.db.full_simulation_invocation_lease import (
     LEASE_SCOPE,
@@ -33,10 +44,10 @@ from beta_engine.infrastructure.db.models import (
     AuthoritativeSimulationCommandModel,
     FullSimulationExecutionLeaseModel,
     FullSimulationTaskModel,
-    SimulationEventGroupModel,
-    SimulationSlotModel,
     RunBranchModel,
     RunContainerModel,
+    SimulationEventGroupModel,
+    SimulationSlotModel,
 )
 
 _LOG = logging.getLogger(__name__)
@@ -83,7 +94,7 @@ def _read(row):
             or fingerprint(data) != row.payload_fingerprint
         ):
             raise ValueError("Task schema/fingerprint mismatch")
-        command = AuthoritativeFullSimulationCommand.model_validate(data["command"])
+        command = parse_full_simulation_command(data["command"])
         if (command.run_id, command.branch_id, command.command_id) != (
             row.run_id,
             row.branch_id,
@@ -215,6 +226,11 @@ def _parent(session, row, data):
     ):
         raise ValueError("Task parent identity/fingerprint mismatch")
     payload = json.loads(parent.result_json)
+    if isinstance(parse_full_simulation_command(data["command"]), NativeFullSimulationCommand):
+        validate_native_parent(session, parent, payload)
+        if payload["resume_command"] != data["command"]:
+            raise ValueError("Task parent immutable native command mismatch")
+        return parent, payload
     if parent.status not in {
         "pending",
         "stopped",
@@ -225,11 +241,15 @@ def _parent(session, row, data):
         raise ValueError("Task parent status corrupt")
     if parent.status != "complete" and payload.get("resume_command") != data["command"]:
         raise ValueError("Task parent immutable command mismatch")
-    from beta_engine.application.full_simulation_boundary_targets import effective_boundary
+    from beta_engine.application.full_simulation_boundary_targets import (
+        effective_boundary,
+    )
     effective_boundary(payload)
     if payload.get("schema_version") == "authoritative_full_simulation_operation.v1" and any(
             e.get("boundary_target") is not None for e in payload.get("target_events", [])):
-        from beta_engine.application.authoritative_run_simulation_driver import AuthoritativeRunSimulationDriver
+        from beta_engine.application.authoritative_run_simulation_driver import (
+            AuthoritativeRunSimulationDriver,
+        )
         AuthoritativeRunSimulationDriver._validate_full_target_audit(parent, payload)
     return parent, payload
 
@@ -253,8 +273,16 @@ def _progress_evidence(session, row, parent, frozen, command, branch_ordinal, ca
     start = calendar.ordinal(command.expected_start_week.season_index, command.expected_start_week.week)
     kind = "live_branch" if branch_ordinal is not None else "unavailable"
     ordinal = branch_ordinal
-    if parent.status in ("stopped", "target_reached"):
-        from beta_engine.application.full_simulation_summary import stored_terminal_summary
+    if frozen.get("schema_version") == OPERATION_SCHEMA and parent.status in TERMINAL:
+        summary = frozen.get("terminal_summary")
+        if summary is None:
+            raise ValueError("Native terminal task has no frozen summary")
+        end = summary["end_week"]
+        kind, ordinal = "terminal_frozen", calendar.ordinal(end["season_index"], end["week"])
+    elif parent.status in ("stopped", "target_reached"):
+        from beta_engine.application.full_simulation_summary import (
+            stored_terminal_summary,
+        )
 
         summary = stored_terminal_summary(parent, frozen)
         if summary is None:
@@ -361,7 +389,10 @@ def _project(session, row, observer_instance=None, calendar_cache=None):
             )
             .scalar()
         )
-    command = AuthoritativeFullSimulationCommand.model_validate(data["command"])
+    command = parse_full_simulation_command(data["command"])
+    if isinstance(command, NativeFullSimulationCommand) and parent.status not in TERMINAL:
+        ctx = native_context(_task_repository(session), session, row.run_id, row.branch_id)
+        ordinal = ctx["calendar"].ordinal(ctx["week"]["season_index"], ctx["week"]["week"])
     # The immutable command selects its original Saved clock. Today's Run/head
     # may have been extended/restored; never use it to reinterpret this task.
     calendar_key = (row.run_id, command.expected_revision_id)
@@ -409,10 +440,25 @@ def _project(session, row, observer_instance=None, calendar_cache=None):
     }
 
 
+def _task_repository(session):
+    from sqlalchemy.orm import sessionmaker
+
+    from beta_engine.infrastructure.db.repositories import (
+        SimulationPersistenceRepository,
+    )
+    if "native_task_read_repository" not in session.info:
+        engine = session.get_bind()
+        session.info["native_task_read_repository"] = SimulationPersistenceRepository(
+            engine=engine, session_factory=sessionmaker(bind=engine, expire_on_commit=False)
+        )
+    return session.info["native_task_read_repository"]
+
+
 def inspect_tasks(
     factory, *, run_id=None, branch_id=None, task_id=None, observer_instance=None
 ):
     with factory() as session:
+        session.execute(text("BEGIN"))
         query = select(FullSimulationTaskModel).order_by(
             FullSimulationTaskModel.task_id
         )
@@ -603,9 +649,10 @@ class FullSimulationTaskWorker:
                     frozen["control_state"] = (
                         "paused"  # expired/absent owner cannot commit further work
                     )
-                parent.result_json = json.dumps(
-                    frozen, sort_keys=True, separators=(",", ":")
-                )
+                if frozen.get("schema_version") == OPERATION_SCHEMA:
+                    write_native_parent(parent, frozen)
+                else:
+                    parent.result_json = json.dumps(frozen, sort_keys=True, separators=(",", ":"))
                 driver.control_full_simulation_in_session(
                     session,
                     AuthoritativeFullSimulationControlCommand(
@@ -665,9 +712,10 @@ class FullSimulationTaskWorker:
                 and frozen.get("control_state") == "pause_requested"
             ):
                 frozen["control_state"] = "paused"
-                parent.result_json = json.dumps(
-                    frozen, sort_keys=True, separators=(",", ":")
-                )
+                if frozen.get("schema_version") == OPERATION_SCHEMA:
+                    write_native_parent(parent, frozen)
+                else:
+                    parent.result_json = json.dumps(frozen, sort_keys=True, separators=(",", ":"))
                 data["checkpoint"] = "operator_paused"
                 _event(data, "paused", "idle_safe_pause_acknowledged")
                 _write(row, data)
@@ -710,7 +758,7 @@ class FullSimulationTaskWorker:
             _event(data, "active", "worker_entered")
             data["heartbeat_unix"] = int(time.time())
             _write(row, data)
-            command = AuthoritativeFullSimulationCommand.model_validate(data["command"])
+            command = parse_full_simulation_command(data["command"])
         with full_simulation_invocation_lease(
             self.factory,
             run_id=command.run_id,

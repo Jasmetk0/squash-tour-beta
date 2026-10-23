@@ -5,76 +5,79 @@ import logging
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import ValidationError, BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from beta_engine.api.deps import (
     ApiRuntime,
+    get_run_working_draft_service,
     get_runtime,
     get_season_match_service,
     get_season_point_awards_service,
-    get_run_working_draft_service,
 )
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeApplicationValidationCommand,
     AuthoritativeEmptyWeekCompletionCommand,
+    AuthoritativeEntryDecisionSlotCommand,
     AuthoritativeExplicitApplicationValidationCommand,
     AuthoritativeExplicitEntryDecisionSlotCommand,
-    AuthoritativeEntryDecisionSlotCommand,
-    AuthoritativeRunSimulationDriver,
-    AuthoritativeSimulationCommand,
-    AuthoritativeNextRallyCommand,
+    AuthoritativeFullSimulationAbandonCommand,
+    AuthoritativeFullSimulationCommand,
+    AuthoritativeFullSimulationControlCommand,
+    AuthoritativeFullSimulationPreviewRequest,
+    AuthoritativeFullSimulationRetargetCommand,
+    AuthoritativeLiveConfirmCommand,
     AuthoritativeLiveRangeCommand,
     AuthoritativeLiveReturnCommand,
-    AuthoritativeLiveConfirmCommand,
     AuthoritativeMatchDayCommand,
+    AuthoritativeMatchReconstructionCommitCommand,
+    AuthoritativeMatchReconstructionPreviewRequest,
+    AuthoritativeNextRallyCommand,
     AuthoritativeRoundCommand,
+    AuthoritativeRunSimulationDriver,
+    AuthoritativeSeasonCommand,
+    AuthoritativeSeasonPreviewRequest,
+    AuthoritativeSimulationCommand,
     AuthoritativeTournamentCommand,
-    AuthoritativeWeekPreviewRequest,
+    AuthoritativeWalkoverCommand,
     AuthoritativeWeekCommand,
     AuthoritativeWeekExtensionApproval,
-    AuthoritativeSeasonPreviewRequest,
-    AuthoritativeSeasonCommand,
-    AuthoritativeFullSimulationPreviewRequest,
-    AuthoritativeFullSimulationCommand,
-    AuthoritativeFullSimulationAbandonCommand,
-    AuthoritativeFullSimulationControlCommand,
-    AuthoritativeFullSimulationRetargetCommand,
-    AuthoritativeMatchReconstructionPreviewRequest,
-    AuthoritativeMatchReconstructionCommitCommand,
-    AuthoritativeWalkoverCommand,
+    AuthoritativeWeekPreviewRequest,
     AuthoritativeWeekTournamentLockCommitCommand,
     AuthoritativeWeekTournamentLockPreviewRequest,
     FinalSeasonTransitionCommand,
     OrdinarySeasonTransitionCommand,
 )
-from beta_engine.application.season_match_service import SeasonMatchService
-from beta_engine.application.season_transition_configuration import (
-    resolve_season_transition_configuration,
+from beta_engine.application.calendar_continuation_service import (
+    CalendarContinuationCommand,
+    CalendarContinuationService,
 )
-from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
-from beta_engine.application.run_working_draft_service import RunWorkingDraftService
-from beta_engine.application.standalone_match_service import (
-    StandaloneMatchAddPlayerCommand,
-    StandaloneMatchService,
-    StandaloneMatchSimulateCommand,
+from beta_engine.application.calendar_knockout_award_service import (
+    CalendarAwardApplyCommand,
+    CalendarAwardProposal,
+    CalendarKnockoutAwardService,
+)
+from beta_engine.application.calendar_opening_knockout_service import (
+    CalendarCanonicalPreviewCommand,
+    CalendarOpeningKnockoutCommand,
+    CalendarOpeningKnockoutService,
+)
+from beta_engine.application.calendar_signed_knockout_standings import (
+    CalendarSignedKnockoutStandingsService,
 )
 from beta_engine.application.calendar_standalone_match_service import (
     CalendarStandaloneMatchCommand,
     CalendarStandaloneMatchService,
 )
-from beta_engine.application.calendar_continuation_service import CalendarContinuationService, CalendarContinuationCommand
-from beta_engine.application.calendar_opening_knockout_service import (
-    CalendarOpeningKnockoutCommand, CalendarCanonicalPreviewCommand, CalendarOpeningKnockoutService,
+from beta_engine.application.full_simulation_tasks import inspect_tasks
+from beta_engine.application.native_full_simulation import (
+    OPERATION_SCHEMA,
+    NativeFullSimulationCommand,
+    NativeFullSimulationDriver,
+    NativeFullSimulationPreview,
+    parse_full_simulation_command,
 )
-from beta_engine.application.calendar_knockout_award_service import (
-    CalendarAwardProposal, CalendarAwardApplyCommand, CalendarKnockoutAwardService,
-)
-from beta_engine.application.calendar_signed_knockout_standings import (
-    CalendarSignedKnockoutStandingsService,
-)
-
-from beta_engine.application.prospect_bridge_inspection import inspect_prospect_bridge
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
+    PreAlphaFaxAcceptanceProfile,
     PreAlphaFaxAcceptanceProfileService,
 )
 from beta_engine.application.pre_alpha_fax_current_entry_decisions import (
@@ -98,11 +101,18 @@ from beta_engine.application.pre_alpha_fax_long_acceptance_probe import (
     PreAlphaFaxLongAcceptanceProbeRequest,
     PreAlphaFaxLongAcceptanceProbeService,
 )
-from beta_engine.application.pre_alpha_fax_acceptance_profile import (
-    PreAlphaFaxAcceptanceProfile,
-    PreAlphaFaxAcceptanceProfileService,
+from beta_engine.application.prospect_bridge_inspection import inspect_prospect_bridge
+from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.application.season_match_service import SeasonMatchService
+from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
+from beta_engine.application.season_transition_configuration import (
+    resolve_season_transition_configuration,
 )
-from beta_engine.application.full_simulation_tasks import inspect_tasks
+from beta_engine.application.standalone_match_service import (
+    StandaloneMatchAddPlayerCommand,
+    StandaloneMatchService,
+    StandaloneMatchSimulateCommand,
+)
 from beta_engine.domain.players.sporting import PlayerDevelopmentPolicy
 from beta_engine.domain.rankings.official import OfficialRankingPolicy, RankingWeek
 from beta_engine.domain.simulation_slots import WeekSimulationSchedule
@@ -162,6 +172,23 @@ def _driver(runtime, matches, awards):
     return AuthoritativeRunSimulationDriver(
         runtime.repository._session_factory, matches, awards
     )
+
+
+def _full_driver(runtime, matches, awards, *, command=None, task_id=None, parent_id=None):
+    if task_id is not None or parent_id is not None:
+        from beta_engine.infrastructure.db.models import (
+            AuthoritativeSimulationCommandModel,
+            FullSimulationTaskModel,
+        )
+        with runtime.repository._session_factory() as session:
+            if task_id is not None:
+                row = session.get(FullSimulationTaskModel, task_id)
+                command = parse_full_simulation_command(json.loads(row.payload_json)["command"]) if row else None
+            else:
+                row = session.get(AuthoritativeSimulationCommandModel, parent_id)
+                if row and json.loads(row.result_json).get("schema_version") == OPERATION_SCHEMA:
+                    return NativeFullSimulationDriver(runtime.repository)
+    return NativeFullSimulationDriver(runtime.repository) if isinstance(command, NativeFullSimulationCommand) else _driver(runtime, matches, awards)
 
 
 @router.post("/season-transition/configuration/preview")
@@ -2087,8 +2114,8 @@ def control_full_simulation(
         command = AuthoritativeFullSimulationControlCommand.model_validate(
             {**payload, "run_id": run_id, "branch_id": branch_id}
         )
-        driver = _driver(runtime, matches, awards)
-        result = driver.control_full_simulation(command)
+        driver = _full_driver(runtime, matches, awards, parent_id=(run_id, branch_id, command.target_command_id))
+        result = driver.control(command) if isinstance(driver, NativeFullSimulationDriver) else driver.control_full_simulation(command)
         request.app.state.full_simulation_worker.acknowledge_idle_pause(driver,command)
         return result
     except ValidationError as exc:
@@ -2491,6 +2518,21 @@ class FullSimulationTaskStart(BaseModel):
         return value.strip()
 
 
+@router.post("/full-simulation/native/preview")
+def preview_native_full_simulation(run_id: str, branch_id: str, payload: dict,
+        runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        for key, expected in (("run_id", run_id), ("branch_id", branch_id)):
+            if key in payload and payload[key] != expected:
+                raise ValueError("Native preview scope mismatch")
+        command = NativeFullSimulationPreview.model_validate({**payload, "run_id": run_id, "branch_id": branch_id})
+        return NativeFullSimulationDriver(runtime.repository).preview(command)
+    except ValidationError as exc:
+        raise HTTPException(422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(409, detail=str(exc)) from exc
+
+
 class FullSimulationTaskContinue(BaseModel):
     model_config = ConfigDict(extra="forbid")
     request_id: str = Field(min_length=1, max_length=128)
@@ -2516,8 +2558,8 @@ def start_full_simulation_task(run_id: str, branch_id: str, payload: FullSimulat
         for key, expected in (("run_id",run_id),("branch_id",branch_id)):
             if key in payload.command and payload.command[key] != expected:
                 raise ValueError("Task original command scope mismatch")
-        command = AuthoritativeFullSimulationCommand.model_validate({**payload.command,"run_id":run_id,"branch_id":branch_id})
-        return request.app.state.full_simulation_worker.start(_driver(runtime,matches,awards),
+        command = parse_full_simulation_command({**payload.command,"run_id":run_id,"branch_id":branch_id})
+        return request.app.state.full_simulation_worker.start(_full_driver(runtime,matches,awards,command=command),
             run_id=run_id,branch_id=branch_id,request_id=payload.request_id,command=command)
     except ValidationError as exc:
         raise HTTPException(422, detail=str(exc)) from exc
@@ -2541,7 +2583,7 @@ def continue_full_simulation_task(run_id: str, branch_id: str, task_id: str, pay
         matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
         awards: Annotated[SeasonPointAwardsService, Depends(get_season_point_awards_service)]):
     try:
-        return request.app.state.full_simulation_worker.continue_task(_driver(runtime,matches,awards),
+        return request.app.state.full_simulation_worker.continue_task(_full_driver(runtime,matches,awards,task_id=task_id),
             run_id=run_id,branch_id=branch_id,task_id=task_id,**payload.model_dump())
     except (KeyError,TypeError,ValueError) as exc:
         raise HTTPException(409, detail={"code":"full_simulation_task_conflict","message":str(exc)}) from exc
@@ -2590,13 +2632,18 @@ def save_calendar_continuation(run_id: str, branch_id: str, payload: dict,
         # Re-running the full continuation inspection *ahead* of that Save
         # duplicates the expensive seven-match replay in a second transaction.
         # This is only a fast UI precondition guard, never a trust shortcut.
+        from sqlalchemy import text
+
         from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
-            load_checkpoint, COMPONENT_KEY as SPORTING_COMPONENT_KEY,
+            COMPONENT_KEY as SPORTING_COMPONENT_KEY,
+        )
+        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+            load_checkpoint,
         )
         from beta_engine.infrastructure.db.models import (
-            RunBranchModel, BranchSavedRevisionModel,
+            BranchSavedRevisionModel,
+            RunBranchModel,
         )
-        from sqlalchemy import text
         with runtime.repository._session_factory() as session:
             session.execute(text('BEGIN'))
             current = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
@@ -2624,7 +2671,9 @@ def save_calendar_continuation(run_id: str, branch_id: str, payload: dict,
 
 # Sporting-only preparation; full Official Week/Season Transition remains guarded.
 from beta_engine.application.calendar_sporting_week_service import (
-    CalendarSportingWeekService, CalendarSportingWeekCommand, CalendarSportingWeekCommit,
+    CalendarSportingWeekCommand,
+    CalendarSportingWeekCommit,
+    CalendarSportingWeekService,
 )
 
 
@@ -2649,7 +2698,11 @@ def commit_calendar_sporting_week(run_id: str, branch_id: str, payload: Calendar
 # Full three-match native sporting knockout from a Saved week-2+ checkpoint.
 # Results and fatigue are real; Tour points/public Official time are not published.
 from beta_engine.application.calendar_followup_knockout_service import (
-    CalendarFollowupKnockoutCommand, CalendarFollowupScoredCommand, CalendarFollowupEightCommand, CalendarFollowupEightScoredCommand, CalendarFollowupKnockoutService,
+    CalendarFollowupEightCommand,
+    CalendarFollowupEightScoredCommand,
+    CalendarFollowupKnockoutCommand,
+    CalendarFollowupKnockoutService,
+    CalendarFollowupScoredCommand,
 )
 
 
@@ -2723,7 +2776,8 @@ def simulate_eight_scored_calendar_followup_knockout(
 # Native real-result closure records signed player match counters as a Saved
 # sporting fact. It never authenticates Tour Entry or publishes Official Rankings.
 from beta_engine.application.calendar_tournament_closure_service import (
-    CalendarNativeTournamentClosureService, CalendarNativeTournamentClosureCommand,
+    CalendarNativeTournamentClosureCommand,
+    CalendarNativeTournamentClosureService,
 )
 
 

@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { useState } from 'react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -10,7 +11,13 @@ const api = vi.hoisted(() => ({
   listRunBranches: vi.fn().mockResolvedValue({run_branches: []}),
   listSavedRevisionHistory: vi.fn().mockResolvedValue({saved_revisions: []}), runMatchTestLab: vi.fn(), getMatchLabBuiltInScenarios: vi.fn(), getMatchLabSessions: vi.fn(), createMatchLabSession: vi.fn(), updateMatchLabSession: vi.fn(), runMatchLabSession: vi.fn(), importMatchLabSavedRevisionPlayer: vi.fn() }))
 vi.mock('../api/client', () => api)
-vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en', t: (key: string) => key})}))
+const testLocale = vi.hoisted(() => ({language: 'en' as 'en' | 'cs'}))
+vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: testLocale.language, t: (key: string) => key})}))
+function LocalizedMatchPage(): JSX.Element {
+  const [cs, setCs] = useState(false)
+  testLocale.language = cs ? 'cs' : 'en'
+  return <><button type="button" onClick={() => setCs(value => !value)}>Toggle test language</button><MatchTestLabPage /></>
+}
 
 const result = {
   schema_version: 'match_test_lab_result.v1',
@@ -63,6 +70,7 @@ const result = {
 
 describe('MatchTestLabPage', () => {
   beforeEach(() => {
+    testLocale.language = 'en'
     for (const fn of Object.values(api)) fn.mockReset()
     api.runMatchTestLab.mockResolvedValue(result)
     api.runMatchLabSession.mockResolvedValue(result)
@@ -71,6 +79,26 @@ describe('MatchTestLabPage', () => {
     api.importMatchLabSavedRevisionPlayer.mockResolvedValue(undefined)
   })
 
+
+  it('keeps the scratch JSON, seed and request intact when switching to Czech', async () => {
+    renderWithRoute(<LocalizedMatchPage />, '/admin/labs/match')
+    const editor = screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement
+    const draft = JSON.parse(editor.value)
+    draft.seed = 429
+    fireEvent.change(editor, {target: {value: JSON.stringify(draft)}})
+    fireEvent.change(screen.getByLabelText('Match Lab batch seeds'), {target: {value: '12, 13'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    expect(screen.getByLabelText('Match Lab batch seeds')).toHaveValue('12, 13')
+    expect(JSON.parse((screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement).value).seed).toBe(429)
+    expect(api.createMatchLabSession).not.toHaveBeenCalled()
+    expect(api.updateMatchLabSession).not.toHaveBeenCalled()
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name: 'Spustit scénář'}))
+    await waitFor(() => expect(api.runMatchTestLab).toHaveBeenCalledWith(expect.objectContaining({
+      scenario: expect.objectContaining({seed: 429}),
+      batch_seeds: [12, 13]
+    })))
+  })
 
   it('creates an isolated Session from the current scratch JSON without automatically running', async () => {
     const user = userEvent.setup()

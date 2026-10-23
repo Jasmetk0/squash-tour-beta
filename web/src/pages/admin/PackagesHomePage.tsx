@@ -228,13 +228,15 @@ export function PackageWorldDetailPage():JSX.Element {
       ? a.name.localeCompare(b.name,cs?'cs-CZ':'en-US')||a.code.localeCompare(b.code)
       : countrySort==='population' ? b.population-a.population||a.code.localeCompare(b.code) : 0)
   const geoTerm=normalizeCatalogSearch(geographySearch)
+  // Stable technical group IDs prevent language switches from collapsing
+  // the expanded geography section while preserving the original source order.
   const geoGroups = geo ? ([
-    [cs ? 'Kontinenty' : 'Continents',geo.continents.map(x=>x.code+' '+x.name)],
-    [cs ? 'Regiony' : 'Regions',geo.regions.map(x=>x.code+' '+x.name)],
-    [cs ? 'Cestovní regiony' : 'Travel regions',geo.travel_regions.map(x=>x.code+' '+x.name)],
-    [cs ? 'Časové oblasti' : 'Timezone areas',geo.timezone_areas.map(x=>x.code+' '+x.name)]
-  ] as [string,string[]][]).map(([name,values])=>({
-    name,values,matches:values.filter(value=>normalizeCatalogSearch(value).includes(geoTerm))
+    ['continents',cs ? 'Kontinenty' : 'Continents',geo.continents.map(x=>x.code+' '+x.name)],
+    ['regions',cs ? 'Regiony' : 'Regions',geo.regions.map(x=>x.code+' '+x.name)],
+    ['travel_regions',cs ? 'Cestovní regiony' : 'Travel regions',geo.travel_regions.map(x=>x.code+' '+x.name)],
+    ['timezone_areas',cs ? 'Časové oblasti' : 'Timezone areas',geo.timezone_areas.map(x=>x.code+' '+x.name)]
+  ] as [string,string,string[]][]).map(([id,name,values])=>({
+    id,name,values,matches:values.filter(value=>normalizeCatalogSearch(value).includes(geoTerm))
   })) : []
   const geoTotal=geoGroups.reduce((sum,group)=>sum+group.values.length,0)
   const geoMatches=geoGroups.reduce((sum,group)=>sum+group.matches.length,0)
@@ -303,8 +305,8 @@ export function PackageWorldDetailPage():JSX.Element {
             <input type="search" aria-label="Package geography search" value={geographySearch} onChange={e=>setGeographySearch(e.target.value)}/>
           </label>
           {geoTerm&&<p role="status" className="status">{cs?`Zobrazeno ${geoMatches} z ${geoTotal} geografických položek.`:`Showing ${geoMatches} of ${geoTotal} geography entries.`}</p>}
-          {geoGroups.filter(group=>!geoTerm||group.matches.length>0).map(({name,values,matches})=>
-            <details key={name}><summary>{name} ({geoTerm?`${matches.length} / ${values.length}`:values.length})</summary>
+          {geoGroups.filter(group=>!geoTerm||group.matches.length>0).map(({id,name,values,matches})=>
+            <details key={id}><summary>{name} ({geoTerm?`${matches.length} / ${values.length}`:values.length})</summary>
               {matches.length ? <ul>{matches.map(value=><li key={value}>{value}</li>)}</ul>
                 : <p role="status">{cs?'V této části nejsou žádné položky.':'No entries in this section.'}</p>}
             </details>)}

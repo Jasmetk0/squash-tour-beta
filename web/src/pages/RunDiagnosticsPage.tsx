@@ -87,14 +87,22 @@ export function RunDiagnosticsPage(): JSX.Element {
     enabled: Boolean(runId)
   })
 
+  // Every history response has a Run ID; never display another Run's artifacts.
+  const eventsMismatch = Boolean(eventsQuery.data && eventsQuery.data.run_id !== runId)
+  const rankingsMismatch = Boolean(rankingSnapshotsQuery.data && rankingSnapshotsQuery.data.run_id !== runId)
+  const racesMismatch = Boolean(raceSnapshotsQuery.data && raceSnapshotsQuery.data.run_id !== runId)
+  const safeEvents = eventsQuery.data?.run_id === runId ? eventsQuery.data.events : []
+  const safeRankingSnapshots = rankingSnapshotsQuery.data?.run_id === runId ? rankingSnapshotsQuery.data.snapshots : []
+  const safeRaceSnapshots = raceSnapshotsQuery.data?.run_id === runId ? raceSnapshotsQuery.data.snapshots : []
+
   // History endpoints return ascending sequences; the first item is the oldest.
   // Select by persisted sequence rather than relying on response array order.
-  const latestCompletedEvent = eventsQuery.data?.events
+  const latestCompletedEvent = safeEvents
     .filter((event) => Boolean(event.tournament_result))
     .sort((a, b) => b.event_sequence - a.event_sequence)[0]
-  const latestRankingSnapshot = rankingSnapshotsQuery.data?.snapshots
+  const latestRankingSnapshot = safeRankingSnapshots
     .slice().sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0]
-  const latestRaceSnapshot = raceSnapshotsQuery.data?.snapshots
+  const latestRaceSnapshot = safeRaceSnapshots
     .slice().sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0]
   const nextPlannedEvent = runQuery.data?.season_state.ordered_events[runQuery.data.season_state.next_event_index] ?? null
   const nextPlannedWeek = nextPlannedEvent?.week ?? null
@@ -160,15 +168,15 @@ export function RunDiagnosticsPage(): JSX.Element {
             />
             <SummaryPills
               items={[
-                { label: 'Events', value: statusSummaryQuery.data?.history_counts.events ?? eventsQuery.data?.events.length ?? '—' },
+                { label: 'Events', value: statusSummaryQuery.data?.history_counts.events ?? safeEvents.length ?? '—' },
                 {
                   label: 'Ranking snapshots',
                   value:
-                    statusSummaryQuery.data?.history_counts.ranking_snapshots ?? rankingSnapshotsQuery.data?.snapshots.length ?? '—'
+                    statusSummaryQuery.data?.history_counts.ranking_snapshots ?? safeRankingSnapshots.length ?? '—'
                 },
                 {
                   label: 'Race snapshots',
-                  value: statusSummaryQuery.data?.history_counts.race_snapshots ?? raceSnapshotsQuery.data?.snapshots.length ?? '—'
+                  value: statusSummaryQuery.data?.history_counts.race_snapshots ?? safeRaceSnapshots.length ?? '—'
                 }
               ]}
             />
@@ -241,6 +249,11 @@ export function RunDiagnosticsPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Recent activity">
+        {(eventsMismatch || rankingsMismatch || racesMismatch) && (
+          <p role="alert" className="error">
+            History response belongs to another Run. Unrelated artifacts and inspection links are hidden.
+          </p>
+        )}
         <p>
           <Link to={`/runs/${encodeURIComponent(runId)}/activity`}>Open aggregated run activity feed</Link>
         </p>
@@ -250,9 +263,11 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Latest completed event',
               value: eventsQuery.isLoading
                 ? 'Loading...'
-                : eventsQuery.error
+                : eventsQuery.error || eventsMismatch
                   ? `Error: ${formatApiError(eventsQuery.error)}`
-                  : latestCompletedEvent
+                  : eventsMismatch
+                    ? 'Run mismatch'
+                    : latestCompletedEvent
                     ? (
                         <>
                           Available —{' '}
@@ -267,9 +282,11 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Latest ranking snapshot',
               value: rankingSnapshotsQuery.isLoading
                 ? 'Loading...'
-                : rankingSnapshotsQuery.error
+                : rankingSnapshotsQuery.error || rankingsMismatch
                   ? `Error: ${formatApiError(rankingSnapshotsQuery.error)}`
-                  : latestRankingSnapshot
+                  : rankingsMismatch
+                    ? 'Run mismatch'
+                    : latestRankingSnapshot
                     ? (
                         <>
                           Available —{' '}
@@ -284,9 +301,11 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Latest race snapshot',
               value: raceSnapshotsQuery.isLoading
                 ? 'Loading...'
-                : raceSnapshotsQuery.error
+                : raceSnapshotsQuery.error || racesMismatch
                   ? `Error: ${formatApiError(raceSnapshotsQuery.error)}`
-                  : latestRaceSnapshot
+                  : racesMismatch
+                    ? 'Run mismatch'
+                    : latestRaceSnapshot
                     ? (
                         <>
                           Available —{' '}
@@ -304,8 +323,9 @@ export function RunDiagnosticsPage(): JSX.Element {
           subtitle="Shows the three newest persisted events by sequence."
           isLoading={eventsQuery.isLoading}
           loadingText="Loading recent events..."
-          errorText={eventsQuery.error ? `Failed to load events: ${formatApiError(eventsQuery.error)}` : undefined}
-          items={(eventsQuery.data?.events ?? []).slice().sort((a, b) => b.event_sequence - a.event_sequence).slice(0, 3)}
+          errorText={eventsMismatch ? 'Event history belongs to a different Run.' :
+            eventsQuery.error ? `Failed to load events: ${formatApiError(eventsQuery.error)}` : undefined}
+          items={safeEvents.slice().sort((a, b) => b.event_sequence - a.event_sequence).slice(0, 3)}
           emptyText="No events are available yet."
           listAriaLabel="Diagnostics recent events"
           getKey={(event) => event.event_id}
@@ -363,9 +383,9 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Events',
               value: eventsQuery.isLoading
                 ? 'Loading...'
-                : eventsQuery.error
+                : eventsQuery.error || eventsMismatch
                   ? 'Error'
-                  : (eventsQuery.data?.events.length ?? 0) > 0
+                  : (safeEvents.length ?? 0) > 0
                     ? 'Available'
                     : 'None yet'
             },
@@ -373,9 +393,9 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Ranking snapshots',
               value: rankingSnapshotsQuery.isLoading
                 ? 'Loading...'
-                : rankingSnapshotsQuery.error
+                : rankingSnapshotsQuery.error || rankingsMismatch
                   ? 'Error'
-                  : (rankingSnapshotsQuery.data?.snapshots.length ?? 0) > 0
+                  : (safeRankingSnapshots.length ?? 0) > 0
                     ? 'Available'
                     : 'None yet'
             },
@@ -383,9 +403,9 @@ export function RunDiagnosticsPage(): JSX.Element {
               label: 'Race snapshots',
               value: raceSnapshotsQuery.isLoading
                 ? 'Loading...'
-                : raceSnapshotsQuery.error
+                : raceSnapshotsQuery.error || racesMismatch
                   ? 'Error'
-                  : (raceSnapshotsQuery.data?.snapshots.length ?? 0) > 0
+                  : (safeRaceSnapshots.length ?? 0) > 0
                     ? 'Available'
                     : 'None yet'
             }

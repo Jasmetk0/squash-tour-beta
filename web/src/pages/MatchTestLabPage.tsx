@@ -44,15 +44,15 @@ const defaultScenario: MatchLabScenario = {
   }
 }
 
-function parseSeeds(value: string): number[] {
+function parseSeeds(value: string, cs: boolean): number[] {
   const trimmed = value.trim()
   if (!trimmed) return []
   const parts = trimmed.split(',').map((part) => part.trim())
   const seeds = parts.map(Number)
   if (parts.some((part) => !/^[+-]?\d+$/.test(part))
-    || seeds.some((seed) => !Number.isSafeInteger(seed))) throw new Error('Batch seeds must be comma-separated integers.')
-  if (new Set(seeds).size !== seeds.length) throw new Error('Batch seeds must be unique.')
-  if (seeds.length > 100) throw new Error('At most 100 batch seeds are supported.')
+    || seeds.some((seed) => !Number.isSafeInteger(seed))) throw new Error(cs ? 'Seedy dávky musí být celá čísla oddělená čárkami.' : 'Batch seeds must be comma-separated integers.')
+  if (new Set(seeds).size !== seeds.length) throw new Error(cs ? 'Seedy dávky se nesmí opakovat.' : 'Batch seeds must be unique.')
+  if (seeds.length > 100) throw new Error(cs ? 'Dávka může mít nejvýše 100 seedů.' : 'At most 100 batch seeds are supported.')
   return seeds
 }
 
@@ -72,7 +72,7 @@ function ResultPanels({ data }: { data: MatchLabResult }): JSX.Element {
   return <>
     <SectionCard title={cs ? 'Kompatibilita a izolace' : 'Compatibility & isolation'}>
       <SummaryPills items={[
-        { label: 'Engine', value: data.compatibility.match_engine_version },
+        { label: cs ? 'Jádro' : 'Engine', value: data.compatibility.match_engine_version },
         { label: cs ? 'Běžný formát' : 'Normal format', value: data.compatibility.normal_format ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
         { label: cs ? 'Zápis do Runu' : 'Run mutation', value: data.compatibility.run_mutation_performed ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
         { label: cs ? 'Živé propojení s Runem' : 'Live Run link', value: data.compatibility.run_live_link ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
@@ -215,7 +215,7 @@ export function MatchTestLabPage(): JSX.Element {
 
   const parseScenario = (): MatchLabScenario => {
     try { return JSON.parse(scenarioText) as MatchLabScenario }
-    catch { throw new Error('Invalid scenario JSON. Check the syntax before running or saving.') }
+    catch { throw new Error(cs ? 'Neplatný JSON scénáře. Před spuštěním nebo uložením opravte syntaxi.' : 'Invalid scenario JSON. Check the syntax before running or saving.') }
   }
 
   const submit = (event: FormEvent) => {
@@ -225,10 +225,10 @@ export function MatchTestLabPage(): JSX.Element {
     runMutation.reset()
     try {
       const scenario = parseScenario()
-      if (sessionHasUnsavedChanges) throw new Error('Save Test Session changes before running this scenario.')
-      if (sessionConflict) throw new Error('Refresh and reload the saved Test Session before running.')
+      if (sessionHasUnsavedChanges) throw new Error(cs ? 'Před spuštěním scénáře uložte změny Test Session.' : 'Save Test Session changes before running this scenario.')
+      if (sessionConflict) throw new Error(cs ? 'Před spuštěním obnovte seznam a znovu načtěte uloženou Test Session.' : 'Refresh and reload the saved Test Session before running.')
       if (writePending || runPending) return
-      runMutation.mutate({ scenario, seeds: parseSeeds(batchText), session: selectedSession })
+      runMutation.mutate({ scenario, seeds: parseSeeds(batchText, cs), session: selectedSession })
     }
     catch (error) { setLocalError(error instanceof Error ? error.message : String(error)) }
   }
@@ -263,7 +263,7 @@ export function MatchTestLabPage(): JSX.Element {
     <SectionCard title={cs ? "Bezpečnostní hranice" : "Safety boundary"}>
       <p>{cs ? "Vestavěné scénáře jsou pouze ke čtení. Nová Test Session vytvoří samostatnou upravitelnou kopii mimo Run a větev. Původ dat není živé propojení." : "Built-in scenarios are read-only. New Test Session creates an independent editable copy outside every Run and Branch; copied provenance is data only, never a live link."}</p>
       <SummaryPills items={[
-        { label: 'Kernel', value: 'MatchEngine.simulate' },
+        { label: cs ? 'Jádro' : 'Kernel', value: 'MatchEngine.simulate' },
         { label: cs ? 'Zápis do Runu' : 'Run mutation', value: cs ? 'nikdy' : 'never' },
         { label: cs ? 'Vybraný režim' : 'Selected mode', value: selectedSession ? (cs ? 'samostatná Test Session' : 'isolated Test Session') : (cs ? 'pracovní přenosný scénář' : 'portable scratch scenario') }
       ]} />

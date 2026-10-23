@@ -250,6 +250,22 @@ function CloneResultCard({ result }: { result: WorldPackageCloneResponse }): JSX
   )
 }
 
+type CloneUiError =
+  | { kind: 'invalidWorldId' | 'missingName' | 'changedSource' | 'responseMismatch' }
+  | { kind: 'server'; message: string }
+
+function cloneUiErrorText(error: CloneUiError, cs: boolean): string {
+  if (error.kind === 'server') return error.message
+  if (error.kind === 'invalidWorldId') return cs
+    ? 'ID musí začínat malým písmenem nebo číslicí (3–64 znaků, dále také podtržítko).'
+    : 'World ID must start with a lowercase letter or digit (3–64 characters, then underscores also allowed).'
+  if (error.kind === 'missingName') return cs ? 'Název vlastní kopie je povinný.' : 'A name is required for the custom copy.'
+  if (error.kind === 'changedSource') return cs
+    ? 'Zdroj World Package se změnil. Návrh zkontrolujte znovu.'
+    : 'The source World Package changed. Review the clone again.'
+  return cs ? 'Odpověď nepatří kontrolované kopii.' : 'The response does not match the reviewed clone.'
+}
+
 function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPackage; onDirtyChange: (dirty: boolean) => void }): JSX.Element {
   const queryClient = useQueryClient()
   const { language } = useLanguage()
@@ -265,7 +281,7 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   const [name, setName] = useState('')
   const [description, setDescription] = useState(`Custom world cloned from ${source.name}.`)
   const [result, setResult] = useState<WorldPackageCloneResponse | null>(null)
-  const [apiError, setApiError] = useState<string | null>(null)
+  const [apiError, setApiError] = useState<CloneUiError | null>(null)
   const [review, setReview] = useState<{ sourceWorldId: string; sourceFingerprint: string; locationKey: string; payload: WorldPackageClonePayload } | null>(null)
   useEffect(() => {
     setNewWorldId(''); setName(''); setDescription(`Custom world cloned from ${source.name}.`)
@@ -284,7 +300,7 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
       }
       if (!mounted.current || sourceRef.current !== command.sourceWorldId || activeLocationKey.current !== command.locationKey) return
       if (response.source_world_id !== command.sourceWorldId || response.new_world_id !== command.payload.new_world_id || response.dry_run !== command.payload.dry_run) {
-        setApiError(cs ? 'Odpověď nepatří kontrolované kopii.' : 'The response does not match the reviewed clone.')
+        setApiError({ kind: 'responseMismatch' })
         return
       }
       setResult(response)
@@ -296,18 +312,18 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
     onError: (error, command) => {
       if (!mounted.current || sourceRef.current !== command.sourceWorldId || activeLocationKey.current !== command.locationKey) return
       setResult(null)
-      setApiError(formatApiError(error))
+      setApiError({ kind: 'server', message: formatApiError(error) })
     }
   })
   function prepare(dryRun: boolean): void {
     if (mutation.isPending) return
     const id = newWorldId.trim()
     if (!/^[a-z0-9][a-z0-9_]{2,63}$/.test(id)) {
-      setApiError(cs ? 'ID musí začínat malým písmenem nebo číslicí (3–64 znaků, dále také podtržítko).' : 'World ID must start with a lowercase letter or digit (3–64 characters, then underscores also allowed).')
+      setApiError({ kind: 'invalidWorldId' })
       return
     }
     if (!name.trim()) {
-      setApiError(cs ? 'Název vlastní kopie je povinný.' : 'A name is required for the custom copy.')
+      setApiError({ kind: 'missingName' })
       return
     }
     const payload: WorldPackageClonePayload = {
@@ -325,8 +341,7 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
     if (!review || mutation.isPending) return
     if (review.sourceWorldId !== source.world_id || review.sourceFingerprint !== source.fingerprint ||
         review.locationKey !== locationKey) {
-      setApiError(cs ? 'Zdroj World Package se změnil. Návrh zkontrolujte znovu.' :
-        'The source World Package changed. Review the clone again.')
+      setApiError({ kind: 'changedSource' })
       return
     }
     mutation.mutate(review)
@@ -359,7 +374,7 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
         </div>
       </fieldset>
     </form>}
-    {apiError && <p className="error" role="alert">{cs ? 'Kopírování se nezdařilo: ' : 'Clone request failed: '}{apiError}</p>}
+    {apiError && <p className="error" role="alert">{cs ? 'Kopírování se nezdařilo: ' : 'Clone request failed: '}{cloneUiErrorText(apiError, cs)}</p>}
     {result && <CloneResultCard result={result} />}
   </SectionCard>
 }

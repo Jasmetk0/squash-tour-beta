@@ -136,6 +136,53 @@ describe('source-backed Packages frontend',()=>{
     expect(await screen.findByText('Kontrola nevrátila žádné jednotlivé záznamy.')).toBeInTheDocument()
     expect(screen.getByText(/platné · 0 chyb · 0 varování/)).toBeInTheDocument()
   })
+  it('searches country names, codes and regions without accents or inventory writes',async()=>{
+    api.getWorldPackageCountries.mockResolvedValue({world_id:'demo',countries:[
+      {code:'CZE',name:'Česko',region:'Střední Evropa',population:100},
+      {code:'USA',name:'United States',region:'America',population:200}
+    ]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    expect(await screen.findByRole('link',{name:'Česko (CZE)'})).toBeInTheDocument()
+    const search=screen.getByRole('searchbox',{name:'Hledat zemi, kód nebo region'})
+    await userEvent.type(search,'cesko')
+    expect(screen.getByRole('link',{name:'Česko (CZE)'})).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'United States (USA)'})).not.toBeInTheDocument()
+    await userEvent.clear(search)
+    await userEvent.type(search,' stredni ')
+    expect(screen.getByText(/Zobrazeno 1 z 2 zemí/)).toBeInTheDocument()
+    expect(screen.getByRole('link',{name:'Česko (CZE)'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(screen.getByRole('searchbox',{name:'Search countries, codes or regions'})).toHaveValue(' stredni ')
+    expect(screen.getByRole('link',{name:'Česko (CZE)'})).toBeInTheDocument()
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+  })
+
+  it('filters validation severity without changing original counts or diagnostic messages',async()=>{
+    api.getWorldPackageValidation.mockResolvedValue({world_id:'demo',status:'errors',error_count:1,warning_count:1,info_count:1,checks:[
+      {code:'broken_country',severity:'error',status:'failed',message:'Country is invalid',path:'countries/CZE/data.json',field:'name'},
+      {code:'country_warning',severity:'warning',status:'warning',message:'Country detail to inspect',path:'countries/CZE/config.json',field:'squash_access'},
+      {code:'source_info',severity:'info',status:'passed',message:'Imported as supplied',path:null,field:null}
+    ]})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(await screen.findByText('Country is invalid')).toBeInTheDocument()
+    expect(screen.getByText(/1 chyba · 1 varování · 1 informace/)).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package validation severity filter'}),'error')
+    expect(screen.getByText('Country is invalid')).toBeInTheDocument()
+    expect(screen.queryByText('Country detail to inspect')).not.toBeInTheDocument()
+    expect(screen.getByText(/Zobrazeno 1 z 3 kontrol/)).toBeInTheDocument()
+    expect(screen.getByText(/1 chyba · 1 varování · 1 informace/)).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package validation severity filter'}),'info')
+    expect(screen.getByText('Imported as supplied')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(screen.getByRole('combobox',{name:'Package validation severity filter'})).toHaveValue('info')
+    expect(screen.getByText('Imported as supplied')).toBeInTheDocument()
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
+  })
+
   it('reports a failed World-country query instead of claiming no countries',async()=>{
     api.getWorldPackageCountries.mockRejectedValue(new Error('country service offline'))
     mount('/admin/packages/world/demo')
@@ -143,6 +190,17 @@ describe('source-backed Packages frontend',()=>{
     await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
     expect(await screen.findByRole('alert')).toHaveTextContent('country service offline')
     expect(screen.queryByText('V balíčku nejsou žádné země.')).not.toBeInTheDocument()
+  })
+
+  it('distinguishes zero matching checks from an empty validation response',async()=>{
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(await screen.findByText('Country detail to inspect')).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package validation severity filter'}),'error')
+    expect(screen.getByText('Zvolenému filtru neodpovídají žádné záznamy kontroly.')).toBeInTheDocument()
+    expect(screen.queryByText('Kontrola nevrátila žádné jednotlivé záznamy.')).not.toBeInTheDocument()
+    expect(api.getWorldPackageValidation).toHaveBeenCalledTimes(1)
   })
 
   it('retries a failed package detail request without navigating away',async()=>{

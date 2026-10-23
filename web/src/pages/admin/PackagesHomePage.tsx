@@ -135,6 +135,10 @@ export function PackagesListPage():JSX.Element {
     {cat!=='all' && <SourceNote category={cat} />}
   </section>
 }
+/** Accents, case and surrounding whitespace affect only search, never saved country fields. */
+function normalizeCatalogSearch(value:string):string {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()
+}
 function resolveCountry(check:WorldPackageValidationCheck,codes:string[]):string|null {
   const raw=[check.path,check.field].filter(Boolean).join('/')
   return codes.find(code => raw.split(/[^A-Za-z0-9]+/).some(part => part.toUpperCase()===code.toUpperCase())) ?? null
@@ -145,6 +149,7 @@ export function PackageWorldDetailPage():JSX.Element {
   const [params,setParams]=useSearchParams(),tab=params.get('tab')||'overview'
   const active=tab==='contents'||tab==='validation'?tab:'overview'
   const [countrySearch,setCountrySearch]=useState('')
+  const [severityFilter,setSeverityFilter]=useState('all')
   const q=useQuery({queryKey:['world-package',worldId],queryFn:()=>getWorldPackage(worldId),enabled:Boolean(worldId),retry:false})
   const countriesQuery=useQuery({queryKey:['world-package-countries',worldId],queryFn:()=>getWorldPackageCountries(worldId),enabled:active!=='overview',retry:false})
   const geoQuery=useQuery({queryKey:['world-package-geography',worldId],queryFn:()=>getWorldPackageGeography(worldId),enabled:active==='contents',retry:false})
@@ -153,6 +158,9 @@ export function PackageWorldDetailPage():JSX.Element {
   const countries=countriesQuery.data?.world_id===worldId?countriesQuery.data.countries:null
   const geo=geoQuery.data?.world_id===worldId?geoQuery.data:null
   const validation=valQuery.data?.world_id===worldId?valQuery.data:null
+  const countryTerm=normalizeCatalogSearch(countrySearch)
+  const visibleCountries=countries?.filter(c=>normalizeCatalogSearch([c.name,c.code,c.region].join(' ')).includes(countryTerm))??[]
+  const visibleChecks=validation?.checks.filter(c=>severityFilter==='all'||c.severity===severityFilter)??[]
   const source='/admin/world/library/'+encodeURIComponent(worldId)
   return <section className="panel package-index">
     <p><Link to="/admin/packages/category/world">← {cs?'World balíčky':'World packages'}</Link></p>
@@ -183,11 +191,12 @@ export function PackageWorldDetailPage():JSX.Element {
         <h3>{cs?'Země':'Countries'} ({pkg.country_count})</h3>
         {countriesQuery.isPending&&<p role="status">{cs ? "Načítám země…" : "Loading countries…"}</p>}
         {countriesQuery.isError&&<><p role="alert" className="error">{cs ? 'Země se nepodařilo načíst: ' : 'Failed to load countries: '}{formatApiError(countriesQuery.error)}</p><RetryRead cs={cs} what="countries" fetching={countriesQuery.isFetching} onRetry={() => { void countriesQuery.refetch() }} /></>}
-        {countries&&<><p role="status" className="status">{cs ? 'Ověřený seznam zemí' : 'Verified country inventory'}: {countries.length}</p><label>{cs?'Hledat zemi':'Search countries'}<input type="search" value={countrySearch} onChange={e=>setCountrySearch(e.target.value)}/></label>
-          <ul className="package-index-countries">{countries.filter(c=>(c.name+' '+c.code).toLowerCase().includes(countrySearch.toLowerCase())).map(c=>
+        {countries&&<><p role="status" className="status">{cs ? 'Ověřený seznam zemí' : 'Verified country inventory'}: {countries.length}</p><label>{cs?'Hledat zemi, kód nebo region':'Search countries, codes or regions'}<input type="search" value={countrySearch} onChange={e=>setCountrySearch(e.target.value)}/></label>
+          {countryTerm&&<p role="status" className="status">{cs ? `Zobrazeno ${visibleCountries.length} z ${countries.length} zemí. Filtr nemění obsah balíčku.` : `Showing ${visibleCountries.length} of ${countries.length} countries. Filtering does not change the package.`}</p>}
+          <ul className="package-index-countries">{visibleCountries.map(c=>
             <li key={c.code}><Link to={source+'/countries/'+encodeURIComponent(c.code)}>{c.name} ({c.code})</Link>
               <span className="status">{c.region} · {c.population.toLocaleString(cs ? 'cs-CZ' : 'en-US')}</span></li>)}</ul>
-          {countries.length === 0 ? <p role="status">{cs ? "V balíčku nejsou žádné země." : "This package contains no countries."}</p> : countries.every(c => !(c.name+" "+c.code).toLowerCase().includes(countrySearch.toLowerCase())) ? <p role="status">{cs ? "Žádná země neodpovídá hledání." : "No country matches the search."}</p> : null}</>}
+          {countries.length === 0 ? <p role="status">{cs ? "V balíčku nejsou žádné země." : "This package contains no countries."}</p> : visibleCountries.length === 0 ? <p role="status">{cs ? "Žádná země neodpovídá hledání." : "No country matches the search."}</p> : null}</>}
         <h3>{cs?'Geografie':'Geography'}</h3>
         {geoQuery.isPending&&<p role="status">{cs ? "Načítám geografii…" : "Loading geography…"}</p>}
         {geoQuery.isError&&<><p className="error" role="alert">{cs ? 'Geografii se nepodařilo načíst: ' : 'Failed to load geography: '}{formatApiError(geoQuery.error)}</p><RetryRead cs={cs} what="geography" fetching={geoQuery.isFetching} onRetry={() => { void geoQuery.refetch() }} /></>}
@@ -203,13 +212,20 @@ export function PackageWorldDetailPage():JSX.Element {
         {valQuery.isPending&&<p role="status">{cs ? "Načítám výsledky kontroly…" : "Loading validation…"}</p>}
         {valQuery.isError&&<><p role="alert" className="error">{cs ? 'Kontrolu se nepodařilo načíst: ' : 'Failed to load validation: '}{formatApiError(valQuery.error)}</p><RetryRead cs={cs} what="validation" fetching={valQuery.isFetching} onRetry={() => { void valQuery.refetch() }} /></>}
         {validation&&<><p className="status">{cs ? "Diagnostické zprávy jsou zobrazeny v původním znění." : "Diagnostic messages are shown verbatim."}</p><p>{statusText(validation.status,cs)} · {quantity(validation.error_count,cs,['chyba','chyby','chyb'],['error','errors'])} · {quantity(validation.warning_count,cs,['varování','varování','varování'],['warning','warnings'])} · {quantity(validation.info_count,cs,['informace','informace','informací'],['info','info'])}</p>
-          <ul className="package-index-checks">{validation.checks.map((check,i)=>{
+          <label>{cs?'Filtrovat kontroly podle závažnosti':'Filter checks by severity'}<select aria-label="Package validation severity filter" value={severityFilter} onChange={event=>setSeverityFilter(event.target.value)}>
+            <option value="all">{cs?'Všechny kontroly':'All checks'}</option>
+            <option value="error">{cs?'Chyby':'Errors'}</option>
+            <option value="warning">{cs?'Varování':'Warnings'}</option>
+            <option value="info">{cs?'Informace':'Information'}</option>
+          </select></label>
+          <p role="status" className="status">{cs ? `Zobrazeno ${visibleChecks.length} z ${validation.checks.length} kontrol. Souhrn validace se filtrem nemění.` : `Showing ${visibleChecks.length} of ${validation.checks.length} checks. Validation totals remain unchanged.`}</p>
+          <ul className="package-index-checks">{visibleChecks.map((check,i)=>{
             const country=resolveCountry(check,countries?.map(c=>c.code)??[])
             return <li key={check.code+':'+i}><strong>{cs ? statusText(check.severity, true).toUpperCase() : check.severity.toUpperCase()} · {check.code}</strong>
               <p>{check.message}</p><small className="status">{check.path}{check.field&&' · '+check.field}</small>
               {country&&<p><Link to={source+'/countries/'+encodeURIComponent(country)}>{cs?'Otevřít dotčenou zemi':'Open affected country'}: {country} →</Link></p>}</li>
           })}</ul>
-          {validation.checks.length === 0 && <p role="status">{cs ? "Kontrola nevrátila žádné jednotlivé záznamy." : "Validation returned no individual checks."}</p>}
+          {validation.checks.length === 0 ? <p role="status">{cs ? "Kontrola nevrátila žádné jednotlivé záznamy." : "Validation returned no individual checks."}</p> : visibleChecks.length===0 ? <p role="status">{cs ? "Zvolenému filtru neodpovídají žádné záznamy kontroly." : "No validation checks match this filter."}</p> : null}
           {countriesQuery.isError&&<p className="status">{cs?'Odkazy na jednotlivé země nejsou dostupné.':'Country links cannot be verified.'}</p>}
         </>}
       </article>}

@@ -87,9 +87,15 @@ export function RunDiagnosticsPage(): JSX.Element {
     enabled: Boolean(runId)
   })
 
-  const latestCompletedEvent = eventsQuery.data?.events.find((event) => event.tournament_result)
-  const latestRankingSnapshot = rankingSnapshotsQuery.data?.snapshots[0]
-  const latestRaceSnapshot = raceSnapshotsQuery.data?.snapshots[0]
+  // History endpoints return ascending sequences; the first item is the oldest.
+  // Select by persisted sequence rather than relying on response array order.
+  const latestCompletedEvent = eventsQuery.data?.events
+    .filter((event) => Boolean(event.tournament_result))
+    .sort((a, b) => b.event_sequence - a.event_sequence)[0]
+  const latestRankingSnapshot = rankingSnapshotsQuery.data?.snapshots
+    .slice().sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0]
+  const latestRaceSnapshot = raceSnapshotsQuery.data?.snapshots
+    .slice().sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0]
   const nextPlannedEvent = runQuery.data?.season_state.ordered_events[runQuery.data.season_state.next_event_index] ?? null
   const nextPlannedWeek = nextPlannedEvent?.week ?? null
   const hasLineageChildren = (lineageQuery.data?.lineage.children.length ?? 0) > 0

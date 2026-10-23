@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RunDiagnosticsPage } from './RunDiagnosticsPage'
@@ -28,17 +28,17 @@ vi.mock('../api/client', () => api)
 describe('RunDiagnosticsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    api.getRun.mockResolvedValue({
-      run: { run_id: 'run-a', season: 2028, seed: 11, next_event_index: 6, total_events: 24, completed_event_ids: ['E1', 'E2'] },
+    api.getRun.mockImplementation(async (runId: string) => ({
+      run: { run_id: runId, season: 2028, seed: 11, next_event_index: 6, total_events: 24, completed_event_ids: ['E1', 'E2'] },
       season_state: {
         season: 2028,
         next_event_index: 6,
         completed_event_ids: ['E1', 'E2'],
         ordered_events: [{ event_id: 'E1', season: 2028, week: 5, tour: 'WORLD', category: 'GOLD', template_id: 'TMP-1' }]
       }
-    })
-    api.getRunStatusSummary.mockResolvedValue({
-      run_id: 'run-a',
+    }))
+    api.getRunStatusSummary.mockImplementation(async (runId: string) => ({
+      run_id: runId,
       season: 2028,
       seed: 11,
       progress: { next_event_index: 6, total_events: 24, completed_event_count: 5 },
@@ -47,7 +47,7 @@ describe('RunDiagnosticsPage', () => {
       source: { source_type: 'new_run', parent_run_id: null },
       lineage: { child_run_count: 1 },
       history_counts: { events: 5, ranking_snapshots: 7, race_snapshots: 6 }
-    })
+    }))
     api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2028, qualification: null, result: null })
     api.getLatestRollover.mockResolvedValue({
       rollover: { run_id: 'run-a', from_season: 2028, to_season: 2029, transitioned_players: 64, metadata: {} }
@@ -245,6 +245,49 @@ describe('RunDiagnosticsPage', () => {
         expect(screen.getByRole('link', {
           name: `Inspect latest ${stillValidSnapshot} snapshot (Seq ${stillValidSnapshot === 'race' ? 14 : 17})`,
         })).toBeInTheDocument()
+      }
+    },
+  )
+
+  it.each(['run', 'status', 'both'] as const)(
+    'does not mix wrong-Run %s summary into the current diagnostics',
+    async (wrong) => {
+      if (wrong === 'run' || wrong === 'both') {
+        api.getRun.mockResolvedValueOnce({
+          run: { run_id: 'FOREIGN_RUN', season: 2039, seed: 999, next_event_index: 0,
+            total_events: 1, completed_event_ids: [] },
+          season_state: { season: 2039, next_event_index: 0, completed_event_ids: [],
+            ordered_events: [{ event_id: 'FOREIGN_WEEK', week: 99, season: 2039,
+              tour: 'WORLD', category: 'GOLD', template_id: 'FOREIGN' }] }
+        })
+      }
+      if (wrong === 'status' || wrong === 'both') {
+        api.getRunStatusSummary.mockResolvedValueOnce({
+          run_id: 'FOREIGN_RUN', season: 2039, seed: 999,
+          progress: { next_event_index: 999, total_events: 999, completed_event_count: 999 },
+          history_counts: { events: 999, ranking_snapshots: 999, race_snapshots: 999 },
+          finals: { qualification_available: false, result_available: false },
+          rollover: null, source: null, lineage: { child_run_count: 0 },
+        })
+      }
+      renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+      await waitFor(() => expect(screen.getAllByRole('alert')).toHaveLength(wrong === 'both' ? 2 : 1))
+      expect(screen.queryByText('FOREIGN_RUN')).not.toBeInTheDocument()
+      expect(screen.queryByText('2039')).not.toBeInTheDocument()
+      expect(screen.queryByText('999')).not.toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: /W99/ })).not.toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Inspect latest completed event (E5)' }))
+        .toHaveAttribute('href', '/runs/run-a/events/E5')
+      if (wrong === 'run' || wrong === 'both') {
+        expect(screen.getByRole('alert', { name: '' })).toBeInTheDocument()
+        expect(screen.getByText(/Run details belong to another Run/)).toBeInTheDocument()
+        expect(screen.getByText('Week Detail (current week unavailable)')).toBeInTheDocument()
+      } else {
+        expect(screen.getByText('Run: run-a')).toBeInTheDocument()
+      }
+      if (wrong === 'status' || wrong === 'both') {
+        expect(screen.getByText(/Status summary belongs to another Run/)).toBeInTheDocument()
+        expect(screen.getByText('6/24')).toBeInTheDocument()
       }
     },
   )

@@ -11,6 +11,10 @@ on:
       - 'src/beta_engine/domain/players/calendar_sporting_checkpoint.py'
       - 'src/beta_engine/domain/tournaments/calendar_tour.py'
       - 'src/beta_engine/infrastructure/db/calendar_tour.py'
+      # Season Save/reopen also consumes the shared Saved validation boundary.
+      - 'src/beta_engine/infrastructure/db/repositories.py'
+      - 'src/beta_engine/infrastructure/db/native_fork_runtime_state.py'
+      - 'src/beta_engine/infrastructure/db/native_fork_source_projection.py'
       - 'tests/api/test_native_calendar_season_transition.py'
       - 'tests/api/test_native_cross_season_edition.py'
       - 'src/beta_engine/domain/players/calendar_followup_knockout.py'

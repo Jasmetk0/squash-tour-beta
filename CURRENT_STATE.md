@@ -1,3 +1,35 @@
+# Native Full Simulation history performance candidate — 23 October 2026
+
+Verified base `buuk` `e39d962bb6797960c47c1c659d57be1dc67bba6b`
+contains owner-merged #1636–#1638. Implementation is one PR, #1639; only the
+owner merges. The parallel Lab/Packages CS/EN PR #1640 is outside this change.
+
+The same genuine W52 pre-Start SQLite input completed every actual week,
+tournament/points, manual Save, Season Transition and cold reopen. Comparable
+execution is ~1,589.74 → 774.04 s (~2.05×); W50 Save/resume is 46.68 → 18.02 s.
+Both runs retain 63 Saved revisions / 80,909,929 payload bytes, the exact original
+source rows and equal UUID-normalized sporting facts at all 55 native Saved points.
+Generated Save IDs change their derived log anchors; raw equality is not claimed
+for those post-tournament hashes. No fixture, week, Save or sporting check was cut.
+
+Bounded exact-value source projections and compact dependency-reference hints
+avoid repeated parsing after fresh physical-byte hashing. Existing full source,
+owner/head/ancestry checks remain; operation proofs follow the actual snapshot,
+including raw-driver/cross-context rollback. Stored formats/hashes are unchanged.
+Cold replay and history growth remain: cold W50 is 31.28 versus 27.66 s here,
+and W4→W50 cycle growth is still ~7.5×. This is a measured scoped speedup,
+not flat-cost history, all-Run performance or release completion.
+
+Local evidence includes 65 contracts (2.51 s), real native controls/recovery,
+the complete W52 and genuine Chromium final closure/reopen. Final-head hosted
+W52/W61/W80, short/control/browser, native Tour and Saved integrity gates must
+actually pass before a merge recommendation. See
+`docs/NATIVE_FULL_SIMULATION_PERFORMANCE.md` and the latest PR checks for the
+repeatable procedure, exact scope, limitations and final evidence. Draft skips
+never count. The Master/product rules and reserved frontend remain unchanged.
+
+---
+
 # Native Full Simulation integration candidate — 23 October 2026
 
 Base `buuk` `79affb0e5e8b76d58535d01d50acd5a8ec7577fa` includes owner-merged

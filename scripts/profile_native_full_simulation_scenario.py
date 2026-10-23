@@ -21,6 +21,7 @@ from sqlalchemy.engine import Engine
 from beta_engine.application import full_simulation_tasks as tasks
 from beta_engine.application import native_full_simulation as native
 from beta_engine.domain.calendar.run_calendar import RunCalendar
+from scripts.profile_native_full_simulation_evidence import normalized_sporting_state
 from scripts.profile_native_full_simulation_metrics import measure_calls
 from tests.api import test_calendar_tour_flow as tour
 from tests.api import test_native_fork_public_continuation as fork_module
@@ -201,25 +202,32 @@ finally:
     print("REPORT", json.dumps(report), flush=True)
     if meta:
         # Compare all sport-bearing Saved facts. Generated Save/audit identities
-        # and their review fingerprints differ between executions. Journal and
-        # Tour receipt equality/replay remain checked by the original acceptance;
+        # and their review fingerprints differ between executions. Actual journal/receipt integrity and
+        # exact retries remain checked by the original acceptance;
         # these digests separately compare every retained sporting state/history.
         sports = []
         with sqlite3.connect(db) as connection:
+            aliases = {
+                rid: f"Saved:{owner}:{sequence}"
+                for rid, owner, sequence in connection.execute(
+                    "select revision_id,branch_id,sequence from branch_saved_revisions"
+                )
+            }
             for sequence, payload in connection.execute(
                 "select sequence,payload_json from branch_saved_revisions where branch_id=? order by sequence",
                 (meta["branch"],),
             ):
                 state = json.loads(payload)["content"]["native_fork_runtime"]["state"]
-                del state["journal"]
-                state["tour"].pop("receipts", None)
+                state = normalized_sporting_state(state, aliases)
                 raw = json.dumps(
                     state, ensure_ascii=False, sort_keys=True, separators=(",", ":")
                 )
                 sports.append(
                     {
                         "sequence": sequence,
-                        "sporting_sha256": hashlib.sha256(raw.encode()).hexdigest(),
+                        "semantic_sporting_sha256": hashlib.sha256(
+                            raw.encode()
+                        ).hexdigest(),
                     }
                 )
         (a.root / "sporting-history.json").write_text(json.dumps(sports, indent=2))

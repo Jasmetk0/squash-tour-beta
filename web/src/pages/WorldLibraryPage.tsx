@@ -323,6 +323,8 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   })
   function prepare(dryRun: boolean): void {
     if (mutation.isPending) return
+    // Starting another attempt must not leave the previous success beside a validation error.
+    setResult(null)
     const id = newWorldId.trim()
     if (!/^[a-z0-9][a-z0-9_]{2,63}$/.test(id)) {
       setApiError({ kind: 'invalidWorldId' })
@@ -335,7 +337,7 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
     const payload: WorldPackageClonePayload = {
       new_world_id: id, name: name.trim(), description: description.trim() || null, dry_run: dryRun
     }
-    setResult(null); setApiError(null)
+    setApiError(null)
     if (dryRun) {
       setReview(null)
       mutation.mutate({ sourceWorldId: source.world_id, sourceFingerprint: source.fingerprint, locationKey, payload })

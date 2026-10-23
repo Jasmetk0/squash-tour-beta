@@ -370,6 +370,43 @@ describe('built-in World cloning', () => {
     expect(api.cloneWorldPackage).toHaveBeenCalledTimes(2)
   })
 
+  it('translates a failed clone preview without rewriting server diagnostics or offering a created package', async () => {
+    locale.language = 'cs'
+    api.getWorldPackage.mockResolvedValue({
+      world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
+      status: 'active', editable: false, fingerprint: 'source-fingerprint',
+      country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+    })
+    api.getWorldPackageGeography.mockResolvedValue({
+      world_id: 'real_world', continents: [], regions: [], travel_regions: [],
+      timezone_areas: [], timezone_areas_authored: false,
+    })
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
+      info_count: 0, checks: [],
+    })
+    api.cloneWorldPackage.mockResolvedValue({
+      ok: false, dry_run: true, source_world_id: 'real_world', new_world_id: 'local_world',
+      target_path: 'config/world_packages/custom/local_world', created_files: [],
+      package: null, validation: null,
+      errors: [{field: 'new_world_id', message: 'DUPLICATE_WORLD_ID: preserved verbatim'}],
+    })
+    const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
+      {initialEntries: ['/world/real_world']})
+    render(<QueryClientProvider client={new QueryClient({defaultOptions: {queries: {retry: false}}})}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>)
+    fireEvent.change(await screen.findByPlaceholderText('my_custom_world'), {target: {value: 'local_world'}})
+    fireEvent.change(screen.getByPlaceholderText('My Custom World'), {target: {value: 'Editable'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Náhled kopírování'}))
+    expect(await screen.findByText('Náhled se nezdařil:')).toBeInTheDocument()
+    expect(screen.getByText('Chyby kopírování:')).toBeInTheDocument()
+    expect(screen.getByText('new_world_id: DUPLICATE_WORLD_ID: preserved verbatim')).toBeInTheDocument()
+    expect(screen.queryByText('Úspěch:')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: /Otevřít detail nového/})).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', expect.objectContaining({dry_run: true}))
+  })
+
 })
 
 

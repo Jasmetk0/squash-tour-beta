@@ -272,6 +272,8 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
   const cs = language === 'cs'
   const sourceRef = useRef(source.world_id)
   sourceRef.current = source.world_id
+  const sourceFingerprintRef = useRef(source.fingerprint)
+  sourceFingerprintRef.current = source.fingerprint
   const locationKey = useLocation().key
   const activeLocationKey = useRef(locationKey)
   activeLocationKey.current = locationKey
@@ -305,6 +307,11 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
         void queryClient.invalidateQueries({ queryKey: ['world-package-validation', response.new_world_id] })
       }
       if (!mounted.current || sourceRef.current !== command.sourceWorldId || activeLocationKey.current !== command.locationKey) return
+      if (command.payload.dry_run && sourceFingerprintRef.current !== command.sourceFingerprint) {
+        // This preview describes the old source revision; it is not a fresh review.
+        setApiError({ kind: 'changedSource' })
+        return
+      }
       if (!responseMatchesRequest) {
         setApiError({ kind: 'responseMismatch' })
         return
@@ -318,6 +325,10 @@ function CloneBuiltInWorldSection({ source, onDirtyChange }: { source: WorldPack
     onError: (error, command) => {
       if (!mounted.current || sourceRef.current !== command.sourceWorldId || activeLocationKey.current !== command.locationKey) return
       setResult(null)
+      if (command.payload.dry_run && sourceFingerprintRef.current !== command.sourceFingerprint) {
+        setApiError({ kind: 'changedSource' })
+        return
+      }
       setApiError({ kind: 'server', message: formatApiError(error) })
     }
   })

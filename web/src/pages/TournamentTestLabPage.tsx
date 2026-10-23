@@ -30,20 +30,20 @@ import { LabScenarioAuthoring, readLabScenario } from '../components/labAuthorin
 import { LabSessionConflict, useLabSessionEditor, validateLabSession, type LabEditorTicket } from '../components/LabSessionEditor'
 import { newCommandId } from '../admin/branchSimulation'
 
-function parseSeeds(value: string): number[] {
+function parseSeeds(value: string, cs: boolean): number[] {
   const trimmed = value.trim()
   if (!trimmed) return []
   const parts = trimmed.split(',').map((part) => part.trim())
   const seeds = parts.map(Number)
   if (parts.some((part) => !/^[+-]?\d+$/.test(part))
     || seeds.some((seed) => !Number.isSafeInteger(seed))) {
-    throw new Error('Batch match seeds must be comma-separated integers.')
+    throw new Error(cs ? 'Seedy zápasů musí být celá čísla oddělená čárkami.' : 'Batch match seeds must be comma-separated integers.')
   }
   if (new Set(seeds).size !== seeds.length) {
-    throw new Error('Batch match seeds must be unique.')
+    throw new Error(cs ? 'Seedy zápasů se nesmí opakovat.' : 'Batch match seeds must be unique.')
   }
   if (seeds.length > 100) {
-    throw new Error('At most 100 batch match seeds are supported.')
+    throw new Error(cs ? 'Dávka může mít nejvýše 100 seedů zápasů.' : 'At most 100 batch match seeds are supported.')
   }
   return seeds
 }
@@ -84,11 +84,11 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
       <SummaryPills items={[
         { label: cs ? 'Scénář' : 'Scenario', value: data.scenario_fingerprint.slice(0, 12) },
         { label: cs ? 'Požadavek' : 'Request', value: data.request_fingerprint.slice(0, 12) },
-        { label: 'Format authority', value: data.format_authority_fingerprint?.slice(0, 12) ?? 'not built' },
-        { label: 'Draw input', value: data.draw_input_fingerprint?.slice(0, 12) ?? 'not built' },
-        { label: 'Draw authority', value: data.draw_authority_fingerprint?.slice(0, 12) ?? 'not built' },
-        { label: 'Topology', value: data.topology_authority_fingerprint?.slice(0, 12) ?? 'not built' },
-        { label: 'Group schedule', value: data.group_schedule_fingerprint?.slice(0, 12) ?? 'not built' }
+        { label: cs ? 'Autorita formátu' : 'Format authority', value: data.format_authority_fingerprint?.slice(0, 12) ?? (cs ? 'nevytvořeno' : 'not built') },
+        { label: cs ? 'Vstup losu' : 'Draw input', value: data.draw_input_fingerprint?.slice(0, 12) ?? (cs ? 'nevytvořeno' : 'not built') },
+        { label: cs ? 'Autorita losu' : 'Draw authority', value: data.draw_authority_fingerprint?.slice(0, 12) ?? (cs ? 'nevytvořeno' : 'not built') },
+        { label: cs ? 'Topologie' : 'Topology', value: data.topology_authority_fingerprint?.slice(0, 12) ?? (cs ? 'nevytvořeno' : 'not built') },
+        { label: cs ? 'Rozpis skupin' : 'Group schedule', value: data.group_schedule_fingerprint?.slice(0, 12) ?? (cs ? 'nevytvořeno' : 'not built') }
       ]} />
     </SectionCard>
     <SectionCard title={cs ? "Diagnostika dávky" : "Batch diagnostics"}>
@@ -103,9 +103,9 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
     {data.draw ? <SectionCard title={cs ? "Kanonický hlavní los" : "Canonical Main Draw"}>
       <SummaryPills items={[
         { label: cs ? 'Velikost pavouka' : 'Bracket size', value: data.draw.main.bracket_size },
-        { label: 'Algorithm', value: data.draw.algorithm_version },
+        { label: cs ? 'Algoritmus' : 'Algorithm', value: data.draw.algorithm_version },
         { label: 'BYEs', value: data.draw.main.bye_slot_indexes.length },
-        { label: 'Q sections', value: data.draw.qualification_sections?.length ?? (data.draw.qualification ? 1 : 0) },
+        { label: cs ? 'Sekce kvalifikace' : 'Q sections', value: data.draw.qualification_sections?.length ?? (data.draw.qualification ? 1 : 0) },
         { label: cs ? 'Uzly' : 'Nodes', value: data.draw.main.nodes.length }
       ]} />
       <table aria-label="Tournament Lab draw slots">
@@ -133,8 +133,8 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
       <SummaryPills items={[
         { label: cs ? 'Hrací dny' : 'Match days', value: firstRun.group_stage.match_day_count },
         { label: cs ? 'Zápasy skupin' : 'Group matches', value: firstRun.group_stage.match_results.length },
-        { label: 'Standings', value: firstRun.group_stage.standings ? 'resolved' : 'blocked' },
-        { label: 'Hybrid bracket', value: firstRun.hybrid_knockout_bracket ? `${firstRun.hybrid_knockout_bracket.entrant_count} entrants` : 'none' }
+        { label: cs ? 'Tabulky' : 'Standings', value: firstRun.group_stage.standings ? (cs ? 'vyhodnoceno' : 'resolved') : (cs ? 'blokováno' : 'blocked') },
+        { label: cs ? 'Hybridní pavouk' : 'Hybrid bracket', value: firstRun.hybrid_knockout_bracket ? `${firstRun.hybrid_knockout_bracket.entrant_count} ${cs ? 'účastníků' : 'entrants'}` : (cs ? 'žádný' : 'none') }
       ]} />
       {firstRun.group_stage.blocking_issue ? <p className="error">
         {firstRun.group_stage.blocking_issue.code}: {firstRun.group_stage.blocking_issue.message}
@@ -159,12 +159,12 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
       <SummaryPills items={[
         { label: cs ? 'Seed zápasů' : 'Match seed', value: firstRun.match_seed },
         { label: cs ? 'Dokončená kola' : 'Completed rounds', value: firstRun.completed_rounds },
-        { label: 'Tournament complete', value: firstRun.tournament_complete ? 'yes' : 'no' },
+        { label: cs ? 'Turnaj dokončen' : 'Tournament complete', value: firstRun.tournament_complete ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
         { label: cs ? 'Vítěz' : 'Champion', value: firstRun.champion_player_id ?? (cs ? 'neurčeno' : 'not resolved') },
         { label: cs ? 'Odehrané zápasy' : 'Played matches', value: firstRun.played_match_count },
-        { label: 'Q sections resolved', value: firstRun.qualification_results?.length ?? 0 },
-        { label: 'Group stage', value: firstRun.group_stage ? 'yes' : 'no' },
-        { label: 'BYE advances', value: firstRun.bye_advance_count }
+        { label: cs ? 'Vyhodnocené sekce kvalifikace' : 'Q sections resolved', value: firstRun.qualification_results?.length ?? 0 },
+        { label: cs ? 'Skupinová fáze' : 'Group stage', value: firstRun.group_stage ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
+        { label: cs ? 'Postupy díky BYE' : 'BYE advances', value: firstRun.bye_advance_count }
       ]} />
       <label>{cs ? "Filtrovat zápasy prvního běhu podle stavu" : "Filter first-run matches by status"}
         <select aria-label="Tournament Lab match status filter" value={activeFilter} onChange={event => setStatusFilter(event.target.value)}>
@@ -399,13 +399,13 @@ export function TournamentTestLabPage(): JSX.Element {
     try {
       const scenario = JSON.parse(scenarioText) as TournamentLabScenario
       if (sessionHasUnsavedChanges) {
-        throw new Error('Save Test Session changes before running this tournament.')
+        throw new Error(cs ? 'Před spuštěním turnaje uložte změny Test Session.' : 'Save Test Session changes before running this tournament.')
       }
       const payload: TournamentLabRequest = {
         scenario,
-        batch_match_seeds: parseSeeds(batchText)
+        batch_match_seeds: parseSeeds(batchText, cs)
       }
-      if (sessionConflict) throw new Error('Refresh and reload the saved Test Session before running.')
+      if (sessionConflict) throw new Error(cs ? 'Před spuštěním obnovte seznam a znovu načtěte uloženou Test Session.' : 'Refresh and reload the saved Test Session before running.')
       if (writePending || runPending) return
       runMutation.mutate({ payload, session: selectedSession })
     } catch (error) {
@@ -571,17 +571,17 @@ export function TournamentTestLabPage(): JSX.Element {
           {runDraftApplyMutation.isPending ? (cs ? 'Vkládám zkontrolovaný návrh…' : 'Applying reviewed proposal…') : (cs ? 'Vložit návrh do Working Draft' : 'Apply to Run Working Draft')}
         </button>
       </> : null}
-      {runDraftPreviewMutation.isError ? <p className="error">
+      {runDraftPreviewMutation.isError ? <p role="alert" className="error">
         {cs ? 'Náhled návrhu selhal' : 'Run draft preview failed'}: {String(runDraftPreviewMutation.error)}
       </p> : null}
-      {runDraftApplyMutation.isError ? <p className="error">
+      {runDraftApplyMutation.isError ? <p role="alert" className="error">
         {cs ? 'Vložení návrhu selhalo' : 'Run draft apply failed'}: {String(runDraftApplyMutation.error)}
       </p> : null}
       {runDraftApplyMutation.data ? <SummaryPills items={[
-        { label: 'Proposal version', value: runDraftApplyMutation.data.proposal_version },
-        { label: 'Proposal', value: runDraftApplyMutation.data.proposal_fingerprint.slice(0, 12) },
-        { label: 'Working Draft version', value: runDraftApplyMutation.data.working_draft_version },
-        { label: 'Replay', value: runDraftApplyMutation.data.already_applied ? 'idempotent' : 'new mutation' }
+        { label: cs ? 'Verze návrhu' : 'Proposal version', value: runDraftApplyMutation.data.proposal_version },
+        { label: cs ? 'Otisk návrhu' : 'Proposal', value: runDraftApplyMutation.data.proposal_fingerprint.slice(0, 12) },
+        { label: cs ? 'Verze Working Draft' : 'Working Draft version', value: runDraftApplyMutation.data.working_draft_version },
+        { label: cs ? 'Opakování' : 'Replay', value: runDraftApplyMutation.data.already_applied ? (cs ? 'idempotentní opakování' : 'idempotent') : (cs ? 'nové vložení návrhu' : 'new mutation') }
       ]} /> : null}
       {runDraftApplyMutation.data ? <p role="status" className="status">{cs ? "Návrh je vložen pouze do Working Draft cílového Runu. Autoritativní uložená revize vznikne až samostatným potvrzeným Run Save." : "Proposal is staged in the target Run Working Draft. Use normal Run Save to create an immutable Saved Revision before authoritative adoption."}</p> : null}
     </SectionCard>
@@ -628,11 +628,11 @@ export function TournamentTestLabPage(): JSX.Element {
           {runPending ? (cs ? 'Spouštím…' : 'Running…') : selectedSession ? (cs ? 'Spustit Test Session' : 'Run Test Session') : (cs ? 'Spustit turnajový scénář' : 'Run tournament scenario')}
         </button>
         {sessionHasUnsavedChanges ? <p role="status">{cs ? "Neuložené změny Session. Ulož je před spuštěním či náhledem návrhu pro Run." : "Unsaved Tournament Test Session changes. Save before running or reviewing a Run proposal."}</p> : null}
-        {localError ? <p className="error">{localError}</p> : null}
-        {inspectMutation.isError ? <p className="error">{cs ? 'Kontrola selhala' : 'Inspection failed'}: {String(inspectMutation.error)}</p> : null}
-        {createMutation.isError ? <p className="error">{cs ? 'Vytvoření Session selhalo' : 'Session creation failed'}: {String(createMutation.error)}</p> : null}
-        {saveMutation.isError ? <p className="error">{cs ? 'Uložení Session selhalo' : 'Session save failed'}: {String(saveMutation.error)}</p> : null}
-        {runMutation.isError ? <p className="error">{cs ? 'Turnajová laboratoř selhala' : 'Tournament Lab failed'}: {String(runMutation.error)}</p> : null}
+        {localError ? <p role="alert" className="error">{localError}</p> : null}
+        {inspectMutation.isError ? <p role="alert" className="error">{cs ? 'Kontrola selhala' : 'Inspection failed'}: {String(inspectMutation.error)}</p> : null}
+        {createMutation.isError ? <p role="alert" className="error">{cs ? 'Vytvoření Session selhalo' : 'Session creation failed'}: {String(createMutation.error)}</p> : null}
+        {saveMutation.isError ? <p role="alert" className="error">{cs ? 'Uložení Session selhalo' : 'Session save failed'}: {String(saveMutation.error)}</p> : null}
+        {runMutation.isError ? <p role="alert" className="error">{cs ? 'Turnajová laboratoř selhala' : 'Tournament Lab failed'}: {String(runMutation.error)}</p> : null}
         <p className="status">{cs ? 'Scénář' : 'Scenario'}: {parsedScenario?.scenario_id ?? (scenarioText ? (cs ? 'neplatný JSON' : 'invalid JSON') : (cs ? 'nic nenačteno' : 'none loaded'))}</p>
       </SectionCard>
     </form>

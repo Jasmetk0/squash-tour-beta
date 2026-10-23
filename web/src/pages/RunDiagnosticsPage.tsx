@@ -87,6 +87,13 @@ export function RunDiagnosticsPage(): JSX.Element {
     enabled: Boolean(runId)
   })
 
+  // Run and status summaries must belong to the currently selected route.
+  // Other independently valid diagnostics remain available if either is wrong.
+  const runMismatch = Boolean(runQuery.data && runQuery.data.run.run_id !== runId)
+  const statusMismatch = Boolean(statusSummaryQuery.data && statusSummaryQuery.data.run_id !== runId)
+  const safeRun = runQuery.data?.run.run_id === runId ? runQuery.data : null
+  const safeStatus = statusSummaryQuery.data?.run_id === runId ? statusSummaryQuery.data : null
+
   // Every history response has a Run ID; never display another Run's artifacts.
   const eventsMismatch = Boolean(eventsQuery.data && eventsQuery.data.run_id !== runId)
   const rankingsMismatch = Boolean(rankingSnapshotsQuery.data && rankingSnapshotsQuery.data.run_id !== runId)
@@ -104,7 +111,7 @@ export function RunDiagnosticsPage(): JSX.Element {
     .slice().sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0]
   const latestRaceSnapshot = safeRaceSnapshots
     .slice().sort((a, b) => b.snapshot_sequence - a.snapshot_sequence)[0]
-  const nextPlannedEvent = runQuery.data?.season_state.ordered_events[runQuery.data.season_state.next_event_index] ?? null
+  const nextPlannedEvent = safeRun?.season_state.ordered_events[safeRun.season_state.next_event_index] ?? null
   const nextPlannedWeek = nextPlannedEvent?.week ?? null
   const hasLineageChildren = (lineageQuery.data?.lineage.children.length ?? 0) > 0
   const finalsInspectionRoute = getFinalsInspectionRoute({
@@ -125,18 +132,18 @@ export function RunDiagnosticsPage(): JSX.Element {
       </p>
       <CurrentContextStrip
         items={[
-          { label: 'Season', value: statusSummaryQuery.data?.season ?? runQuery.data?.run.season ?? '—' },
+          { label: 'Season', value: safeStatus?.season ?? safeRun?.run.season ?? '—' },
           {
             label: 'Progress',
-            value: statusSummaryQuery.data
-              ? `${statusSummaryQuery.data.progress.next_event_index}/${statusSummaryQuery.data.progress.total_events}`
-              : runQuery.data
-                ? `${runQuery.data.run.next_event_index}/${runQuery.data.run.total_events}`
+            value: safeStatus
+              ? `${safeStatus.progress.next_event_index}/${safeStatus.progress.total_events}`
+              : safeRun
+                ? `${safeRun.run.next_event_index}/${safeRun.run.total_events}`
                 : '—'
           },
           {
             label: 'Completed events',
-            value: statusSummaryQuery.data?.progress.completed_event_count ?? runQuery.data?.run.completed_event_ids.length ?? '—'
+            value: safeStatus?.progress.completed_event_count ?? safeRun?.run.completed_event_ids.length ?? '—'
           }
         ]}
       />
@@ -144,39 +151,41 @@ export function RunDiagnosticsPage(): JSX.Element {
       <SectionCard title="Run diagnostics summary">
         {runQuery.isLoading && <p className="status">Loading run diagnostics...</p>}
         {runQuery.error && <p className="error">Failed to load run details: {formatApiError(runQuery.error)}</p>}
+        {runMismatch && <p role="alert" className="error">Run details belong to another Run. Its progress and planned week are hidden.</p>}
         {statusSummaryQuery.error && (
           <p className="error">Failed to load status summary: {formatApiError(statusSummaryQuery.error)}</p>
         )}
-        {runQuery.data && (
+        {statusMismatch && <p role="alert" className="error">Status summary belongs to another Run. Its progress and counts are hidden.</p>}
+        {safeRun && (
           <>
             <CompactSummaryCard
               items={[
-                { label: 'Run ID', value: runQuery.data.run.run_id },
-                { label: 'Season', value: statusSummaryQuery.data?.season ?? runQuery.data.run.season },
-                { label: 'Seed', value: statusSummaryQuery.data?.seed ?? runQuery.data.run.seed },
+                { label: 'Run ID', value: safeRun.run.run_id },
+                { label: 'Season', value: safeStatus?.season ?? safeRun.run.season },
+                { label: 'Seed', value: safeStatus?.seed ?? safeRun.run.seed },
                 {
                   label: 'Progress',
-                  value: statusSummaryQuery.data
-                    ? `${statusSummaryQuery.data.progress.next_event_index} / ${statusSummaryQuery.data.progress.total_events}`
-                    : `${runQuery.data.run.next_event_index} / ${runQuery.data.run.total_events}`
+                  value: safeStatus
+                    ? `${safeStatus.progress.next_event_index} / ${safeStatus.progress.total_events}`
+                    : `${safeRun.run.next_event_index} / ${safeRun.run.total_events}`
                 },
                 {
                   label: 'Completed events',
-                  value: statusSummaryQuery.data?.progress.completed_event_count ?? runQuery.data.run.completed_event_ids.length
+                  value: safeStatus?.progress.completed_event_count ?? safeRun.run.completed_event_ids.length
                 }
               ]}
             />
             <SummaryPills
               items={[
-                { label: 'Events', value: statusSummaryQuery.data?.history_counts.events ?? (eventsQuery.data?.run_id === runId ? safeEvents.length : '—') },
+                { label: 'Events', value: safeStatus?.history_counts.events ?? (eventsQuery.data?.run_id === runId ? safeEvents.length : '—') },
                 {
                   label: 'Ranking snapshots',
                   value:
-                    statusSummaryQuery.data?.history_counts.ranking_snapshots ?? (rankingSnapshotsQuery.data?.run_id === runId ? safeRankingSnapshots.length : '—')
+                    safeStatus?.history_counts.ranking_snapshots ?? (rankingSnapshotsQuery.data?.run_id === runId ? safeRankingSnapshots.length : '—')
                 },
                 {
                   label: 'Race snapshots',
-                  value: statusSummaryQuery.data?.history_counts.race_snapshots ?? (raceSnapshotsQuery.data?.run_id === runId ? safeRaceSnapshots.length : '—')
+                  value: safeStatus?.history_counts.race_snapshots ?? (raceSnapshotsQuery.data?.run_id === runId ? safeRaceSnapshots.length : '—')
                 }
               ]}
             />

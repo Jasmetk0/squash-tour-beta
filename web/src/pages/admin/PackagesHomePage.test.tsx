@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { LanguageProvider } from '../../i18n/LanguageContext'
+import { LanguageProvider, useLanguage } from '../../i18n/LanguageContext'
 import { PackagesHomePage, PackagesListPage, PackageWorldDetailPage } from './PackagesHomePage'
 
 const api=vi.hoisted(()=>({
@@ -19,9 +19,13 @@ const world={
   timezone_area_count:1,used_by_run_count:null
 }
 const empty={...world,world_id:'empty',name:'Empty World',country_count:0}
+function LanguageSwitch():JSX.Element {
+  const {language,setLanguage}=useLanguage()
+  return <button type="button" onClick={()=>setLanguage(language==='cs'?'en':'cs')}>Switch language</button>
+}
 function mount(path:string):void {
   render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
-    <MemoryRouter initialEntries={[path]}><LanguageProvider><Routes>
+    <MemoryRouter initialEntries={[path]}><LanguageProvider><LanguageSwitch /><Routes>
       <Route path="/admin/packages" element={<PackagesHomePage/>}/>
       <Route path="/admin/packages/all" element={<PackagesListPage/>}/>
       <Route path="/admin/packages/category/:categoryId" element={<PackagesListPage/>}/>
@@ -73,12 +77,32 @@ describe('source-backed Packages frontend',()=>{
     expect(screen.getByRole('link',{name:'Vytvořit vlastní kopii →'})).toHaveAttribute('href','/admin/world/library/demo')
     await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
     expect(await screen.findByRole('link',{name:'Czechia (CZE)'})).toHaveAttribute('href','/admin/world/library/demo/countries/CZE')
-    expect(screen.getByText('Continents (1)')).toBeInTheDocument()
+    expect(screen.getByText('Kontinenty (1)')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
     expect(await screen.findByText('Country detail to inspect')).toBeInTheDocument()
     expect(screen.getByRole('link',{name:/Otevřít dotčenou zemi/})).toHaveAttribute('href','/admin/world/library/demo/countries/CZE')
     expect(api.getWorldPackageValidation).toHaveBeenCalledWith('demo')
   })
+  it('switches languages without changing a filtered catalog or making write requests',async()=>{
+    mount('/admin/packages/all')
+    expect(await screen.findByText('Demo World')).toBeInTheDocument()
+    await userEvent.type(screen.getByRole('searchbox',{name:'Hledání'}),'demo')
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package status'}),'active')
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(screen.getByRole('searchbox',{name:'Search'})).toHaveValue('demo')
+    expect(screen.getByRole('combobox',{name:'Package status'})).toHaveValue('active')
+    expect(screen.getByText('Demo World')).toBeInTheDocument()
+    expect(screen.queryByText('Empty World')).not.toBeInTheDocument()
+    expect(api.getWorldPackage).not.toHaveBeenCalled()
+    expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
+  })
+  it('distinguishes a filtered-out inventory from a truly empty category',async()=>{
+    mount('/admin/packages/all')
+    expect(await screen.findByText('Demo World')).toBeInTheDocument()
+    await userEvent.type(screen.getByRole('searchbox',{name:'Hledání'}),'not-a-real-package')
+    expect(screen.getByText(/Žádný evidovaný balíček/)).toBeInTheDocument()
+  })
+
   it('does not substitute fabricated empty inventory on source API failure',async()=>{
     api.listWorldPackages.mockRejectedValue(new Error('registry offline'))
     mount('/admin/packages/all')

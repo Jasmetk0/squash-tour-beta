@@ -212,7 +212,7 @@ function CloneResultCard({ result }: { result: WorldPackageCloneResponse }): JSX
       <DetailRow label={cs ? 'ID zdrojového světa' : 'Source world ID'} value={<code>{result.source_world_id}</code>} />
       <DetailRow label={cs ? 'Nové ID světa' : 'New world ID'} value={<code>{result.new_world_id}</code>} />
       <DetailRow label={cs ? 'Režim náhledu' : 'Dry run'} value={result.dry_run ? (cs ? 'Ano' : 'Yes') : (cs ? 'Ne' : 'No')} />
-      <p><strong>{result.dry_run ? (cs ? 'Soubory uvedené v náhledu:' : 'Files listed in preview:') : (cs ? 'Vytvořené soubory:' : 'Created files:')}</strong></p>
+      <p><strong>{result.dry_run ? (cs ? 'Soubory uvedené v náhledu:' : 'Files listed in preview:') : result.ok ? (cs ? 'Vytvořené soubory:' : 'Created files:') : (cs ? 'Soubory uvedené v odpovědi:' : 'Files reported in response:')}</strong></p>
       {result.created_files.length > 0 ? <ul>
         {result.created_files.map((file) => <li key={file}><code>{file}</code></li>)}
       </ul> : <p>{cs ? 'Žádné soubory nejsou uvedeny.' : 'No files listed.'}</p>}
@@ -226,7 +226,7 @@ function CloneResultCard({ result }: { result: WorldPackageCloneResponse }): JSX
       )}
       {result.package && (
         <div aria-label={cs ? 'Souhrn balíčku po kopírování' : 'Clone package summary'}>
-          <h4>{result.dry_run ? (cs ? 'Náhled balíčku' : 'Package preview') : result.ok ? (cs ? 'Vytvořený balíček' : 'Created package') : (cs ? 'Údaje balíčku' : 'Package details')}</h4>
+          <h4>{result.ok ? (result.dry_run ? (cs ? 'Náhled balíčku' : 'Package preview') : (cs ? 'Vytvořený balíček' : 'Created package')) : (cs ? 'Údaje balíčku (nepotvrzeno)' : 'Package details (unconfirmed)')}</h4>
           <DetailRow label="World ID" value={<code>{result.package.world_id}</code>} />
           <DetailRow label={cs ? 'Typ' : 'Type'} value={result.package.type} />
           <DetailRow label={cs ? 'Zdroj' : 'Source'} value={result.package.source} />

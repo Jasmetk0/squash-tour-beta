@@ -108,7 +108,8 @@ results already executed (earlier source-tree states; not final-head claims):
 | Actual native fork, horizon Save, both restores, independent continuation, source rehash rejection and restart | 1 passed, 116.12 s |
 | Consolidated native HTTP/SQLite target, final closure, recovery, seasonal approval and fork/horizon/restore | 5 passed, about 428.4 s |
 | Final candidate legacy task/lease/summary regressions | 14 passed, 69.97 s |
-| Actual legacy precise-boundary Chromium, process death, CS/EN and frozen summaries | passed locally; first hosted attempt failed with ECONNRESET and is not counted as a pass |
+| Actual legacy precise-boundary Chromium, process death, CS/EN and frozen summaries | passed locally; two earlier hosted duplicate-GET attempts failed with ECONNRESET and are not counted as passes |
+| Legacy boundary Chromium using the actual Admin review response, with all sporting assertions preserved | passed locally, 134.90 s; latest-head hosted rerun required |
 | Rehashed unsupported Tour version, read non-mutation, target Save and restart regression | 1 passed, 46.94 s |
 | Closing Ranking unit contracts plus original task-calendar regressions | 18 passed, 2.33 s |
 | Focused existing/new frontend contracts | 121 passed, 7.81 s (five files; API mocks/component contracts, not sporting integration) |
@@ -142,3 +143,9 @@ identity and allowed sporting action. An idle stop must also settle the task
 ledger, not merely its parent. Focused regressions exercise those cases; final
 hosted evidence remains required above. Parallel World Package files and the
 Master remain untouched.
+
+The legacy boundary browser captures and checks the actual target-review response
+triggered by its UI button, rather than issuing a duplicate synchronous GET through
+the separate API context after process death/restart. It retains every sporting,
+target, CS/EN, Saved and recovery assertion, and records unexpected backend exits.
+No HTTP failure/status or sporting assertion is retried or suppressed by this change.

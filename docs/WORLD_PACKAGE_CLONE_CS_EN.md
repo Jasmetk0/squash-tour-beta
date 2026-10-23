@@ -9,6 +9,7 @@ Scope: frontend presentation of the existing built-in World Package clone flow. 
 - Failure remains visibly distinct from a confirmed creation. Source/target IDs, paths, package fields, fingerprints, raw validation status and server error field/message values are never translated.
 - The adjacent confirmation review's accessibility label follows the selected language. The stored default clone description remains the original stable English string.
 - No mutation, form reset, review re-approval, or data fetch is driven by a language toggle; the existing source-fingerprint, late-response, explicit confirmation and unsaved-navigation safeguards remain unchanged.
+- Starting a **new** review or preview attempt clears any previous result before client-side validation. This prevents a prior successful creation and an invalid follow-up attempt appearing together; simply toggling language still does not clear the completed result.
 - A server reply's source ID, destination ID, dry-run flag and any nested `package.world_id` must match the command **before** a reported successful write can invalidate World Package caches or be presented as confirmed. A genuine matching write still refreshes its package and list caches, including after navigation; a mismatched reply cannot refresh an unrelated package.
 
 ## Focused verification

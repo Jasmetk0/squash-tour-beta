@@ -499,7 +499,10 @@ describe('built-in World cloning', () => {
     expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', expect.objectContaining({dry_run: true}))
   })
 
-  it('rejects a mismatched successful write without invalidating unrelated package caches', async () => {
+  it.each([
+    { caseName: 'top-level destination', newWorldId: 'unexpected_world', packageWorldId: null },
+    { caseName: 'nested package summary', newWorldId: 'expected_world', packageWorldId: 'unrelated_world' },
+  ])('rejects a mismatch in $caseName without invalidating unrelated package caches', async ({newWorldId, packageWorldId}) => {
     api.getWorldPackage.mockResolvedValue({
       world_id: 'real_world', name: 'Real World', type: 'official', source: 'built_in',
       status: 'active', editable: false, fingerprint: 'source-fingerprint',
@@ -514,9 +517,13 @@ describe('built-in World cloning', () => {
       info_count: 0, checks: [],
     })
     api.cloneWorldPackage.mockResolvedValue({
-      ok: true, dry_run: false, source_world_id: 'real_world', new_world_id: 'unexpected_world',
-      target_path: 'config/world_packages/custom/unexpected_world',
-      created_files: [], package: null, validation: null, errors: [],
+      ok: true, dry_run: false, source_world_id: 'real_world', new_world_id: newWorldId,
+      target_path: 'config/world_packages/custom/' + newWorldId,
+      created_files: [], package: packageWorldId ? {
+        world_id: packageWorldId, type: 'custom', source: 'custom_config',
+        country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+        fingerprint: 'unexpected-package-fingerprint',
+      } : null, validation: null, errors: [],
     })
     const client = new QueryClient({defaultOptions: {queries: {retry: false}, mutations: {retry: false}}})
     const invalidate = vi.spyOn(client, 'invalidateQueries')

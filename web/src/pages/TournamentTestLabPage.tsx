@@ -353,7 +353,8 @@ export function TournamentTestLabPage(): JSX.Element {
     try {
       editScenario(prettyLabJson(scenarioText))
     } catch (error) {
-      setLocalError(error instanceof Error ? error.message : String(error))
+      const detail = error instanceof Error ? error.message : String(error)
+      setLocalError(cs ? `JSON nelze formátovat. ${detail}` : detail)
     }
   }
 
@@ -373,7 +374,8 @@ export function TournamentTestLabPage(): JSX.Element {
       const scenario = JSON.parse(scenarioText) as TournamentLabScenario
       inspectMutation.mutate(scenario)
     } catch (error) {
-      setLocalError(error instanceof Error ? error.message : String(error))
+      const detail = error instanceof Error ? error.message : String(error)
+      setLocalError(cs ? `Kontrolu scénáře nelze spustit: neplatný JSON. ${detail}` : detail)
     }
   }
 
@@ -400,7 +402,8 @@ export function TournamentTestLabPage(): JSX.Element {
       const scenario = JSON.parse(scenarioText) as TournamentLabScenario
       saveMutation.mutate({ session: selectedSession, scenario, displayName: sessionName, ticket: editor.captureEditor() })
     } catch (error) {
-      setLocalError(error instanceof Error ? error.message : String(error))
+      const detail = error instanceof Error ? error.message : String(error)
+      setLocalError(cs ? `Scénář nelze uložit: neplatný JSON. ${detail}` : detail)
     }
   }
 
@@ -421,7 +424,8 @@ export function TournamentTestLabPage(): JSX.Element {
       if (writePending || runPending) return
       runMutation.mutate({ payload, session: selectedSession })
     } catch (error) {
-      setLocalError(error instanceof Error ? error.message : String(error))
+      const detail = error instanceof Error ? error.message : String(error)
+      setLocalError(cs && error instanceof SyntaxError ? `Neplatný JSON turnajového scénáře. ${detail}` : detail)
     }
   }
 

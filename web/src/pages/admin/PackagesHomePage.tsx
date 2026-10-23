@@ -77,8 +77,8 @@ function WrongWorldResponse({cs,expected,actual,what,fetching,onRetry}:{
     : `Response belongs to a different World package (requested ${expected}, received ${actual}). Data was not displayed.`}</p>
     <RetryRead cs={cs} what={what} fetching={fetching} onRetry={onRetry}/></>
 }
-function Inventory() {
-  const query = useQuery({ queryKey:['world-packages'], queryFn:listWorldPackages, retry:false })
+function Inventory(enabled=true) {
+  const query = useQuery({ queryKey:['world-packages'], queryFn:listWorldPackages, enabled, retry:false })
   const items = useMemo(() => catalogFromWorlds(query.data?.packages ?? []), [query.data])
   return {query,items}
 }
@@ -127,11 +127,13 @@ export function PackagesListPage():JSX.Element {
   const {pathname}=useLocation()
   const resolvedCategory=pathname==='/admin/packages/all'?'all':categoryId
   const {language}=useLanguage(),cs=language==='cs'
-  const {query,items}=Inventory()
   const [search,setSearch]=useState(''),[origin,setOrigin]=useState('any'),[status,setStatus]=useState('any')
   const cat:PackageFilter|null=resolvedCategory==='all'||packageCategories.some(c=>c===resolvedCategory) ? resolvedCategory as PackageFilter : null
-  if(!cat) return <section className="panel"><h2>{cs?'Neznámá kategorie':'Unknown category'}</h2><Link to="/admin/packages">{cs ? "Balíčky" : "Packages"}</Link></section>
   const registrySupported = cat === 'all' || cat === 'world' || cat === 'countries'
+  // Unsupported categories must not make a misleading World-registry request.
+  // Keep the hook unconditional even for unknown routes.
+  const {query,items}=Inventory(registrySupported)
+  if(!cat) return <section className="panel"><h2>{cs?'Neznámá kategorie':'Unknown category'}</h2><Link to="/admin/packages">{cs ? "Balíčky" : "Packages"}</Link></section>
   const members=inCategory(items,cat)
   const searchTerm=normalizeCatalogSearch(search)
   const shown=members.filter(item=>(origin==='any'||(origin==='custom'?item.editable:!item.editable))
@@ -141,14 +143,15 @@ export function PackagesListPage():JSX.Element {
     <p><Link to="/admin/packages">← {cs?'Kategorie':'Categories'}</Link></p>
     <div className="page-intro"><h2>{cat==='all'?(cs?'Všechny balíčky':'All packages'):categories[cat][language]}</h2>
       <p className="subtitle">{cs?'Jedna identita = jedna položka.':'One identity, one inventory row.'}</p></div>
-    <div className="package-index-filters">
+    {registrySupported && <div className="package-index-filters">
       <label>{cs?'Hledání':'Search'}<input type="search" value={search} onChange={e=>setSearch(e.target.value)} /></label>
       <label>{cs?'Typ přístupu':'Access type'}<select aria-label="Package origin" value={origin} onChange={e=>setOrigin(e.target.value)}><option value="any">{cs?'Vše':'All'}</option><option value="custom">{cs?'Vlastní':'Custom'}</option><option value="protected">{cs?'Chráněné':'Protected'}</option></select></label>
       <label>{cs?'Stav':'Status'}<select aria-label="Package status" value={status} onChange={e=>setStatus(e.target.value)}><option value="any">{cs?'Vše':'All'}</option><option value="active">{cs ? "Aktivní" : "Active"}</option><option value="archived">{cs ? "Archivované" : "Archived"}</option></select></label>
-    </div>
-    {query.isPending && <p role="status">{cs?'Načítám…':'Loading…'}</p>}
-    {query.isError && <><p role="alert" className="error">{cs ? 'Registr balíčků se nepodařilo načíst: ' : 'Package registry failed to load: '}{formatApiError(query.error)}</p><RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} /></>}
-    {query.isSuccess && <><p className="status">{registrySupported?shown.length+' / '+members.length:(cs?'Samostatný registr této kategorie zatím není dostupný.':'No independent registry for this category yet.')}</p>
+    </div>}
+    {!registrySupported && <p role="status" className="status">{cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.'}</p>}
+    {registrySupported && query.isPending && <p role="status">{cs?'Načítám…':'Loading…'}</p>}
+    {registrySupported && query.isError && <><p role="alert" className="error">{cs ? 'Registr balíčků se nepodařilo načíst: ' : 'Package registry failed to load: '}{formatApiError(query.error)}</p><RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} /></>}
+    {registrySupported && query.isSuccess && <><p className="status">{registrySupported?shown.length+' / '+members.length:(cs?'Samostatný registr této kategorie zatím není dostupný.':'No independent registry for this category yet.')}</p>
       {registrySupported && shown.length ? <ul className="package-index-list">{shown.map(item=><PackageRow key={item.key} item={item}/>)}</ul>
       : <p>{registrySupported ? (members.length === 0 ? (cs ? 'Registr nevrátil žádný balíček v této kategorii.' : 'The registry returned no packages in this category.') : (cs?'Žádný evidovaný balíček neodpovídá filtru.':'No indexed packages match this filter.')) : (cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.')}</p>}
       {registrySupported && members.length>0 && shown.length===0 && (searchTerm || origin!=='any' || status!=='any')

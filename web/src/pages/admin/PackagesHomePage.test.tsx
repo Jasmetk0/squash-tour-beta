@@ -65,6 +65,19 @@ describe('source-backed Packages frontend',()=>{
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package origin'}),'custom')
     expect(screen.getByText(/Žádný evidovaný balíček/)).toBeInTheDocument()
   })
+  it('does not query World packages or show fake loading for categories without a registry',async()=>{
+    api.listWorldPackages.mockRejectedValue(new Error('irrelevant World outage'))
+    mount('/admin/packages/category/hybrid')
+    expect(screen.getByRole('heading',{name:'Hybridní'})).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Z této kategorie zatím nemáme ověřený inventář balíčků.')
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(api.listWorldPackages).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(screen.getByRole('status')).toHaveTextContent('A verified package inventory for this category is not yet available.')
+    expect(api.listWorldPackages).not.toHaveBeenCalled()
+  })
+
   it('does not list Country-less World packages under Countries or any hybrid',async()=>{
     mount('/admin/packages/category/countries')
     expect(await screen.findByText('Demo World')).toBeInTheDocument()

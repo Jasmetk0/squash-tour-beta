@@ -103,6 +103,32 @@ describe('source-backed Packages frontend',()=>{
     expect(screen.getByText(/Žádný evidovaný balíček/)).toBeInTheDocument()
   })
 
+
+  it('distinguishes empty World contents and validation rows from load failures',async()=>{
+    api.getWorldPackageCountries.mockResolvedValue({world_id:'demo',countries:[]})
+    api.getWorldPackageGeography.mockResolvedValue({world_id:'demo',continents:[],regions:[],travel_regions:[],timezone_areas:[]})
+    api.getWorldPackageValidation.mockResolvedValue({
+      world_id:'demo',status:'valid',error_count:0,warning_count:0,info_count:0,checks:[]
+    })
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    expect(await screen.findByText('V balíčku nejsou žádné země.')).toBeInTheDocument()
+    await userEvent.click(screen.getByText('Kontinenty (0)'))
+    expect(screen.getByText('V této části nejsou žádné položky.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
+    expect(await screen.findByText('Kontrola nevrátila žádné jednotlivé záznamy.')).toBeInTheDocument()
+    expect(screen.getByText(/platné · 0 chyb · 0 varování/)).toBeInTheDocument()
+  })
+  it('reports a failed World-country query instead of claiming no countries',async()=>{
+    api.getWorldPackageCountries.mockRejectedValue(new Error('country service offline'))
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('country service offline')
+    expect(screen.queryByText('V balíčku nejsou žádné země.')).not.toBeInTheDocument()
+  })
+
   it('does not substitute fabricated empty inventory on source API failure',async()=>{
     api.listWorldPackages.mockRejectedValue(new Error('registry offline'))
     mount('/admin/packages/all')

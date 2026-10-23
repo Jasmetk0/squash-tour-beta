@@ -128,6 +128,9 @@ export function PackagesListPage():JSX.Element {
   const resolvedCategory=pathname==='/admin/packages/all'?'all':categoryId
   const {language}=useLanguage(),cs=language==='cs'
   const [search,setSearch]=useState(''),[origin,setOrigin]=useState('any'),[status,setStatus]=useState('any')
+  // The router may reuse this list when selecting another source category.
+  // Do not let stale local filters hide a different category's inventory.
+  useEffect(()=>{setSearch('');setOrigin('any');setStatus('any')},[resolvedCategory])
   const cat:PackageFilter|null=resolvedCategory==='all'||packageCategories.some(c=>c===resolvedCategory) ? resolvedCategory as PackageFilter : null
   const registrySupported = cat === 'all' || cat === 'world' || cat === 'countries'
   // Unsupported categories must not make a misleading World-registry request.

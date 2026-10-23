@@ -23,9 +23,9 @@ function LanguageSwitch():JSX.Element {
   const {language,setLanguage}=useLanguage()
   return <button type="button" onClick={()=>setLanguage(language==='cs'?'en':'cs')}>Switch language</button>
 }
-function mount(path:string, worldJumpTab?:'contents'|'validation'):void {
+function mount(path:string, worldJumpTab?:'contents'|'validation', categoryJump?:string):void {
   render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
-    <MemoryRouter initialEntries={[path]}><LanguageProvider><LanguageSwitch />{worldJumpTab&&<Link to={'/admin/packages/world/other?tab='+worldJumpTab}>Open another World</Link>}<Routes>
+    <MemoryRouter initialEntries={[path]}><LanguageProvider><LanguageSwitch />{worldJumpTab&&<Link to={'/admin/packages/world/other?tab='+worldJumpTab}>Open another World</Link>}{categoryJump&&<Link to={categoryJump}>Open another category</Link>}<Routes>
       <Route path="/admin/packages" element={<PackagesHomePage/>}/>
       <Route path="/admin/packages/all" element={<PackagesListPage/>}/>
       <Route path="/admin/packages/category/:categoryId" element={<PackagesListPage/>}/>
@@ -76,6 +76,23 @@ describe('source-backed Packages frontend',()=>{
     await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
     expect(screen.getByRole('status')).toHaveTextContent('A verified package inventory for this category is not yet available.')
     expect(api.listWorldPackages).not.toHaveBeenCalled()
+  })
+
+  it('resets local list filters when navigating from All to another source category',async()=>{
+    mount('/admin/packages/all',undefined,'/admin/packages/category/world')
+    expect(await screen.findByText('Demo World')).toBeInTheDocument()
+    const search=screen.getByRole('searchbox',{name:'Hledání'})
+    await userEvent.type(search,'empty')
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Package origin'}),'custom')
+    expect(screen.getByText('Žádný evidovaný balíček neodpovídá filtru.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('link',{name:'Open another category'}))
+    expect(await screen.findByRole('heading',{name:'Svět'})).toBeInTheDocument()
+    expect(screen.getByRole('searchbox',{name:'Hledání'})).toHaveValue('')
+    expect(screen.getByRole('combobox',{name:'Package origin'})).toHaveValue('any')
+    expect(screen.getByRole('combobox',{name:'Package status'})).toHaveValue('any')
+    expect(screen.getByText('Demo World')).toBeInTheDocument()
+    expect(screen.getByText('Empty World')).toBeInTheDocument()
+    expect(api.listWorldPackages).toHaveBeenCalledTimes(1)
   })
 
   it('does not list Country-less World packages under Countries or any hybrid',async()=>{

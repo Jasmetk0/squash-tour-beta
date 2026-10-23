@@ -233,7 +233,8 @@ export function PlayerTestLabPage(): JSX.Element {
       {sessions.isSuccess && sessions.data.length === 0 && <p role="status">{cs ? "Žádné uložené Session. Pracovní scénář zůstává dostupný." : "No saved Sessions. Scratch scenario remains available."}</p>}
       <button type="button" disabled={sessions.isFetching} onClick={() => void sessions.refetch()}>{cs ? "Obnovit seznam Session" : "Refresh Player Test Sessions"}</button>
       <button type="button" disabled={!parsedPreview || writePending || Boolean(sessionConflict)} onClick={() => parsedPreview && saveMutation.mutate({scenario: parsedPreview, session: selectedSession, name: editor.sessionName, ticket: editor.captureEditor()})}>{cs ? 'Uložit experiment' : 'Save Player Test Session'}</button>
-      <LabSessionConflict conflict={sessionConflict} dirty={sessionHasUnsavedChanges} canReload={editor.canReloadSession} onReload={editor.reloadSession} />
+      <LabSessionConflict key={`${editor.selectedSessionId}:${selectedSession?.session_fingerprint}:${sessionConflict}:${editor.editorEdit}`}
+        conflict={sessionConflict} dirty={sessionHasUnsavedChanges} canReload={editor.canReloadSession} onReload={editor.reloadSession} />
       {saveMutation.isError && <p role="alert">{cs ? 'Uložení Session selhalo' : 'Session save failed'}: {String(saveMutation.error)}</p>}
     </SectionCard>
     <SectionCard title={cs ? 'Historický hráč → nezávislý experiment' : 'Historical player → independent experiment'}>

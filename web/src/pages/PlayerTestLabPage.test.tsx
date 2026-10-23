@@ -292,6 +292,32 @@ describe('PlayerTestLabPage', () => {
     expect(api.runPlayerLabSession).toHaveBeenCalledWith('saved-player', '3'.repeat(64))
   })
 
+  it('requires fresh discard consent after an additional local Player Session edit',async()=>{
+    const saved={session_id:'saved-player',version:1,session_fingerprint:'1'.repeat(64),display_name:'Saved Player',scenario}
+    api.listPlayerLabSessions.mockResolvedValueOnce([saved]).mockResolvedValue([{...saved,version:2,session_fingerprint:'2'.repeat(64)}])
+    const user=userEvent.setup()
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByRole('option',{name:'Saved Player'})
+    await user.selectOptions(screen.getByLabelText('Open Player Test Session'),'saved-player')
+    const editor=screen.getByRole('textbox',{name:'Player Lab scenario JSON'})
+    const first=JSON.stringify({...scenario,scenario_id:'first-unsaved'})
+    fireEvent.change(editor,{target:{value:first}})
+    await user.click(screen.getByRole('button',{name:'Refresh Player Test Sessions'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('saved Test Session changed')
+    const consent=screen.getByRole('checkbox',{name:'Discard local edits when reloading'})
+    const reload=screen.getByRole('button',{name:'Reload saved Test Session'})
+    expect(reload).toBeDisabled()
+    await user.click(consent)
+    expect(reload).toBeEnabled()
+    const second=JSON.stringify({...scenario,scenario_id:'newer-unsaved'})
+    fireEvent.change(editor,{target:{value:second}})
+    expect(editor).toHaveValue(second)
+    expect(screen.getByRole('checkbox',{name:'Discard local edits when reloading'})).not.toBeChecked()
+    expect(screen.getByRole('button',{name:'Reload saved Test Session'})).toBeDisabled()
+    expect(api.savePlayerLabSession).not.toHaveBeenCalled()
+    expect(api.runPlayerLabSession).not.toHaveBeenCalled()
+  })
+
   it('retains in-flight status after editing and never publishes the detached old result', async () => {
     const user = userEvent.setup()
     let resolve!: (value: typeof result) => void

@@ -315,10 +315,7 @@ export function MatchTestLabPage(): JSX.Element {
     </SectionCard>
 
     {selectedSession ? <SectionCard title={cs ? "Import hráče z uložené revize" : "Import player from Saved Revision"}>
-      <p className="status">
-        Copies one validated historical player profile + saved sporting state into this Test Session.
-        The source Run/Saved Revision is never mutated or live-linked.
-      </p>
+      <p className="status">{cs ? 'Zkopíruje ověřený profil a uložený sportovní stav historického hráče do této Test Session. Zdrojový Run ani Saved Revision nemění a nevytváří živé propojení.' : 'Copies one validated historical player profile and saved sporting state into this Test Session. The source Run/Saved Revision is never mutated or live-linked.'}</p>
       <HistoricalLabSourcePicker lab="Match Lab" run={importRunId} branch={importBranchId} revision={importRevisionId}
         onChange={(run, branch, revision) => {setImportRunId(run); setImportBranchId(branch); setImportRevisionId(revision)}} />
       <label>{cs ? "ID Runu" : "Product Run ID"}

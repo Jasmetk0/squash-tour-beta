@@ -33,7 +33,7 @@ are not successful acceptance evidence.
   owner, lineage, source-head or physical-row authority.
 - Reread and hash every physical field using type-tagged, length-delimited UTF-8
   bytes. Reuse only the parsed dependency references for those exact current
-  bytes, retaining at most 4,096 compact hints per repository. Actual owners,
+  bytes, retaining at most 4,096 compact hints per repository (at most 1 KiB of references each). Actual owners,
   source heads and complete dependency topology are still reauthenticated in each
   new snapshot. Python JSON parsing preserves the verifier's duplicate-key
   semantics; SQLite json_extract would choose a different duplicate value.
@@ -44,6 +44,8 @@ are not successful acceptance evidence.
   invalidation also observes raw driver rollback/savepoints and transaction
   restarts, where `total_changes` alone is insufficient. Reject stale loaded
   source/owner ORM identities before certifying changed physical dependencies.
+- Reuse the one decoded runtime inside its root verifier rather than repeatedly
+  serializing and reparsing that same input.
 - Bound parsed-runtime value retention to eight entries and 8 MiB of serialized
   inputs per operation, using compact digest keys rather than large JSON keys.
 

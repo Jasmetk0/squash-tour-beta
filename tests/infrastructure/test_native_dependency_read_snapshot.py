@@ -288,3 +288,18 @@ def test_dependency_reference_hint_retention_is_compact_and_bounded(monkeypatch)
         row = (None, None, 'branch', None, None, None, None, None, None, '{"content":{}}')
         assert storage._dependency_references(repo, row, str(index)) == ()
     assert repo._native_dependency_reference_hints == {'3': (), '4': ()}
+
+
+def test_oversized_dependency_reference_hint_is_not_retained():
+    from threading import Lock
+    from types import SimpleNamespace
+
+    from beta_engine.infrastructure.db.native_fork_runtime_state import (
+        _dependency_references,
+    )
+    repo = SimpleNamespace(_revision_validation_lock=Lock())
+    branch = 'x' * 1025
+    raw = json.dumps({'content': {'native_fork_baseline': {'state': {'selected_source_branch_id': branch}}}})
+    row = (None, None, 'branch', None, None, None, None, None, None, raw)
+    assert _dependency_references(repo, row, 'fresh-digest') == (branch,)
+    assert not getattr(repo, '_native_dependency_reference_hints', {})

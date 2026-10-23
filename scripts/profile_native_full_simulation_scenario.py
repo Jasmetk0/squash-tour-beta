@@ -31,6 +31,14 @@ parser.add_argument("--root", type=Path, required=True)
 parser.add_argument("--weeks", type=int, choices=(52, 61, 80), default=52)
 parser.add_argument("--input", type=Path)
 a = parser.parse_args()
+source_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+source_tree = subprocess.check_output(
+    ["git", "rev-parse", "HEAD:src"], text=True
+).strip()
+if subprocess.run(
+    ["git", "diff", "--quiet", "HEAD", "--", "src"], check=False
+).returncode:
+    raise ValueError("Commit the production candidate before measuring it")
 a.root.mkdir(parents=True, exist_ok=True)
 db = a.root / "matrix.db"
 if db.exists():
@@ -162,6 +170,13 @@ try:
     case.test_native_task_actual_match_points_all_weeks_and_real_season_rollover(
         a.root, clock
     )
+    if (
+        subprocess.check_output(["git", "rev-parse", "HEAD:src"], text=True).strip()
+        != source_tree
+    ):
+        raise ValueError(
+            "Production source changed during the run; timings cannot certify that candidate"
+        )
     passed = True
 finally:
     report = {
@@ -179,9 +194,8 @@ finally:
         "task_heartbeat_cost": heartbeat_cost,
         "python": sys.version,
         "platform": platform.platform(),
-        "git_sha": subprocess.check_output(
-            ["git", "rev-parse", "HEAD"], text=True
-        ).strip(),
+        "git_sha": source_commit,
+        "production_source_tree": source_tree,
     }
     (a.root / "report.json").write_text(json.dumps(report, indent=2))
     print("REPORT", json.dumps(report), flush=True)

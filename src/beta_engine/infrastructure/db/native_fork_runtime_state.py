@@ -28,6 +28,7 @@ DRAFT_SCHEMA = "native_fork_runtime_draft.v1"
 _proofs = ContextVar("native_read_proofs", default=None)
 _MAX_DEPENDENCY_PROOFS = 256
 _MAX_DEPENDENCY_REFERENCE_HINTS = 4096
+_MAX_DEPENDENCY_REFERENCE_BYTES = 1024
 _MAX_PARSED_RUNTIMES = 8
 _MAX_PARSED_RUNTIME_BYTES = 8 * 1024 * 1024
 
@@ -331,7 +332,9 @@ def _dependency_references(repository, row, digest):
         result = tuple(branches)
     except (TypeError, ValueError, AttributeError) as exc:
         raise ValueError("Native Saved row contains malformed JSON dependency data") from exc
-    if repository is not None:
+    retain = all(branch is None or isinstance(branch, str) for branch in result)
+    retain = retain and sum(len(branch.encode("utf-8")) for branch in result if branch is not None) <= _MAX_DEPENDENCY_REFERENCE_BYTES
+    if repository is not None and retain:
         with repository._revision_validation_lock:
             hints = getattr(repository, "_native_dependency_reference_hints", None)
             if hints is None:

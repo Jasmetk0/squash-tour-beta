@@ -6,10 +6,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import argparse
 import cProfile
+import hashlib
 import json
+import platform
 import pstats
 import resource
 import sqlite3
+import subprocess
 import time
 from collections import Counter
 
@@ -36,12 +39,34 @@ p.add_argument("--root", type=Path, required=True)
 p.add_argument("--branch", required=True)
 p.add_argument("--profile", action="store_true")
 a = p.parse_args()
+source_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+source_tree = subprocess.check_output(
+    ["git", "rev-parse", "HEAD:src"], text=True
+).strip()
+if subprocess.run(
+    ["git", "diff", "--quiet", "HEAD", "--", "src"], check=False
+).returncode:
+    raise ValueError("Commit the production candidate before measuring it")
 a.root.mkdir(parents=True, exist_ok=True)
 local = a.root / "input.db"
 if local.exists():
     raise ValueError("Use a fresh output directory")
 with sqlite3.connect(a.database) as s, sqlite3.connect(local) as d:
     s.backup(d)
+with local.open("rb") as stream:
+    input_hash = hashlib.file_digest(stream, "sha256").hexdigest()
+(a.root / "metadata.json").write_text(
+    json.dumps(
+        {
+            "git_sha": source_commit,
+            "production_source_tree": source_tree,
+            "input_sha256": input_hash,
+            "python": sys.version,
+            "platform": platform.platform(),
+        },
+        indent=2,
+    )
+)
 engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{local}"))
 fetches = measure_fetches(engine)
 factory = create_session_factory(engine)

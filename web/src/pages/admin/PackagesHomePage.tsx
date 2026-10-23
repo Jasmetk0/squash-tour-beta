@@ -242,6 +242,7 @@ export function PackageWorldDetailPage():JSX.Element {
         </button>)}</nav>
       {active==='overview'&&<article className="package-index-detail">
         <h3>{cs?'Informace a původ':'Metadata and provenance'}</h3>
+        <RetryRead cs={cs} what="detail" fetching={q.isFetching} onRetry={()=>{void q.refetch()}}/>
         <dl><dt>ID</dt><dd>{pkg.world_id}</dd><dt>{cs?'Verze':'Version'}</dt><dd>{pkg.version}</dd>
           <dt>{cs ? "Zdroj" : "Source"}</dt><dd>{sourceText(pkg.source,cs)} · {pkg.type}</dd>
           <dt>{cs ? "Stav" : "Status"}</dt><dd>{statusText(pkg.status,cs)} · {pkg.editable ? (cs ? "upravitelný" : "Editable") : (cs ? "chráněný" : "Protected")}</dd>
@@ -279,7 +280,7 @@ export function PackageWorldDetailPage():JSX.Element {
         {geoQuery.isPending&&<p role="status">{cs ? "Načítám geografii…" : "Loading geography…"}</p>}
         {geoQuery.isError&&<><p className="error" role="alert">{cs ? 'Geografii se nepodařilo načíst: ' : 'Failed to load geography: '}{formatApiError(geoQuery.error)}</p><RetryRead cs={cs} what="geography" fetching={geoQuery.isFetching} onRetry={() => { void geoQuery.refetch() }} /></>}
         {geoMismatch&&<WrongWorldResponse cs={cs} expected={worldId} actual={geoQuery.data?.world_id ?? ''} what="geography" fetching={geoQuery.isFetching} onRetry={()=>{void geoQuery.refetch()}}/>}
-        {geo&&<div>{([
+        {geo&&<div><RetryRead cs={cs} what="geography" fetching={geoQuery.isFetching} onRetry={()=>{void geoQuery.refetch()}}/>{([
           [cs ? 'Kontinenty' : 'Continents',geo.continents.map(x=>x.code+' '+x.name)],
           [cs ? 'Regiony' : 'Regions',geo.regions.map(x=>x.code+' '+x.name)],
           [cs ? 'Cestovní regiony' : 'Travel regions',geo.travel_regions.map(x=>x.code+' '+x.name)],

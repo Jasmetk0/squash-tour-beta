@@ -465,6 +465,38 @@ describe('source-backed Packages frontend',()=>{
     expect(api.getWorldPackage).toHaveBeenCalledTimes(1)
   })
 
+  it('refreshes a successful World detail without opening new source queries',async()=>{
+    api.getWorldPackage.mockResolvedValueOnce(world).mockResolvedValue({...world,version:'v2'})
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    expect(screen.getByText('v1')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst detail balíčku'}))
+    expect(await screen.findByText('v2')).toBeInTheDocument()
+    expect(screen.queryByText('v1')).not.toBeInTheDocument()
+    expect(api.getWorldPackage).toHaveBeenCalledTimes(2)
+    expect(api.getWorldPackageCountries).not.toHaveBeenCalled()
+    expect(api.getWorldPackageValidation).not.toHaveBeenCalled()
+  })
+
+  it('refreshes successful geography independently of country inventory',async()=>{
+    api.getWorldPackageGeography.mockResolvedValueOnce({world_id:'demo',
+      continents:[{code:'EU',name:'Europe'}],regions:[],travel_regions:[],timezone_areas:[]
+    }).mockResolvedValue({world_id:'demo',
+      continents:[{code:'EU',name:'Europe'},{code:'AF',name:'Africa'}],
+      regions:[],travel_regions:[],timezone_areas:[]
+    })
+    mount('/admin/packages/world/demo')
+    expect(await screen.findByRole('heading',{name:'Demo World'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
+    expect(await screen.findByText('Kontinenty (1)')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst geografii'}))
+    expect(await screen.findByText('Kontinenty (2)')).toBeInTheDocument()
+    expect(api.getWorldPackageGeography).toHaveBeenCalledTimes(2)
+    expect(api.getWorldPackageCountries).toHaveBeenCalledTimes(1)
+    expect(api.getWorldPackage).toHaveBeenCalledTimes(1)
+    expect(api.getWorldPackageValidation).not.toHaveBeenCalled()
+  })
+
   it('refreshes successful country inventory independently after external edits',async()=>{
     api.getWorldPackageCountries.mockResolvedValueOnce({
       world_id:'demo',countries:[{code:'CZE',name:'Czechia',population:100,region:'Europe'}]

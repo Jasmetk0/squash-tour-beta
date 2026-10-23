@@ -1,5 +1,6 @@
 import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { TournamentTestLabPage } from './TournamentTestLabPage'
@@ -19,7 +20,13 @@ const api = vi.hoisted(() => ({
   copySavedRevisionTournamentToLab: vi.fn()
 }))
 vi.mock('../api/client', () => api)
-vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en', t: (key: string) => key})}))
+const uiLocale = vi.hoisted(() => ({language: 'en' as 'en' | 'cs'}))
+vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: uiLocale.language, t: (key: string) => key})}))
+function LocalizedPage(): JSX.Element {
+  const [czech, setCzech] = useState(false)
+  uiLocale.language = czech ? 'cs' : 'en'
+  return <><button type="button" onClick={() => setCzech(value => !value)}>Toggle test language</button><TournamentTestLabPage /></>
+}
 
 const participant = (id: string, base: number) => ({
   player: {
@@ -169,6 +176,7 @@ const result = {
 
 describe('TournamentTestLabPage', () => {
   beforeEach(() => {
+    uiLocale.language = 'en'
     vi.clearAllMocks()
     api.getTournamentLabBuiltInScenarios.mockResolvedValue([{
       scenario_id: scenario.scenario_id,
@@ -186,6 +194,25 @@ describe('TournamentTestLabPage', () => {
     api.runTournamentTestLab.mockResolvedValue(result)
   })
 
+
+
+  it('switches CS/EN without changing scratch tournament JSON, batch seeds or writes', async () => {
+    renderWithRoute(<LocalizedPage />, '/admin/labs/tournament')
+    fireEvent.click(await screen.findByRole('button', {name: 'Load scratch copy'}))
+    fireEvent.change(screen.getByLabelText('Tournament Lab batch match seeds'), {target: {value: '31, 32'}})
+    const previous = (screen.getByLabelText('Tournament Lab scenario JSON') as HTMLTextAreaElement).value
+    fireEvent.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    expect(screen.getByLabelText('Tournament Lab batch match seeds')).toHaveValue('31, 32')
+    expect(screen.getByLabelText('Tournament Lab scenario JSON')).toHaveValue(previous)
+    expect(api.createTournamentLabSession).not.toHaveBeenCalled()
+    expect(api.updateTournamentLabSession).not.toHaveBeenCalled()
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name: 'Spustit turnajový scénář'}))
+    expect(api.runTournamentTestLab).toHaveBeenCalledWith(expect.objectContaining({
+      batch_match_seeds: [31, 32],
+      scenario: expect.objectContaining({scenario_id: 'standard-four-player'})
+    }))
+  })
 
   it('creates an isolated Session from a scratch tournament without applying a Run proposal', async () => {
     const user = userEvent.setup()

@@ -536,3 +536,49 @@ describe('server task UI (mock HTTP)',()=>{
   expect(api.continueServerTask).not.toHaveBeenCalled()
  })
 })
+
+it.each(['cs','en'] as const)('uses the original v2 calendar in display and season handoff (%s)',async language=>{
+ const task=taskExample() as unknown as import('../api/fullSimulationTasks').ServerTask
+ task.schema_version='full_simulation_task_view.v2'
+ task.execution_calendar={schema_version:'run_calendar.v1',weeks_per_year:52,season_start_year_week:52,start_year:2030,season_count:64}
+ task.calendar_revision_id='saved'
+ task.state='awaiting_operator';task.checkpoint='season_preparation_required'
+ task.current_week={season_index:0,week:2}
+ task.progress_evidence={...task.progress_evidence,schema_version:'full_simulation_task_progress_evidence.v2',
+  week:task.current_week,weeks_advanced_since_start:1}
+ api.getServerTasks.mockResolvedValue([task])
+ open(language,<FullSimulationServerTasks runId="run" branchId="branch"/>)
+ await screen.findByText('task')
+ expect(screen.getByText((_,element)=>element?.tagName==='P' &&
+  (element.textContent??'').includes('2030/2031') && (element.textContent??'').includes('2031') &&
+  (element.textContent??'').includes(language==='cs'?'Týden roku 1':'Year week 1'))).toBeVisible()
+ const link=screen.getByRole('link',{name:language==='cs'?'Prověřit kalendář aktuální sezony ve správě Runu':'Review this season’s Calendar in Run Management'})
+ expect(link).toHaveAttribute('href','/admin/runs/run/manage?branch=branch')
+ expect(screen.getByText(language==='cs'
+  ?'Výběr zdrojového kalendáře nepodporuje tento původní časový základ nebo sezonu. Odkaz vybere pouze tuto větev; zkontrolujte kalendář bez předpokladu, že byl vybrán zdroj.'
+  :'The source Calendar picker does not support this original clock or season. The link selects this Branch only; inspect its calendar without assuming a source was selected.')).toBeVisible()
+ expect(screen.getByText(language==='cs'?'Saved Revision kalendáře:':'Calendar Saved Revision:',{exact:false})).toHaveTextContent('saved')
+ expect(api.continueServerTask).not.toHaveBeenCalled()
+})
+
+it('hands off a v2 FAX season in the exact format the existing source picker consumes',async()=>{
+ const {taskCalendarHandoff}=await import('./FullSimulationServerTasks')
+ const {supportedCalendarSeason}=await import('./RunPackageSetupPanel')
+ const task=taskExample() as unknown as import('../api/fullSimulationTasks').ServerTask
+ task.schema_version='full_simulation_task_view.v2'
+ task.execution_calendar={schema_version:'run_calendar.v1',weeks_per_year:61,season_start_year_week:37,start_year:2000,season_count:64}
+ task.calendar_revision_id='saved';task.state='awaiting_operator'
+ task.checkpoint='season_preparation_required';task.current_week={season_index:2,week:1}
+ const target=taskCalendarHandoff(task)!
+ const key=new URL(target,'http://localhost').searchParams.get('calendarSeason')
+ expect(key).toBe('2002-2003')
+ expect(supportedCalendarSeason(key)).toBe(key)
+ // A valid Run year outside the source catalog must not silently select a default.
+ task.current_week={season_index:50,week:1}
+ expect(taskCalendarHandoff(task)).toBe('/admin/runs/run/manage?branch=branch')
+ task.current_week={season_index:2,week:1}
+ for(const clock of [{weeks_per_year:80,season_start_year_week:37},{weeks_per_year:61,season_start_year_week:1}]){
+  task.execution_calendar={...task.execution_calendar,...clock}
+  expect(taskCalendarHandoff(task)).toBe('/admin/runs/run/manage?branch=branch')
+ }
+})

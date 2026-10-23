@@ -21,6 +21,8 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeFullSimulationControlCommand,
     fingerprint,
 )
+from beta_engine.application.run_calendar_read_authority import resolve_revision_run_calendar
+from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.infrastructure.db.full_simulation_invocation_lease import (
     LEASE_SCOPE,
     acquire_in_session,
@@ -242,13 +244,13 @@ def _owned(lease, row, data, now):
     )
 
 
-def _progress_evidence(session, row, parent, frozen, command, branch_ordinal):
+def _progress_evidence(session, row, parent, frozen, command, branch_ordinal, calendar: RunCalendar):
     """Read-only current Branch receipts or immutable historical task position.
 
     The live counts cover *all* persisted Branch receipts for the current week,
     NOT work exclusively attributable to this Full Simulation task.
     """
-    start = command.expected_start_week.ordinal
+    start = calendar.ordinal(command.expected_start_week.season_index, command.expected_start_week.week)
     kind = "live_branch" if branch_ordinal is not None else "unavailable"
     ordinal = branch_ordinal
     if parent.status in ("stopped", "target_reached"):
@@ -260,22 +262,22 @@ def _progress_evidence(session, row, parent, frozen, command, branch_ordinal):
         else:
             kind = "terminal_frozen"
             end = summary["end_week"]
-            ordinal = end["season_index"] * 61 + end["week"] - 1
+            ordinal = calendar.ordinal(end["season_index"], end["week"])
     elif parent.status == "complete":
         if (frozen.get("schema_version") != "authoritative_full_simulation_result.v1"
                 or frozen.get("run_id") != row.run_id
                 or frozen.get("branch_id") != row.branch_id
                 or frozen.get("start_week") != command.expected_start_week.model_dump(mode="json")
-                or frozen.get("final_week") != {"season_index": 49, "week": 61}):
+                or frozen.get("final_week") != {"season_index": calendar.season_count - 1, "week": calendar.weeks_per_year}):
             raise ValueError("Complete Full Simulation terminal position is corrupt")
-        kind, ordinal = "terminal_frozen", 50 * 61 - 1
+        kind, ordinal = "terminal_frozen", calendar.season_count * calendar.weeks_per_year - 1
     elif parent.status == "abandoned":
         kind, ordinal = "unavailable", None
 
-    if ordinal is not None and not start <= ordinal < 50 * 61:
+    if ordinal is not None and (type(ordinal) is not int or not start <= ordinal < calendar.season_count * calendar.weeks_per_year):
         raise ValueError("Task Position precedes reviewed start or exceeds final Run week")
     week = (
-        {"season_index": ordinal // 61, "week": ordinal % 61 + 1}
+        {"season_index": ordinal // calendar.weeks_per_year, "week": ordinal % calendar.weeks_per_year + 1}
         if ordinal is not None else None
     )
     slots = groups = None
@@ -297,7 +299,7 @@ def _progress_evidence(session, row, parent, frozen, command, branch_ordinal):
             )
         )
     return {
-        "schema_version": "full_simulation_task_progress_evidence.v1",
+        "schema_version": "full_simulation_task_progress_evidence.v2",
         "kind": kind,
         "week": week,
         "weeks_advanced_since_start": ordinal - start if ordinal is not None else None,
@@ -307,7 +309,7 @@ def _progress_evidence(session, row, parent, frozen, command, branch_ordinal):
     }
 
 
-def _project(session, row, observer_instance=None):
+def _project(session, row, observer_instance=None, calendar_cache=None):
     data = _read(row)
     parent, frozen = _parent(session, row, data)
     run, branch = (
@@ -360,10 +362,28 @@ def _project(session, row, observer_instance=None):
             .scalar()
         )
     command = AuthoritativeFullSimulationCommand.model_validate(data["command"])
-    evidence = _progress_evidence(session, row, parent, frozen, command, ordinal)
+    # The immutable command selects its original Saved clock. Today's Run/head
+    # may have been extended/restored; never use it to reinterpret this task.
+    calendar_key = (row.run_id, command.expected_revision_id)
+    if calendar_cache is None:
+        calendar_cache = {}
+    if calendar_key not in calendar_cache:
+        calendar_cache[calendar_key] = resolve_revision_run_calendar(
+            session, run_id=row.run_id, revision_id=command.expected_revision_id
+        )
+    calendar = calendar_cache[calendar_key]
+    evidence = _progress_evidence(session, row, parent, frozen, command, ordinal, calendar)
     current_week = evidence["week"]
     return {
-        "schema_version": "full_simulation_task_view.v1",
+        "schema_version": "full_simulation_task_view.v2",
+        "calendar_revision_id": command.expected_revision_id,
+        "execution_calendar": {
+            "schema_version": calendar.schema_version,
+            "weeks_per_year": calendar.weeks_per_year,
+            "season_start_year_week": calendar.season_start_year_week,
+            "start_year": calendar.start_year,
+            "season_count": calendar.season_count,
+        },
         "task_id": row.task_id,
         "run_id": row.run_id,
         "branch_id": row.branch_id,
@@ -406,9 +426,13 @@ def inspect_tasks(
             rows = [r for r in rows if r.task_id == task_id]
             if not rows:
                 raise ValueError("Task is unavailable in this exact Run/Branch")
+        # Request/transaction-local only: several tasks may share one original
+        # Saved head. Hash-verify each distinct source once, never cache it across
+        # requests or replace it with today's Run calendar.
+        calendars = {}
         return {
             "schema_version": "full_simulation_tasks.v1",
-            "tasks": [_project(session, r, observer_instance) for r in rows],
+            "tasks": [_project(session, r, observer_instance, calendars) for r in rows],
         }
 
 

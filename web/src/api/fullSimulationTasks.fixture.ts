@@ -7,3 +7,13 @@ export function taskExample(){return {schema_version:'full_simulation_task_view.
  original_command:{command_id:'parent',operator_label:'Operator',audit_reason:'Original intent',expected_start_week:{season_index:0,week:1},
  expected_position_fingerprint:'a'.repeat(64),expected_revision_id:'saved',expected_preview_fingerprint:'b'.repeat(64)},
  events:[{revision:1,previous:null as string|null,state:'queued',reason:'explicit_start',at_unix:1,fingerprint:'c'.repeat(64)}]}}
+
+/** v2 read DTO; this does not claim that the legacy worker executes this clock. */
+export function calendarTaskExample(calendar: import('./fullSimulationTasksCalendar').TaskCalendar) {
+ const task=taskExample() as unknown as import('./fullSimulationTasks').ServerTask
+ task.schema_version='full_simulation_task_view.v2'
+ task.execution_calendar={...calendar}
+ task.calendar_revision_id=task.original_command.expected_revision_id
+ task.progress_evidence.schema_version='full_simulation_task_progress_evidence.v2'
+ return task
+}

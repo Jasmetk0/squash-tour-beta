@@ -9,7 +9,8 @@ import { HistoricalLabSourcePicker } from './HistoricalLabSourcePicker'
 const api = vi.hoisted(() => ({
   listRunContainers: vi.fn(),
   listRunBranches: vi.fn(),
-  listSavedRevisionHistory: vi.fn()
+  listSavedRevisionHistory: vi.fn(),
+  ApiError: class ApiError extends Error { status = 500 }
 }))
 vi.mock('../api/client', () => api)
 

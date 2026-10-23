@@ -115,7 +115,7 @@ describe('source-backed Packages frontend',()=>{
     await userEvent.click(screen.getByRole('button',{name:'Obsah'}))
     expect(await screen.findByText('V balíčku nejsou žádné země.')).toBeInTheDocument()
     await userEvent.click(screen.getByText('Kontinenty (0)'))
-    expect(screen.getByText('V této části nejsou žádné položky.')).toBeInTheDocument()
+    expect(screen.getAllByText('V této části nejsou žádné položky.')).toHaveLength(4)
     await userEvent.click(screen.getByRole('button',{name:'Kontrola'}))
     expect(await screen.findByText('Kontrola nevrátila žádné jednotlivé záznamy.')).toBeInTheDocument()
     expect(screen.getByText(/platné · 0 chyb · 0 varování/)).toBeInTheDocument()

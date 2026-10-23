@@ -403,12 +403,18 @@ describe('built-in World cloning', () => {
       world_id: 'real_world', status: 'valid', error_count: 0, warning_count: 0,
       info_count: 0, checks: [],
     })
-    api.cloneWorldPackage.mockResolvedValue({
-      ok: false, dry_run: true, source_world_id: 'real_world', new_world_id: 'local_world',
-      target_path: 'config/world_packages/custom/local_world', created_files: [],
-      package: null, validation: null,
+    api.cloneWorldPackage.mockImplementation(async (_worldId: string, payload: {dry_run: boolean}) => ({
+      ok: false, dry_run: payload.dry_run, source_world_id: 'real_world', new_world_id: 'local_world',
+      target_path: 'config/world_packages/custom/local_world',
+      created_files: payload.dry_run ? [] : ['countries/AAA.json'],
+      package: payload.dry_run ? null : {
+        world_id: 'local_world', type: 'custom', source: 'custom_config',
+        country_count: 1, continent_count: 1, region_count: 1, travel_region_count: 1,
+        fingerprint: 'unconfirmed-fingerprint',
+      },
+      validation: null,
       errors: [{field: 'new_world_id', message: 'DUPLICATE_WORLD_ID: preserved verbatim'}],
-    })
+    }))
     const router = createMemoryRouter([{path: '/world/:worldId', element: <WorldLibraryDetailPage />}],
       {initialEntries: ['/world/real_world']})
     render(<QueryClientProvider client={new QueryClient({defaultOptions: {queries: {retry: false}}})}>
@@ -423,6 +429,29 @@ describe('built-in World cloning', () => {
     expect(screen.queryByText('Úspěch:')).not.toBeInTheDocument()
     expect(screen.queryByRole('link', {name: /Otevřít detail nového/})).not.toBeInTheDocument()
     expect(api.cloneWorldPackage).toHaveBeenCalledWith('real_world', expect.objectContaining({dry_run: true}))
+
+    fireEvent.click(screen.getByRole('button', {name: 'Zkontrolovat vytvoření kopie'}))
+    fireEvent.click(screen.getByRole('button', {name: 'Potvrdit vytvoření kopie'}))
+    expect(await screen.findByText('Kopírování se nezdařilo:')).toBeInTheDocument()
+    expect(screen.getByText('Soubory uvedené v odpovědi:')).toBeInTheDocument()
+    expect(screen.getByText('Údaje balíčku (nepotvrzeno)')).toBeInTheDocument()
+    expect(screen.getByText('countries/AAA.json')).toBeInTheDocument()
+    expect(screen.getByText('new_world_id: DUPLICATE_WORLD_ID: preserved verbatim')).toBeInTheDocument()
+    expect(screen.queryByText('Vytvořený balíček')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: /Otevřít detail nového/})).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenNthCalledWith(2, 'real_world', expect.objectContaining({dry_run: false}))
+
+    act(() => {
+      locale.language = 'en'
+      for (const listener of [...locale.listeners]) listener()
+    })
+    expect(screen.getByText('Clone failed:')).toBeInTheDocument()
+    expect(screen.getByText('Files reported in response:')).toBeInTheDocument()
+    expect(screen.getByText('Package details (unconfirmed)')).toBeInTheDocument()
+    expect(screen.getByText('new_world_id: DUPLICATE_WORLD_ID: preserved verbatim')).toBeInTheDocument()
+    expect(screen.queryByText('Success:')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Open new Custom World detail'})).not.toBeInTheDocument()
+    expect(api.cloneWorldPackage).toHaveBeenCalledTimes(2)
   })
 
   it('keeps an in-flight preview and localizes a late mismatched response in the active language', async () => {

@@ -48,6 +48,17 @@ function parseSeeds(value: string, cs: boolean): number[] {
   return seeds
 }
 
+/** Translate presentation only; the filter and API retain the original status code. */
+function visibleMatchStatus(status: string, cs: boolean): string {
+  if (!cs) return status
+  const translations: Record<string, string> = {
+    played: 'odehráno', completed: 'dokončeno', bye: 'volný postup',
+    pending: 'čeká', skipped: 'přeskočeno', blocked: 'blokováno',
+    not_played: 'neodehráno', retired: 'ukončení zápasu'
+  }
+  return translations[status] ? `${translations[status]} (${status})` : status
+}
+
 function CompatibilityPanel({ compatibility }: { compatibility: TournamentLabCompatibility }): JSX.Element {
   const {language} = useLanguage(), cs = language === 'cs'
   return <SectionCard title={cs ? "Diagnostika kompatibility" : "Compatibility diagnostics"}>
@@ -136,9 +147,7 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         { label: cs ? 'Tabulky' : 'Standings', value: firstRun.group_stage.standings ? (cs ? 'vyhodnoceno' : 'resolved') : (cs ? 'blokováno' : 'blocked') },
         { label: cs ? 'Hybridní pavouk' : 'Hybrid bracket', value: firstRun.hybrid_knockout_bracket ? `${firstRun.hybrid_knockout_bracket.entrant_count} ${cs ? 'účastníků' : 'entrants'}` : (cs ? 'žádný' : 'none') }
       ]} />
-      {firstRun.group_stage.blocking_issue ? <p className="error">
-        {firstRun.group_stage.blocking_issue.code}: {firstRun.group_stage.blocking_issue.message}
-      </p> : null}
+      {firstRun.group_stage.blocking_issue ? <p role="alert" className="error">{cs ? "Skupinovou fázi nelze vyhodnotit" : "Group stage could not be resolved"} · {firstRun.group_stage.blocking_issue.code}: {firstRun.group_stage.blocking_issue.message}</p> : null}
       {firstRun.group_stage.standings?.groups.map((group) => <table
         key={group.group_index}
         aria-label={`Tournament Lab group ${group.group_index} standings`}
@@ -169,7 +178,7 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
       <label>{cs ? "Filtrovat zápasy prvního běhu podle stavu" : "Filter first-run matches by status"}
         <select aria-label="Tournament Lab match status filter" value={activeFilter} onChange={event => setStatusFilter(event.target.value)}>
           <option value="all">{cs ? "Všechny stavy" : "All match statuses"}</option>
-          {statuses.map(status => <option key={status} value={status}>{status}</option>)}
+          {statuses.map(status => <option key={status} value={status}>{visibleMatchStatus(status, cs)}</option>)}
         </select>
       </label>
       <p role="status" className="status">{cs ? `Zobrazeno ${displayedMatches.length} z ${firstRun.match_results.length} zápasů prvního běhu` : `Showing ${displayedMatches.length} of ${firstRun.match_results.length} first-run matches`} · {cs ? "Souhrn dávky se filtrem nemění." : "Batch totals remain unchanged."}</p>
@@ -180,7 +189,7 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
           <td>{row.round_number}</td>
           <td>{row.node_id}</td>
           <td>{row.player_a_id ?? 'BYE'} vs {row.player_b_id ?? 'BYE'}</td>
-          <td>{row.status}</td>
+          <td>{visibleMatchStatus(row.status, cs)}</td>
           <td>{row.winner_player_id ?? '—'}</td>
           <td>{row.set_scores.join(', ') || '—'}</td>
           <td>{row.rally_count}</td>

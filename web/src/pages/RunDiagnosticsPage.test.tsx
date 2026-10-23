@@ -136,6 +136,24 @@ describe('RunDiagnosticsPage', () => {
     expect(screen.getByText('7')).toBeInTheDocument()
   })
 
+  it('uses verified status-summary metrics when the Run detail endpoint is unavailable', async () => {
+    api.getRun.mockRejectedValueOnce(new Error('Run detail offline'))
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+
+    expect(await screen.findByText('Failed to load run details: Run detail offline')).toBeInTheDocument()
+    expect(screen.getByText('Run: run-a')).toBeInTheDocument()
+    expect(screen.getByText('Run ID')).toBeInTheDocument()
+    expect(screen.getByText('Seed')).toBeInTheDocument()
+    expect(screen.getByText('11')).toBeInTheDocument()
+    expect(screen.getByText('6 / 24')).toBeInTheDocument()
+    expect(screen.getByText('7')).toBeInTheDocument()
+    expect(screen.getByText('Week Detail (current week unavailable)')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Inspect current week detail/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Inspect latest completed event (E5)' }))
+      .toHaveAttribute('href', '/runs/run-a/events/E5')
+    expect(screen.queryByText(/Run details belong to another Run/)).not.toBeInTheDocument()
+  })
+
   it('renders richer latest-activity summaries with direct detail links', async () => {
     api.listEvents.mockResolvedValueOnce({ run_id: 'run-rich',
       events: [{ event_sequence: 5, event_id: 'E5', season: 2028, week: 12, template_id: null, tournament_result: { done: true } }]

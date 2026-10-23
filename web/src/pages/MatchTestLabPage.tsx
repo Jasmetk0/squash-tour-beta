@@ -57,6 +57,7 @@ function parseSeeds(value: string): number[] {
 }
 
 function ResultPanels({ data }: { data: MatchLabResult }): JSX.Element {
+  const {language} = useLanguage(), cs = language === 'cs'
   const [winnerFilter, setWinnerFilter] = useState('all')
   const winners = useMemo(() =>
     Array.from(new Set(data.results.map(result => result.winner_player_id))).sort(),
@@ -69,40 +70,41 @@ function ResultPanels({ data }: { data: MatchLabResult }): JSX.Element {
     : data.results.filter(result => result.winner_player_id === activeFilter)
 
   return <>
-    <SectionCard title="Compatibility & isolation">
+    <SectionCard title={cs ? 'Kompatibilita a izolace' : 'Compatibility & isolation'}>
       <SummaryPills items={[
         { label: 'Engine', value: data.compatibility.match_engine_version },
-        { label: 'Normal format', value: data.compatibility.normal_format ? 'yes' : 'no' },
-        { label: 'Run mutation', value: data.compatibility.run_mutation_performed ? 'yes' : 'no' },
-        { label: 'Live Run link', value: data.compatibility.run_live_link ? 'yes' : 'no' },
-        { label: 'Scenario fingerprint', value: data.scenario_fingerprint.slice(0, 12) },
-        { label: 'Request fingerprint', value: data.request_fingerprint.slice(0, 12) }
+        { label: cs ? 'Běžný formát' : 'Normal format', value: data.compatibility.normal_format ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
+        { label: cs ? 'Zápis do Runu' : 'Run mutation', value: data.compatibility.run_mutation_performed ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
+        { label: cs ? 'Živé propojení s Runem' : 'Live Run link', value: data.compatibility.run_live_link ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
+        { label: cs ? 'Otisk scénáře' : 'Scenario fingerprint', value: data.scenario_fingerprint.slice(0, 12) },
+        { label: cs ? 'Otisk požadavku' : 'Request fingerprint', value: data.request_fingerprint.slice(0, 12) }
       ]} />
       <p className="status"><code>{data.compatibility.production_kernel}</code></p>
       {data.compatibility.warnings.length > 0
         ? <ul>{data.compatibility.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
-        : <p className="status">No compatibility warnings for this scenario.</p>}
+        : <p className="status">{cs ? 'Pro tento scénář nejsou hlášena varování o kompatibilitě.' : 'No compatibility warnings for this scenario.'}</p>}
     </SectionCard>
-    <SectionCard title="Batch diagnostics">
+    <SectionCard title={cs ? 'Diagnostika dávky' : 'Batch diagnostics'}>
       <SummaryPills items={[
-        { label: 'Seeds', value: data.diagnostics.seed_count },
-        { label: 'Distinct results', value: data.diagnostics.distinct_result_count },
-        { label: 'Avg rallies', value: data.diagnostics.average_rally_count.toFixed(1) },
-        { label: 'Avg elapsed (s)', value: data.diagnostics.average_elapsed_seconds.toFixed(1) },
-        { label: 'Retirements', value: data.diagnostics.retirement_count }
+        { label: cs ? 'Seedy' : 'Seeds', value: data.diagnostics.seed_count },
+        { label: cs ? 'Různé výsledky' : 'Distinct results', value: data.diagnostics.distinct_result_count },
+        { label: cs ? 'Průměr výměn' : 'Avg rallies', value: data.diagnostics.average_rally_count.toFixed(1) },
+        { label: cs ? 'Průměr doby (s)' : 'Avg elapsed (s)', value: data.diagnostics.average_elapsed_seconds.toFixed(1) },
+        { label: cs ? 'Ukončení zápasu' : 'Retirements', value: data.diagnostics.retirement_count }
       ]} />
-      <p>Wins: {Object.entries(data.diagnostics.wins_by_player).map(([player, wins]) => `${player}: ${wins}`).join(' · ')}</p>
+      <p>{cs ? 'Výhry' : 'Wins'}: {Object.entries(data.diagnostics.wins_by_player).map(([player, wins]) => `${player}: ${wins}`).join(' · ')}</p>
     </SectionCard>
-    <SectionCard title="Replayable results">
-      <label>Filter results by winner
+    <SectionCard title={cs ? 'Opakovatelné výsledky' : 'Replayable results'}>
+      <label>{cs ? 'Filtrovat podle vítěze' : 'Filter results by winner'}
         <select aria-label="Match Lab winner filter" value={activeFilter} onChange={event => setWinnerFilter(event.target.value)}>
-          <option value="all">All winners</option>
+          <option value="all">{cs ? "Všichni vítězové" : "All winners"}</option>
           {winners.map(winner => <option key={winner} value={winner}>{winner}</option>)}
         </select>
       </label>
-      <p className="status">Showing {displayed.length} of {data.results.length} results · Batch diagnostics above include all matches.</p>
+      <p role="status" className="status">{cs ? `Zobrazeno ${displayed.length} z ${data.results.length} výsledků` : `Showing ${displayed.length} of ${data.results.length} results`} · {cs ? "Souhrn dávky zahrnuje všechny zápasy." : "Batch diagnostics above include all matches."}</p>
+      {data.results.length === 0 ? <p className="status">{cs ? "Dávka nemá žádné výsledky." : "This batch has no results."}</p> : displayed.length === 0 ? <p className="status">{cs ? "Filtru neodpovídají žádné výsledky." : "No results match this filter."}</p> : null}
       <table aria-label="Match Lab results"><thead><tr>
-        <th>Seed</th><th>Winner</th><th>Sets</th><th>Set scores (A-B)</th><th>Rallies</th><th>Elapsed</th><th>Result fingerprint</th>
+        <th>Seed</th><th>{cs ? "Vítěz" : "Winner"}</th><th>{cs ? "Sety" : "Sets"}</th><th>{cs ? "Skóre setů (A–B)" : "Set scores (A-B)"}</th><th>{cs ? "Výměny" : "Rallies"}</th><th>{cs ? "Doba" : "Elapsed"}</th><th>{cs ? "Otisk výsledku" : "Result fingerprint"}</th>
       </tr></thead><tbody>
         {displayed.map((result) => <tr key={result.seed}>
           <td>{result.seed}</td><td>{result.winner_player_id}</td>
@@ -255,31 +257,32 @@ export function MatchTestLabPage(): JSX.Element {
   }
 
   return <section className="panel">
-    <PageIntro title="Match Test Lab" subtitle="Global isolated sandbox for built-in baselines, editable Test Sessions and portable replayable Match Engine scenarios." />
+    <PageIntro title={cs ? "Testovací laboratoř zápasů" : "Match Test Lab"} subtitle={cs ? "Samostatné vestavěné scénáře, upravitelné Test Sessions a opakovatelné scénáře Match Engine mimo Run." : "Global isolated sandbox for built-in baselines, editable Test Sessions and portable replayable Match Engine scenarios."} />
 
     <LabNavigation active="match" />
-    <SectionCard title="Safety boundary">
-      <p>Built-in scenarios are read-only. <strong>New Test Session</strong> creates an independent editable copy outside every Run and Branch; copied provenance is data only, never a live link.</p>
+    <SectionCard title={cs ? "Bezpečnostní hranice" : "Safety boundary"}>
+      <p>{cs ? "Vestavěné scénáře jsou pouze ke čtení. Nová Test Session vytvoří samostatnou upravitelnou kopii mimo Run a větev. Původ dat není živé propojení." : "Built-in scenarios are read-only. New Test Session creates an independent editable copy outside every Run and Branch; copied provenance is data only, never a live link."}</p>
       <SummaryPills items={[
         { label: 'Kernel', value: 'MatchEngine.simulate' },
-        { label: 'Run mutation', value: 'never' },
-        { label: 'Selected mode', value: selectedSession ? 'isolated Test Session' : 'portable scratch scenario' }
+        { label: cs ? 'Zápis do Runu' : 'Run mutation', value: cs ? 'nikdy' : 'never' },
+        { label: cs ? 'Vybraný režim' : 'Selected mode', value: selectedSession ? (cs ? 'samostatná Test Session' : 'isolated Test Session') : (cs ? 'pracovní přenosný scénář' : 'portable scratch scenario') }
       ]} />
     </SectionCard>
 
-    <SectionCard title="Built-in read-only scenarios">
-      {builtIns.isLoading ? <p className="status">Loading built-in scenarios…</p> : null}
+    <SectionCard title={cs ? "Vestavěné scénáře pouze ke čtení" : "Built-in read-only scenarios"}>
+      {builtIns.isLoading ? <p role="status" className="status">{cs ? "Načítám vestavěné scénáře…" : "Loading built-in scenarios…"}</p> : null}
       {builtIns.data?.map((item) => <article key={item.scenario_id}>
         <strong>{item.display_name}</strong>
         <p>{item.description}</p>
-        <p className="status"><code>{item.scenario_fingerprint.slice(0, 12)}</code> · read-only baseline</p>
+        <p className="status"><code>{item.scenario_fingerprint.slice(0, 12)}</code> · {cs ? "výchozí scénář pouze ke čtení" : "read-only baseline"}</p>
         <button type="button" disabled={writePending} onClick={() => createMutation.mutate({ ticket: editor.captureEditor(), request: {
           display_name: `${item.display_name} — Test Session`,
           built_in_scenario_id: item.scenario_id
-        }})}>New Test Session from {item.display_name}</button>
+        }})}>{cs ? "Nová Test Session ze scénáře" : "New Test Session from"} {item.display_name}</button>
       </article>)}
-      {builtIns.isError ? <p className="error">Built-in scenarios unavailable.</p> : null}
-      {createMutation.isError ? <p role="alert" className="error">Session creation failed: {String(createMutation.error)}</p> : null}
+      {builtIns.isError ? <p role="alert" className="error">{cs ? "Vestavěné scénáře nelze načíst." : "Built-in scenarios unavailable."}</p> : null}
+      {builtIns.isSuccess && builtIns.data?.length === 0 ? <p className="status">{cs ? "Registr neobsahuje žádné vestavěné scénáře." : "No built-in scenarios were returned."}</p> : null}
+      {createMutation.isError ? <p role="alert" className="error">{cs ? "Vytvoření Session selhalo" : "Session creation failed"}: {String(createMutation.error)}</p> : null}
     </SectionCard>
 
     <SectionCard title="Test Sessions">

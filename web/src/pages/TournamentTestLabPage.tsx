@@ -68,6 +68,9 @@ function CompatibilityPanel({ compatibility }: { compatibility: TournamentLabCom
       { label: cs ? 'Zápis do Runu' : 'Run mutation', value: compatibility.run_mutation_performed ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') },
       { label: cs ? 'Živé propojení' : 'Live Run link', value: compatibility.run_live_link ? (cs ? 'ano' : 'yes') : (cs ? 'ne' : 'no') }
     ]} />
+    <p className="status">{cs
+      ? "Kompatibilita s Runem je pouze výsledkem existující kontroly návrhu; spuštění v Labu samo nepotvrzuje platný Run turnaj, Entry, los ani uloženou revizi."
+      : "Run compatibility is only the existing inspection result; execution in the Lab alone does not certify a valid Run tournament, Entry, Draw or Saved Revision."}</p>
     <p className="status">{cs ? "Sdílené autority:" : "Shared authorities:"}</p>
     <ul>{compatibility.shared_authorities.map((item) => <li key={item}><code>{item}</code></li>)}</ul>
     {compatibility.issues.length ? <table aria-label="Tournament Lab compatibility issues">

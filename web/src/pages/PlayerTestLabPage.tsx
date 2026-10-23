@@ -186,7 +186,7 @@ export function PlayerTestLabPage(): JSX.Element {
 
   const formatScenario = () => {
     if (!parsedPreview) {
-      setLocalError('Enter a valid Player Lab scenario before formatting.')
+      setLocalError(cs ? 'Před formátováním zadej platný scénář Player Lab.' : 'Enter a valid Player Lab scenario before formatting.')
       return
     }
     editScenario(JSON.stringify(parsedPreview, null, 2))
@@ -198,8 +198,8 @@ export function PlayerTestLabPage(): JSX.Element {
     setLocalError(null)
     runMutation.reset()
     try {
-      if (!scenarioText.trim()) throw new Error('Load or enter a Player Lab scenario first.')
-      if (!parsedPreview) throw new Error('Player Lab scenario must contain its schema, ID and variants.')
+      if (!scenarioText.trim()) throw new Error(cs ? 'Nejprve načti nebo zadej scénář Player Lab.' : 'Load or enter a Player Lab scenario first.')
+      if (!parsedPreview) throw new Error(cs ? 'Scénář Player Lab musí obsahovat schéma, ID a varianty.' : 'Player Lab scenario must contain its schema, ID and variants.')
       // Mutation setup and offline resumption may run after another selection.
       // Bind the reviewed source at submission, never through a live closure.
       runMutation.mutate({scenario: parsedPreview, session: selectedSession ? {
@@ -213,24 +213,28 @@ export function PlayerTestLabPage(): JSX.Element {
 
   return <section className="panel">
     <PageIntro
-      title="Player Test Lab"
-      subtitle="Global isolated development sandbox using the same canonical weekly sporting kernels as Product Runs."
+      title={cs ? "Testovací laboratoř hráčů" : "Player Test Lab"}
+      subtitle={cs ? "Samostatné experimenty vývoje hráčů se stejnými kanonickými týdenními sportovními jádry jako Product Runs." : "Global isolated development sandbox using the same canonical weekly sporting kernels as Product Runs."}
     />
 
     <LabNavigation active="player" />
     <InitialPopulationComparisonPanel />
     <SectionCard title={cs ? 'Uložené experimenty hráče' : 'Saved Player experiments'}>
-      <label>{cs ? 'Session' : 'Session'} <select aria-label="Open Player Test Session" value={editor.selectedSessionId ?? ''}
+      <label>{cs ? 'Test Session' : 'Session'} <select aria-label="Open Player Test Session" value={editor.selectedSessionId ?? ''}
         disabled={sessionHasUnsavedChanges && !discard} onChange={e => {initialScenarioHandled.current = true; editor.setSelectedSessionId(e.target.value || null); setDiscard(false)}}>
         <option value="">{cs ? 'Pracovní scénář' : 'Scratch scenario'}</option>
+        {selectedSession && !sessions.data?.some(item => item.session_id === selectedSession.session_id) ? <option value={selectedSession.session_id}>{selectedSession.display_name} · {cs ? "nedostupná v seznamu" : "unavailable"}</option> : null}
         {sessions.data?.map(item => <option key={item.session_id} value={item.session_id}>{item.display_name}</option>)}
       </select></label>
       {sessionHasUnsavedChanges && <label><input type="checkbox" checked={discard} onChange={e => setDiscard(e.target.checked)} />{cs ? 'Zahodit místní změny při změně Session' : 'Discard local edits when switching Session'}</label>}
       <label>{cs ? 'Název' : 'Name'} <input aria-label="Player Test Session name" value={editor.sessionName} onChange={e => editor.setSessionName(e.target.value)} /></label>
-      <button type="button" onClick={() => void sessions.refetch()}>{cs ? 'Obnovit seznam Session' : 'Refresh Player Test Sessions'}</button>
+      {sessions.isLoading && <p role="status">{cs ? "Načítám seznam Session…" : "Loading Sessions…"}</p>}
+      {sessions.isError && <p role="alert">{cs ? "Seznam uložených Session není dostupný." : "Saved Sessions unavailable."}</p>}
+      {sessions.isSuccess && sessions.data.length === 0 && <p role="status">{cs ? "Žádné uložené Session. Pracovní scénář zůstává dostupný." : "No saved Sessions. Scratch scenario remains available."}</p>}
+      <button type="button" disabled={sessions.isFetching} onClick={() => void sessions.refetch()}>{cs ? "Obnovit seznam Session" : "Refresh Player Test Sessions"}</button>
       <button type="button" disabled={!parsedPreview || writePending || Boolean(sessionConflict)} onClick={() => parsedPreview && saveMutation.mutate({scenario: parsedPreview, session: selectedSession, name: editor.sessionName, ticket: editor.captureEditor()})}>{cs ? 'Uložit experiment' : 'Save Player Test Session'}</button>
       <LabSessionConflict conflict={sessionConflict} dirty={sessionHasUnsavedChanges} canReload={editor.canReloadSession} onReload={editor.reloadSession} />
-      {saveMutation.isError && <p role="alert">{String(saveMutation.error)}</p>}
+      {saveMutation.isError && <p role="alert">{cs ? 'Uložení Session selhalo' : 'Session save failed'}: {String(saveMutation.error)}</p>}
     </SectionCard>
     <SectionCard title={cs ? 'Historický hráč → nezávislý experiment' : 'Historical player → independent experiment'}>
       <HistoricalLabSourcePicker lab="Player Lab" run={source.run} branch={source.branch} revision={source.revision}
@@ -241,7 +245,7 @@ export function PlayerTestLabPage(): JSX.Element {
       <label>{cs ? 'Počet týdnů experimentu' : 'Experiment weeks'} <input aria-label="Player Lab experiment weeks" type="number" min={1} max={61} value={duration} onChange={e => setDuration(Number(e.target.value))} /></label>
       <button type="button" disabled={writePending || sessionHasUnsavedChanges || Boolean(sessionConflict) || !Object.values(source).every(Boolean)}
         onClick={() => importMutation.mutate({source, duration, selection: sourceSelection.current, ticket: editor.captureEditor()})}>{cs ? 'Importovat historického hráče' : 'Import historical Player scenario'}</button>
-      {importMutation.isError && <p role="alert">{String(importMutation.error)}</p>}
+      {importMutation.isError && <p role="alert">{cs ? 'Historický import selhal' : 'Historical import failed'}: {String(importMutation.error)}</p>}
       {parsedPreview?.source_snapshot && <p aria-label="Player Lab historical provenance">
         {parsedPreview.source_snapshot.biography.name} · {parsedPreview.source_snapshot.run_id} / {parsedPreview.source_snapshot.selected_branch_id} / {parsedPreview.source_snapshot.saved_revision_id}
         {' · '}{cs ? 'Vlastník historie' : 'Historical owner'}: {parsedPreview.source_snapshot.owner_branch_id}
@@ -250,55 +254,49 @@ export function PlayerTestLabPage(): JSX.Element {
       </p>}
     </SectionCard>
 
-    <SectionCard title="Safety boundary">
-      <p>
-        Player Lab V1 never creates, saves or mutates a Product Run. Portable scenarios are replayable JSON.
-        Player Lab now also accepts an explicit canonical Health timeline and projects it through the same
-        Match Health limitation authority used by Product Runs. Health generation/healing and numeric sporting
-        effects remain deliberately uncalibrated; Training Load, Experience, Match Preparation, Financial Level
-        and career AI remain explicit follow-up work.
-      </p>
+    <SectionCard title={cs ? "Bezpečnostní hranice" : "Safety boundary"}>
+      <p>{cs ? "Player Lab nevytváří, neukládá ani nemění Product Run. Přenosné scénáře jsou opakovatelné JSON. Podporuje explicitní kanonickou časovou osu Health se stejnými omezeními projekce jako Product Runs. Generování Health, léčení a číselný sportovní vliv nejsou kalibrovány; Training Load, Experience, Match Preparation, Financial Level a kariérní AI zůstávají dalšími úkoly." : "Player Lab V1 never creates, saves or mutates a Product Run. Portable scenarios are replayable JSON. Player Lab also accepts an explicit canonical Health timeline with the same Match Health projection limitations as Product Runs. Health generation/healing and numeric sporting effects remain uncalibrated; Training Load, Experience, Match Preparation, Financial Level and career AI remain follow-up work."}</p>
       <SummaryPills items={[
-        { label: 'Run mutation', value: 'never' },
-        { label: 'Live Run link', value: 'none' },
+        { label: cs ? 'Zápis do Runu' : 'Run mutation', value: cs ? 'nikdy' : 'never' },
+        { label: cs ? 'Živé propojení' : 'Live Run link', value: cs ? 'žádné' : 'none' },
         { label: 'Kernel', value: 'weekly development + Match Health projection' }
       ]} />
     </SectionCard>
 
-    <SectionCard title="Built-in read-only scenarios">
+    <SectionCard title={cs ? "Vestavěné scénáře pouze ke čtení" : "Built-in read-only scenarios"}>
       <button type="button" disabled={builtIns.isFetching} onClick={() => { void builtIns.refetch() }}>
-        {builtIns.isFetching ? 'Refreshing Player Lab scenarios…' : 'Refresh built-in scenarios'}
+        {builtIns.isFetching ? (cs ? 'Obnovuji scénáře…' : 'Refreshing Player Lab scenarios…') : (cs ? 'Obnovit vestavěné scénáře' : 'Refresh built-in scenarios')}
       </button>
-      {builtIns.isLoading ? <p role="status">Loading built-in scenarios…</p> : null}
-      {builtIns.isError ? <p role="alert" className="error">Built-in Player Lab scenarios unavailable.</p> : null}
+      {builtIns.isLoading ? <p role="status">{cs ? "Načítám vestavěné scénáře…" : "Loading built-in scenarios…"}</p> : null}
+      {builtIns.isError ? <p role="alert" className="error">{cs ? "Vestavěné scénáře Player Lab nejsou dostupné." : "Built-in Player Lab scenarios unavailable."}</p> : null}
       {builtIns.isSuccess && builtIns.data.length === 0
-        ? <p className="status">No built-in Player Lab scenarios are available.</p> : null}
+        ? <p className="status">{cs ? "Nejsou dostupné žádné vestavěné scénáře Player Lab." : "No built-in Player Lab scenarios are available."}</p> : null}
       {builtIns.data?.map((item) => <article key={item.scenario_id}>
         <strong>{item.display_name}</strong>
         <p>{item.description}</p>
-        <p className="status"><code>{item.scenario_fingerprint.slice(0, 12)}</code> · read-only baseline</p>
+        <p className="status"><code>{item.scenario_fingerprint.slice(0, 12)}</code> · {cs ? "výchozí scénář pouze ke čtení" : "read-only baseline"}</p>
         <button type="button" onClick={() => editScenario(JSON.stringify(item.scenario, null, 2))}>
-          Load scenario
+          {cs ? "Načíst scénář" : "Load scenario"}
         </button>
       </article>)}
     </SectionCard>
 
     <form onSubmit={submit}>
-      <SectionCard title="Portable Player Lab scenario JSON">
+      <SectionCard title={cs ? "JSON přenosného scénáře Player Lab" : "Portable Player Lab scenario JSON"}>
         <LabScenarioAuthoring kind="player" text={scenarioText} onChange={editScenario}
           jsonLabel="Player Lab scenario JSON" selection={selectedSession ? `${selectedSession.session_id}:${selectedSession.session_fingerprint}` : 'scratch'} revision={editor.editorEdit}
           savedScenario={selectedSession?.scenario} savedName={selectedSession?.display_name}
           sessionName={editor.sessionName} />
         <button type="button" onClick={formatScenario} disabled={runPending || Boolean(sessionConflict) || sessionHasUnsavedChanges || !parsedPreview}>
-          Format JSON
+          {cs ? "Formátovat JSON" : "Format JSON"}
         </button>{' '}
         <button type="submit" disabled={runPending || Boolean(sessionConflict) || sessionHasUnsavedChanges || !parsedPreview}>
-          {runPending ? 'Running…' : 'Run scenario'}
+          {runPending ? (cs ? 'Spouštím…' : 'Running…') : (cs ? 'Spustit scénář' : 'Run scenario')}
         </button>
-        {localError ? <p className="error">{localError}</p> : null}
-        {runMutation.isError ? <p className="error">Player Lab failed: {String(runMutation.error)}</p> : null}
+        {localError ? <p role="alert" className="error">{localError}</p> : null}
+        {runMutation.isError ? <p role="alert" className="error">{cs ? "Player Lab selhal" : "Player Lab failed"}: {String(runMutation.error)}</p> : null}
         <p className="status">
-          Scenario: {parsedPreview?.scenario_id ?? 'invalid / incomplete JSON'} · variants {parsedPreview?.variants.length ?? '—'}
+          {cs ? 'Scénář' : 'Scenario'}: {parsedPreview?.scenario_id ?? (cs ? 'neplatný / neúplný JSON' : 'invalid / incomplete JSON')} · {cs ? 'varianty' : 'variants'} {parsedPreview?.variants.length ?? '—'}
         </p>
       </SectionCard>
     </form>

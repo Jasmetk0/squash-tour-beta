@@ -155,7 +155,7 @@ export function PackageWorldDetailPage():JSX.Element {
       {active==='contents'&&<article className="package-index-detail">
         <h3>{cs?'Země':'Countries'} ({pkg.country_count})</h3>
         {countriesQuery.isPending&&<p role="status">{cs ? "Načítám země…" : "Loading countries…"}</p>}
-        {countriesQuery.isError&&<p role="alert" className="error">{formatApiError(countriesQuery.error)}</p>}
+        {countriesQuery.isError&&<p role="alert" className="error">{cs ? 'Země se nepodařilo načíst: ' : 'Failed to load countries: '}{formatApiError(countriesQuery.error)}</p>}
         {countries&&<><p role="status" className="status">{cs ? 'Ověřený seznam zemí' : 'Verified country inventory'}: {countries.length}</p><label>{cs?'Hledat zemi':'Search countries'}<input type="search" value={countrySearch} onChange={e=>setCountrySearch(e.target.value)}/></label>
           <ul className="package-index-countries">{countries.filter(c=>(c.name+' '+c.code).toLowerCase().includes(countrySearch.toLowerCase())).map(c=>
             <li key={c.code}><Link to={source+'/countries/'+encodeURIComponent(c.code)}>{c.name} ({c.code})</Link>

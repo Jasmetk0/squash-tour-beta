@@ -378,6 +378,21 @@ describe('TournamentTestLabPage', () => {
     expect(api.runTournamentTestLab).not.toHaveBeenCalled()
   })
 
+  it('retries an unavailable built-in tournament list without overwriting scratch changes', async () => {
+    const user = userEvent.setup()
+    api.getTournamentLabBuiltInScenarios.mockRejectedValueOnce(new Error('Tournament registry offline'))
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    const editor = screen.getByRole('textbox', { name: 'Tournament Lab scenario JSON' })
+    fireEvent.change(editor, { target: { value: '{"local":"draft"}' } })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Tournament registry offline')
+    await user.click(screen.getByRole('button', {name: 'Refresh built-in scenarios'}))
+    expect(await screen.findByRole('button', {name: 'Load scratch copy'})).toBeInTheDocument()
+    expect(editor).toHaveValue('{"local":"draft"}')
+    expect(api.getTournamentLabBuiltInScenarios).toHaveBeenCalledTimes(2)
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+    expect(api.createTournamentLabSession).not.toHaveBeenCalled()
+  })
+
   it('manually refreshes Tournament Test Sessions without simulating or saving a session', async () => {
     const user = userEvent.setup()
     api.getTournamentLabSessions.mockResolvedValueOnce([]).mockResolvedValue([{

@@ -215,6 +215,23 @@ describe('MatchTestLabPage', () => {
     expect(api.runMatchTestLab).not.toHaveBeenCalled()
   })
 
+  it('recovers a failed built-in list in Czech without replacing scratch JSON or writing', async () => {
+    const user = userEvent.setup()
+    api.getMatchLabBuiltInScenarios.mockRejectedValueOnce(new Error('Match registry offline'))
+      .mockResolvedValue([])
+    renderWithRoute(<LocalizedMatchPage />, '/admin/labs/match')
+    await user.click(screen.getByRole('button', { name: 'Toggle test language' }))
+    const editor = screen.getByRole('textbox', { name: 'Match Lab scenario JSON' })
+    fireEvent.change(editor, { target: { value: '{"preserve":"local"}' } })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Match registry offline')
+    await user.click(screen.getByRole('button', { name: 'Obnovit vestavěné scénáře' }))
+    expect(await screen.findByText('Registr neobsahuje žádné vestavěné scénáře.')).toBeInTheDocument()
+    expect(editor).toHaveValue('{"preserve":"local"}')
+    expect(api.getMatchLabBuiltInScenarios).toHaveBeenCalledTimes(2)
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+    expect(api.createMatchLabSession).not.toHaveBeenCalled()
+  })
+
   it('manually refreshes Match Test Session inventory without modifying or running any session', async () => {
     const user = userEvent.setup()
     api.getMatchLabSessions.mockResolvedValueOnce([]).mockResolvedValue([{

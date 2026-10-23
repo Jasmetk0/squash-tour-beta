@@ -427,6 +427,21 @@ describe('PlayerTestLabPage', () => {
     expect(api.runPlayerTestLab).not.toHaveBeenCalled()
   })
 
+  it('retries a failed Player built-in fetch without overriding an edited scratch scenario', async () => {
+    const user = userEvent.setup()
+    api.getPlayerLabBuiltInScenarios.mockRejectedValueOnce(new Error('Player registry offline'))
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    const editor = screen.getByRole('textbox', {name: 'Player Lab scenario JSON'})
+    fireEvent.change(editor, {target: {value: '{"local":"player"}'}})
+    expect(await screen.findByRole('alert')).toHaveTextContent('Player registry offline')
+    await user.click(screen.getByRole('button', {name: 'Refresh built-in scenarios'}))
+    expect(await screen.findByText('Development activity baseline')).toBeInTheDocument()
+    expect(editor).toHaveValue('{"local":"player"}')
+    expect(api.getPlayerLabBuiltInScenarios).toHaveBeenCalledTimes(2)
+    expect(api.runPlayerTestLab).not.toHaveBeenCalled()
+    expect(api.savePlayerLabSession).not.toHaveBeenCalled()
+  })
+
   it('shows a failed Player Lab built-in fetch as an error, not an empty list', async () => {
     api.getPlayerLabBuiltInScenarios.mockRejectedValue(new Error('No connection'))
     renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')

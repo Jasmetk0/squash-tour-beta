@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { RouterProvider, createMemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { WorldLibraryDetailPage, WorldPackageCountryCreatePage } from './WorldLibraryPage'
@@ -349,7 +349,7 @@ describe('built-in World cloning', () => {
     expect(screen.getByText('Žádné soubory nebyly zapsány.')).toBeInTheDocument()
     expect(screen.getByText('Náhled balíčku')).toBeInTheDocument()
     expect(screen.getByText('Počty:')).toBeInTheDocument()
-    expect(screen.getByText('Varování:')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Výsledek kopírování')).getByText('Varování:')).toBeInTheDocument()
     expect(screen.getByText('countries/AAA.json')).toBeInTheDocument()
     expect(screen.getByText('config/world_packages/custom/local_world')).toBeInTheDocument()
     expect(screen.queryByRole('link', {name: /Otevřít detail nového/})).not.toBeInTheDocument()
@@ -360,7 +360,7 @@ describe('built-in World cloning', () => {
     switchLanguage('en')
     expect(screen.getByText('Preview only:')).toBeInTheDocument()
     expect(screen.getByText('Package preview')).toBeInTheDocument()
-    expect(screen.getByText('Warnings:')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Clone result')).getByText('Warnings:')).toBeInTheDocument()
     expect(api.cloneWorldPackage).toHaveBeenCalledTimes(1)
 
     fireEvent.click(screen.getByRole('button', {name: 'Review custom copy'}))

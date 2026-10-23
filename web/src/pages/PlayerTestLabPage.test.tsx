@@ -1,5 +1,6 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { onlineManager } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -23,7 +24,13 @@ const api = vi.hoisted(() => ({
   initialPopulationExportUrl: vi.fn()
 }))
 vi.mock('../api/client', () => api)
-vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en', t: (key: string) => key})}))
+const uiLocale = vi.hoisted(() => ({language: 'en' as 'en' | 'cs'}))
+vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: uiLocale.language, t: (key: string) => key})}))
+function LocalizedPage(): JSX.Element {
+  const [czech, setCzech] = useState(false)
+  uiLocale.language = czech ? 'cs' : 'en'
+  return <><button type="button" onClick={() => setCzech(value => !value)}>Toggle test language</button><PlayerTestLabPage /></>
+}
 
 const scenario = {
   schema_version: 'player_test_lab_scenario.v1',
@@ -167,6 +174,7 @@ const result = {
 
 describe('PlayerTestLabPage', () => {
   beforeEach(() => {
+    uiLocale.language = 'en'
     api.getPlayerLabBuiltInScenarios.mockReset()
     api.runPlayerTestLab.mockReset()
     api.listPlayerLabSessions.mockReset().mockResolvedValue([])
@@ -182,6 +190,24 @@ describe('PlayerTestLabPage', () => {
       scenario
     }])
     api.runPlayerTestLab.mockResolvedValue(result)
+  })
+
+
+  it('preserves a selected saved Session and unchanged Run payload on a CS/EN switch', async () => {
+    const saved = {session_id: 'original', version: 1, session_fingerprint: 'a'.repeat(64), display_name: 'Original test', scenario}
+    api.listPlayerLabSessions.mockResolvedValue([saved])
+    renderWithRoute(<LocalizedPage />, '/admin/labs/player')
+    await screen.findByRole('option', {name: 'Original test'})
+    fireEvent.change(screen.getByLabelText('Open Player Test Session'), {target: {value: saved.session_id}})
+    expect(screen.getByLabelText('Open Player Test Session')).toHaveValue(saved.session_id)
+    fireEvent.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    expect(screen.getByLabelText('Open Player Test Session')).toHaveValue(saved.session_id)
+    expect((screen.getByLabelText('Player Lab scenario JSON') as HTMLTextAreaElement).value).toContain('development-activity-baseline')
+    expect(api.savePlayerLabSession).not.toHaveBeenCalled()
+    expect(api.importPlayerLabHistory).not.toHaveBeenCalled()
+    expect(api.runPlayerLabSession).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name: 'Spustit scénář'}))
+    await waitFor(() => expect(api.runPlayerLabSession).toHaveBeenCalledWith(saved.session_id, saved.session_fingerprint))
   })
 
   it.each(['saved', 'scratch'])('keeps the submitted %s source when a paused request resumes after switching selection', async kind => {

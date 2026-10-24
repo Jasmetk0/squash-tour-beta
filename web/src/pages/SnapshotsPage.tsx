@@ -50,7 +50,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   })
 
   const snapshotMismatch = Boolean(query.data?.run_id && query.data.run_id !== runId)
-  const snapshots = snapshotMismatch ? [] : query.data?.snapshots ?? []
+  const snapshots = snapshotMismatch || query.error ? [] : query.data?.snapshots ?? []
   const siblingMismatch = Boolean(siblingSnapshotsQuery.data?.run_id && siblingSnapshotsQuery.data.run_id !== runId)
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const runMismatch = Boolean(runQuery.data?.run.run_id && runQuery.data.run.run_id !== runId)
@@ -77,11 +77,11 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   }, [orderedEvents])
   const persistedEventsById = useMemo(() => {
     const map = new Map<string, { season: number | null; eventSequence: number; week: number | null }>()
-    ;(eventsMismatch ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
+    ;(eventsMismatch || eventsQuery.error ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
       map.set(event.event_id, { season: event.season, eventSequence: event.event_sequence, week: event.week })
     })
     return map
-  }, [eventsMismatch, eventsQuery.data?.events])
+  }, [eventsMismatch, eventsQuery.error, eventsQuery.data?.events])
   const plannedForSource = (sourceEventId: string) => {
     const plan = plannedContext.get(sourceEventId)
     const persisted = persistedEventsById.get(sourceEventId)

@@ -245,4 +245,27 @@ describe('RolloverSeasonDetailPage', () => {
     expect(screen.queryByText('Next-season player response belongs to another Run or season.')).not.toBeInTheDocument()
   })
 
+  it('does not display cached player transitions after their refresh fails and restores them on retry', async () => {
+    const summary = { rollover: { run_id: 'run-a', from_season: 2027, to_season: 2028,
+      transitioned_players: 1, metadata: {} } }
+    const transitions = { run_id: 'run-a', to_season: 2028,
+      transitions: [{ run_id: 'run-a', from_season: 2027, to_season: 2028,
+        player_id: 'P_STORED', transition: { delta: 0 } }] }
+    api.getRolloverBySeason.mockResolvedValue(summary)
+    api.getPlayerTransitions.mockResolvedValueOnce(transitions)
+      .mockRejectedValueOnce(new Error('temporary transition outage'))
+      .mockResolvedValueOnce(transitions)
+    api.getNextSeasonPlayers.mockResolvedValue({ run_id: 'run-a', to_season: 2028,
+      players: [{ player_id: 'P_INDEPENDENT', state: { delta: 0 } }] })
+    renderPage('/runs/run-a/rollover/2028')
+    expect(await screen.findByText(/"player_id": "P_STORED"/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load transitions: temporary transition outage')).toBeInTheDocument()
+    expect(screen.queryByText(/"player_id": "P_STORED"/)).not.toBeInTheDocument()
+    expect(screen.getByText(/"player_id": "P_INDEPENDENT"/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText(/"player_id": "P_STORED"/)).toBeInTheDocument()
+    expect(api.getPlayerTransitions).toHaveBeenCalledTimes(3)
+  })
+
 })

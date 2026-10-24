@@ -24,6 +24,8 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('../api/client', () => api)
+// Legacy assertions verify the existing English copy; CS/EN transitions have separate coverage.
+vi.mock('../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }))
 
 const finalsQualification = (runId: string, season = 2028) => ({
   run_id: runId, season, source_as_of_season: season, source_as_of_week: 60,

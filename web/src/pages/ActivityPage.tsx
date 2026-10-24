@@ -80,7 +80,9 @@ export function ActivityPage(): JSX.Element {
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
 
-  const items = activityQuery.data?.items ?? []
+  const activityMismatch = Boolean(activityQuery.data && activityQuery.data.run_id !== runId)
+  const eventsMismatch = Boolean(eventsQuery.data && eventsQuery.data.run_id !== runId)
+  const items = activityMismatch ? [] : activityQuery.data?.items ?? []
   const indexedItems = useMemo<IndexedActivityItem[]>(() => items.map((item, index) => ({ item, index })), [items])
 
   const plannedContextByEventId = useMemo(() => {
@@ -99,11 +101,11 @@ export function ActivityPage(): JSX.Element {
 
   const persistedEventById = useMemo(() => {
     const map = new Map<string, { week: number | null; eventSequence: number }>()
-    ;(eventsQuery.data?.events ?? []).forEach((event) => {
+    ;(eventsMismatch ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
       map.set(event.event_id, { week: event.week, eventSequence: event.event_sequence })
     })
     return map
-  }, [eventsQuery.data?.events])
+  }, [eventsMismatch, eventsQuery.data?.events])
 
   const normalizedTextFilter = textFilter.trim().toLowerCase()
   const filteredItems = indexedItems.filter(({ item }) => {
@@ -193,6 +195,8 @@ export function ActivityPage(): JSX.Element {
         runId={runId}
         subtitle={t('Deterministic run-level feed browser with filterable activity and compact bridge navigation.')}
       />
+      <p className="status">{t('Stored legacy SimulationRun history. This view does not verify Product Run Saved Revision authority.')}</p>
+      <p className="status">{t('History records shown are only those returned by this endpoint; they do not certify a complete Product Run history.')}</p>
       <CurrentContextStrip
         items={[
           { label: t('Run'), value: runId || 'unknown' },
@@ -247,15 +251,18 @@ export function ActivityPage(): JSX.Element {
             />
           </label>
         </div>
+        <button type="button" onClick={() => { setKindFilter(''); setSeasonFilter(''); setWeekFilter(''); setTextFilter('') }}>{t('Reset filters')}</button>
       </SectionCard>
 
       <SectionCard title={t('Activity feed')}>
+        {activityMismatch && <p role="alert" className="error">{t('Activity response belongs to another Run; its records are hidden.')}</p>}
+        <button type="button" onClick={() => void activityQuery.refetch()}>{t('Refresh read-only data')}</button>
         {activityQuery.isLoading ? <p className="status">{t('Loading activity feed...')}</p> : null}
         {activityQuery.error ? <p className="error">Failed to load activity feed: {formatApiError(activityQuery.error)}</p> : null}
-        {!activityQuery.isLoading && !activityQuery.error && items.length === 0 ? (
+        {!activityQuery.isLoading && !activityQuery.error && !activityMismatch && items.length === 0 ? (
           <EmptyState message={t('No activity has been persisted for this run yet.')} />
         ) : null}
-        {!activityQuery.isLoading && !activityQuery.error && items.length > 0 && filteredItems.length === 0 ? (
+        {!activityQuery.isLoading && !activityQuery.error && !activityMismatch && items.length > 0 && filteredItems.length === 0 ? (
           <EmptyState message={t('No activity items match the current filters.')} />
         ) : null}
         {filteredItems.length > 0 ? (

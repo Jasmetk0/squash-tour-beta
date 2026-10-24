@@ -88,9 +88,18 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
     runQuery.data.season_state.season !== runQuery.data.run.season)
   const sourceEventId = snapshot?.source_event_id ?? null
   const neighboringSnapshots = historyMismatch || snapshotsQuery.error ? [] : (snapshotsQuery.data?.snapshots ?? [])
+  const matchingHistoryEntries = neighboringSnapshots.filter((item) => item.snapshot_sequence === parsedSequence)
+  // The index and direct detail are read independently. If they disagree on
+  // the same sequence's source/kind, neither one can prove source navigation.
+  const snapshotHistoryConflict = Boolean(snapshot && matchingHistoryEntries.length > 0 && (
+    matchingHistoryEntries.length !== 1 ||
+    matchingHistoryEntries[0].source_event_id !== snapshot.source_event_id ||
+    matchingHistoryEntries[0].snapshot_kind !== snapshot.snapshot_kind
+  ))
   const neighborHistoryUnavailable = snapshotsQuery.isLoading || Boolean(snapshotsQuery.error) || historyMismatch ||
-    !snapshotsQuery.data || !neighboringSnapshots.some((item) => item.snapshot_sequence === parsedSequence)
-  const currentSnapshotIndex = neighboringSnapshots.findIndex((item) => item.snapshot_sequence === parsedSequence)
+    snapshotHistoryConflict || !snapshotsQuery.data || matchingHistoryEntries.length !== 1
+  const currentSnapshotIndex = neighborHistoryUnavailable ? -1 :
+    neighboringSnapshots.findIndex((item) => item.snapshot_sequence === parsedSequence)
   const previousSnapshot = currentSnapshotIndex > 0 ? neighboringSnapshots[currentSnapshotIndex - 1] : null
   const nextSnapshot =
     currentSnapshotIndex >= 0 && currentSnapshotIndex < neighboringSnapshots.length - 1
@@ -108,8 +117,8 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
     ? findPlannedEventContext(runQuery.data, sourceEventId) : null
   const sourceSeasonMismatch = Boolean(plannedCandidate && persistedSourceEvent &&
     persistedSourceEvent.season != null && persistedSourceEvent.season !== plannedCandidate.season)
-  const plannedSourceEvent = sourceSeasonMismatch || ambiguousSourceEvent ? null : plannedCandidate
-  const relatedSiblingUnavailable = ambiguousSourceEvent || siblingSnapshotsQuery.isLoading || Boolean(siblingSnapshotsQuery.error) || siblingMismatch || !siblingSnapshotsQuery.data
+  const plannedSourceEvent = sourceSeasonMismatch || ambiguousSourceEvent || snapshotHistoryConflict ? null : plannedCandidate
+  const relatedSiblingUnavailable = snapshotHistoryConflict || ambiguousSourceEvent || siblingSnapshotsQuery.isLoading || Boolean(siblingSnapshotsQuery.error) || siblingMismatch || !siblingSnapshotsQuery.data
   const relatedSiblingSnapshots = sourceEventId
     ? (siblingMismatch || siblingSnapshotsQuery.error ? [] : siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === sourceEventId) ?? [])
     : []
@@ -182,6 +191,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
             {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>}
             {sourceSeasonMismatch && <p role="alert" className="error">{t('Source event season does not match the current plan. Planned links are hidden.')}</p>}
             {ambiguousSourceEvent && <p role="alert" className="error">{t('Source event ID is reused in persisted history. Source links and week context are unavailable.')}</p>}
+            {snapshotHistoryConflict && <p role="alert" className="error">{t('Snapshot detail and history index disagree on source identity. Navigation links are unavailable.')}</p>}
             {historyMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
             {snapshotsQuery.error && <p role="alert" className="error">{t('Failed to load snapshots history')}: {formatApiError(snapshotsQuery.error)}</p>}
             {snapshotQuery.isLoading && <p role="status" className="status">{t('Loading snapshot details...')}</p>}
@@ -199,10 +209,10 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
               <SourceEventContext
                 runId={runId}
                 sourceEventId={sourceEventId}
-                persistedSourceEventSequence={persistedSourceEvent?.event_sequence ?? null}
-                persistedSourceEventUnavailable={ambiguousSourceEvent || eventsQuery.isLoading || Boolean(eventsQuery.error) || eventsMismatch}
+                persistedSourceEventSequence={snapshotHistoryConflict ? null : persistedSourceEvent?.event_sequence ?? null}
+                persistedSourceEventUnavailable={snapshotHistoryConflict || ambiguousSourceEvent || eventsQuery.isLoading || Boolean(eventsQuery.error) || eventsMismatch}
                 plannedSourceEvent={plannedSourceEvent}
-                plannedSourceEventUnavailable={ambiguousSourceEvent || runQuery.isLoading || Boolean(runQuery.error) || runQuery.data?.run.run_id !== runId || planSeasonMismatch || sourceSeasonMismatch}
+                plannedSourceEventUnavailable={snapshotHistoryConflict || ambiguousSourceEvent || runQuery.isLoading || Boolean(runQuery.error) || runQuery.data?.run.run_id !== runId || planSeasonMismatch || sourceSeasonMismatch}
                 relatedSiblingSnapshots={relatedSiblingSnapshots}
                 siblingMode={siblingMode}
                 relatedSiblingUnavailable={relatedSiblingUnavailable}

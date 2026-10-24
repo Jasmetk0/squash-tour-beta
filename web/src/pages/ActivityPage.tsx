@@ -41,7 +41,7 @@ function makeWeekContext(item: RunActivityItem, effectiveWeek: number | null): s
 function getEffectiveWeek(
   item: RunActivityItem,
   plannedContextByEventId: Map<string, { season: number; week: number; category: string; templateId: string; planPosition: number }>,
-  persistedEventById: Map<string, { season: number; week: number | null; eventSequence: number }>
+  persistedEventById: Map<string, { season: number | null; week: number | null; eventSequence: number }>
 ): number | null {
   if (item.week != null) {
     return item.week
@@ -112,7 +112,7 @@ export function ActivityPage(): JSX.Element {
   }, [runId, runQuery.data, plannedContextUnavailable])
 
   const persistedEventById = useMemo(() => {
-    const map = new Map<string, { season: number; week: number | null; eventSequence: number }>()
+    const map = new Map<string, { season: number | null; week: number | null; eventSequence: number }>()
     ;(eventsMismatch ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
       map.set(event.event_id, { season: event.season, week: event.week, eventSequence: event.event_sequence })
     })

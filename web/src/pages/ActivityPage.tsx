@@ -200,8 +200,9 @@ export function ActivityPage(): JSX.Element {
   const selectedPlannedContext = matchedPlan && (selectedItem?.season == null || matchedPlan.season === selectedItem.season) ? matchedPlan : undefined
   const selectedPersistedEvent = matchedPersistedEvent && (selectedItem?.season == null || matchedPersistedEvent.season === selectedItem.season) ? matchedPersistedEvent : undefined
   const selectedWeek = selectedItem ? getEffectiveWeek(selectedItem, plannedContextByEventId, persistedEventById) : null
+  const selectedEvidenceSeason = selectedItem?.season ?? selectedPlannedContext?.season ?? selectedPersistedEvent?.season ?? null
   const canInspectCurrentWeek = selectedItem && !plannedContextUnavailable &&
-    selectedItem.season != null && selectedItem.season === runQuery.data?.run.season
+    selectedEvidenceSeason != null && selectedEvidenceSeason === runQuery.data?.run.season
   const bridgeItems = selectedItem ? activityBridgeItems(runId, selectedItem, selectedWeek, t, {
     contextEventId: selectedContextEventId,
     hasPersistedContext: Boolean(selectedPersistedEvent),

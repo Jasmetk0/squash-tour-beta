@@ -471,7 +471,8 @@ const czech: Record<string, string> = {
   "Activity source event ID has conflicting seasons. Its navigation links are unavailable.": "Zdrojové ID události aktivity má rozporné sezony. Navigační odkazy nejsou dostupné.",
   "Text search": "Textové vyhledávání",
   "Event ID is reused in this Run. Use the selected sequence to identify the stored record; direct ID-only navigation is unavailable.": "ID události se v tomto Runu opakuje. Uložený záznam určuje vybrané pořadové číslo; přímý odkaz pouze podle ID není dostupný.",
-  "Unavailable: the event ID identifies multiple stored records.": "Nedostupné: ID události označuje více uložených záznamů."
+  "Unavailable: the event ID identifies multiple stored records.": "Nedostupné: ID události označuje více uložených záznamů.",
+  "Source event ID is reused in persisted history. Source links and week context are unavailable.": "Zdrojové ID události se v uložené historii opakuje. Odkazy na zdroj a kontext týdne nejsou dostupné."
 }
 
 export function useHistoryText(): (english: string) => string {

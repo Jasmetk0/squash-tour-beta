@@ -207,4 +207,27 @@ describe('Run historical UI CS/EN read-only behavior', () => {
     expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)
   })
 
+  it('translates a Finals summary/detail provenance conflict without refetching or leaking the result', async () => {
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2027, qualification: null,
+      result: { run_id: 'run-a', season: 2027, event_id: 'OLD_FINALS',
+        source_as_of_season: 2027, source_as_of_week: 42 }
+    })
+    api.getFinalsResult.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2027, event_id: 'WORLD_TOUR_FINALS',
+      source_as_of_season: 2027, source_as_of_week: 42,
+      result: { champion_player_id: 'SHOULD_NOT_DISPLAY' }
+    })
+    renderHistory(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText('Finals result detail conflicts with the stored summary or selected Run.')).toBeInTheDocument()
+    expect(screen.queryByText(/SHOULD_NOT_DISPLAY/)).not.toBeInTheDocument()
+
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(screen.getByText('Detail výsledku Finals se neshoduje s uloženým souhrnem nebo vybraným Runem.')).toBeInTheDocument()
+    expect(screen.queryByText(/SHOULD_NOT_DISPLAY/)).not.toBeInTheDocument()
+    expect(api.getFinalsSummary).toHaveBeenCalledTimes(1)
+    expect(api.getFinalsResult).toHaveBeenCalledTimes(1)
+  })
+
 })

@@ -118,6 +118,17 @@ Legacy persisted event IDs may recur in more than one season. A read-only event 
 
 This is a frontend provenance safeguard, not a change to the backend event model, URLs of the dedicated ID-only endpoint, or canonical Product Run saved-history authority.
 
+## Follow-up — reused source event IDs in activity and snapshot bridges
+
+A legacy snapshot and some activity records carry only a `source_event_id`. The persisted events endpoint may return **multiple** rows bearing that ID (including rows in different seasons), without telling the snapshot which event was the source. A `Map<event_id, event>` that silently overwrites earlier rows can attach the wrong week or source links.
+
+- **Activity:** the indexed persisted-event evidence tracks duplicate IDs rather than choosing whichever row appeared last. If the selected activity uses an ambiguous event ID, infer neither persisted nor planned event context from that ID; suppress event/week/source bridges and inferred week-filter values. The activity itself and independent snapshot detail remain available.
+- **Snapshot timeline:** when `source_event_id` is duplicated in persisted history, inferred planned and persisted context, derived week/category filters, ID-only event links, and source-based sibling availability are not presented as verified. A CS/EN warning explains why the source is unavailable while the stored snapshot and its exact sequence-based detail link and payload remain intact.
+- **Snapshot detail:** multiple persisted events with the same source ID invalidate event and current-plan source links, derived week links, and guessed race/ranking sibling matches. The exact snapshot payload, previous/next sequence history, and independent navigation to the events timeline stay visible.
+- **Regression tests:** duplicate persisted event IDs in both API return orders, plus snapshots with zero-valued payloads, verify no arbitrary source/week link survives; nonduplicated cases retain existing behavior.
+
+No backend source schema, native Product Run history, global query configuration, or write action changed.
+
 ## Verification plan and evidence
 
 - Retained English historical regressions explicitly select English inside their test mocks; they do not weaken or delete legacy sequence/progress mismatch assertions.

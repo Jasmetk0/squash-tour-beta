@@ -73,6 +73,17 @@ The existing legacy SimulationRun history endpoints are **not** a canonical mult
 - **No schema/endpoint changes:** these guards use only already-returned Run, season-state and event history fields. A snapshot without a source season cannot independently prove a Saved Revision; no absent timestamp is fabricated.
 - **Regression cases:** stale Run season-state, reused event ID with a different stored season, historic snapshots, seasonless admin source context and dedicated snapshot detail are covered by colocated tests. Existing ordering, URL and read-only behavior are retained.
 
+## Follow-up hardening — independently loaded Finals and rollover records
+
+The Finals summary, the per-artifact detail, and rollover records are loaded from **independent legacy read endpoints**. An agreeing outer Run/season ID does not prove that the artifact payloads refer to the same source observation.
+
+- **Finals qualification:** when both summary and qualification detail are present, explicit `source_as_of_season` or `source_as_of_week` conflicts suppress the independently fetched detail and display a CS/EN warning. Missing source fields in an older summary are not treated as contradictory. When the summary is genuinely unavailable, a valid standalone detail remains visible.
+- **Finals result:** additionally compares `event_id`, `source_as_of_season`, and `source_as_of_week` across summary and direct result. Conflicting payloads are hidden without fabricating a winner, runner-up, or result; a valid result may still be independently displayed when the summary request fails.
+- **Rollover transition / next-season player rows:** verify every explicit row-level Run ID, `to_season`, and (only when an independently valid rollover summary exists) `from_season`. A foreign row invalidates **only its own collection**, not the independently valid sibling collection or stored summary. Unspecified optional row provenance is not itself evidence of a conflict; accepted legacy fixture formats remain displayable.
+- **Regression coverage:** mismatched source dates, Finals result event IDs, cross-season rollover rows and independently unavailable summaries, including valid zero-valued data, are covered in the existing colocated tests.
+
+No backend endpoints, shared API types, query keys, simulation controls, router, global i18n, or cross-PR files were touched. Exact-head CI evidence must include the stable baseline, changed test suites, and TypeScript + Vite production build.
+
 ## Verification plan and evidence
 
 - Retained English historical regressions explicitly select English inside their test mocks; they do not weaken or delete legacy sequence/progress mismatch assertions.

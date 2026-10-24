@@ -62,8 +62,11 @@ describe('history list ordering, detail selection, and states', () => {
   it('numbers planned event positions from one consistently with snapshot and activity history', async () => {
     renderWithRoute(<EventsPage />, '/runs/run-a/events')
     const list = await screen.findByRole('list', { name: 'Events history list' })
-    expect(within(list).getByRole('button', { name: /2\\. E2/ })).toHaveTextContent('Plan #1')
-    expect(within(list).getByRole('button', { name: /1\\. E1/ })).toHaveTextContent('Plan #2')
+    const items = within(list).getAllByRole('button')
+    expect(items[0]).toHaveTextContent('2. E2')
+    expect(items[0]).toHaveTextContent('Plan #1')
+    expect(items[1]).toHaveTextContent('1. E1')
+    expect(items[1]).toHaveTextContent('Plan #2')
     expect(screen.queryByText('Plan #0')).not.toBeInTheDocument()
   })
 

@@ -53,7 +53,7 @@ export function RolloverSeasonDetailPage(): JSX.Element {
   const summaryMismatch = Boolean(seasonSummaryQuery.data && (
     seasonSummaryQuery.data.rollover.run_id !== runId || seasonSummaryQuery.data.rollover.to_season !== toSeason
   ))
-  const safeRollover = summaryMismatch ? null : seasonSummaryQuery.data
+  const safeRollover = summaryMismatch || seasonSummaryQuery.error ? null : seasonSummaryQuery.data
   // Row identity is independent of the envelope. A row may omit its own
   // provenance in older responses; an absent field is not a mismatch, but
   // an explicit conflicting Run, target or confirmed source season is.
@@ -69,8 +69,8 @@ export function RolloverSeasonDetailPage(): JSX.Element {
     playersQuery.data.run_id !== runId || playersQuery.data.to_season !== toSeason ||
     playersQuery.data.players.some(rowHasForeignIdentity)
   ))
-  const safeTransitions = transitionsMismatch ? null : transitionsQuery.data
-  const safePlayers = playersMismatch ? null : playersQuery.data
+  const safeTransitions = transitionsMismatch || transitionsQuery.error ? null : transitionsQuery.data
+  const safePlayers = playersMismatch || playersQuery.error ? null : playersQuery.data
   const normalizedFilter = playerIdFilter.trim().toLowerCase()
 
   const filteredTransitions = useMemo(() => {

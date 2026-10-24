@@ -431,3 +431,22 @@ describe('Signed 15yo sporting review (Admin-only read, never a commit)',()=>{
     expect(api.previewCalendarTourNativeBirthSporting).not.toHaveBeenCalled()
   })
 })
+
+describe('terminal Edition result presentation (API mocked)',()=>{
+  it.each(['en','cs'])('shows the closing boundary without inventing publication in %s',async(language)=>{
+    vi.clearAllMocks();localStorage.setItem('squash-engine-language-v1',language)
+    const calendar={schema_version:'run_calendar.v1',weeks_per_year:4,season_start_year_week:2,start_year:2040,season_count:1}
+    const week={calendar,season_index:0,week:4}
+    const result={schema_version:'calendar_terminal_edition_result.v1' as const,edition_id:'final-cup',player_id:'p',main_points:100,qualification_points:0,source_fingerprint:'f'.repeat(64),validity_weeks:4,completed_week:{season_index:0,week:4},closing_eligibility_ordinal:4}
+    api.inspectCalendarTour.mockResolvedValue({...view(),saved:true,tour_fingerprint:'b'.repeat(64),players:[{player_id:'p',name:'Player'}],
+      edition_evidence:{'final-cup':{results:[{...result,stage:'champion'}],matches:[]}},contributions:{p:[{...result,status:'closing_only'}]},
+      state:{week,transitions:[],editions:[{edition:{edition_id:'final-cup',name:'Final Cup',week,announcement_week:{...week,week:3},start_slot:1,main_entrant_count:4,point_table:{champion:100,finalist:60,semifinal:30},validity_weeks:4},submissions:[],field:null,draw:null,tournament_fingerprint:'c'.repeat(64),result_confirmed:true}],
+        rankings:[{week,policy:{policy_id:'outgoing',best_n:1},rows:[{rank:1,player_id:'p',points:0,counted_results:[]}]}]}})
+    render(panel())
+    await screen.findByText(language==='cs'?/Poslední týden původního Runu:/:/Original Run final week:/)
+    fireEvent.click(screen.getByRole('button',{name:'0',exact:true}))
+    expect(await screen.findByLabelText('Official point contributions')).toHaveTextContent(language==='cs'?'Výsledek pro Closing Ranking bez následujícího týdne':'Closing Ranking result without a following week')
+    expect(api.executeCalendarTour).not.toHaveBeenCalled()
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
+})

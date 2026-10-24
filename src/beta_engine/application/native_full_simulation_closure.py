@@ -150,7 +150,7 @@ class NativeFullSimulationClosureService:
         ctx = native_context(self.repository, session, command.run_id, command.branch_id)
         if not ctx["saved"] or ctx["calendar"].to_metadata() != command.execution_calendar:
             raise ValueError("Final closure requires an unchanged original horizon and a clean manual Save")
-        blockers = [b for b in ctx["blockers"] if b != "season_transition_horizon_exhausted"]
+        blockers = [b for b in ctx["blockers"] if b not in {"season_transition_horizon_exhausted", "run_horizon_exhausted"}]
         if blockers:
             raise ValueError("Native final closure blocked: " + ", ".join(blockers))
         facts = closure_facts(self.repository, session, ctx["revision"])

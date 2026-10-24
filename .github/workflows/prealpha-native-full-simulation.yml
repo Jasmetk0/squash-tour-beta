@@ -29,6 +29,7 @@ on:
       - 'src/beta_engine/api/routers/run_containers.py'
       - 'tests/api/test_native_full_simulation_tasks.py'
       - 'tests/api/test_native_final_week_closing.py'
+      - 'tests/api/native_final_week_tamper.py'
       - 'tests/application/test_native_full_simulation_contract.py'
       - 'tests/domain/test_calendar_season_closing.py'
       - 'tests/domain/test_calendar_terminal_result.py'
@@ -100,7 +101,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        calendar: [short-original, short-fork, w52, w61, w80]
+        calendar: [short-original, short-fork, w52, w61, w80, two_editions]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

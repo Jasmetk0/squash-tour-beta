@@ -61,6 +61,14 @@ it neither creates a second result nor retroactively claims that Week 1 existed.
   separate approvals/Saves, uncertain confirmation retry, final Save late rollback,
   physical SQLite reopen, explicit completed extension and actual next-season
   continuation: 1 passed, 322.28 s on the initial runtime candidate.
+- Actual independent native fork final-week completion, final Save rollback,
+  physical restart and completed extension/Season continuation: 1 passed,
+  225.64 s on the subsequent runtime candidate.
+- Genuine Chromium final-week results review, three actual matches, separate
+  result/closure approvals/Saves and physical SQLite restart: passed. The expanded
+  repeat also opens Chromium against the physically restarted application.
+- Focused frontend CS/EN/consent/client contracts: 91 passed, 5.93 s (mocked API
+  contracts, distinct from actual Chromium acceptance).
 - Production frontend build passed; current candidate still requires all relevant
   final-head acceptance. Failed development runs remain recorded as failures.
 

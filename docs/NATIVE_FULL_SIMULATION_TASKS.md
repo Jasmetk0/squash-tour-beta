@@ -104,10 +104,12 @@ start year and saved horizon, including independent native fork aggregates.
 The existing production Tour formats, point policies and Health constraints
 still apply; this does not add new tournament formats or realism models.
 
-A native Edition in the original final Run week still needs a dedicated
-closing-only result source adapter. Such a task stops explicitly; it never skips
-the Edition or creates an out-of-horizon publication. The complete short Run
-acceptance therefore uses a valid final week without an unresolved Edition.
+The final-week Edition continuation adds a versioned closing-only result source
+through the existing Tour/MatchEngine and native worker. Its separate confirmations,
+manual Saves, closing ranking, Saved summary and explicit completed extension are
+documented in `NATIVE_FINAL_WEEK_CLOSING.md`. The additional final-week production
+matrix and Chromium scenario must pass alongside the earlier task/season gates;
+older empty-final-week evidence alone does not certify the new path.
 Native precise slot/round/Edition retargeting and initial-world preparation are
 not advertised by this v2 interface; the existing legacy controls keep their
 own supported scope. Unsupported Health healing/permanent effects and source

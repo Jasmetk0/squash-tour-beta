@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -38,6 +39,7 @@ def main():
         raise ValueError("Use a fresh isolated browser fixture")
     database = f"sqlite:///{path}"
     result = {}
+    started_at = time.monotonic()
     with ApiServer(database_url=database) as server:
         setup(server, RunCalendar(4, 2, 2030, 1), count=4)
         create_edition(server, "worker-cup", size=4)
@@ -156,6 +158,24 @@ def main():
         assert max(r["points"] for r in summary["selected"]["closing_ranking"]["rows"]) == 100
         result["saved_season_summary"] = summary
         result["sqlite_restart_verified"] = True
+        with (root / "restarted-frontend.log").open("w") as log:
+            frontend = subprocess.Popen(["npm", "--prefix", "web", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5173", "--strictPort"],
+                env={**os.environ, "VITE_API_BASE_URL": restarted.base_url}, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+            try:
+                wait_http("http://127.0.0.1:5173", frontend)
+                with sync_playwright() as pw:
+                    browser = pw.chromium.launch(executable_path=args.chromium, args=["--no-sandbox"])
+                    context = browser.new_context(viewport={"width": 1440, "height": 1100})
+                    context.add_init_script("localStorage.setItem('squash-engine-language-v1','en')")
+                    page = context.new_page()
+                    page.goto("http://127.0.0.1:5173/admin/operations")
+                    expect(page.locator(f'[data-task-id="{result["task_id"]}"]')).to_contain_text("Complete")
+                    page.screenshot(path=str(root / "restarted-completed-native-task.png"), full_page=True)
+                    result["chromium_after_sqlite_restart_verified"] = True
+                    browser.close()
+            finally:
+                stop_process(frontend)
+    result["duration_seconds"] = time.monotonic() - started_at
     (root / "evidence.json").write_text(json.dumps(result, indent=2))
     print("Real Chromium native Full Simulation, match/points, manual approvals/Save, final closure and SQLite restart passed.")
 

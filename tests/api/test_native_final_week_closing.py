@@ -79,6 +79,7 @@ def test_real_final_week_edition_closing_save_restart_and_extension(tmp_path, mo
             assert opening['checkpoint'] == 'native_manual_save_required', opening
             save_tour(server)
             opening = resume(server, opening, f'open-week-{index}')
+            print(f"Final W{clock.weeks_per_year}: {branch} {opening['current_week']} {opening['checkpoint']}", flush=True)
         assert opening['state'] == 'target_reached', opening
         view = inspect(server)
         assert not view['edition_evidence']
@@ -128,6 +129,11 @@ def test_real_final_week_edition_closing_save_restart_and_extension(tmp_path, mo
         assert closed_state['week']['week'] == clock.weeks_per_year
         assert len(closed_state['rankings']) == clock.weeks_per_year - 1
         assert repo.get_branch_saved_revision(revision_id=original_source) == source
+        if clock.weeks_per_year == 4 and not forked:
+            from tests.api.native_final_week_tamper import (
+                reject_rehashed_terminal_history,
+            )
+            reject_rehashed_terminal_history(database, closed, tmp_path)
         task_id, opening_id = task['task_id'], opening['task_id']
     # A fresh server/repository physically reopens the actual committed file.
     with ApiServer(database_url=db) as server:
@@ -167,6 +173,24 @@ def test_real_final_week_edition_closing_save_restart_and_extension(tmp_path, mo
         assert sorted(r['points'] for r in ranking['rows']) == [30, 30, 60, 100]
         assert all(len(r['counted_results']) == 1 for r in ranking['rows'])
         assert all(r['counted_results'][0]['first_publication_week'] == {'season_index': 1, 'week': 1} for r in ranking['rows'])
+        if clock.weeks_per_year == 4 and forked:
+            inherited = fork(server, closed.revision_id, branch=branch, name='Inherited final-week history')
+            server.native_task_branch = inherited['branch_id']
+            inherited_task = start(server, reviewed(server, {'season_index': 1, 'week': 1}, name='inherited-terminal-continuation'))
+            assert inherited_task['checkpoint'] == 'native_season_transition_review_required', inherited_task
+            inherited_url = scope(server) + '/native/inherited-terminal-continuation/season-transition'
+            code, inherited_review = _request('GET', inherited_url)
+            assert code == 200, inherited_review
+            assert sorted(r['points'] for r in inherited_review['outgoing_season_closure']['closing_ranking']['rows']) == [30, 30, 60, 100]
+            assert _request('POST', inherited_url + '/approve', {**body, 'request_id': 'approve-inherited-season', 'review_fingerprint': inherited_review['review_fingerprint']})[0] == 200
+            inherited_task = resume(server, inherited_task, 'continue-inherited-season')
+            assert inherited_task['checkpoint'] == 'native_manual_save_required', inherited_task
+            save_tour(server)
+            inherited_task = resume(server, inherited_task, 'save-inherited-season')
+            assert inherited_task['state'] == 'target_reached', inherited_task
+            assert sorted(r['points'] for r in inspect(server)['state']['rankings'][-1]['rows']) == [30, 30, 60, 100]
+            server.native_task_branch = branch
+            assert wait(server, task_id)['state'] == 'complete'
         if forked:
             server.native_task_branch = 'branch'
             assert inspect(server)['state']['week']['week'] == 2
@@ -175,3 +199,45 @@ def test_real_final_week_edition_closing_save_restart_and_extension(tmp_path, mo
 
 def review_rows(closed, branch):
     return closed.payload['run']['native_branch_closures'][branch]['closing_ranking']['rows']
+
+
+def test_real_two_editions_outgoing_best_one_counts_one_result_per_player(tmp_path):
+    clock = RunCalendar(5, 3, 2040, 1)
+    db = f"sqlite:///{tmp_path / 'best-one.sqlite'}"
+    with ApiServer(database_url=db) as server:
+        setup(server, clock, count=4)
+        view = inspect(server)
+        execute_tour(server, tour_command(view, 'policy', name='outgoing-best-one', data={
+            'effective_week': {**view['state']['week'], 'week': 3},
+            'ranking': {'policy_id': 'actual-outgoing-best-one', 'best_n': 1},
+        }))
+        save_tour(server)
+        create_edition(server, 'previous-cup', size=4, offset=2)
+        create_edition(server, 'terminal-cup', size=4, offset=3)
+        task = start(server, reviewed(server, name='two-editions-run-end'))
+        for index in range(3):
+            if task['checkpoint'] == 'native_entry_review_required':
+                break
+            assert task['checkpoint'] == 'native_manual_save_required', task
+            save_tour(server)
+            task = resume(server, task, f'prepare-prior-{index}')
+        task, previous, _, _ = finish_tournament(server, task, 'previous-cup')
+        assert task['checkpoint'] == 'native_manual_save_required', task
+        save_tour(server)
+        task = resume(server, task, 'open-terminal-after-prior-points')
+        published = inspect(server)['state']['rankings'][-1]
+        task, final, _, _ = finish_tournament(server, task, 'terminal-cup')
+        assert task['checkpoint'] == 'native_final_closure_review_required', task
+        code, review = _request('GET', scope(server) + '/native/two-editions-run-end/closure')
+        assert code == 200, review
+        assert review['season_summary']['played_match_count'] == 6
+        assert review['season_summary']['awarded_points'] == 440
+        assert review['closing_ranking']['policy']['best_n'] == 1
+        expected = {}
+        for evidence in (previous, final):
+            for result in evidence['results']:
+                expected[result['player_id']] = max(expected.get(result['player_id'], 0), result['main_points'])
+        for row in review['closing_ranking']['rows']:
+            assert row['points'] == expected[row['player_id']]
+            assert len(row['counted_results']) == 1
+        assert inspect(server)['state']['rankings'][-1] == published

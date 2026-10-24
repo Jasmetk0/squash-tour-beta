@@ -106,6 +106,7 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
         )
     events = {e.tournament_id: e for e in checkpoint.tournaments}
     sources = {a.edition.edition_id: a for a in state.editions}
+    confirmations = {}
     for receipt in state.receipts:
         command = receipt.request.get("command", {})
         if not isinstance(command, dict):
@@ -142,12 +143,8 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                 )
         action = command.get("action")
         authority = sources.get(command.get("edition_id"))
-        if action == "confirm-result" and authority is not None:
-            event = events.get(authority.edition.edition_id)
-            if event is None or not authority.result_confirmed or receipt.result.get("results") != [
-                r.model_dump(mode="json") for r in edition_results(authority, event)
-            ]:
-                raise ValueError("Tour confirmation receipt differs from actual Edition results")
+        if action == "confirm-result":
+            confirmations.setdefault(command.get("edition_id"), []).append(receipt)
         if action == "approve" and (
             authority is None
             or authority.field is None
@@ -186,11 +183,12 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                     "Edition lacks authentic played event and Saved origin"
                 )
             results = edition_results(authority, event)
-            if results and getattr(results[0], "schema_version", None) == "calendar_terminal_edition_result.v1" and authority.result_confirmed:
-                confirmations = [r for r in state.receipts if r.request.get("command", {}).get("action") == "confirm-result"
-                    and r.request["command"].get("edition_id") == authority.edition.edition_id]
-                if len(confirmations) != 1:
-                    raise ValueError("Terminal Edition requires exactly one actual confirmation receipt")
+            if results and getattr(results[0], "schema_version", None) == "calendar_terminal_edition_result.v1":
+                receipts = confirmations.get(authority.edition.edition_id, [])
+                if authority.result_confirmed != bool(receipts) or len(receipts) > 1 or (
+                    receipts and receipts[0].result.get("results") != [r.model_dump(mode="json") for r in results]
+                ):
+                    raise ValueError("Terminal confirmation differs from actual Edition results")
     advances = {e.command_id: e for e in checkpoint.weekly_advances}
     if {
         e.command_id
@@ -595,6 +593,12 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None):
                 validate_run_prospect_source_extension(previous_source, source)
                 previous_source = source
 
+    terminal_clocks = {}
+    for receipt in state.receipts:
+        if receipt.request.get("command", {}).get("action") == "confirm-result":
+            for result in receipt.result.get("results", []):
+                if result.get("schema_version") == "calendar_terminal_edition_result.v1":
+                    terminal_clocks.setdefault(result["edition_id"], []).append(result["completed_week"]["calendar"])
     for authority in state.editions:
         if not authority.played_saved_head:
             continue
@@ -612,11 +616,8 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None):
         origin_payload = json.loads(row.payload_json)
         # The terminal record's clock must have existed at actual play. An
         # extension/rehashed event cannot retroactively create publication time.
-        for receipt in state.receipts:
-            if receipt.request.get("command", {}).get("action") == "confirm-result" and receipt.request["command"].get("edition_id") == authority.edition.edition_id:
-                for result in receipt.result.get("results", []):
-                    if result.get("schema_version") == "calendar_terminal_edition_result.v1" and result["completed_week"]["calendar"] != origin_payload["run"]["run_calendar"]:
-                        raise ValueError("Terminal result calendar did not exist in its actual played Saved origin")
+        if any(clock != origin_payload["run"]["run_calendar"] for clock in terminal_clocks.get(authority.edition.edition_id, ())):
+            raise ValueError("Terminal result calendar did not exist in its actual played Saved origin")
         component = origin_payload.get("content", {}).get(COMPONENT_KEY)
         origin = parse_tour_json(json.dumps(component["state"])) if component else None
         frozen = (

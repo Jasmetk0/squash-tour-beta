@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -26,7 +26,7 @@ vi.mock('../api/client', () => api)
 // Legacy assertions verify the existing English copy; CS/EN transitions have separate coverage.
 vi.mock('../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }))
 
-function renderSnapshotDetailRoute(route: string, mode: 'ranking' | 'race'): void {
+function renderSnapshotDetailRoute(route: string, mode: 'ranking' | 'race'): QueryClient {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
   render(
@@ -39,6 +39,7 @@ function renderSnapshotDetailRoute(route: string, mode: 'ranking' | 'race'): voi
       </MemoryRouter>
     </QueryClientProvider>
   )
+  return queryClient
 }
 
 function mockRunData(): void {
@@ -286,6 +287,27 @@ describe('SnapshotDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
     expect(await screen.findByText(/RECOVERABLE_SNAPSHOT/)).toBeInTheDocument()
     expect(api.getRankingSnapshot).toHaveBeenCalledTimes(3)
+  })
+
+  it('does not offer cached neighboring snapshot links after the index refresh fails', async () => {
+    const snapshot = { snapshot_sequence: 10, snapshot_kind: 'WEEK',
+      source_event_id: 'E3', payload: { points: 0 } }
+    api.getRankingSnapshot.mockResolvedValue(snapshot)
+    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} },
+      snapshot,
+      { snapshot_sequence: 11, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }
+    ] }).mockRejectedValueOnce(new Error('temporary history index outage'))
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [] })
+    const client = renderSnapshotDetailRoute('/runs/run-a/snapshots/ranking/10', 'ranking')
+    expect(await screen.findByRole('link', { name: '#9' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '#11' })).toBeInTheDocument()
+    await act(async () => { await client.refetchQueries({ queryKey: ['ranking-snapshots', 'run-a'] }) })
+    expect(await screen.findByText('Failed to load snapshots history: temporary history index outage')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '#9' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '#11' })).not.toBeInTheDocument()
+    expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)
+    expect(screen.getByText(/"points": 0/)).toBeInTheDocument()
   })
 
 })

@@ -162,7 +162,7 @@ export function RolloverSeasonDetailPage(): JSX.Element {
           </SectionCard>
 
           <SectionCard title={t('Player transitions')}>
-            {transitionsMismatch && <p role="alert" className="error">{t('Player transition response belongs to another Run or season.')}</p>}
+            {transitionsMismatch && <p role="alert" className="error">{t('Player transition response belongs to another Run or season.')}</p>}}
             {transitionsQuery.isLoading && <p className="status">{t('Loading transitions...')}</p>}
             {transitionsQuery.error && <p className="error">{t('Failed to load transitions')}: {formatApiError(transitionsQuery.error)}</p>}
             {safeTransitions ? (
@@ -177,7 +177,7 @@ export function RolloverSeasonDetailPage(): JSX.Element {
           </SectionCard>
 
           <SectionCard title={t('Next-season players')}>
-            {playersMismatch && <p role="alert" className="error">{t('Next-season player response belongs to another Run or season.')}</p>
+            {playersMismatch && <p role="alert" className="error">{t('Next-season player response belongs to another Run or season.')}</p>}
             {playersQuery.isLoading && <p className="status">{t('Loading next-season players...')}</p>}
             {playersQuery.error && <p className="error">{t('Failed to load next-season players')}: {formatApiError(playersQuery.error)}</p>}
             {safePlayers ? (

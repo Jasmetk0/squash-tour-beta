@@ -14,7 +14,7 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
-import { formatApiError } from '../utils/apiErrors'
+import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 type IndexedActivityItem = {
   item: RunActivityItem
@@ -258,7 +258,9 @@ export function ActivityPage(): JSX.Element {
         {activityMismatch && <p role="alert" className="error">{t('Activity response belongs to another Run; its records are hidden.')}</p>}
         <button type="button" onClick={() => void activityQuery.refetch()}>{t('Refresh read-only data')}</button>
         {activityQuery.isLoading ? <p className="status">{t('Loading activity feed...')}</p> : null}
-        {activityQuery.error ? <p className="error">{t('Failed to load activity feed')}: {formatApiError(activityQuery.error)}</p> : null}
+        {isApiNotFound(activityQuery.error)
+          ? <EmptyState message={t('Run activity could not be found for this Run.')} />
+          : activityQuery.error ? <p role="alert" className="error">{t('Failed to load activity feed')}: {formatApiError(activityQuery.error)}</p> : null}
         {!activityQuery.isLoading && !activityQuery.error && !activityMismatch && items.length === 0 ? (
           <EmptyState message={t('No activity has been persisted for this run yet.')} />
         ) : null}

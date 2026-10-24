@@ -473,7 +473,9 @@ const czech: Record<string, string> = {
   "Event ID is reused in this Run. Use the selected sequence to identify the stored record; direct ID-only navigation is unavailable.": "ID události se v tomto Runu opakuje. Uložený záznam určuje vybrané pořadové číslo; přímý odkaz pouze podle ID není dostupný.",
   "Unavailable: the event ID identifies multiple stored records.": "Nedostupné: ID události označuje více uložených záznamů.",
   "Source event ID is reused in persisted history. Source links and week context are unavailable.": "Zdrojové ID události se v uložené historii opakuje. Odkazy na zdroj a kontext týdne nejsou dostupné.",
-  "Some event IDs are reused. Event links open their selected sequence in history.": "Některá ID událostí se opakují. Odkazy otevírají odpovídající pořadové číslo v historii."
+  "Some event IDs are reused. Event links open their selected sequence in history.": "Některá ID událostí se opakují. Odkazy otevírají odpovídající pořadové číslo v historii.",
+  "Ranking snapshots list": "Seznam snímků žebříčku",
+  "Race snapshots list": "Seznam snímků Race"
 }
 
 export function useHistoryText(): (english: string) => string {

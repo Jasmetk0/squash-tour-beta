@@ -123,6 +123,17 @@ export function RunDiagnosticsPage(): JSX.Element {
   const safeEvents = !eventsQuery.error && eventsQuery.data?.run_id === runId ? eventsQuery.data.events : []
   const safeRankingSnapshots = !rankingSnapshotsQuery.error && rankingSnapshotsQuery.data?.run_id === runId ? rankingSnapshotsQuery.data.snapshots : []
   const safeRaceSnapshots = !raceSnapshotsQuery.error && raceSnapshotsQuery.data?.run_id === runId ? raceSnapshotsQuery.data.snapshots : []
+  const seenEventIds = new Set<string>()
+  const reusedEventIds = new Set<string>()
+  safeEvents.forEach((event) => {
+    if (seenEventIds.has(event.event_id)) reusedEventIds.add(event.event_id)
+    seenEventIds.add(event.event_id)
+  })
+  // The /events/:id route cannot disambiguate persisted event sequences.
+  const eventInspectionUrl = (event: (typeof safeEvents)[number]): string =>
+    reusedEventIds.has(event.event_id)
+      ? `/runs/${encodeURIComponent(runId)}/events?selectedEventId=${encodeURIComponent(event.event_id)}&selectedEventSequence=${event.event_sequence}`
+      : `/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(event.event_id)}`
 
   // History endpoints return ascending sequences; the first item is the oldest.
   // Select by persisted sequence rather than relying on response array order.
@@ -313,6 +324,7 @@ export function RunDiagnosticsPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title={t('Recent activity')}>
+        {reusedEventIds.size > 0 && <p role="status" className="status">{t('Some event IDs are reused. Event links open their selected sequence in history.')}</p>}
         {(eventsMismatch || rankingsMismatch || racesMismatch) && (
           <p role="alert" className="error">
             {t('History response belongs to another Run. Unrelated artifacts and inspection links are hidden.')}
@@ -335,7 +347,7 @@ export function RunDiagnosticsPage(): JSX.Element {
                     ? (
                         <>
                           {t('Available')} —{' '}
-                          <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
+                          <Link to={eventInspectionUrl(latestCompletedEvent)}>
                             {latestCompletedEvent.event_id} ({t('Seq')} {latestCompletedEvent.event_sequence})
                           </Link>
                         </>
@@ -392,9 +404,9 @@ export function RunDiagnosticsPage(): JSX.Element {
           items={safeEvents.slice().sort((a, b) => b.event_sequence - a.event_sequence).slice(0, 3)}
           emptyText={t('No events are available yet.')}
           listAriaLabel={t('Diagnostics recent events')}
-          getKey={(event) => event.event_id}
+          getKey={(event) => `${event.event_sequence}-${event.event_id}`}
           renderItem={(event) => (
-            <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(event.event_id)}`}>
+            <Link to={eventInspectionUrl(event)}>
               <strong>{event.event_id}</strong> <span className="status">• Seq {event.event_sequence}</span>
             </Link>
           )}
@@ -481,7 +493,7 @@ export function RunDiagnosticsPage(): JSX.Element {
         <ul className="item-list" aria-label={t('Diagnostics next inspection links')}>
           {latestCompletedEvent ? (
             <li>
-              <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
+              <Link to={eventInspectionUrl(latestCompletedEvent)}>
                 {t('Inspect latest completed event')} ({latestCompletedEvent.event_id})
               </Link>
             </li>

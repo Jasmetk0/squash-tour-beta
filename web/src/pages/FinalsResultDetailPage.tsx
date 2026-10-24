@@ -92,7 +92,7 @@ export function FinalsResultDetailPage(): JSX.Element {
           <>
             <SummaryPills
               items={[
-                { label: 'Event', value: safeResult.event_id },
+                { label: t('Event'), value: safeResult.event_id },
                 { label: t('As of season'), value: safeResult.source_as_of_season },
                 { label: t('As of week'), value: safeResult.source_as_of_week },
                 { label: t('Champion'), value: championPlayerId ?? t('Unknown') },
@@ -130,7 +130,7 @@ export function FinalsResultDetailPage(): JSX.Element {
           <JsonPayloadBlock title={t('Raw result payload')} payload={safeResult.result} emptyText={t('No result payload available.')} />
         ) : resultNotFound ? (
           <EmptyState message={t('No Finals result payload is available yet.')} />
-        ) : !resultQuery.isLoading && !hasResultError ? (
+        ) : !resultQuery.isLoading && !hasResultError && !resultMismatch ? (
           <EmptyState message={t('No result data available.')} />
         ) : null}
       </SectionCard>

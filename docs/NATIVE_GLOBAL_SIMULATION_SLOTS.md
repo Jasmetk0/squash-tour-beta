@@ -7,6 +7,37 @@ owner-merged #1642. The parallel Draft #1641 owns its listed diagnostic and
 historical frontend pages; this change excludes those files and their tests.
 Only the owner merges. Auto-merge remains disabled.
 
+## Independent completion review
+
+The published candidate `502914ee` was not merge-ready: the simultaneous-player
+case rejected its second valid application batch, creating the first shared-slot
+Edition after native birth retained an empty intermediate v4 root, old Tour
+browsers still clicked the replaced whole-Edition Play button, and long histories
+timed out. These failures are retained as failures, not prior acceptance.
+
+The continuation preserves already committed same-slot application evidence via
+the existing batch writer, upgrades a native birth owner directly to its actual
+global root, and exercises every original browser match through the new round
+slots. Global origin verification authenticates the complete physical graph and
+each current command source, then reuses the verified immediate global parent's
+ancestry instead of recursively revisiting every overlapping prefix. Native fork
+rows retain their dedicated verifier without an extra global-routing JSON parse.
+New global Saved components can replay only their suffix from the physically
+authenticated immediate Saved predecessor; the existing complete-prefix checks
+reject changed inputs/history and fall back to full replay. Derived tournament
+views validate their already typed slot matches and complete bracket without
+serializing and reparsing every stored rally again on every weekly projection.
+No transport/workflow timeout, sporting assertion, population or integrity fence
+is relaxed. Exact-head hosted acceptance remains required.
+
+Before the final performance refinements, independent local checks:
+simultaneous-player rejection/recovery passed (76.88 s),
+actual native-birth upgrade/Save/physical reopen passed (63.04 s), and actual
+concurrent retry/stale/rollback/rehashed-input and source rejection passed (42.19 s).
+54 focused backend contracts, 125 focused frontend contracts and production build
+passed. Frontend contracts mock API boundaries; they are not Chromium evidence.
+Long-calendar performance and final hosted checks remain pending.
+
 ## Contract
 
 Newly configured slot Editions use an explicit versioned contract. Existing

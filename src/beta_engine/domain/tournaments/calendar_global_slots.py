@@ -377,7 +377,13 @@ def completed_tournaments(events, *, owner=None):
         event = event.model_copy(
             update={"prepared_awards": derive_followup_awards(event)}
         )
-        result.append(model.model_validate_json(event.model_dump_json()))
+        # These matches were already decoded/validated as part of the slot
+        # ledger. Validate the derived bracket and its typed fields without a
+        # JSON round trip that reparses every rally in every historical week.
+        # The slot command verifier still independently replays MatchEngine.
+        result.append(model.model_validate({
+            key: getattr(event, key) for key in model.model_fields
+        }))
     return tuple(result)
 
 

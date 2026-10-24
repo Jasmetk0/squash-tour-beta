@@ -41,7 +41,17 @@ def verify_saved_global_origins(
     ids.add(state.competition_root_saved_head)
     if not ids <= reachable:
         raise ValueError("Global slot command source is outside its actual Saved past")
-    for source_id in sorted(reachable):
+    # A completely verified global parent already authenticates every earlier
+    # physical source in its lineage. Revalidating each prefix's entire lineage
+    # again turns a season of Saves into repeated overlapping history walks.
+    # Its proof is reusable only after actual_dependency_signature above has
+    # freshly hashed the complete physical graph in this read snapshot.
+    parent_row = session.get(BranchSavedRevisionModel, revision.parent_revision_id)
+    parent_is_global = parent_row is not None and is_global_slot_row(parent_row)
+    sources_to_verify = (
+        (revision.parent_revision_id,) if parent_is_global else sorted(reachable)
+    )
+    for source_id in sources_to_verify:
         row = session.get(BranchSavedRevisionModel, source_id)
         if (
             source_id not in reachable
@@ -59,6 +69,12 @@ def verify_saved_global_origins(
             materialize_payload=False,
             sporting_component_proofs=sporting_component_proofs,
         )
+    # Even when a parent proves ancestry, the current commands must independently
+    # name actual same-Branch ancestors, never a foreign row in a shared past.
+    for source_id in ids:
+        row = session.get(BranchSavedRevisionModel, source_id)
+        if row is None or (row.run_id, row.branch_id) != (revision.run_id, revision.branch_id):
+            raise ValueError("Global slot command source has a foreign owner")
     verify_tour_origins(session, state, _reachable_revision_ids=reachable)
 
 

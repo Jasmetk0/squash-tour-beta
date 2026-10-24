@@ -80,6 +80,36 @@ def copy_database(source, target):
         source_db.backup(target_db)
 
 
+def test_first_global_edition_after_birth_keeps_the_actual_native_root(tmp_path):
+    from tests.api.test_calendar_native_birth_week_execution import sign_prospects
+
+    database = f"sqlite:///{tmp_path / 'birth-global-upgrade.db'}"
+    with ApiServer(database_url=database) as server:
+        clock = RunCalendar(52, 1, 2030, 3)
+        repo, _ = setup(server, clock, 4)
+        sign_prospects(server, repo, clock)
+        execute(server, command(inspect(server), "transition", name="global-admit"))
+        saved = save_tour(server)
+        born = inspect(server)
+        assert born["state"]["schema_version"] == "calendar_tour_authority.v3"
+        week = born["state"]["week"]
+        execute(server, command(born, "create-edition", name="first-global-after-birth", data={
+            "schema_version": "calendar_tournament_edition.v2",
+            "simulation_seed": 891, "edition_id": "born-global", "name": "Born global",
+            "week": {**week, "week": 5}, "announcement_week": {**week, "week": 4},
+            "start_slot": 1, "main_entrant_count": 4, "ranked": True,
+            "validity_weeks": 52,
+            "point_table": {"champion": 100, "finalist": 60, "semifinal": 30},
+        }))
+        upgraded = inspect(server)
+        assert upgraded["state"]["competition_root_tour"] == born["state"]
+        assert upgraded["state"]["competition_root_saved_head"] == saved["revision_id"]
+        save_tour(server)
+        expected = inspect(server)["state"]
+    with ApiServer(database_url=database) as reopened:
+        assert inspect(reopened)["state"] == expected
+
+
 def test_real_overlapping_slots_save_restart_and_points(tmp_path, prepared_slots):
     path = tmp_path / "slots.db"
     copy_database(prepared_slots, path)

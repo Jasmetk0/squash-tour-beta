@@ -463,7 +463,9 @@ class CalendarTourService:
                             contributions.setdefault(r.player_id, []).append(
                                 {**r.model_dump(mode="json"), "status": status}
                             )
-            from beta_engine.application.calendar_global_slot_service import slot_inspection
+            from beta_engine.application.calendar_global_slot_service import (
+                slot_inspection,
+            )
             return {
                 "schema_version": "calendar_tour_inspection.v1",
                 "run_id": run_id,
@@ -737,7 +739,9 @@ class CalendarTourService:
         }
         successor = None
         if command.action in {"next-slot", "next-match"}:
-            from beta_engine.application.calendar_global_slot_service import prepare_global_slot
+            from beta_engine.application.calendar_global_slot_service import (
+                prepare_global_slot,
+            )
             _slot, preview["impact"] = prepare_global_slot(session, ctx, state, command, signed=signed)
         elif command.action in {"transition", "season-transition"}:
             candidate, successor = self._transition_candidate(
@@ -1020,7 +1024,9 @@ class CalendarTourService:
             session, rev.saved_revision.payload, run_id=state.run_id
         )
         if source is None and cp.schema_version == "calendar_sporting_checkpoint.v13":
-            from beta_engine.infrastructure.db.run_prospect_source_state import RunProspectSourceSnapshot
+            from beta_engine.infrastructure.db.run_prospect_source_state import (
+                RunProspectSourceSnapshot,
+            )
             source = RunProspectSourceSnapshot("run_prospect_source.v1", state.run_id, (), canonical_hash([]))
         if source is not None:
             native = prepare_native_tour_week(
@@ -1113,6 +1119,10 @@ class CalendarTourService:
             state is not None
             and state.schema_version == "calendar_tour_authority.v3"
             and command.action not in {"transition", "season-transition"}
+            and not (
+                command.action == "create-edition"
+                and command.data.get("schema_version") == "calendar_tournament_edition.v2"
+            )
         ):
             from beta_engine.domain.tournaments.calendar_native_tour import (
                 competition_tour,
@@ -1137,7 +1147,9 @@ class CalendarTourService:
                 replace_checkpoint(session, previous=previous_cp, successor=cp)
             ctx = (*ctx[:4], cp, *ctx[5:])
         if command.action in {"next-slot", "next-match"}:
-            from beta_engine.application.calendar_global_slot_service import apply_global_slot
+            from beta_engine.application.calendar_global_slot_service import (
+                apply_global_slot,
+            )
             return apply_global_slot(session, ctx, state, command, persist=persist, native_inputs=_native_inputs)
         if command.action == "initialize":
             from beta_engine.infrastructure.db.models import RunProspectModel
@@ -1468,10 +1480,20 @@ class CalendarTourService:
                         "Retired-age player cannot submit a Tour application"
                     )
                 if persist:
+                    # A new reviewed batch may include another application in
+                    # an already committed simultaneous entry slot. Include its
+                    # actual existing submissions so the ordinary batch writer
+                    # can preserve the established first-entry authority. Never
+                    # replace that trigger or treat a later slot as simultaneous.
+                    simultaneous = tuple(
+                        s for a in state.editions for s in a.submissions
+                        if authority.edition.schema_version.endswith(".v2")
+                        and s.decision_position == submissions[0].decision_position
+                    )
                     record_valid_application_submission_batch(
                         session,
                         TournamentApplicationSubmissionBatchAuthority.from_submissions(
-                            submissions
+                            (*simultaneous, *submissions)
                         ),
                     )
                 authority = authority.model_copy(

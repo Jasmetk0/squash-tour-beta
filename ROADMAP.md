@@ -1,7 +1,7 @@
 # Native global Simulation Slots candidate — 24 October 2026
 
 Verified `buuk` `94737b0dab67c38c57682480f66bfae365c3225e` includes owner-merged
-#1642. Implementation continues in one Draft PR #1643; only the owner merges.
+#1642. Implementation continues in one PR #1643; only the owner merges.
 The parallel #1641 diagnostic/history pages and their tests remain excluded.
 
 New v2 Editions share the Branch's nearest chronological match slot. A v13
@@ -23,6 +23,14 @@ passes. Relevant W52/W61/W80 API, every-week Season Transition, final-week,
 native/Saved regressions and actual CS/EN Chromium must execute successfully.
 See [contract and verification ledger](docs/NATIVE_GLOBAL_SIMULATION_SLOTS.md).
 This is not a claim of completed pre-alpha or release acceptance.
+
+Independent completion review found and corrected simultaneous application batch
+reuse, the invalid empty v4 intermediate during the first post-birth global
+Edition, outdated whole-Edition browser controls and repeated overlapping origin
+walks. Actual collision, birth/Save/reopen and concurrent/retry/rollback/rehash
+scenarios passed locally; 54 backend and 125 frontend contracts/build passed.
+Long-calendar performance and exact-head hosted acceptance are still required.
+No timeout or required sporting/integrity assertion is relaxed.
 
 ---
 

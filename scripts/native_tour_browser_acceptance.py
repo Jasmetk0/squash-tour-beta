@@ -362,7 +362,11 @@ def main():
                 operation("Review applications", edition, save_after=False)
                 operation("Review approval", edition, save_after=False)
                 operation("Review draw", edition)
-                operation("Review play", edition)
+                # New UI Editions use the shared global-slot executor. An
+                # eight-player bracket has three actual rounds; keep all seven
+                # matches, effects, points and subsequent recovery assertions.
+                for _ in range(3):
+                    operation("Review Next Slot")
                 expect(
                     edition.get_by_role("table", name="Played matches " + name).locator(
                         "tbody tr"

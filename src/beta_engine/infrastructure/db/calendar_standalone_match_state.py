@@ -458,10 +458,11 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     return evidence, checkpoint, tour
 
 
-def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str, _sporting_component_proofs=None) -> CalendarMatchEvidence | None:
+def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str, _sporting_component_proofs=None, _verified_global_prefix=None) -> CalendarMatchEvidence | None:
     """Validate both the played MatchEngine evidence and the full Saved owner."""
     return load_saved_calendar_sources(payload,run_id=run_id,branch_id=branch_id,
-        _sporting_component_proofs=_sporting_component_proofs)[0]
+        _sporting_component_proofs=_sporting_component_proofs,
+        _verified_global_prefix=_verified_global_prefix)[0]
 
 
 def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,

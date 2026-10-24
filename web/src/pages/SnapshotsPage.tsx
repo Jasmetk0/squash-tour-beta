@@ -132,9 +132,9 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   const selected = filteredSnapshots.find((snapshot) => snapshot.snapshot_sequence === selectedSequence) ?? null
 
   const title = mode === 'ranking' ? t('Ranking snapshots') : t('Race snapshots')
-  const siblingMatchCount = selected?.source_event_id
-    ? (siblingMismatch ? 0 : siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === selected.source_event_id).length ?? 0)
-    : 0
+  const siblingMatchCount = !selected?.source_event_id ? 0
+    : siblingMismatch || siblingSnapshotsQuery.isLoading || siblingSnapshotsQuery.error || !siblingSnapshotsQuery.data ? null
+    : siblingSnapshotsQuery.data.snapshots.filter((item) => item.source_event_id === selected.source_event_id).length
 
   return (
     <section className="panel">
@@ -280,7 +280,7 @@ function SnapshotDetail({
   plannedContext?: { week: number; category: string; tour: string; templateId: string; planPosition: number }
   persistedEvent?: { eventSequence: number; week: number | null }
   siblingMode: Mode
-  siblingMatchCount: number
+  siblingMatchCount: number | null
 }): JSX.Element {
   const t = useHistoryText()
   const sourceEventId = snapshot.source_event_id
@@ -305,7 +305,7 @@ function SnapshotDetail({
       <SummaryPills
         items={[
           { label: t('Source event context'), value: sourceEventId ? t('Present') : t(MISSING_SOURCE_EVENT_ID_FALLBACK) },
-          { label: `${t(siblingMode === 'ranking' ? 'Ranking snapshots' : 'Race snapshots')} (${t('Source event')})`, value: siblingMatchCount > 0 ? siblingMatchCount : t('No snapshot result matching this source event was returned.') }
+          { label: `${t(siblingMode === 'ranking' ? 'Ranking snapshots' : 'Race snapshots')} (${t('Source event')})`, value: siblingMatchCount === null ? t('Unavailable') : siblingMatchCount > 0 ? siblingMatchCount : t('No snapshot result matching this source event was returned.') }
         ]}
       />
       <CompactSummaryCard
@@ -344,7 +344,7 @@ function SnapshotDetail({
           {
             label: t(siblingMode === 'ranking' ? 'Ranking snapshots' : 'Race snapshots'),
             value:
-              sourceEventId && siblingMatchCount > 0 ? (
+              sourceEventId && siblingMatchCount !== null && siblingMatchCount > 0 ? (
                 <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${siblingMode}`}>Open {siblingMode} snapshots for matching source_event_id</Link>
               ) : (
                 t('No snapshots share this source_event_id.')

@@ -127,4 +127,28 @@ describe('RolloverSeasonDetailPage', () => {
     expect(screen.getByText('No transition records are available for this season.')).toBeInTheDocument()
     expect(screen.getByText('No next-season players are available for this season.')).toBeInTheDocument()
   })
+  it('rejects foreign rollover data without hiding independently valid player transitions or displaying a false zero', async () => {
+    api.getRolloverBySeason.mockResolvedValueOnce({ rollover: {
+      run_id: 'another-run', from_season: 2027, to_season: 2028,
+      transitioned_players: 50, metadata: {}
+    } })
+    api.getPlayerTransitions.mockResolvedValueOnce({
+      run_id: 'run-a', to_season: 2028,
+      transitions: [{ run_id: 'run-a', from_season: 2027, to_season: 2028, player_id: 'P1', transition: { delta: 0 } }]
+    })
+    api.getNextSeasonPlayers.mockResolvedValueOnce({
+      run_id: 'another-run', to_season: 2028,
+      players: [{ player_id: 'SHOULD_NOT_DISPLAY', state: { readiness: 1 } }]
+    })
+    renderPage('/runs/run-a/rollover/2028')
+    expect(await screen.findByText('Rollover summary identity differs from the selected Run or target season.')).toBeInTheDocument()
+    expect(screen.getByText('Next-season player response belongs to another Run or season.')).toBeInTheDocument()
+    expect(screen.queryByText(/SHOULD_NOT_DISPLAY/)).not.toBeInTheDocument()
+    expect(await screen.findByText(/"player_id": "P1"/)).toBeInTheDocument()
+    const summary = screen.getByRole('heading', { name: 'Inspection summary' }).closest('article')
+    expect(summary).not.toBeNull()
+    expect(within(summary as HTMLElement).getByText('Unavailable')).toBeInTheDocument()
+    expect(screen.queryByText('50')).not.toBeInTheDocument()
+  })
+
 })

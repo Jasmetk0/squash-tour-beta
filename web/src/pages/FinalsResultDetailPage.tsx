@@ -75,8 +75,8 @@ export function FinalsResultDetailPage(): JSX.Element {
         {resultMismatch && <p role="alert" className="error">{t('Finals result identity differs from the selected Run or summary season.')}</p>}
         {summaryMismatch && <p role="alert" className="error">{t('Finals result identity differs from the selected Run or summary season.')}</p>}
         {resultQuery.isLoading ? <p className="status">{t('Loading Finals result detail...')}</p> : null}
-        {hasSummaryError ? <p className="error">Failed to load Finals summary: {formatApiError(summaryQuery.error)}</p> : null}
-        {hasResultError ? <p className="error">Failed to load Finals result: {formatApiError(resultQuery.error)}</p> : null}
+        {hasSummaryError ? <p className="error">{t('Failed to load Finals summary')}: {formatApiError(summaryQuery.error)}</p> : null}
+        {hasResultError ? <p className="error">{t('Failed to load Finals result')}: {formatApiError(resultQuery.error)}</p> : null}
         {resultNotFound ? <EmptyState message={t('Finals result has not been recorded for this run yet.')} /> : null}
         {safeResult ? (
           <>
@@ -102,11 +102,11 @@ export function FinalsResultDetailPage(): JSX.Element {
       <SectionCard title={t('Inspection context')}>
         <MetadataList
           items={[
-            { label: t('Overview'), value: <Link to={`/runs/${runId}/finals`}>{t('Open Finals overview page')}</Link> },
+            { label: t('Overview'), value: <Link to={`/runs/${encodeURIComponent(runId)}/finals`}>{t('Open Finals overview page')}</Link> },
             {
               label: t('Qualification detail'),
               value: safeSummary?.qualification ? (
-                <Link to={`/runs/${runId}/finals/qualification`}>{t('Open Finals qualification detail')}</Link>
+                <Link to={`/runs/${encodeURIComponent(runId)}/finals/qualification`}>{t('Open Finals qualification detail')}</Link>
               ) : (
                 t('Qualification not available')
               )

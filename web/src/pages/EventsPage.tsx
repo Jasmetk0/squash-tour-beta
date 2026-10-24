@@ -32,9 +32,10 @@ export function EventsPage(): JSX.Element {
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const events = eventsMismatch ? [] : eventsQuery.data?.events ?? []
 
+  const runMismatch = Boolean(runQuery.data?.run.run_id && runQuery.data.run.run_id !== runId)
   const orderedEventContext = useMemo(() => {
     const map = new Map<string, { week: number; tour: string; category: string; templateId: string; planPosition: number }>()
-    const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
+    const orderedEvents = runQuery.data?.run.run_id === runId ? runQuery.data.season_state.ordered_events : []
 
     orderedEvents.forEach((event, index) => {
       map.set(event.event_id, {
@@ -47,7 +48,7 @@ export function EventsPage(): JSX.Element {
     })
 
     return map
-  }, [runQuery.data?.season_state.ordered_events])
+  }, [runId, runQuery.data])
 
   const normalizedTextFilter = textFilter.trim().toLowerCase()
   const filteredEvents = events.filter((event) => {
@@ -207,7 +208,7 @@ export function EventsPage(): JSX.Element {
               const segments = []
               if (week != null) segments.push(`W${week}`)
               if (plannedContext) {
-                segments.push(`Plan #${plannedContext.planPosition}`)
+                segments.push(`${t('Plan')} #${plannedContext.planPosition}`)
                 segments.push(plannedContext.category)
                 segments.push(plannedContext.tour)
               } else {
@@ -231,13 +232,14 @@ export function EventsPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title={t('Selected event detail')}>
+        {runMismatch && <p role="alert" className="error">{t('Planned context belongs to another Run.')}</p>}
         {selectedEvent ? (
           <>
             <MetadataList
               items={[
                 { label: t('Event ID'), value: selectedEvent.event_id },
                 { label: t('Sequence'), value: selectedEvent.event_sequence },
-                { label: t('Persisted tournament result'), value: selectedEvent.tournament_result ? t('Recorded tournament result') : t('No tournament result evidenced') },
+                { label: t('Persisted tournament result'), value: selectedEvent.tournament_result != null ? t('Recorded tournament result') : t('No tournament result evidenced') },
                 { label: t('Season'), value: selectedEvent.season ?? '—' },
                 { label: t('Week'), value: selectedEventWeek != null ? selectedEventWeek : '—' },
                 { label: t('Plan position'), value: selectedEventPlanContext ? selectedEventPlanContext.planPosition : t('No ordered-plan match') },
@@ -256,12 +258,12 @@ export function EventsPage(): JSX.Element {
               items={[
                 {
                   label: t('Persisted detail'),
-                  value: <Link to={`/runs/${encodeURIComponent(runId)}/events/${selectedEvent.event_id}`}>Open dedicated event detail page</Link>
+                  value: <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(selectedEvent.event_id)}`}>{t('Open dedicated event detail page')}</Link>
                 },
                 {
                   label: t('Planned event detail'),
                   value: selectedEventPlanContext ? (
-                    <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${selectedEvent.event_id}`}>Open planned-event detail page</Link>
+                    <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(selectedEvent.event_id)}`}>{t('Open planned-event detail page')}</Link>
                   ) : (
                     t('No ordered-plan match for this persisted event.')
                   )
@@ -270,14 +272,14 @@ export function EventsPage(): JSX.Element {
                   label: t('Week detail'),
                   value:
                     selectedEventWeek != null ? (
-                      <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${selectedEventWeek}`}>Open week detail page (W{selectedEventWeek})</Link>
+                      <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${selectedEventWeek}`}>{t('Open week detail page')} (W{selectedEventWeek})</Link>
                     ) : (
-                      'No week context available for this persisted event.'
+                      t('No week context available for this persisted event.')
                     )
                 },
                 {
                   label: t('Season calendar'),
-                  value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>Open season calendar browser</Link>
+                  value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>{t('Open season calendar browser')}</Link>
                 }
               ]}
             />

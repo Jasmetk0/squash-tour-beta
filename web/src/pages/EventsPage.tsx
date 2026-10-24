@@ -29,7 +29,7 @@ export function EventsPage(): JSX.Element {
 
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
-  const eventsMismatch = Boolean(eventsQuery.data && eventsQuery.data.run_id !== runId)
+  const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const events = eventsMismatch ? [] : eventsQuery.data?.events ?? []
 
   const orderedEventContext = useMemo(() => {

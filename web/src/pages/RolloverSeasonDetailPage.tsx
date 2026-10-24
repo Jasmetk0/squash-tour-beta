@@ -94,7 +94,7 @@ export function RolloverSeasonDetailPage(): JSX.Element {
         items={[
           { label: t('Run'), value: runId || 'unknown' },
           { label: t('Target season'), value: toSeason ?? t('Invalid') },
-          { label: 'Filter', value: normalizedFilter || t('None') }
+          { label: t('Filter'), value: normalizedFilter || t('None') }
         ]}
       />
 
@@ -114,7 +114,7 @@ export function RolloverSeasonDetailPage(): JSX.Element {
           <SectionCard title={`${t('Rollover summary')} (S${toSeason})`}>
             {summaryMismatch && <p role="alert" className="error">{t('Rollover summary identity differs from the selected Run or target season.')}</p>}
             {seasonSummaryQuery.isLoading && <p className="status">{t('Loading rollover summary...')}</p>}
-            {seasonNotFound && <EmptyState message={`No rollover summary found for season ${toSeason}.`} />}
+            {seasonNotFound && <EmptyState message={`${t('No rollover summary found for season')} ${toSeason}.`} />}
             {seasonSummaryQuery.error && !seasonNotFound && (
               <p className="error">{t('Failed to load rollover summary')}: {formatApiError(seasonSummaryQuery.error)}</p>
             )}
@@ -144,8 +144,8 @@ export function RolloverSeasonDetailPage(): JSX.Element {
             <SummaryPills
               items={[
                 { label: t('Target season'), value: toSeason },
-                { label: t('Transition records'), value: transitionsQuery.isLoading ? t('Loading...') : safeTransitions ? filteredTransitions.length : t('Unavailable') },
-                { label: t('Next-season players'), value: playersQuery.isLoading ? t('Loading...') : safePlayers ? filteredPlayers.length : t('Unavailable') }
+                { label: t(normalizedFilter ? 'Matching transition records' : 'Transition records'), value: transitionsQuery.isLoading ? t('Loading...') : safeTransitions ? filteredTransitions.length : t('Unavailable') },
+                { label: t(normalizedFilter ? 'Matching next-season players' : 'Next-season players'), value: playersQuery.isLoading ? t('Loading...') : safePlayers ? filteredPlayers.length : t('Unavailable') }
               ]}
             />
             <label>

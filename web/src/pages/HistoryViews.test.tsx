@@ -110,6 +110,49 @@ describe('history list ordering, detail selection, and states', () => {
     expect(api.getEvent).toHaveBeenCalledWith('run-a', 'E2')
   })
 
+  it('preserves a stored historical event but hides links into the wrong current season', async () => {
+    api.listEvents.mockResolvedValueOnce({
+      run_id: 'run-a',
+      events: [{ event_sequence: 2, event_id: 'E2', season: 2026, week: 9,
+        template_id: 'WT-OLD', tournament_result: null }]
+    })
+    renderWithRoute(<EventsPage />, '/runs/run-a/events')
+    expect(await screen.findByText('Current-season week link unavailable for this historic event.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail page' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail page/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open dedicated event detail page' })).toHaveAttribute('href', '/runs/run-a/events/E2')
+  })
+
+  it('rejects a same-Run but stale season_state plan without hiding persisted events', async () => {
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2027, seed: 42, next_event_index: 1,
+        total_events: 1, completed_event_ids: [] },
+      season_state: { season: 2026, next_event_index: 1, completed_event_ids: [],
+        ordered_events: [{ event_id: 'E2', season: 2026, week: 9, tour: 'WORLD',
+          category: 'Gold', template_id: 'ST-ALE' }] }
+    })
+    renderWithRoute(<EventsPage />, '/runs/run-a/events')
+    expect(await screen.findByText('Run season and ordered plan disagree. Planned links are unavailable.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail page' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open dedicated event detail page' })).toHaveAttribute('href', '/runs/run-a/events/E2')
+  })
+
+  it('keeps a snapshot payload but rejects cross-season source event plan/weekly bridges', async () => {
+    api.listEvents.mockResolvedValueOnce({
+      run_id: 'run-a',
+      events: [{ event_sequence: 2, event_id: 'E2', season: 2026, week: 9,
+        template_id: 'WT-OLD', tournament_result: null }]
+    })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [] })
+    renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    expect(await screen.findByText(/snapshot-4/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail page' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open week detail page (W9)' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open dedicated snapshot detail page' })).toHaveAttribute(
+      'href', '/runs/run-a/snapshots/ranking/4'
+    )
+  })
+
   it('respects a valid selectedEventId query param and falls back when invalid or missing', async () => {
     const validView = renderWithRoute(<EventsPage />, '/runs/run-a/events?selectedEventId=E1')
 

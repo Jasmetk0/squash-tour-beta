@@ -49,7 +49,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
     enabled: Boolean(runId)
   })
 
-  const snapshotMismatch = Boolean(query.data && query.data.run_id !== runId)
+  const snapshotMismatch = Boolean(query.data?.run_id && query.data.run_id !== runId)
   const snapshots = snapshotMismatch ? [] : query.data?.snapshots ?? []
   const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
   const plannedContext = useMemo(() => {

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -8,10 +8,12 @@ import { LanguageProvider, useLanguage } from '../i18n/LanguageContext'
 import { ActivityPage } from './ActivityPage'
 import { EventsPage } from './EventsPage'
 import { SnapshotsPage } from './SnapshotsPage'
+import { FinalsResultDetailPage } from './FinalsResultDetailPage'
 
 const api = vi.hoisted(() => ({
   getRunActivity: vi.fn(), getRun: vi.fn(), listEvents: vi.fn(), getEvent: vi.fn(),
-  listRankingSnapshots: vi.fn(), listRaceSnapshots: vi.fn()
+  listRankingSnapshots: vi.fn(), listRaceSnapshots: vi.fn(),
+  getFinalsSummary: vi.fn(), getFinalsResult: vi.fn()
 }))
 vi.mock('../api/client', () => api)
 
@@ -113,4 +115,43 @@ describe('Run historical UI CS/EN read-only behavior', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Activity response belongs to another Run; its records are hidden.')
     expect(screen.queryByText('No activity has been persisted for this run yet.')).not.toBeInTheDocument()
   })
+  it('changes language while a read is pending without replacing its request or data', async () => {
+    let resolveActivity!: (payload: unknown) => void
+    api.getRunActivity.mockReturnValue(new Promise((resolve) => { resolveActivity = resolve }))
+    const user = userEvent.setup()
+    renderHistory(<ActivityPage />, '/runs/run-a/activity')
+    expect(screen.getByText('Loading activity feed...')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(screen.getByText('Načítání aktivity…')).toBeInTheDocument()
+    resolveActivity({ run_id: 'run-a', items: [item('E1', 1)] })
+    expect(await screen.findByRole('list', { name: 'Seznam aktivity Runu' })).toBeInTheDocument()
+    expect(api.getRunActivity).toHaveBeenCalledTimes(1)
+    expect(api.getRunActivity).toHaveBeenCalledWith('run-a')
+  })
+
+  it('refetches only the read-only activity resource when Refresh is clicked', async () => {
+    const user = userEvent.setup()
+    renderHistory(<ActivityPage />, '/runs/run-a/activity')
+    await screen.findByRole('list', { name: 'Run activity feed list' })
+    await user.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    await waitFor(() => expect(api.getRunActivity).toHaveBeenCalledTimes(2))
+    expect(api.getRun).toHaveBeenCalledTimes(1)
+    expect(api.listEvents).toHaveBeenCalledTimes(1)
+  })
+
+  it('never fabricates a Finals result from available qualification and keeps 404 separate from read failure', async () => {
+    api.getFinalsSummary.mockResolvedValue({
+      run_id: 'run-a', season: 2027,
+      qualification: { run_id: 'run-a', season: 2027 }, result: null
+    })
+    api.getFinalsResult.mockRejectedValue({ status: 404, message: 'No stored result' })
+    const user = userEvent.setup()
+    renderHistory(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText('Finals result has not been recorded for this run yet.')).toBeInTheDocument()
+    expect(screen.queryByText('P1')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(screen.getByText('Pro tento Run nebyl v tomto zdroji nalezen uložený výsledek Finals.')).toBeInTheDocument()
+    expect(api.getFinalsResult).toHaveBeenCalledTimes(1)
+  })
+
 })

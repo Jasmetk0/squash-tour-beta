@@ -387,7 +387,27 @@ const czech: Record<string, string> = {
   "Source event": "Zdrojová událost",
   "Selected snapshot belongs to a different requested sequence.": "Vybraný snímek má odlišnou než požadovanou sekvenci.",
   "Filter options reflect only returned rows.": "Možnosti filtrů pocházejí pouze z načtených řádků.",
-  "Historical snapshot with no timestamp in this API": "Historický snímek bez časového razítka v tomto API"
+  "Historical snapshot with no timestamp in this API": "Historický snímek bez časového razítka v tomto API",
+  "Event": "Událost",
+  "Navigation": "Navigace",
+  "Found": "Nalezeno",
+  "Source event not found": "Zdrojová událost nenalezena",
+  "Back to": "Zpět na",
+  "History": "Historie",
+  "Open week detail": "Otevřít detail týdne",
+  "Related": "Související",
+  "snapshots from the same source event": "snímky ze stejné zdrojové události",
+  "snapshot": "snímek",
+  "snapshot history": "historie snímků",
+  "No rollover summary found for season": "Pro sezonu nebyl nalezen souhrn přechodu",
+  "No snapshots share this source_event_id.": "Žádné snímky nemají shodné source_event_id.",
+  "Inspect latest rollover details": "Prohlédnout podrobnosti posledního přechodu sezony",
+  "Matching transition records": "Vyhovující záznamy přechodu",
+  "Matching next-season players": "Vyhovující hráči další sezony",
+  "Snapshot history context unavailable.": "Kontext historie snímků není dostupný.",
+  "Snapshot status could not be verified.": "Stav snímku nelze ověřit.",
+  "Returned history is limited to the records exposed by this endpoint.": "Historie je omezena na záznamy zpřístupněné tímto endpointem.",
+  "Rollover detail available": "Detail přechodu je dostupný"
 }
 
 export function useHistoryText(): (english: string) => string {

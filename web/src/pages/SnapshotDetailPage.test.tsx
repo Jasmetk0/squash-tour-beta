@@ -232,4 +232,42 @@ describe('SnapshotDetailPage', () => {
     expect(screen.queryByText('None (latest snapshot)')).not.toBeInTheDocument()
   })
 
+  it('shows the stored snapshot but does not link to a current plan after a cross-season source collision', async () => {
+    api.getRankingSnapshot.mockResolvedValue({
+      snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: { score: 0 }
+    })
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a',
+      snapshots: [{ snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} }] })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [] })
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-a', events: [
+      { event_sequence: 2, event_id: 'E3', season: 2026, week: 2,
+        template_id: 'OLD-E3', tournament_result: null }
+    ] })
+    renderSnapshotDetailRoute('/runs/run-a/snapshots/ranking/10', 'ranking')
+    expect(await screen.findByText('Source event season does not match the current plan. Planned links are hidden.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open source event detail' })).toHaveAttribute('href', '/runs/run-a/events/E3')
+  })
+
+  it('does not present plan context when run and season-state headers disagree', async () => {
+    api.getRankingSnapshot.mockResolvedValue({
+      snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: { score: 0 }
+    })
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a',
+      snapshots: [{ snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} }] })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [] })
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2027, next_event_index: 1,
+        total_events: 2, completed_event_ids: [] },
+      season_state: { season: 2026, next_event_index: 1, completed_event_ids: [],
+        ordered_events: [{ event_id: 'E3', season: 2026, week: 2, tour: 'World',
+          category: 'Gold', template_id: 'E3-OLD' }] }
+    })
+    renderSnapshotDetailRoute('/runs/run-a/snapshots/ranking/10', 'ranking')
+    expect(await screen.findByText('Run season and ordered plan disagree. Planned links are unavailable.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail/ })).not.toBeInTheDocument()
+  })
+
 })

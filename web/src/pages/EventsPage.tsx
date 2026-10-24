@@ -121,7 +121,7 @@ export function EventsPage(): JSX.Element {
   }, [filteredEvents, requestedEventId, selectedEventId])
 
   const selectedEvent = filteredEvents.find((event) => event.event_id === selectedEventId) ?? null
-  const selectedEventPlanContext = selectedEvent ? orderedEventContext.get(selectedEvent.event_id) : undefined
+  const selectedEventPlanContext = selectedEvent ? getEventPlanContext(selectedEvent) : undefined
   const selectedEventWeek = selectedEvent ? selectedEvent.week ?? selectedEventPlanContext?.week ?? null : null
   const weekLinkAvailable = selectedEvent && !planUnavailable &&
     selectedEvent.season != null && selectedEvent.season === runQuery.data?.run.season

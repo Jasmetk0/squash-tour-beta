@@ -37,7 +37,9 @@ type PlannedEventContext = {
   plannedStatus: PlannedEventStatus
 }
 
+import { useHistoryText } from './runHistoryText'
 export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Element {
+  const t = useHistoryText()
   const { runId = '', snapshotSequence = '' } = useParams()
   // parseInt accepts invalid route suffixes such as "12abc" or "1.5".
   // Only a complete positive safe integer may identify a stored snapshot.
@@ -85,7 +87,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
     currentSnapshotIndex >= 0 && currentSnapshotIndex < neighboringSnapshots.length - 1
       ? neighboringSnapshots[currentSnapshotIndex + 1]
       : null
-  const title = mode === 'ranking' ? 'Ranking snapshot detail' : 'Race snapshot detail'
+  const title = mode === 'ranking' ? t('Ranking snapshot detail') : t('Race snapshot detail')
   const persistedSourceEvent = sourceEventId
     ? (eventsQuery.data?.events.find((event) => event.event_id === sourceEventId) ?? null)
     : null
@@ -99,37 +101,37 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
       <RunScopedHeader
         title={title}
         runId={runId}
-        subtitle="Inspect snapshot metadata and payload for a single history snapshot sequence."
+        subtitle={t('Inspect snapshot metadata and payload for a single history snapshot sequence.')}
       />
 
       <CurrentContextStrip
         items={[
-          { label: 'Run', value: runId || 'unknown' },
-          { label: 'Mode', value: mode },
-          { label: 'Sequence', value: snapshotSequence || 'unknown' },
-          { label: 'Status', value: snapshot ? 'Loaded' : 'Pending' }
+          { label: t('Run'), value: runId || 'unknown' },
+          { label: t('Mode'), value: mode },
+          { label: t('Sequence'), value: snapshotSequence || 'unknown' },
+          { label: t('Status'), value: snapshot ? t('Loaded') : t('Pending') }
         ]}
       />
 
-      <SectionCard title="Snapshot context">
+      <SectionCard title={t('Snapshot context')}>
         <SummaryPills
           items={[
             {
-              label: 'Previous snapshot',
+              label: t('Previous snapshot'),
               value: previousSnapshot ? (
                 <Link to={`/runs/${runId}/snapshots/${mode}/${previousSnapshot.snapshot_sequence}`}>
                   #{previousSnapshot.snapshot_sequence}
                 </Link>
               ) : (
-                'None (start of history)'
+                t('None (start of history)')
               )
             },
             {
-              label: 'Next snapshot',
+              label: t('Next snapshot'),
               value: nextSnapshot ? (
                 <Link to={`/runs/${runId}/snapshots/${mode}/${nextSnapshot.snapshot_sequence}`}>#{nextSnapshot.snapshot_sequence}</Link>
               ) : (
-                'None (latest snapshot)'
+                t('None (latest snapshot)')
               )
             }
           ]}
@@ -140,21 +142,21 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
       </SectionCard>
 
       {!snapshotSequence && (
-        <SectionCard title="Snapshot lookup">
-          <EmptyState message="No snapshot sequence was provided in the URL." />
+        <SectionCard title={t('Snapshot lookup')}>
+          <EmptyState message={t('No snapshot sequence was provided in the URL.')} />
         </SectionCard>
       )}
 
       {snapshotSequence && !isValidSequence && (
-        <SectionCard title="Snapshot lookup">
+        <SectionCard title={t('Snapshot lookup')}>
           <EmptyState message={`Snapshot sequence "${snapshotSequence}" is invalid. Use a positive integer sequence.`} />
         </SectionCard>
       )}
 
       {snapshotSequence && isValidSequence && (
         <>
-          <SectionCard title="Snapshot summary">
-            {snapshotQuery.isLoading && <p className="status">Loading snapshot details...</p>}
+          <SectionCard title={t('Snapshot summary')}>
+            {snapshotQuery.isLoading && <p className="status">{t('Loading snapshot details...')}</p>}
             {snapshotQuery.error && !isApiNotFound(snapshotQuery.error) && (
               <p className="error">Failed to load snapshot details: {formatApiError(snapshotQuery.error)}</p>
             )}
@@ -165,7 +167,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
           </SectionCard>
 
           {snapshot ? (
-            <SectionCard title="Source event context">
+            <SectionCard title={t('Source event context')}>
               <SourceEventContext
                 runId={runId}
                 sourceEventId={sourceEventId}
@@ -177,11 +179,11 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
             </SectionCard>
           ) : null}
 
-          <SectionCard title="Raw snapshot payload">
+          <SectionCard title={t('Raw snapshot payload')}>
             {snapshot && (
               <JsonPayloadBlock
-                title="Snapshot record"
-                emptyText="No snapshot payload is available for this snapshot."
+                title={t('Snapshot record')}
+                emptyText={t('No snapshot payload is available for this snapshot.')}
                 payload={snapshot.payload}
               />
             )}
@@ -201,16 +203,17 @@ function SnapshotSummary({
   snapshot: RankingSnapshot | RaceSnapshot
   runId: string
 }): JSX.Element {
+  const t = useHistoryText()
   return (
     <CompactSummaryCard
       items={[
-        { label: 'Sequence', value: snapshot.snapshot_sequence },
-        { label: 'Kind', value: snapshot.snapshot_kind },
-        { label: 'Mode', value: mode },
-        { label: 'Source event ID', value: snapshot.source_event_id ?? '—' },
+        { label: t('Sequence'), value: snapshot.snapshot_sequence },
+        { label: t('Kind'), value: snapshot.snapshot_kind },
+        { label: t('Mode'), value: mode },
+        { label: t('Source event ID'), value: snapshot.source_event_id ?? '—' },
         {
           label: 'Navigation',
-          value: <Link to={`/runs/${runId}/snapshots/${mode}`}>Back to snapshot history</Link>
+          value: <Link to={`/runs/${runId}/snapshots/${mode}`}>{t('Back to snapshot history')}</Link>
         }
       ]}
     />
@@ -232,38 +235,39 @@ function SourceEventContext({
   relatedSiblingSnapshots: Array<RankingSnapshot | RaceSnapshot>
   siblingMode: SnapshotMode
 }): JSX.Element {
+  const t = useHistoryText()
   if (!sourceEventId) {
-    return <EmptyState message="This snapshot has no source_event_id, so event-level context links are unavailable." />
+    return <EmptyState message={t('This snapshot has no source_event_id, so event-level context links are unavailable.')} />
   }
 
   return (
     <>
       <CompactSummaryCard
         items={[
-          { label: 'Source event ID', value: sourceEventId },
+          { label: t('Source event ID'), value: sourceEventId },
           {
             label: 'Persisted event',
             value:
               persistedSourceEventSequence !== null
                 ? `Found (event sequence ${persistedSourceEventSequence})`
-                : 'Not found in persisted event history'
+                : t('Not found in persisted event history')
           },
-          { label: 'Season plan context', value: plannedSourceEvent ? 'Found in ordered season plan' : 'No ordered-plan match' }
+          { label: t('Season plan context'), value: plannedSourceEvent ? t('Found in ordered season plan') : t('No ordered-plan match') }
         ]}
       />
 
       <p>
-        <Link to={`/runs/${runId}/events`}>Open events history</Link> ·{' '}
-        <Link to={`/runs/${runId}/calendar`}>Open season calendar</Link> · <Link to={`/runs/${runId}/activity`}>Open activity</Link>
+        <Link to={`/runs/${runId}/events`}>{t('Open events history')}</Link> ·{' '}
+        <Link to={`/runs/${runId}/calendar`}>{t('Open season calendar')}</Link> · <Link to={`/runs/${runId}/activity`}>{t('Open activity')}</Link>
       </p>
 
       <p>
         {persistedSourceEventSequence !== null ? (
-          <Link to={`/runs/${runId}/events/${encodeURIComponent(sourceEventId)}`}>Open source event detail</Link>
+          <Link to={`/runs/${runId}/events/${encodeURIComponent(sourceEventId)}`}>{t('Open source event detail')}</Link>
         ) : (
-          <span>Source event detail unavailable (event not present in persisted event history).</span>
+          <span>{t('Source event detail unavailable (event not present in persisted event history).')}</span>
         )}{' '}
-        · <Link to={`/runs/${runId}/calendar/${encodeURIComponent(sourceEventId)}`}>Open planned-event detail</Link>
+        · <Link to={`/runs/${runId}/calendar/${encodeURIComponent(sourceEventId)}`}>{t('Open planned-event detail')}</Link>
         {plannedSourceEvent ? (
           <>
             {' '}
@@ -275,17 +279,17 @@ function SourceEventContext({
       {plannedSourceEvent ? (
         <MetadataList
           items={[
-            { label: 'Season', value: plannedSourceEvent.season },
-            { label: 'Week', value: plannedSourceEvent.week },
-            { label: 'Tour', value: plannedSourceEvent.tour },
-            { label: 'Category', value: plannedSourceEvent.category },
-            { label: 'Template ID', value: plannedSourceEvent.templateId },
-            { label: 'Plan position', value: plannedSourceEvent.planPosition },
-            { label: 'Planned status', value: plannedSourceEvent.plannedStatus }
+            { label: t('Season'), value: plannedSourceEvent.season },
+            { label: t('Week'), value: plannedSourceEvent.week },
+            { label: t('Tour'), value: plannedSourceEvent.tour },
+            { label: t('Category'), value: plannedSourceEvent.category },
+            { label: t('Template ID'), value: plannedSourceEvent.templateId },
+            { label: t('Plan position'), value: plannedSourceEvent.planPosition },
+            { label: t('Planned status'), value: plannedSourceEvent.plannedStatus }
           ]}
         />
       ) : (
-        <EmptyState message="source_event_id is present, but this event is not in season_state.ordered_events for the current run." />
+        <EmptyState message={t('source_event_id is present, but this event is not in season_state.ordered_events for the current run.')} />
       )}
 
       {relatedSiblingSnapshots.length > 0 ? (

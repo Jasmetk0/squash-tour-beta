@@ -130,6 +130,15 @@ A legacy snapshot and some activity records carry only a `source_event_id`. The 
 
 No backend source schema, native Product Run history, global query configuration, or write action changed.
 
+## Follow-up — URL-authoritative selection and accessible snapshot lists
+
+- **Activity and snapshot selection:** the selected row now derives synchronously from validated `selectedItem` / `selectedSequence` URL parameters or the first matching item. The previous second local React selection state and synchronization effect were removed. This prevents a brief selection mismatch or stale detail when navigating browser Back/Forward, filtering, or reading refreshed history.
+- **Deep links:** existing strict safe-integer validation and legacy query parameter names remain unchanged. Invalid, missing or filtered-out selections display the first currently matching record without writing to the URL; clicking a row still updates the appropriate selection parameter.
+- **Localization/accessibility:** ranking and race snapshot list labels now use whole CS/EN translations instead of appending the English word `list` to a translated heading.
+- **Regression coverage:** MemoryRouter Back/Forward simulations check both activity and snapshot row selection, active filters, no redundant source fetches, and retention of selected snapshot state through an EN→CS locale switch.
+
+These changes are limited to read-only history pages, their translation dictionary, tests and documentation; backend/API contracts and Product Run Saved Revision history were not altered.
+
 ## Verification plan and evidence
 
 - Retained English historical regressions explicitly select English inside their test mocks; they do not weaken or delete legacy sequence/progress mismatch assertions.

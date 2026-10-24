@@ -36,7 +36,17 @@ export function FinalsQualificationDetailPage(): JSX.Element {
     retry: false
   })
 
-  const summaryMismatch = Boolean(summaryQuery.data && summaryQuery.data.run_id !== runId)
+  const summaryMismatch = Boolean(summaryQuery.data && (
+    summaryQuery.data.run_id !== runId ||
+    (summaryQuery.data.qualification && (
+      summaryQuery.data.qualification.run_id !== runId ||
+      (summaryQuery.data.qualification.season != null && summaryQuery.data.qualification.season !== summaryQuery.data.season)
+    )) ||
+    (summaryQuery.data.result && (
+      summaryQuery.data.result.run_id !== runId ||
+      (summaryQuery.data.result.season != null && summaryQuery.data.result.season !== summaryQuery.data.season)
+    ))
+  ))
   const safeSummary = summaryMismatch ? null : summaryQuery.data
   const qualificationMismatch = Boolean(qualificationQuery.data && (
     qualificationQuery.data.run_id !== runId || (safeSummary && qualificationQuery.data.season !== safeSummary.season)

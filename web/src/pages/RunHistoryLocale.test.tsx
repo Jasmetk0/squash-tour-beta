@@ -132,7 +132,7 @@ describe('Run historical UI CS/EN read-only behavior', () => {
     expect(buttons[1]).toHaveAttribute('aria-current', 'true')
     expect(screen.getByLabelText('Filter snapshots by source event')).toHaveValue('E1')
     await user.click(screen.getByRole('button', { name: 'Switch locale' }))
-    expect(within(screen.getByRole('list', { name: 'Historie snímků žebříčku' })).getAllByRole('button')[1])
+    expect(within(screen.getByRole('list', { name: 'Seznam snímků žebříčku' })).getAllByRole('button')[1])
       .toHaveAttribute('aria-current', 'true')
     expect(api.listRankingSnapshots).toHaveBeenCalledTimes(1)
     expect(api.listRaceSnapshots).toHaveBeenCalledTimes(1)

@@ -65,7 +65,7 @@ export function FinalsQualificationDetailPage(): JSX.Element {
     : summaryQuery.error || !safeSummary ? t('Unknown')
     : safeSummary.result ? t('Recorded') : t('Not simulated')
 
-  const qualifiedPlayersCount = readArrayFieldLength(safeQualification?.qualification, 'qualified_player_ids')
+  const qualifiedPlayersCount = readArrayFieldLength(safeQualification?.qualification, 'qualified_player_ids') ?? readArrayFieldLength(safeQualification?.qualification, 'qualified')
   const groupCount = readArrayFieldLength(safeQualification?.qualification, 'groups')
 
   return (
@@ -143,7 +143,7 @@ export function FinalsQualificationDetailPage(): JSX.Element {
           />
         ) : qualificationNotFound ? (
           <EmptyState message={t('No qualification payload is available yet.')} />
-        ) : !qualificationQuery.isLoading && !hasQualificationError ? (
+        ) : !qualificationQuery.isLoading && !hasQualificationError && !qualificationMismatch ? (
           <EmptyState message={t('No qualification data available.')} />
         ) : null}
       </SectionCard>

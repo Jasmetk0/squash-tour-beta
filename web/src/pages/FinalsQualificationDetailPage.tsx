@@ -47,7 +47,7 @@ export function FinalsQualificationDetailPage(): JSX.Element {
       (summaryQuery.data.result.season != null && summaryQuery.data.result.season !== summaryQuery.data.season)
     ))
   ))
-  const safeSummary = summaryMismatch ? null : summaryQuery.data
+  const safeSummary = summaryMismatch || summaryQuery.error ? null : summaryQuery.data
   // A summary and a detail may be fetched at different times. If both
   // identify the same artifact, differing source snapshots must not be
   // silently presented together as one consistent qualification record.
@@ -62,7 +62,7 @@ export function FinalsQualificationDetailPage(): JSX.Element {
         qualificationQuery.data.source_as_of_week !== summaryQualification.source_as_of_week)
     ))
   ))
-  const safeQualification = qualificationMismatch ? null : qualificationQuery.data
+  const safeQualification = qualificationMismatch || qualificationQuery.error ? null : qualificationQuery.data
 
   const qualificationNotFound = isApiNotFound(qualificationQuery.error)
   const hasSummaryError = summaryQuery.error && !isApiNotFound(summaryQuery.error)

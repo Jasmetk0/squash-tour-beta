@@ -122,17 +122,17 @@ export function RolloverSeasonDetailPage(): JSX.Element {
               <>
                 <SummaryPills
                   items={[
-                    { label: t('From season'), value: safeRollover!.rollover.from_season },
-                    { label: t('To season'), value: safeRollover!.rollover.to_season },
-                    { label: t('Transitioned players'), value: safeRollover!.rollover.transitioned_players }
+                    { label: t('From season'), value: safeRollover.rollover.from_season },
+                    { label: t('To season'), value: safeRollover.rollover.to_season },
+                    { label: t('Transitioned players'), value: safeRollover.rollover.transitioned_players }
                   ]}
                 />
                 <CompactSummaryCard
                   items={[
-                    { label: t('Run ID'), value: safeRollover!.rollover.run_id },
+                    { label: t('Run ID'), value: safeRollover.rollover.run_id },
                     {
                       label: t('Metadata keys'),
-                      value: Object.keys(safeRollover!.rollover.metadata ?? {}).length
+                      value: Object.keys(safeRollover.rollover.metadata ?? {}).length
                     }
                   ]}
                 />
@@ -144,8 +144,8 @@ export function RolloverSeasonDetailPage(): JSX.Element {
             <SummaryPills
               items={[
                 { label: t('Target season'), value: toSeason },
-                { label: t('Transition records'), value: transitionsQuery.isLoading ? t('Loading...') : filteredTransitions.length },
-                { label: t('Next-season players'), value: playersQuery.isLoading ? t('Loading...') : filteredPlayers.length }
+                { label: t('Transition records'), value: transitionsQuery.isLoading ? t('Loading...') : safeTransitions ? filteredTransitions.length : t('Unavailable') },
+                { label: t('Next-season players'), value: playersQuery.isLoading ? t('Loading...') : safePlayers ? filteredPlayers.length : t('Unavailable') }
               ]}
             />
             <label>

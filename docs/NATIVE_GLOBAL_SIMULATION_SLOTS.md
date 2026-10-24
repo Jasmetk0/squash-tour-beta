@@ -20,8 +20,8 @@ the existing batch writer, upgrades a native birth owner directly to its actual
 global root, and exercises every original browser match through the new round
 slots. Global origin verification authenticates the complete physical graph and
 each current command source, then reuses the verified immediate global parent's
-ancestry instead of recursively revisiting every overlapping prefix. Native fork
-rows retain their dedicated verifier without an extra global-routing JSON parse.
+ancestry instead of recursively revisiting every overlapping prefix. Bounded
+routing hints hash all actual bytes and still inspect unexpected mixed components.
 New global Saved components can replay only their suffix from the physically
 authenticated immediate Saved predecessor; the existing complete-prefix checks
 reject changed inputs/history and fall back to full replay. Derived tournament
@@ -37,6 +37,31 @@ concurrent retry/stale/rollback/rehashed-input and source rejection passed (42.1
 54 focused backend contracts, 125 focused frontend contracts and production build
 passed. Frontend contracts mock API boundaries; they are not Chromium evidence.
 Long-calendar performance and final hosted checks remain pending.
+
+The performance follow-up keeps only narrow physical origin projections during
+the recursive walk, rather than retaining every decoded full rally snapshot.
+Exact component values already produced by a successful replay may be reused
+only with the same World/played/prospect/calendar/owner inputs and exact complete
+lifecycle/Health histories. Every actual value is hashed, and physical rows,
+ancestry and source ownership still validate independently. Parsed immutable
+parts are bounded to 16 MiB/128 entries; origin projections to 32 MiB/128 entries;
+these live for this one caller-owned walk only. A separate decoded Tour DTO cache
+retains at most two inputs/32 MiB of serialized source bytes after the full
+physical Saved gate; every lookup hashes the complete actual payload and returns
+defensive copies. Routing hints retain only actual-byte hashes and booleans. Private pure-replay projections and
+fingerprints end with that replay, including failure, and never authorize a later
+physical read. No stored schema, hash, seed or result changes.
+
+On an isolated backup of the actual failed W52 workflow's W26 SQLite history,
+an intermediate cold read completed in 49.12 s. This is recovery/read evidence,
+not a fresh whole-season or final-head performance certification. The original
+candidate's 1,000-player browser Save also exceeded its unchanged 90 s budget;
+its actual source is retained for the continued production measurement. Eight
+additional focused guards cover exact-value reuse, nested mutation, bounded
+retention, exception cleanup, raw-component/history/source binding and actual-byte
+routing/origin projection integrity and isolated DTO decoding. The latest local
+focused set passed 62 contracts; no hosted final-head or whole-season performance
+pass is inferred from this. Final acceptance remains the merge gate.
 
 ## Contract
 

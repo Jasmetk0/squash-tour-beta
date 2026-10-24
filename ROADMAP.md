@@ -32,6 +32,13 @@ scenarios passed locally; 54 backend and 125 frontend contracts/build passed.
 Long-calendar performance and exact-head hosted acceptance are still required.
 No timeout or required sporting/integrity assertion is relaxed.
 
+The next performance candidate bounds per-walk decoded parts/origin projections,
+reuses only exact fully replayed component values with complete source/history
+binding, and isolates decoded Tour DTO reuse behind physical authentication.
+62 focused contracts pass locally. The preceding published head still failed
+three browser budgets and the W80 worker; these remain failures until the new
+exact head executes those gates successfully. No release/merge claim is made.
+
 ---
 
 # Native final-week Edition closing candidate — 24 October 2026

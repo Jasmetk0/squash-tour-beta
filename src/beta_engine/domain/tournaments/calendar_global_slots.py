@@ -4,6 +4,8 @@ The v13 sporting ledger owns results. Tournament views below are derived from
 that ledger, never a second mutable result store. Old executors retain old seeds.
 """
 
+from contextlib import contextmanager
+from contextvars import ContextVar
 from types import SimpleNamespace
 from typing import Literal
 
@@ -62,6 +64,43 @@ from beta_engine.domain.tournaments.calendar_tour import (
     CalendarEditionAuthority,
     CalendarTourState,
 )
+
+_replay_projections = ContextVar("global_slot_private_replay_projections", default=None)
+
+
+@contextmanager
+def global_replay_projection_scope():
+    """Memoize private frozen values only during one pure verification replay.
+
+    The verifier owns freshly decoded inputs and creates new frozen models for
+    every change. Nothing escapes this scope as a validation proof. Physical
+    rows, source graphs and later calls still get their ordinary byte checks.
+    Callers must neither expose nor mutate these private models during replay.
+    """
+    token = _replay_projections.set({"fingerprints": {}, "tournaments": {}}) if _replay_projections.get() is None else None
+    try:
+        yield
+    finally:
+        if token is not None:
+            _replay_projections.reset(token)
+
+
+def _replay_fingerprint(value, *, sporting=False):
+    scope = _replay_projections.get()
+    key = (id(value), sporting)
+    memo = scope["fingerprints"] if scope is not None else {}
+    known = memo.get(key)
+    if known is not None and known[0] is value:
+        return known[1]
+    body = value.model_dump(mode="json")
+    if sporting:
+        body.pop("prepared_awards", None)
+    fingerprint = canonical_hash(body)
+    if scope is not None:
+        memo[key] = (value, fingerprint)
+        while len(memo) > 256:
+            memo.pop(next(iter(memo)))
+    return fingerprint
 
 
 def is_slot_edition(authority):
@@ -185,6 +224,14 @@ class GlobalTournamentResult(CalendarFollowupKnockout):
         "calendar_followup_knockout.v7"
     )
 
+    @property
+    def fingerprint(self):
+        return _replay_fingerprint(self)
+
+    @property
+    def sporting_fingerprint(self):
+        return _replay_fingerprint(self, sporting=True)
+
     @model_validator(mode="after")
     def validate_bracket(self):
         # Actual input/results are independently rebuilt from the slot ledger.
@@ -241,6 +288,10 @@ class GlobalCompetitionCheckpoint(CalendarNativeCompetitionCheckpoint):
     ] = ()
 
     @property
+    def fingerprint(self):
+        return _replay_fingerprint(self)
+
+    @property
     def source_checkpoint(self):
         return getattr(
             self.competition_root, "source_checkpoint", self.competition_root
@@ -295,6 +346,10 @@ class GlobalTourState(CalendarNativeCompetitionTourState):
         CalendarTourState | CalendarNativeTourState | CalendarNativeCompetitionTourState
     )
 
+    @property
+    def fingerprint(self):
+        return _replay_fingerprint(self)
+
 
 def upgrade(state, checkpoint, head):
     if isinstance(state, GlobalTourState):
@@ -332,6 +387,10 @@ def participants(ids, matches, index):
 
 def completed_tournaments(events, *, owner=None):
     slots = tuple(e for e in events if isinstance(e, GlobalSlot))
+    scope = _replay_projections.get()
+    key = (tuple(id(slot) for slot in slots), owner)
+    if scope is not None and key in scope["tournaments"]:
+        return scope["tournaments"][key][1]
     authorities = {a.edition.edition_id: a for e in slots for a in e.authorities}
     matches = {m.match_id: m for e in slots for m in e.accepted}
     result = []
@@ -384,7 +443,14 @@ def completed_tournaments(events, *, owner=None):
         result.append(model.model_validate({
             key: getattr(event, key) for key in model.model_fields
         }))
-    return tuple(result)
+    result = tuple(result)
+    if scope is not None:
+        # Keep slot references so Python cannot recycle their identities while
+        # this private value projection is retained. Changed slots are new models.
+        scope["tournaments"][key] = (slots, result)
+        while len(scope["tournaments"]) > 16:
+            scope["tournaments"].pop(next(iter(scope["tournaments"])))
+    return result
 
 
 def next_schedule(state, checkpoint):

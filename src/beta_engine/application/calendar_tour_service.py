@@ -174,10 +174,14 @@ class CalendarTourService:
         # latter either strictly folds all sporting/Tour sources or reuses an
         # identical-byte verified signature. Do not fold the same 14 real matches
         # and all ranking publications a second time on every Admin operation.
-        saved_evidence, saved, signed = decode_prevalidated_calendar_sources(
-            revision.saved_revision.payload,
-            run_id=run_id,
-            branch_id=branch_id,
+        from beta_engine.infrastructure.db.native_fork_source_projection import (
+            decoded_global_tour_source,
+        )
+        saved_evidence, saved, signed = decoded_global_tour_source(
+            self.repository, revision.saved_revision,
+            lambda source: decode_prevalidated_calendar_sources(
+                source.payload, run_id=run_id, branch_id=branch_id,
+            ),
         )
         rows = load_match_rows(
             session,
@@ -240,7 +244,9 @@ class CalendarTourService:
         context = (clock, revision, world, health, checkpoint, saved, evidence)
         if not native and (state != signed or checkpoint != saved):
             verify_tour(state, checkpoint, world)
-        verify_tour_origins(session, state)
+        verify_tour_origins(session, state,
+            _origin_cache=proofs.setdefault('_global_origin_inputs', {})
+                if state is not None and state.schema_version == 'calendar_tour_authority.v5' else None)
         # The exact Saved HEAD has been fully authenticated in _context's
         # repository lineage walk. Comparing immutable Saved lifecycle bytes
         # to independently parsed live rows is sufficient for unchanged Tour

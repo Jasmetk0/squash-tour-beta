@@ -18,6 +18,52 @@ from beta_engine.domain.tournaments.calendar_tour import (
 )
 
 
+def _raw_global_inputs(payload):
+    content = payload['content']
+    binding = canonical_hash({
+        'run_id': payload.get('run', {}).get('run_id'),
+        'branch_id': payload.get('branch', {}).get('branch_id'),
+        'calendar': payload.get('run', {}).get('run_calendar'),
+        'population_clock_origin': payload.get('run', {}).get('run_calendar_content_origin'),
+        **{key: content.get(key) for key in ('initial_world', 'calendar_standalone_match', 'run_prospect_source')},
+    })
+    histories = []
+    for key in ('player_lifecycle', 'player_health_state'):
+        component = content.get(key)
+        if (not isinstance(component, dict)
+            or set(component) != {'states', 'fingerprint'}
+            or not isinstance(component['states'], list)
+            or canonical_hash(component['states']) != component['fingerprint']):
+            raise ValueError('Global source history has an invalid actual value fingerprint')
+        histories.append(tuple(canonical_hash(state) for state in component['states']))
+    return binding, *histories
+
+
+def has_replayed_global_components(payload, proofs):
+    """Reuse exact values produced by an earlier full replay in this one walk.
+
+    This certifies component math only. The repository still authenticates each
+    physical revision, owner, full dependency graph and reachable command source.
+    No declared component fingerprint is sufficient: hash every actual value.
+    """
+    known = (proofs or {}).get('_prefixes', {}).get('_global_replayed_values', {})
+    if not known:
+        return False
+    content = payload.get('content', {})
+    cp, tour = content.get('calendar_player_sporting_checkpoint', {}), content.get('calendar_tour_authority', {})
+    if (set(cp) != {'state', 'fingerprint'} or set(tour) != {'state', 'fingerprint'}
+        or not isinstance(cp['state'], dict) or not isinstance(tour['state'], dict)
+        or cp['state'].get('schema_version') != 'calendar_sporting_checkpoint.v13'
+        or tour['state'].get('schema_version') != 'calendar_tour_authority.v5'):
+        return False
+    identity = canonical_hash(cp['state']), canonical_hash(tour['state'])
+    evidence = known.get(identity)
+    if evidence is None or identity != (cp['fingerprint'], tour['fingerprint']):
+        return False
+    actual = _raw_global_inputs(payload)
+    return actual == evidence
+
+
 def root_payload(payload, checkpoint, tour):
     content = dict(payload["content"])
     for key in ("player_lifecycle", "player_health_state"):
@@ -35,6 +81,14 @@ def root_payload(payload, checkpoint, tour):
 
 
 def verify_competition_payload(payload, checkpoint, evidence=None, *, verified_global_prefix=None, source_proofs=None):
+    from beta_engine.domain.tournaments.calendar_global_slots import global_replay_projection_scope
+
+    with global_replay_projection_scope():
+        return _verify_competition_payload(payload, checkpoint, evidence,
+            verified_global_prefix=verified_global_prefix, source_proofs=source_proofs)
+
+
+def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_global_prefix=None, source_proofs=None):
     from beta_engine.application.calendar_tour_service import (
         CalendarTourCommit,
         CalendarTourService,
@@ -79,13 +133,6 @@ def verify_competition_payload(payload, checkpoint, evidence=None, *, verified_g
             payload, run_id=run_id, branch_id=branch_id
         )
     prefix = authenticated_global_prefix(payload, checkpoint, state, verified_global_prefix)
-    if prefix is None:
-        if (
-            saved_checkpoint(old, evidence, run_id=run_id, branch_id=branch_id) != root_cp
-            or saved_tour(old, run_id=run_id, branch_id=branch_id, checkpoint=root_cp)
-            != root_tour
-        ):
-            raise ValueError("Native competition historical root differs")
     world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id)
     life = load_saved_lifecycle(payload, run_id=run_id, branch_id=branch_id)
     health = load_saved_health(payload, run_id=run_id, branch_id=branch_id)
@@ -104,6 +151,13 @@ def verify_competition_payload(payload, checkpoint, evidence=None, *, verified_g
         # verifying another revision in this one caller-owned lineage walk.
         # Every physical row/owner/origin is still checked by the repository.
         return
+    if prefix is None:
+        if (
+            saved_checkpoint(old, evidence, run_id=run_id, branch_id=branch_id) != root_cp
+            or saved_tour(old, run_id=run_id, branch_id=branch_id, checkpoint=root_cp)
+            != root_tour
+        ):
+            raise ValueError("Native competition historical root differs")
     verified_states = []
     previous, cp = prefix if prefix is not None else (root_tour, root_cp)
     event_index = len(cp.events) if prefix is not None else 0
@@ -288,6 +342,21 @@ def verify_competition_payload(payload, checkpoint, evidence=None, *, verified_g
         raise ValueError("Native competition differs from complete confirmed history")
     for verified_cp, verified_tour in verified_states:
         scoped[(verified_cp.fingerprint, verified_tour.fingerprint)] = (*actual_inputs[:4], source.for_week(verified_cp.week.ordinal).fingerprint if source is not None else None)
+    if source_proofs is not None and verified_states:
+        raw_inputs = _raw_global_inputs(payload)
+        values = source_proofs.setdefault('_global_replayed_values', {})
+        for verified_cp, verified_tour in verified_states:
+            life_indices = [i for i, fp in enumerate(raw_inputs[1])
+                if fp == verified_tour.lifecycle_fingerprint]
+            health_indices = [i for i, h in enumerate(health)
+                if h.week.ordinal <= verified_cp.week.ordinal]
+            if life_indices and health_indices:
+                values[(verified_cp.fingerprint, verified_tour.fingerprint)] = (
+                    raw_inputs[0], raw_inputs[1][:life_indices[-1] + 1],
+                    raw_inputs[2][:health_indices[-1] + 1],
+                )
+        while len(values) > 128:
+            values.pop(next(iter(values)))
     while len(scoped) > 128:
         scoped.pop(next(iter(scoped)))
 

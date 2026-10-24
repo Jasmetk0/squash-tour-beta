@@ -2516,6 +2516,8 @@ class SimulationPersistenceRepository:
     def _validated_saved_revision_in_session(self, **kwargs):
         from beta_engine.infrastructure.db.native_fork_runtime_state import native_read_proof_scope
         with native_read_proof_scope():
+            if kwargs.get('sporting_component_proofs') is None:
+                kwargs['sporting_component_proofs'] = {}
             return self._validated_saved_revision_core_in_session(**kwargs)
 
     def _validated_saved_revision_core_in_session(
@@ -2551,13 +2553,9 @@ class SimulationPersistenceRepository:
         token = _active_saved_revision_proofs.set(active | {key})
         try:
             from beta_engine.infrastructure.db.calendar_global_slot_origins import is_global_slot_row
-            # Native fork roots have their own complete dependency verifier;
-            # their sporting content cannot be an ordinary global Tour owner.
-            # Do not parse their large aggregate merely to route that known kind.
-            global_slots = (
-                model.payload_schema_version != "native_fork_saved_root.v2"
-                and is_global_slot_row(model)
-            )
+            # Routing hints are keyed by all actual JSON bytes, including any
+            # unexpected mixed-owner component; they never certify a source.
+            global_slots = is_global_slot_row(model, repository=self)
             if model.payload_schema_version == "native_fork_saved_root.v2" or global_slots:
                 from beta_engine.infrastructure.db.native_fork_runtime_state import (
                     actual_dependency_signature,
@@ -2591,7 +2589,7 @@ class SimulationPersistenceRepository:
                     and parent_component_known
                     and (parent_model.run_id, parent_model.branch_id, parent_model.sequence)
                     == (model.run_id, model.branch_id, model.sequence - 1)
-                    and is_global_slot_row(parent_model)):
+                    and is_global_slot_row(parent_model, repository=self)):
                     # Authenticate the actual immutable predecessor before
                     # entering the striped work lock. Only its unchanged prefix
                     # may anchor this revision's independently replayed suffix.
@@ -2619,7 +2617,8 @@ class SimulationPersistenceRepository:
                     self, session, revision=revision, baseline=baseline
                 )
             from beta_engine.infrastructure.db.calendar_global_slot_origins import verify_saved_global_origins
-            verify_saved_global_origins(self, session, revision, sporting_component_proofs=sporting_component_proofs)
+            if global_slots:
+                verify_saved_global_origins(self, session, revision, sporting_component_proofs=sporting_component_proofs)
             from beta_engine.infrastructure.db.calendar_terminal_results import verify_saved_terminal_results
             verify_saved_terminal_results(self, session, revision, sporting_component_proofs=sporting_component_proofs)
             from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
@@ -4097,11 +4096,13 @@ class SimulationPersistenceRepository:
                 load_saved_run_package_state(
                     payload, run_id=model.run_id, branch_id=model.branch_id
                 )
-                load_saved_calendar_match(
-                    payload, run_id=model.run_id, branch_id=model.branch_id,
-                    _sporting_component_proofs=sporting_component_proofs,
-                    _verified_global_prefix=verified_global_prefix,
-                )
+                from beta_engine.infrastructure.db.calendar_native_competition import has_replayed_global_components
+                if not has_replayed_global_components(payload, sporting_component_proofs):
+                    load_saved_calendar_match(
+                        payload, run_id=model.run_id, branch_id=model.branch_id,
+                        _sporting_component_proofs=sporting_component_proofs,
+                        _verified_global_prefix=verified_global_prefix,
+                    )
         except (TypeError, ValueError) as exc:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {model.revision_id} has invalid ranking content: {exc}"

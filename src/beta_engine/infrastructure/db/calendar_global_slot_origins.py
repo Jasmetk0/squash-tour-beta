@@ -1,9 +1,12 @@
 """Authenticate physical reachable origins of global-slot commands on Saved reads."""
 
+import hashlib
 import json
 
-from beta_engine.domain.tournaments.calendar_tour import parse_tour_json
-from beta_engine.infrastructure.db.calendar_tour import verify_tour_origins
+from beta_engine.infrastructure.db.calendar_tour import (
+    _origin_inputs,
+    verify_tour_origins,
+)
 from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
 
 
@@ -11,18 +14,17 @@ def verify_saved_global_origins(
     repository, session, revision, *, sporting_component_proofs=None
 ):
     physical = session.get(BranchSavedRevisionModel, revision.revision_id)
-    body = (
-        json.loads(physical.payload_json) if physical is not None else revision.payload
-    )
-    raw = body.get("content", {}).get("calendar_tour_authority", {}).get("state")
-    if not raw or raw.get("schema_version") != "calendar_tour_authority.v5":
-        return
+    if physical is None:
+        raise ValueError('Global slot physical Saved origin is missing')
+    cache = sporting_component_proofs.setdefault('_global_origin_inputs', {}) if sporting_component_proofs is not None else {}
     from beta_engine.infrastructure.db.native_fork_runtime_state import (
         actual_dependency_signature,
     )
 
     actual_dependency_signature(session, physical, repository=repository)
-    state = parse_tour_json(json.dumps(raw))
+    _, state = _origin_inputs(physical, cache)
+    if state is None or state.schema_version != 'calendar_tour_authority.v5':
+        raise ValueError('Global slot physical Saved origin changed its owner kind')
     reachable = set()
     parent = revision.parent_revision_id
     while parent:
@@ -47,7 +49,7 @@ def verify_saved_global_origins(
     # Its proof is reusable only after actual_dependency_signature above has
     # freshly hashed the complete physical graph in this read snapshot.
     parent_row = session.get(BranchSavedRevisionModel, revision.parent_revision_id)
-    parent_is_global = parent_row is not None and is_global_slot_row(parent_row)
+    parent_is_global = parent_row is not None and is_global_slot_row(parent_row, repository=repository)
     sources_to_verify = (
         (revision.parent_revision_id,) if parent_is_global else sorted(reachable)
     )
@@ -75,17 +77,34 @@ def verify_saved_global_origins(
         row = session.get(BranchSavedRevisionModel, source_id)
         if row is None or (row.run_id, row.branch_id) != (revision.run_id, revision.branch_id):
             raise ValueError("Global slot command source has a foreign owner")
-    verify_tour_origins(session, state, _reachable_revision_ids=reachable)
+    verify_tour_origins(session, state, _reachable_revision_ids=reachable,
+        _origin_cache=cache)
 
 
-def is_global_slot_row(row):
+def is_global_slot_row(row, *, repository=None):
     """Routing only; malformed data still receives the ordinary strict verifier."""
+    signature = hashlib.sha256(row.payload_json.encode('utf-8')).digest()
+    if repository is not None:
+        with repository._revision_validation_lock:
+            hints = getattr(repository, '_global_kind_hints', {})
+            if signature in hints:
+                return hints[signature]
     value = json.loads(row.payload_json)
     for key in ("content", "calendar_tour_authority", "state"):
         if not isinstance(value, dict):
-            return False
+            value = None
+            break
         value = value.get(key)
-    return (
+    result = (
         isinstance(value, dict)
         and value.get("schema_version") == "calendar_tour_authority.v5"
     )
+    if repository is not None:
+        with repository._revision_validation_lock:
+            hints = getattr(repository, '_global_kind_hints', None)
+            if hints is None:
+                hints = repository._global_kind_hints = {}
+            hints[signature] = result
+            while len(hints) > 4096:
+                hints.pop(next(iter(hints)))
+    return result

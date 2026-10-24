@@ -83,6 +83,8 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
   const historyMismatch = Boolean(snapshotsQuery.data?.run_id && snapshotsQuery.data.run_id !== runId)
   const siblingMismatch = Boolean(siblingSnapshotsQuery.data?.run_id && siblingSnapshotsQuery.data.run_id !== runId)
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
+  const planSeasonMismatch = Boolean(runQuery.data && runQuery.data.run.run_id === runId &&
+    runQuery.data.season_state.season !== runQuery.data.run.season)
   const sourceEventId = snapshot?.source_event_id ?? null
   const neighboringSnapshots = historyMismatch ? [] : (snapshotsQuery.data?.snapshots ?? [])
   const neighborHistoryUnavailable = snapshotsQuery.isLoading || Boolean(snapshotsQuery.error) || historyMismatch ||
@@ -97,7 +99,10 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
   const persistedSourceEvent = sourceEventId
     ? (eventsMismatch ? null : eventsQuery.data?.events.find((event) => event.event_id === sourceEventId) ?? null)
     : null
-  const plannedSourceEvent = sourceEventId && runQuery.data?.run.run_id === runId ? findPlannedEventContext(runQuery.data, sourceEventId) : null
+  const plannedCandidate = sourceEventId && runQuery.data?.run.run_id === runId && !planSeasonMismatch
+    ? findPlannedEventContext(runQuery.data, sourceEventId) : null
+  const plannedSourceEvent = plannedCandidate && (!persistedSourceEvent || persistedSourceEvent.season === plannedCandidate.season)
+    ? plannedCandidate : null
   const relatedSiblingUnavailable = siblingSnapshotsQuery.isLoading || Boolean(siblingSnapshotsQuery.error) || siblingMismatch || !siblingSnapshotsQuery.data
   const relatedSiblingSnapshots = sourceEventId
     ? (siblingMismatch ? [] : siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === sourceEventId) ?? [])
@@ -168,6 +173,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
             {snapshotMismatch && <p role="alert" className="error">{t('Snapshot detail does not match the requested sequence.')}</p>}
             {siblingMismatch && <p role="alert" className="error">{t('Snapshot sibling history belongs to another Run.')}</p>}
             {eventsMismatch && <p role="alert" className="error">{t('Event context belongs to another Run.')}</p>}
+            {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>}
             {historyMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
             {snapshotsQuery.error && <p role="alert" className="error">{t('Failed to load snapshots history')}: {formatApiError(snapshotsQuery.error)}</p>}
             {snapshotQuery.isLoading && <p role="status" className="status">{t('Loading snapshot details...')}</p>}
@@ -188,7 +194,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
                 persistedSourceEventSequence={persistedSourceEvent?.event_sequence ?? null}
                 persistedSourceEventUnavailable={eventsQuery.isLoading || Boolean(eventsQuery.error) || eventsMismatch}
                 plannedSourceEvent={plannedSourceEvent}
-                plannedSourceEventUnavailable={runQuery.isLoading || Boolean(runQuery.error) || runQuery.data?.run.run_id !== runId}
+                plannedSourceEventUnavailable={runQuery.isLoading || Boolean(runQuery.error) || runQuery.data?.run.run_id !== runId || planSeasonMismatch}
                 relatedSiblingSnapshots={relatedSiblingSnapshots}
                 siblingMode={siblingMode}
                 relatedSiblingUnavailable={relatedSiblingUnavailable}
@@ -338,13 +344,15 @@ function SourceEventContext({
 }
 
 function findPlannedEventContext(runData: SeasonStateResponse | undefined, eventId: string): PlannedEventContext | null {
-  const orderedEvents = runData?.season_state?.ordered_events ?? []
+  if (!runData || runData.run.season !== runData.season_state.season) return null
+  const orderedEvents = runData.season_state.ordered_events
   const matchedIndex = orderedEvents.findIndex((event) => event.event_id === eventId)
   if (matchedIndex < 0) {
     return null
   }
 
   const matchedEvent = orderedEvents[matchedIndex]
+  if (matchedEvent.season !== runData.season_state.season) return null
   const completedEventIds = new Set(runData?.season_state?.completed_event_ids ?? [])
   const nextEventIndex = runData?.season_state?.next_event_index ?? 0
   const plannedStatus = getPlannedEventStatus({

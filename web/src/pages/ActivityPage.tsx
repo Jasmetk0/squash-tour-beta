@@ -87,6 +87,7 @@ export function ActivityPage(): JSX.Element {
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const items = activityMismatch ? [] : activityQuery.data?.items ?? []
   const planSeasonMismatch = Boolean(runQuery.data && runQuery.data.run.run_id === runId &&
+    runQuery.data.season_state.season != null &&
     runQuery.data.season_state.season !== runQuery.data.run.season)
   const plannedContextUnavailable = runQuery.isLoading || Boolean(runQuery.error) ||
     !runQuery.data || runQuery.data.run.run_id !== runId || planSeasonMismatch

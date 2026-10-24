@@ -114,6 +114,88 @@ describe('SnapshotDetailPage', () => {
     expect(screen.getByRole('link', { name: 'Open events history' })).toBeInTheDocument()
   })
 
+  it.each([
+    ['source event', { snapshot_kind: 'WEEK', source_event_id: 'E5' }],
+    ['snapshot kind', { snapshot_kind: 'SEASON', source_event_id: 'E3' }]
+  ])('preserves stored payload but withholds unverified snapshot context after %s disagreement', async (_label, conflicting) => {
+    const detail = { snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3',
+      payload: { points: 0, identity: 'STORED_DETAIL' } }
+    api.getRankingSnapshot.mockResolvedValue(detail)
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: {} },
+      { snapshot_sequence: 10, ...conflicting, payload: {} },
+      { snapshot_sequence: 11, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }
+    ] })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 4, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} }
+    ] })
+    renderSnapshotDetailRoute('/runs/run-a/snapshots/ranking/10', 'ranking')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Snapshot detail and history index disagree on source identity. Navigation links are unavailable.'
+    )
+    expect(screen.getByText(/STORED_DETAIL/)).toBeInTheDocument()
+    expect(screen.getByText(/"points": 0/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open source event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /race snapshot #4/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '#9' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '#11' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open events history' })).toBeInTheDocument()
+  })
+
+  it('does not treat two history entries sharing the requested sequence as trusted neighbors or source provenance', async () => {
+    api.getRankingSnapshot.mockResolvedValue({
+      snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3',
+      payload: { retained: 0 }
+    })
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: {} },
+      { snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} },
+      { snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} },
+      { snapshot_sequence: 11, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }
+    ] })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [] })
+    renderSnapshotDetailRoute('/runs/run-a/snapshots/ranking/10', 'ranking')
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Snapshot detail and history index disagree on source identity. Navigation links are unavailable.'
+    )
+    expect(screen.getByText(/"retained": 0/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '#9' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '#11' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open source event detail' })).not.toBeInTheDocument()
+  })
+
+  it('restores source and neighbor links only after a later index refresh resolves the source conflict', async () => {
+    const detail = { snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3',
+      payload: { retained: 0 } }
+    api.getRankingSnapshot.mockResolvedValue(detail)
+    const index = (source_event_id: string) => ({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: {} },
+      { snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id, payload: {} },
+      { snapshot_sequence: 11, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }
+    ] })
+    api.listRankingSnapshots.mockResolvedValueOnce(index('E5')).mockResolvedValueOnce(index('E3'))
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [] })
+    const client = renderSnapshotDetailRoute('/runs/run-a/snapshots/ranking/10', 'ranking')
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Snapshot detail and history index disagree on source identity. Navigation links are unavailable.'
+    )
+    expect(screen.queryByRole('link', { name: 'Open source event detail' })).not.toBeInTheDocument()
+    await act(async () => { await client.refetchQueries({ queryKey: ['ranking-snapshots', 'run-a'] }) })
+    expect(screen.queryByText('Snapshot detail and history index disagree on source identity. Navigation links are unavailable.')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open source event detail' }))
+      .toHaveAttribute('href', '/runs/run-a/events/E3')
+    expect(screen.getByRole('link', { name: 'Open planned-event detail' }))
+      .toHaveAttribute('href', '/runs/run-a/calendar/E3')
+    expect(screen.getByRole('link', { name: '#9' })).toHaveAttribute('href', '/runs/run-a/snapshots/ranking/9')
+    expect(screen.getByRole('link', { name: '#11' })).toHaveAttribute('href', '/runs/run-a/snapshots/ranking/11')
+    expect(screen.getByText(/"retained": 0/)).toBeInTheDocument()
+    expect(api.getRankingSnapshot).toHaveBeenCalledTimes(1)
+    expect(api.listRankingSnapshots).toHaveBeenCalledTimes(2)
+  })
+
   it('renders source-event context, planned context, and cross-links for ranking snapshots', async () => {
     api.getRankingSnapshot.mockResolvedValue({
       snapshot_sequence: 10,

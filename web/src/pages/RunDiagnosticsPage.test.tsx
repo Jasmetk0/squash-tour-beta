@@ -99,6 +99,34 @@ describe('RunDiagnosticsPage', () => {
     }))
   })
 
+
+  it('routes reused persisted event IDs to their sequence-selected timeline instead of ambiguous ID-only detail', async () => {
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-a', events: [
+      { event_sequence: 8, event_id: 'REUSED', season: 2028, week: 13, template_id: null,
+        tournament_result: { winner: 'P8' } },
+      { event_sequence: 3, event_id: 'REUSED', season: 2027, week: 35, template_id: null,
+        tournament_result: { winner: 'P3' } },
+      { event_sequence: 2, event_id: 'UNIQUE', season: 2028, week: 4, template_id: null,
+        tournament_result: { winner: 'P2' } }
+    ] })
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+    expect(await screen.findByText('Some event IDs are reused. Event links open their selected sequence in history.')).toBeInTheDocument()
+    const targeted = '/runs/run-a/events?selectedEventId=REUSED&selectedEventSequence=8'
+    expect(screen.getByRole('link', { name: 'Inspect latest completed event (REUSED)' }))
+      .toHaveAttribute('href', targeted)
+    const recent = screen.getByRole('list', { name: 'Diagnostics recent events' })
+    expect(within(recent).getByRole('link', { name: /REUSED.*Seq 8/ }))
+      .toHaveAttribute('href', targeted)
+    expect(within(recent).getByRole('link', { name: /REUSED.*Seq 3/ }))
+      .toHaveAttribute('href', '/runs/run-a/events?selectedEventId=REUSED&selectedEventSequence=3')
+    expect(within(recent).getByRole('link', { name: /UNIQUE.*Seq 2/ }))
+      .toHaveAttribute('href', '/runs/run-a/events/UNIQUE')
+    expect(screen.queryByRole('link', { name: /REUSED.*Seq.*8/, hidden: true }))
+      .not.toHaveAttribute('href', '/runs/run-a/events/REUSED')
+    expect(screen.getByRole('link', { name: 'Inspect latest ranking snapshot (Seq 17)' }))
+      .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/17')
+  })
+
   it('encodes Run and parent Run IDs in all diagnostics navigation while retaining raw API identity', async () => {
     api.getRunSource.mockResolvedValueOnce({
       source: {

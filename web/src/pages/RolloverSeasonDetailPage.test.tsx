@@ -87,6 +87,7 @@ describe('RolloverSeasonDetailPage', () => {
   it('renders readable invalid/missing season behavior without crashing', async () => {
     renderPage('/runs/run-a/rollover/not-a-season')
 
+    expect(screen.getByRole('button', { name: 'Refresh read-only data' })).toBeDisabled()
     expect(await screen.findByText(/Invalid or missing target season/i)).toBeInTheDocument()
     expect(api.getRolloverBySeason).not.toHaveBeenCalled()
     expect(api.getPlayerTransitions).not.toHaveBeenCalled()

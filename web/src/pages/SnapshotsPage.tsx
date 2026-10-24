@@ -55,6 +55,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const runMismatch = Boolean(runQuery.data?.run.run_id && runQuery.data.run.run_id !== runId)
   const planSeasonMismatch = Boolean(runQuery.data && runQuery.data.run.run_id === runId &&
+    runQuery.data.season_state.season != null &&
     runQuery.data.season_state.season !== runQuery.data.run.season)
   const planUnavailable = runQuery.isLoading || Boolean(runQuery.error) || !runQuery.data || runMismatch || planSeasonMismatch
   const eventsUnavailable = eventsQuery.isLoading || Boolean(eventsQuery.error) || !eventsQuery.data || eventsMismatch

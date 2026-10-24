@@ -92,6 +92,24 @@ describe('history list ordering, detail selection, and states', () => {
     expect(screen.getByRole('button', { name: /2\. E2/i })).not.toHaveClass('is-selected')
   }, 10000)
 
+  it.each([
+    ['stored sequence', { event_sequence: 900 }],
+    ['stored season', { season: 2030 }],
+    ['stored week', { week: 44 }]
+  ])('rejects event details contradicting the list %s even when event_id agrees', async (_field, conflicting) => {
+    api.getEvent.mockResolvedValueOnce({
+      event_id: 'E2', event_sequence: 2, season: 2027, week: 9,
+      template_id: null, tournament_result: null,
+      detail: 'UNTRUSTED_DETAIL', ...conflicting
+    })
+    renderWithRoute(<EventsPage />, '/runs/run-a/events')
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Event detail does not match the selected event; its payload is hidden.'
+    )
+    expect(screen.queryByText(/UNTRUSTED_DETAIL/)).not.toBeInTheDocument()
+    expect(api.getEvent).toHaveBeenCalledWith('run-a', 'E2')
+  })
+
   it('respects a valid selectedEventId query param and falls back when invalid or missing', async () => {
     const validView = renderWithRoute(<EventsPage />, '/runs/run-a/events?selectedEventId=E1')
 

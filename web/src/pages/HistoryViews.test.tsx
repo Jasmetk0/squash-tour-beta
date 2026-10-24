@@ -59,6 +59,14 @@ describe('history list ordering, detail selection, and states', () => {
     })
   })
 
+  it('numbers planned event positions from one consistently with snapshot and activity history', async () => {
+    renderWithRoute(<EventsPage />, '/runs/run-a/events')
+    const list = await screen.findByRole('list', { name: 'Events history list' })
+    expect(within(list).getByRole('button', { name: /2\\. E2/ })).toHaveTextContent('Plan #1')
+    expect(within(list).getByRole('button', { name: /1\\. E1/ })).toHaveTextContent('Plan #2')
+    expect(screen.queryByText('Plan #0')).not.toBeInTheDocument()
+  })
+
   it('renders events in API order with default selected styling and click-to-update detail', async () => {
     const user = userEvent.setup()
     renderWithRoute(<EventsPage />, '/runs/run-a/events')

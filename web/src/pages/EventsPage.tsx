@@ -49,7 +49,7 @@ export function EventsPage(): JSX.Element {
         tour: event.tour,
         category: event.category,
         templateId: event.template_id,
-        planPosition: index
+        planPosition: index + 1
       })
     })
 

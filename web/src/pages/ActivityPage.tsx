@@ -219,7 +219,8 @@ export function ActivityPage(): JSX.Element {
     hasPlannedContext: Boolean(selectedPlannedContext),
     plannedContextUnavailable: plannedContextUnavailable || ambiguousEventSeason,
     persistedContextUnavailable: persistedContextUnavailable || ambiguousEventSeason,
-    canInspectCurrentWeek: Boolean(canInspectCurrentWeek)
+    canInspectCurrentWeek: Boolean(canInspectCurrentWeek),
+    sourceIdentityAmbiguous: ambiguousEventSeason
   }) : []
   const availableBridgeLinks = bridgeItems.filter(({ value }) => typeof value !== 'string').length
 
@@ -388,15 +389,17 @@ function activityBridgeItems(
     plannedContextUnavailable: boolean
     persistedContextUnavailable: boolean
     canInspectCurrentWeek: boolean
+    sourceIdentityAmbiguous: boolean
   }
 ): Array<{ label: string; value: JSX.Element | string }> {
-  const { contextEventId, hasPersistedContext, hasPlannedContext, plannedContextUnavailable, persistedContextUnavailable, canInspectCurrentWeek } = snapshotContext
+  const { contextEventId, hasPersistedContext, hasPlannedContext, plannedContextUnavailable, persistedContextUnavailable, canInspectCurrentWeek, sourceIdentityAmbiguous } = snapshotContext
   const links: Array<{ label: string; value: JSX.Element | string }> = []
 
   if (item.kind === 'event' && item.event_id) {
     links.push({
       label: t('Persisted event detail'),
-      value: <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>{t('Open persisted event detail')}</Link>
+      value: sourceIdentityAmbiguous ? t('Unavailable') :
+        <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>{t('Open persisted event detail')}</Link>
     })
     links.push({
       label: t('Planned-event detail'),

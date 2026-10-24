@@ -41,7 +41,9 @@ function artifactAvailability({
   return availableLabel || noneLabel
 }
 
+import { useHistoryText } from './runHistoryText'
 export function RunDiagnosticsPage(): JSX.Element {
+  const t = useHistoryText()
   const { runId = '' } = useParams()
 
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
@@ -158,18 +160,18 @@ export function RunDiagnosticsPage(): JSX.Element {
   return (
     <section className="panel">
       <RunScopedHeader
-        title="Run diagnostics"
+        title={t('Run diagnostics')}
         runId={runId}
-        subtitle="Read-only run health, progress, and structure summary."
+        subtitle={t('Read-only run health, progress, and structure summary.')}
       />
       <p>
-        <Link to={`/runs/${encodeURIComponent(runId)}/world-generation`}>Open world generation diagnostics</Link>
+        <Link to={`/runs/${encodeURIComponent(runId)}/world-generation`}>{t('Open world generation diagnostics')}</Link>
       </p>
       <CurrentContextStrip
         items={[
-          { label: 'Season', value: safeStatus?.season ?? safeRun?.run.season ?? '—' },
+          { label: t('Season'), value: safeStatus?.season ?? safeRun?.run.season ?? '—' },
           {
-            label: 'Progress',
+            label: t('Progress'),
             value: safeStatus
               ? `${safeStatus.progress.next_event_index}/${safeStatus.progress.total_events}`
               : safeRun
@@ -177,35 +179,35 @@ export function RunDiagnosticsPage(): JSX.Element {
                 : '—'
           },
           {
-            label: 'Completed events',
+            label: t('Completed events'),
             value: safeStatus?.progress.completed_event_count ?? safeRun?.run.completed_event_ids.length ?? '—'
           }
         ]}
       />
 
-      <SectionCard title="Run diagnostics summary">
-        {runQuery.isLoading && <p className="status">Loading run diagnostics...</p>}
+      <SectionCard title={t('Run diagnostics summary')}>
+        {runQuery.isLoading && <p className="status">{t('Loading run diagnostics...')}</p>}
         {runQuery.error && <p className="error">Failed to load run details: {formatApiError(runQuery.error)}</p>}
-        {runMismatch && <p role="alert" className="error">Run details belong to another Run. Its progress and planned week are hidden.</p>}
+        {runMismatch && <p role="alert" className="error">{t('Run details belong to another Run. Its progress and planned week are hidden.')}</p>}
         {(seasonStateMismatch || nextEventSeasonMismatch) && (
-          <p role="alert" className="error">Run calendar and progress disagree. Current-week links are hidden.</p>
+          <p role="alert" className="error">{t('Run calendar and progress disagree. Current-week links are hidden.')}</p>
         )}
         {runStatusProgressMismatch && (
-          <p role="alert" className="error">Run detail and status summary disagree on season or progress. Current-week links are hidden.</p>
+          <p role="alert" className="error">{t('Run detail and status summary disagree on season or progress. Current-week links are hidden.')}</p>
         )}
         {statusSummaryQuery.error && (
           <p className="error">Failed to load status summary: {formatApiError(statusSummaryQuery.error)}</p>
         )}
-        {statusMismatch && <p role="alert" className="error">Status summary belongs to another Run. Its progress and counts are hidden.</p>}
+        {statusMismatch && <p role="alert" className="error">{t('Status summary belongs to another Run. Its progress and counts are hidden.')}</p>}
         {(safeRun || safeStatus) && (
           <>
             <CompactSummaryCard
               items={[
-                { label: 'Run ID', value: safeRun?.run.run_id ?? safeStatus?.run_id ?? '—' },
-                { label: 'Season', value: safeStatus?.season ?? safeRun?.run.season ?? '—' },
-                { label: 'Seed', value: safeStatus?.seed ?? safeRun?.run.seed ?? '—' },
+                { label: t('Run ID'), value: safeRun?.run.run_id ?? safeStatus?.run_id ?? '—' },
+                { label: t('Season'), value: safeStatus?.season ?? safeRun?.run.season ?? '—' },
+                { label: t('Seed'), value: safeStatus?.seed ?? safeRun?.run.seed ?? '—' },
                 {
-                  label: 'Progress',
+                  label: t('Progress'),
                   value: safeStatus
                     ? `${safeStatus.progress.next_event_index} / ${safeStatus.progress.total_events}`
                     : safeRun
@@ -213,21 +215,21 @@ export function RunDiagnosticsPage(): JSX.Element {
                       : '—'
                 },
                 {
-                  label: 'Completed events',
+                  label: t('Completed events'),
                   value: safeStatus?.progress.completed_event_count ?? safeRun?.run.completed_event_ids.length ?? '—'
                 }
               ]}
             />
             <SummaryPills
               items={[
-                { label: 'Events', value: safeStatus?.history_counts.events ?? (eventsQuery.data?.run_id === runId ? safeEvents.length : '—') },
+                { label: t('Events'), value: safeStatus?.history_counts.events ?? (eventsQuery.data?.run_id === runId ? safeEvents.length : '—') },
                 {
-                  label: 'Ranking snapshots',
+                  label: t('Ranking snapshots'),
                   value:
                     safeStatus?.history_counts.ranking_snapshots ?? (rankingSnapshotsQuery.data?.run_id === runId ? safeRankingSnapshots.length : '—')
                 },
                 {
-                  label: 'Race snapshots',
+                  label: t('Race snapshots'),
                   value: safeStatus?.history_counts.race_snapshots ?? (raceSnapshotsQuery.data?.run_id === runId ? safeRaceSnapshots.length : '—')
                 }
               ]}
@@ -236,88 +238,88 @@ export function RunDiagnosticsPage(): JSX.Element {
         )}
       </SectionCard>
 
-      <SectionCard title="Finals and rollover">
-        {(finalsSummaryQuery.isLoading || latestRolloverQuery.isLoading) && <p className="status">Loading finals and rollover...</p>}
+      <SectionCard title={t('Finals and rollover')}>
+        {(finalsSummaryQuery.isLoading || latestRolloverQuery.isLoading) && <p className="status">{t('Loading finals and rollover...')}</p>}
         {finalsSummaryQuery.error && !isApiNotFound(finalsSummaryQuery.error) && (
           <p className="error">Failed to load Finals summary: {formatApiError(finalsSummaryQuery.error)}</p>
         )}
-        {finalsMismatch && <p role="alert" className="error">Finals summary contains mismatched Run or season data. Its status and inspection links are hidden.</p>}
-        {rolloverMismatch && <p role="alert" className="error">Rollover summary belongs to another Run. Its result and inspection link are hidden.</p>}
+        {finalsMismatch && <p role="alert" className="error">{t('Finals summary contains mismatched Run or season data. Its status and inspection links are hidden.')}</p>}
+        {rolloverMismatch && <p role="alert" className="error">{t('Rollover summary belongs to another Run. Its result and inspection link are hidden.')}</p>}
         {safeFinals && (
           <MetadataList
             items={[
               {
-                label: 'Finals qualification',
-                value: safeFinals.qualification ? 'Available' : 'Not generated yet'
+                label: t('Finals qualification'),
+                value: safeFinals.qualification ? t('Available') : t('Not generated yet')
               },
-              { label: 'Finals result', value: safeFinals.result ? 'Available' : 'Not simulated yet' }
+              { label: t('Finals result'), value: safeFinals.result ? t('Available') : t('Not simulated yet') }
             ]}
           />
         )}
         {!safeFinals && isApiNotFound(finalsSummaryQuery.error) && (
-          <EmptyState message="No Finals summary available for this run." />
+          <EmptyState message={t('No Finals summary available for this run.')} />
         )}
 
         {safeRollover && (
           <MetadataList
             items={[
-              { label: 'Latest rollover to season', value: safeRollover.rollover.to_season },
-              { label: 'Transitioned players', value: safeRollover.rollover.transitioned_players }
+              { label: t('Latest rollover to season'), value: safeRollover.rollover.to_season },
+              { label: t('Transitioned players'), value: safeRollover.rollover.transitioned_players }
             ]}
           />
         )}
         {!safeRollover && isApiNotFound(latestRolloverQuery.error) && (
-          <EmptyState message="No rollover has been executed for this run yet." />
+          <EmptyState message={t('No rollover has been executed for this run yet.')} />
         )}
         {latestRolloverQuery.error && !isApiNotFound(latestRolloverQuery.error) && (
           <p className="error">Failed to load latest rollover: {formatApiError(latestRolloverQuery.error)}</p>
         )}
       </SectionCard>
 
-      <SectionCard title="Source and lineage">
-        {(sourceQuery.isLoading || lineageQuery.isLoading) && <p className="status">Loading source and lineage...</p>}
+      <SectionCard title={t('Source and lineage')}>
+        {(sourceQuery.isLoading || lineageQuery.isLoading) && <p className="status">{t('Loading source and lineage...')}</p>}
         {sourceQuery.error && !isApiNotFound(sourceQuery.error) && (
           <p className="error">Failed to load run source: {formatApiError(sourceQuery.error)}</p>
         )}
         {lineageQuery.error && !isApiNotFound(lineageQuery.error) && (
           <p className="error">Failed to load run lineage: {formatApiError(lineageQuery.error)}</p>
         )}
-        {lineageMismatch && <p role="alert" className="error">Lineage belongs to another Run. Child count and season-chain inspection link are hidden.</p>}
+        {lineageMismatch && <p role="alert" className="error">{t('Lineage belongs to another Run. Child count and season-chain inspection link are hidden.')}</p>}
         {sourceQuery.data && (
           <CompactSummaryCard
             items={[
-              { label: 'Source type', value: sourceQuery.data.source.source_type || 'Unknown' },
+              { label: t('Source type'), value: sourceQuery.data.source.source_type || t('Unknown') },
               {
-                label: 'Parent run',
+                label: t('Parent run'),
                 value: sourceQuery.data.source.parent_run_id ? (
                   <Link to={`/runs/${encodeURIComponent(sourceQuery.data.source.parent_run_id)}`}>{sourceQuery.data.source.parent_run_id}</Link>
                 ) : (
-                  'No parent run'
+                  t('No parent run')
                 )
               },
-              { label: 'Child run count', value: safeLineage?.lineage.children.length ?? '—' }
+              { label: t('Child run count'), value: safeLineage?.lineage.children.length ?? '—' }
             ]}
           />
         )}
-        {!sourceQuery.data && isApiNotFound(sourceQuery.error) && <EmptyState message="No source metadata available." />}
-        {!safeLineage && isApiNotFound(lineageQuery.error) && <EmptyState message="No lineage metadata available." />}
+        {!sourceQuery.data && isApiNotFound(sourceQuery.error) && <EmptyState message={t('No source metadata available.')} />}
+        {!safeLineage && isApiNotFound(lineageQuery.error) && <EmptyState message={t('No lineage metadata available.')} />}
       </SectionCard>
 
-      <SectionCard title="Recent activity">
+      <SectionCard title={t('Recent activity')}>
         {(eventsMismatch || rankingsMismatch || racesMismatch) && (
           <p role="alert" className="error">
-            History response belongs to another Run. Unrelated artifacts and inspection links are hidden.
+            {t('History response belongs to another Run. Unrelated artifacts and inspection links are hidden.')}
           </p>
         )}
         <p>
-          <Link to={`/runs/${encodeURIComponent(runId)}/activity`}>Open aggregated run activity feed</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/activity`}>{t('Open aggregated run activity feed')}</Link>
         </p>
         <MetadataList
           items={[
             {
-              label: 'Latest completed event',
+              label: t('Latest completed event'),
               value: eventsQuery.isLoading
-                ? 'Loading...'
+                ? t('Loading...')
                 : eventsQuery.error
                   ? `Error: ${formatApiError(eventsQuery.error)}`
                   : eventsMismatch
@@ -331,12 +333,12 @@ export function RunDiagnosticsPage(): JSX.Element {
                           </Link>
                         </>
                       )
-                    : 'None yet'
+                    : t('None yet')
             },
             {
-              label: 'Latest ranking snapshot',
+              label: t('Latest ranking snapshot'),
               value: rankingSnapshotsQuery.isLoading
-                ? 'Loading...'
+                ? t('Loading...')
                 : rankingSnapshotsQuery.error
                   ? `Error: ${formatApiError(rankingSnapshotsQuery.error)}`
                   : rankingsMismatch
@@ -350,12 +352,12 @@ export function RunDiagnosticsPage(): JSX.Element {
                           </Link>
                         </>
                       )
-                    : 'None yet'
+                    : t('None yet')
             },
             {
-              label: 'Latest race snapshot',
+              label: t('Latest race snapshot'),
               value: raceSnapshotsQuery.isLoading
-                ? 'Loading...'
+                ? t('Loading...')
                 : raceSnapshotsQuery.error
                   ? `Error: ${formatApiError(raceSnapshotsQuery.error)}`
                   : racesMismatch
@@ -369,19 +371,19 @@ export function RunDiagnosticsPage(): JSX.Element {
                           </Link>
                         </>
                       )
-                    : 'None yet'
+                    : t('None yet')
             }
           ]}
         />
         <PreviewListCard
-          title="Recent events"
-          subtitle="Shows the three newest persisted events by sequence."
+          title={t('Recent events')}
+          subtitle={t('Shows the three newest persisted events by sequence.')}
           isLoading={eventsQuery.isLoading}
-          loadingText="Loading recent events..."
-          errorText={eventsMismatch ? 'Event history belongs to a different Run.' :
+          loadingText={t('Loading recent events...')}
+          errorText={eventsMismatch ? t('Event history belongs to a different Run.') :
             eventsQuery.error ? `Failed to load events: ${formatApiError(eventsQuery.error)}` : undefined}
           items={safeEvents.slice().sort((a, b) => b.event_sequence - a.event_sequence).slice(0, 3)}
-          emptyText="No events are available yet."
+          emptyText={t('No events are available yet.')}
           listAriaLabel="Diagnostics recent events"
           getKey={(event) => event.event_id}
           renderItem={(event) => (
@@ -389,86 +391,86 @@ export function RunDiagnosticsPage(): JSX.Element {
               <strong>{event.event_id}</strong> <span className="status">• Seq {event.event_sequence}</span>
             </Link>
           )}
-          viewAllLink={<Link to={`/runs/${encodeURIComponent(runId)}/events`}>View all events</Link>}
+          viewAllLink={<Link to={`/runs/${encodeURIComponent(runId)}/events`}>{t('View all events')}</Link>}
         />
       </SectionCard>
 
-      <SectionCard title="Availability / artifact state">
+      <SectionCard title={t('Availability / artifact state')}>
         <SummaryPills
           items={[
             {
-              label: 'Finals qualification',
+              label: t('Finals qualification'),
               value: finalsSummaryQuery.isLoading
-                ? 'Loading...'
+                ? t('Loading...')
                 : finalsSummaryQuery.error || finalsMismatch
-                  ? finalsMismatch ? 'Error' : isApiNotFound(finalsSummaryQuery.error)
-                    ? 'Missing'
-                    : 'Error'
+                  ? finalsMismatch ? t('Error') : isApiNotFound(finalsSummaryQuery.error)
+                    ? t('Missing')
+                    : t('Error')
                   : safeFinals?.qualification
-                    ? 'Available'
-                    : 'None yet'
+                    ? t('Available')
+                    : t('None yet')
             },
             {
-              label: 'Finals result',
+              label: t('Finals result'),
               value: finalsSummaryQuery.isLoading
-                ? 'Loading...'
+                ? t('Loading...')
                 : finalsSummaryQuery.error || finalsMismatch
-                  ? finalsMismatch ? 'Error' : isApiNotFound(finalsSummaryQuery.error)
-                    ? 'Missing'
-                    : 'Error'
+                  ? finalsMismatch ? t('Error') : isApiNotFound(finalsSummaryQuery.error)
+                    ? t('Missing')
+                    : t('Error')
                   : safeFinals?.result
-                    ? 'Available'
-                    : 'None yet'
+                    ? t('Available')
+                    : t('None yet')
             },
             {
-              label: 'Latest rollover',
+              label: t('Latest rollover'),
               value: latestRolloverQuery.isLoading
-                ? 'Loading...'
+                ? t('Loading...')
                 : latestRolloverQuery.error || rolloverMismatch
-                  ? rolloverMismatch ? 'Error' : isApiNotFound(latestRolloverQuery.error)
-                    ? 'Missing'
-                    : 'Error'
+                  ? rolloverMismatch ? t('Error') : isApiNotFound(latestRolloverQuery.error)
+                    ? t('Missing')
+                    : t('Error')
                   : safeRollover?.rollover
-                    ? 'Available'
-                    : 'None yet'
+                    ? t('Available')
+                    : t('None yet')
             },
-            { label: 'Source metadata', value: artifactAvailability({ isLoading: sourceQuery.isLoading, error: sourceQuery.error, availableLabel: sourceQuery.data ? 'Available' : '', noneLabel: 'None yet' }) },
-            { label: 'Lineage metadata', value: artifactAvailability({ isLoading: lineageQuery.isLoading, error: lineageMismatch ? new Error('Run mismatch') : lineageQuery.error, availableLabel: safeLineage ? 'Available' : '', noneLabel: 'None yet' }) },
+            { label: t('Source metadata'), value: t(artifactAvailability({ isLoading: sourceQuery.isLoading, error: sourceQuery.error, availableLabel: sourceQuery.data ? t('Available') : '', noneLabel: 'None yet' })) },
+            { label: t('Lineage metadata'), value: t(artifactAvailability({ isLoading: lineageQuery.isLoading, error: lineageMismatch ? new Error('Run mismatch') : lineageQuery.error, availableLabel: safeLineage ? t('Available') : '', noneLabel: 'None yet' })) },
             {
-              label: 'Events',
+              label: t('Events'),
               value: eventsQuery.isLoading
-                ? 'Loading...'
+                ? t('Loading...')
                 : eventsQuery.error || eventsMismatch
-                  ? 'Error'
+                  ? t('Error')
                   : safeEvents.length > 0
-                    ? 'Available'
-                    : 'None yet'
+                    ? t('Available')
+                    : t('None yet')
             },
             {
-              label: 'Ranking snapshots',
+              label: t('Ranking snapshots'),
               value: rankingSnapshotsQuery.isLoading
-                ? 'Loading...'
+                ? t('Loading...')
                 : rankingSnapshotsQuery.error || rankingsMismatch
-                  ? 'Error'
+                  ? t('Error')
                   : safeRankingSnapshots.length > 0
-                    ? 'Available'
-                    : 'None yet'
+                    ? t('Available')
+                    : t('None yet')
             },
             {
-              label: 'Race snapshots',
+              label: t('Race snapshots'),
               value: raceSnapshotsQuery.isLoading
-                ? 'Loading...'
+                ? t('Loading...')
                 : raceSnapshotsQuery.error || racesMismatch
-                  ? 'Error'
+                  ? t('Error')
                   : safeRaceSnapshots.length > 0
-                    ? 'Available'
-                    : 'None yet'
+                    ? t('Available')
+                    : t('None yet')
             }
           ]}
         />
       </SectionCard>
 
-      <SectionCard title="Most relevant next inspection links">
+      <SectionCard title={t('Most relevant next inspection links')}>
         <ul className="item-list" aria-label="Diagnostics next inspection links">
           {latestCompletedEvent ? (
             <li>
@@ -525,28 +527,28 @@ export function RunDiagnosticsPage(): JSX.Element {
           !hasLineageChildren &&
           !(safeFinals?.qualification || safeFinals?.result) ? (
             <li>
-              <span className="status">No targeted inspection links yet. Use quick navigation below.</span>
+              <span className="status">{t('No targeted inspection links yet. Use quick navigation below.')}</span>
             </li>
           ) : null}
         </ul>
       </SectionCard>
 
-      <SectionCard title="Quick navigation">
+      <SectionCard title={t('Quick navigation')}>
         <ul className="item-list" aria-label="Diagnostics quick navigation">
           <li>
-            <Link to={`/runs/${encodeURIComponent(runId)}`}>Run Detail</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}`}>{t('Run Detail')}</Link>
           </li>
           <li>
-            <Link to={`/runs/${encodeURIComponent(runId)}/events`}>Events</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/events`}>{t('Events')}</Link>
           </li>
           <li>
-            <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>Season Calendar</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>{t('Season Calendar')}</Link>
           </li>
           <li>
             {nextPlannedWeek !== null ? (
-              <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${nextPlannedWeek}`}>Week Detail (current week)</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${nextPlannedWeek}`}>{t('Week Detail (current week)')}</Link>
             ) : (
-              <span>Week Detail (current week unavailable)</span>
+              <span>{t('Week Detail (current week unavailable)')}</span>
             )}
           </li>
           <li>
@@ -556,19 +558,19 @@ export function RunDiagnosticsPage(): JSX.Element {
             <Link to={`/runs/${encodeURIComponent(runId)}/finals`}>World Tour Finals</Link>
           </li>
           <li>
-            <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>Season Rollover</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>{t('Season Rollover')}</Link>
           </li>
           <li>
-            <Link to={`/runs/${encodeURIComponent(runId)}/bootstrap-lineage`}>Bootstrap / Lineage</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/bootstrap-lineage`}>{t('Bootstrap / Lineage')}</Link>
           </li>
           <li>
-            <Link to={`/runs/${encodeURIComponent(runId)}/season-chain`}>Season Chain</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/season-chain`}>{t('Season Chain')}</Link>
           </li>
           <li>
-            <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/ranking`}>Ranking snapshots</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/ranking`}>{t('Ranking snapshots')}</Link>
           </li>
           <li>
-            <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/race`}>Race snapshots</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/race`}>{t('Race snapshots')}</Link>
           </li>
         </ul>
       </SectionCard>

@@ -399,4 +399,43 @@ describe('ActivityPage', () => {
     expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)
   })
 
+  it('keeps historic snapshot activity but refuses to borrow week and plan links from a reused event ID', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [{
+      kind: 'ranking_snapshot', sequence: 9, label: 'Historic ranking E1',
+      season: 2026, week: null, event_id: null, snapshot_sequence: 9,
+      source_event_id: 'E1', related_run_id: null
+    }] })
+    mockContext()
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByRole('link', { name: 'Open ranking snapshot detail' })).toHaveAttribute(
+      'href', '/runs/run-a/snapshots/ranking/9'
+    )
+    expect(screen.queryByRole('link', { name: 'Open source planned-event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open source persisted event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail page/i })).not.toBeInTheDocument()
+  })
+
+  it('reports inconsistent current-season run/calendar evidence without guessing administrative links', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [{
+      kind: 'admin_wildcard_assignment', sequence: 12, label: 'Admin wildcard E1',
+      season: null, week: null, event_id: 'E1', snapshot_sequence: null,
+      source_event_id: null, related_run_id: null
+    }] })
+    mockContext()
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2027, next_event_index: 0, total_events: 1,
+        completed_event_ids: [] },
+      season_state: { season: 2026, next_event_index: 0, completed_event_ids: [],
+        ordered_events: [{ event_id: 'E1', season: 2026, week: 1, tour: 'WORLD',
+          category: 'PLATINUM', template_id: 'T-E1' }] }
+    })
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByText('Run season and ordered plan disagree. Planned links are unavailable.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open wildcard event planned detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail page/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open wildcard event persisted detail' })).toHaveAttribute(
+      'href', '/runs/run-a/events/E1'
+    )
+  })
+
 })

@@ -368,7 +368,7 @@ function SnapshotDetail({
               sourceWeek != null && canNavigateWeek ? (
                 <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${sourceWeek}`}>{t('Open week detail page')} (W{sourceWeek})</Link>
               ) : (
-                !canNavigateWeek ? t('Current-season week link unavailable for this historic event.') : t('No source week context available.')
+                sourceWeek == null ? t('No source week context available.') : !canNavigateWeek ? t('Current-season week link unavailable for this historic event.') : t('No source week context available.')
               )
           },
           { label: t('Season calendar'), value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>{t('Open season calendar browser')}</Link> },

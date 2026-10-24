@@ -197,7 +197,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         {snapshotMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
         <button type="button" onClick={() => void query.refetch()}>{t('Refresh read-only data')}</button>
         {query.isLoading && <p className="status">{t('Loading snapshots history...')}</p>}
-        {query.error && <p className="error">Failed to load snapshots history: {formatApiError(query.error)}</p>}
+        {query.error && <p className="error">{t('Failed to load snapshots history')}: {formatApiError(query.error)}</p>}
         {!query.isLoading && !query.error && !snapshotMismatch && snapshots.length === 0 && (
           <EmptyState message={t('No snapshots are available for this run yet.')} />
         )}
@@ -308,13 +308,13 @@ function SnapshotDetail({
         items={[
           {
             label: t('Snapshot detail'),
-            value: <Link to={`/runs/${runId}/snapshots/${mode}/${snapshot.snapshot_sequence}`}>Open dedicated snapshot detail page</Link>
+            value: <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}/${snapshot.snapshot_sequence}`}>Open dedicated snapshot detail page</Link>
           },
           {
             label: t('Source persisted event'),
             value:
               sourceEventId && persistedEvent ? (
-                <Link to={`/runs/${runId}/events/${encodeURIComponent(sourceEventId)}`}>Open source event detail page</Link>
+                <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(sourceEventId)}`}>Open source event detail page</Link>
               ) : (
                 'Source persisted event detail unavailable.'
               )
@@ -322,7 +322,7 @@ function SnapshotDetail({
           {
             label: t('Source planned event'),
             value: sourceEventId && plannedContext ? (
-              <Link to={`/runs/${runId}/calendar/${encodeURIComponent(sourceEventId)}`}>Open planned-event detail page</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(sourceEventId)}`}>Open planned-event detail page</Link>
             ) : (
               t('No ordered-plan match for source_event_id.')
             )
@@ -331,17 +331,17 @@ function SnapshotDetail({
             label: t('Source week detail'),
             value:
               sourceWeek != null ? (
-                <Link to={`/runs/${runId}/weeks/${sourceWeek}`}>Open week detail page (W{sourceWeek})</Link>
+                <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${sourceWeek}`}>Open week detail page (W{sourceWeek})</Link>
               ) : (
                 t('No source week context available.')
               )
           },
-          { label: t('Season calendar'), value: <Link to={`/runs/${runId}/calendar`}>Open season calendar browser</Link> },
+          { label: t('Season calendar'), value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>Open season calendar browser</Link> },
           {
             label: `${siblingMode} snapshots`,
             value:
               sourceEventId && siblingMatchCount > 0 ? (
-                <Link to={`/runs/${runId}/snapshots/${siblingMode}`}>Open {siblingMode} snapshots for matching source_event_id</Link>
+                <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${siblingMode}`}>Open {siblingMode} snapshots for matching source_event_id</Link>
               ) : (
                 `No ${siblingMode} snapshots share this source_event_id.`
               )

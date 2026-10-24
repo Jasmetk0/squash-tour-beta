@@ -127,10 +127,8 @@ describe('SnapshotDetailPage', () => {
 
     expect(await screen.findByText(/source_event_id is present, but this event is not in season_state\.ordered_events/i)).toBeInTheDocument()
     expect(screen.getByText(/Source event detail unavailable/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Open planned-event detail/i })).toHaveAttribute(
-      'href',
-      '/runs/run-a/calendar/UNKNOWN-EVENT'
-    )
+    // A reference absent from the ordered plan must not become an invented detail link.
+    expect(screen.queryByRole('link', { name: /Open planned-event detail/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Open week detail/i })).not.toBeInTheDocument()
   })
 

@@ -21,7 +21,9 @@ type Mode = 'ranking' | 'race'
 
 const MISSING_SOURCE_EVENT_ID_FALLBACK = 'Missing source_event_id'
 
+import { useHistoryText } from './runHistoryText'
 export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
+  const t = useHistoryText()
   const { runId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedSequence, setSelectedSequence] = useState<number | null>(null)
@@ -125,7 +127,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
 
   const selected = filteredSnapshots.find((snapshot) => snapshot.snapshot_sequence === selectedSequence) ?? null
 
-  const title = mode === 'ranking' ? 'Ranking snapshots' : 'Race snapshots'
+  const title = mode === 'ranking' ? t('Ranking snapshots') : t('Race snapshots')
   const siblingMatchCount = selected?.source_event_id
     ? (siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === selected.source_event_id).length ?? 0)
     : 0
@@ -139,20 +141,20 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
       />
       <CurrentContextStrip
         items={[
-          { label: 'Run', value: runId || 'unknown' },
-          { label: 'Mode', value: mode },
-          { label: 'Snapshots', value: snapshots.length },
-          { label: 'Matching filters', value: filteredSnapshots.length },
-          { label: 'Selected', value: selected?.snapshot_sequence ?? 'None' }
+          { label: t('Run'), value: runId || 'unknown' },
+          { label: t('Mode'), value: mode },
+          { label: t('Snapshots'), value: snapshots.length },
+          { label: t('Matching filters'), value: filteredSnapshots.length },
+          { label: t('Selected'), value: selected?.snapshot_sequence ?? t('None') }
         ]}
       />
 
-      <SectionCard title="Filters">
+      <SectionCard title={t('Filters')}>
         <div className="grid">
           <label>
-            Week
+            {t('Week')}
             <select aria-label="Filter snapshots by week" value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
-              <option value="">All weeks</option>
+              <option value="">{t('All weeks')}</option>
               {weekOptions.map((week) => (
                 <option key={week} value={week}>
                   W{week}
@@ -161,13 +163,13 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             </select>
           </label>
           <label>
-            Category
+            {t('Category')}
             <select
               aria-label="Filter snapshots by category"
               value={categoryFilter}
               onChange={(event) => setCategoryFilter(event.target.value)}
             >
-              <option value="">All categories</option>
+              <option value="">{t('All categories')}</option>
               {categoryOptions.map((category) => (
                 <option key={category} value={category}>
                   {category}
@@ -187,14 +189,14 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         </div>
       </SectionCard>
 
-      <SectionCard title="Snapshot timeline">
-        {query.isLoading && <p className="status">Loading snapshots history...</p>}
+      <SectionCard title={t('Snapshot timeline')}>
+        {query.isLoading && <p className="status">{t('Loading snapshots history...')}</p>}
         {query.error && <p className="error">Failed to load snapshots history: {formatApiError(query.error)}</p>}
         {!query.isLoading && !query.error && snapshots.length === 0 && (
-          <EmptyState message="No snapshots are available for this run yet." />
+          <EmptyState message={t('No snapshots are available for this run yet.')} />
         )}
         {!query.isLoading && !query.error && snapshots.length > 0 && filteredSnapshots.length === 0 && (
-          <EmptyState message="No snapshots match the current filters." />
+          <EmptyState message={t('No snapshots match the current filters.')} />
         )}
 
         {filteredSnapshots.length > 0 && (
@@ -204,7 +206,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             getLabel={(snapshot) => `${snapshot.snapshot_sequence}. ${snapshot.snapshot_kind}`}
             getSubLabel={(snapshot) => {
               const sourceEventId = snapshot.source_event_id
-              if (!sourceEventId) return 'No source_event_id'
+              if (!sourceEventId) return t('No source_event_id')
               const plan = plannedContext.get(sourceEventId)
               const persisted = persistedEventsById.get(sourceEventId)
               const week = persisted?.week ?? plan?.week
@@ -216,7 +218,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
                 segments.push(plan.tour)
                 segments.push(plan.templateId)
               } else {
-                segments.push('No ordered-plan match')
+                segments.push(t('No ordered-plan match'))
               }
               return segments.join(' · ')
             }}
@@ -234,7 +236,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         )}
       </SectionCard>
 
-      <SectionCard title="Selected snapshot detail">
+      <SectionCard title={t('Selected snapshot detail')}>
         {selected ? (
           <SnapshotDetail
             snapshot={selected}
@@ -246,7 +248,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             siblingMatchCount={siblingMatchCount}
           />
         ) : (
-          <EmptyState message="Select a snapshot to inspect details." />
+          <EmptyState message={t('Select a snapshot to inspect details.')} />
         )}
       </SectionCard>
     </section>
@@ -270,6 +272,7 @@ function SnapshotDetail({
   siblingMode: Mode
   siblingMatchCount: number
 }): JSX.Element {
+  const t = useHistoryText()
   const sourceEventId = snapshot.source_event_id
   const sourceWeek = persistedEvent?.week ?? plannedContext?.week
 
@@ -277,32 +280,32 @@ function SnapshotDetail({
     <>
       <MetadataList
         items={[
-          { label: 'Sequence', value: snapshot.snapshot_sequence },
-          { label: 'Kind', value: snapshot.snapshot_kind },
-          { label: 'Mode', value: mode },
-          { label: 'Source event ID', value: sourceEventId ?? '—' },
-          { label: 'Week context', value: sourceWeek != null ? `W${sourceWeek}` : 'No week context' },
-          { label: 'Planned category', value: plannedContext?.category ?? 'No ordered-plan match' },
-          { label: 'Planned tour', value: plannedContext?.tour ?? 'No ordered-plan match' },
-          { label: 'Planned template', value: plannedContext?.templateId ?? 'No ordered-plan match' },
-          { label: 'Plan position', value: plannedContext?.planPosition ?? 'No ordered-plan match' },
-          { label: 'Persisted source event', value: persistedEvent ? `Found (sequence ${persistedEvent.eventSequence})` : 'Not found' }
+          { label: t('Sequence'), value: snapshot.snapshot_sequence },
+          { label: t('Kind'), value: snapshot.snapshot_kind },
+          { label: t('Mode'), value: mode },
+          { label: t('Source event ID'), value: sourceEventId ?? '—' },
+          { label: t('Week context'), value: sourceWeek != null ? `W${sourceWeek}` : t('No week context') },
+          { label: t('Planned category'), value: plannedContext?.category ?? t('No ordered-plan match') },
+          { label: t('Planned tour'), value: plannedContext?.tour ?? t('No ordered-plan match') },
+          { label: t('Planned template'), value: plannedContext?.templateId ?? t('No ordered-plan match') },
+          { label: t('Plan position'), value: plannedContext?.planPosition ?? t('No ordered-plan match') },
+          { label: t('Persisted source event'), value: persistedEvent ? `Found (sequence ${persistedEvent.eventSequence})` : t('Not found') }
         ]}
       />
       <SummaryPills
         items={[
-          { label: 'Source event context', value: sourceEventId ? 'Present' : MISSING_SOURCE_EVENT_ID_FALLBACK },
+          { label: t('Source event context'), value: sourceEventId ? t('Present') : t(MISSING_SOURCE_EVENT_ID_FALLBACK) },
           { label: `${siblingMode} siblings`, value: siblingMatchCount > 0 ? siblingMatchCount : 'None for this source event' }
         ]}
       />
       <CompactSummaryCard
         items={[
           {
-            label: 'Snapshot detail',
+            label: t('Snapshot detail'),
             value: <Link to={`/runs/${runId}/snapshots/${mode}/${snapshot.snapshot_sequence}`}>Open dedicated snapshot detail page</Link>
           },
           {
-            label: 'Source persisted event',
+            label: t('Source persisted event'),
             value:
               sourceEventId && persistedEvent ? (
                 <Link to={`/runs/${runId}/events/${encodeURIComponent(sourceEventId)}`}>Open source event detail page</Link>
@@ -311,23 +314,23 @@ function SnapshotDetail({
               )
           },
           {
-            label: 'Source planned event',
+            label: t('Source planned event'),
             value: sourceEventId && plannedContext ? (
               <Link to={`/runs/${runId}/calendar/${encodeURIComponent(sourceEventId)}`}>Open planned-event detail page</Link>
             ) : (
-              'No ordered-plan match for source_event_id.'
+              t('No ordered-plan match for source_event_id.')
             )
           },
           {
-            label: 'Source week detail',
+            label: t('Source week detail'),
             value:
               sourceWeek != null ? (
                 <Link to={`/runs/${runId}/weeks/${sourceWeek}`}>Open week detail page (W{sourceWeek})</Link>
               ) : (
-                'No source week context available.'
+                t('No source week context available.')
               )
           },
-          { label: 'Season calendar', value: <Link to={`/runs/${runId}/calendar`}>Open season calendar browser</Link> },
+          { label: t('Season calendar'), value: <Link to={`/runs/${runId}/calendar`}>Open season calendar browser</Link> },
           {
             label: `${siblingMode} snapshots`,
             value:
@@ -340,7 +343,7 @@ function SnapshotDetail({
         ]}
       />
 
-      <JsonPayloadBlock title="Snapshot payload" emptyText="No snapshot payload is available for this item." payload={snapshot.payload} />
+      <JsonPayloadBlock title={t('Snapshot payload')} emptyText={t('No snapshot payload is available for this item.')} payload={snapshot.payload} />
     </>
   )
 }

@@ -54,6 +54,10 @@ function getEffectiveWeek(
 
   const persisted = persistedEventById.get(contextEventId)
   const planned = plannedContextByEventId.get(contextEventId)
+  // A seasonless activity must not borrow a week from two contradictory
+  // sources merely because they reuse the same event ID.
+  if (item.season == null && persisted?.season != null && planned?.season != null &&
+    persisted.season !== planned.season) return null
   return (persisted && (item.season == null || item.season === persisted.season) ? persisted.week : null) ??
     (planned && (item.season == null || item.season === planned.season) ? planned.week : null) ?? null
 }
@@ -198,18 +202,23 @@ export function ActivityPage(): JSX.Element {
   const selectedContextEventId = selectedItem?.event_id ?? selectedItem?.source_event_id ?? null
   const matchedPlan = selectedContextEventId ? plannedContextByEventId.get(selectedContextEventId) : undefined
   const matchedPersistedEvent = selectedContextEventId ? persistedEventById.get(selectedContextEventId) : undefined
-  const selectedPlannedContext = matchedPlan && (selectedItem?.season == null || matchedPlan.season === selectedItem.season) ? matchedPlan : undefined
-  const selectedPersistedEvent = matchedPersistedEvent && (selectedItem?.season == null || matchedPersistedEvent.season === selectedItem.season) ? matchedPersistedEvent : undefined
+  const ambiguousEventSeason = Boolean(selectedItem && selectedItem.season == null &&
+    matchedPlan && matchedPersistedEvent && matchedPersistedEvent.season != null &&
+    matchedPersistedEvent.season !== matchedPlan.season)
+  const selectedPlannedContext = !ambiguousEventSeason && matchedPlan &&
+    (selectedItem?.season == null || matchedPlan.season === selectedItem.season) ? matchedPlan : undefined
+  const selectedPersistedEvent = !ambiguousEventSeason && matchedPersistedEvent &&
+    (selectedItem?.season == null || matchedPersistedEvent.season === selectedItem.season) ? matchedPersistedEvent : undefined
   const selectedWeek = selectedItem ? getEffectiveWeek(selectedItem, plannedContextByEventId, persistedEventById) : null
   const selectedEvidenceSeason = selectedItem?.season ?? selectedPlannedContext?.season ?? selectedPersistedEvent?.season ?? null
-  const canInspectCurrentWeek = selectedItem && !plannedContextUnavailable &&
+  const canInspectCurrentWeek = selectedItem && !plannedContextUnavailable && !ambiguousEventSeason &&
     selectedEvidenceSeason != null && selectedEvidenceSeason === runQuery.data?.run.season
   const bridgeItems = selectedItem ? activityBridgeItems(runId, selectedItem, selectedWeek, t, {
     contextEventId: selectedContextEventId,
     hasPersistedContext: Boolean(selectedPersistedEvent),
     hasPlannedContext: Boolean(selectedPlannedContext),
-    plannedContextUnavailable,
-    persistedContextUnavailable,
+    plannedContextUnavailable: plannedContextUnavailable || ambiguousEventSeason,
+    persistedContextUnavailable: persistedContextUnavailable || ambiguousEventSeason,
     canInspectCurrentWeek: Boolean(canInspectCurrentWeek)
   }) : []
   const availableBridgeLinks = bridgeItems.filter(({ value }) => typeof value !== 'string').length
@@ -322,6 +331,7 @@ export function ActivityPage(): JSX.Element {
 
       <SectionCard title={t('Selected activity detail')}>
         {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>}
+        {ambiguousEventSeason && <p role="alert" className="error">{t('Activity source event ID has conflicting seasons. Its navigation links are unavailable.')}</p>}
         {selectedItem ? (
           <>
             <MetadataList
@@ -338,7 +348,7 @@ export function ActivityPage(): JSX.Element {
                   label: t('Plan context'),
                   value: selectedPlannedContext
                     ? `Plan #${selectedPlannedContext.planPosition} (${selectedPlannedContext.category}, ${selectedPlannedContext.templateId})`
-                    : plannedContextUnavailable ? t('Unavailable') : t('No ordered-plan match')
+                    : plannedContextUnavailable || ambiguousEventSeason ? t('Unavailable') : t('No ordered-plan match')
                 }
               ]}
             />

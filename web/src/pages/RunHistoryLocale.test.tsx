@@ -231,4 +231,60 @@ describe('Run historical UI CS/EN read-only behavior', () => {
     expect(api.getFinalsResult).toHaveBeenCalledTimes(1)
   })
 
+  it('hides cached activity rows after a failed read-only refresh and restores them after recovery', async () => {
+    const first = { run_id: 'run-a', items: [item('E1', 1)] }
+    api.getRunActivity.mockResolvedValueOnce(first)
+      .mockRejectedValueOnce(new Error('temporary activity outage'))
+      .mockResolvedValueOnce(first)
+    const user = userEvent.setup()
+    renderHistory(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByRole('list', { name: 'Run activity feed list' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load activity feed: temporary activity outage')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Run activity feed list' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open persisted event detail' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByRole('list', { name: 'Run activity feed list' })).toBeInTheDocument()
+    expect(api.getRunActivity).toHaveBeenCalledTimes(3)
+  })
+
+  it('never displays cached event detail or event list as current after their own refresh fails', async () => {
+    const stored = { run_id: 'run-a', events: [event('E1', 1)] }
+    api.listEvents.mockResolvedValueOnce(stored)
+      .mockRejectedValueOnce(new Error('temporary events outage'))
+      .mockResolvedValueOnce(stored)
+    const user = userEvent.setup()
+    renderHistory(<EventsPage />, '/runs/run-a/events')
+    expect(await screen.findByRole('list', { name: 'Events history list' })).toBeInTheDocument()
+    const timeline = screen.getByRole('heading', { name: 'Event timeline' }).closest('article') as HTMLElement
+    await user.click(within(timeline).getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load events history: temporary events outage')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Events history list' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open dedicated event detail page' })).not.toBeInTheDocument()
+    await user.click(within(timeline).getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByRole('list', { name: 'Events history list' })).toBeInTheDocument()
+    expect(api.listEvents).toHaveBeenCalledTimes(3)
+  })
+
+  it('hides cached snapshot list after a failed refresh but restores the same stored zero on success', async () => {
+    const stored = { run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 1, snapshot_kind: 'WEEK', source_event_id: 'E1',
+        payload: { points: 0 } }
+    ] }
+    api.listRankingSnapshots.mockResolvedValueOnce(stored)
+      .mockRejectedValueOnce(new Error('temporary ranking outage'))
+      .mockResolvedValueOnce(stored)
+    const user = userEvent.setup()
+    renderHistory(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    expect(await screen.findByRole('list', { name: 'Ranking snapshots list' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load snapshots history: temporary ranking outage')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Ranking snapshots list' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open dedicated snapshot detail page' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByRole('list', { name: 'Ranking snapshots list' })).toBeInTheDocument()
+    expect(screen.getByText(/"points": 0/)).toBeInTheDocument()
+    expect(api.listRankingSnapshots).toHaveBeenCalledTimes(3)
+  })
+
 })

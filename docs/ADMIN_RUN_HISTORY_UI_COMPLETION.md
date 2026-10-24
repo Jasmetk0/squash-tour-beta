@@ -139,6 +139,16 @@ No backend source schema, native Product Run history, global query configuration
 
 These changes are limited to read-only history pages, their translation dictionary, tests and documentation; backend/API contracts and Product Run Saved Revision history were not altered.
 
+## Follow-up — direct snapshot versus historical index reconciliation
+
+The sequence-scoped snapshot detail and the independently loaded history index can disagree even when each response independently belongs to the requested Run. Matching the numeric sequence alone does not establish that both reads refer to the same source evidence.
+
+- For a selected snapshot sequence present in the index, the detail view verifies **exactly one** index entry and matching `snapshot_kind` and `source_event_id` (including null source values). Two entries with the same sequence, or an explicit source/kind conflict, trigger a localized CS/EN provenance warning.
+- On conflict, unverified source-event, current-season plan/week, cross-mode sibling, and previous/next links are hidden rather than derived from a contradictory index. The **direct snapshot record and raw payload remain visible**, including saved numeric zero values and independent links to the overall histories.
+- An index request error or an index that does not include the requested sequence retains its existing unavailable-navigation state, not an invented claim of identity conflict.
+- Tests exercise source ID mismatch, snapshot-kind mismatch, duplicate index sequence and recovery following a later read-only index refresh. Recovery reveals the previously hidden links only after the two independently loaded records agree; it does not refetch the direct snapshot.
+- No backend/API shape, query key, write endpoint, Product Run Saved Revision implementation or parallel development file is affected.
+
 ## Verification plan and evidence
 
 - Retained English historical regressions explicitly select English inside their test mocks; they do not weaken or delete legacy sequence/progress mismatch assertions.

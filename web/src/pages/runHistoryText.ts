@@ -407,7 +407,12 @@ const czech: Record<string, string> = {
   "Snapshot history context unavailable.": "Kontext historie snímků není dostupný.",
   "Snapshot status could not be verified.": "Stav snímku nelze ověřit.",
   "Returned history is limited to the records exposed by this endpoint.": "Historie je omezena na záznamy zpřístupněné tímto endpointem.",
-  "Rollover detail available": "Detail přechodu je dostupný"
+  "Rollover detail available": "Detail přechodu je dostupný",
+  "Run activity could not be found for this Run.": "Historie aktivity tohoto Runu nebyla v daném zdroji nalezena.",
+  "Events history could not be found for this Run.": "Historie událostí tohoto Runu nebyla v daném zdroji nalezena.",
+  "Snapshot history could not be found for this Run.": "Historie snímků tohoto Runu nebyla v daném zdroji nalezena.",
+  "Selected event detail is not found.": "Detail vybrané události nebyl ve zdroji nalezen.",
+  "Selected source not found; this does not prove historical nonexistence.": "Vybraný zdroj nebyl nalezen. To neprokazuje jeho historickou neexistenci."
 }
 
 export function useHistoryText(): (english: string) => string {

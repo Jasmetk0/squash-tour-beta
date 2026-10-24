@@ -119,6 +119,8 @@ export function EventsPage(): JSX.Element {
     enabled: Boolean(runId && selectedEventId)
   })
 
+  const eventDetailMismatch = Boolean(eventDetailQuery.data && selectedEvent && eventDetailQuery.data.event_id !== selectedEvent.event_id)
+
   return (
     <section className="panel">
       <RunScopedHeader
@@ -281,11 +283,13 @@ export function EventsPage(): JSX.Element {
             />
 
             {runQuery.error ? <p className="error">Failed to load planned season context: {formatApiError(runQuery.error)}</p> : null}
+            {eventDetailMismatch && <p role="alert" className="error">{t('Event detail does not match the selected event; its payload is hidden.')}</p>}
+            <button type="button" onClick={() => void eventDetailQuery.refetch()} disabled={!selectedEvent}>{t('Refresh read-only data')}</button>
             {eventDetailQuery.isLoading && <p className="status">{t('Loading selected event payload...')}</p>}
             {eventDetailQuery.error && (
               <p className="error">Failed to load selected event payload: {formatApiError(eventDetailQuery.error)}</p>
             )}
-            {eventDetailQuery.data && (
+            {eventDetailQuery.data && !eventDetailMismatch && (
               <JsonPayloadBlock
                 title={t('Event payload')}
                 emptyText={t('No event payload is available for this item.')}

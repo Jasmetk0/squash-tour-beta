@@ -46,6 +46,30 @@ def reject_rehashed_terminal_history(database, closed, directory):
             with pytest.raises((ValueError, TypeError)):
                 repository.get_branch_saved_revision(revision_id=source_id)
         clone.unlink()
+    # Keep the result unchanged but rehash a false horizon in its actual
+    # physical pre-play source. Own-result hashing cannot detect this dependency.
+    clone = directory / 'forged-physical-played-calendar.sqlite'
+    with sqlite3.connect(database) as original, sqlite3.connect(clone) as target:
+        original.backup(target)
+    with ApiServer(database_url=f'sqlite:///{clone}') as isolated:
+        repository = isolated.app.state.runtime.repository
+        with repository._session_factory.begin() as session:
+            saved = session.get(BranchSavedRevisionModel, source_id)
+            result_body = json.loads(saved.payload_json)
+            tour = result_body['content']['calendar_tour_authority']['state']
+            played_id = next(a['played_saved_head'] for a in tour['editions'] if a['result_confirmed'])
+            row = session.get(BranchSavedRevisionModel, played_id)
+            body = json.loads(row.payload_json)
+            body['run']['run_calendar']['season_count'] += 1
+            row.payload_json = json.dumps(body)
+            row.content_hash = saved_revision_content_hash(
+                revision_id=row.revision_id, run_id=row.run_id, branch_id=row.branch_id,
+                sequence=row.sequence, parent_revision_id=row.parent_revision_id,
+                kind=row.kind, payload_schema_version=row.payload_schema_version,
+                payload=body, change_summary=json.loads(row.change_summary_json))
+        with pytest.raises(ValueError):
+            repository.get_branch_saved_revision(revision_id=source_id)
+    clone.unlink()
     # A plausible, internally rehashed final summary also needs actual ancestry.
     clone = directory / 'forged-closing-summary.sqlite'
     with sqlite3.connect(database) as original, sqlite3.connect(clone) as target:

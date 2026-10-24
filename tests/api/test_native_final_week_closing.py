@@ -100,6 +100,8 @@ def test_real_final_week_edition_closing_save_restart_and_extension(tmp_path, mo
         url = scope(server) + '/native/finish-original-run/closure'
         code, review = _request('GET', url)
         assert code == 200, review
+        if not forked:
+            assert _request('GET', server.base_url + '/viewer/runs/run/calendar-tour/seasons/0')[0] == 409
         assert review['season_summary']['played_match_count'] == 3
         assert review['season_summary']['awarded_points'] == 220
         assert sorted(r['points'] for r in review['closing_ranking']['rows']) == [30, 30, 60, 100]
@@ -135,6 +137,9 @@ def test_real_final_week_edition_closing_save_restart_and_extension(tmp_path, mo
             )
             reject_rehashed_terminal_history(database, closed, tmp_path)
         task_id, opening_id = task['task_id'], opening['task_id']
+        from beta_engine.infrastructure.db.models import FullSimulationTaskModel
+        with repo._session_factory() as session:
+            original_task_bytes = session.get(FullSimulationTaskModel, task_id).payload_json
     # A fresh server/repository physically reopens the actual committed file.
     with ApiServer(database_url=db) as server:
         server.native_task_branch = branch
@@ -147,6 +152,12 @@ def test_real_final_week_edition_closing_save_restart_and_extension(tmp_path, mo
         assert code == 200, report
         assert report['selected']['closing_ranking']['rows'] == review_rows(closed, branch)
         assert sum(r['awarded_points'] for r in report['selected']['players']) == 220
+        code, viewer = _request('GET', server.base_url + '/viewer/runs/run/calendar-tour/seasons/0')
+        if not forked:
+            assert code == 200, viewer
+            assert viewer['selected']['closing_ranking']['rows'] == review_rows(closed, branch)
+        else:
+            assert code == 409, viewer
         # Explicit strict extension must not revive either terminal command.
         code, review = extension(server, 2)
         assert code == 200 and review['can_save'], review
@@ -155,6 +166,11 @@ def test_real_final_week_edition_closing_save_restart_and_extension(tmp_path, mo
         assert wait(server, task_id)['original_command'] == original
         assert wait(server, task_id)['state'] == 'complete'
         assert wait(server, opening_id)['original_command'] == opening_command
+        repo = server.app.state.runtime.repository
+        with repo._session_factory() as session:
+            assert session.get(FullSimulationTaskModel, task_id).payload_json == original_task_bytes
+        assert repo.get_branch_saved_revision(revision_id=closed.revision_id) == closed
+        assert repo.get_branch_saved_revision(revision_id=original_source) == source
         next_command = reviewed(server, {'season_index': 1, 'week': 1}, name='explicit-new-continuation')
         continued = start(server, next_command)
         assert continued['checkpoint'] == 'native_season_transition_review_required', continued

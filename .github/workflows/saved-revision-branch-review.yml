@@ -24,6 +24,7 @@ on:
       - 'src/beta_engine/infrastructure/db/native_fork_saved_root.py'
       - 'src/beta_engine/infrastructure/db/native_fork_source.py'
       - 'src/beta_engine/infrastructure/db/calendar_tour.py'
+      - 'src/beta_engine/infrastructure/db/calendar_terminal_results.py'
       - 'src/beta_engine/domain/tournaments/calendar_tour.py'
       - 'src/beta_engine/domain/rankings/calendar_terminal_result.py'
       - 'src/beta_engine/application/native_full_simulation_closure.py'

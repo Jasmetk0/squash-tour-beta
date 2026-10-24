@@ -20,6 +20,8 @@ on:
       - 'src/beta_engine/**/calendar_lifecycle.py'
       - 'src/beta_engine/infrastructure/db/player_lifecycle_state.py'
       - 'src/beta_engine/infrastructure/db/repositories.py'
+      - 'src/beta_engine/infrastructure/db/calendar_terminal_results.py'
+      - 'src/beta_engine/domain/rankings/calendar_terminal_result.py'
       - 'src/beta_engine/infrastructure/db/calendar_standalone_match_state.py'
       - 'web/src/pages/CalendarTour*'
       - 'web/src/pages/NativeTransitionReadiness*'

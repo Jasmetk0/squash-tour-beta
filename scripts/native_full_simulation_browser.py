@@ -157,6 +157,9 @@ def main():
         assert code == 200, summary
         assert max(r["points"] for r in summary["selected"]["closing_ranking"]["rows"]) == 100
         result["saved_season_summary"] = summary
+        code, viewer = _request("GET", restarted.base_url + "/viewer/runs/run/calendar-tour/seasons/0")
+        assert code == 200, viewer
+        assert viewer["selected"]["closing_ranking"] == summary["selected"]["closing_ranking"]
         result["sqlite_restart_verified"] = True
         with (root / "restarted-frontend.log").open("w") as log:
             frontend = subprocess.Popen(["npm", "--prefix", "web", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5173", "--strictPort"],

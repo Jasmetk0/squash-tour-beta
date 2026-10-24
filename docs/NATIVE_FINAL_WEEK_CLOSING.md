@@ -75,3 +75,26 @@ it neither creates a second result nor retroactively claims that Week 1 existed.
 The production HTTP matrix, browser and adversarial evidence will be recorded
 here when executed. Draft skips are not passes. This bounded slice does not
 certify the whole pre-alpha or the reference 50-season release acceptance.
+
+## Separate adversarial review
+
+The separate pass traced result construction, ordinary and native-fork replay,
+physical pre-play origins, final closure ancestry, approval/Save boundaries,
+historical reads and strict extension. It found two additional boundaries:
+independent forks report `run_horizon_exhausted` at their real final point, and
+ordinary Saved terminal results also require an independently resolved physical
+pre-play calendar (including rejection of changing the source to claim a future
+publication). Both are addressed without relaxing calendar bounds. Source checks
+reuse existing per-snapshot Saved proofs and do not add sporting replay to task
+polls. No unrelated shared-file lint refactor is included.
+
+A genuine completed/extended original fixture was copied by isolated SQLite
+backup, cold reopened and validated with the new source verifier. Six separate
+rehash attacks changed result owner, played source, eligibility time, points,
+the physical pre-play horizon and final summary. All were rejected: complete
+positive/rejection run 100.05 s. This is reused genuine sporting evidence, not a
+new manually inserted result or a second fresh MatchEngine acceptance claim.
+
+The source is also checked through the existing Saved-only Viewer season-summary
+API; it remains separate from ordinary Official Ranking and Branch selection.
+Known broader Viewer work remains outside this slice.

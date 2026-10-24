@@ -2582,6 +2582,8 @@ class SimulationPersistenceRepository:
                 verify_native_fork_saved_root(
                     self, session, revision=revision, baseline=baseline
                 )
+            from beta_engine.infrastructure.db.calendar_terminal_results import verify_saved_terminal_results
+            verify_saved_terminal_results(self, session, revision)
             from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
             verify_saved_native_closure(self, session, revision)
             if baseline is not None:

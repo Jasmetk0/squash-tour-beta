@@ -40,8 +40,8 @@ function makeWeekContext(item: RunActivityItem, effectiveWeek: number | null): s
 
 function getEffectiveWeek(
   item: RunActivityItem,
-  plannedContextByEventId: Map<string, { week: number; category: string; templateId: string; planPosition: number }>,
-  persistedEventById: Map<string, { week: number | null; eventSequence: number }>
+  plannedContextByEventId: Map<string, { season: number; week: number; category: string; templateId: string; planPosition: number }>,
+  persistedEventById: Map<string, { season: number; week: number | null; eventSequence: number }>
 ): number | null {
   if (item.week != null) {
     return item.week
@@ -52,7 +52,10 @@ function getEffectiveWeek(
     return null
   }
 
-  return persistedEventById.get(contextEventId)?.week ?? plannedContextByEventId.get(contextEventId)?.week ?? null
+  const persisted = persistedEventById.get(contextEventId)
+  const planned = plannedContextByEventId.get(contextEventId)
+  return (persisted && (item.season == null || item.season === persisted.season) ? persisted.week : null) ??
+    (planned && (item.season == null || item.season === planned.season) ? planned.week : null) ?? null
 }
 
 import { useHistoryText } from './runHistoryText'
@@ -83,17 +86,21 @@ export function ActivityPage(): JSX.Element {
   const activityMismatch = Boolean(activityQuery.data?.run_id && activityQuery.data.run_id !== runId)
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const items = activityMismatch ? [] : activityQuery.data?.items ?? []
+  const planSeasonMismatch = Boolean(runQuery.data && runQuery.data.run.run_id === runId &&
+    runQuery.data.season_state.season !== runQuery.data.run.season)
   const plannedContextUnavailable = runQuery.isLoading || Boolean(runQuery.error) ||
-    !runQuery.data || runQuery.data.run.run_id !== runId
+    !runQuery.data || runQuery.data.run.run_id !== runId || planSeasonMismatch
   const persistedContextUnavailable = eventsQuery.isLoading || Boolean(eventsQuery.error) ||
     !eventsQuery.data || eventsMismatch
   const indexedItems = useMemo<IndexedActivityItem[]>(() => items.map((item, index) => ({ item, index })), [items])
 
   const plannedContextByEventId = useMemo(() => {
-    const orderedEvents = runQuery.data?.run.run_id === runId ? runQuery.data.season_state.ordered_events : []
-    const map = new Map<string, { week: number; category: string; templateId: string; planPosition: number }>()
+    const orderedEvents = !plannedContextUnavailable ? runQuery.data?.season_state.ordered_events ?? [] : []
+    const map = new Map<string, { season: number; week: number; category: string; templateId: string; planPosition: number }>()
     orderedEvents.forEach((event, index) => {
+      if (event.season !== runQuery.data?.season_state.season) return
       map.set(event.event_id, {
+        season: event.season,
         week: event.week,
         category: event.category,
         templateId: event.template_id,
@@ -101,12 +108,12 @@ export function ActivityPage(): JSX.Element {
       })
     })
     return map
-  }, [runId, runQuery.data])
+  }, [runId, runQuery.data, plannedContextUnavailable])
 
   const persistedEventById = useMemo(() => {
-    const map = new Map<string, { week: number | null; eventSequence: number }>()
+    const map = new Map<string, { season: number; week: number | null; eventSequence: number }>()
     ;(eventsMismatch ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
-      map.set(event.event_id, { week: event.week, eventSequence: event.event_sequence })
+      map.set(event.event_id, { season: event.season, week: event.week, eventSequence: event.event_sequence })
     })
     return map
   }, [eventsMismatch, eventsQuery.data?.events])
@@ -188,15 +195,20 @@ export function ActivityPage(): JSX.Element {
   const selectedEntry = filteredItems.find((entry) => entry.index === selectedIndex) ?? null
   const selectedItem = selectedEntry?.item ?? null
   const selectedContextEventId = selectedItem?.event_id ?? selectedItem?.source_event_id ?? null
-  const selectedPlannedContext = selectedContextEventId ? plannedContextByEventId.get(selectedContextEventId) : undefined
-  const selectedPersistedEvent = selectedContextEventId ? persistedEventById.get(selectedContextEventId) : undefined
+  const matchedPlan = selectedContextEventId ? plannedContextByEventId.get(selectedContextEventId) : undefined
+  const matchedPersistedEvent = selectedContextEventId ? persistedEventById.get(selectedContextEventId) : undefined
+  const selectedPlannedContext = matchedPlan && (selectedItem?.season == null || matchedPlan.season === selectedItem.season) ? matchedPlan : undefined
+  const selectedPersistedEvent = matchedPersistedEvent && (selectedItem?.season == null || matchedPersistedEvent.season === selectedItem.season) ? matchedPersistedEvent : undefined
   const selectedWeek = selectedItem ? getEffectiveWeek(selectedItem, plannedContextByEventId, persistedEventById) : null
+  const canInspectCurrentWeek = selectedItem && !plannedContextUnavailable &&
+    selectedItem.season != null && selectedItem.season === runQuery.data?.run.season
   const bridgeItems = selectedItem ? activityBridgeItems(runId, selectedItem, selectedWeek, t, {
     contextEventId: selectedContextEventId,
     hasPersistedContext: Boolean(selectedPersistedEvent),
     hasPlannedContext: Boolean(selectedPlannedContext),
     plannedContextUnavailable,
-    persistedContextUnavailable
+    persistedContextUnavailable,
+    canInspectCurrentWeek: Boolean(canInspectCurrentWeek)
   }) : []
   const availableBridgeLinks = bridgeItems.filter(({ value }) => typeof value !== 'string').length
 
@@ -307,6 +319,7 @@ export function ActivityPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title={t('Selected activity detail')}>
+        {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>}
         {selectedItem ? (
           <>
             <MetadataList
@@ -362,9 +375,10 @@ function activityBridgeItems(
     hasPlannedContext: boolean
     plannedContextUnavailable: boolean
     persistedContextUnavailable: boolean
+    canInspectCurrentWeek: boolean
   }
 ): Array<{ label: string; value: JSX.Element | string }> {
-  const { contextEventId, hasPersistedContext, hasPlannedContext, plannedContextUnavailable, persistedContextUnavailable } = snapshotContext
+  const { contextEventId, hasPersistedContext, hasPlannedContext, plannedContextUnavailable, persistedContextUnavailable, canInspectCurrentWeek } = snapshotContext
   const links: Array<{ label: string; value: JSX.Element | string }> = []
 
   if (item.kind === 'event' && item.event_id) {
@@ -497,7 +511,7 @@ function activityBridgeItems(
     item.kind === 'admin_wildcard_assignment' ||
     item.kind === 'admin_pre_draw_withdrawal_replacement' ||
     item.kind === 'admin_late_replacement_lucky_loser'
-  if (supportsWeekInspection && selectedWeek != null) {
+  if (supportsWeekInspection && selectedWeek != null && canInspectCurrentWeek) {
     links.push({
       label: t('Week detail'),
       value: <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${selectedWeek}`}>{t('Open week detail page')} (W{selectedWeek})</Link>

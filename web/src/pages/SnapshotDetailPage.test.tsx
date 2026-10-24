@@ -77,6 +77,43 @@ describe('SnapshotDetailPage', () => {
     })
   })
 
+
+  it.each([
+    ['historical first', [
+      { event_sequence: 2, event_id: 'E3', season: 2026, week: 35, template_id: 'OLD', tournament_result: null },
+      { event_sequence: 9, event_id: 'E3', season: 2027, week: 2, template_id: 'NEW', tournament_result: null }
+    ]],
+    ['current first', [
+      { event_sequence: 9, event_id: 'E3', season: 2027, week: 2, template_id: 'NEW', tournament_result: null },
+      { event_sequence: 2, event_id: 'E3', season: 2026, week: 35, template_id: 'OLD', tournament_result: null }
+    ]]
+  ])('isolates direct snapshot detail from duplicated persisted source IDs (%s)', async (_name, duplicated) => {
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-a', events: duplicated })
+    api.getRankingSnapshot.mockResolvedValue({
+      snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3',
+      payload: { marker: 'INDEPENDENT_SNAPSHOT', points: 0 }
+    })
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} }
+    ] })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 4, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: {} }
+    ] })
+    renderSnapshotDetailRoute('/runs/run-a/snapshots/ranking/10', 'ranking')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Source event ID is reused in persisted history. Source links and week context are unavailable.'
+    )
+    expect(screen.getByText(/INDEPENDENT_SNAPSHOT/)).toBeInTheDocument()
+    expect(screen.getByText(/"points": 0/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open source event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /race snapshot #4/i })).not.toBeInTheDocument()
+    expect(screen.getByText('Related snapshots currently unavailable')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open events history' })).toBeInTheDocument()
+  })
+
   it('renders source-event context, planned context, and cross-links for ranking snapshots', async () => {
     api.getRankingSnapshot.mockResolvedValue({
       snapshot_sequence: 10,

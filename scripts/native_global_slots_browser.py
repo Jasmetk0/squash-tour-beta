@@ -19,7 +19,7 @@ def main():
     from scripts.native_tour_browser_acceptance import stop_process, wait_http
     from tests.api.test_calendar_global_slots import ready
     from tests.api.test_calendar_tour_flow import inspect
-    from tests.api.test_saved_revision_history_api import ApiServer, _free_port
+    from tests.api.test_saved_revision_history_api import ApiServer
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
@@ -46,7 +46,7 @@ def main():
 
     @contextmanager
     def browser_session(pw, server, language):
-        port = _free_port()
+        port = 5173
         web = f"http://127.0.0.1:{port}"
         with (root / f"frontend-{language}.log").open("w") as log:
             frontend = subprocess.Popen(

@@ -51,7 +51,10 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
 
   const snapshotMismatch = Boolean(query.data?.run_id && query.data.run_id !== runId)
   const snapshots = snapshotMismatch ? [] : query.data?.snapshots ?? []
-  const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
+  const siblingMismatch = Boolean(siblingSnapshotsQuery.data?.run_id && siblingSnapshotsQuery.data.run_id !== runId)
+  const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
+  const runMismatch = Boolean(runQuery.data?.run.run_id && runQuery.data.run.run_id !== runId)
+  const orderedEvents = runQuery.data?.run.run_id === runId ? runQuery.data.season_state.ordered_events : []
   const plannedContext = useMemo(() => {
     const map = new Map<string, { week: number; category: string; tour: string; templateId: string; planPosition: number }>()
     orderedEvents.forEach((event, index) => {
@@ -67,11 +70,11 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   }, [orderedEvents])
   const persistedEventsById = useMemo(() => {
     const map = new Map<string, { eventSequence: number; week: number | null }>()
-    ;(eventsQuery.data?.events ?? []).forEach((event) => {
+    ;(eventsMismatch ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
       map.set(event.event_id, { eventSequence: event.event_sequence, week: event.week })
     })
     return map
-  }, [eventsQuery.data?.events])
+  }, [eventsMismatch, eventsQuery.data?.events])
   const normalizedSourceEventFilter = sourceEventFilter.trim().toLowerCase()
   const filteredSnapshots = snapshots.filter((snapshot) => {
     const sourceEventId = snapshot.source_event_id
@@ -130,7 +133,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
 
   const title = mode === 'ranking' ? t('Ranking snapshots') : t('Race snapshots')
   const siblingMatchCount = selected?.source_event_id
-    ? (siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === selected.source_event_id).length ?? 0)
+    ? (siblingMismatch ? 0 : siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === selected.source_event_id).length ?? 0)
     : 0
 
   return (
@@ -193,6 +196,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         <button type="button" onClick={() => { setWeekFilter(''); setCategoryFilter(''); setSourceEventFilter('') }}>{t('Reset filters')}</button>
       </SectionCard>
 
+      {(runMismatch || eventsMismatch || siblingMismatch) && <p role="alert" className="error">{t('Snapshot sibling history belongs to another Run.')}</p>}
       <SectionCard title={t('Snapshot timeline')}>
         {snapshotMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
         <button type="button" onClick={() => void query.refetch()}>{t('Refresh read-only data')}</button>
@@ -216,10 +220,10 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
               const plan = plannedContext.get(sourceEventId)
               const persisted = persistedEventsById.get(sourceEventId)
               const week = persisted?.week ?? plan?.week
-              const segments = [`Source ${sourceEventId}`]
+              const segments = [`${t('Source event')} ${sourceEventId}`]
               if (week != null) segments.push(`W${week}`)
               if (plan) {
-                segments.push(`Plan #${plan.planPosition}`)
+                segments.push(`${t('Plan')} #${plan.planPosition}`)
                 segments.push(plan.category)
                 segments.push(plan.tour)
                 segments.push(plan.templateId)
@@ -301,28 +305,28 @@ function SnapshotDetail({
       <SummaryPills
         items={[
           { label: t('Source event context'), value: sourceEventId ? t('Present') : t(MISSING_SOURCE_EVENT_ID_FALLBACK) },
-          { label: `${siblingMode} siblings`, value: siblingMatchCount > 0 ? siblingMatchCount : 'None for this source event' }
+          { label: `${t(siblingMode === 'ranking' ? 'Ranking snapshots' : 'Race snapshots')} (${t('Source event')})`, value: siblingMatchCount > 0 ? siblingMatchCount : t('No snapshot result matching this source event was returned.') }
         ]}
       />
       <CompactSummaryCard
         items={[
           {
             label: t('Snapshot detail'),
-            value: <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}/${snapshot.snapshot_sequence}`}>Open dedicated snapshot detail page</Link>
+            value: <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}/${snapshot.snapshot_sequence}`}>{t('Open dedicated snapshot detail page')}</Link>
           },
           {
             label: t('Source persisted event'),
             value:
               sourceEventId && persistedEvent ? (
-                <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(sourceEventId)}`}>Open source event detail page</Link>
+                <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(sourceEventId)}`}>{t('Open source event detail page')}</Link>
               ) : (
-                'Source persisted event detail unavailable.'
+                t('Source persisted event detail unavailable.')
               )
           },
           {
             label: t('Source planned event'),
             value: sourceEventId && plannedContext ? (
-              <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(sourceEventId)}`}>Open planned-event detail page</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(sourceEventId)}`}>{t('Open planned-event detail page')}</Link>
             ) : (
               t('No ordered-plan match for source_event_id.')
             )
@@ -331,14 +335,14 @@ function SnapshotDetail({
             label: t('Source week detail'),
             value:
               sourceWeek != null ? (
-                <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${sourceWeek}`}>Open week detail page (W{sourceWeek})</Link>
+                <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${sourceWeek}`}>{t('Open week detail page')} (W{sourceWeek})</Link>
               ) : (
                 t('No source week context available.')
               )
           },
-          { label: t('Season calendar'), value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>Open season calendar browser</Link> },
+          { label: t('Season calendar'), value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>{t('Open season calendar browser')}</Link> },
           {
-            label: `${siblingMode} snapshots`,
+            label: t(siblingMode === 'ranking' ? 'Ranking snapshots' : 'Race snapshots'),
             value:
               sourceEventId && siblingMatchCount > 0 ? (
                 <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${siblingMode}`}>Open {siblingMode} snapshots for matching source_event_id</Link>

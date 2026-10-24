@@ -33,12 +33,17 @@ export function EventsPage(): JSX.Element {
   const events = eventsMismatch ? [] : eventsQuery.data?.events ?? []
 
   const runMismatch = Boolean(runQuery.data?.run.run_id && runQuery.data.run.run_id !== runId)
+  const planSeasonMismatch = Boolean(runQuery.data && runQuery.data.run.run_id === runId &&
+    runQuery.data.season_state.season !== runQuery.data.run.season)
+  const planUnavailable = runQuery.isLoading || Boolean(runQuery.error) || !runQuery.data || runMismatch || planSeasonMismatch
   const orderedEventContext = useMemo(() => {
-    const map = new Map<string, { week: number; tour: string; category: string; templateId: string; planPosition: number }>()
-    const orderedEvents = runQuery.data?.run.run_id === runId ? runQuery.data.season_state.ordered_events : []
+    const map = new Map<string, { season: number; week: number; tour: string; category: string; templateId: string; planPosition: number }>()
+    const orderedEvents = runQuery.data?.run.run_id === runId && !planSeasonMismatch ? runQuery.data.season_state.ordered_events : []
 
     orderedEvents.forEach((event, index) => {
+      if (event.season !== runQuery.data?.season_state.season) return
       map.set(event.event_id, {
+        season: event.season,
         week: event.week,
         tour: event.tour,
         category: event.category,
@@ -48,11 +53,16 @@ export function EventsPage(): JSX.Element {
     })
 
     return map
-  }, [runId, runQuery.data])
+  }, [runId, runQuery.data, planSeasonMismatch])
+  // Persisted event IDs may be reused across seasons; join only matching seasons.
+  const getEventPlanContext = (event: (typeof events)[number]) => {
+    const context = orderedEventContext.get(event.event_id)
+    return context && (event.season == null || event.season === context.season) ? context : undefined
+  }
 
   const normalizedTextFilter = textFilter.trim().toLowerCase()
   const filteredEvents = events.filter((event) => {
-    const plannedContext = orderedEventContext.get(event.event_id)
+    const plannedContext = getEventPlanContext(event)
     const effectiveWeek = event.week ?? plannedContext?.week ?? null
     const weekMatches = weekFilter ? String(effectiveWeek) === weekFilter : true
     const categoryMatches = categoryFilter ? plannedContext?.category === categoryFilter : true
@@ -69,7 +79,7 @@ export function EventsPage(): JSX.Element {
     const values = new Set<string>()
 
     events.forEach((event) => {
-      const plannedContext = orderedEventContext.get(event.event_id)
+      const plannedContext = getEventPlanContext(event)
       const effectiveWeek = event.week ?? plannedContext?.week ?? null
       if (effectiveWeek != null) {
         values.add(String(effectiveWeek))
@@ -83,7 +93,7 @@ export function EventsPage(): JSX.Element {
     const values = new Set<string>()
 
     events.forEach((event) => {
-      const category = orderedEventContext.get(event.event_id)?.category
+      const category = getEventPlanContext(event)?.category
       if (category) {
         values.add(category)
       }
@@ -113,6 +123,8 @@ export function EventsPage(): JSX.Element {
   const selectedEvent = filteredEvents.find((event) => event.event_id === selectedEventId) ?? null
   const selectedEventPlanContext = selectedEvent ? orderedEventContext.get(selectedEvent.event_id) : undefined
   const selectedEventWeek = selectedEvent ? selectedEvent.week ?? selectedEventPlanContext?.week ?? null : null
+  const weekLinkAvailable = selectedEvent && !planUnavailable &&
+    selectedEvent.season != null && selectedEvent.season === runQuery.data?.run.season
 
   const eventDetailQuery = useQuery({
     queryKey: ['event', runId, selectedEventId],
@@ -207,7 +219,7 @@ export function EventsPage(): JSX.Element {
             getKey={(event) => event.event_id}
             getLabel={(event) => `${event.event_sequence}. ${event.event_id}`}
             getSubLabel={(event) => {
-              const plannedContext = orderedEventContext.get(event.event_id)
+              const plannedContext = getEventPlanContext(event)
               const week = event.week ?? plannedContext?.week
 
               if (!plannedContext && week == null) {
@@ -242,6 +254,7 @@ export function EventsPage(): JSX.Element {
 
       <SectionCard title={t('Selected event detail')}>
         {runMismatch && <p role="alert" className="error">{t('Planned context belongs to another Run.')}</p>}
+        {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>}
         {selectedEvent ? (
           <>
             <MetadataList
@@ -251,16 +264,16 @@ export function EventsPage(): JSX.Element {
                 { label: t('Persisted tournament result'), value: selectedEvent.tournament_result != null ? t('Recorded tournament result') : t('No tournament result evidenced') },
                 { label: t('Season'), value: selectedEvent.season ?? '—' },
                 { label: t('Week'), value: selectedEventWeek != null ? selectedEventWeek : '—' },
-                { label: t('Plan position'), value: selectedEventPlanContext ? selectedEventPlanContext.planPosition : t('No ordered-plan match') },
-                { label: t('Planned tour'), value: selectedEventPlanContext?.tour ?? t('No ordered-plan match') },
-                { label: t('Planned category'), value: selectedEventPlanContext?.category ?? t('No ordered-plan match') },
+                { label: t('Plan position'), value: selectedEventPlanContext ? selectedEventPlanContext.planPosition : planUnavailable ? t('Unavailable') : t('No ordered-plan match') },
+                { label: t('Planned tour'), value: selectedEventPlanContext?.tour ?? (planUnavailable ? t('Unavailable') : t('No ordered-plan match')) },
+                { label: t('Planned category'), value: selectedEventPlanContext?.category ?? (planUnavailable ? t('Unavailable') : t('No ordered-plan match')) },
                 { label: t('Planned template'), value: selectedEventPlanContext?.templateId ?? selectedEvent.template_id ?? '—' }
               ]}
             />
             <SummaryPills
               items={[
                 { label: t('Week context'), value: selectedEventWeek != null ? `W${selectedEventWeek}` : t('Not available') },
-                { label: t('Planned context'), value: selectedEventPlanContext ? t('Matched') : t('No ordered-plan match') }
+                { label: t('Planned context'), value: selectedEventPlanContext ? t('Matched') : planUnavailable ? t('Unavailable') : t('No ordered-plan match') }
               ]}
             />
             <CompactSummaryCard
@@ -274,16 +287,16 @@ export function EventsPage(): JSX.Element {
                   value: selectedEventPlanContext ? (
                     <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(selectedEvent.event_id)}`}>{t('Open planned-event detail page')}</Link>
                   ) : (
-                    t('No ordered-plan match for this persisted event.')
+                    planUnavailable ? t('Unavailable') : t('No ordered-plan match for this persisted event.')
                   )
                 },
                 {
                   label: t('Week detail'),
                   value:
-                    selectedEventWeek != null ? (
+                    selectedEventWeek != null && weekLinkAvailable ? (
                       <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${selectedEventWeek}`}>{t('Open week detail page')} (W{selectedEventWeek})</Link>
                     ) : (
-                      t('No week context available for this persisted event.')
+                      !weekLinkAvailable ? t('Current-season week link unavailable for this historic event.') : t('No week context available for this persisted event.')
                     )
                 },
                 {

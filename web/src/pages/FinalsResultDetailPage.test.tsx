@@ -81,4 +81,27 @@ describe('FinalsResultDetailPage', () => {
     expect(await screen.findByText('Finals result has not been recorded for this run yet.')).toBeInTheDocument()
     expect(screen.getByText('No Finals result payload is available yet.')).toBeInTheDocument()
   })
+  it.each([
+    ['event ID', { event_id: 'OTHER_FINALS', source_as_of_season: 2027, source_as_of_week: 42 }],
+    ['source season', { event_id: 'WORLD_TOUR_FINALS', source_as_of_season: 2026, source_as_of_week: 42 }],
+    ['source week', { event_id: 'WORLD_TOUR_FINALS', source_as_of_season: 2027, source_as_of_week: 41 }]
+  ])('hides a Finals result detail contradicting summary %s', async (_dimension, source) => {
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2027, qualification: { run_id: 'run-a', season: 2027 },
+      result: { run_id: 'run-a', season: 2027, ...source }
+    })
+    renderWithRoute(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText('Finals result detail conflicts with the stored summary or selected Run.')).toBeInTheDocument()
+    expect(screen.queryByText(/runner_up_player_id/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Finals overview page' })).toBeInTheDocument()
+  })
+
+  it('keeps a valid standalone Finals result when summary evidence is unavailable', async () => {
+    api.getFinalsSummary.mockRejectedValueOnce(new api.ApiError('summary offline', 503))
+    renderWithRoute(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText('Failed to load Finals summary: summary offline')).toBeInTheDocument()
+    expect(screen.getByText(/runner_up_player_id/)).toBeInTheDocument()
+    expect(screen.queryByText('Finals result detail conflicts with the stored summary or selected Run.')).not.toBeInTheDocument()
+  })
+
 })

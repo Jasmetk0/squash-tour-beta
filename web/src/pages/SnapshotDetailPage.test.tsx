@@ -202,4 +202,34 @@ describe('SnapshotDetailPage', () => {
     expect(await screen.findByText('Snapshot sequence 99 was not found for this run.')).toBeInTheDocument()
   })
 
+  it('does not claim a previous/latest boundary when the snapshot index read fails', async () => {
+    api.getRankingSnapshot.mockResolvedValue({
+      snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: { points: 0 }
+    })
+    api.listRankingSnapshots.mockRejectedValue(new Error('history offline'))
+    api.listRaceSnapshots.mockRejectedValue(new Error('related history offline'))
+    renderSnapshotDetailRoute('/runs/run-a/snapshots/ranking/10', 'ranking')
+    expect(await screen.findByText('Failed to load snapshots history: history offline')).toBeInTheDocument()
+    expect(screen.queryByText('None (start of history)')).not.toBeInTheDocument()
+    expect(screen.queryByText('None (latest snapshot)')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Unavailable').length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByText('Related snapshots currently unavailable')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /race snapshot #/i })).not.toBeInTheDocument()
+  })
+
+  it('does not treat a selected snapshot missing from the returned index as its first or latest entry', async () => {
+    api.getRaceSnapshot.mockResolvedValue({
+      snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: null, payload: { points: 0 }
+    })
+    api.listRaceSnapshots.mockResolvedValue({
+      run_id: 'run-a',
+      snapshots: [{ snapshot_sequence: 4, snapshot_kind: 'WEEK', source_event_id: null, payload: {} }]
+    })
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [] })
+    renderSnapshotDetailRoute('/runs/run-a/snapshots/race/9', 'race')
+    expect(await screen.findByText(/"points": 0/)).toBeInTheDocument()
+    expect(screen.queryByText('None (start of history)')).not.toBeInTheDocument()
+    expect(screen.queryByText('None (latest snapshot)')).not.toBeInTheDocument()
+  })
+
 })

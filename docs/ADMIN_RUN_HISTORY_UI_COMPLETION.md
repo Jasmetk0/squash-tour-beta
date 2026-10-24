@@ -1,0 +1,58 @@
+# Admin Run history UI — CS/EN read-only completion ledger
+
+**Scope:** PR #1641, feature branch `feat/admin-run-history-csen-readonly-20261024`, against the independently verified `buuk` starting point `e39d962bb6797960c47c1c659d57be1dc67bba6b`. **Status: Draft — CI on the final HEAD is required before merge.** The owner alone merges.
+
+## Source authority and safety boundary
+
+The eight edited Run-scoped pages consume the existing **legacy SimulationRun** endpoints (`/runs/:runId/...`) through existing API clients: run details/status/source/lineage, activity, persisted events, ranking/race snapshots, Finals read DTOs, and rollover read DTOs. They are **not** Product Run Saved Revision, Branch sporting truth, World Event Log, public news, notification, audit, or new Full Simulation Saved-history verification. The presentation now states this distinction rather than silently implying canonical Product Run authority. The separate native work in #1639 and Test Labs/Packages work in #1640 is untouched.
+
+UI changes do not alter request payloads, query keys, API/types, URL parameter meaning, saved values, ranking/points/rules, timestamp conversions, simulation/DB behavior, role gates, Viewer availability or server/task workflows. Refresh buttons invoke the preexisting TanStack Query `refetch` operations only. Scope validation is performed locally when the existing response exposes an identity; no missing server identity is inferred. Raw payloads and server error messages retain their original data.
+
+The snapshot list/detail DTOs expose a sequence, kind, optional source event ID and payload **but no trusted timestamp**. Consequently the UI labels them saved historical snapshots and explicitly says that the actual save time cannot be displayed from this endpoint; it does **not** manufacture a date or label them as the live ranking. An unavailable resource or 404 is not evidence that it never existed in another history. Event existence does not imply that `tournament_result` is stored.
+
+## Review checklist — 26 user requirements
+
+| # | Status | What changed / what was already correct |
+|---|---|---|
+| 1 | Implemented | Run diagnostics headings, summaries, metadata, navigation and available statuses localize via the scoped dictionary. |
+| 2 | Implemented | Per-query loading/error states remain independent; a failed Finals, status, source or history query does not block unrelated correctly scoped sections. |
+| 3 | Preserved | #1638 chooses most recent saved event with a result and snapshots by **persisted sequence**, not array position. Existing regression assertions retained. |
+| 4 | Preserved + localized | Existing wrong-Run, cross-season and inconsistent-progress suppression remains; actionable warnings are now CS/EN. |
+| 5 | Implemented | Artifact status describes loaded, missing, unavailable and failed reads without asserting an absent historical record never existed. |
+| 6 | Implemented | Activity summary, existing filters, known technical kinds, record details and link labels localize. Stored user labels and IDs are not translated. |
+| 7 | Preserved | Activity remains a technical source feed with separately conditional bridge links, not a World Event Log or public news stream. |
+| 8 | Implemented | A genuinely empty returned history differs from a nonempty history filtered to zero; reset affects only local filters. |
+| 9 | Implemented | Counters are explicitly described as loaded/returned items; the UI makes no claim that these are complete Product Run history counts. |
+| 10 | Implemented | Events list, selected details, filter labels and stored-versus-planned context localize. |
+| 11 | Implemented | A saved event with `tournament_result: null` is marked as having no evidenced result; a stored result is not computed or inferred. |
+| 12 | Preserved + guarded | Selection/filters remain during CS/EN toggles; data are re-scoped by Run query key and mismatched list/detail identities are rejected when provided. |
+| 13 | Implemented | Ranking and Race list modes, filters, metadata and navigation share scoped translations; mode identifiers remain unchanged. |
+| 14 | Implemented within API limits | Both modes are explicitly **historical**; no unexposed timestamp, current ranking, or new Saved authority is guessed. |
+| 15 | Implemented | Snapshot detail labels and related source/other snapshot navigation localize; raw payload untouched. |
+| 16 | Preserved + guarded | Links retain exact Run/snapshot/event references and URL encoding. A missing ordered-plan source no longer receives a guessed planned-detail link; foreign list identities are ignored. |
+| 17 | Implemented | Finals qualification detail, source season/week, group and qualified-player information localize; counts come only from arrays present in returned records. |
+| 18 | Implemented | Finals result detail displays stored response only and retains missing-result 404; qualifying alone does not synthesize a result. |
+| 19 | Implemented | Stored rollover target/from season, metadata summaries and inspect-only navigation localize. |
+| 20 | Implemented | Player transition/next-season lists and player ID filter localize; source values and calculations remain unchanged. |
+| 21 | Implemented with source limitations | Loading/error/not found/true-empty/filter-empty states are separated for the relevant read DTOs; missing payload authority is not faked. |
+| 22 | Implemented | Explicit read-only refresh for each applicable primary view or read collection uses its existing `refetch`; no simulation or mutation is wired. |
+| 23 | Preserved + corrected | `??` prevents valid 0/false being replaced by fallback text; a failed/mismatched rollover read is **unavailable**, not a displayed count of zero. |
+| 24 | Partially implemented | Filter controls use labels, targeted errors use `role=alert`, and refresh/reset have readable button text. Shared `RunScopedUi`, global responsive wrappers, and global accessibility contracts are explicitly untouched. |
+| 25 | Implemented + tested | Independent live-language tests exercise an open selection/filter and a pending read: language changes do not initiate new API requests or writes. |
+| 26 | Implemented, verification gate still open | Existing scoped regressions are retained, live CS/EN/read-only tests added. Exact-head automated test and TypeScript/Vite build results must be recorded from CI, not assumed from earlier commits. |
+
+**Legend:** Implemented = this PR adds display-only behavior; Preserved = already correct and intentionally not rewritten; Partially implemented = remaining work crosses an explicit source/shared-component boundary; verification evidence is independent of this checklist.
+
+## Files and explicit exclusions
+
+Only the eight named pages, their colocated frontend tests plus `RunHistoryLocale.test.tsx`, the local `runHistoryText.ts` translation helper, and this document are in scope.
+
+No changes to BootstrapLineagePage, FinalsPage, RolloverPage, `RunScopedUi`, the global language context, clients/query keys/contracts, backend, Master/AGENTS/CURRENT_STATE/ROADMAP, unrelated packages/labs, dependencies, workflows, or acceptance scripts.
+
+## Verification plan and evidence
+
+- Retained English historical regressions explicitly select English inside their test mocks; they do not weaken or delete legacy sequence/progress mismatch assertions.
+- Added integrated tests with a real `LanguageProvider` for toggling during a pending read, preserving active filters and selection, differentiating missing results from stored zeros, rejecting foreign Run activity, read-only manual refresh, and snapshot historical provenance.
+- Final gate: GitHub **Fast CI**, including stable critical baseline, changed/colocated Vitest suites, and TypeScript + Vite production build, all passing on the **same final SHA**. Draft-skipped workflows count neither as executed nor as passed. A full backend/simulation matrix is intentionally not run for this display-only scope.
+
+**Important limitations / review questions:** these legacy endpoints do not supply an authenticated Product Run Saved Revision scope or an actual snapshot timestamp. A detail DTO without its own Run ID can be validated against the specific requested event/sequence but cannot independently prove the owning Run. Some test fixtures deliberately omit optional identity metadata; guards activate when the real DTO actually provides it. The existing shared UI and large-table responsiveness have not been redesigned in this PR. Product Run native history should be reviewed separately with #1639, not inferred from these legacy views.

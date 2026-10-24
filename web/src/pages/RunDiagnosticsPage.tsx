@@ -327,15 +327,15 @@ export function RunDiagnosticsPage(): JSX.Element {
               value: eventsQuery.isLoading
                 ? t('Loading...')
                 : eventsQuery.error
-                  ? `Error: ${formatApiError(eventsQuery.error)}`
+                  ? `${t('Error')}: ${formatApiError(eventsQuery.error)}`
                   : eventsMismatch
-                    ? 'Run mismatch'
+                    ? t('Run mismatch')
                     : latestCompletedEvent
                     ? (
                         <>
-                          Available —{' '}
+                          {t('Available')} —{' '}
                           <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
-                            {latestCompletedEvent.event_id} (Seq {latestCompletedEvent.event_sequence})
+                            {latestCompletedEvent.event_id} ({t('Seq')} {latestCompletedEvent.event_sequence})
                           </Link>
                         </>
                       )
@@ -346,15 +346,15 @@ export function RunDiagnosticsPage(): JSX.Element {
               value: rankingSnapshotsQuery.isLoading
                 ? t('Loading...')
                 : rankingSnapshotsQuery.error
-                  ? `Error: ${formatApiError(rankingSnapshotsQuery.error)}`
+                  ? `${t('Error')}: ${formatApiError(rankingSnapshotsQuery.error)}`
                   : rankingsMismatch
-                    ? 'Run mismatch'
+                    ? t('Run mismatch')
                     : latestRankingSnapshot
                     ? (
                         <>
-                          Available —{' '}
+                          {t('Available')} —{' '}
                           <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/ranking/${latestRankingSnapshot.snapshot_sequence}`}>
-                            Seq {latestRankingSnapshot.snapshot_sequence}
+                            {t('Seq')} {latestRankingSnapshot.snapshot_sequence}
                           </Link>
                         </>
                       )
@@ -365,15 +365,15 @@ export function RunDiagnosticsPage(): JSX.Element {
               value: raceSnapshotsQuery.isLoading
                 ? t('Loading...')
                 : raceSnapshotsQuery.error
-                  ? `Error: ${formatApiError(raceSnapshotsQuery.error)}`
+                  ? `${t('Error')}: ${formatApiError(raceSnapshotsQuery.error)}`
                   : racesMismatch
-                    ? 'Run mismatch'
+                    ? t('Run mismatch')
                     : latestRaceSnapshot
                     ? (
                         <>
-                          Available —{' '}
+                          {t('Available')} —{' '}
                           <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/race/${latestRaceSnapshot.snapshot_sequence}`}>
-                            Seq {latestRaceSnapshot.snapshot_sequence}
+                            {t('Seq')} {latestRaceSnapshot.snapshot_sequence}
                           </Link>
                         </>
                       )
@@ -390,7 +390,7 @@ export function RunDiagnosticsPage(): JSX.Element {
             eventsQuery.error ? `${t('Failed to load events')}: ${formatApiError(eventsQuery.error)}` : undefined}
           items={safeEvents.slice().sort((a, b) => b.event_sequence - a.event_sequence).slice(0, 3)}
           emptyText={t('No events are available yet.')}
-          listAriaLabel="Diagnostics recent events"
+          listAriaLabel={t('Diagnostics recent events')}
           getKey={(event) => event.event_id}
           renderItem={(event) => (
             <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(event.event_id)}`}>
@@ -477,32 +477,32 @@ export function RunDiagnosticsPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title={t('Most relevant next inspection links')}>
-        <ul className="item-list" aria-label="Diagnostics next inspection links">
+        <ul className="item-list" aria-label={t('Diagnostics next inspection links')}>
           {latestCompletedEvent ? (
             <li>
               <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(latestCompletedEvent.event_id)}`}>
-                Inspect latest completed event ({latestCompletedEvent.event_id})
+                {t('Inspect latest completed event')} ({latestCompletedEvent.event_id})
               </Link>
             </li>
           ) : null}
           {latestRankingSnapshot ? (
             <li>
               <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/ranking/${latestRankingSnapshot.snapshot_sequence}`}>
-                Inspect latest ranking snapshot (Seq {latestRankingSnapshot.snapshot_sequence})
+                {t('Inspect latest ranking snapshot')} ({t('Seq')} {latestRankingSnapshot.snapshot_sequence})
               </Link>
             </li>
           ) : null}
           {latestRaceSnapshot ? (
             <li>
               <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/race/${latestRaceSnapshot.snapshot_sequence}`}>
-                Inspect latest race snapshot (Seq {latestRaceSnapshot.snapshot_sequence})
+                {t('Inspect latest race snapshot')} ({t('Seq')} {latestRaceSnapshot.snapshot_sequence})
               </Link>
             </li>
           ) : null}
           {nextPlannedEvent && nextPlannedWeek !== null ? (
             <li>
               <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${nextPlannedWeek}`}>
-                Inspect current week detail (W{nextPlannedWeek} from {nextPlannedEvent.event_id})
+                {t('Inspect current week detail')} (W{nextPlannedWeek} {t('from')} {nextPlannedEvent.event_id})
               </Link>
             </li>
           ) : null}
@@ -510,8 +510,8 @@ export function RunDiagnosticsPage(): JSX.Element {
             <li>
               <Link to={finalsInspectionRoute}>
                 {safeFinals?.result
-                  ? 'Inspect Finals result detail (result available)'
-                  : 'Inspect Finals qualification detail (qualification available, result pending)'}
+                  ? t('Inspect Finals result detail (result available)')
+                  : t('Inspect Finals qualification detail (qualification available, result pending)')}
               </Link>
             </li>
           ) : null}
@@ -522,7 +522,7 @@ export function RunDiagnosticsPage(): JSX.Element {
           ) : null}
           {hasLineageChildren ? (
             <li>
-              <Link to={`/runs/${encodeURIComponent(runId)}/season-chain`}>Inspect season chain ({safeLineage?.lineage.children.length} child run(s))</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/season-chain`}>{t('Inspect season chain')} ({safeLineage?.lineage.children.length} {t('child run(s)')})</Link>
             </li>
           ) : null}
           {!latestCompletedEvent &&
@@ -540,7 +540,7 @@ export function RunDiagnosticsPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title={t('Quick navigation')}>
-        <ul className="item-list" aria-label="Diagnostics quick navigation">
+        <ul className="item-list" aria-label={t('Diagnostics quick navigation')}>
           <li>
             <Link to={`/runs/${encodeURIComponent(runId)}`}>{t('Run Detail')}</Link>
           </li>
@@ -558,10 +558,10 @@ export function RunDiagnosticsPage(): JSX.Element {
             )}
           </li>
           <li>
-            <Link to={`/runs/${encodeURIComponent(runId)}/activity`}>Activity</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/activity`}>{t('Activity')}</Link>
           </li>
           <li>
-            <Link to={`/runs/${encodeURIComponent(runId)}/finals`}>World Tour Finals</Link>
+            <Link to={`/runs/${encodeURIComponent(runId)}/finals`}>{t('World Tour Finals')}</Link>
           </li>
           <li>
             <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>{t('Season Rollover')}</Link>

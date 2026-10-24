@@ -41,7 +41,8 @@ function makeWeekContext(item: RunActivityItem, effectiveWeek: number | null): s
 function getEffectiveWeek(
   item: RunActivityItem,
   plannedContextByEventId: Map<string, { season: number; week: number; category: string; templateId: string; planPosition: number }>,
-  persistedEventById: Map<string, { season: number | null; week: number | null; eventSequence: number }>
+  persistedEventById: Map<string, { season: number | null; week: number | null; eventSequence: number }>,
+  ambiguousEventIds: Set<string>
 ): number | null {
   if (item.week != null) {
     return item.week
@@ -52,6 +53,8 @@ function getEffectiveWeek(
     return null
   }
 
+  // This ID may identify entries from multiple seasons. Avoid guessing.
+  if (ambiguousEventIds.has(contextEventId)) return null
   const persisted = persistedEventById.get(contextEventId)
   const planned = plannedContextByEventId.get(contextEventId)
   // A seasonless activity must not borrow a week from two contradictory
@@ -115,17 +118,25 @@ export function ActivityPage(): JSX.Element {
     return map
   }, [runId, runQuery.data, plannedContextUnavailable])
 
-  const persistedEventById = useMemo(() => {
-    const map = new Map<string, { season: number | null; week: number | null; eventSequence: number }>()
+  const persistedEvidence = useMemo(() => {
+    const byId = new Map<string, { season: number | null; week: number | null; eventSequence: number }>()
+    const ambiguousIds = new Set<string>()
     ;(eventsMismatch || eventsQuery.error ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
-      map.set(event.event_id, { season: event.season, week: event.week, eventSequence: event.event_sequence })
+      if (byId.has(event.event_id) || ambiguousIds.has(event.event_id)) {
+        byId.delete(event.event_id)
+        ambiguousIds.add(event.event_id)
+      } else {
+        byId.set(event.event_id, { season: event.season, week: event.week, eventSequence: event.event_sequence })
+      }
     })
-    return map
+    return { byId, ambiguousIds }
   }, [eventsMismatch, eventsQuery.error, eventsQuery.data?.events])
+  const persistedEventById = persistedEvidence.byId
+  const ambiguousPersistedEventIds = persistedEvidence.ambiguousIds
 
   const normalizedTextFilter = textFilter.trim().toLowerCase()
   const filteredItems = indexedItems.filter(({ item }) => {
-    const effectiveWeek = getEffectiveWeek(item, plannedContextByEventId, persistedEventById)
+    const effectiveWeek = getEffectiveWeek(item, plannedContextByEventId, persistedEventById, ambiguousPersistedEventIds)
     const kindMatches = kindFilter ? item.kind === kindFilter : true
     const seasonMatches = seasonFilter ? String(item.season) === seasonFilter : true
     const weekMatches = weekFilter ? String(effectiveWeek) === weekFilter : true
@@ -168,7 +179,7 @@ export function ActivityPage(): JSX.Element {
     const seen = new Set<string>()
     const values: string[] = []
     items.forEach((item) => {
-      const effectiveWeek = getEffectiveWeek(item, plannedContextByEventId, persistedEventById)
+      const effectiveWeek = getEffectiveWeek(item, plannedContextByEventId, persistedEventById, ambiguousPersistedEventIds)
       if (effectiveWeek == null) return
       const normalized = String(effectiveWeek)
       if (!seen.has(normalized)) {
@@ -177,7 +188,7 @@ export function ActivityPage(): JSX.Element {
       }
     })
     return values
-  }, [items, plannedContextByEventId, persistedEventById])
+  }, [items, plannedContextByEventId, persistedEventById, ambiguousPersistedEventIds])
 
   useEffect(() => {
     if (!filteredItems.length) {
@@ -202,14 +213,15 @@ export function ActivityPage(): JSX.Element {
   const selectedContextEventId = selectedItem?.event_id ?? selectedItem?.source_event_id ?? null
   const matchedPlan = selectedContextEventId ? plannedContextByEventId.get(selectedContextEventId) : undefined
   const matchedPersistedEvent = selectedContextEventId ? persistedEventById.get(selectedContextEventId) : undefined
-  const ambiguousEventSeason = Boolean(selectedItem && selectedItem.season == null &&
+  const ambiguousEventSeason = Boolean((selectedContextEventId && ambiguousPersistedEventIds.has(selectedContextEventId)) ||
+    (selectedItem && selectedItem.season == null &&
     matchedPlan && matchedPersistedEvent && matchedPersistedEvent.season != null &&
-    matchedPersistedEvent.season !== matchedPlan.season)
+    matchedPersistedEvent.season !== matchedPlan.season))
   const selectedPlannedContext = !ambiguousEventSeason && matchedPlan &&
     (selectedItem?.season == null || matchedPlan.season === selectedItem.season) ? matchedPlan : undefined
   const selectedPersistedEvent = !ambiguousEventSeason && matchedPersistedEvent &&
     (selectedItem?.season == null || matchedPersistedEvent.season === selectedItem.season) ? matchedPersistedEvent : undefined
-  const selectedWeek = selectedItem ? getEffectiveWeek(selectedItem, plannedContextByEventId, persistedEventById) : null
+  const selectedWeek = selectedItem ? getEffectiveWeek(selectedItem, plannedContextByEventId, persistedEventById, ambiguousPersistedEventIds) : null
   const selectedEvidenceSeason = selectedItem?.season ?? selectedPlannedContext?.season ?? selectedPersistedEvent?.season ?? null
   const canInspectCurrentWeek = selectedItem && !plannedContextUnavailable && !ambiguousEventSeason &&
     selectedEvidenceSeason != null && selectedEvidenceSeason === runQuery.data?.run.season

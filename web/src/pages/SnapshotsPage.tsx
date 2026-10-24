@@ -208,7 +208,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
       </SectionCard>
 
       {runMismatch && <p role="alert" className="error">{t('Planned context belongs to another Run.')}</p>}
-      {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>
+      {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>}
       {eventsMismatch && <p role="alert" className="error">{t('Event context belongs to another Run.')}</p>}
       {siblingMismatch && <p role="alert" className="error">{t('Snapshot sibling history belongs to another Run.')}</p>}
       {runQuery.error && <p role="alert" className="error">{t('Failed to load planned season context')}: {formatApiError(runQuery.error)}</p>}

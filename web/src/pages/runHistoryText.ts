@@ -469,7 +469,9 @@ const czech: Record<string, string> = {
   "Result cannot be verified without a valid Finals summary": "Výsledek nelze ověřit bez platného souhrnu Finals",
   "Qualification cannot be verified without a valid Finals summary": "Kvalifikaci nelze ověřit bez platného souhrnu Finals",
   "Activity source event ID has conflicting seasons. Its navigation links are unavailable.": "Zdrojové ID události aktivity má rozporné sezony. Navigační odkazy nejsou dostupné.",
-  "Text search": "Textové vyhledávání"
+  "Text search": "Textové vyhledávání",
+  "Event ID is reused in this Run. Use the selected sequence to identify the stored record; direct ID-only navigation is unavailable.": "ID události se v tomto Runu opakuje. Uložený záznam určuje vybrané pořadové číslo; přímý odkaz pouze podle ID není dostupný.",
+  "Unavailable: the event ID identifies multiple stored records.": "Nedostupné: ID události označuje více uložených záznamů."
 }
 
 export function useHistoryText(): (english: string) => string {

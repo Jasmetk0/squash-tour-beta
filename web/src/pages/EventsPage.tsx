@@ -29,7 +29,8 @@ export function EventsPage(): JSX.Element {
 
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
-  const events = eventsQuery.data?.events ?? []
+  const eventsMismatch = Boolean(eventsQuery.data && eventsQuery.data.run_id !== runId)
+  const events = eventsMismatch ? [] : eventsQuery.data?.events ?? []
 
   const orderedEventContext = useMemo(() => {
     const map = new Map<string, { week: number; tour: string; category: string; templateId: string; planPosition: number }>()
@@ -125,6 +126,7 @@ export function EventsPage(): JSX.Element {
         runId={runId}
         subtitle={t('Browse persisted event history, map events back to the planned season, and jump to linked read-only detail views.')}
       />
+      <p className="status">{t('Stored legacy SimulationRun history. This view does not verify Product Run Saved Revision authority.')}</p>
       <CurrentContextStrip
         items={[
           { label: t('Run'), value: runId || 'unknown' },
@@ -172,12 +174,15 @@ export function EventsPage(): JSX.Element {
             />
           </label>
         </div>
+        <button type="button" onClick={() => { setWeekFilter(''); setCategoryFilter(''); setTextFilter('') }}>{t('Reset filters')}</button>
       </SectionCard>
 
       <SectionCard title={t('Event timeline')}>
+        {eventsMismatch && <p role="alert" className="error">{t('Events response belongs to another Run; its records are hidden.')}</p>}
+        <button type="button" onClick={() => void eventsQuery.refetch()}>{t('Refresh read-only data')}</button>
         {eventsQuery.isLoading && <p className="status">{t('Loading events history...')}</p>}
         {eventsQuery.error && <p className="error">Failed to load events history: {formatApiError(eventsQuery.error)}</p>}
-        {!eventsQuery.isLoading && !eventsQuery.error && events.length === 0 && (
+        {!eventsQuery.isLoading && !eventsQuery.error && !eventsMismatch && events.length === 0 && (
           <EmptyState message={t('No events are available for this run yet.')} />
         )}
         {!eventsQuery.isLoading && !eventsQuery.error && events.length > 0 && filteredEvents.length === 0 && (
@@ -230,6 +235,7 @@ export function EventsPage(): JSX.Element {
               items={[
                 { label: t('Event ID'), value: selectedEvent.event_id },
                 { label: t('Sequence'), value: selectedEvent.event_sequence },
+                { label: t('Persisted tournament result'), value: selectedEvent.tournament_result ? t('Recorded tournament result') : t('No tournament result evidenced') },
                 { label: t('Season'), value: selectedEvent.season ?? '—' },
                 { label: t('Week'), value: selectedEventWeek != null ? selectedEventWeek : '—' },
                 { label: t('Plan position'), value: selectedEventPlanContext ? selectedEventPlanContext.planPosition : t('No ordered-plan match') },

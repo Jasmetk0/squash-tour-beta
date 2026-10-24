@@ -299,7 +299,7 @@ function SnapshotDetail({
           { label: t('Planned tour'), value: plannedContext?.tour ?? t('No ordered-plan match') },
           { label: t('Planned template'), value: plannedContext?.templateId ?? t('No ordered-plan match') },
           { label: t('Plan position'), value: plannedContext?.planPosition ?? t('No ordered-plan match') },
-          { label: t('Persisted source event'), value: persistedEvent ? `Found (sequence ${persistedEvent.eventSequence})` : t('Not found') }
+          { label: t('Persisted source event'), value: persistedEvent ? `${t('Found')} (${t('Sequence').toLowerCase()} ${persistedEvent.eventSequence})` : t('Not found') }
         ]}
       />
       <SummaryPills
@@ -347,7 +347,7 @@ function SnapshotDetail({
               sourceEventId && siblingMatchCount > 0 ? (
                 <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${siblingMode}`}>Open {siblingMode} snapshots for matching source_event_id</Link>
               ) : (
-                `No ${siblingMode} snapshots share this source_event_id.`
+                t('No snapshots share this source_event_id.')
               )
           }
         ]}

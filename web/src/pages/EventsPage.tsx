@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getEvent, getRun, listEvents } from '../api/client'
@@ -21,7 +21,6 @@ export function EventsPage(): JSX.Element {
   const t = useHistoryText()
   const { runId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [selectedEventSequence, setSelectedEventSequence] = useState<number | null>(null)
   const [weekFilter, setWeekFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [textFilter, setTextFilter] = useState('')
@@ -106,29 +105,19 @@ export function EventsPage(): JSX.Element {
     return Array.from(values)
   }, [events, orderedEventContext])
 
-  // event_id can be reused across seasons. Persisted sequence is the stable
-  // selection identity; legacy ?selectedEventId links remain readable.
-  useEffect(() => {
-    if (!filteredEvents.length) {
-      setSelectedEventSequence(null)
-      return
-    }
-    const requestedBySequence = hasRequestedSequence
-      ? filteredEvents.find((event) =>
-          event.event_sequence === requestedSequence &&
-          (!requestedEventId || event.event_id === requestedEventId))
-      : undefined
-    const requestedByLegacyId = requestedEventId
-      ? filteredEvents.find((event) => event.event_id === requestedEventId)
-      : undefined
-    const remembered = filteredEvents.find((event) => event.event_sequence === selectedEventSequence)
-    const next = requestedBySequence ?? requestedByLegacyId ?? remembered ?? filteredEvents[0]
-    if (selectedEventSequence !== next.event_sequence) {
-      setSelectedEventSequence(next.event_sequence)
-    }
-  }, [filteredEvents, hasRequestedSequence, requestedSequence, requestedEventId, selectedEventSequence])
-
-  const selectedEvent = filteredEvents.find((event) => event.event_sequence === selectedEventSequence) ?? null
+  // Use URL parameters as the sole selection authority. Local selection state
+  // can race with useSearchParams and trigger duplicate same-ID detail reads.
+  // Legacy ?selectedEventId bookmarks remain supported.
+  const requestedBySequence = hasRequestedSequence
+    ? filteredEvents.find((event) =>
+        event.event_sequence === requestedSequence &&
+        (!requestedEventId || event.event_id === requestedEventId))
+    : undefined
+  const requestedByLegacyId = requestedEventId
+    ? filteredEvents.find((event) => event.event_id === requestedEventId)
+    : undefined
+  const selectedEvent = requestedBySequence ?? requestedByLegacyId ?? filteredEvents[0] ?? null
+  const selectedEventSequence = selectedEvent?.event_sequence ?? null
   const ambiguousEventId = Boolean(selectedEvent &&
     events.filter((event) => event.event_id === selectedEvent.event_id).length > 1)
   const selectedEventPlanContext = selectedEvent ? getEventPlanContext(selectedEvent) : undefined
@@ -251,7 +240,6 @@ export function EventsPage(): JSX.Element {
             }}
             isSelected={(event) => event.event_sequence === selectedEventSequence}
             onSelect={(event) => {
-              setSelectedEventSequence(event.event_sequence)
               setSearchParams((current) => {
                 const next = new URLSearchParams(current)
                 next.set('selectedEventId', event.event_id)

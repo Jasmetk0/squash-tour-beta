@@ -97,15 +97,19 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
       ? neighboringSnapshots[currentSnapshotIndex + 1]
       : null
   const title = mode === 'ranking' ? t('Ranking snapshot detail') : t('Race snapshot detail')
-  const persistedSourceEvent = sourceEventId
-    ? (eventsMismatch || eventsQuery.error ? null : eventsQuery.data?.events.find((event) => event.event_id === sourceEventId) ?? null)
-    : null
+  const matchedSourceEvents = sourceEventId && !eventsMismatch && !eventsQuery.error
+    ? eventsQuery.data?.events.filter((event) => event.event_id === sourceEventId) ?? []
+    : []
+  // A snapshot only records source_event_id, not the originating event season.
+  // Multiple matching persisted records cannot be disambiguated by this ID.
+  const ambiguousSourceEvent = matchedSourceEvents.length > 1
+  const persistedSourceEvent = ambiguousSourceEvent ? null : matchedSourceEvents[0] ?? null
   const plannedCandidate = sourceEventId && !runQuery.error && runQuery.data?.run.run_id === runId && !planSeasonMismatch
     ? findPlannedEventContext(runQuery.data, sourceEventId) : null
   const sourceSeasonMismatch = Boolean(plannedCandidate && persistedSourceEvent &&
     persistedSourceEvent.season != null && persistedSourceEvent.season !== plannedCandidate.season)
-  const plannedSourceEvent = sourceSeasonMismatch ? null : plannedCandidate
-  const relatedSiblingUnavailable = siblingSnapshotsQuery.isLoading || Boolean(siblingSnapshotsQuery.error) || siblingMismatch || !siblingSnapshotsQuery.data
+  const plannedSourceEvent = sourceSeasonMismatch || ambiguousSourceEvent ? null : plannedCandidate
+  const relatedSiblingUnavailable = ambiguousSourceEvent || siblingSnapshotsQuery.isLoading || Boolean(siblingSnapshotsQuery.error) || siblingMismatch || !siblingSnapshotsQuery.data
   const relatedSiblingSnapshots = sourceEventId
     ? (siblingMismatch || siblingSnapshotsQuery.error ? [] : siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === sourceEventId) ?? [])
     : []
@@ -177,6 +181,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
             {eventsMismatch && <p role="alert" className="error">{t('Event context belongs to another Run.')}</p>}
             {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>}
             {sourceSeasonMismatch && <p role="alert" className="error">{t('Source event season does not match the current plan. Planned links are hidden.')}</p>}
+            {ambiguousSourceEvent && <p role="alert" className="error">{t('Source event ID is reused in persisted history. Source links and week context are unavailable.')}</p>}
             {historyMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
             {snapshotsQuery.error && <p role="alert" className="error">{t('Failed to load snapshots history')}: {formatApiError(snapshotsQuery.error)}</p>}
             {snapshotQuery.isLoading && <p role="status" className="status">{t('Loading snapshot details...')}</p>}
@@ -195,9 +200,9 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
                 runId={runId}
                 sourceEventId={sourceEventId}
                 persistedSourceEventSequence={persistedSourceEvent?.event_sequence ?? null}
-                persistedSourceEventUnavailable={eventsQuery.isLoading || Boolean(eventsQuery.error) || eventsMismatch}
+                persistedSourceEventUnavailable={ambiguousSourceEvent || eventsQuery.isLoading || Boolean(eventsQuery.error) || eventsMismatch}
                 plannedSourceEvent={plannedSourceEvent}
-                plannedSourceEventUnavailable={runQuery.isLoading || Boolean(runQuery.error) || runQuery.data?.run.run_id !== runId || planSeasonMismatch || sourceSeasonMismatch}
+                plannedSourceEventUnavailable={ambiguousSourceEvent || runQuery.isLoading || Boolean(runQuery.error) || runQuery.data?.run.run_id !== runId || planSeasonMismatch || sourceSeasonMismatch}
                 relatedSiblingSnapshots={relatedSiblingSnapshots}
                 siblingMode={siblingMode}
                 relatedSiblingUnavailable={relatedSiblingUnavailable}

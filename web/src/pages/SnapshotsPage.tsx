@@ -301,8 +301,8 @@ function SnapshotDetail({
   snapshot: RankingSnapshot | RaceSnapshot
   mode: Mode
   runId: string
-  plannedContext?: { week: number; category: string; tour: string; templateId: string; planPosition: number }
-  persistedEvent?: { eventSequence: number; week: number | null }
+  plannedContext?: { season: number; week: number; category: string; tour: string; templateId: string; planPosition: number }
+  persistedEvent?: { season: number; eventSequence: number; week: number | null }
   siblingMode: Mode
   siblingMatchCount: number | null
   currentRunSeason: number | null

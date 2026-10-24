@@ -180,7 +180,9 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
                 runId={runId}
                 sourceEventId={sourceEventId}
                 persistedSourceEventSequence={persistedSourceEvent?.event_sequence ?? null}
+                persistedSourceEventUnavailable={eventsQuery.isLoading || Boolean(eventsQuery.error) || eventsMismatch}
                 plannedSourceEvent={plannedSourceEvent}
+                plannedSourceEventUnavailable={runQuery.isLoading || Boolean(runQuery.error) || runQuery.data?.run.run_id !== runId}
                 relatedSiblingSnapshots={relatedSiblingSnapshots}
                 siblingMode={siblingMode}
               />
@@ -232,14 +234,18 @@ function SourceEventContext({
   runId,
   sourceEventId,
   persistedSourceEventSequence,
+  persistedSourceEventUnavailable,
   plannedSourceEvent,
+  plannedSourceEventUnavailable,
   relatedSiblingSnapshots,
   siblingMode
 }: {
   runId: string
   sourceEventId: string | null
   persistedSourceEventSequence: number | null
+  persistedSourceEventUnavailable: boolean
   plannedSourceEvent: PlannedEventContext | null
+  plannedSourceEventUnavailable: boolean
   relatedSiblingSnapshots: Array<RankingSnapshot | RaceSnapshot>
   siblingMode: SnapshotMode
 }): JSX.Element {
@@ -258,9 +264,9 @@ function SourceEventContext({
             value:
               persistedSourceEventSequence !== null
                 ? `${t('Found')} (${t('Event')} ${t('Sequence').toLowerCase()} ${persistedSourceEventSequence})`
-                : t('Not found in persisted event history')
+                 : persistedSourceEventUnavailable ? t('Unavailable') : t('Not found in persisted event history')
           },
-          { label: t('Season plan context'), value: plannedSourceEvent ? t('Found in ordered season plan') : t('No ordered-plan match') }
+          { label: t('Season plan context'), value: plannedSourceEvent ? t('Found in ordered season plan') : plannedSourceEventUnavailable ? t('Unavailable') : t('No ordered-plan match') }
         ]}
       />
 
@@ -273,7 +279,7 @@ function SourceEventContext({
         {persistedSourceEventSequence !== null ? (
           <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(sourceEventId)}`}>{t('Open source event detail')}</Link>
         ) : (
-          <span>{t('Source event detail unavailable (event not present in persisted event history).')}</span>
+          <span>{persistedSourceEventUnavailable ? t('Unavailable') : t('Source event detail unavailable (event not present in persisted event history).')}</span>
         )}{' '}
         {plannedSourceEvent ? <>· <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(sourceEventId)}`}>{t('Open planned-event detail')}</Link></> : null}
         {plannedSourceEvent ? (
@@ -296,6 +302,8 @@ function SourceEventContext({
             { label: t('Planned status'), value: plannedSourceEvent.plannedStatus }
           ]}
         />
+      ) : plannedSourceEventUnavailable ? (
+        <p className="status">{t('Unavailable')}</p>
       ) : (
         <EmptyState message={t('source_event_id is present, but this event is not in season_state.ordered_events for the current run.')} />
       )}

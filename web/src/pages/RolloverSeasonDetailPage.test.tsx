@@ -152,4 +152,61 @@ describe('RolloverSeasonDetailPage', () => {
     expect(screen.queryByText('50')).not.toBeInTheDocument()
   })
 
+  it('hides a transition record with an explicitly foreign target season even without row run_id', async () => {
+    api.getRolloverBySeason.mockResolvedValueOnce({ rollover: {
+      run_id: 'run-a', from_season: 2027, to_season: 2028,
+      transitioned_players: 1, metadata: {}
+    } })
+    api.getPlayerTransitions.mockResolvedValueOnce({ run_id: 'run-a', to_season: 2028,
+      transitions: [{ player_id: 'FOREIGN_TARGET', from_season: 2027, to_season: 2029,
+        transition: { marker: 'must-not-show' } }]
+    })
+    api.getNextSeasonPlayers.mockResolvedValueOnce({ run_id: 'run-a', to_season: 2028,
+      players: [{ player_id: 'VALID_PLAYER', from_season: 2027, to_season: 2028,
+        state: { count: 0 } }]
+    })
+    renderPage('/runs/run-a/rollover/2028')
+    expect(await screen.findByText('Player transition response belongs to another Run or season.')).toBeInTheDocument()
+    expect(screen.queryByText(/FOREIGN_TARGET/)).not.toBeInTheDocument()
+    expect(await screen.findByText(/"player_id": "VALID_PLAYER"/)).toBeInTheDocument()
+    const summary = screen.getByRole('heading', { name: 'Inspection summary' }).closest('article')
+    expect(within(summary as HTMLElement).getByText('Unavailable')).toBeInTheDocument()
+  })
+
+  it('hides next-season player rows whose source season explicitly conflicts with the valid rollover', async () => {
+    api.getRolloverBySeason.mockResolvedValueOnce({ rollover: {
+      run_id: 'run-a', from_season: 2027, to_season: 2028,
+      transitioned_players: 1, metadata: {}
+    } })
+    api.getPlayerTransitions.mockResolvedValueOnce({ run_id: 'run-a', to_season: 2028,
+      transitions: [{ player_id: 'VALID_TRANSITION', from_season: 2027, to_season: 2028,
+        transition: { delta: 0 } }]
+    })
+    api.getNextSeasonPlayers.mockResolvedValueOnce({ run_id: 'run-a', to_season: 2028,
+      players: [{ player_id: 'WRONG_SOURCE', from_season: 2026, to_season: 2028,
+        state: { marker: 'must-not-show' } }]
+    })
+    renderPage('/runs/run-a/rollover/2028')
+    expect(await screen.findByText('Next-season player response belongs to another Run or season.')).toBeInTheDocument()
+    expect(screen.queryByText(/WRONG_SOURCE/)).not.toBeInTheDocument()
+    expect(await screen.findByText(/"player_id": "VALID_TRANSITION"/)).toBeInTheDocument()
+  })
+
+  it('does not treat unknown row provenance as conflicting when its envelope matches', async () => {
+    api.getRolloverBySeason.mockResolvedValueOnce({ rollover: {
+      run_id: 'run-a', from_season: 2027, to_season: 2028,
+      transitioned_players: 1, metadata: {}
+    } })
+    api.getPlayerTransitions.mockResolvedValueOnce({ run_id: 'run-a', to_season: 2028,
+      transitions: [{ player_id: 'NO_ROW_SCOPE', transition: { delta: 0 } }]
+    })
+    api.getNextSeasonPlayers.mockResolvedValueOnce({ run_id: 'run-a', to_season: 2028,
+      players: [{ player_id: 'NO_ROW_SCOPE', state: { readiness: 0 } }]
+    })
+    renderPage('/runs/run-a/rollover/2028')
+    expect((await screen.findAllByText(/"player_id": "NO_ROW_SCOPE"/)).length).toBe(2)
+    expect(screen.queryByText('Player transition response belongs to another Run or season.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Next-season player response belongs to another Run or season.')).not.toBeInTheDocument()
+  })
+
 })

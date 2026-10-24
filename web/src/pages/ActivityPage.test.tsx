@@ -92,6 +92,37 @@ function mockContext(): void {
 }
 
 describe('ActivityPage', () => {
+
+  it.each([
+    ['historical-first', [
+      { event_sequence: 2, event_id: 'E1', season: 2026, week: 35, template_id: 'OLD', tournament_result: null },
+      { event_sequence: 11, event_id: 'E1', season: 2027, week: 1, template_id: 'NEW', tournament_result: null }
+    ]],
+    ['current-first', [
+      { event_sequence: 11, event_id: 'E1', season: 2027, week: 1, template_id: 'NEW', tournament_result: null },
+      { event_sequence: 2, event_id: 'E1', season: 2026, week: 35, template_id: 'OLD', tournament_result: null }
+    ]]
+  ])('does not borrow weeks or source links from duplicated event history (%s)', async (_name, duplicates) => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [{
+      kind: 'ranking_snapshot', sequence: 10, label: 'Historic snapshot E1',
+      season: 2027, week: null, event_id: null, snapshot_sequence: 10,
+      source_event_id: 'E1', related_run_id: null
+    }] })
+    mockContext()
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-a', events: duplicates })
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+
+    expect(await screen.findByText('Activity source event ID has conflicting seasons. Its navigation links are unavailable.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open ranking snapshot detail' }))
+      .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/10')
+    expect(screen.queryByRole('link', { name: 'Open source persisted event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open source planned-event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail page/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('W35')).not.toBeInTheDocument()
+    expect(screen.queryByText('W1')).not.toBeInTheDocument()
+    expect(screen.getByText('No week context available')).toBeInTheDocument()
+  })
+
   it('renders activity items in backend order', async () => {
     api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: baseItems })
     mockContext()

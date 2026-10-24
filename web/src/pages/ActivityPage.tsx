@@ -258,7 +258,7 @@ export function ActivityPage(): JSX.Element {
         {activityMismatch && <p role="alert" className="error">{t('Activity response belongs to another Run; its records are hidden.')}</p>}
         <button type="button" onClick={() => void activityQuery.refetch()}>{t('Refresh read-only data')}</button>
         {activityQuery.isLoading ? <p className="status">{t('Loading activity feed...')}</p> : null}
-        {activityQuery.error ? <p className="error">Failed to load activity feed: {formatApiError(activityQuery.error)}</p> : null}
+        {activityQuery.error ? <p className="error">{t('Failed to load activity feed')}: {formatApiError(activityQuery.error)}</p> : null}
         {!activityQuery.isLoading && !activityQuery.error && !activityMismatch && items.length === 0 ? (
           <EmptyState message={t('No activity has been persisted for this run yet.')} />
         ) : null}
@@ -334,8 +334,8 @@ export function ActivityPage(): JSX.Element {
                 hasPlannedContext: Boolean(selectedPlannedContext)
               })}
             />
-            {runQuery.error ? <p className="error">Failed to load ordered-plan context: {formatApiError(runQuery.error)}</p> : null}
-            {eventsQuery.error ? <p className="error">Failed to load persisted events context: {formatApiError(eventsQuery.error)}</p> : null}
+            {runQuery.error ? <p className="error">{t('Failed to load ordered-plan context')}: {formatApiError(runQuery.error)}</p> : null}
+            {eventsQuery.error ? <p className="error">{t('Failed to load persisted events context')}: {formatApiError(eventsQuery.error)}</p> : null}
           </>
         ) : (
           <EmptyState message={t('Select an activity item to inspect details.')} />
@@ -358,11 +358,11 @@ function activityBridgeItems(
   if (item.kind === 'event' && item.event_id) {
     links.push({
       label: 'Persisted event detail',
-      value: <Link to={`/runs/${runId}/events/${encodeURIComponent(item.event_id)}`}>Open persisted event detail</Link>
+      value: <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>Open persisted event detail</Link>
     })
     links.push({
       label: 'Planned-event detail',
-      value: <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open planned-event detail')}</Link>
+      value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open planned-event detail')}</Link>
     })
   }
 
@@ -370,13 +370,13 @@ function activityBridgeItems(
     const mode = item.kind === 'ranking_snapshot' ? 'ranking' : 'race'
     links.push({
       label: t('Snapshot detail'),
-      value: <Link to={`/runs/${runId}/snapshots/${mode}/${item.snapshot_sequence}`}>Open {mode} snapshot detail</Link>
+      value: <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}/${item.snapshot_sequence}`}>Open {mode} snapshot detail</Link>
     })
     links.push({
       label: 'Source planned-event detail',
       value:
         contextEventId && hasPlannedContext ? (
-          <Link to={`/runs/${runId}/calendar/${encodeURIComponent(contextEventId)}`}>Open source planned-event detail</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(contextEventId)}`}>Open source planned-event detail</Link>
         ) : (
           'No ordered-plan context for this snapshot source event.'
         )
@@ -385,7 +385,7 @@ function activityBridgeItems(
       label: 'Source persisted event detail',
       value:
         contextEventId && hasPersistedContext ? (
-          <Link to={`/runs/${runId}/events/${encodeURIComponent(contextEventId)}`}>Open source persisted event detail</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(contextEventId)}`}>Open source persisted event detail</Link>
         ) : (
           'No persisted-event context for this snapshot source event.'
         )
@@ -395,14 +395,14 @@ function activityBridgeItems(
   if (item.kind === 'finals_qualification') {
     links.push({
       label: t('Finals qualification detail'),
-      value: <Link to={`/runs/${runId}/finals/qualification`}>Open finals qualification detail</Link>
+      value: <Link to={`/runs/${encodeURIComponent(runId)}/finals/qualification`}>Open finals qualification detail</Link>
     })
   }
 
   if (item.kind === 'finals_result') {
     links.push({
       label: t('Finals result detail'),
-      value: <Link to={`/runs/${runId}/finals/result`}>Open finals result detail</Link>
+      value: <Link to={`/runs/${encodeURIComponent(runId)}/finals/result`}>Open finals result detail</Link>
     })
   }
 
@@ -411,9 +411,9 @@ function activityBridgeItems(
       label: 'Rollover detail',
       value:
         item.season != null ? (
-          <Link to={`/runs/${runId}/rollover/${item.season}`}>Open rollover season detail</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/rollover/${item.season}`}>Open rollover season detail</Link>
         ) : (
-          <Link to={`/runs/${runId}/rollover`}>Open rollover page</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>Open rollover page</Link>
         )
     })
   }
@@ -432,12 +432,12 @@ function activityBridgeItems(
   if (item.kind === 'admin_wildcard_assignment' && item.event_id) {
     links.push({
       label: 'Wildcard event planned detail',
-      value: <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>Open wildcard event planned detail</Link>
+      value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>Open wildcard event planned detail</Link>
     })
     links.push({
       label: 'Wildcard event persisted detail',
       value: hasPersistedContext ? (
-        <Link to={`/runs/${runId}/events/${encodeURIComponent(item.event_id)}`}>Open wildcard event persisted detail</Link>
+        <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>Open wildcard event persisted detail</Link>
       ) : (
         'Wildcard event has not been persisted yet.'
       )
@@ -447,13 +447,13 @@ function activityBridgeItems(
     links.push({
       label: 'Pre-draw event planned detail',
       value: (
-        <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>Open pre-draw event planned detail</Link>
+        <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>Open pre-draw event planned detail</Link>
       )
     })
     links.push({
       label: 'Pre-draw event persisted detail',
       value: hasPersistedContext ? (
-        <Link to={`/runs/${runId}/events/${encodeURIComponent(item.event_id)}`}>Open pre-draw event persisted detail</Link>
+        <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>Open pre-draw event persisted detail</Link>
       ) : (
         'Pre-draw event has not been persisted yet.'
       )
@@ -463,13 +463,13 @@ function activityBridgeItems(
     links.push({
       label: 'Late-replacement event planned detail',
       value: (
-        <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>Open late-replacement event planned detail</Link>
+        <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>Open late-replacement event planned detail</Link>
       )
     })
     links.push({
       label: 'Late-replacement event persisted detail',
       value: hasPersistedContext ? (
-        <Link to={`/runs/${runId}/events/${encodeURIComponent(item.event_id)}`}>Open late-replacement event persisted detail</Link>
+        <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>Open late-replacement event persisted detail</Link>
       ) : (
         'Late-replacement event has not been persisted yet.'
       )
@@ -486,7 +486,7 @@ function activityBridgeItems(
   if (supportsWeekInspection && selectedWeek != null) {
     links.push({
       label: t('Week detail'),
-      value: <Link to={`/runs/${runId}/weeks/${selectedWeek}`}>Open week detail page (W{selectedWeek})</Link>
+      value: <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${selectedWeek}`}>Open week detail page (W{selectedWeek})</Link>
     })
   }
 

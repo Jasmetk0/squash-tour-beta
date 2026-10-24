@@ -83,7 +83,7 @@ export function RolloverSeasonDetailPage(): JSX.Element {
     const players = safePlayers?.players ?? []
     if (!normalizedFilter) return players
     return players.filter((item) => item.player_id.toLowerCase().includes(normalizedFilter))
-  }, [normalizedFilter, playersQuery.data])
+  }, [normalizedFilter, safePlayers?.players])
 
   const invalidSeasonParam = toSeason === null
   const seasonNotFound = isApiNotFound(seasonSummaryQuery.error)

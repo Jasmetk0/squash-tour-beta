@@ -468,7 +468,8 @@ const czech: Record<string, string> = {
   "Waiting for Finals summary": "Čeká se na souhrn Finals",
   "Result cannot be verified without a valid Finals summary": "Výsledek nelze ověřit bez platného souhrnu Finals",
   "Qualification cannot be verified without a valid Finals summary": "Kvalifikaci nelze ověřit bez platného souhrnu Finals",
-  "Activity source event ID has conflicting seasons. Its navigation links are unavailable.": "Zdrojové ID události aktivity má rozporné sezony. Navigační odkazy nejsou dostupné."
+  "Activity source event ID has conflicting seasons. Its navigation links are unavailable.": "Zdrojové ID události aktivity má rozporné sezony. Navigační odkazy nejsou dostupné.",
+  "Text search": "Textové vyhledávání"
 }
 
 export function useHistoryText(): (english: string) => string {

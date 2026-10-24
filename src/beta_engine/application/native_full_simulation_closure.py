@@ -5,6 +5,7 @@ The closing-only ranking uses the outgoing policy at the boundary ordinal.
 """
 
 from copy import deepcopy
+from types import SimpleNamespace
 
 from sqlalchemy import text
 
@@ -52,11 +53,20 @@ def closure_facts(repository, session, revision, *, final=True):
     events = {t.tournament_id: t for t in checkpoint.tournaments}
     results = tuple(r for a in state.editions if a.result_confirmed for r in edition_results(a, events[a.edition.edition_id]))
     submissions = tuple(s for a in state.editions for s in a.submissions)
+    if state.schema_version == "native_fork_tour.v1":
+        # Source submissions retain their original identity. This local player
+        # projection uses the authenticated independent Branch's current owner.
+        submissions = tuple(SimpleNamespace(**{**s.model_dump(), "run_id": state.run_id, "branch_id": state.branch_id,
+            "submission_week": s.submission_week, "decision_position": s.decision_position}) for s in submissions)
     retired = tuple(p.player_id for p in sources.lifecycle.players if p.status == "retired")
     ranking = calculate_calendar_season_closing(calendar=clock, completed_week=week,
         policy=effective_policy(state, state.week).ranking,
         players=ranking_players(state, submissions, retired=retired),
-        results=results, previous=state.rankings[-1])
+        results=results, previous=state.rankings[-1],
+        # Only the completely authenticated source_inputs graph may introduce
+        # inherited source owners; callers cannot supply this through an API.
+        inherited_terminal_sources=tuple((r.source_fingerprint, r.run_id, r.branch_id)
+            for r in results if getattr(r, "schema_version", None) == "calendar_terminal_edition_result.v1"))
     season_editions = tuple(a for a in state.editions if a.edition.week.season_index == week.season_index)
     summary = {
         "schema_version": "native_final_season_summary.v1", "season_index": week.season_index,

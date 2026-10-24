@@ -11,10 +11,17 @@ from collections import defaultdict
 from types import SimpleNamespace
 
 
-def _completed_boundary(state, season_index):
+def _completed_boundary(state, season_index, closure=None):
     clock = state.week.calendar
     if type(season_index) is not int or not 0 <= season_index < clock.season_count:
         raise ValueError("Season is outside this Run horizon")
+    if closure and closure["completed_week"]["season_index"] == season_index:
+        from beta_engine.domain.calendar.run_calendar import RunCalendar
+        from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+        return SimpleNamespace(
+            completed_week=RunWeekPosition(calendar=RunCalendar.from_metadata(closure["execution_calendar"]), **closure["completed_week"]),
+            target_week=None, command_id=closure["parent_command_id"],
+        )
     for transition in state.transitions:
         if (
             transition.completed_week.season_index == season_index
@@ -27,9 +34,9 @@ def _completed_boundary(state, season_index):
     raise ValueError("Season has no signed terminal Season Transition")
 
 
-def completed_season_indices(state):
+def completed_season_indices(state, closure=None):
     """Only publicly closed, chronologically signed Seasons."""
-    return tuple(
+    indices = tuple(
         t.completed_week.season_index
         for t in state.transitions
         if (
@@ -39,6 +46,15 @@ def completed_season_indices(state):
             and t.target_week.week == 1
         )
     )
+
+    if closure:
+        indices = tuple(sorted({*indices, closure["completed_week"]["season_index"]}))
+    return indices
+
+
+def saved_final_closure(payload, branch_id):
+    """Projection only: caller already authenticated this complete Saved revision."""
+    return payload.get("run", {}).get("native_branch_closures", {}).get(branch_id)
 
 
 def native_tour_identities(state, world):
@@ -55,7 +71,7 @@ def native_tour_identities(state, world):
     return players
 
 
-def native_tour_season_summary(state, world, season_index):
+def native_tour_season_summary(state, world, season_index, *, closure=None):
     """Pure national comparison and actual Edition placements; no inferred wins.
 
     The final-week ranking is explicitly the ranking PUBLISHED at Week W;
@@ -64,7 +80,7 @@ def native_tour_season_summary(state, world, season_index):
     """
     if (state.run_id, state.branch_id) != (world.run_id, world.branch_id):
         raise ValueError("Season summary requires the same signed Run/Branch world")
-    boundary = _completed_boundary(state, season_index)
+    boundary = _completed_boundary(state, season_index, closure)
     players = native_tour_identities(state, world)
     per_country = defaultdict(lambda: {
         "titles": 0, "finals": 0, "semifinals": 0,
@@ -168,7 +184,8 @@ def native_tour_season_summary(state, world, season_index):
         "season_label": state.week.calendar.label(season_index),
         "weeks_per_season": state.week.calendar.weeks_per_year,
         "boundary_command_id": boundary.command_id,
-        "next_season_index": boundary.target_week.season_index,
+        "next_season_index": boundary.target_week.season_index if boundary.target_week else None,
+        **({"closing_ranking": closure["closing_ranking"], "closure_marker_fingerprint": closure["fingerprint"]} if closure and not boundary.target_week else {}),
         "completed_edition_count": len(editions),
         "countries": countries,
         "editions": sorted(editions, key=lambda row: (row["week"], row["edition_id"])),
@@ -184,11 +201,11 @@ def native_tour_season_summary(state, world, season_index):
     }
 
 
-def compare_completed_seasons(state, world, season_index, compare_to=None):
-    selected = native_tour_season_summary(state, world, season_index)
+def compare_completed_seasons(state, world, season_index, compare_to=None, *, closure=None):
+    selected = native_tour_season_summary(state, world, season_index, closure=closure)
     if compare_to is None:
         return {"selected": selected, "comparison": None, "country_deltas": []}
-    other = native_tour_season_summary(state, world, compare_to)
+    other = native_tour_season_summary(state, world, compare_to, closure=closure)
     rows = {r["country_code"]: r for r in selected["countries"]}
     prior = {r["country_code"]: r for r in other["countries"]}
     deltas = [

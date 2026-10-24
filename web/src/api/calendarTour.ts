@@ -1,7 +1,7 @@
 import {tourWeekOffset} from './nativeTourCalendar'
 
 export type TourWeek = {calendar:{schema_version:string;weeks_per_year:number;season_start_year_week:number;start_year:number;season_count:number};season_index:number;week:number}
-export type TourResult = {edition_id:string;player_id:string;main_points:number;qualification_points:number;source_fingerprint:string;validity_weeks:number;completed_week:{season_index:number;week:number};first_publication_week:{season_index:number;week:number}}
+export type TourResult = {edition_id:string;player_id:string;main_points:number;qualification_points:number;source_fingerprint:string;validity_weeks:number;completed_week:{season_index:number;week:number};first_publication_week?:{season_index:number;week:number};schema_version?:'calendar_terminal_edition_result.v1';closing_eligibility_ordinal?:number}
 export type TourContribution = TourResult & {status?:string}
 export type TourSaveReceipt = {schema_version:'calendar_tour_save_receipt.v1';run_id:string;branch_id:string;saved_revision:{revision_id:string;run_id:string;branch_id:string;content_hash:string}}
 export type TourPlayer = {run_id:string;branch_id:string;saved_head_revision_id:string;checkpoint_fingerprint:string;record:{player_id:string;attributes:[string,number][];current_form:number;match_sharpness:number;long_term_fatigue:number};lifecycle:null|{age:number;status:string}}
@@ -36,7 +36,7 @@ export type SignedSeasonCountry={country_code:string;titles:number;finals:number
 export type SignedSeasonSummary={
   schema_version:'native_tour_signed_season_summary.v1';run_id:string;branch_id:string
   source_tour_fingerprint:string;season_index:number;season_label:string
-  weeks_per_season:number;boundary_command_id:string;next_season_index:number
+  weeks_per_season:number;boundary_command_id:string;next_season_index:number|null;closing_ranking?:{rows:{rank:number;player_id:string;points:number}[]};closure_marker_fingerprint?:string
   completed_edition_count:number;countries:SignedSeasonCountry[]
   editions:{edition_id:string;name:string;week:number;champion_player_id:string;champion_name:string;champion_country:string;finalist_player_id:string;finalist_name:string;finalist_country:string;source_tournament_fingerprint:string}[]
   players:{player_id:string;name:string;country_code:string;titles:number;finals:number;awarded_points:number;edition_appearances:number}[]

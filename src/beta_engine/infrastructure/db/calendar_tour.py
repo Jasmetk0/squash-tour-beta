@@ -142,6 +142,12 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                 )
         action = command.get("action")
         authority = sources.get(command.get("edition_id"))
+        if action == "confirm-result" and authority is not None:
+            event = events.get(authority.edition.edition_id)
+            if event is None or not authority.result_confirmed or receipt.result.get("results") != [
+                r.model_dump(mode="json") for r in edition_results(authority, event)
+            ]:
+                raise ValueError("Tour confirmation receipt differs from actual Edition results")
         if action == "approve" and (
             authority is None
             or authority.field is None
@@ -179,7 +185,12 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                 raise ValueError(
                     "Edition lacks authentic played event and Saved origin"
                 )
-            edition_results(authority, event)
+            results = edition_results(authority, event)
+            if results and getattr(results[0], "schema_version", None) == "calendar_terminal_edition_result.v1" and authority.result_confirmed:
+                confirmations = [r for r in state.receipts if r.request.get("command", {}).get("action") == "confirm-result"
+                    and r.request["command"].get("edition_id") == authority.edition.edition_id]
+                if len(confirmations) != 1:
+                    raise ValueError("Terminal Edition requires exactly one actual confirmation receipt")
     advances = {e.command_id: e for e in checkpoint.weekly_advances}
     if {
         e.command_id
@@ -598,7 +609,15 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None):
             )
         ):
             raise ValueError("Edition played origin is missing or foreign")
-        component = json.loads(row.payload_json).get("content", {}).get(COMPONENT_KEY)
+        origin_payload = json.loads(row.payload_json)
+        # The terminal record's clock must have existed at actual play. An
+        # extension/rehashed event cannot retroactively create publication time.
+        for receipt in state.receipts:
+            if receipt.request.get("command", {}).get("action") == "confirm-result" and receipt.request["command"].get("edition_id") == authority.edition.edition_id:
+                for result in receipt.result.get("results", []):
+                    if result.get("schema_version") == "calendar_terminal_edition_result.v1" and result["completed_week"]["calendar"] != origin_payload["run"]["run_calendar"]:
+                        raise ValueError("Terminal result calendar did not exist in its actual played Saved origin")
+        component = origin_payload.get("content", {}).get(COMPONENT_KEY)
         origin = parse_tour_json(json.dumps(component["state"])) if component else None
         frozen = (
             next(

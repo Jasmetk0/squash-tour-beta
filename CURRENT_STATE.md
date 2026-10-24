@@ -1,3 +1,21 @@
+# Native final-week Edition closing candidate — 24 October 2026
+
+Verified `buuk` `16c6ff737372d27b97c3237b21f7b988218df1ab` includes owner-merged
+#1639 and #1640. The single `feat/native-final-week-closing-20261024` branch
+continues the existing Tour/Full Simulation authorities with a versioned terminal
+Edition result, genuine outgoing Closing Ranking, separate result/closure approvals
+and manual Saves, Saved final season summary and explicit completed extension.
+Original calendar/source/target and old result formats remain immutable.
+
+Initial actual short original-Branch HTTP/SQLite final-week match/points, late
+closure rollback, cold restart and extension/continuation passed in 322.28 s;
+104 focused contracts passed in 3.35 s. Further native fork, W52/W61/W80, actual
+Chromium, adversarial and final-head checks are pending. **WAIT**; no merge or
+pre-alpha release claim. See [scoped contract](docs/NATIVE_FINAL_WEEK_CLOSING.md).
+Only the owner merges; reserved parallel Admin and Lab/Packages files are untouched.
+
+---
+
 # Native Full Simulation history performance candidate — 23 October 2026
 
 Verified base `buuk` `e39d962bb6797960c47c1c659d57be1dc67bba6b`

@@ -102,6 +102,7 @@ export function NativeTaskActions({task}:{task:ServerTask}){
    {review&&<div>
     <p>{cs?'Skutečně odehrané zápasy':'Actually played matches'}: {review.season_summary.played_match_count} · {cs?'Udělené body':'Awarded points'}: {review.season_summary.awarded_points}</p>
     <p>{cs?'Samostatný Closing Ranking':'Separate Closing Ranking'}: {review.closing_ranking.rows.length} {cs?'hráčů':'players'}</p>
+    <table aria-label="Final Closing Ranking"><thead><tr><th>#</th><th>{cs?'Hráč':'Player'}</th><th>{cs?'Body':'Points'}</th></tr></thead><tbody>{review.closing_ranking.rows.map(row=><tr key={row.player_id}><td>{row.rank}</td><td>{row.player_id}</td><td>{row.points}</td></tr>)}</tbody></table>
     <p>{cs?'Žádný další týden se neotevře.':'No following week will open.'}</p>
     <label><input aria-label="Native closure consent" type="checkbox" disabled={!!frozen} checked={consent} onChange={e=>setConsent(e.target.checked)}/>{cs?'Potvrzuji zkontrolované uzavření.':'I confirm the reviewed closure.'}</label>
     {!approved?<button disabled={!consent||dirtyInputs||!!frozen||mutation.isPending} onClick={()=>submit('approve')}>{cs?'Schválit uzavření':'Approve closure'}</button>

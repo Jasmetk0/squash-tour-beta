@@ -16,6 +16,10 @@ from beta_engine.application.native_fork_runtime_reducer import (
     tour_fingerprint,
     transition_blockers,
 )
+from beta_engine.domain.rankings.calendar_terminal_result import (
+    CalendarTerminalRankingResult,
+    result_activation_ordinal,
+)
 from beta_engine.domain.run_revisions import (
     canonical_json,
     saved_revision_content_hash,
@@ -146,6 +150,7 @@ class NativeForkRuntimeService:
     def _inspection(self, revision, draft, signed, current, sources):
         from beta_engine.application.calendar_tour_season_summary import (
             completed_season_indices,
+            saved_final_closure,
         )
         from beta_engine.domain.native_fork_runtime import ForkCompetitionView
         from beta_engine.domain.players.calendar_native_competition import (
@@ -194,13 +199,12 @@ class NativeForkRuntimeService:
                 ],
             }
             for result in results:
-                age = current.week.ordinal - current.week.calendar.ordinal(
-                    result.first_publication_week.season_index,
-                    result.first_publication_week.week,
-                )
+                age = current.week.ordinal - result_activation_ordinal(result, current.week.calendar)
                 status = (
                     "awaiting_confirmation"
                     if not authority.result_confirmed
+                    else "closing_only"
+                    if isinstance(result, CalendarTerminalRankingResult) and age < 0
                     else "awaiting_activation"
                     if age < 0
                     else "expired"
@@ -219,7 +223,7 @@ class NativeForkRuntimeService:
             "saved_head_revision_id": revision.revision_id,
             "draft_version": draft.draft_version,
             "run_calendar": sources.execution_calendar.to_metadata(),
-            "saved_completed_seasons": completed_season_indices(signed.tour),
+            "saved_completed_seasons": completed_season_indices(signed.tour, saved_final_closure(revision.payload, current.branch_id)),
             "checkpoint_fingerprint": current.checkpoint_fingerprint,
             "tour_fingerprint": tour_fingerprint(current, draft.draft_version),
             "saved": current == signed and draft.status == "clean",
@@ -281,7 +285,9 @@ class NativeForkRuntimeService:
             _, _, revision, draft, signed, current, _, sources = self._context(
                 session, run_id, branch_id
             )
-            from beta_engine.application.native_full_simulation_closure import saved_native_closure
+            from beta_engine.application.native_full_simulation_closure import (
+                saved_native_closure,
+            )
             if saved_native_closure(revision.payload, branch_id=branch_id, calendar=sources.execution_calendar):
                 raise ValueError("This native Branch is completed; extend the Run before new Tour work")
             if draft.status == "dirty" and draft.draft_schema_version != DRAFT_SCHEMA:
@@ -313,7 +319,9 @@ class NativeForkRuntimeService:
                             "Command ID already has another request or confirmation"
                         )
                     return event.result
-            from beta_engine.application.native_full_simulation_closure import saved_native_closure
+            from beta_engine.application.native_full_simulation_closure import (
+                saved_native_closure,
+            )
             if saved_native_closure(revision.payload, branch_id=branch_id, calendar=sources.execution_calendar):
                 raise ValueError("This native Branch is completed; extend the Run before new Tour work")
             if draft.status == "dirty" and draft.draft_schema_version != DRAFT_SCHEMA:
@@ -527,7 +535,9 @@ class NativeForkRuntimeService:
         )
         target = next((r for r in lineage if r.revision_id == target_id), None)
         blockers = []
-        from beta_engine.infrastructure.db.full_simulation_command_scope import pending_native_task_parents
+        from beta_engine.infrastructure.db.full_simulation_command_scope import (
+            pending_native_task_parents,
+        )
         if pending_native_task_parents(session, run_id=run_id, branch_id=branch_id):
             blockers.append(SavedRevisionRestorePreflightBlocker(
                 "pending_native_full_simulation", "Stop the pending native Full Simulation before restoring this Branch"
@@ -834,6 +844,7 @@ class NativeForkRuntimeService:
 
         from beta_engine.application.calendar_tour_season_summary import (
             compare_completed_seasons,
+            saved_final_closure,
         )
         from beta_engine.application.calendar_tour_signed_records import (
             signed_tour_records,
@@ -851,7 +862,7 @@ class NativeForkRuntimeService:
             state, world = publication_inputs(self.repository, session, revision)
             if kind == "records":
                 return {
-                    **signed_tour_records(state, world, **options),
+                    **signed_tour_records(state, world, closure=saved_final_closure(revision.payload, branch_id), **options),
                     "schema_version": "calendar_tour_signed_records_response.v1",
                     "saved_head_revision_id": revision.revision_id,
                 }
@@ -860,5 +871,5 @@ class NativeForkRuntimeService:
                 "run_id": run_id,
                 "branch_id": branch_id,
                 "saved_head_revision_id": revision.revision_id,
-                **compare_completed_seasons(state, world, **options),
+                **compare_completed_seasons(state, world, closure=saved_final_closure(revision.payload, branch_id), **options),
             }

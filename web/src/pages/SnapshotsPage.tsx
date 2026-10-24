@@ -85,7 +85,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   const plannedForSource = (sourceEventId: string) => {
     const plan = plannedContext.get(sourceEventId)
     const persisted = persistedEventsById.get(sourceEventId)
-    return plan && (!persisted || persisted.season === plan.season) ? plan : undefined
+    return plan && (!persisted || persisted.season == null || persisted.season === plan.season) ? plan : undefined
   }
   const normalizedSourceEventFilter = sourceEventFilter.trim().toLowerCase()
   const filteredSnapshots = snapshots.filter((snapshot) => {

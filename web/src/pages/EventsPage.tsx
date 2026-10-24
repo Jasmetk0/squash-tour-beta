@@ -21,11 +21,14 @@ export function EventsPage(): JSX.Element {
   const t = useHistoryText()
   const { runId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const [selectedEventSequence, setSelectedEventSequence] = useState<number | null>(null)
   const [weekFilter, setWeekFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [textFilter, setTextFilter] = useState('')
   const requestedEventId = searchParams.get('selectedEventId')
+  const requestedSequenceText = searchParams.get('selectedEventSequence') ?? ''
+  const requestedSequence = /^\d+$/.test(requestedSequenceText) ? Number(requestedSequenceText) : NaN
+  const hasRequestedSequence = Number.isSafeInteger(requestedSequence) && requestedSequence > 0
 
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
@@ -103,40 +106,47 @@ export function EventsPage(): JSX.Element {
     return Array.from(values)
   }, [events, orderedEventContext])
 
+  // event_id can be reused across seasons. Persisted sequence is the stable
+  // selection identity; legacy ?selectedEventId links remain readable.
   useEffect(() => {
     if (!filteredEvents.length) {
-      setSelectedEventId(null)
+      setSelectedEventSequence(null)
       return
     }
-
-    if (requestedEventId && filteredEvents.some((event) => event.event_id === requestedEventId)) {
-      if (selectedEventId !== requestedEventId) {
-        setSelectedEventId(requestedEventId)
-      }
-      return
+    const requestedBySequence = hasRequestedSequence
+      ? filteredEvents.find((event) =>
+          event.event_sequence === requestedSequence &&
+          (!requestedEventId || event.event_id === requestedEventId))
+      : undefined
+    const requestedByLegacyId = requestedEventId
+      ? filteredEvents.find((event) => event.event_id === requestedEventId)
+      : undefined
+    const remembered = filteredEvents.find((event) => event.event_sequence === selectedEventSequence)
+    const next = requestedBySequence ?? requestedByLegacyId ?? remembered ?? filteredEvents[0]
+    if (selectedEventSequence !== next.event_sequence) {
+      setSelectedEventSequence(next.event_sequence)
     }
+  }, [filteredEvents, hasRequestedSequence, requestedSequence, requestedEventId, selectedEventSequence])
 
-    if (!selectedEventId || !filteredEvents.some((event) => event.event_id === selectedEventId)) {
-      setSelectedEventId(filteredEvents[0].event_id)
-    }
-  }, [filteredEvents, requestedEventId, selectedEventId])
-
-  const selectedEvent = filteredEvents.find((event) => event.event_id === selectedEventId) ?? null
+  const selectedEvent = filteredEvents.find((event) => event.event_sequence === selectedEventSequence) ?? null
+  const ambiguousEventId = Boolean(selectedEvent &&
+    events.filter((event) => event.event_id === selectedEvent.event_id).length > 1)
   const selectedEventPlanContext = selectedEvent ? getEventPlanContext(selectedEvent) : undefined
   const selectedEventWeek = selectedEvent ? selectedEvent.week ?? selectedEventPlanContext?.week ?? null : null
   const weekLinkAvailable = selectedEvent && !planUnavailable &&
     selectedEvent.season != null && selectedEvent.season === runQuery.data?.run.season
 
   const eventDetailQuery = useQuery({
-    queryKey: ['event', runId, selectedEventId],
-    queryFn: () => getEvent(runId, selectedEventId ?? ''),
-    enabled: Boolean(runId && selectedEventId)
+    queryKey: ['event', runId, selectedEvent?.event_id, selectedEvent?.event_sequence],
+    queryFn: () => getEvent(runId, selectedEvent?.event_id ?? ''),
+    enabled: Boolean(runId && selectedEvent)
   })
 
   // The list and detail may be read at different times. Do not present a
   // same-ID payload with contradictory stored sequence/season/week as evidence.
   const eventDetailMismatch = Boolean(eventDetailQuery.data && selectedEvent && (
     eventDetailQuery.data.event_id !== selectedEvent.event_id ||
+    (ambiguousEventId && !Number.isSafeInteger(eventDetailQuery.data.event_sequence)) ||
     (Number.isSafeInteger(eventDetailQuery.data.event_sequence) && eventDetailQuery.data.event_sequence !== selectedEvent.event_sequence) ||
     (eventDetailQuery.data.season != null && selectedEvent.season != null && eventDetailQuery.data.season !== selectedEvent.season) ||
     (eventDetailQuery.data.week != null && selectedEvent.week != null && eventDetailQuery.data.week !== selectedEvent.week)
@@ -217,7 +227,7 @@ export function EventsPage(): JSX.Element {
         {filteredEvents.length > 0 && (
           <SelectableHistoryList
             items={filteredEvents}
-            getKey={(event) => event.event_id}
+            getKey={(event) => `${event.event_sequence}-${event.event_id}`}
             getLabel={(event) => `${event.event_sequence}. ${event.event_id}`}
             getSubLabel={(event) => {
               const plannedContext = getEventPlanContext(event)
@@ -239,12 +249,13 @@ export function EventsPage(): JSX.Element {
 
               return segments.join(' · ')
             }}
-            isSelected={(event) => event.event_id === selectedEventId}
+            isSelected={(event) => event.event_sequence === selectedEventSequence}
             onSelect={(event) => {
-              setSelectedEventId(event.event_id)
+              setSelectedEventSequence(event.event_sequence)
               setSearchParams((current) => {
                 const next = new URLSearchParams(current)
                 next.set('selectedEventId', event.event_id)
+                next.set('selectedEventSequence', String(event.event_sequence))
                 return next
               })
             }}
@@ -258,6 +269,7 @@ export function EventsPage(): JSX.Element {
         {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>}
         {selectedEvent ? (
           <>
+            {ambiguousEventId && <p role="alert" className="error">{t('Event ID is reused in this Run. Use the selected sequence to identify the stored record; direct ID-only navigation is unavailable.')}</p>}
             <MetadataList
               items={[
                 { label: t('Event ID'), value: selectedEvent.event_id },
@@ -281,7 +293,9 @@ export function EventsPage(): JSX.Element {
               items={[
                 {
                   label: t('Persisted detail'),
-                  value: <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(selectedEvent.event_id)}`}>{t('Open dedicated event detail page')}</Link>
+                  value: ambiguousEventId
+                    ? t('Unavailable: the event ID identifies multiple stored records.')
+                    : <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(selectedEvent.event_id)}`}>{t('Open dedicated event detail page')}</Link>
                 },
                 {
                   label: t('Planned event detail'),

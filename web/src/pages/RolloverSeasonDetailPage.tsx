@@ -77,7 +77,7 @@ export function RolloverSeasonDetailPage(): JSX.Element {
     const transitions = safeTransitions?.transitions ?? []
     if (!normalizedFilter) return transitions
     return transitions.filter((item) => item.player_id.toLowerCase().includes(normalizedFilter))
-  }, [normalizedFilter, transitionsQuery.data])
+  }, [normalizedFilter, safeTransitions?.transitions])
 
   const filteredPlayers = useMemo(() => {
     const players = safePlayers?.players ?? []

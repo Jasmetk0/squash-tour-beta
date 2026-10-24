@@ -475,7 +475,8 @@ const czech: Record<string, string> = {
   "Source event ID is reused in persisted history. Source links and week context are unavailable.": "Zdrojové ID události se v uložené historii opakuje. Odkazy na zdroj a kontext týdne nejsou dostupné.",
   "Some event IDs are reused. Event links open their selected sequence in history.": "Některá ID událostí se opakují. Odkazy otevírají odpovídající pořadové číslo v historii.",
   "Ranking snapshots list": "Seznam snímků žebříčku",
-  "Race snapshots list": "Seznam snímků Race"
+  "Race snapshots list": "Seznam snímků Race",
+  "Snapshot detail and history index disagree on source identity. Navigation links are unavailable.": "Detail snímku a seznam historie se neshodují v identitě zdroje. Navigační odkazy nejsou dostupné."
 }
 
 export function useHistoryText(): (english: string) => string {

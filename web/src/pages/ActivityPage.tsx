@@ -83,6 +83,10 @@ export function ActivityPage(): JSX.Element {
   const activityMismatch = Boolean(activityQuery.data?.run_id && activityQuery.data.run_id !== runId)
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const items = activityMismatch ? [] : activityQuery.data?.items ?? []
+  const plannedContextUnavailable = runQuery.isLoading || Boolean(runQuery.error) ||
+    !runQuery.data || runQuery.data.run.run_id !== runId
+  const persistedContextUnavailable = eventsQuery.isLoading || Boolean(eventsQuery.error) ||
+    !eventsQuery.data || eventsMismatch
   const indexedItems = useMemo<IndexedActivityItem[]>(() => items.map((item, index) => ({ item, index })), [items])
 
   const plannedContextByEventId = useMemo(() => {
@@ -187,6 +191,14 @@ export function ActivityPage(): JSX.Element {
   const selectedPlannedContext = selectedContextEventId ? plannedContextByEventId.get(selectedContextEventId) : undefined
   const selectedPersistedEvent = selectedContextEventId ? persistedEventById.get(selectedContextEventId) : undefined
   const selectedWeek = selectedItem ? getEffectiveWeek(selectedItem, plannedContextByEventId, persistedEventById) : null
+  const bridgeItems = selectedItem ? activityBridgeItems(runId, selectedItem, selectedWeek, t, {
+    contextEventId: selectedContextEventId,
+    hasPersistedContext: Boolean(selectedPersistedEvent),
+    hasPlannedContext: Boolean(selectedPlannedContext),
+    plannedContextUnavailable,
+    persistedContextUnavailable
+  }) : []
+  const availableBridgeLinks = bridgeItems.filter(({ value }) => typeof value !== 'string').length
 
   return (
     <section className="panel">
@@ -311,7 +323,7 @@ export function ActivityPage(): JSX.Element {
                   label: t('Plan context'),
                   value: selectedPlannedContext
                     ? `Plan #${selectedPlannedContext.planPosition} (${selectedPlannedContext.category}, ${selectedPlannedContext.templateId})`
-                    : t('No ordered-plan match')
+                    : plannedContextUnavailable ? t('Unavailable') : t('No ordered-plan match')
                 }
               ]}
             />
@@ -321,20 +333,12 @@ export function ActivityPage(): JSX.Element {
                 {
                   label: t('Bridge links'),
                   value:
-                    activityBridgeItems(runId, selectedItem, selectedWeek, t, {
-                      contextEventId: selectedContextEventId,
-                      hasPersistedContext: Boolean(selectedPersistedEvent),
-                      hasPlannedContext: Boolean(selectedPlannedContext)
-                    }).length || t('None')
+                    availableBridgeLinks
                 }
               ]}
             />
             <CompactSummaryCard
-              items={activityBridgeItems(runId, selectedItem, selectedWeek, t, {
-                contextEventId: selectedContextEventId,
-                hasPersistedContext: Boolean(selectedPersistedEvent),
-                hasPlannedContext: Boolean(selectedPlannedContext)
-              })}
+              items={bridgeItems}
             />
             {runQuery.error ? <p className="error">{t('Failed to load ordered-plan context')}: {formatApiError(runQuery.error)}</p> : null}
             {eventsQuery.error ? <p className="error">{t('Failed to load persisted events context')}: {formatApiError(eventsQuery.error)}</p> : null}
@@ -352,9 +356,15 @@ function activityBridgeItems(
   item: RunActivityItem,
   selectedWeek: number | null,
   t: (english: string) => string,
-  snapshotContext: { contextEventId: string | null; hasPersistedContext: boolean; hasPlannedContext: boolean }
+  snapshotContext: {
+    contextEventId: string | null
+    hasPersistedContext: boolean
+    hasPlannedContext: boolean
+    plannedContextUnavailable: boolean
+    persistedContextUnavailable: boolean
+  }
 ): Array<{ label: string; value: JSX.Element | string }> {
-  const { contextEventId, hasPersistedContext, hasPlannedContext } = snapshotContext
+  const { contextEventId, hasPersistedContext, hasPlannedContext, plannedContextUnavailable, persistedContextUnavailable } = snapshotContext
   const links: Array<{ label: string; value: JSX.Element | string }> = []
 
   if (item.kind === 'event' && item.event_id) {
@@ -366,7 +376,7 @@ function activityBridgeItems(
       label: t('Planned-event detail'),
       value: hasPlannedContext
         ? <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open planned-event detail')}</Link>
-        : t('No ordered-plan match')
+        : plannedContextUnavailable ? t('Unavailable') : t('No ordered-plan match')
     })
   }
 
@@ -382,7 +392,7 @@ function activityBridgeItems(
         contextEventId && hasPlannedContext ? (
           <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(contextEventId)}`}>{t('Open source planned-event detail')}</Link>
         ) : (
-          'No ordered-plan context for this snapshot source event.'
+          plannedContextUnavailable ? t('Unavailable') : t('No ordered-plan context for this snapshot source event.')
         )
     })
     links.push({
@@ -391,7 +401,7 @@ function activityBridgeItems(
         contextEventId && hasPersistedContext ? (
           <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(contextEventId)}`}>{t('Open source persisted event detail')}</Link>
         ) : (
-          'No persisted-event context for this snapshot source event.'
+          persistedContextUnavailable ? t('Unavailable') : t('No persisted-event context for this snapshot source event.')
         )
     })
   }
@@ -436,14 +446,14 @@ function activityBridgeItems(
   if (item.kind === 'admin_wildcard_assignment' && item.event_id) {
     links.push({
       label: t('Wildcard event planned detail'),
-      value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open wildcard event planned detail')}</Link>
+      value: hasPlannedContext ? <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open wildcard event planned detail')}</Link> : plannedContextUnavailable ? t('Unavailable') : t('No ordered-plan match')
     })
     links.push({
       label: t('Wildcard event persisted detail'),
       value: hasPersistedContext ? (
         <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>{t('Open wildcard event persisted detail')}</Link>
       ) : (
-        'Wildcard event has not been persisted yet.'
+        persistedContextUnavailable ? t('Unavailable') : t('Wildcard event has not been persisted yet.')
       )
     })
   }
@@ -451,7 +461,7 @@ function activityBridgeItems(
     links.push({
       label: t('Pre-draw event planned detail'),
       value: (
-        <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open pre-draw event planned detail')}</Link>
+        hasPlannedContext ? <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open pre-draw event planned detail')}</Link> : plannedContextUnavailable ? t('Unavailable') : t('No ordered-plan match')
       )
     })
     links.push({
@@ -459,7 +469,7 @@ function activityBridgeItems(
       value: hasPersistedContext ? (
         <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>{t('Open pre-draw event persisted detail')}</Link>
       ) : (
-        'Pre-draw event has not been persisted yet.'
+        persistedContextUnavailable ? t('Unavailable') : t('Pre-draw event has not been persisted yet.')
       )
     })
   }
@@ -467,7 +477,7 @@ function activityBridgeItems(
     links.push({
       label: t('Late-replacement event planned detail'),
       value: (
-        <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open late-replacement event planned detail')}</Link>
+        hasPlannedContext ? <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open late-replacement event planned detail')}</Link> : plannedContextUnavailable ? t('Unavailable') : t('No ordered-plan match')
       )
     })
     links.push({
@@ -475,7 +485,7 @@ function activityBridgeItems(
       value: hasPersistedContext ? (
         <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>{t('Open late-replacement event persisted detail')}</Link>
       ) : (
-        'Late-replacement event has not been persisted yet.'
+        persistedContextUnavailable ? t('Unavailable') : t('Late-replacement event has not been persisted yet.')
       )
     })
   }

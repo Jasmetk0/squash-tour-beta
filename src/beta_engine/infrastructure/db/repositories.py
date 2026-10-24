@@ -2550,7 +2550,9 @@ class SimulationPersistenceRepository:
             return memo[proof_key]
         token = _active_saved_revision_proofs.set(active | {key})
         try:
-            if model.payload_schema_version == "native_fork_saved_root.v2":
+            from beta_engine.infrastructure.db.calendar_global_slot_origins import is_global_slot_row
+            global_slots = is_global_slot_row(model)
+            if model.payload_schema_version == "native_fork_saved_root.v2" or global_slots:
                 from beta_engine.infrastructure.db.native_fork_runtime_state import (
                     actual_dependency_signature,
                     has_actual_dependency_proof,
@@ -2582,10 +2584,15 @@ class SimulationPersistenceRepository:
                 verify_native_fork_saved_root(
                     self, session, revision=revision, baseline=baseline
                 )
+            from beta_engine.infrastructure.db.calendar_global_slot_origins import verify_saved_global_origins
+            verify_saved_global_origins(self, session, revision, sporting_component_proofs=sporting_component_proofs)
             from beta_engine.infrastructure.db.calendar_terminal_results import verify_saved_terminal_results
             verify_saved_terminal_results(self, session, revision, sporting_component_proofs=sporting_component_proofs)
             from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
             verify_saved_native_closure(self, session, revision)
+            if global_slots:
+                from beta_engine.infrastructure.db.native_fork_runtime_state import verify_with_actual_dependencies
+                verify_with_actual_dependencies(self, session, revision, lambda: None)
             if baseline is not None:
                 memo[(id(session), signature, True)] = revision
                 if not materialize_payload:
@@ -5424,7 +5431,7 @@ class SimulationPersistenceRepository:
                 native_birth_restore = (
                     target_content.get("calendar_player_sporting_checkpoint", {})
                     .get("state", {}).get("schema_version")
-                    in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
+                    in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
                 )
                 capture_saved_calendar_match(
                     session, payload, run_id=run_id, branch_id=branch_id,
@@ -6095,7 +6102,7 @@ class SimulationPersistenceRepository:
                     or (
                         live_calendar_owner is not None
                         and live_calendar_owner.schema_version
-                        in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
+                        in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
                     )
                 )
                 capture_saved_calendar_match(
@@ -6127,6 +6134,7 @@ class SimulationPersistenceRepository:
                     load_saved_calendar_sources(
                         payload, run_id=run_id, branch_id=branch_id,
                         _verified_saved_prefix=signed_prefix,
+                        _verified_global_prefix=(signed_prefix, _saved_tour, state.saved_revision.payload),
                     )
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,

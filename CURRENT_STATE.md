@@ -1,3 +1,31 @@
+# Native global Simulation Slots candidate — 24 October 2026
+
+Verified `buuk` `94737b0dab67c38c57682480f66bfae365c3225e` includes owner-merged
+#1642. Implementation continues in one Draft PR #1643; only the owner merges.
+The parallel #1641 diagnostic/history pages and their tests remain excluded.
+
+New v2 Editions share the Branch's nearest chronological match slot. A v13
+sporting ledger and v5 Tour keep original frozen slot inputs and accepted real
+MatchEngine results across Next Match, Next Slot and manual Save. Completed
+brackets/awards derive from that ledger. The native worker uses slot children;
+Entry, results, Week/Season review, final approval and Saves remain explicit.
+Original schemas and history keep their original seeds, hashes and meaning.
+Native fork runtime v2 references accepted source matches and independently
+continues the remaining work, without rewriting their original owners.
+
+**WAIT — implementation/acceptance candidate.** Executed development checks
+include legacy/domain contracts, frontend contracts/build, a complete original
+HTTP/SQLite two-Edition Save/restart/points flow, equal batch/reversed-order
+sporting checkpoints and actual worker slot children/frozen target. Subsequent
+source-proof, summary and recovery corrections require the final candidate's
+full acceptance again. Earlier-head results and Draft skips are not final-head
+passes. Relevant W52/W61/W80 API, every-week Season Transition, final-week,
+native/Saved regressions and actual CS/EN Chromium must execute successfully.
+See [contract and verification ledger](docs/NATIVE_GLOBAL_SIMULATION_SLOTS.md).
+This is not a claim of completed pre-alpha or release acceptance.
+
+---
+
 # Native final-week Edition closing candidate — 24 October 2026
 
 Verified base `buuk` `16c6ff737372d27b97c3237b21f7b988218df1ab` includes owner-merged

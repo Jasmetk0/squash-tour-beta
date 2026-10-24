@@ -34,7 +34,7 @@ def root_payload(payload, checkpoint, tour):
     return {**payload, "content": content}
 
 
-def verify_competition_payload(payload, checkpoint, evidence=None):
+def verify_competition_payload(payload, checkpoint, evidence=None, *, verified_global_prefix=None, source_proofs=None):
     from beta_engine.application.calendar_tour_service import (
         CalendarTourCommit,
         CalendarTourService,
@@ -64,7 +64,8 @@ def verify_competition_payload(payload, checkpoint, evidence=None):
     run_id, branch_id = checkpoint.run_id, checkpoint.branch_id
     component = payload["content"].get("calendar_tour_authority", {})
     state = parse_tour_json(json.dumps(component.get("state")))
-    if not isinstance(state, CalendarNativeCompetitionTourState) or (
+    from beta_engine.domain.tournaments.calendar_global_slots import GlobalTourState, GlobalCompetitionCheckpoint, upgrade
+    if not isinstance(state, (CalendarNativeCompetitionTourState, GlobalTourState)) or (
         state.run_id,
         state.branch_id,
         state.fingerprint,
@@ -77,20 +78,37 @@ def verify_competition_payload(payload, checkpoint, evidence=None):
         evidence = _parse_saved_calendar_match_evidence(
             payload, run_id=run_id, branch_id=branch_id
         )
-    if (
-        saved_checkpoint(old, evidence, run_id=run_id, branch_id=branch_id) != root_cp
-        or saved_tour(old, run_id=run_id, branch_id=branch_id, checkpoint=root_cp)
-        != root_tour
-    ):
-        raise ValueError("Native competition historical root differs")
+    prefix = authenticated_global_prefix(payload, checkpoint, state, verified_global_prefix)
+    if prefix is None:
+        if (
+            saved_checkpoint(old, evidence, run_id=run_id, branch_id=branch_id) != root_cp
+            or saved_tour(old, run_id=run_id, branch_id=branch_id, checkpoint=root_cp)
+            != root_tour
+        ):
+            raise ValueError("Native competition historical root differs")
     world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id)
     life = load_saved_lifecycle(payload, run_id=run_id, branch_id=branch_id)
     health = load_saved_health(payload, run_id=run_id, branch_id=branch_id)
     source = load_saved_run_prospect_source(payload, run_id=run_id)
-    previous, cp = root_tour, root_cp
-    event_index = 0
-    receipts = state.receipts[len(root_tour.receipts) :]
-    if not receipts:
+    if source is None and isinstance(checkpoint, GlobalCompetitionCheckpoint):
+        from beta_engine.infrastructure.db.run_prospect_source_state import RunProspectSourceSnapshot
+        source = RunProspectSourceSnapshot("run_prospect_source.v1", run_id, (), canonical_hash([]))
+    scoped = source_proofs.setdefault("_global_verified_states", {}) if source_proofs is not None else {}
+    identity = (checkpoint.fingerprint, state.fingerprint)
+    actual_inputs = (world.fingerprint, getattr(evidence, "knockout", evidence).fingerprint,
+        tuple(s.fingerprint for s in life), tuple(s.fingerprint for s in health),
+        source.for_week(checkpoint.week.ordinal).fingerprint if source is not None else None)
+    known = scoped.get(identity)
+    if known is not None and actual_inputs[:2] == known[:2] and actual_inputs[2] == known[2][:len(actual_inputs[2])] and actual_inputs[3] == known[3][:len(actual_inputs[3])] and actual_inputs[4] == known[4]:
+        # This exact sporting/Tour state was independently produced while
+        # verifying another revision in this one caller-owned lineage walk.
+        # Every physical row/owner/origin is still checked by the repository.
+        return
+    verified_states = []
+    previous, cp = prefix if prefix is not None else (root_tour, root_cp)
+    event_index = len(cp.events) if prefix is not None else 0
+    receipts = state.receipts[len(previous.receipts) :]
+    if not receipts and prefix is None:
         raise ValueError("Native competition lacks confirmed commands")
     service = CalendarTourService(None)
     for receipt in receipts:
@@ -132,7 +150,7 @@ def verify_competition_payload(payload, checkpoint, evidence=None):
         if command.action in {"transition", "season-transition"}:
             if command.data or command.edition_id is not None:
                 raise ValueError("Natural transition cannot contain Edition inputs")
-            ctx = (clock, None, world, health[cp.week.ordinal], cp, cp, evidence)
+            ctx = (clock, None, world, next(h for h in reversed(health) if h.week.ordinal <= cp.week.ordinal), cp, cp, evidence)
             blockers = service._transition_blockers(
                 previous, ctx, season=command.action == "season-transition"
             )
@@ -146,7 +164,7 @@ def verify_competition_payload(payload, checkpoint, evidence=None):
                 world=world,
                 source=source,
                 lifecycle=life[: cp.week.ordinal + 1],
-                health=health[: cp.week.ordinal + 1],
+                health=health[: receipt.result.get("impact", {}).get("source_health_state_count", cp.week.ordinal + 1)],
                 clock=clock,
                 knockout=getattr(evidence, "knockout", evidence),
                 command=command.model_dump(mode="json"),
@@ -174,12 +192,12 @@ def verify_competition_payload(payload, checkpoint, evidence=None):
             clock,
             SimpleNamespace(saved_revision=SimpleNamespace(payload=payload)),
             world,
-            health[cp.week.ordinal],
+            next(h for h in reversed(health) if h.week.ordinal <= cp.week.ordinal),
             cp,
             cp,
             evidence,
         )
-        if command.action not in {"create-edition", "transition", "season-transition"}:
+        if command.action not in {"create-edition", "transition", "season-transition", "next-slot", "next-match"}:
             if authority is None:
                 raise ValueError("Native command lacks Edition")
             offsets = {
@@ -189,14 +207,14 @@ def verify_competition_payload(payload, checkpoint, evidence=None):
                 "play": 3,
                 "confirm-result": authority.edition.main_entrant_count + 2,
             }
-            if authority.edition.start_slot + offsets[
+            if authority.edition.schema_version.endswith(".v1") and (authority.edition.start_slot + offsets[
                 command.action
             ] < previous.slot_cursor or any(
                 a.edition.week.ordinal == cp.week.ordinal
                 and a.edition.start_slot < authority.edition.start_slot
                 and not a.result_confirmed
                 for a in previous.editions
-            ):
+            )):
                 raise ValueError("Native command precedes unresolved Simulation Slot")
         native_inputs = (life[cp.week.ordinal], source)
         if command.action == "play":
@@ -208,7 +226,7 @@ def verify_competition_payload(payload, checkpoint, evidence=None):
                 checkpoint=cp,
                 world=world,
                 lifecycle=life[cp.week.ordinal],
-                health=health[cp.week.ordinal],
+                health=next(h for h in reversed(health) if h.week.ordinal <= cp.week.ordinal),
                 source=source.for_week(cp.week.ordinal),
                 clock=clock,
                 authority=authority,
@@ -221,6 +239,14 @@ def verify_competition_payload(payload, checkpoint, evidence=None):
                 )
             event_index += 1
             native_inputs = (*native_inputs, (replayed_event, next_cp))
+        if command.action in {"next-slot", "next-match"}:
+            from beta_engine.application.calendar_global_slot_service import prepare_global_slot
+            from beta_engine.domain.tournaments.calendar_global_slots import accept_slot
+            slot, impact = prepare_global_slot(None, ctx, previous, command, native_inputs=native_inputs)
+            selected = impact["selected_match_ids"][0] if command.action == "next-match" else None
+            next_cp, _ = accept_slot(cp, slot, match_id=selected)
+            native_inputs = (*native_inputs, (slot, next_cp))
+            event_index = len(next_cp.events)
         planned, result = service._apply(
             None,
             ctx,
@@ -231,7 +257,9 @@ def verify_competition_payload(payload, checkpoint, evidence=None):
             transition_candidate=(impact, next_cp),
             _native_inputs=native_inputs,
         )
-        if cp is root_cp and planned.schema_version == "calendar_tour_authority.v4":
+        if planned.schema_version == "calendar_tour_authority.v5" and not isinstance(cp, GlobalCompetitionCheckpoint):
+            next_cp = upgrade(previous, cp, command.expected_saved_head)[1]
+        elif cp is root_cp and planned.schema_version == "calendar_tour_authority.v4":
             next_cp = competition_checkpoint(cp)
         if impact is None:
             impact = result
@@ -254,5 +282,48 @@ def verify_competition_payload(payload, checkpoint, evidence=None):
             update={"receipts": planned.receipts + (receipt,)}
         )
         cp = next_cp
+        if isinstance(cp, GlobalCompetitionCheckpoint):
+            verified_states.append((cp, previous))
     if event_index != len(checkpoint.events) or cp != checkpoint or previous != state:
         raise ValueError("Native competition differs from complete confirmed history")
+    for verified_cp, verified_tour in verified_states:
+        scoped[(verified_cp.fingerprint, verified_tour.fingerprint)] = (*actual_inputs[:4], source.for_week(verified_cp.week.ordinal).fingerprint if source is not None else None)
+    while len(scoped) > 128:
+        scoped.pop(next(iter(scoped)))
+
+
+def authenticated_global_prefix(payload, checkpoint, state, prefix):
+    """Only callers with an actual validated immutable Saved row supply this.
+
+    Compare complete inherited inputs and evidence. A partial slot may gain
+    accepted results but cannot rewrite its frozen snapshot or accepted prefix.
+    Any difference falls back to the independent complete root replay.
+    """
+    if prefix is None:
+        return None
+    from beta_engine.domain.tournaments.calendar_global_slots import GlobalCompetitionCheckpoint, GlobalSlot, GlobalTourState
+    old_cp, old_tour, old_payload = prefix
+    if not isinstance(checkpoint, GlobalCompetitionCheckpoint) or not isinstance(old_cp, GlobalCompetitionCheckpoint) or not isinstance(old_tour, GlobalTourState):
+        return None
+    if checkpoint.competition_root != old_cp.competition_root or state.competition_root_tour != old_tour.competition_root_tour or state.receipts[:len(old_tour.receipts)] != old_tour.receipts:
+        return None
+    before, after = old_payload["content"], payload["content"]
+    if any(before.get(k) != after.get(k) for k in ("initial_world", "calendar_standalone_match", "run_prospect_source")):
+        return None
+    for key in ("player_lifecycle", "player_health_state"):
+        old_states = before[key]["states"]
+        if after[key]["states"][:len(old_states)] != old_states:
+            return None
+    if len(checkpoint.events) < len(old_cp.events):
+        return None
+    for i, event in enumerate(old_cp.events):
+        actual = checkpoint.events[i]
+        if isinstance(event, GlobalSlot) and event.remaining:
+            if not isinstance(actual, GlobalSlot) or actual.model_copy(update={"accepted":event.accepted}) != event:
+                return None
+            matches = {m.match_id:m for m in actual.accepted}
+            if any(matches.get(m.match_id) != m for m in event.accepted):
+                return None
+        elif actual != event:
+            return None
+    return old_tour, old_cp

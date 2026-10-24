@@ -4,6 +4,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
+      - 'src/beta_engine/application/calendar_global_slot_service.py'
+      - 'src/beta_engine/domain/tournaments/calendar_global_slots.py'
+      - 'src/beta_engine/infrastructure/db/calendar_global_slot_origins.py'
+      - 'tests/api/test_calendar_global_slots*.py'
+      - 'tests/domain/test_calendar_global_slots.py'
       - '.github/workflows/prealpha-native-season-api.yml'
       - 'src/beta_engine/application/calendar_tour_service.py'
       - 'src/beta_engine/application/calendar_sporting_week_service.py'

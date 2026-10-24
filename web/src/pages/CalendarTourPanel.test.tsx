@@ -15,6 +15,43 @@ const preview=(c:TourCommand):TourPreview=>({schema_version:'calendar_tour_comma
 
 describe('configured Tour consent (HTTP boundary mocked)',()=>{
   beforeEach(()=>{vi.clearAllMocks();localStorage.setItem('squash-engine-language-v1','en');api.inspectCalendarTour.mockImplementation((r,b)=>Promise.resolve(view(r,b)))})
+  const slotView=(run='r',branch='b'):TourView=>({...view(run,branch),saved:true,sporting_saved:true,tour_fingerprint:'c'.repeat(64),next_slot:{schema_version:'calendar_global_slot_inspection.v1',number:14,snapshot_fingerprint:null,completed:0,remaining:2,matches:[{edition_id:'a',match_id:'a:sf1',player_a_id:'p1',player_b_id:'p2',completed:false},{edition_id:'b',match_id:'b:sf1',player_a_id:'p3',player_b_id:'p4',completed:false}]},state:{week:{calendar:{schema_version:'run_calendar.v1',weeks_per_year:80,season_start_year_week:80,start_year:2030,season_count:2},season_index:0,week:4},editions:[],rankings:[],transitions:[]}})
+  it('selects an independent match in the shared slot and retains the exact confirmed request after a lost reply',async()=>{
+    api.inspectCalendarTour.mockResolvedValue(slotView())
+    api.previewCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve(preview(c)))
+    api.executeCalendarTour.mockRejectedValueOnce(Error('Lost actual response')).mockResolvedValue({})
+    render(panel());await screen.findByLabelText('Global slot match')
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Independent match review'}})
+    fireEvent.change(screen.getByLabelText('Global slot match'),{target:{value:'b:sf1'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review Next Match'}))
+    await screen.findByLabelText('Confirm Tour command')
+    fireEvent.click(screen.getByLabelText('Confirm Tour command'))
+    fireEvent.click(screen.getByRole('button',{name:'Execute confirmed operation'}))
+    await screen.findByRole('alert')
+    expect(api.executeCalendarTour.mock.calls[0][2]).toMatchObject({action:'next-match',edition_id:null,data:{match_id:'b:sf1'}})
+    const original=api.executeCalendarTour.mock.calls[0]
+    fireEvent.click(screen.getByRole('button',{name:'Execute confirmed operation'}))
+    await act(async()=>{})
+    expect(api.executeCalendarTour.mock.calls[1]).toEqual(original)
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
+  it('does not apply a late shared-slot reply or redirect its confirmed request after the Run changes',async()=>{
+    let finish!:(v:unknown)=>void
+    api.inspectCalendarTour.mockImplementation((r,b)=>Promise.resolve(slotView(r,b)))
+    api.previewCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve({...preview(c),run_id:'r',branch_id:'b'}))
+    api.executeCalendarTour.mockImplementation(()=>new Promise(resolve=>{finish=resolve}))
+    const page=render(panel());await screen.findByLabelText('Global slot match')
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Frozen original source'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review Next Slot'}))
+    await screen.findByLabelText('Confirm Tour command')
+    fireEvent.click(screen.getByLabelText('Confirm Tour command'))
+    fireEvent.click(screen.getByRole('button',{name:'Execute confirmed operation'}))
+    page.rerender(panel('other'))
+    await act(async()=>finish({}))
+    expect(api.executeCalendarTour).toHaveBeenCalledTimes(1)
+    expect(api.executeCalendarTour.mock.calls[0].slice(0,2)).toEqual(['r','b'])
+    expect(screen.queryByText('Change is in Working Draft. Save manually.')).not.toBeInTheDocument()
+  })
   it('renders verified next-week prospect source without writing to Tour',async()=>{
     const calendar={schema_version:'run_calendar.v1',weeks_per_year:52,season_start_year_week:35,start_year:2030,season_count:3}
     api.inspectCalendarTour.mockResolvedValue({...view(),saved:true,tour_fingerprint:'c'.repeat(64),checkpoint_fingerprint:'a'.repeat(64),state:{week:{calendar,season_index:0,week:2},editions:[],rankings:[],transitions:[]}})

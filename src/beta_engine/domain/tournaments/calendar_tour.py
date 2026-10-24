@@ -8,7 +8,7 @@ import itertools
 import json
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_serializer, model_validator
 
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
@@ -52,16 +52,16 @@ def ranking_week(week):
 
 
 class CalendarTourEdition(FrozenInput):
-    schema_version: Literal["calendar_tournament_edition.v1"] = (
+    schema_version: Literal["calendar_tournament_edition.v1", "calendar_tournament_edition.v2"] = (
         "calendar_tournament_edition.v1"
     )
     edition_id: str = Field(min_length=3, max_length=80)
     name: str = Field(min_length=1, max_length=160)
     week: RunWeekPosition
     announcement_week: RunWeekPosition
-    # This first executor has explicitly sequential global slots. Simultaneous
-    # cross-Edition execution needs the shared-slot owner and is blocked.
+    # v1 retains its sequential executor. v2 uses the shared Branch slot ledger.
     start_slot: int = Field(ge=1)
+    simulation_seed: int = 1
     main_entrant_count: int = Field(ge=2, le=128)
     ranked: bool = True
     point_table: dict[str, int]
@@ -69,6 +69,13 @@ class CalendarTourEdition(FrozenInput):
     best_of: Literal[5] = 5
     games_to: Literal[11] = 11
     win_by: Literal[2] = 2
+
+    @model_serializer(mode="wrap")
+    def historical_shape(self, handler):
+        body = handler(self)
+        if self.schema_version == "calendar_tournament_edition.v1":
+            body.pop("simulation_seed", None)
+        return body
 
     @property
     def capacity(self):
@@ -289,11 +296,12 @@ class CalendarTourState(FrozenInput):
             if authority.field:
                 for pid in authority.field.direct_main_player_ids:
                     key = (authority.edition.week.ordinal, pid)
-                    if key in accepted:
+                    if key in accepted and authority.edition.schema_version.endswith(".v1"):
                         raise ValueError(
                             "Week Tournament Lock conflict in approved native fields"
                         )
-                    accepted.add(key)
+                    if authority.edition.schema_version.endswith(".v1"):
+                        accepted.add(key)
         ordinals = [p.effective_week.ordinal for p in self.policies]
         if ordinals != sorted(set(ordinals)) or ordinals[
             0
@@ -376,6 +384,9 @@ def effective_policy(state, week):
 
 def parse_tour_json(raw):
     body = json.loads(raw)
+    if isinstance(body, dict) and body.get("schema_version") == "calendar_tour_authority.v5":
+        from beta_engine.domain.tournaments.calendar_global_slots import GlobalTourState
+        return GlobalTourState.model_validate_json(raw)
     if isinstance(body, dict) and body.get("schema_version") == "calendar_tour_authority.v3":
         from beta_engine.domain.tournaments.calendar_native_tour import (
             CalendarNativeTourState,
@@ -407,7 +418,7 @@ def edition_results(authority, event):
     if authority.tournament_fingerprint != played_fingerprint:
         raise ValueError("Edition result is detached from played MatchEngine evidence")
     if (
-        event.schema_version not in {"calendar_followup_knockout.v5", "calendar_followup_knockout.v6"}
+        event.schema_version not in {"calendar_followup_knockout.v5", "calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8"}
         or event.edition_authority_fingerprint != authority.execution_fingerprint
     ):
         raise ValueError(

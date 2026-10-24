@@ -18,7 +18,7 @@ const blockerLabels:Record<string,[string,string]>={season_transition_required:[
 
 export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:string;head:string}) {
   const cs=useLanguage().language==='cs',client=useQueryClient()
-  const scope=[runId,branchId,head].join('|'),current=useRef(scope),epoch=useRef(0)
+  const scope=JSON.stringify([runId,branchId,head]),current=useRef(scope),epoch=useRef(0)
   const inputs=useRef(0)
   if(current.current!==scope){current.current=scope;epoch.current++}
   const [view,setView]=useState<TourView|null>(null),[error,setError]=useState<string|null>(null)
@@ -29,6 +29,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const [season,setSeason]=useState(''),[week,setWeek]=useState(''),[slot,setSlot]=useState('1')
   const [points,setPoints]=useState({champion:'100',finalist:'60',semifinal:'30',quarterfinal:'15'})
   const [selected,setSelected]=useState<string[]>([]),[contributions,setContributions]=useState<TourContribution[]|null>(null)
+  const [selectedSlotMatch,setSelectedSlotMatch]=useState('')
   const [notice,setNotice]=useState<string|null>(null)
   const [player,setPlayer]=useState(''),[playerDetail,setPlayerDetail]=useState<TourPlayer|null>(null)
   const detailRequest=useRef(0),seasonReadRequest=useRef(0),careerReadRequest=useRef(0),intakeReadRequest=useRef(0)
@@ -45,7 +46,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     const controller=new AbortController()
     let active=true
     const valid=()=>active&&epoch.current===stamp
-    setView(null);setError(null);setReview(null);setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setIntakeReport(null);setBirthSportingReport(null);intakeReadRequest.current++;setBusy(true)
+    setView(null);setError(null);setReview(null);setSelectedSlotMatch('');setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setIntakeReport(null);setBirthSportingReport(null);intakeReadRequest.current++;setBusy(true)
     void read(controller.signal).then(v=>{if(valid()){
       setView(v)
       const clock=v.state?{...v.state.week,calendar:v.run_calendar??v.state.week.calendar}:null
@@ -92,7 +93,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         await executeCalendarTour(runId,branchId,review.command,review.preview_fingerprint)
         if(!valid())return
         const next=await read();if(!valid())return
-        invalidate();setView(next);setNotice(cs?'Změna je v Working Draft. Proveďte ruční Save.':'Change is in Working Draft. Save manually.');return
+        invalidate();setSelectedSlotMatch('');setView(next);setNotice(cs?'Změna je v Working Draft. Proveďte ruční Save.':'Change is in Working Draft. Save manually.');return
       }
       if(action==='refresh'){
         const next=await read();if(!valid())return
@@ -106,13 +107,14 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         const schedule=scheduleTourEdition(current,Number(season)-1,Number(week))
         if(!schedule)throw Error(cs?'Turnaj musí být platně naplánován alespoň dva týdny dopředu v rámci Runu.':'Edition must be scheduled at least two weeks ahead, inside the Run horizon.')
         const table=Object.fromEntries(Object.entries(points).filter(([k])=>size===8||k!=='quarterfinal').map(([k,v])=>[k,Number(v)]))
-        data={edition_id:editionId,name,week:schedule.week,announcement_week:schedule.announcement_week,start_slot:Number(slot),main_entrant_count:size,ranked:true,point_table:table,validity_weeks:current.calendar.weeks_per_year}
+        data={schema_version:'calendar_tournament_edition.v2',simulation_seed:Number(seed),edition_id:editionId,name,week:schedule.week,announcement_week:schedule.announcement_week,start_slot:Number(slot),main_entrant_count:size,ranked:true,point_table:table,validity_weeks:current.calendar.weeks_per_year}
       } else if(action==='submit') data={player_ids:selected}
-      const command:TourCommand={action,command_id:newCommandId(),edition_id:id,expected_saved_head:view.saved_head_revision_id,expected_checkpoint_fingerprint:view.checkpoint_fingerprint,expected_tour_fingerprint:view.tour_fingerprint,seed:Number(seed),operator_label:'Admin',audit_reason:reason.trim(),data}
+      else if(action==='next-match'&&id) data={match_id:id}
+      const command:TourCommand={action,command_id:newCommandId(),edition_id:action==='next-match'?null:id,expected_saved_head:view.saved_head_revision_id,expected_checkpoint_fingerprint:view.checkpoint_fingerprint,expected_tour_fingerprint:view.tour_fingerprint,seed:Number(seed),operator_label:'Admin',audit_reason:reason.trim(),data}
       const checked=validateTourPreview(await previewCalendarTour(runId,branchId,command),command,runId,branchId)
       if(!valid())return
       setReview(checked);setConsent(false)
-    }catch(e){if(valid()){invalidate();setError(formatApiError(e))}}
+    }catch(e){if(valid()){if(action!=='commit')invalidate();setError(formatApiError(e))}}
     finally{if(epoch.current===stamp&&current.current===scope)setBusy(false)}
   }
   const loadSeasonReport=async()=>{
@@ -202,7 +204,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   }
   const names=new Map(view?.players.map(p=>[p.player_id,p.name])??[])
   const ready=Boolean(view&&!busy&&reason.trim()&&/^-?\d+$/.test(seed)&&Number.isSafeInteger(Number(seed))&&(view.saved||view.state)&&view.sporting_saved!==false)
-  const nativePopulation=Boolean(view?.state&&'schema_version' in view.state&&['calendar_tour_authority.v3','calendar_tour_authority.v4','native_fork_tour.v1'].includes(String(view.state.schema_version)))
+  const nativePopulation=Boolean(view?.state&&'schema_version' in view.state&&['calendar_tour_authority.v3','calendar_tour_authority.v4','calendar_tour_authority.v5','native_fork_tour.v1'].includes(String(view.state.schema_version)))
   const nativeOnly=Boolean(view?.state&&'schema_version' in view.state&&view.state.schema_version==='calendar_tour_authority.v3'&&view.post_birth_competition_supported!==true)
   const latest=view?.state?.rankings[view.state.rankings.length-1]
   const clock=view?.state?{...view.state.week,calendar:view.run_calendar??view.state.week.calendar}:null
@@ -259,11 +261,22 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           <p>{cs?'Platnost bodů':'Point validity'}: {view.state.week.calendar.weeks_per_year} {cs?'týdnů od prvního oficiálního rankingu':'weeks from first Official ranking'}</p>
           <button disabled={nativeOnly||!ready||!plannedEdition||!editionId.trim()||!name.trim()} onClick={()=>void perform('create-edition')}>{cs?'Zkontrolovat novou Edition':'Review new Edition'}</button>
         </details>
+        {view.next_slot&&<section aria-label="Global Simulation Slot">
+          <h3>{cs?'Nejbližší Simulation Slot':'Next Simulation Slot'} {view.next_slot.number}</h3>
+          <p>{cs?'Dokončeno':'Completed'}: {view.next_slot.completed} · {cs?'Zbývá':'Remaining'}: {view.next_slot.remaining}</p>
+          {view.next_slot.conflicts?.map(c=><p role="alert" key={c.player_id}>{cs?'Kolize hráče ve stejném slotu':'Player conflict in the same slot'}: {names.get(c.player_id)??c.player_id} · {c.match_ids.join(' / ')}</p>)}
+          <table><thead><tr><th>Edition</th><th>{cs?'Zápas':'Match'}</th><th>{cs?'Stav':'State'}</th></tr></thead><tbody>{view.next_slot.matches.map(m=><tr key={m.match_id}><td>{m.edition_id}</td><td>{names.get(m.player_a_id??'')??m.player_a_id} / {names.get(m.player_b_id??'')??m.player_b_id}</td><td>{m.completed?(cs?'Dokončeno':'Completed'):(cs?'Čeká':'Pending')}</td></tr>)}</tbody></table>
+          <button disabled={busy||!reason.trim()||Boolean(view.next_slot.conflicts?.length)} onClick={()=>void perform('next-slot')}>{cs?'Zkontrolovat Next Slot':'Review Next Slot'}</button>
+          <button disabled={busy||!reason.trim()} onClick={()=>void perform('next-match',selectedSlotMatch||null)}>{cs?'Zkontrolovat Next Match':'Review Next Match'}</button>
+          <label>{cs?'Zápas tohoto slotu':'Match in this slot'}<select aria-label="Global slot match" value={selectedSlotMatch} onChange={e=>{setSelectedSlotMatch(e.target.value);invalidate()}}><option value="">{cs?'První zbývající zápas':'First remaining match'}</option>{view.next_slot.matches.filter(m=>!m.completed).map(m=><option key={m.match_id} value={m.match_id}>{m.edition_id}: {names.get(m.player_a_id??'')??m.player_a_id} / {names.get(m.player_b_id??'')??m.player_b_id}</option>)}</select></label>
+          <p>{cs?'Všechny zápasy slotu používají stejný zmrazený vstup. Rozpracovaný slot lze ručně uložit a obnovit po restartu.':'Every match uses the same frozen slot input. Manually Save a partial slot to resume after restart.'}</p>
+        </section>}
         {view.state.editions.map(a=>{
           const id=a.edition.edition_id,active=a.edition.week.week===view.state!.week.week&&a.edition.week.season_index===view.state!.week.season_index
           const next: keyof typeof actionLabels=!a.field?'approve':!a.draw?'draw':!a.tournament_fingerprint?'play':'confirm-result'
           return <section key={id} aria-label={`Edition ${id}`}>
             <h3>{a.edition.name} · S{a.edition.week.season_index+1}/W{a.edition.week.week}</h3>
+            {a.edition.schema_version==='calendar_tournament_edition.v2'&&<p>{cs?'Uložený seed turnaje':'Stored tournament seed'}: {a.edition.simulation_seed}</p>}
             <p>{cs?'Přihlášky':'Applications'}: {a.submissions.length} · {cs?'Schválení':'Approved'}: {a.field?.direct_main_player_ids.length??0} · {a.result_confirmed?(cs?'Výsledky potvrzeny':'Results confirmed'):a.tournament_fingerprint?(cs?'Odehráno':'Played'):a.draw?(cs?'Vylosováno':'Drawn'):(cs?'Příprava':'Preparation')}</p>
             <p>{cs?'Bodová tabulka':'Point table'}: {Object.entries(a.edition.point_table).map(([k,v])=>`${cs?stageLabels[k]:k} ${v}`).join(' · ')}</p>
             {!a.field&&active&&<><select multiple aria-label={`Tour applicants ${id}`} value={selected} onChange={e=>{setSelected(Array.from(e.target.selectedOptions,o=>o.value));invalidate()}}>{view.players.filter(p=>p.status!=='retired'&&!a.submissions.some(s=>s.player_id===p.player_id)).map(p=><option key={p.player_id} value={p.player_id}>{p.name}</option>)}</select>
@@ -275,7 +288,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
               {view.edition_evidence[id].results.some(r=>r.schema_version==='calendar_terminal_edition_result.v1')&&<p>{cs?'Poslední týden původního Runu: potvrzení a ruční Save uloží výsledek pro Closing Ranking. Žádný další týden ani Official Ranking se neotevře. Závěrečné uzavření vyžaduje samostatné schválení a Save.':'Original Run final week: confirmation and manual Save retain this result for the Closing Ranking. No following week or Official Ranking opens. Final closure requires separate approval and Save.'}</p>}
               <table aria-label={`Edition results ${id}`}><thead><tr><th>{cs?'Hráč':'Player'}</th><th>{cs?'Výsledek':'Result'}</th><th>{cs?'Body':'Points'}</th></tr></thead><tbody>{view.edition_evidence[id].results.map(r=><tr key={r.player_id}><td>{names.get(r.player_id)}</td><td>{cs?stageLabels[r.stage]:r.stage}</td><td>{r.main_points}</td></tr>)}</tbody></table>
             </>}
-            {active&&!a.result_confirmed&&<button disabled={nativeOnly||!ready||(!view.saved&&(next==='play'||next==='confirm-result'))} onClick={()=>void perform(next,id)}>{actionLabels[next][cs?0:1]}</button>}
+            {active&&!a.result_confirmed&&!(next==='play'&&a.edition.schema_version==='calendar_tournament_edition.v2')&&<button disabled={nativeOnly||!ready||(!view.saved&&(next==='play'||next==='confirm-result'))} onClick={()=>void perform(next,id)}>{actionLabels[next][cs?0:1]}</button>}
             {a.tournament_fingerprint&&<button disabled={busy} onClick={()=>{
               const stamp=epoch.current;setBusy(true)
               void replayCalendarContinuation(runId,branchId,`${id}:final`).then(r=>{if(epoch.current===stamp)setNotice(`${cs?'Přesný replay':'Exact replay'}: ${r.exact_replay}`)}).catch(e=>{if(epoch.current===stamp)setError(formatApiError(e))}).finally(()=>{if(epoch.current===stamp)setBusy(false)})
@@ -368,6 +381,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
       {review&&<section aria-label="Tour command review"><h3>{cs?'Kontrola operace':'Operation review'}: {review.command.action}</h3>
         {'admitted_player_ids' in review.impact&&Array.isArray(review.impact.admitted_player_ids)&&review.impact.admitted_player_ids.length>0&&<p>{cs?'Nově přijímaní hráči':'Newly admitted players'}: {review.impact.admitted_player_ids.join(', ')}</p>}
         <p>HEAD: <code>{review.command.expected_saved_head}</code></p>
+        {review.impact.selected_match_ids&&<p>Simulation Slot {review.impact.slot} · {cs?'Vybrané zápasy':'Selected matches'}: {review.impact.selected_match_ids.join(', ')} · {cs?'Zbývá před operací':'Remaining before operation'}: {review.impact.remaining}</p>}
         {review.command.action==='create-edition'&&<p>{String(review.command.data.name)} · W{String((review.command.data.week as {week:number}).week)} · {cs?'Účastníci':'Participants'}: {String(review.command.data.main_entrant_count)} · {Object.entries(review.command.data.point_table as Record<string,number>).map(([k,v])=>`${cs?stageLabels[k]:k} ${v}`).join(' · ')}</p>}
         {review.command.action==='submit'&&<p>{cs?'Přihlášky':'Applications'}: {(review.command.data.player_ids as string[]).map(id=>names.get(id)??id).join(', ')}</p>}
         {review.impact.approved_field&&<p>{cs?'Schválený field':'Approved field'}: {review.impact.approved_field.direct_main_player_ids.map(id=>names.get(id)??id).join(', ')}</p>}

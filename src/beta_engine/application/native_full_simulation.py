@@ -214,7 +214,7 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
             if component["state"]["baseline"] != saved["state"]["baseline"] or component["state"]["root_saved_revision_id"] != saved["state"]["root_saved_revision_id"]:
                 raise ValueError("Native task progress Working Draft changed its original source")
         state = component["state"]
-        if set(component) != {"state", "fingerprint"} or component["fingerprint"] != canonical_hash(state) or state["schema_version"] != "native_fork_runtime.v1":
+        if set(component) != {"state", "fingerprint"} or component["fingerprint"] != canonical_hash(state) or state["schema_version"] not in {"native_fork_runtime.v1", "native_fork_runtime.v2"}:
             raise ValueError("Native task progress runtime hash/schema is corrupt")
         tour = state["tour"]
         if state["lifecycle"]["week"] != tour["week"] or tour["schema_version"] != "native_fork_tour.v1":
@@ -226,9 +226,13 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
         if checkpoint_row is None or tour_row is None:
             raise ValueError("Native task progress lacks its sporting/Tour owner")
         state, tour = json.loads(checkpoint_row.payload_json), json.loads(tour_row.payload_json)
-        if state.get("schema_version") not in {f"calendar_sporting_checkpoint.v{i}" for i in range(1, 13)} or tour.get("schema_version") not in {"calendar_tour_authority.v1", "calendar_tour_authority.v2"}:
+        if state.get("schema_version") not in {f"calendar_sporting_checkpoint.v{i}" for i in range(1, 14)} or tour.get("schema_version") not in {f"calendar_tour_authority.v{i}" for i in range(1, 6)}:
             raise ValueError("Native task progress sporting/Tour schema is unsupported")
-        if canonical_hash(state) != checkpoint_row.fingerprint or canonical_hash(tour) != tour_row.fingerprint or tour["checkpoint_fingerprint"] != checkpoint_row.fingerprint or state["week"] != tour["week"]:
+        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import parse_checkpoint_json
+        from beta_engine.domain.tournaments.calendar_tour import parse_tour_json
+        parse_tour_json(tour_row.payload_json)
+        actual_week = parse_checkpoint_json(checkpoint_row.payload_json).week.model_dump(mode="json") if state["schema_version"] in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"} else state["week"]
+        if canonical_hash(state) != checkpoint_row.fingerprint or canonical_hash(tour) != tour_row.fingerprint or tour["checkpoint_fingerprint"] != checkpoint_row.fingerprint or actual_week != tour["week"]:
             raise ValueError("Native task progress sporting/Tour hash or position is corrupt")
         source_fingerprint = fingerprint({"checkpoint": checkpoint_row.fingerprint, "tour": tour_row.fingerprint})
     owner = state.get("baseline", state)
@@ -250,6 +254,8 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
     match_ids = []
     for receipt in receipts.values():
         action = receipt["request"]["command"]
+        if action["action"] in {"next-slot", "next-match"} and receipt["result"]["week"]["season_index"] == week.season_index and receipt["result"]["week"]["week"] == week.week:
+            match_ids.extend(receipt["result"]["match_ids"])
         if action["action"] == "play" and action.get("edition_id") in editions:
             ids = receipt["result"]["played"]["match_ids"]
             if not isinstance(ids, list) or any(not isinstance(i, str) or not i for i in ids):
@@ -359,7 +365,7 @@ def child_seed(command, index):
 def validate_native_child(command, index, value):
     request = CalendarTourCommit.model_validate(value)
     child = request.command
-    if child.action not in {"play", "transition", "season-transition"} or child.data:
+    if child.action not in {"play", "next-slot", "transition", "season-transition"} or child.data:
         raise ValueError("Native task child is not a supported sporting action")
     if (child.command_id, child.seed, child.operator_label, child.audit_reason) != (
         child_id(command, index), child_seed(command, index), command.operator_label, command.audit_reason
@@ -508,8 +514,11 @@ class NativeFullSimulationDriver:
             "persisted_child_command_count": len(payload["children"]),
             "reason": "run_completed" if status == "complete" else "week_target_reached" if status == "target_reached" else "operator_stop",
             "target_reached": status == "target_reached",
-            "completed_tournaments": [a.edition.edition_id for a in ctx["state"].editions if a.result_confirmed and
-                a.edition.edition_id in {c["request"]["command"]["edition_id"] for c in payload["children"] if c["request"]["command"]["action"] == "play"}],
+            "completed_tournaments": [a.edition.edition_id for a in ctx["state"].editions if a.result_confirmed and any(
+                (c["request"]["command"]["action"] == "play" and c["request"]["command"]["edition_id"] == a.edition.edition_id)
+                or (c["request"]["command"]["action"] in {"next-slot", "next-match"} and any(
+                    mid.startswith(a.edition.edition_id + ":") for r in ctx["state"].receipts if r.command_id == c["request"]["command"]["command_id"] for mid in r.result.get("match_ids", [])))
+                for c in payload["children"])],
         }
         payload["terminal_summary"] = {**summary, "summary_fingerprint": fingerprint(summary)}
         _write(row, payload)
@@ -545,7 +554,14 @@ class NativeFullSimulationDriver:
                         return _progress(command, ctx, "native_entry_review_required", blockers=["entry_draw_required:" + authority.edition.edition_id], detail="Review Entry, approve the field/draw and manually Save in Run Admin.")
                     if authority.tournament_fingerprint:
                         return _progress(command, ctx, "native_result_review_required", blockers=["result_confirmation_required:" + authority.edition.edition_id], detail="Review and explicitly confirm the played results, then manually Save.")
-                    action = "play"
+                    if authority.edition.schema_version == "calendar_tournament_edition.v2":
+                        current_due = [a for a in pending if a.edition.week.ordinal == state.week.ordinal and a.edition.schema_version == "calendar_tournament_edition.v2" and not a.tournament_fingerprint]
+                        missing = [a.edition.edition_id for a in current_due if not a.draw]
+                        if missing:
+                            return _progress(command, ctx, "native_entry_review_required", blockers=["entry_draw_required:" + eid for eid in missing])
+                        action = "next-slot"
+                    else:
+                        action = "play"
                 else:
                     clock = RunCalendar.from_metadata(command.execution_calendar)
                     if current == clock.season_count * clock.weeks_per_year - 1:
@@ -560,7 +576,7 @@ class NativeFullSimulationDriver:
                         return _progress(command, ctx, "native_transition_review_required", blockers=ctx["blockers"])
                 child = CalendarTourCommand(action=action, command_id=child_id(command, len(payload["children"])),
                     expected_saved_head=ctx["saved_head_revision_id"], expected_checkpoint_fingerprint=ctx["checkpoint_fingerprint"],
-                    expected_tour_fingerprint=ctx["tour_fingerprint"], edition_id=authority.edition.edition_id if authority else None,
+                    expected_tour_fingerprint=ctx["tour_fingerprint"], edition_id=authority.edition.edition_id if authority and action != "next-slot" else None,
                     seed=child_seed(command, len(payload["children"])),
                     operator_label=command.operator_label, audit_reason=command.audit_reason)
             else:

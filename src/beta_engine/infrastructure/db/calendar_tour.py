@@ -48,7 +48,7 @@ def put_tour(session, state):
 def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
     if (
         checkpoint is not None
-        and checkpoint.schema_version == "calendar_sporting_checkpoint.v12"
+        and checkpoint.schema_version in {"calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
     ):
         if _native_payload is None:
             raise ValueError("Native competition requires its complete Signed payload")
@@ -335,7 +335,7 @@ def saved_tour(
     if (
         checkpoint is not _verified_competition
         or checkpoint is None
-        or checkpoint.schema_version != "calendar_sporting_checkpoint.v12"
+        or checkpoint.schema_version not in {"calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
     ):
         verify_tour(
             state,
@@ -508,7 +508,7 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None):
                 validate_run_prospect_source_extension(first_source, source)
                 first_source = source
 
-    if state.schema_version == "calendar_tour_authority.v4":
+    if state.schema_version in {"calendar_tour_authority.v4", "calendar_tour_authority.v5"}:
         verify_tour_origins(
             session, state.competition_root_tour,
             _reachable_revision_ids=_reachable_revision_ids,
@@ -551,7 +551,7 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None):
                 raise ValueError(
                     "Native transition horizon did not exist in its actual Saved origin"
                 )
-            if cp.get("fingerprint") != command["expected_checkpoint_fingerprint"]:
+            if command["action"] not in {"next-slot", "next-match"} and cp.get("fingerprint") != command["expected_checkpoint_fingerprint"]:
                 raise ValueError(
                     "Native competition does not own its actual Saved checkpoint"
                 )
@@ -578,8 +578,6 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None):
             )
 
             source = load_saved_run_prospect_source(payload, run_id=state.run_id)
-            if source is None:
-                raise ValueError("Native competition lacks Signed prospect source")
             if index == 0:
                 previous_source = source
                 if (
@@ -590,7 +588,8 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None):
                         "Native competition root differs from actual Saved origin"
                     )
             else:
-                validate_run_prospect_source_extension(previous_source, source)
+                if previous_source is not None or source is not None:
+                    validate_run_prospect_source_extension(previous_source, source)
                 previous_source = source
 
     terminal_clocks = {}

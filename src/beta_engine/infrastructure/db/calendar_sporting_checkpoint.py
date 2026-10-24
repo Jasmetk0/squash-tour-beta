@@ -18,6 +18,9 @@ def parse_checkpoint_json(raw):
     body = json.loads(raw)
     if not isinstance(body, dict):
         raise ValueError('Calendar sporting checkpoint must be a versioned object')
+    if body.get('schema_version') == 'calendar_sporting_checkpoint.v13':
+        from beta_engine.domain.tournaments.calendar_global_slots import GlobalCompetitionCheckpoint
+        return GlobalCompetitionCheckpoint.model_validate_json(raw)
     if body.get('schema_version') == 'calendar_sporting_checkpoint.v12':
         from beta_engine.domain.players.calendar_native_competition import (
             CalendarNativeCompetitionCheckpoint,
@@ -186,7 +189,7 @@ def verify_checkpoint(state, world, evidence, *, _prefix_proofs=None,
 
 
 def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=None,
-                     _verified_saved_prefix=None):
+                     _verified_saved_prefix=None, _verified_global_prefix=None):
     from beta_engine.infrastructure.db.initial_world_state import (
         load_saved_initial_world,
     )
@@ -198,11 +201,11 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
         state = parse_checkpoint_json(json.dumps(component['state']))
         if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, component['fingerprint']):
             raise ValueError('Saved calendar sporting checkpoint identity/hash mismatch')
-    if state is not None and state.schema_version == 'calendar_sporting_checkpoint.v12':
+    if state is not None and state.schema_version in {'calendar_sporting_checkpoint.v12', 'calendar_sporting_checkpoint.v13'}:
         from beta_engine.infrastructure.db.calendar_native_competition import (
             verify_competition_payload,
         )
-        verify_competition_payload(payload, state, evidence)
+        verify_competition_payload(payload, state, evidence, verified_global_prefix=_verified_global_prefix, source_proofs=_prefix_proofs)
         return state
     knockout = _knockout(evidence)
     required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'

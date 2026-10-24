@@ -157,7 +157,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
 
       {snapshotSequence && !isValidSequence && (
         <SectionCard title={t('Snapshot lookup')}>
-          <EmptyState message={`Snapshot sequence "${snapshotSequence}" is invalid. Use a positive integer sequence.`} />
+          <EmptyState message={`${t('Snapshot sequence')} "${snapshotSequence}" ${t('is invalid. Use a positive integer sequence.')}`} />
         </SectionCard>
       )}
 
@@ -175,7 +175,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
               <p className="error">{t('Failed to load snapshot details')}: {formatApiError(snapshotQuery.error)}</p>
             )}
             {isApiNotFound(snapshotQuery.error) && (
-              <EmptyState message={`Snapshot sequence ${snapshotSequence} was not found for this run.`} />
+              <EmptyState message={`${t('Snapshot sequence')} ${snapshotSequence} ${t('was not found for this run.')}`} />
             )}
             {snapshot && <SnapshotSummary mode={mode} snapshot={snapshot} runId={runId} />}
           </SectionCard>
@@ -326,7 +326,7 @@ function SourceEventContext({
             {relatedSiblingSnapshots.map((item) => (
               <li key={`${siblingMode}-${item.snapshot_sequence}`}>
                 <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${siblingMode}/${item.snapshot_sequence}`}>
-                  {siblingMode} snapshot #{item.snapshot_sequence}
+                  {t(siblingMode === 'ranking' ? 'Ranking' : 'Race').toLowerCase()} {t('snapshot')} #{item.snapshot_sequence}
                 </Link>
               </li>
             ))}

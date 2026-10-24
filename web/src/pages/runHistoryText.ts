@@ -462,7 +462,9 @@ const czech: Record<string, string> = {
   "Event season differs from current Run season.": "Sezona události se liší od aktuální sezony Runu.",
   "Historical season": "Historická sezona",
   "Current-season navigation": "Navigace v aktuální sezoně",
-  "Planned context unavailable because seasons disagree": "Plánovaný kontext není dostupný kvůli rozdílným sezonám"
+  "Planned context unavailable because seasons disagree": "Plánovaný kontext není dostupný kvůli rozdílným sezonám",
+  "Finals qualification detail conflicts with the stored summary or selected Run.": "Detail kvalifikace Finals se neshoduje s uloženým souhrnem nebo vybraným Runem.",
+  "Finals result detail conflicts with the stored summary or selected Run.": "Detail výsledku Finals se neshoduje s uloženým souhrnem nebo vybraným Runem."
 }
 
 export function useHistoryText(): (english: string) => string {

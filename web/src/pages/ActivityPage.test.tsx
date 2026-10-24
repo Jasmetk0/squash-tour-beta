@@ -370,4 +370,32 @@ describe('ActivityPage', () => {
     expect(await screen.findByText('No activity items match the current filters.')).toBeInTheDocument()
     expect(screen.getByText('Select an activity item to inspect details.')).toBeInTheDocument()
   })
+  it('does not invent planned detail links for a technical record without matching run plan evidence', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [{
+      kind: 'admin_wildcard_assignment', sequence: 7, label: 'Wildcard E-NOT-PLANNED',
+      season: 2027, week: null, event_id: 'E-NOT-PLANNED', source_event_id: null,
+      snapshot_sequence: null, related_run_id: null
+    }] })
+    mockContext()
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByText('Wildcard E-NOT-PLANNED')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open wildcard event planned detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open wildcard event persisted detail' })).not.toBeInTheDocument()
+    expect(screen.getAllByText('No ordered-plan match').length).toBeGreaterThan(0)
+  })
+
+  it('keeps technical source context unavailable when the run context read fails', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [{
+      kind: 'admin_pre_draw_withdrawal_replacement', sequence: 8, label: 'Pre-draw E1',
+      season: 2027, week: null, event_id: 'E1', source_event_id: null,
+      snapshot_sequence: null, related_run_id: null
+    }] })
+    mockContext()
+    api.getRun.mockRejectedValueOnce(new Error('plan offline'))
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByText('Failed to load ordered-plan context: plan offline')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open pre-draw event planned detail' })).not.toBeInTheDocument()
+    expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)
+  })
+
 })

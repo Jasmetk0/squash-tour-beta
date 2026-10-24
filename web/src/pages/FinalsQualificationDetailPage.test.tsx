@@ -81,4 +81,27 @@ describe('FinalsQualificationDetailPage', () => {
     expect(await screen.findByText('No Finals qualification is available for this run yet.')).toBeInTheDocument()
     expect(screen.getByText('No qualification payload is available yet.')).toBeInTheDocument()
   })
+  it.each([
+    ['source season', { source_as_of_season: 2026, source_as_of_week: 42 }],
+    ['source week', { source_as_of_season: 2027, source_as_of_week: 41 }]
+  ])('hides a Finals qualification detail contradicting summary %s', async (_dimension, source) => {
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2027,
+      qualification: { run_id: 'run-a', season: 2027, ...source },
+      result: null
+    })
+    renderWithRoute(<FinalsQualificationDetailPage />, '/runs/run-a/finals/qualification')
+    expect(await screen.findByText('Finals qualification detail conflicts with the stored summary or selected Run.')).toBeInTheDocument()
+    expect(screen.queryByText(/qualified_player_ids/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Finals overview page' })).toBeInTheDocument()
+  })
+
+  it('keeps an independently identified qualification available without a summary read', async () => {
+    api.getFinalsSummary.mockRejectedValueOnce(new api.ApiError('summary offline', 503))
+    renderWithRoute(<FinalsQualificationDetailPage />, '/runs/run-a/finals/qualification')
+    expect(await screen.findByText('Failed to load Finals summary: summary offline')).toBeInTheDocument()
+    expect(screen.getByText(/qualified_player_ids/)).toBeInTheDocument()
+    expect(screen.queryByText('Finals qualification detail conflicts with the stored summary or selected Run.')).not.toBeInTheDocument()
+  })
+
 })

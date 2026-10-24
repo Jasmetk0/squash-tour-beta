@@ -464,7 +464,10 @@ const czech: Record<string, string> = {
   "Current-season navigation": "Navigace v aktuální sezoně",
   "Planned context unavailable because seasons disagree": "Plánovaný kontext není dostupný kvůli rozdílným sezonám",
   "Finals qualification detail conflicts with the stored summary or selected Run.": "Detail kvalifikace Finals se neshoduje s uloženým souhrnem nebo vybraným Runem.",
-  "Finals result detail conflicts with the stored summary or selected Run.": "Detail výsledku Finals se neshoduje s uloženým souhrnem nebo vybraným Runem."
+  "Finals result detail conflicts with the stored summary or selected Run.": "Detail výsledku Finals se neshoduje s uloženým souhrnem nebo vybraným Runem.",
+  "Waiting for Finals summary": "Čeká se na souhrn Finals",
+  "Result cannot be verified without a valid Finals summary": "Výsledek nelze ověřit bez platného souhrnu Finals",
+  "Qualification cannot be verified without a valid Finals summary": "Kvalifikaci nelze ověřit bez platného souhrnu Finals"
 }
 
 export function useHistoryText(): (english: string) => string {

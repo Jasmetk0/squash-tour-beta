@@ -15,7 +15,7 @@ import {
 } from '../components/RunScopedUi'
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
 import type { RaceSnapshot, RankingSnapshot } from '../api/types'
-import { formatApiError } from '../utils/apiErrors'
+import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 type Mode = 'ranking' | 'race'
 
@@ -201,7 +201,9 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         {snapshotMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
         <button type="button" onClick={() => void query.refetch()}>{t('Refresh read-only data')}</button>
         {query.isLoading && <p className="status">{t('Loading snapshots history...')}</p>}
-        {query.error && <p className="error">{t('Failed to load snapshots history')}: {formatApiError(query.error)}</p>}
+        {isApiNotFound(query.error)
+          ? <EmptyState message={t('Snapshot history could not be found for this Run.')} />
+          : query.error && <p role="alert" className="error">{t('Failed to load snapshots history')}: {formatApiError(query.error)}</p>}
         {!query.isLoading && !query.error && !snapshotMismatch && snapshots.length === 0 && (
           <EmptyState message={t('No snapshots are available for this run yet.')} />
         )}

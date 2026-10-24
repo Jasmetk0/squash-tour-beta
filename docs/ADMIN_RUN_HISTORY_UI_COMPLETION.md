@@ -106,6 +106,18 @@ The read-only screens use React Query, which may retain a previous successful `d
 
 These guards do not alter the React Query client, shared components, global retry policy, backend endpoints, or native Product Run saved-history authority. They intentionally distinguish a successful historical read from stale cached data after a failed read, not certify end-to-end browser or backend behavior.
 
+## Follow-up — event IDs reused across seasons
+
+Legacy persisted event IDs may recur in more than one season. A read-only event timeline must distinguish these records using the **persisted `event_sequence`**, not only the `event_id`.
+
+- Timeline row keys and selected-row state now use event sequence; different records with a reused ID are independently selectable rather than accidentally sharing React keys or both appearing selected.
+- Deep links support the scoped `selectedEventSequence` alongside `selectedEventId`, with strict positive-safe-integer parsing. Existing bookmarks containing only `selectedEventId` continue to open the first matching persisted event in API order.
+- The existing direct detail endpoint is addressed by `event_id` alone, so a duplicate ID is **not** a safe dedicated-detail URL. Such links are unavailable with explicit CS/EN explanation, while the selected persisted record's own metadata and planned/current-week links continue to follow their independent season checks.
+- For duplicate IDs, a fetched ID-only detail payload is displayed **only when it explicitly contains a matching valid `event_sequence`**. An absent or conflicting sequence cannot prove the payload belongs to the selected row. The detail query also includes the selected sequence in its client cache key to avoid reusing same-ID details between distinct records.
+- Regression tests cover duplicate IDs across seasons, selected-row accessibility, explicit sequence links, legacy bookmarks, malformed sequence parameters, direct-link suppression, detail isolation, and independent API requests after switching rows.
+
+This is a frontend provenance safeguard, not a change to the backend event model, URLs of the dedicated ID-only endpoint, or canonical Product Run saved-history authority.
+
 ## Verification plan and evidence
 
 - Retained English historical regressions explicitly select English inside their test mocks; they do not weaken or delete legacy sequence/progress mismatch assertions.

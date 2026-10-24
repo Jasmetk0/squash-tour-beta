@@ -54,13 +54,17 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   const siblingMismatch = Boolean(siblingSnapshotsQuery.data?.run_id && siblingSnapshotsQuery.data.run_id !== runId)
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const runMismatch = Boolean(runQuery.data?.run.run_id && runQuery.data.run.run_id !== runId)
-  const planUnavailable = runQuery.isLoading || Boolean(runQuery.error) || !runQuery.data || runMismatch
+  const planSeasonMismatch = Boolean(runQuery.data && runQuery.data.run.run_id === runId &&
+    runQuery.data.season_state.season !== runQuery.data.run.season)
+  const planUnavailable = runQuery.isLoading || Boolean(runQuery.error) || !runQuery.data || runMismatch || planSeasonMismatch
   const eventsUnavailable = eventsQuery.isLoading || Boolean(eventsQuery.error) || !eventsQuery.data || eventsMismatch
-  const orderedEvents = runQuery.data?.run.run_id === runId ? runQuery.data.season_state.ordered_events : []
+  const orderedEvents = !planUnavailable ? runQuery.data?.season_state.ordered_events ?? [] : []
   const plannedContext = useMemo(() => {
-    const map = new Map<string, { week: number; category: string; tour: string; templateId: string; planPosition: number }>()
+    const map = new Map<string, { season: number; week: number; category: string; tour: string; templateId: string; planPosition: number }>()
     orderedEvents.forEach((event, index) => {
+      if (event.season !== runQuery.data?.season_state.season) return
       map.set(event.event_id, {
+        season: event.season,
         week: event.week,
         category: event.category,
         tour: event.tour,
@@ -71,16 +75,21 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
     return map
   }, [orderedEvents])
   const persistedEventsById = useMemo(() => {
-    const map = new Map<string, { eventSequence: number; week: number | null }>()
+    const map = new Map<string, { season: number; eventSequence: number; week: number | null }>()
     ;(eventsMismatch ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
-      map.set(event.event_id, { eventSequence: event.event_sequence, week: event.week })
+      map.set(event.event_id, { season: event.season, eventSequence: event.event_sequence, week: event.week })
     })
     return map
   }, [eventsMismatch, eventsQuery.data?.events])
+  const plannedForSource = (sourceEventId: string) => {
+    const plan = plannedContext.get(sourceEventId)
+    const persisted = persistedEventsById.get(sourceEventId)
+    return plan && (!persisted || persisted.season === plan.season) ? plan : undefined
+  }
   const normalizedSourceEventFilter = sourceEventFilter.trim().toLowerCase()
   const filteredSnapshots = snapshots.filter((snapshot) => {
     const sourceEventId = snapshot.source_event_id
-    const planContext = sourceEventId ? plannedContext.get(sourceEventId) : undefined
+    const planContext = sourceEventId ? plannedForSource(sourceEventId) : undefined
     const persistedContext = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
     const effectiveWeek = persistedContext?.week ?? planContext?.week
     const weekMatches = weekFilter ? String(effectiveWeek) === weekFilter : true
@@ -95,7 +104,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
     snapshots.forEach((snapshot) => {
       const sourceEventId = snapshot.source_event_id
       if (!sourceEventId) return
-      const plan = plannedContext.get(sourceEventId)
+      const plan = plannedForSource(sourceEventId)
       const persisted = persistedEventsById.get(sourceEventId)
       const effectiveWeek = persisted?.week ?? plan?.week
       if (effectiveWeek != null) values.add(String(effectiveWeek))
@@ -107,7 +116,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
     snapshots.forEach((snapshot) => {
       const sourceEventId = snapshot.source_event_id
       if (!sourceEventId) return
-      const category = plannedContext.get(sourceEventId)?.category
+      const category = plannedForSource(sourceEventId)?.category
       if (category) values.add(category)
     })
     return Array.from(values)
@@ -199,6 +208,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
       </SectionCard>
 
       {runMismatch && <p role="alert" className="error">{t('Planned context belongs to another Run.')}</p>}
+      {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>
       {eventsMismatch && <p role="alert" className="error">{t('Event context belongs to another Run.')}</p>}
       {siblingMismatch && <p role="alert" className="error">{t('Snapshot sibling history belongs to another Run.')}</p>}
       {runQuery.error && <p role="alert" className="error">{t('Failed to load planned season context')}: {formatApiError(runQuery.error)}</p>}
@@ -225,7 +235,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             getSubLabel={(snapshot) => {
               const sourceEventId = snapshot.source_event_id
               if (!sourceEventId) return t('No source_event_id')
-              const plan = plannedContext.get(sourceEventId)
+              const plan = plannedForSource(sourceEventId)
               const persisted = persistedEventsById.get(sourceEventId)
               const week = persisted?.week ?? plan?.week
               const segments = [`${t('Source event')} ${sourceEventId}`]
@@ -264,6 +274,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             persistedEvent={selected.source_event_id ? persistedEventsById.get(selected.source_event_id) : undefined}
             siblingMode={siblingMode}
             siblingMatchCount={siblingMatchCount}
+            currentRunSeason={planUnavailable ? null : runQuery.data?.run.season ?? null}
             planUnavailable={planUnavailable}
             eventsUnavailable={eventsUnavailable}
           />
@@ -283,6 +294,7 @@ function SnapshotDetail({
   persistedEvent,
   siblingMode,
   siblingMatchCount,
+  currentRunSeason,
   planUnavailable,
   eventsUnavailable
 }: {
@@ -293,12 +305,15 @@ function SnapshotDetail({
   persistedEvent?: { eventSequence: number; week: number | null }
   siblingMode: Mode
   siblingMatchCount: number | null
+  currentRunSeason: number | null
   planUnavailable: boolean
   eventsUnavailable: boolean
 }): JSX.Element {
   const t = useHistoryText()
   const sourceEventId = snapshot.source_event_id
   const sourceWeek = persistedEvent?.week ?? plannedContext?.week
+  const sourceEvidenceSeason = persistedEvent?.season ?? plannedContext?.season ?? null
+  const canNavigateWeek = currentRunSeason != null && sourceEvidenceSeason === currentRunSeason
   const missingPlan = planUnavailable ? t('Unavailable') : t('No ordered-plan match')
 
   return (
@@ -349,10 +364,10 @@ function SnapshotDetail({
           {
             label: t('Source week detail'),
             value:
-              sourceWeek != null ? (
+              sourceWeek != null && canNavigateWeek ? (
                 <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${sourceWeek}`}>{t('Open week detail page')} (W{sourceWeek})</Link>
               ) : (
-                planUnavailable || eventsUnavailable ? t('Unavailable') : t('No source week context available.')
+                !canNavigateWeek ? t('Current-season week link unavailable for this historic event.') : t('No source week context available.')
               )
           },
           { label: t('Season calendar'), value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>{t('Open season calendar browser')}</Link> },

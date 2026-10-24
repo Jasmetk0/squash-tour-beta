@@ -5,8 +5,11 @@ runtime Branch until the dedicated continuation adapters can be installed too.
 The surrounding transaction belongs to the caller; there are no nested commits.
 """
 
+import json
+
 from sqlalchemy import select
 
+from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.run_branches import normalize_branch_display_name
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.run_revisions import (
@@ -194,17 +197,30 @@ def install_native_fork_baseline_in_session(
             BranchSavedRevisionModel, baseline.source_binding.source.revision_id
         ),
     )
+    available_calendar = baseline.week.calendar
+    if runtime is not None:
+        # A new independent Branch may select an older Saved source after an
+        # explicit Run-wide extension. Its history/baseline retains that source
+        # clock; only this newly Saved envelope gets the already available range.
+        available_calendar = RunCalendar.from_metadata(json.loads(run.metadata_json)["run_calendar"])
+        original = baseline.week.calendar
+        if (
+            (available_calendar.weeks_per_year, available_calendar.season_start_year_week, available_calendar.start_year)
+            != (original.weeks_per_year, original.season_start_year_week, original.start_year)
+            or available_calendar.season_count < original.season_count
+        ):
+            raise ValueError("Native fork source calendar is incompatible with the available Run horizon")
     payload = viewer_branch_saved_revision_payload(
         base_payload={
-            "run": {"run_calendar": baseline.week.calendar.to_metadata()},
+            "run": {"run_calendar": available_calendar.to_metadata()},
             "branch": {},
         },
         run_id=baseline.run_id,
         display_name=run.display_name,
         run_status=run.status,
         timeline_start_season=baseline.week.calendar.start_year,
-        timeline_end_season=baseline.week.calendar.start_year
-        + baseline.week.calendar.season_count
+        timeline_end_season=available_calendar.start_year
+        + available_calendar.season_count
         - 1,
         branch_id=baseline.branch_id,
         branch_display_name=display_name,

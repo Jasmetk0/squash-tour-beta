@@ -7,7 +7,7 @@ from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
 SCHEMA = 'calendar_terminal_edition_result.v1'
 
 
-def verify_saved_terminal_results(repository, session, revision):
+def verify_saved_terminal_results(repository, session, revision, *, sporting_component_proofs=None):
     # The ordinary component verifier already replayed actual sport/results.
     # Resolve only the terminal boundary's physical dependencies here; do not
     # decode/replay complete histories again or retain a cross-request proof.
@@ -33,6 +33,7 @@ def verify_saved_terminal_results(repository, session, revision):
             candidates.append((authority, results))
     if not candidates:
         return
+    sporting_component_proofs = sporting_component_proofs if sporting_component_proofs is not None else {}
     # One ancestry walk for all relevant Editions; no per-result lineage replay.
     reachable = set()
     parent_id = revision.parent_revision_id
@@ -44,7 +45,7 @@ def verify_saved_terminal_results(repository, session, revision):
         if row is None or row.run_id != revision.run_id:
             raise ValueError('Terminal result source ancestry is missing or foreign')
         ancestor = repository._validated_saved_revision_in_session(
-            session=session, model=row, materialize_payload=False,
+            session=session, model=row, materialize_payload=False, sporting_component_proofs=sporting_component_proofs,
         )
         parent_id = ancestor.parent_revision_id
     for authority, results in candidates:
@@ -52,7 +53,7 @@ def verify_saved_terminal_results(repository, session, revision):
         row = session.get(BranchSavedRevisionModel, source_id)
         if source_id not in reachable or row is None or (row.run_id, row.branch_id) != (revision.run_id, revision.branch_id):
             raise ValueError('Terminal result played source is missing, foreign or unreachable')
-        source = repository._validated_saved_revision_in_session(session=session, model=row)
+        source = repository._validated_saved_revision_in_session(session=session, model=row, sporting_component_proofs=sporting_component_proofs)
         original = source.payload['content']['calendar_tour_authority']['state']
         frozen = next((a for a in original['editions'] if a['edition']['edition_id'] == authority['edition']['edition_id']), None)
         if frozen is None or any(frozen[key] != authority[key] for key in (

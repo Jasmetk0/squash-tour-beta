@@ -52,9 +52,9 @@ def completed_season_indices(state, closure=None):
     return indices
 
 
-def saved_final_closure(payload, branch_id):
+def saved_final_closure(payload, branch_id, inherited=None):
     """Projection only: caller already authenticated this complete Saved revision."""
-    return payload.get("run", {}).get("native_branch_closures", {}).get(branch_id)
+    return payload.get("run", {}).get("native_branch_closures", {}).get(branch_id) or inherited
 
 
 def native_tour_identities(state, world):

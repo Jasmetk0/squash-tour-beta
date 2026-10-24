@@ -444,7 +444,7 @@ describe('terminal Edition result presentation (API mocked)',()=>{
         rankings:[{week,policy:{policy_id:'outgoing',best_n:1},rows:[{rank:1,player_id:'p',points:0,counted_results:[]}]}]}})
     render(panel())
     await screen.findByText(language==='cs'?/Poslední týden původního Runu:/:/Original Run final week:/)
-    fireEvent.click(screen.getByRole('button',{name:'0',exact:true}))
+    fireEvent.click(screen.getByRole('button',{name:'0'}))
     expect(await screen.findByLabelText('Official point contributions')).toHaveTextContent(language==='cs'?'Výsledek pro Closing Ranking bez následujícího týdne':'Closing Ranking result without a following week')
     expect(api.executeCalendarTour).not.toHaveBeenCalled()
     expect(api.saveCalendarTour).not.toHaveBeenCalled()

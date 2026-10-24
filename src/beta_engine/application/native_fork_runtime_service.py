@@ -223,7 +223,7 @@ class NativeForkRuntimeService:
             "saved_head_revision_id": revision.revision_id,
             "draft_version": draft.draft_version,
             "run_calendar": sources.execution_calendar.to_metadata(),
-            "saved_completed_seasons": completed_season_indices(signed.tour, saved_final_closure(revision.payload, current.branch_id)),
+            "saved_completed_seasons": completed_season_indices(signed.tour, saved_final_closure(revision.payload, current.branch_id, getattr(sources, "final_closure", None))),
             "checkpoint_fingerprint": current.checkpoint_fingerprint,
             "tour_fingerprint": tour_fingerprint(current, draft.draft_version),
             "saved": current == signed and draft.status == "clean",
@@ -862,7 +862,7 @@ class NativeForkRuntimeService:
             state, world = publication_inputs(self.repository, session, revision)
             if kind == "records":
                 return {
-                    **signed_tour_records(state, world, closure=saved_final_closure(revision.payload, branch_id), **options),
+                    **signed_tour_records(state, world, closure=saved_final_closure(revision.payload, branch_id, getattr(state, "inherited_final_closure", None)), **options),
                     "schema_version": "calendar_tour_signed_records_response.v1",
                     "saved_head_revision_id": revision.revision_id,
                 }
@@ -871,5 +871,5 @@ class NativeForkRuntimeService:
                 "run_id": run_id,
                 "branch_id": branch_id,
                 "saved_head_revision_id": revision.revision_id,
-                **compare_completed_seasons(state, world, closure=saved_final_closure(revision.payload, branch_id), **options),
+                **compare_completed_seasons(state, world, closure=saved_final_closure(revision.payload, branch_id, getattr(state, "inherited_final_closure", None)), **options),
             }

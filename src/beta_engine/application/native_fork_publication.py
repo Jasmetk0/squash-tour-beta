@@ -23,6 +23,7 @@ def publication_inputs(repository, session, revision):
     )
     history = (*getattr(sources, "history_tours", ()), sources.tour)
     state.fingerprint = runtime.tour.fingerprint
+    state.inherited_final_closure = getattr(sources, "final_closure", None)
     state.receipts = (
         tuple(r for t in history for r in t.receipts) + runtime.tour.receipts
     )

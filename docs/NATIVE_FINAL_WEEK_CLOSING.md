@@ -98,3 +98,16 @@ new manually inserted result or a second fresh MatchEngine acceptance claim.
 The source is also checked through the existing Saved-only Viewer season-summary
 API; it remains separate from ordinary Official Ranking and Branch selection.
 Known broader Viewer work remains outside this slice.
+
+The minimum currently supported real Tour fixture is W4: native Tour requires an
+already Saved Week 2+ sporting checkpoint, the announcement must become public
+on a future Week Transition, and an entire announcement week must precede play.
+The existing W3 empty-final-week closure fixture is retained as a separate task
+contract; no initialization or announcement guard is weakened.
+
+A new runtime fork selecting a historical source after a Run extension now Saves
+an envelope with the already available current Run horizon. Its baseline, actual
+week and selected source retain the original calendar. Pending v1 installations
+retain their exact older envelope semantics. A source Closing Ranking is visible
+as inherited Saved history; it never becomes the target Branch's own completion
+marker or starts/retargets a task. Fresh real nested-fork acceptance is required.

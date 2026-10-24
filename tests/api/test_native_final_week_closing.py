@@ -192,6 +192,11 @@ def test_real_final_week_edition_closing_save_restart_and_extension(tmp_path, mo
         if clock.weeks_per_year == 4 and forked:
             inherited = fork(server, closed.revision_id, branch=branch, name='Inherited final-week history')
             server.native_task_branch = inherited['branch_id']
+            assert inspect(server)['saved_completed_seasons'] == [0]
+            inherited_report_url = server.base_url + f"/admin/runs/run/branches/{inherited['branch_id']}/calendar-tour/seasons/0"
+            code, inherited_report = _request('GET', inherited_report_url)
+            assert code == 200, inherited_report
+            assert inherited_report['selected']['closing_ranking']['rows'] == review_rows(closed, branch)
             inherited_task = start(server, reviewed(server, {'season_index': 1, 'week': 1}, name='inherited-terminal-continuation'))
             assert inherited_task['checkpoint'] == 'native_season_transition_review_required', inherited_task
             inherited_url = scope(server) + '/native/inherited-terminal-continuation/season-transition'

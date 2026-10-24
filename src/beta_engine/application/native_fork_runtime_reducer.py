@@ -99,6 +99,11 @@ def source_inputs(source, repository=None, session=None):
         )
 
         result = decoded_original_source(repository, source, _decode_sources)
+    # Historical closure is read-only source evidence, never this fork's own
+    # completion marker. The source revision has already been fully verified.
+    result.final_closure = source.payload.get("run", {}).get("native_branch_closures", {}).get(
+        source.branch_id, getattr(result, "final_closure", None)
+    )
     if memo is not None:
         memo[key] = result
     return SimpleNamespace(**vars(result))

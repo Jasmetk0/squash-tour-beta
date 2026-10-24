@@ -83,6 +83,7 @@ describe('Run historical UI CS/EN read-only behavior', () => {
 
     await user.click(screen.getByRole('button', { name: 'Switch locale' }))
     expect(screen.getByText('Aktivita Runu')).toBeInTheDocument()
+    expect(screen.getByText('Textové vyhledávání')).toBeInTheDocument()
     expect(screen.getByLabelText('Filtrovat podle popisu nebo identifikátoru')).toHaveValue('E2')
     expect(within(screen.getByRole('list', { name: 'Seznam aktivity Runu' })).getAllByRole('button')).toHaveLength(1)
     expect(api.getRunActivity).toHaveBeenCalledTimes(1)

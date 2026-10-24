@@ -48,8 +48,19 @@ export function FinalsQualificationDetailPage(): JSX.Element {
     ))
   ))
   const safeSummary = summaryMismatch ? null : summaryQuery.data
+  // A summary and a detail may be fetched at different times. If both
+  // identify the same artifact, differing source snapshots must not be
+  // silently presented together as one consistent qualification record.
+  const summaryQualification = safeSummary?.qualification
   const qualificationMismatch = Boolean(qualificationQuery.data && (
-    qualificationQuery.data.run_id !== runId || (safeSummary && qualificationQuery.data.season !== safeSummary.season)
+    qualificationQuery.data.run_id !== runId ||
+    (safeSummary && qualificationQuery.data.season !== safeSummary.season) ||
+    (summaryQualification && (
+      (summaryQualification.source_as_of_season != null &&
+        qualificationQuery.data.source_as_of_season !== summaryQualification.source_as_of_season) ||
+      (summaryQualification.source_as_of_week != null &&
+        qualificationQuery.data.source_as_of_week !== summaryQualification.source_as_of_week)
+    ))
   ))
   const safeQualification = qualificationMismatch ? null : qualificationQuery.data
 
@@ -90,8 +101,8 @@ export function FinalsQualificationDetailPage(): JSX.Element {
       />
 
       <SectionCard title={t('Summary')}>
-        {qualificationMismatch && <p role="alert" className="error">{t('Finals qualification identity differs from the selected Run or summary season.')}</p>}
-        {summaryMismatch && <p role="alert" className="error">{t('Finals qualification identity differs from the selected Run or summary season.')}</p>}
+        {qualificationMismatch && <p role="alert" className="error">{t('Finals qualification detail conflicts with the stored summary or selected Run.')}</p>}
+        {summaryMismatch && <p role="alert" className="error">{t('Finals qualification detail conflicts with the stored summary or selected Run.')}</p>}
         {qualificationQuery.isLoading ? <p className="status">{t('Loading Finals qualification detail...')}</p> : null}
         {hasSummaryError ? <p className="error">{t('Failed to load Finals summary')}: {formatApiError(summaryQuery.error)}</p> : null}
         {hasQualificationError ? (

@@ -47,7 +47,7 @@ export function FinalsResultDetailPage(): JSX.Element {
       (summaryQuery.data.result.season != null && summaryQuery.data.result.season !== summaryQuery.data.season)
     ))
   ))
-  const safeSummary = summaryMismatch ? null : summaryQuery.data
+  const safeSummary = summaryMismatch || summaryQuery.error ? null : summaryQuery.data
   // The result summary and detail are separate reads. An explicit event
   // identity or as-of snapshot disagreement cannot prove the same result.
   const summaryResult = safeSummary?.result
@@ -62,7 +62,7 @@ export function FinalsResultDetailPage(): JSX.Element {
         resultQuery.data.source_as_of_week !== summaryResult.source_as_of_week)
     ))
   ))
-  const safeResult = resultMismatch ? null : resultQuery.data
+  const safeResult = resultMismatch || resultQuery.error ? null : resultQuery.data
 
   const resultNotFound = isApiNotFound(resultQuery.error)
   const hasSummaryError = summaryQuery.error && !isApiNotFound(summaryQuery.error)

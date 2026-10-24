@@ -1,5 +1,7 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { EventsPage } from './EventsPage'
@@ -68,6 +70,34 @@ describe('history list ordering, detail selection, and states', () => {
     expect(items[1]).toHaveTextContent('1. E1')
     expect(items[1]).toHaveTextContent('Plan #2')
     expect(screen.queryByText('Plan #0')).not.toBeInTheDocument()
+  })
+
+  it('does not preserve a stale planned-event link when a formerly valid run-context refresh fails', async () => {
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2027, seed: 42, next_event_index: 1,
+        total_events: 2, completed_event_ids: ['E2'] },
+      season_state: { season: 2027, next_event_index: 1,
+        completed_event_ids: ['E2'], ordered_events: [
+          { event_id: 'E2', season: 2027, week: 9, tour: 'World Tour',
+            category: 'Diamond', template_id: 'WT-DIAMOND' },
+          { event_id: 'E1', season: 2027, week: 8, tour: 'Elite Tour',
+            category: 'Gold', template_id: 'ET-GOLD' }
+        ] }
+    }).mockRejectedValueOnce(new Error('temporary season plan outage'))
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={['/runs/run-a/events']}>
+          <Routes><Route path="/runs/:runId/events" element={<EventsPage />} /></Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+    expect(await screen.findByRole('link', { name: 'Open planned-event detail page' })).toBeInTheDocument()
+    await act(async () => { await client.refetchQueries({ queryKey: ['run', 'run-a'] }) })
+    expect(await screen.findByText('Failed to load planned season context: temporary season plan outage')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail page' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open dedicated event detail page' }))
+      .toHaveAttribute('href', '/runs/run-a/events/E2')
   })
 
   it('renders events in API order with default selected styling and click-to-update detail', async () => {

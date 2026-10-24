@@ -78,9 +78,13 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
     enabled: Boolean(runId && isValidSequence)
   })
 
-  const snapshot = snapshotQuery.data ?? null
+  const snapshotMismatch = Boolean(snapshotQuery.data && snapshotQuery.data.snapshot_sequence !== parsedSequence)
+  const snapshot = snapshotMismatch ? null : snapshotQuery.data ?? null
+  const historyMismatch = Boolean(snapshotsQuery.data?.run_id && snapshotsQuery.data.run_id !== runId)
+  const siblingMismatch = Boolean(siblingSnapshotsQuery.data?.run_id && siblingSnapshotsQuery.data.run_id !== runId)
+  const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const sourceEventId = snapshot?.source_event_id ?? null
-  const neighboringSnapshots = snapshotsQuery.data?.snapshots ?? []
+  const neighboringSnapshots = historyMismatch ? [] : (snapshotsQuery.data?.snapshots ?? []).slice().sort((a, b) => a.snapshot_sequence - b.snapshot_sequence)
   const currentSnapshotIndex = neighboringSnapshots.findIndex((item) => item.snapshot_sequence === parsedSequence)
   const previousSnapshot = currentSnapshotIndex > 0 ? neighboringSnapshots[currentSnapshotIndex - 1] : null
   const nextSnapshot =
@@ -89,11 +93,11 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
       : null
   const title = mode === 'ranking' ? t('Ranking snapshot detail') : t('Race snapshot detail')
   const persistedSourceEvent = sourceEventId
-    ? (eventsQuery.data?.events.find((event) => event.event_id === sourceEventId) ?? null)
+    ? (eventsMismatch ? null : eventsQuery.data?.events.find((event) => event.event_id === sourceEventId) ?? null)
     : null
-  const plannedSourceEvent = sourceEventId ? findPlannedEventContext(runQuery.data, sourceEventId) : null
+  const plannedSourceEvent = sourceEventId && runQuery.data?.run.run_id === runId ? findPlannedEventContext(runQuery.data, sourceEventId) : null
   const relatedSiblingSnapshots = sourceEventId
-    ? (siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === sourceEventId) ?? [])
+    ? (siblingMismatch ? [] : siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === sourceEventId) ?? [])
     : []
 
   return (
@@ -104,6 +108,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
         subtitle={t('Inspect snapshot metadata and payload for a single history snapshot sequence.')}
       />
 
+      <p className="status">{t('Stored historical snapshot; it is not necessarily the current ranking. The endpoint does not provide a timestamp.')}</p>
       <CurrentContextStrip
         items={[
           { label: t('Run'), value: runId || 'unknown' },
@@ -156,6 +161,9 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
       {snapshotSequence && isValidSequence && (
         <>
           <SectionCard title={t('Snapshot summary')}>
+            <button type="button" onClick={() => void snapshotQuery.refetch()}>{t('Refresh read-only data')}</button>
+            {snapshotMismatch && <p role="alert" className="error">{t('Snapshot detail does not match the requested sequence.')}</p>}
+            {historyMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
             {snapshotQuery.isLoading && <p className="status">{t('Loading snapshot details...')}</p>}
             {snapshotQuery.error && !isApiNotFound(snapshotQuery.error) && (
               <p className="error">Failed to load snapshot details: {formatApiError(snapshotQuery.error)}</p>
@@ -267,7 +275,7 @@ function SourceEventContext({
         ) : (
           <span>{t('Source event detail unavailable (event not present in persisted event history).')}</span>
         )}{' '}
-        · <Link to={`/runs/${runId}/calendar/${encodeURIComponent(sourceEventId)}`}>{t('Open planned-event detail')}</Link>
+        {plannedSourceEvent ? <>· <Link to={`/runs/${runId}/calendar/${encodeURIComponent(sourceEventId)}`}>{t('Open planned-event detail')}</Link></> : null}
         {plannedSourceEvent ? (
           <>
             {' '}

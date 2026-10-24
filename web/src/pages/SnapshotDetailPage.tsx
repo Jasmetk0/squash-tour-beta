@@ -103,7 +103,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
   const plannedCandidate = sourceEventId && runQuery.data?.run.run_id === runId && !planSeasonMismatch
     ? findPlannedEventContext(runQuery.data, sourceEventId) : null
   const sourceSeasonMismatch = Boolean(plannedCandidate && persistedSourceEvent &&
-    persistedSourceEvent.season !== plannedCandidate.season)
+    persistedSourceEvent.season != null && persistedSourceEvent.season !== plannedCandidate.season)
   const plannedSourceEvent = sourceSeasonMismatch ? null : plannedCandidate
   const relatedSiblingUnavailable = siblingSnapshotsQuery.isLoading || Boolean(siblingSnapshotsQuery.error) || siblingMismatch || !siblingSnapshotsQuery.data
   const relatedSiblingSnapshots = sourceEventId

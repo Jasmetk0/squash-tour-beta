@@ -89,7 +89,7 @@ export function ActivityPage(): JSX.Element {
 
   const activityMismatch = Boolean(activityQuery.data?.run_id && activityQuery.data.run_id !== runId)
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
-  const items = activityMismatch ? [] : activityQuery.data?.items ?? []
+  const items = activityMismatch || activityQuery.error ? [] : activityQuery.data?.items ?? []
   const planSeasonMismatch = Boolean(runQuery.data && runQuery.data.run.run_id === runId &&
     runQuery.data.season_state.season != null &&
     runQuery.data.season_state.season !== runQuery.data.run.season)
@@ -117,11 +117,11 @@ export function ActivityPage(): JSX.Element {
 
   const persistedEventById = useMemo(() => {
     const map = new Map<string, { season: number | null; week: number | null; eventSequence: number }>()
-    ;(eventsMismatch ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
+    ;(eventsMismatch || eventsQuery.error ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
       map.set(event.event_id, { season: event.season, week: event.week, eventSequence: event.event_sequence })
     })
     return map
-  }, [eventsMismatch, eventsQuery.data?.events])
+  }, [eventsMismatch, eventsQuery.error, eventsQuery.data?.events])
 
   const normalizedTextFilter = textFilter.trim().toLowerCase()
   const filteredItems = indexedItems.filter(({ item }) => {

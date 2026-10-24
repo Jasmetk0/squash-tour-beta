@@ -76,7 +76,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
     return map
   }, [orderedEvents])
   const persistedEventsById = useMemo(() => {
-    const map = new Map<string, { season: number; eventSequence: number; week: number | null }>()
+    const map = new Map<string, { season: number | null; eventSequence: number; week: number | null }>()
     ;(eventsMismatch ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
       map.set(event.event_id, { season: event.season, eventSequence: event.event_sequence, week: event.week })
     })
@@ -303,7 +303,7 @@ function SnapshotDetail({
   mode: Mode
   runId: string
   plannedContext?: { season: number; week: number; category: string; tour: string; templateId: string; planPosition: number }
-  persistedEvent?: { season: number; eventSequence: number; week: number | null }
+  persistedEvent?: { season: number | null; eventSequence: number; week: number | null }
   siblingMode: Mode
   siblingMatchCount: number | null
   currentRunSeason: number | null

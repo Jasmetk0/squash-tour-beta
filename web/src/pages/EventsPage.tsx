@@ -14,7 +14,7 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
-import { formatApiError } from '../utils/apiErrors'
+import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 import { useHistoryText } from './runHistoryText'
 export function EventsPage(): JSX.Element {
@@ -184,7 +184,9 @@ export function EventsPage(): JSX.Element {
         {eventsMismatch && <p role="alert" className="error">{t('Events response belongs to another Run; its records are hidden.')}</p>}
         <button type="button" onClick={() => void eventsQuery.refetch()}>{t('Refresh read-only data')}</button>
         {eventsQuery.isLoading && <p className="status">{t('Loading events history...')}</p>}
-        {eventsQuery.error && <p className="error">{t('Failed to load events history')}: {formatApiError(eventsQuery.error)}</p>}
+        {isApiNotFound(eventsQuery.error)
+          ? <EmptyState message={t('Events history could not be found for this Run.')} />
+          : eventsQuery.error && <p role="alert" className="error">{t('Failed to load events history')}: {formatApiError(eventsQuery.error)}</p>}
         {!eventsQuery.isLoading && !eventsQuery.error && !eventsMismatch && events.length === 0 && (
           <EmptyState message={t('No events are available for this run yet.')} />
         )}
@@ -288,9 +290,11 @@ export function EventsPage(): JSX.Element {
             {eventDetailMismatch && <p role="alert" className="error">{t('Event detail does not match the selected event; its payload is hidden.')}</p>}
             <button type="button" onClick={() => void eventDetailQuery.refetch()} disabled={!selectedEvent}>{t('Refresh read-only data')}</button>
             {eventDetailQuery.isLoading && <p className="status">{t('Loading selected event payload...')}</p>}
-            {eventDetailQuery.error && (
-              <p className="error">{t('Failed to load selected event payload')}: {formatApiError(eventDetailQuery.error)}</p>
-            )}
+            {isApiNotFound(eventDetailQuery.error)
+              ? <EmptyState message={t('Selected event detail is not found.')} />
+              : eventDetailQuery.error && (
+                <p role="alert" className="error">{t('Failed to load selected event payload')}: {formatApiError(eventDetailQuery.error)}</p>
+              )}
             {eventDetailQuery.data && !eventDetailMismatch && (
               <JsonPayloadBlock
                 title={t('Event payload')}

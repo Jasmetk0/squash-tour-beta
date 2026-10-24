@@ -114,7 +114,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
           { label: t('Run'), value: runId || 'unknown' },
           { label: t('Mode'), value: mode },
           { label: t('Sequence'), value: snapshotSequence || 'unknown' },
-          { label: t('Status'), value: snapshot ? t('Loaded') : t('Pending') }
+          { label: t('Status'), value: snapshot ? t('Loaded') : snapshotMismatch ? t('Error') : snapshotQuery.isLoading ? t('Loading') : isApiNotFound(snapshotQuery.error) ? t('Missing') : snapshotQuery.error ? t('Failed') : t('Unavailable') }
         ]}
       />
 
@@ -142,7 +142,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
           ]}
         />
         <p>
-          <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}`}>Back to {mode} snapshots history</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}`}>{t('Back to')} {mode} {t('snapshot history')}</Link>
         </p>
       </SectionCard>
 
@@ -220,7 +220,7 @@ function SnapshotSummary({
         { label: t('Mode'), value: mode },
         { label: t('Source event ID'), value: snapshot.source_event_id ?? '—' },
         {
-          label: 'Navigation',
+          label: t('Navigation'),
           value: <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}`}>{t('Back to snapshot history')}</Link>
         }
       ]}
@@ -254,10 +254,10 @@ function SourceEventContext({
         items={[
           { label: t('Source event ID'), value: sourceEventId },
           {
-            label: 'Persisted event',
+            label: t('Persisted event'),
             value:
               persistedSourceEventSequence !== null
-                ? `Found (event sequence ${persistedSourceEventSequence})`
+                ? `${t('Found')} (${t('Event')} ${t('Sequence').toLowerCase()} ${persistedSourceEventSequence})`
                 : t('Not found in persisted event history')
           },
           { label: t('Season plan context'), value: plannedSourceEvent ? t('Found in ordered season plan') : t('No ordered-plan match') }
@@ -279,7 +279,7 @@ function SourceEventContext({
         {plannedSourceEvent ? (
           <>
             {' '}
-            · <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${plannedSourceEvent.week}`}>Open week detail (W{plannedSourceEvent.week})</Link>
+            · <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${plannedSourceEvent.week}`}>{t('Open week detail')} (W{plannedSourceEvent.week})</Link>
           </>
         ) : null}
       </p>
@@ -302,8 +302,8 @@ function SourceEventContext({
 
       {relatedSiblingSnapshots.length > 0 ? (
         <>
-          <h4>Related {siblingMode} snapshots from the same source event</h4>
-          <ul className="item-list" aria-label={`Related ${siblingMode} snapshots`}>
+          <h4>{t('Related')} {siblingMode} {t('snapshots from the same source event')}</h4>
+          <ul className="item-list" aria-label={`${t('Related')} ${siblingMode} snapshots`}>
             {relatedSiblingSnapshots.map((item) => (
               <li key={`${siblingMode}-${item.snapshot_sequence}`}>
                 <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${siblingMode}/${item.snapshot_sequence}`}>

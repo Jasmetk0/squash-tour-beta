@@ -50,16 +50,30 @@ export function RolloverSeasonDetailPage(): JSX.Element {
     retry: false
   })
 
+  const summaryMismatch = Boolean(seasonSummaryQuery.data && (
+    seasonSummaryQuery.data.rollover.run_id !== runId || seasonSummaryQuery.data.rollover.to_season !== toSeason
+  ))
+  const transitionsMismatch = Boolean(transitionsQuery.data && (
+    transitionsQuery.data.run_id !== runId || transitionsQuery.data.to_season !== toSeason ||
+    transitionsQuery.data.transitions.some((item) => item.run_id && (item.run_id !== runId || item.to_season !== toSeason))
+  ))
+  const playersMismatch = Boolean(playersQuery.data && (
+    playersQuery.data.run_id !== runId || playersQuery.data.to_season !== toSeason ||
+    playersQuery.data.players.some((item) => item.run_id && (item.run_id !== runId || item.to_season !== toSeason))
+  ))
+  const safeRollover = summaryMismatch ? null : seasonSummaryQuery.data
+  const safeTransitions = transitionsMismatch ? null : transitionsQuery.data
+  const safePlayers = playersMismatch ? null : playersQuery.data
   const normalizedFilter = playerIdFilter.trim().toLowerCase()
 
   const filteredTransitions = useMemo(() => {
-    const transitions = transitionsQuery.data?.transitions ?? []
+    const transitions = safeTransitions?.transitions ?? []
     if (!normalizedFilter) return transitions
     return transitions.filter((item) => item.player_id.toLowerCase().includes(normalizedFilter))
   }, [normalizedFilter, transitionsQuery.data])
 
   const filteredPlayers = useMemo(() => {
-    const players = playersQuery.data?.players ?? []
+    const players = safePlayers?.players ?? []
     if (!normalizedFilter) return players
     return players.filter((item) => item.player_id.toLowerCase().includes(normalizedFilter))
   }, [normalizedFilter, playersQuery.data])
@@ -74,6 +88,8 @@ export function RolloverSeasonDetailPage(): JSX.Element {
         runId={runId}
         subtitle={t('Read-only inspection for one rollover target season.')}
       />
+      <p className="status">{t('Stored legacy SimulationRun history. This view does not verify Product Run Saved Revision authority.')}</p>
+      <button type="button" onClick={() => { void seasonSummaryQuery.refetch(); void transitionsQuery.refetch(); void playersQuery.refetch() }}>{t('Refresh read-only data')}</button>
       <CurrentContextStrip
         items={[
           { label: t('Run'), value: runId || 'unknown' },
@@ -96,26 +112,27 @@ export function RolloverSeasonDetailPage(): JSX.Element {
       {!invalidSeasonParam ? (
         <>
           <SectionCard title={`Rollover summary (S${toSeason})`}>
+            {summaryMismatch && <p role="alert" className="error">{t('Rollover summary identity differs from the selected Run or target season.')}</p>}
             {seasonSummaryQuery.isLoading && <p className="status">{t('Loading rollover summary...')}</p>}
             {seasonNotFound && <EmptyState message={`No rollover summary found for season ${toSeason}.`} />}
             {seasonSummaryQuery.error && !seasonNotFound && (
               <p className="error">Failed to load rollover summary: {formatApiError(seasonSummaryQuery.error)}</p>
             )}
-            {seasonSummaryQuery.data ? (
+            {safeRollover ? (
               <>
                 <SummaryPills
                   items={[
-                    { label: t('From season'), value: seasonSummaryQuery.data.rollover.from_season },
-                    { label: t('To season'), value: seasonSummaryQuery.data.rollover.to_season },
-                    { label: t('Transitioned players'), value: seasonSummaryQuery.data.rollover.transitioned_players }
+                    { label: t('From season'), value: safeRollover!.rollover.from_season },
+                    { label: t('To season'), value: safeRollover!.rollover.to_season },
+                    { label: t('Transitioned players'), value: safeRollover!.rollover.transitioned_players }
                   ]}
                 />
                 <CompactSummaryCard
                   items={[
-                    { label: t('Run ID'), value: seasonSummaryQuery.data.rollover.run_id },
+                    { label: t('Run ID'), value: safeRollover!.rollover.run_id },
                     {
                       label: t('Metadata keys'),
-                      value: Object.keys(seasonSummaryQuery.data.rollover.metadata ?? {}).length
+                      value: Object.keys(safeRollover!.rollover.metadata ?? {}).length
                     }
                   ]}
                 />
@@ -141,12 +158,14 @@ export function RolloverSeasonDetailPage(): JSX.Element {
                 aria-label={t('player_id filter')}
               />
             </label>
+            <button type="button" onClick={() => setPlayerIdFilter('')}>{t('Reset filters')}</button>
           </SectionCard>
 
           <SectionCard title={t('Player transitions')}>
+            {transitionsMismatch && <p role="alert" className="error">{t('Player transition response belongs to another Run or season.')}</p>}
             {transitionsQuery.isLoading && <p className="status">{t('Loading transitions...')}</p>}
             {transitionsQuery.error && <p className="error">Failed to load transitions: {formatApiError(transitionsQuery.error)}</p>}
-            {transitionsQuery.data ? (
+            {safeTransitions ? (
               filteredTransitions.length === 0 ? (
                 <EmptyState
                   message={normalizedFilter ? t('No transition records match the active player_id filter.') : t('No transition records are available for this season.')}
@@ -158,9 +177,10 @@ export function RolloverSeasonDetailPage(): JSX.Element {
           </SectionCard>
 
           <SectionCard title={t('Next-season players')}>
+            {playersMismatch && <p role="alert" className="error">{t('Next-season player response belongs to another Run or season.')}</p>
             {playersQuery.isLoading && <p className="status">{t('Loading next-season players...')}</p>}
             {playersQuery.error && <p className="error">Failed to load next-season players: {formatApiError(playersQuery.error)}</p>}
-            {playersQuery.data ? (
+            {safePlayers ? (
               filteredPlayers.length === 0 ? (
                 <EmptyState
                   message={normalizedFilter ? t('No next-season players match the active player_id filter.') : t('No next-season players are available for this season.')}

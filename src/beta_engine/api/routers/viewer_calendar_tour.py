@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from beta_engine.api.deps import ApiRuntime, get_runtime
+from beta_engine.application.calendar_tour_season_summary import saved_final_closure
 from beta_engine.infrastructure.db import (
     ViewerOfficialRunContextConflictError,
     ViewerOfficialRunContextNotFoundError,
@@ -85,7 +86,7 @@ def read_signed_season_summary(
         if snapshot.revision.payload_schema_version == "native_fork_saved_root.v2":
             state, world = _fork_publication(runtime.repository, snapshot.revision)
             return {"schema_version": "calendar_tour_season_comparison.v1", "run_id": run_id, "branch_id": state.branch_id,
-                "saved_head_revision_id": snapshot.revision.revision_id, **compare_completed_seasons(state, world, season_index, compare_to)}
+                "saved_head_revision_id": snapshot.revision.revision_id, **compare_completed_seasons(state, world, season_index, compare_to, closure=saved_final_closure(payload, state.branch_id, getattr(state, "inherited_final_closure", None)))}
         state = saved_tour(
             payload, run_id=run_id, branch_id=snapshot.revision.branch_id,
         )
@@ -99,7 +100,7 @@ def read_signed_season_summary(
             "run_id": run_id,
             "branch_id": state.branch_id,
             "saved_head_revision_id": snapshot.revision.revision_id,
-            **compare_completed_seasons(state, world, season_index, compare_to),
+            **compare_completed_seasons(state, world, season_index, compare_to, closure=saved_final_closure(payload, state.branch_id, getattr(state, "inherited_final_closure", None))),
         }
     except ViewerOfficialRunContextNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

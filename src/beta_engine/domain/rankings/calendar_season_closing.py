@@ -1,9 +1,13 @@
 """Closing-only Best N at a Run boundary; never opens/publishes a future week."""
 
+from beta_engine.domain.rankings.calendar_terminal_result import (
+    CalendarTerminalRankingResult,
+    result_activation_ordinal,
+)
 from beta_engine.domain.run_packages import canonical_hash
 
 
-def calculate_calendar_season_closing(*, calendar, completed_week, policy, players, results, previous):
+def calculate_calendar_season_closing(*, calendar, completed_week, policy, players, results, previous, inherited_terminal_sources=()):
     completed = calendar.ordinal(completed_week.season_index, completed_week.week)
     if completed_week.week != calendar.weeks_per_year:
         raise ValueError("Closing Ranking requires the actual last Season Week")
@@ -16,7 +20,14 @@ def calculate_calendar_season_closing(*, calendar, completed_week, policy, playe
     eligible = {pid: [] for pid in ids}
     for result in results:
         end = calendar.ordinal(result.completed_week.season_index, result.completed_week.week)
-        activation = calendar.ordinal(result.first_publication_week.season_index, result.first_publication_week.week)
+        activation = result_activation_ordinal(result, calendar)
+        if isinstance(result, CalendarTerminalRankingResult) and (
+            result.run_id != previous.run_id or (
+                result.branch_id != previous.branch_id
+                and (result.source_fingerprint, result.run_id, result.branch_id) not in inherited_terminal_sources
+            )
+        ):
+            raise ValueError("Closing Ranking terminal result has a foreign owner")
         if result.player_id not in ids or not end < activation <= boundary or end > completed:
             raise ValueError("Closing Ranking result source is foreign/future")
         age = boundary - activation

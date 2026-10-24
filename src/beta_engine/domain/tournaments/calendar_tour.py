@@ -22,6 +22,9 @@ from beta_engine.domain.rankings.calendar_official import (
     CalendarRankingWeek,
     calculate_calendar_official_ranking,
 )
+from beta_engine.domain.rankings.calendar_terminal_result import (
+    CalendarTerminalRankingResult,
+)
 from beta_engine.domain.rankings.official import FrozenInput, OfficialRankingPolicy
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.application_submission_authority import (
@@ -445,16 +448,32 @@ def edition_results(authority, event):
             "Played point policy differs from the pre-existing Edition table"
         )
     completed = ranking_week(event.week)
-    target = event.week.calendar.position_at_ordinal(event.week.ordinal + 1)
-    published = CalendarRankingWeek(
-        season_index=target.season_index, week=target.season_week
-    )
+    terminal = event.week.ordinal + 1 == event.week.calendar.weeks_per_year * event.week.calendar.season_count
+    if not terminal:
+        target = event.week.calendar.position_at_ordinal(event.week.ordinal + 1)
+        published = CalendarRankingWeek(season_index=target.season_index, week=target.season_week)
     source = {
         "edition": authority.edition.fingerprint,
         "field": authority.field.fingerprint,
         "draw": authority.draw.fingerprint,
         "played": played_fingerprint,
     }
+    if terminal:
+        if (event.run_id, event.branch_id, event.source_saved_head) != (
+            authority.ranking_authority.run_id, authority.ranking_authority.branch_id, authority.played_saved_head
+        ):
+            raise ValueError("Terminal Edition has a foreign played owner/source")
+        return tuple(CalendarTerminalRankingResult(
+            run_id=event.run_id, branch_id=event.branch_id,
+            edition_id=event.tournament_id, player_id=award.player_id,
+            completed_week=event.week, closing_eligibility_ordinal=event.week.ordinal + 1,
+            created_saved_head=authority.created_saved_head, played_saved_head=authority.played_saved_head,
+            edition_fingerprint=authority.edition.fingerprint,
+            execution_fingerprint=authority.execution_fingerprint, played_fingerprint=played_fingerprint,
+            source_fingerprint=canonical_hash({**source, "award": award.model_dump(mode="json")}),
+            main_points=award.main_points, validity_weeks=authority.edition.validity_weeks,
+            ranked=authority.edition.ranked,
+        ) for award in event.prepared_awards)
     return tuple(
         CalendarRankingResult(
             edition_id=event.tournament_id,
@@ -472,6 +491,13 @@ def edition_results(authority, event):
             ranked=authority.edition.ranked,
         )
         for award in event.prepared_awards
+    )
+
+
+def published_edition_results(authority, event, calendar):
+    return tuple(
+        r.for_publication(calendar) if isinstance(r, CalendarTerminalRankingResult) else r
+        for r in edition_results(authority, event)
     )
 
 
@@ -500,7 +526,7 @@ def calculate_tour_ranking(state, checkpoint, *, target, retired=()):
         r
         for a in state.editions
         if a.result_confirmed and a.edition.week.ordinal < target.ordinal
-        for r in edition_results(a, events[a.edition.edition_id])
+        for r in published_edition_results(a, events[a.edition.edition_id], target.calendar)
     )
     submissions = tuple(
         s

@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -38,10 +39,11 @@ def main():
         raise ValueError("Use a fresh isolated browser fixture")
     database = f"sqlite:///{path}"
     result = {}
+    started_at = time.monotonic()
     with ApiServer(database_url=database) as server:
-        setup(server, RunCalendar(5, 4, 2030, 1), count=4)
+        setup(server, RunCalendar(4, 2, 2030, 1), count=4)
         create_edition(server, "worker-cup", size=4)
-        for week in (2, 3):
+        for week in (3, 4):
             execute(server, command(inspect(server), "transition", name=f"browser-prepare-{week}"))
             save_tour(server)
         approve_draw(server)
@@ -110,15 +112,16 @@ def main():
                     assert confirmed.value.status == 201, confirmed.value.text()
                     tour_save()
                     resume("native_result_review_required")
-                    task_card("native_manual_save_required")
-                    tour_save()
-                    assert max(r["points"] for r in inspect(server)["state"]["rankings"][-1]["rows"]) == 100
-                    resume("native_manual_save_required")
+                    assert not any(r["points"] for r in inspect(server)["state"]["rankings"][-1]["rows"])
+                    assert all(r["schema_version"] == "calendar_terminal_edition_result.v1"
+                        and "first_publication_week" not in r
+                        for r in inspect(server)["edition_evidence"]["worker-cup"]["results"])
                     card = task_card("native_final_closure_review_required")
                     card.get_by_label("Native task control operator").fill("Chromium Admin")
                     card.get_by_label("Native task control reason").fill("Reviewed final Closing Ranking and actual season results")
                     card.get_by_role("button", name="Review final closure", exact=True).click()
                     expect(card.get_by_text("Actually played matches: 3", exact=False)).to_be_visible()
+                    expect(card.get_by_role("table", name="Final Closing Ranking")).to_contain_text("100")
                     card.get_by_label("Native closure consent").check()
                     with page.expect_response(lambda r: r.request.method == "POST" and r.url.endswith("/closure/approve")) as approved:
                         card.get_by_role("button", name="Approve closure", exact=True).click()
@@ -146,7 +149,36 @@ def main():
         assert terminal["state"] == "complete"
         assert terminal["original_command"] == result["terminal"]["original_command"]
         assert len(inspect(restarted)["edition_evidence"]["worker-cup"]["matches"]) == 3
+        view = inspect(restarted)
+        assert view["state"]["week"]["week"] == 4
+        assert view["saved_completed_seasons"] == [0]
+        from tests.api.test_saved_revision_history_api import _request
+        code, summary = _request("GET", restarted.base_url + "/admin/runs/run/branches/branch/calendar-tour/seasons/0")
+        assert code == 200, summary
+        assert max(r["points"] for r in summary["selected"]["closing_ranking"]["rows"]) == 100
+        result["saved_season_summary"] = summary
+        code, viewer = _request("GET", restarted.base_url + "/viewer/runs/run/calendar-tour/seasons/0")
+        assert code == 200, viewer
+        assert viewer["selected"]["closing_ranking"] == summary["selected"]["closing_ranking"]
         result["sqlite_restart_verified"] = True
+        with (root / "restarted-frontend.log").open("w") as log:
+            frontend = subprocess.Popen(["npm", "--prefix", "web", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5173", "--strictPort"],
+                env={**os.environ, "VITE_API_BASE_URL": restarted.base_url}, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+            try:
+                wait_http("http://127.0.0.1:5173", frontend)
+                with sync_playwright() as pw:
+                    browser = pw.chromium.launch(executable_path=args.chromium, args=["--no-sandbox"])
+                    context = browser.new_context(viewport={"width": 1440, "height": 1100})
+                    context.add_init_script("localStorage.setItem('squash-engine-language-v1','en')")
+                    page = context.new_page()
+                    page.goto("http://127.0.0.1:5173/admin/operations")
+                    expect(page.locator(f'[data-task-id="{result["task_id"]}"]')).to_contain_text("Complete")
+                    page.screenshot(path=str(root / "restarted-completed-native-task.png"), full_page=True)
+                    result["chromium_after_sqlite_restart_verified"] = True
+                    browser.close()
+            finally:
+                stop_process(frontend)
+    result["duration_seconds"] = time.monotonic() - started_at
     (root / "evidence.json").write_text(json.dumps(result, indent=2))
     print("Real Chromium native Full Simulation, match/points, manual approvals/Save, final closure and SQLite restart passed.")
 

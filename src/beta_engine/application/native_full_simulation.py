@@ -541,8 +541,6 @@ class NativeFullSimulationDriver:
                 pending = sorted((a for a in state.editions if a.edition.week.ordinal <= state.week.ordinal and not a.result_confirmed), key=lambda a: (a.edition.week.ordinal, a.edition.start_slot, a.edition.edition_id))
                 authority = pending[0] if pending else None
                 if authority:
-                    if current == RunCalendar.from_metadata(command.execution_calendar).season_count * RunCalendar.from_metadata(command.execution_calendar).weeks_per_year - 1:
-                        return _progress(command, ctx, "native_final_week_edition_unsupported", blockers=["native_final_week_edition_requires_closing_only_result_authority"])
                     if not authority.draw:
                         return _progress(command, ctx, "native_entry_review_required", blockers=["entry_draw_required:" + authority.edition.edition_id], detail="Review Entry, approve the field/draw and manually Save in Run Admin.")
                     if authority.tournament_fingerprint:

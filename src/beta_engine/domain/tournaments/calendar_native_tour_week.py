@@ -25,8 +25,8 @@ from beta_engine.domain.players.calendar_prospect_birth import (
 from beta_engine.domain.players.calendar_sporting_week import played_counts
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.calendar_tour import (
-    edition_results,
     effective_policy,
+    published_edition_results,
 )
 
 
@@ -96,7 +96,7 @@ def prepare_native_tour_week(
         r
         for a in state.editions
         if a.result_confirmed and a.edition.week.ordinal < target.ordinal
-        for r in edition_results(a, events[a.edition.edition_id])
+        for r in published_edition_results(a, events[a.edition.edition_id], clock)
     )
     ranking, proof = calculate_native_ranking_from_signed_lifecycle(
         states=(*lifecycle, successor_life),

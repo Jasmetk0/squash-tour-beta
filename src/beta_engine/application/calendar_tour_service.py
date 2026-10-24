@@ -24,6 +24,7 @@ from beta_engine.application.calendar_sporting_week_service import (
 from beta_engine.application.calendar_tour_season_summary import (
     compare_completed_seasons,
     completed_season_indices,
+    saved_final_closure,
 )
 from beta_engine.application.calendar_tour_signed_records import signed_tour_records
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
@@ -35,6 +36,10 @@ from beta_engine.domain.players.calendar_lifecycle import calendar_lifecycle_his
 from beta_engine.domain.players.calendar_sporting_week import age_in_run_years
 from beta_engine.domain.rankings.calendar_official import (
     calculate_calendar_official_ranking,
+)
+from beta_engine.domain.rankings.calendar_terminal_result import (
+    CalendarTerminalRankingResult,
+    result_activation_ordinal,
 )
 from beta_engine.domain.rankings.official import FrozenInput, OfficialRankingPolicy
 from beta_engine.domain.run_packages import canonical_hash
@@ -292,7 +297,10 @@ class CalendarTourService:
         leaderboard_limit=20,
     ):
         """Read only the authenticated Saved Tour, not newer Working changes."""
-        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        from beta_engine.application.native_fork_runtime_service import (
+            NativeForkRuntimeService,
+            is_native_fork,
+        )
         if is_native_fork(self.repository, run_id, branch_id):
             return NativeForkRuntimeService(self.repository).report(run_id=run_id, branch_id=branch_id, kind="records", as_of_season_index=as_of_season_index, from_season_index=from_season_index, country_code=country_code, leaderboard_limit=leaderboard_limit)
         with self.repository._session_factory() as session:
@@ -308,6 +316,7 @@ class CalendarTourService:
                 from_season_index=from_season_index,
                 country_code=country_code,
                 leaderboard_limit=leaderboard_limit,
+                closure=saved_final_closure(rev.saved_revision.payload, branch_id),
             )
             return {
                 **report,
@@ -317,7 +326,10 @@ class CalendarTourService:
 
     def season_summary(self, *, run_id, branch_id, season_index, compare_to=None):
         """Read only an already authenticated Saved Tour, never the Working candidate."""
-        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        from beta_engine.application.native_fork_runtime_service import (
+            NativeForkRuntimeService,
+            is_native_fork,
+        )
         if is_native_fork(self.repository, run_id, branch_id):
             return NativeForkRuntimeService(self.repository).report(run_id=run_id, branch_id=branch_id, kind="summary", season_index=season_index, compare_to=compare_to)
         with self.repository._session_factory() as session:
@@ -331,6 +343,7 @@ class CalendarTourService:
                 world,
                 season_index,
                 compare_to,
+                closure=saved_final_closure(rev.saved_revision.payload, branch_id),
             )
             return {
                 "schema_version": "calendar_tour_season_comparison.v1",
@@ -341,7 +354,10 @@ class CalendarTourService:
             }
 
     def inspect(self, *, run_id, branch_id):
-        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        from beta_engine.application.native_fork_runtime_service import (
+            NativeForkRuntimeService,
+            is_native_fork,
+        )
         if is_native_fork(self.repository, run_id, branch_id):
             return NativeForkRuntimeService(self.repository).inspect(run_id=run_id, branch_id=branch_id)
         with self.repository._session_factory() as session:
@@ -429,12 +445,11 @@ class CalendarTourService:
                             for r in row.counted_results
                         }
                         for r in edition_results(a, event):
-                            age = state.week.ordinal - state.week.calendar.ordinal(
-                                r.first_publication_week.season_index,
-                                r.first_publication_week.week,
-                            )
+                            age = state.week.ordinal - result_activation_ordinal(r, state.week.calendar)
                             status = (
-                                "awaiting_activation"
+                                "closing_only"
+                                if isinstance(r, CalendarTerminalRankingResult) and age < 0
+                                else "awaiting_activation"
                                 if age < 0
                                 else "expired"
                                 if age >= r.validity_weeks
@@ -453,7 +468,7 @@ class CalendarTourService:
                 "draft_version": rev.working_draft.draft_version,
                 "run_calendar": _clock.to_metadata(),
                 "saved_completed_seasons": (
-                    completed_season_indices(signed) if signed else ()
+                    completed_season_indices(signed, saved_final_closure(rev.saved_revision.payload, branch_id)) if signed else ()
                 ),
                 "checkpoint_fingerprint": checkpoint_fingerprint,
                 "tour_fingerprint": state.fingerprint if state else None,
@@ -515,7 +530,10 @@ class CalendarTourService:
             }
 
     def player(self, *, run_id, branch_id, player_id):
-        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        from beta_engine.application.native_fork_runtime_service import (
+            NativeForkRuntimeService,
+            is_native_fork,
+        )
         if is_native_fork(self.repository, run_id, branch_id):
             return NativeForkRuntimeService(self.repository).player(run_id=run_id, branch_id=branch_id, player_id=player_id)
         with self.repository._session_factory() as session:
@@ -556,7 +574,9 @@ class CalendarTourService:
             loaded if loaded is not None else self._context(session, run_id, branch_id)
         )
         _clock, rev, _world, _health, cp, saved, evidence = ctx
-        from beta_engine.application.native_full_simulation_closure import saved_native_closure
+        from beta_engine.application.native_full_simulation_closure import (
+            saved_native_closure,
+        )
         if saved_native_closure(rev.saved_revision.payload, branch_id=branch_id, calendar=_clock):
             raise ValueError("This native Branch has a Saved final closure; explicitly extend the Run before new Tour work")
         if (
@@ -732,7 +752,10 @@ class CalendarTourService:
         return preview, ctx, state, authority, successor
 
     def preview(self, *, run_id, branch_id, command):
-        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        from beta_engine.application.native_fork_runtime_service import (
+            NativeForkRuntimeService,
+            is_native_fork,
+        )
         if is_native_fork(self.repository, run_id, branch_id):
             return NativeForkRuntimeService(self.repository).preview(run_id=run_id, branch_id=branch_id, command=command)
         with self.repository._session_factory() as session:
@@ -740,7 +763,10 @@ class CalendarTourService:
             return self._prepare(session, run_id, branch_id, command)[0]
 
     def execute(self, *, run_id, branch_id, request):
-        from beta_engine.application.native_fork_runtime_service import is_native_fork, NativeForkRuntimeService
+        from beta_engine.application.native_fork_runtime_service import (
+            NativeForkRuntimeService,
+            is_native_fork,
+        )
         if is_native_fork(self.repository, run_id, branch_id):
             return NativeForkRuntimeService(self.repository).execute(run_id=run_id, branch_id=branch_id, request=request)
         command = request.command

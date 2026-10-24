@@ -38,8 +38,8 @@ from beta_engine.domain.rankings.calendar_official import (
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.calendar_tour import (
     CalendarTourTransition,
-    edition_results,
     effective_policy,
+    published_edition_results,
     ranking_week,
 )
 from beta_engine.infrastructure.db.calendar_standalone_match_state import (
@@ -99,6 +99,11 @@ def source_inputs(source, repository=None, session=None):
         )
 
         result = decoded_original_source(repository, source, _decode_sources)
+    # Historical closure is read-only source evidence, never this fork's own
+    # completion marker. The source revision has already been fully verified.
+    result.final_closure = source.payload.get("run", {}).get("native_branch_closures", {}).get(
+        source.branch_id, getattr(result, "final_closure", None)
+    )
     if memo is not None:
         memo[key] = result
     return SimpleNamespace(**vars(result))
@@ -348,7 +353,7 @@ def _advance(runtime, command, sources):
         r
         for a in runtime.tour.editions
         if a.result_confirmed and a.edition.week.ordinal < target.ordinal
-        for r in edition_results(a, events[a.edition.edition_id])
+        for r in published_edition_results(a, events[a.edition.edition_id], clock)
     )
     players = tuple(
         CalendarRankingPlayer(

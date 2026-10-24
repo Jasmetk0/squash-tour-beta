@@ -61,7 +61,7 @@ def _empty(entity_id, *, scope, identities):
 
 def signed_tour_records(
     state, world, *, as_of_season_index=None, from_season_index=0,
-    country_code=None, leaderboard_limit=20,
+    country_code=None, leaderboard_limit=20, closure=None,
 ):
     """Compute cumulative leaderboards and complete co-holder changes.
 
@@ -82,7 +82,7 @@ def signed_tour_records(
         or country_code != country_code.upper()
     ):
         raise ValueError("Records filter requires uppercase three-letter country")
-    closed = tuple(sorted(set(completed_season_indices(state))))
+    closed = tuple(sorted(set(completed_season_indices(state, closure))))
     if not closed:
         raise ValueError("Native Records require at least one Signed closed Season")
     if as_of_season_index is None:
@@ -103,7 +103,7 @@ def signed_tour_records(
     source_seasons = []
     counted_editions = 0
     for index in included_seasons:
-        summary = native_tour_season_summary(state, world, index)
+        summary = native_tour_season_summary(state, world, index, closure=closure)
         counted_editions += summary["completed_edition_count"]
         source_seasons.append({
             "season_index": index,

@@ -80,3 +80,14 @@ hit the unchanged 120 s HTTP limit. These are development failures/corrections,
 not hidden passes or reasons to increase timeouts. Full final acceptance remains
 pending. New fixtures are genuine isolated production SQLite histories, reused
 through SQLite backups; results and required assertions are not mocked or cut.
+
+
+Distinct adversarial review (candidate): traced slot freeze versus accepted
+mutation, canonical ordering/seeds, actual source/owner graph, partial retry and
+rollback, inherited source match reachability, late UI context delivery and
+Week/Season/final closure. This found a target-owned inherited partial bracket
+could not use the original-owner-only v1 terminal record; the new v2 terminal
+record retains both owners and the original clock without changing v1 meaning.
+It also bound rendered Tour data to the exact UI selection epoch so a scope
+change cannot briefly render an older loaded result. Final acceptance of these
+corrections remains required; review is not a substitute for executed checks.

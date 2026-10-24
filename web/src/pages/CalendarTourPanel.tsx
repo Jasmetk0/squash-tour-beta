@@ -21,7 +21,9 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const scope=JSON.stringify([runId,branchId,head]),current=useRef(scope),epoch=useRef(0)
   const inputs=useRef(0)
   if(current.current!==scope){current.current=scope;epoch.current++}
-  const [view,setView]=useState<TourView|null>(null),[error,setError]=useState<string|null>(null)
+  const [loadedView,setLoadedView]=useState<{scope:string;value:TourView}|null>(null),[error,setError]=useState<string|null>(null)
+  const view=loadedView?.scope===scope?loadedView.value:null
+  const setView=(value:TourView|null)=>setLoadedView(value?{scope,value}:null)
   const [busy,setBusy]=useState(false),[review,setReview]=useState<TourPreview|null>(null)
   const [consent,setConsent]=useState(false),[saveConsent,setSaveConsent]=useState(false)
   const [reason,setReason]=useState(''),[seed,setSeed]=useState('231')

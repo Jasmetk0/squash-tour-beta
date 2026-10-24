@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -184,7 +184,7 @@ describe('SnapshotDetailPage', () => {
     )
     expect(screen.queryByRole('link', { name: 'Open source event detail' })).not.toBeInTheDocument()
     await act(async () => { await client.refetchQueries({ queryKey: ['ranking-snapshots', 'run-a'] }) })
-    expect(screen.queryByText('Snapshot detail and history index disagree on source identity. Navigation links are unavailable.')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByText('Snapshot detail and history index disagree on source identity. Navigation links are unavailable.')).not.toBeInTheDocument())
     expect(screen.getByRole('link', { name: 'Open source event detail' }))
       .toHaveAttribute('href', '/runs/run-a/events/E3')
     expect(screen.getByRole('link', { name: 'Open planned-event detail' }))

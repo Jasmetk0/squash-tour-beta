@@ -517,7 +517,7 @@ export function RunDiagnosticsPage(): JSX.Element {
           ) : null}
           {safeRollover?.rollover ? (
             <li>
-              <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>Inspect latest rollover details</Link>
+              <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>{t('Inspect latest rollover details')}</Link>
             </li>
           ) : null}
           {hasLineageChildren ? (

@@ -75,14 +75,23 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
     })
     return map
   }, [orderedEvents])
-  const persistedEventsById = useMemo(() => {
-    const map = new Map<string, { season: number | null; eventSequence: number; week: number | null }>()
+  const persistedEvidence = useMemo(() => {
+    const byId = new Map<string, { season: number | null; eventSequence: number; week: number | null }>()
+    const ambiguousIds = new Set<string>()
     ;(eventsMismatch || eventsQuery.error ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
-      map.set(event.event_id, { season: event.season, eventSequence: event.event_sequence, week: event.week })
+      if (byId.has(event.event_id) || ambiguousIds.has(event.event_id)) {
+        byId.delete(event.event_id)
+        ambiguousIds.add(event.event_id)
+      } else {
+        byId.set(event.event_id, { season: event.season, eventSequence: event.event_sequence, week: event.week })
+      }
     })
-    return map
+    return { byId, ambiguousIds }
   }, [eventsMismatch, eventsQuery.error, eventsQuery.data?.events])
+  const persistedEventsById = persistedEvidence.byId
+  const ambiguousPersistedEventIds = persistedEvidence.ambiguousIds
   const plannedForSource = (sourceEventId: string) => {
+    if (ambiguousPersistedEventIds.has(sourceEventId)) return undefined
     const plan = plannedContext.get(sourceEventId)
     const persisted = persistedEventsById.get(sourceEventId)
     return plan && (!persisted || persisted.season == null || persisted.season === plan.season) ? plan : undefined
@@ -111,7 +120,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
       if (effectiveWeek != null) values.add(String(effectiveWeek))
     })
     return Array.from(values)
-  }, [plannedContext, persistedEventsById, snapshots])
+  }, [plannedContext, persistedEventsById, ambiguousPersistedEventIds, snapshots])
   const categoryOptions = useMemo(() => {
     const values = new Set<string>()
     snapshots.forEach((snapshot) => {
@@ -121,7 +130,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
       if (category) values.add(category)
     })
     return Array.from(values)
-  }, [plannedContext, snapshots])
+  }, [plannedContext, ambiguousPersistedEventIds, snapshots])
 
   useEffect(() => {
     if (!filteredSnapshots.length) {
@@ -144,7 +153,8 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   const selected = filteredSnapshots.find((snapshot) => snapshot.snapshot_sequence === selectedSequence) ?? null
 
   const title = mode === 'ranking' ? t('Ranking snapshots') : t('Race snapshots')
-  const siblingMatchCount = !selected?.source_event_id ? 0
+  const selectedSourceAmbiguous = Boolean(selected?.source_event_id && ambiguousPersistedEventIds.has(selected.source_event_id))
+  const siblingMatchCount = selectedSourceAmbiguous ? null : !selected?.source_event_id ? 0
     : siblingMismatch || siblingSnapshotsQuery.isLoading || siblingSnapshotsQuery.error || !siblingSnapshotsQuery.data ? null
     : siblingSnapshotsQuery.data.snapshots.filter((item) => item.source_event_id === selected.source_event_id).length
 
@@ -236,6 +246,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             getSubLabel={(snapshot) => {
               const sourceEventId = snapshot.source_event_id
               if (!sourceEventId) return t('No source_event_id')
+              if (ambiguousPersistedEventIds.has(sourceEventId)) return t('Source event ID is reused in persisted history. Source links and week context are unavailable.')
               const plan = plannedForSource(sourceEventId)
               const persisted = persistedEventsById.get(sourceEventId)
               const week = persisted?.week ?? plan?.week
@@ -272,12 +283,13 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             mode={mode}
             runId={runId}
             plannedContext={selected.source_event_id ? plannedForSource(selected.source_event_id) : undefined}
-            persistedEvent={selected.source_event_id ? persistedEventsById.get(selected.source_event_id) : undefined}
+            persistedEvent={selected.source_event_id && !selectedSourceAmbiguous ? persistedEventsById.get(selected.source_event_id) : undefined}
             siblingMode={siblingMode}
             siblingMatchCount={siblingMatchCount}
             currentRunSeason={planUnavailable ? null : runQuery.data?.run.season ?? null}
             planUnavailable={planUnavailable}
-            eventsUnavailable={eventsUnavailable}
+            eventsUnavailable={eventsUnavailable || selectedSourceAmbiguous}
+            sourceIdentityAmbiguous={selectedSourceAmbiguous}
           />
         ) : (
           <EmptyState message={t('Select a snapshot to inspect details.')} />
@@ -297,7 +309,8 @@ function SnapshotDetail({
   siblingMatchCount,
   currentRunSeason,
   planUnavailable,
-  eventsUnavailable
+  eventsUnavailable,
+  sourceIdentityAmbiguous
 }: {
   snapshot: RankingSnapshot | RaceSnapshot
   mode: Mode
@@ -309,16 +322,18 @@ function SnapshotDetail({
   currentRunSeason: number | null
   planUnavailable: boolean
   eventsUnavailable: boolean
+  sourceIdentityAmbiguous: boolean
 }): JSX.Element {
   const t = useHistoryText()
   const sourceEventId = snapshot.source_event_id
   const sourceWeek = persistedEvent?.week ?? plannedContext?.week
   const sourceEvidenceSeason = persistedEvent?.season ?? plannedContext?.season ?? null
   const canNavigateWeek = currentRunSeason != null && sourceEvidenceSeason === currentRunSeason
-  const missingPlan = planUnavailable ? t('Unavailable') : t('No ordered-plan match')
+  const missingPlan = planUnavailable || sourceIdentityAmbiguous ? t('Unavailable') : t('No ordered-plan match')
 
   return (
     <>
+      {sourceIdentityAmbiguous && <p role="alert" className="error">{t('Source event ID is reused in persisted history. Source links and week context are unavailable.')}</p>}
       <MetadataList
         items={[
           { label: t('Sequence'), value: snapshot.snapshot_sequence },
@@ -359,7 +374,7 @@ function SnapshotDetail({
             value: sourceEventId && plannedContext ? (
               <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(sourceEventId)}`}>{t('Open planned-event detail page')}</Link>
             ) : (
-              planUnavailable ? t('Unavailable') : t('No ordered-plan match for source_event_id.')
+              planUnavailable || sourceIdentityAmbiguous ? t('Unavailable') : t('No ordered-plan match for source_event_id.')
             )
           },
           {

@@ -676,7 +676,7 @@ describe('RunDiagnosticsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
     expect(await screen.findByText('Failed to load events: temporary event outage')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Inspect latest completed event (E5)' })).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Inspect latest ranking snapshot (17)' }))
+    expect(screen.getByRole('link', { name: 'Inspect latest ranking snapshot (Seq 17)' }))
       .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/17')
     fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
     expect(await screen.findByRole('link', { name: 'Inspect latest completed event (E5)' }))

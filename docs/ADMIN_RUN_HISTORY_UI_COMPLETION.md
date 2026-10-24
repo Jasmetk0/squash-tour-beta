@@ -49,6 +49,20 @@ Only the eight named pages, their colocated frontend tests plus `RunHistoryLocal
 
 No changes to BootstrapLineagePage, FinalsPage, RolloverPage, `RunScopedUi`, the global language context, clients/query keys/contracts, backend, Master/AGENTS/CURRENT_STATE/ROADMAP, unrelated packages/labs, dependencies, workflows, or acceptance scripts.
 
+## Follow-up review hardening — 24 October 2026
+
+A separate follow-up to the same **Draft PR #1641** closes additional practical gaps found after the initial green frontend run. It adds no new files beyond the permitted page/test/helper/handoff scope.
+
+- **Run diagnostics:** remaining recent-event statuses, sequence labels, quick-inspection link captions and list accessibility names now use the same scoped CS/EN display strings. Stored sequences, link targets and #1638 latest-by-sequence decisions are unchanged.
+- **Snapshots:** list filters and accessibility labels now localize; a failed or mismatched planned/persisted source read is **unavailable**, not evidence of a missing historical relation. The sibling-history link describes its actual **unfiltered mode-list destination** instead of falsely promising a prefiltered result.
+- **Snapshot detail:** previous/next endpoints retain their original server-provided order when a valid index exists, while a missing/failed/foreign index or direct detail omitted from an index cannot be presented as the start/end of history. Related snapshot metadata is explicitly unavailable when its independent read fails. Invalid and missing-sequence explanations now localize.
+- **Activity:** a technical admin record without an evidenced planned-event relation no longer exposes a guessed planned detail link. Failed context reads are not described as absent records. The bridge count measures actionable links, not explanatory placeholder rows; original technical event names and identities remain untouched.
+- **Event detail:** same event ID is insufficient if the stored event sequence, season or week explicitly contradicts the selected record. Such a detail's raw payload is hidden without hiding the rest of the list.
+- **Rollover detail:** the manual read-only retry is disabled for invalid target-season URL parameters, avoiding unsupported refetches.
+- **Regression evidence added:** English and live CS/EN scenarios cover unavailable snapshot index boundaries and preserved backend navigation order, snapshot filters during a language switch, missing/failed admin planned-event links, mismatched event sequences/season/week, and invalid rollover retry. No old #1638 assertions were removed.
+
+These are presentation-level, existing-endpoint changes only. A fresh final-HEAD frontend test/build run is required to validate this follow-up independently of the earlier 309 passing tests.
+
 ## Verification plan and evidence
 
 - Retained English historical regressions explicitly select English inside their test mocks; they do not weaken or delete legacy sequence/progress mismatch assertions.

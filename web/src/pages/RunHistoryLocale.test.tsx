@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LanguageProvider, useLanguage } from '../i18n/LanguageContext'
@@ -38,13 +38,26 @@ function LanguageToggle(): JSX.Element {
   return <button type="button" onClick={() => setLanguage(language === 'cs' ? 'en' : 'cs')}>Switch locale</button>
 }
 
-function renderHistory(ui: JSX.Element, route: string): void {
+function HistoryNavigationControls(): JSX.Element {
+  const navigate = useNavigate()
+  const location = useLocation()
+  return (
+    <>
+      <button type="button" onClick={() => navigate(-1)}>History Back</button>
+      <button type="button" onClick={() => navigate(1)}>History Forward</button>
+      <output aria-label="History query">{location.search}</output>
+    </>
+  )
+}
+
+function renderHistory(ui: JSX.Element, route: string, withNavigation = false): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <LanguageProvider>
       <QueryClientProvider client={client}>
         <MemoryRouter initialEntries={[route]}>
           <LanguageToggle />
+          {withNavigation && <HistoryNavigationControls />}
           <Routes><Route path="/runs/:runId/*" element={ui} /></Routes>
         </MemoryRouter>
       </QueryClientProvider>
@@ -71,6 +84,58 @@ describe('Run historical UI CS/EN read-only behavior', () => {
       { snapshot_sequence: 1, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: { points: 0 } }
     ] })
     api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [] })
+  })
+
+  it('synchronizes activity selection with Back and Forward without clearing filters or refetching', async () => {
+    const user = userEvent.setup()
+    renderHistory(<ActivityPage />, '/runs/run-a/activity?selectedItem=0', true)
+    const list = await screen.findByRole('list', { name: 'Run activity feed list' })
+    let buttons = within(list).getAllByRole('button')
+    expect(buttons[0]).toHaveAttribute('aria-current', 'true')
+    await user.type(screen.getByLabelText('Filter activity by label or identifier text'), 'E')
+    buttons = within(list).getAllByRole('button')
+    await user.click(buttons[1])
+    expect(screen.getByLabelText('History query')).toHaveTextContent('selectedItem=1')
+    expect(buttons[1]).toHaveAttribute('aria-current', 'true')
+    await user.click(screen.getByRole('button', { name: 'History Back' }))
+    expect(screen.getByLabelText('History query')).toHaveTextContent('selectedItem=0')
+    expect(buttons[0]).toHaveAttribute('aria-current', 'true')
+    expect(buttons[1]).not.toHaveAttribute('aria-current', 'true')
+    await user.click(screen.getByRole('button', { name: 'History Forward' }))
+    expect(buttons[1]).toHaveAttribute('aria-current', 'true')
+    expect(screen.getByLabelText('Filter activity by label or identifier text')).toHaveValue('E')
+    expect(api.getRunActivity).toHaveBeenCalledTimes(1)
+    expect(api.listEvents).toHaveBeenCalledTimes(1)
+    expect(api.getEvent).not.toHaveBeenCalled()
+  })
+
+  it('synchronizes snapshot selection with Back and Forward without losing a source filter', async () => {
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 1, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: { points: 0 } },
+      { snapshot_sequence: 2, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: { points: 5 } }
+    ] })
+    const user = userEvent.setup()
+    renderHistory(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking?selectedSequence=1', true)
+    const list = await screen.findByRole('list', { name: 'Ranking snapshots list' })
+    let buttons = within(list).getAllByRole('button')
+    expect(buttons[0]).toHaveAttribute('aria-current', 'true')
+    await user.type(screen.getByLabelText('Filter snapshots by source event'), 'E1')
+    buttons = within(list).getAllByRole('button')
+    await user.click(buttons[1])
+    expect(screen.getByLabelText('History query')).toHaveTextContent('selectedSequence=2')
+    expect(buttons[1]).toHaveAttribute('aria-current', 'true')
+    await user.click(screen.getByRole('button', { name: 'History Back' }))
+    expect(screen.getByLabelText('History query')).toHaveTextContent('selectedSequence=1')
+    expect(buttons[0]).toHaveAttribute('aria-current', 'true')
+    expect(buttons[1]).not.toHaveAttribute('aria-current', 'true')
+    await user.click(screen.getByRole('button', { name: 'History Forward' }))
+    expect(buttons[1]).toHaveAttribute('aria-current', 'true')
+    expect(screen.getByLabelText('Filter snapshots by source event')).toHaveValue('E1')
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(within(screen.getByRole('list', { name: 'Historie snímků žebříčku' })).getAllByRole('button')[1])
+      .toHaveAttribute('aria-current', 'true')
+    expect(api.listRankingSnapshots).toHaveBeenCalledTimes(1)
+    expect(api.listRaceSnapshots).toHaveBeenCalledTimes(1)
   })
 
   it('preserves an active activity filter and selection across language changes without another request', async () => {

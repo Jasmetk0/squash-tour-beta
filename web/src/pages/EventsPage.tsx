@@ -30,7 +30,7 @@ export function EventsPage(): JSX.Element {
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
-  const events = eventsMismatch ? [] : eventsQuery.data?.events ?? []
+  const events = eventsMismatch || eventsQuery.error ? [] : eventsQuery.data?.events ?? []
 
   const runMismatch = Boolean(runQuery.data?.run.run_id && runQuery.data.run.run_id !== runId)
   const planSeasonMismatch = Boolean(runQuery.data && runQuery.data.run.run_id === runId &&
@@ -316,7 +316,7 @@ export function EventsPage(): JSX.Element {
               : eventDetailQuery.error && (
                 <p role="alert" className="error">{t('Failed to load selected event payload')}: {formatApiError(eventDetailQuery.error)}</p>
               )}
-            {eventDetailQuery.data && !eventDetailMismatch && (
+            {eventDetailQuery.data && !eventDetailQuery.error && !eventDetailMismatch && (
               <JsonPayloadBlock
                 title={t('Event payload')}
                 emptyText={t('No event payload is available for this item.')}

@@ -69,6 +69,18 @@ class CalendarTerminalRankingResult(FrozenInput):
         )
 
 
+class CalendarInheritedTerminalRankingResult(CalendarTerminalRankingResult):
+    """A target-owned completion of an actual inherited partial slot bracket."""
+    schema_version: Literal["calendar_terminal_edition_result.v2"] = "calendar_terminal_edition_result.v2"
+    source_edition_branch_id: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def distinct_inherited_owner(self):
+        if self.source_edition_branch_id == self.branch_id:
+            raise ValueError("Inherited terminal source must retain its distinct original Edition owner")
+        return self
+
+
 def result_activation_ordinal(result, calendar):
     if isinstance(result, CalendarTerminalRankingResult):
         original = result.completed_week.calendar

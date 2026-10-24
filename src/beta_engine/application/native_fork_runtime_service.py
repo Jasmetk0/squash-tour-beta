@@ -117,14 +117,28 @@ class NativeForkRuntimeService:
                     raise ValueError(
                         "Native fork Working Draft changes the original source"
                     )
-                verify_runtime(
-                    self.repository,
-                    session,
-                    runtime=current,
-                    revision=revision,
-                    original=original,
-                    working=True,
-                )
+                # Both immutable sources have just passed actual-row dependency
+                # validation. Cache only the exact complete Working aggregate.
+                signature = (revision.revision_id, revision.content_hash, original.content_hash, current.fingerprint)
+                with self.repository._revision_validation_lock:
+                    proofs = getattr(self.repository, "_global_fork_working_proofs", None)
+                    if proofs is None:
+                        proofs = self.repository._global_fork_working_proofs = {}
+                    verified = bool(current.global_slots and signature in proofs)
+                if not verified:
+                    verify_runtime(
+                        self.repository,
+                        session,
+                        runtime=current,
+                        revision=revision,
+                        original=original,
+                        working=True,
+                    )
+                    if current.global_slots:
+                        with self.repository._revision_validation_lock:
+                            proofs[signature] = True
+                            while len(proofs) > 8:
+                                proofs.pop(next(iter(proofs)))
             elif draft.draft_schema_version != "run_working_draft_v1":
                 raise ValueError("Native fork has an unsupported Working Draft")
         elif (
@@ -216,6 +230,7 @@ class NativeForkRuntimeService:
                 contributions.setdefault(result.player_id, []).append(
                     {**result.model_dump(mode="json"), "status": status}
                 )
+        from beta_engine.application.calendar_global_slot_service import slot_inspection
         return {
             "schema_version": "calendar_tour_inspection.v1",
             "run_id": current.run_id,
@@ -245,6 +260,7 @@ class NativeForkRuntimeService:
             ],
             "state": current.tour.model_dump(mode="json"),
             "edition_evidence": evidence,
+            "next_slot": slot_inspection(current.tour, ForkCompetitionView(current, sources.checkpoint)),
             "contributions": contributions,
             "transition_blockers": transition_blockers(
                 current, calendar=sources.execution_calendar

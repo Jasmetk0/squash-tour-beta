@@ -458,15 +458,16 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     return evidence, checkpoint, tour
 
 
-def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str, _sporting_component_proofs=None) -> CalendarMatchEvidence | None:
+def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str, _sporting_component_proofs=None, _verified_global_prefix=None) -> CalendarMatchEvidence | None:
     """Validate both the played MatchEngine evidence and the full Saved owner."""
     return load_saved_calendar_sources(payload,run_id=run_id,branch_id=branch_id,
-        _sporting_component_proofs=_sporting_component_proofs)[0]
+        _sporting_component_proofs=_sporting_component_proofs,
+        _verified_global_prefix=_verified_global_prefix)[0]
 
 
 def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
                                 _sporting_component_proofs=None,
-                                _verified_saved_prefix=None):
+                                _verified_saved_prefix=None, _verified_global_prefix=None):
     """Return the coupled sources, sharing only exact transaction-local proofs."""
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
         saved_checkpoint,
@@ -482,7 +483,7 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
         raw_checkpoint_state = raw_checkpoint.get('state') if isinstance(raw_checkpoint,dict) else None
         native_dependencies = (
             {k:content.get(k) for k in ('calendar_tour_authority','player_lifecycle','player_health_state','run_prospect_source')}
-            if isinstance(raw_checkpoint_state,dict) and raw_checkpoint_state.get('schema_version') in {'calendar_sporting_checkpoint.v11', 'calendar_sporting_checkpoint.v12'}
+            if isinstance(raw_checkpoint_state,dict) and raw_checkpoint_state.get('schema_version') in {'calendar_sporting_checkpoint.v11', 'calendar_sporting_checkpoint.v12', 'calendar_sporting_checkpoint.v13'}
             else {}
         )
         key = canonical_hash({'run_id':run_id,'branch_id':branch_id,'run':payload.get('run'),
@@ -505,7 +506,7 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
                 root_proofs[root_key] = state
         checkpoint = saved_checkpoint(payload, state, run_id=run_id, branch_id=branch_id,
             _prefix_proofs=_sporting_component_proofs.setdefault('_prefixes',{}) if _sporting_component_proofs is not None else None,
-            _verified_saved_prefix=_verified_saved_prefix)
+            _verified_saved_prefix=_verified_saved_prefix, _verified_global_prefix=_verified_global_prefix)
         if key is not None:
             _sporting_component_proofs[key] = (state,checkpoint)
     else:
@@ -545,7 +546,7 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
     else:
         tour = saved_tour(
             payload, run_id=run_id, branch_id=branch_id, checkpoint=checkpoint,
-            **({"_verified_competition":checkpoint} if checkpoint is not None and checkpoint.schema_version == "calendar_sporting_checkpoint.v12" else {}),
+            **({"_verified_competition":checkpoint} if checkpoint is not None and checkpoint.schema_version in {"calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"} else {}),
         )
         if tour_proofs is not None:
             tour_proofs[tour_key] = tour

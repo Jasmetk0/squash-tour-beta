@@ -51,7 +51,7 @@ class CalendarFollowupKnockout(FrozenInput):
     @model_serializer(mode="wrap")
     def historical_shape(self, handler):
         body = handler(self)
-        if self.schema_version not in {"calendar_followup_knockout.v5", "calendar_followup_knockout.v6"}:
+        if self.schema_version not in {"calendar_followup_knockout.v5", "calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8"}:
             body.pop("edition_authority_fingerprint", None)
         if self.schema_version in {"calendar_followup_knockout.v1", "calendar_followup_knockout.v3"}:
             body.pop("prepared_policy", None)

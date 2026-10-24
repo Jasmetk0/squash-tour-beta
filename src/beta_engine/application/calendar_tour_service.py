@@ -109,6 +109,8 @@ class CalendarTourCommand(FrozenInput):
         "approve",
         "draw",
         "play",
+        "next-slot",
+        "next-match",
         "confirm-result",
         "policy",
         "transition",
@@ -172,10 +174,14 @@ class CalendarTourService:
         # latter either strictly folds all sporting/Tour sources or reuses an
         # identical-byte verified signature. Do not fold the same 14 real matches
         # and all ranking publications a second time on every Admin operation.
-        saved_evidence, saved, signed = decode_prevalidated_calendar_sources(
-            revision.saved_revision.payload,
-            run_id=run_id,
-            branch_id=branch_id,
+        from beta_engine.infrastructure.db.native_fork_source_projection import (
+            decoded_global_tour_source,
+        )
+        saved_evidence, saved, signed = decoded_global_tour_source(
+            self.repository, revision.saved_revision,
+            lambda source: decode_prevalidated_calendar_sources(
+                source.payload, run_id=run_id, branch_id=branch_id,
+            ),
         )
         rows = load_match_rows(
             session,
@@ -201,7 +207,7 @@ class CalendarTourService:
 
         native = checkpoint is not None and checkpoint.schema_version in {
             "calendar_sporting_checkpoint.v11",
-            "calendar_sporting_checkpoint.v12",
+            "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13",
         }
         state = load_tour(session, run_id=run_id, branch_id=branch_id)
         if native:
@@ -217,6 +223,7 @@ class CalendarTourService:
                 state=state,
                 signed=signed,
                 evidence=evidence,
+                repository=self.repository,
             )
         else:
             health = saved_knockout_health(
@@ -237,7 +244,9 @@ class CalendarTourService:
         context = (clock, revision, world, health, checkpoint, saved, evidence)
         if not native and (state != signed or checkpoint != saved):
             verify_tour(state, checkpoint, world)
-        verify_tour_origins(session, state)
+        verify_tour_origins(session, state,
+            _origin_cache=proofs.setdefault('_global_origin_inputs', {})
+                if state is not None and state.schema_version == 'calendar_tour_authority.v5' else None)
         # The exact Saved HEAD has been fully authenticated in _context's
         # repository lineage walk. Comparing immutable Saved lifecycle bytes
         # to independently parsed live rows is sufficient for unchanged Tour
@@ -428,7 +437,7 @@ class CalendarTourService:
                                 "match_id": m.match_id,
                                 "slot": native_match_slot(a, i)
                                 if event.schema_version
-                                == "calendar_followup_knockout.v6"
+                                in {"calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8"}
                                 else a.edition.start_slot + 3 + i,
                                 "player_a_id": m.result.player_a_id,
                                 "player_b_id": m.result.player_b_id,
@@ -460,6 +469,9 @@ class CalendarTourService:
                             contributions.setdefault(r.player_id, []).append(
                                 {**r.model_dump(mode="json"), "status": status}
                             )
+            from beta_engine.application.calendar_global_slot_service import (
+                slot_inspection,
+            )
             return {
                 "schema_version": "calendar_tour_inspection.v1",
                 "run_id": run_id,
@@ -479,7 +491,7 @@ class CalendarTourService:
                     and cp.schema_version
                     in {
                         "calendar_sporting_checkpoint.v11",
-                        "calendar_sporting_checkpoint.v12",
+                        "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13",
                     }
                 ),
                 "can_initialize": state is None
@@ -512,6 +524,7 @@ class CalendarTourService:
                 ],
                 "state": state.model_dump(mode="json") if state else None,
                 "edition_evidence": evidence,
+                "next_slot": slot_inspection(state, cp) if state and cp and any(a.edition.schema_version.endswith(".v2") for a in state.editions) else None,
                 "contributions": contributions,
                 "transition_blockers": self._transition_blockers(
                     state, ctx, session, _checkpoint_fingerprint=checkpoint_fingerprint
@@ -581,7 +594,7 @@ class CalendarTourService:
             raise ValueError("This native Branch has a Saved final closure; explicitly extend the Run before new Tour work")
         if (
             cp is None
-            or cp != saved
+            or (cp != saved and command.action not in {"next-slot", "next-match"})
             or rev.saved_head_revision_id != command.expected_saved_head
             or cp.fingerprint != command.expected_checkpoint_fingerprint
             or (state.fingerprint if state else None)
@@ -611,7 +624,7 @@ class CalendarTourService:
 
         if cp.schema_version in {
             "calendar_sporting_checkpoint.v11",
-            "calendar_sporting_checkpoint.v12",
+            "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13",
         } and (
             command.action in {"initialize", "policy"}
             or (
@@ -668,7 +681,7 @@ class CalendarTourService:
                 "play": 3,
                 "confirm-result": authority.edition.main_entrant_count + 2,
             }
-            if command.action in offsets and any(
+            if authority.edition.schema_version.endswith(".v1") and command.action in offsets and any(
                 a.edition.week.ordinal == cp.week.ordinal
                 and a.edition.start_slot < authority.edition.start_slot
                 and not a.result_confirmed
@@ -676,7 +689,8 @@ class CalendarTourService:
             ):
                 raise ValueError("Complete the nearest earlier mandatory Edition first")
             if (
-                command.action in offsets
+                authority.edition.schema_version.endswith(".v1")
+                and command.action in offsets
                 and authority.edition.start_slot + offsets[command.action]
                 < state.slot_cursor
             ):
@@ -684,6 +698,8 @@ class CalendarTourService:
                     "Operation precedes the current global Simulation Slot"
                 )
         if state and command.action == "play":
+            if authority and authority.edition.schema_version.endswith(".v2"):
+                raise ValueError("Use Next Slot / Next Match for a shared-slot Edition")
             if authority.draw is None or authority.tournament_fingerprint:
                 raise ValueError(
                     "Play requires a pre-existing Saved draw and unplayed Edition"
@@ -728,7 +744,12 @@ class CalendarTourService:
             "edition": authority.model_dump(mode="json") if authority else None,
         }
         successor = None
-        if command.action in {"transition", "season-transition"}:
+        if command.action in {"next-slot", "next-match"}:
+            from beta_engine.application.calendar_global_slot_service import (
+                prepare_global_slot,
+            )
+            _slot, preview["impact"] = prepare_global_slot(session, ctx, state, command, signed=signed)
+        elif command.action in {"transition", "season-transition"}:
             candidate, successor = self._transition_candidate(
                 session, ctx, state, command
             )
@@ -814,7 +835,7 @@ class CalendarTourService:
             _fault_injection_point("after_tour_write")
             if successor.schema_version in {
                 "calendar_tour_authority.v3",
-                "calendar_tour_authority.v4",
+                "calendar_tour_authority.v4", "calendar_tour_authority.v5",
             }:
                 # Reject any coupled-write discrepancy before this transaction
                 # commits, not on the next inspection or eventual manual Save.
@@ -1008,6 +1029,11 @@ class CalendarTourService:
         source = validate_live_run_prospect_source_against_saved(
             session, rev.saved_revision.payload, run_id=state.run_id
         )
+        if source is None and cp.schema_version == "calendar_sporting_checkpoint.v13":
+            from beta_engine.infrastructure.db.run_prospect_source_state import (
+                RunProspectSourceSnapshot,
+            )
+            source = RunProspectSourceSnapshot("run_prospect_source.v1", state.run_id, (), canonical_hash([]))
         if source is not None:
             native = prepare_native_tour_week(
                 state=state,
@@ -1099,6 +1125,10 @@ class CalendarTourService:
             state is not None
             and state.schema_version == "calendar_tour_authority.v3"
             and command.action not in {"transition", "season-transition"}
+            and not (
+                command.action == "create-edition"
+                and command.data.get("schema_version") == "calendar_tournament_edition.v2"
+            )
         ):
             from beta_engine.domain.tournaments.calendar_native_tour import (
                 competition_tour,
@@ -1115,6 +1145,18 @@ class CalendarTourService:
                 replace_checkpoint(session, previous=previous_cp, successor=cp)
             state = state.model_copy(update={"checkpoint_fingerprint": cp.fingerprint})
             ctx = (*ctx[:4], cp, *ctx[5:])
+        if command.action == "create-edition" and command.data.get("schema_version") == "calendar_tournament_edition.v2" and state.schema_version != "native_fork_tour.v1":
+            from beta_engine.domain.tournaments.calendar_global_slots import upgrade
+            previous_cp = cp
+            state, cp = upgrade(state, cp, command.expected_saved_head)
+            if persist and cp != previous_cp:
+                replace_checkpoint(session, previous=previous_cp, successor=cp)
+            ctx = (*ctx[:4], cp, *ctx[5:])
+        if command.action in {"next-slot", "next-match"}:
+            from beta_engine.application.calendar_global_slot_service import (
+                apply_global_slot,
+            )
+            return apply_global_slot(session, ctx, state, command, persist=persist, native_inputs=_native_inputs)
         if command.action == "initialize":
             from beta_engine.infrastructure.db.models import RunProspectModel
 
@@ -1186,6 +1228,7 @@ class CalendarTourService:
             )
             if any(
                 a.edition.week.ordinal == edition.week.ordinal
+                and not (edition.schema_version.endswith(".v2") and a.edition.schema_version.endswith(".v2"))
                 and not (
                     edition.start_slot
                     > a.edition.start_slot + a.edition.main_entrant_count + 2
@@ -1300,8 +1343,9 @@ class CalendarTourService:
             )
             updates = {
                 "schema_version": (
+                    "calendar_tour_authority.v5" if state.schema_version == "calendar_tour_authority.v5" else
                     "calendar_tour_authority.v4"
-                    if state.schema_version in {"calendar_tour_authority.v4", "native_fork_tour.v1"}
+                    if state.schema_version in {"calendar_tour_authority.v4", "calendar_tour_authority.v5", "native_fork_tour.v1"}
                     else "calendar_tour_authority.v3"
                     if impact.get("native_transition")
                     else "calendar_tour_authority.v2"
@@ -1317,7 +1361,7 @@ class CalendarTourService:
             }
             if (
                 impact.get("native_transition")
-                and state.schema_version != "calendar_tour_authority.v4"
+                and state.schema_version not in {"calendar_tour_authority.v4", "calendar_tour_authority.v5"}
             ):
                 from beta_engine.domain.tournaments.calendar_native_tour import (
                     CalendarNativeTourState,
@@ -1374,7 +1418,7 @@ class CalendarTourService:
                         "Select distinct player IDs for the application batch"
                     )
                 native_competition = (
-                    state.schema_version in {"calendar_tour_authority.v4", "native_fork_tour.v1"}
+                    state.schema_version in {"calendar_tour_authority.v4", "calendar_tour_authority.v5", "native_fork_tour.v1"}
                 )
                 owned = {
                     p.player_id: p
@@ -1442,10 +1486,20 @@ class CalendarTourService:
                         "Retired-age player cannot submit a Tour application"
                     )
                 if persist:
+                    # A new reviewed batch may include another application in
+                    # an already committed simultaneous entry slot. Include its
+                    # actual existing submissions so the ordinary batch writer
+                    # can preserve the established first-entry authority. Never
+                    # replace that trigger or treat a later slot as simultaneous.
+                    simultaneous = tuple(
+                        s for a in state.editions for s in a.submissions
+                        if authority.edition.schema_version.endswith(".v2")
+                        and s.decision_position == submissions[0].decision_position
+                    )
                     record_valid_application_submission_batch(
                         session,
                         TournamentApplicationSubmissionBatchAuthority.from_submissions(
-                            submissions
+                            (*simultaneous, *submissions)
                         ),
                     )
                 authority = authority.model_copy(
@@ -1485,6 +1539,7 @@ class CalendarTourService:
                 accepted = set(field.direct_main_player_ids)
                 if any(
                     a.field
+                    and not (authority.edition.schema_version.endswith(".v2") and a.edition.schema_version.endswith(".v2"))
                     and a.edition.edition_id != authority.edition.edition_id
                     and a.edition.week.ordinal == cp.week.ordinal
                     and accepted.intersection(a.field.direct_main_player_ids)
@@ -1553,7 +1608,7 @@ class CalendarTourService:
                         persist=persist,
                         native_inputs=_native_inputs,
                     )
-                    if state.schema_version in {"calendar_tour_authority.v4", "native_fork_tour.v1"}
+                    if state.schema_version in {"calendar_tour_authority.v4", "calendar_tour_authority.v5", "native_fork_tour.v1"}
                     else CalendarFollowupKnockoutService(self.repository).simulate(
                         run_id=state.run_id,
                         branch_id=state.branch_id,
@@ -1624,7 +1679,7 @@ class CalendarTourService:
             }
             state = state.model_copy(
                 update={
-                    "slot_cursor": authority.edition.start_slot
+                    "slot_cursor": state.slot_cursor if authority.edition.schema_version.endswith(".v2") else authority.edition.start_slot
                     + offsets[command.action],
                     "editions": tuple(
                         authority

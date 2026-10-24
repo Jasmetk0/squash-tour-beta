@@ -27,7 +27,7 @@ from beta_engine.infrastructure.db.run_prospect_source_state import (
 
 
 def native_working_context(
-    session, *, revision, checkpoint, saved, state, signed, evidence
+    session, *, revision, checkpoint, saved, state, signed, evidence, repository=None
 ):
     if state is None:
         raise ValueError("Native sporting owner lacks its coupled Tour authority")
@@ -58,12 +58,28 @@ def native_working_context(
         return _parse_health_json(
             json.dumps(payload["content"][PLAYER_HEALTH_COMPONENT_KEY]["states"][-1])
         )
+    # The caller just authenticated the Saved lineage against physical rows.
+    # Reuse only a completed proof of these exact captured live bytes in this
+    # repository; this is never a source-hash-only authorization shortcut.
+    cache = None
+    signature = None
+    if repository is not None and checkpoint.schema_version == "calendar_sporting_checkpoint.v13":
+        from beta_engine.domain.run_packages import canonical_hash
+        signature = (revision.saved_head_revision_id, canonical_hash(payload))
+        with repository._revision_validation_lock:
+            cache = getattr(repository, "_global_working_proofs", None)
+            if cache is None:
+                cache = repository._global_working_proofs = {}
+            verified_before = signature in cache
+        if verified_before:
+            return load_saved_health(payload, run_id=run_id, branch_id=branch_id)[-1]
     verified = saved_checkpoint(
         payload,
         evidence,
         run_id=run_id,
         branch_id=branch_id,
         _verified_saved_prefix=saved,
+        _verified_global_prefix=(saved, signed, revision.saved_revision.payload),
     )
     if (
         verified != checkpoint
@@ -72,11 +88,16 @@ def native_working_context(
             run_id=run_id,
             branch_id=branch_id,
             checkpoint=verified,
-            **({"_verified_competition":verified} if verified is not None and verified.schema_version == "calendar_sporting_checkpoint.v12" else {}),
+            **({"_verified_competition":verified} if verified is not None and verified.schema_version in {"calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"} else {}),
         )
         != state
     ):
         raise ValueError(
             "Live native owner differs from its complete component history"
         )
+    if cache is not None:
+        with repository._revision_validation_lock:
+            cache[signature] = True
+            while len(cache) > 8:
+                cache.pop(next(iter(cache)))
     return load_saved_health(payload, run_id=run_id, branch_id=branch_id)[-1]

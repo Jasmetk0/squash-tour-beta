@@ -2516,6 +2516,8 @@ class SimulationPersistenceRepository:
     def _validated_saved_revision_in_session(self, **kwargs):
         from beta_engine.infrastructure.db.native_fork_runtime_state import native_read_proof_scope
         with native_read_proof_scope():
+            if kwargs.get('sporting_component_proofs') is None:
+                kwargs['sporting_component_proofs'] = {}
             return self._validated_saved_revision_core_in_session(**kwargs)
 
     def _validated_saved_revision_core_in_session(
@@ -2550,7 +2552,11 @@ class SimulationPersistenceRepository:
             return memo[proof_key]
         token = _active_saved_revision_proofs.set(active | {key})
         try:
-            if model.payload_schema_version == "native_fork_saved_root.v2":
+            from beta_engine.infrastructure.db.calendar_global_slot_origins import is_global_slot_row
+            # Routing hints are keyed by all actual JSON bytes, including any
+            # unexpected mixed-owner component; they never certify a source.
+            global_slots = is_global_slot_row(model, repository=self)
+            if model.payload_schema_version == "native_fork_saved_root.v2" or global_slots:
                 from beta_engine.infrastructure.db.native_fork_runtime_state import (
                     actual_dependency_signature,
                     has_actual_dependency_proof,
@@ -2569,11 +2575,39 @@ class SimulationPersistenceRepository:
                         revision = replace(revision, payload={}, change_summary={})
                     memo[proof_key] = revision
                     return revision
+            verified_global_prefix = None
+            with self._revision_validation_lock:
+                needs_component_validation = signature not in self._revision_validation_cache
+            if global_slots and needs_component_validation and model.parent_revision_id:
+                parent_model = session.get(BranchSavedRevisionModel, model.parent_revision_id)
+                with self._revision_validation_lock:
+                    parent_component_known = (
+                        parent_model is not None
+                        and _saved_revision_validation_signature(parent_model) in self._revision_validation_cache
+                    )
+                if (parent_model is not None
+                    and parent_component_known
+                    and (parent_model.run_id, parent_model.branch_id, parent_model.sequence)
+                    == (model.run_id, model.branch_id, model.sequence - 1)
+                    and is_global_slot_row(parent_model, repository=self)):
+                    # Authenticate the actual immutable predecessor before
+                    # entering the striped work lock. Only its unchanged prefix
+                    # may anchor this revision's independently replayed suffix.
+                    parent_revision = self._validated_saved_revision_in_session(
+                        session=session, model=parent_model,
+                        sporting_component_proofs=sporting_component_proofs,
+                    )
+                    from beta_engine.infrastructure.db.calendar_standalone_match_state import decode_prevalidated_calendar_sources
+                    _, parent_checkpoint, parent_tour = decode_prevalidated_calendar_sources(
+                        parent_revision.payload, run_id=model.run_id, branch_id=model.branch_id,
+                    )
+                    verified_global_prefix = (parent_checkpoint, parent_tour, parent_revision.payload)
             with work_lock:
                 revision = self._validate_saved_revision_once(
                     session=session, model=model, signature=signature,
                     materialize_payload=materialize_payload,
                     sporting_component_proofs=sporting_component_proofs,
+                    verified_global_prefix=verified_global_prefix,
                 )
             # Source resolution can validate other revisions. Never hold a stripe
             # lock here: unrelated source/target signatures may share that lock.
@@ -2582,10 +2616,16 @@ class SimulationPersistenceRepository:
                 verify_native_fork_saved_root(
                     self, session, revision=revision, baseline=baseline
                 )
+            from beta_engine.infrastructure.db.calendar_global_slot_origins import verify_saved_global_origins
+            if global_slots:
+                verify_saved_global_origins(self, session, revision, sporting_component_proofs=sporting_component_proofs)
             from beta_engine.infrastructure.db.calendar_terminal_results import verify_saved_terminal_results
             verify_saved_terminal_results(self, session, revision, sporting_component_proofs=sporting_component_proofs)
             from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
             verify_saved_native_closure(self, session, revision)
+            if global_slots:
+                from beta_engine.infrastructure.db.native_fork_runtime_state import verify_with_actual_dependencies
+                verify_with_actual_dependencies(self, session, revision, lambda: None)
             if baseline is not None:
                 memo[(id(session), signature, True)] = revision
                 if not materialize_payload:
@@ -2599,14 +2639,15 @@ class SimulationPersistenceRepository:
 
     def _validate_saved_revision_once(
         self, *, session, model, signature, materialize_payload,
-        sporting_component_proofs,
+        sporting_component_proofs, verified_global_prefix=None,
     ):
         """One exact-byte validation in flight; every waiter still checks owner."""
         with self._revision_validation_lock:
             verified = self._revision_validation_cache.get(signature)
         revision = (
             self._to_branch_saved_revision(model, validate_components=verified is None,
-                sporting_component_proofs=sporting_component_proofs)
+                sporting_component_proofs=sporting_component_proofs,
+                verified_global_prefix=verified_global_prefix)
             if materialize_payload or verified is None
             else verified
         )
@@ -4034,6 +4075,7 @@ class SimulationPersistenceRepository:
         validate_components: bool = True,
         sporting_component_proofs: dict | None = None,
         validate_native_root: bool = True,
+        verified_global_prefix=None,
     ) -> BranchSavedRevisionRecord:
         try:
             payload = _from_json(model.payload_json)
@@ -4054,10 +4096,13 @@ class SimulationPersistenceRepository:
                 load_saved_run_package_state(
                     payload, run_id=model.run_id, branch_id=model.branch_id
                 )
-                load_saved_calendar_match(
-                    payload, run_id=model.run_id, branch_id=model.branch_id,
-                    _sporting_component_proofs=sporting_component_proofs,
-                )
+                from beta_engine.infrastructure.db.calendar_native_competition import has_replayed_global_components
+                if not has_replayed_global_components(payload, sporting_component_proofs):
+                    load_saved_calendar_match(
+                        payload, run_id=model.run_id, branch_id=model.branch_id,
+                        _sporting_component_proofs=sporting_component_proofs,
+                        _verified_global_prefix=verified_global_prefix,
+                    )
         except (TypeError, ValueError) as exc:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {model.revision_id} has invalid ranking content: {exc}"
@@ -5424,7 +5469,7 @@ class SimulationPersistenceRepository:
                 native_birth_restore = (
                     target_content.get("calendar_player_sporting_checkpoint", {})
                     .get("state", {}).get("schema_version")
-                    in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
+                    in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
                 )
                 capture_saved_calendar_match(
                     session, payload, run_id=run_id, branch_id=branch_id,
@@ -6095,7 +6140,7 @@ class SimulationPersistenceRepository:
                     or (
                         live_calendar_owner is not None
                         and live_calendar_owner.schema_version
-                        in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
+                        in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
                     )
                 )
                 capture_saved_calendar_match(
@@ -6127,6 +6172,7 @@ class SimulationPersistenceRepository:
                     load_saved_calendar_sources(
                         payload, run_id=run_id, branch_id=branch_id,
                         _verified_saved_prefix=signed_prefix,
+                        _verified_global_prefix=(signed_prefix, _saved_tour, state.saved_revision.payload),
                     )
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,

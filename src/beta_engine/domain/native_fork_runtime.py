@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_serializer, model_validator
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.native_fork_baseline import NativeForkBaseline
@@ -32,6 +32,10 @@ from beta_engine.domain.players.lifecycle import PlayerLifecyclePolicy
 from beta_engine.domain.players.sporting import PlayerSportingRecord
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
+from beta_engine.domain.tournaments.calendar_global_slots import (
+    GlobalSlot,
+    completed_tournaments,
+)
 from beta_engine.domain.tournaments.calendar_tour import CalendarTourState
 
 
@@ -103,8 +107,10 @@ class ForkRuntimeCommand(FrozenInput):
     result: dict
 
 
+
+
 class NativeForkRuntime(FrozenInput):
-    schema_version: Literal["native_fork_runtime.v1"] = "native_fork_runtime.v1"
+    schema_version: Literal["native_fork_runtime.v1", "native_fork_runtime.v2"] = "native_fork_runtime.v1"
     baseline: NativeForkBaseline
     root_saved_revision_id: str = Field(min_length=1, max_length=128)
     players: tuple[PlayerSportingRecord, ...]
@@ -118,6 +124,14 @@ class NativeForkRuntime(FrozenInput):
     tournaments: tuple[CalendarFollowupKnockout, ...] = ()
     advances: tuple[CalendarNativeSportingBirthAdvance, ...] = ()
     journal: tuple[ForkRuntimeCommand, ...] = ()
+    global_slots: tuple[GlobalSlot, ...] = ()
+
+    @model_serializer(mode="wrap")
+    def historical_shape(self, handler):
+        value = handler(self)
+        if not self.global_slots:
+            value.pop("global_slots", None)
+        return value
 
     @property
     def run_id(self):
@@ -143,6 +157,7 @@ class NativeForkRuntime(FrozenInput):
                 "health": self.health.fingerprint,
                 "tournaments": [t.fingerprint for t in self.tournaments],
                 "advances": [a.fingerprint for a in self.advances],
+                **({"global_slots": [s.fingerprint for s in self.global_slots]} if self.global_slots else {}),
             }
         )
 
@@ -152,6 +167,8 @@ class NativeForkRuntime(FrozenInput):
 
     @model_validator(mode="after")
     def coherent_current_authorities(self):
+        if bool(self.global_slots) != (self.schema_version == "native_fork_runtime.v2"):
+            raise ValueError("Global fork slots require the explicit runtime v2 contract")
         if any(
             (a.run_id, a.branch_id) != (self.run_id, self.branch_id)
             or a.week != self.week
@@ -221,13 +238,15 @@ class ForkCompetitionView:
 
     @property
     def tournaments(self):
-        return self.original.tournaments + self.runtime.tournaments + self.events
+        old = self.original.tournaments + self.runtime.tournaments + self.events
+        known = {t.tournament_id for t in old}
+        return old + tuple(t for t in completed_tournaments(self.history_global_slots, owner=self.branch_id) if t.tournament_id not in known)
 
     @property
     def played_continuations(self):
         return self.original.played_continuations + tuple(
             m for e in self.runtime.tournaments + self.events for m in e.matches
-        )
+        ) + tuple(m for s in self.runtime.global_slots for m in s.accepted)
 
     @property
     def week_events(self):
@@ -245,3 +264,20 @@ class ForkCompetitionView:
         if set(update) != {"events"}:
             raise ValueError("Unsupported fork sporting view update")
         return ForkCompetitionView(self.runtime, self.original, update["events"])
+
+
+    @property
+    def global_slots(self):
+        return self.runtime.global_slots
+
+    @property
+    def history_global_slots(self):
+        return tuple(getattr(self.original, "history_global_slots", getattr(self.original, "events", ()))) + self.runtime.global_slots
+
+    def with_global_slot(self, slot):
+        previous = self.runtime.global_slots
+        replacing = bool(previous and previous[-1].number == slot.number and previous[-1].week == slot.week)
+        old_ids = {m.match_id for m in previous[-1].accepted} if replacing else set()
+        players = terminal_players(self.runtime.players, tuple(m for m in slot.accepted if m.match_id not in old_ids))
+        runtime = self.runtime.model_copy(update={"schema_version": "native_fork_runtime.v2", "global_slots": (*previous[:-1], slot) if replacing else (*previous, slot), "players": players})
+        return ForkCompetitionView(runtime, self.original)

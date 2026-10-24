@@ -20,6 +20,9 @@ from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.rankings.calendar_season_closing import (
     calculate_calendar_season_closing,
 )
+from beta_engine.domain.rankings.calendar_terminal_result import (
+    CalendarTerminalRankingResult,
+)
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.run_revisions import canonical_json, saved_revision_content_hash
 from beta_engine.domain.tournaments.calendar_tour import (
@@ -66,7 +69,7 @@ def closure_facts(repository, session, revision, *, final=True):
         # Only the completely authenticated source_inputs graph may introduce
         # inherited source owners; callers cannot supply this through an API.
         inherited_terminal_sources=tuple((r.source_fingerprint, r.run_id, r.branch_id)
-            for r in results if getattr(r, "schema_version", None) == "calendar_terminal_edition_result.v1"))
+            for r in results if isinstance(r, CalendarTerminalRankingResult)))
     season_editions = tuple(a for a in state.editions if a.edition.week.season_index == week.season_index)
     summary = {
         "schema_version": "native_final_season_summary.v1", "season_index": week.season_index,

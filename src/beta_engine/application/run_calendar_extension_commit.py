@@ -122,7 +122,7 @@ def _capture_live_content(session: Session, *, payload: dict, run_id: str, branc
     native_birth = (
         payload.get("content", {}).get("calendar_player_sporting_checkpoint", {})
         .get("state", {}).get("schema_version")
-        in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
+        in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
     )
     storage.capture_saved_calendar_match(
         session, copy, run_id=run_id, branch_id=branch_id,

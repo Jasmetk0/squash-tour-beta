@@ -1,3 +1,46 @@
+# Native global Simulation Slots candidate — 24 October 2026
+
+Verified `buuk` `94737b0dab67c38c57682480f66bfae365c3225e` includes owner-merged
+#1642. Implementation continues in one PR #1643; only the owner merges.
+The parallel #1641 diagnostic/history pages and their tests remain excluded.
+
+New v2 Editions share the Branch's nearest chronological match slot. A v13
+sporting ledger and v5 Tour keep original frozen slot inputs and accepted real
+MatchEngine results across Next Match, Next Slot and manual Save. Completed
+brackets/awards derive from that ledger. The native worker uses slot children;
+Entry, results, Week/Season review, final approval and Saves remain explicit.
+Original schemas and history keep their original seeds, hashes and meaning.
+Native fork runtime v2 references accepted source matches and independently
+continues the remaining work, without rewriting their original owners.
+
+**WAIT — implementation/acceptance candidate.** Executed development checks
+include legacy/domain contracts, frontend contracts/build, a complete original
+HTTP/SQLite two-Edition Save/restart/points flow, equal batch/reversed-order
+sporting checkpoints and actual worker slot children/frozen target. Subsequent
+source-proof, summary and recovery corrections require the final candidate's
+full acceptance again. Earlier-head results and Draft skips are not final-head
+passes. Relevant W52/W61/W80 API, every-week Season Transition, final-week,
+native/Saved regressions and actual CS/EN Chromium must execute successfully.
+See [contract and verification ledger](docs/NATIVE_GLOBAL_SIMULATION_SLOTS.md).
+This is not a claim of completed pre-alpha or release acceptance.
+
+Independent completion review found and corrected simultaneous application batch
+reuse, the invalid empty v4 intermediate during the first post-birth global
+Edition, outdated whole-Edition browser controls and repeated overlapping origin
+walks. Actual collision, birth/Save/reopen and concurrent/retry/rollback/rehash
+scenarios passed locally; 54 backend and 125 frontend contracts/build passed.
+Long-calendar performance and exact-head hosted acceptance are still required.
+No timeout or required sporting/integrity assertion is relaxed.
+
+The next performance candidate bounds per-walk decoded parts/origin projections,
+reuses only exact fully replayed component values with complete source/history
+binding, and isolates decoded Tour DTO reuse behind physical authentication.
+62 focused contracts pass locally. The preceding published head still failed
+three browser budgets and the W80 worker; these remain failures until the new
+exact head executes those gates successfully. No release/merge claim is made.
+
+---
+
 # Native final-week Edition closing candidate — 24 October 2026
 
 Verified base `buuk` `16c6ff737372d27b97c3237b21f7b988218df1ab` includes owner-merged

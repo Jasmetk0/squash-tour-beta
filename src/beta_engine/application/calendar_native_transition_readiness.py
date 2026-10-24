@@ -79,7 +79,7 @@ def inspect_native_transition_readiness(repository, *, run_id, branch_id):
                     )
         else:
             blockers.append("run_horizon_exhausted")
-        native = checkpoint.schema_version in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
+        native = checkpoint.schema_version in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
         body = {
             "schema_version": "native_tour_transition_readiness.v2",
             "run_id": run_id,

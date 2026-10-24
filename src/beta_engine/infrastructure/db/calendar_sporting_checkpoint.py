@@ -8,9 +8,31 @@ from beta_engine.domain.players.calendar_sporting_checkpoint import (
 from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
 
 COMPONENT_KEY = 'calendar_player_sporting_checkpoint'
+_MAX_GLOBAL_PART_BYTES = 16 * 1024 * 1024
+_MAX_GLOBAL_PARTS = 128
 
 
-def parse_checkpoint_json(raw):
+def _parsed_global_part(body, cache, parse):
+    """Value-keyed decoding only, confined to one caller's physical read walk."""
+    from beta_engine.domain.run_packages import canonical_hash
+
+    if not isinstance(body, dict):
+        raise TypeError('Global checkpoint part must be a versioned object')
+    encoded = json.dumps(body)
+    key = canonical_hash(body)
+    entry = cache.get(key)
+    if entry is not None and entry[1] == canonical_hash(entry[2].model_dump(mode='json')):
+        return entry[2]
+    value = parse(encoded)
+    size = len(encoded.encode("utf-8"))
+    if size <= _MAX_GLOBAL_PART_BYTES:
+        cache[key] = (size, canonical_hash(value.model_dump(mode='json')), value)
+        while len(cache) > _MAX_GLOBAL_PARTS or sum(item[0] for item in cache.values()) > _MAX_GLOBAL_PART_BYTES:
+            cache.pop(next(iter(cache)))
+    return value
+
+
+def parse_checkpoint_json(raw, *, _parsed_global_parts=None):
     from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
         CalendarNativeSportingCheckpoint,
     )
@@ -18,6 +40,38 @@ def parse_checkpoint_json(raw):
     body = json.loads(raw)
     if not isinstance(body, dict):
         raise ValueError('Calendar sporting checkpoint must be a versioned object')
+    if body.get('schema_version') == 'calendar_sporting_checkpoint.v13':
+        from beta_engine.domain.tournaments.calendar_global_slots import (
+            GlobalCompetitionCheckpoint,
+            GlobalSlot,
+        )
+        if _parsed_global_parts is not None:
+            from beta_engine.domain.players.calendar_followup_knockout import (
+                CalendarFollowupKnockout,
+            )
+            from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
+                CalendarNativeSportingWeek,
+            )
+
+            values = dict(body)
+            values['competition_root'] = _parsed_global_part(
+                body.get('competition_root'), _parsed_global_parts, parse_checkpoint_json,
+            )
+            events = []
+            if not isinstance(body.get('events', []), list):
+                raise ValueError('Global checkpoint events must be an array')
+            for entry in body.get('events', ()):
+                if not isinstance(entry, dict):
+                    raise TypeError('Global checkpoint event must be a versioned object')
+                model = (GlobalSlot if entry.get('schema_version') == 'calendar_global_slot.v1'
+                    else CalendarNativeSportingWeek if entry.get('schema_version') == 'calendar_native_sporting_week.v1'
+                    else CalendarFollowupKnockout)
+                events.append(_parsed_global_part(entry, _parsed_global_parts, model.model_validate_json))
+            values['events'] = tuple(events)
+            # All nested values passed their ordinary strict JSON validators.
+            # The outer owner/root validation still runs for every revision.
+            return GlobalCompetitionCheckpoint.model_validate(values)
+        return GlobalCompetitionCheckpoint.model_validate_json(raw)
     if body.get('schema_version') == 'calendar_sporting_checkpoint.v12':
         from beta_engine.domain.players.calendar_native_competition import (
             CalendarNativeCompetitionCheckpoint,
@@ -186,7 +240,7 @@ def verify_checkpoint(state, world, evidence, *, _prefix_proofs=None,
 
 
 def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=None,
-                     _verified_saved_prefix=None):
+                     _verified_saved_prefix=None, _verified_global_prefix=None):
     from beta_engine.infrastructure.db.initial_world_state import (
         load_saved_initial_world,
     )
@@ -195,14 +249,15 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
     if component is not None:
         if not isinstance(component, dict) or set(component) != {'fingerprint', 'state'}:
             raise ValueError('Malformed Saved calendar sporting checkpoint component')
-        state = parse_checkpoint_json(json.dumps(component['state']))
+        state = parse_checkpoint_json(json.dumps(component['state']),
+            _parsed_global_parts=_prefix_proofs.setdefault('_global_decoded_parts', {}) if _prefix_proofs is not None else None)
         if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, component['fingerprint']):
             raise ValueError('Saved calendar sporting checkpoint identity/hash mismatch')
-    if state is not None and state.schema_version == 'calendar_sporting_checkpoint.v12':
+    if state is not None and state.schema_version in {'calendar_sporting_checkpoint.v12', 'calendar_sporting_checkpoint.v13'}:
         from beta_engine.infrastructure.db.calendar_native_competition import (
             verify_competition_payload,
         )
-        verify_competition_payload(payload, state, evidence)
+        verify_competition_payload(payload, state, evidence, verified_global_prefix=_verified_global_prefix, source_proofs=_prefix_proofs)
         return state
     knockout = _knockout(evidence)
     required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'

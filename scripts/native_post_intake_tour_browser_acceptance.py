@@ -241,7 +241,10 @@ def main():
                     operation("Review applications", edition, False)
                     operation("Review approval", edition, False)
                     operation("Review draw", edition)
-                    operation("Review play", edition)
+                    # New Editions use two shared slots for the actual
+                    # semifinals and final, including the admitted player.
+                    operation("Review Next Slot")
+                    operation("Review Next Slot")
                     operation("Review results", edition)
                     operation("Review Week Transition")
                     view = inspect(server)

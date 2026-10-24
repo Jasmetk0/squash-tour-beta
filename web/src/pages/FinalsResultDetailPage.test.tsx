@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { FinalsResultDetailPage } from './FinalsResultDetailPage'
@@ -105,6 +105,23 @@ describe('FinalsResultDetailPage', () => {
     expect(await screen.findByText('Failed to load Finals summary: summary offline')).toBeInTheDocument()
     expect(screen.getByText(/runner_up_player_id/)).toBeInTheDocument()
     expect(screen.queryByText('Finals result detail conflicts with the stored summary or selected Run.')).not.toBeInTheDocument()
+  })
+
+  it('hides a cached Finals result after a failed read-only refresh and restores the same payload after retry', async () => {
+    const savedResult = { run_id: 'run-a', season: 2027, event_id: 'WORLD_TOUR_FINALS',
+      source_as_of_season: 2027, source_as_of_week: 42,
+      result: { champion_player_id: 'P_STORED', runner_up_player_id: 'P2' } }
+    api.getFinalsResult.mockResolvedValueOnce(savedResult)
+      .mockRejectedValueOnce(new api.ApiError('temporary result outage', 503))
+      .mockResolvedValueOnce(savedResult)
+    renderWithRoute(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText(/"champion_player_id": "P_STORED"/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load Finals result: temporary result outage')).toBeInTheDocument()
+    expect(screen.queryByText(/"champion_player_id": "P_STORED"/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText(/"champion_player_id": "P_STORED"/)).toBeInTheDocument()
+    expect(api.getFinalsResult).toHaveBeenCalledTimes(3)
   })
 
 })

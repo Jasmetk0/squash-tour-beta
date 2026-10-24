@@ -124,7 +124,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
             {
               label: t('Previous snapshot'),
               value: previousSnapshot ? (
-                <Link to={`/runs/${runId}/snapshots/${mode}/${previousSnapshot.snapshot_sequence}`}>
+                <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}/${previousSnapshot.snapshot_sequence}`}>
                   #{previousSnapshot.snapshot_sequence}
                 </Link>
               ) : (
@@ -134,7 +134,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
             {
               label: t('Next snapshot'),
               value: nextSnapshot ? (
-                <Link to={`/runs/${runId}/snapshots/${mode}/${nextSnapshot.snapshot_sequence}`}>#{nextSnapshot.snapshot_sequence}</Link>
+                <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}/${nextSnapshot.snapshot_sequence}`}>#{nextSnapshot.snapshot_sequence}</Link>
               ) : (
                 t('None (latest snapshot)')
               )
@@ -142,7 +142,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
           ]}
         />
         <p>
-          <Link to={`/runs/${runId}/snapshots/${mode}`}>Back to {mode} snapshots history</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}`}>Back to {mode} snapshots history</Link>
         </p>
       </SectionCard>
 
@@ -166,7 +166,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
             {historyMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
             {snapshotQuery.isLoading && <p className="status">{t('Loading snapshot details...')}</p>}
             {snapshotQuery.error && !isApiNotFound(snapshotQuery.error) && (
-              <p className="error">Failed to load snapshot details: {formatApiError(snapshotQuery.error)}</p>
+              <p className="error">{t('Failed to load snapshot details')}: {formatApiError(snapshotQuery.error)}</p>
             )}
             {isApiNotFound(snapshotQuery.error) && (
               <EmptyState message={`Snapshot sequence ${snapshotSequence} was not found for this run.`} />
@@ -221,7 +221,7 @@ function SnapshotSummary({
         { label: t('Source event ID'), value: snapshot.source_event_id ?? '—' },
         {
           label: 'Navigation',
-          value: <Link to={`/runs/${runId}/snapshots/${mode}`}>{t('Back to snapshot history')}</Link>
+          value: <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}`}>{t('Back to snapshot history')}</Link>
         }
       ]}
     />
@@ -265,21 +265,21 @@ function SourceEventContext({
       />
 
       <p>
-        <Link to={`/runs/${runId}/events`}>{t('Open events history')}</Link> ·{' '}
-        <Link to={`/runs/${runId}/calendar`}>{t('Open season calendar')}</Link> · <Link to={`/runs/${runId}/activity`}>{t('Open activity')}</Link>
+        <Link to={`/runs/${encodeURIComponent(runId)}/events`}>{t('Open events history')}</Link> ·{' '}
+        <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>{t('Open season calendar')}</Link> · <Link to={`/runs/${encodeURIComponent(runId)}/activity`}>{t('Open activity')}</Link>
       </p>
 
       <p>
         {persistedSourceEventSequence !== null ? (
-          <Link to={`/runs/${runId}/events/${encodeURIComponent(sourceEventId)}`}>{t('Open source event detail')}</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(sourceEventId)}`}>{t('Open source event detail')}</Link>
         ) : (
           <span>{t('Source event detail unavailable (event not present in persisted event history).')}</span>
         )}{' '}
-        {plannedSourceEvent ? <>· <Link to={`/runs/${runId}/calendar/${encodeURIComponent(sourceEventId)}`}>{t('Open planned-event detail')}</Link></> : null}
+        {plannedSourceEvent ? <>· <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(sourceEventId)}`}>{t('Open planned-event detail')}</Link></> : null}
         {plannedSourceEvent ? (
           <>
             {' '}
-            · <Link to={`/runs/${runId}/weeks/${plannedSourceEvent.week}`}>Open week detail (W{plannedSourceEvent.week})</Link>
+            · <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${plannedSourceEvent.week}`}>Open week detail (W{plannedSourceEvent.week})</Link>
           </>
         ) : null}
       </p>
@@ -306,7 +306,7 @@ function SourceEventContext({
           <ul className="item-list" aria-label={`Related ${siblingMode} snapshots`}>
             {relatedSiblingSnapshots.map((item) => (
               <li key={`${siblingMode}-${item.snapshot_sequence}`}>
-                <Link to={`/runs/${runId}/snapshots/${siblingMode}/${item.snapshot_sequence}`}>
+                <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${siblingMode}/${item.snapshot_sequence}`}>
                   {siblingMode} snapshot #{item.snapshot_sequence}
                 </Link>
               </li>

@@ -63,3 +63,40 @@ def test_native_child_cannot_replace_immutable_seed_audit_or_approve_for_the_ope
     validate_native_child(original, 0, request)
     with pytest.raises(ValueError):
         validate_native_child(original, 0, {**request, "command": {**child, **changed}})
+
+
+def test_benchmark_normalization_preserves_sport_and_configuration():
+    from copy import deepcopy
+
+    from scripts.profile_native_full_simulation_evidence import (
+        normalized_sporting_state,
+    )
+    before = {'journal': [{'command': 'A'}], 'tour': {'receipts': [], 'checkpoint_fingerprint': 'a' * 64},
+              'tournaments': [{'matches': [{'source_saved_head': 'old', 'log_anchor_hash': 'b' * 64,
+                 'result': {'winner_player_id': 'P1', 'score': [11, 7], 'rally_log': {'events': [{'winner': 'P1'}]}}}]}],
+              'configuration_fingerprint': 'c' * 64, 'players': [{'form': 51.0}]}
+    after = deepcopy(before)
+    after['tournaments'][0]['matches'][0].update(source_saved_head='new', log_anchor_hash='d' * 64)
+    after['tour']['checkpoint_fingerprint'] = 'e' * 64
+    expected = normalized_sporting_state(before, {'old': 'Saved:branch:9'})
+    assert expected == normalized_sporting_state(after, {'new': 'Saved:branch:9'})
+    assert before['tournaments'][0]['matches'][0]['source_saved_head'] == 'old'
+    for path in ('score', 'rally', 'form', 'configuration'):
+        changed = deepcopy(after)
+        if path == 'score':
+            changed['tournaments'][0]['matches'][0]['result']['score'] = [11, 8]
+        elif path == 'rally':
+            changed['tournaments'][0]['matches'][0]['result']['rally_log']['events'][0]['winner'] = 'P2'
+        elif path == 'form':
+            changed['players'][0]['form'] = 50.0
+        else:
+            changed['configuration_fingerprint'] = 'f' * 64
+        assert expected != normalized_sporting_state(changed, {'new': 'Saved:branch:9'})
+
+
+def test_benchmark_normalization_rejects_unfamiliar_digest_shape():
+    from scripts.profile_native_full_simulation_evidence import (
+        normalized_sporting_state,
+    )
+    with pytest.raises(ValueError, match='UUID-bound digest'):
+        normalized_sporting_state({'tour': {'checkpoint_fingerprint': 'not a digest'}}, {})

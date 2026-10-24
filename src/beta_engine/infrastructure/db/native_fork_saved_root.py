@@ -154,6 +154,7 @@ def _verify_runtime_root(repository, session, revision, baseline):
         verify_runtime,
     )
 
+    runtime = load_runtime(revision.payload)
     verify_native_fork_baseline_in_session(
         repository,
         session,
@@ -164,7 +165,7 @@ def _verify_runtime_root(repository, session, revision, baseline):
         target_branch_id=revision.branch_id,
     )
     parent = session.get(BranchSavedRevisionModel, revision.parent_revision_id)
-    root_id = load_runtime(revision.payload).root_saved_revision_id
+    root_id = runtime.root_saved_revision_id
     if parent is None or parent.run_id != revision.run_id or parent.sequence != revision.sequence - 1 or (root_id != revision.revision_id and parent.branch_id != revision.branch_id):
         raise ValueError("Native Saved descendant lacks a contiguous target-owned parent")
     source = repository._validated_saved_revision_in_session(
@@ -180,14 +181,14 @@ def _verify_runtime_root(repository, session, revision, baseline):
             "Fork prospect source differs from its actual original Saved catalog"
         )
     if (
-        revision.revision_id == load_runtime(revision.payload).root_saved_revision_id
+        revision.revision_id == runtime.root_saved_revision_id
         and revision.sequence != source.sequence + 1
     ):
         raise ValueError("Native runtime root is not contiguous with its source")
     verify_runtime(
         repository,
         session,
-        runtime=load_runtime(revision.payload),
+        runtime=runtime,
         revision=revision,
         original=source,
     )

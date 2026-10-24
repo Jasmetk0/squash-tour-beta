@@ -3,6 +3,14 @@
 Baseline: `buuk` `79affb0e5e8b76d58535d01d50acd5a8ec7577fa`, owner-merged
 #1635. One implementation branch and PR #1637; only the owner merges.
 
+## Performance follow-up — 23 October 2026
+
+The original #1637 implementation below is integrated in verified `buuk`
+`e39d962bb6797960c47c1c659d57be1dc67bba6b`. Its verification ledger is retained
+as historical development evidence. Current performance work is the separate
+single PR #1639; see [measurements and integrity boundary](NATIVE_FULL_SIMULATION_PERFORMANCE.md).
+Only the owner merges; current final-head acceptance remains required.
+
 ## Versioned execution boundary
 
 `authoritative_full_simulation_command.v2` freezes the actual original Saved

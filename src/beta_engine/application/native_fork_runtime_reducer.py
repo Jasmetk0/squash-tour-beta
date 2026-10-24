@@ -94,7 +94,11 @@ def source_inputs(source, repository=None, session=None):
             inherited, "inherited_command_ids", set()
         ) | {r.command_id for r in inherited.tour.receipts}
     else:
-        result = _decode_sources(source)
+        from beta_engine.infrastructure.db.native_fork_source_projection import (
+            decoded_original_source,
+        )
+
+        result = decoded_original_source(repository, source, _decode_sources)
     if memo is not None:
         memo[key] = result
     return SimpleNamespace(**vars(result))

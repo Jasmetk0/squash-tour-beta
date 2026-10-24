@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -150,6 +150,42 @@ describe('RolloverSeasonDetailPage', () => {
     expect(summary).not.toBeNull()
     expect(within(summary as HTMLElement).getByText('Unavailable')).toBeInTheDocument()
     expect(screen.queryByText('50')).not.toBeInTheDocument()
+  })
+
+  it('recomputes filtered payloads after a late rollover summary invalidates and later revalidates unchanged player responses', async () => {
+    let resolveInitialSummary!: (value: unknown) => void
+    api.getRolloverBySeason
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveInitialSummary = resolve }))
+      .mockResolvedValue({ rollover: {
+        run_id: 'run-a', from_season: 2026, to_season: 2028,
+        transitioned_players: 1, metadata: {}
+      } })
+    api.getPlayerTransitions.mockResolvedValue({ run_id: 'run-a', to_season: 2028,
+      transitions: [{ run_id: 'run-a', from_season: 2026, to_season: 2028,
+        player_id: 'P1', transition: { count: 0 } }]
+    })
+    api.getNextSeasonPlayers.mockResolvedValue({ run_id: 'run-a', to_season: 2028,
+      players: [{ run_id: 'run-a', from_season: 2026, to_season: 2028,
+        player_id: 'P1', state: { count: 0 } }]
+    })
+    renderPage('/runs/run-a/rollover/2028')
+    expect((await screen.findAllByText(/"player_id": "P1"/)).length).toBe(2)
+
+    await act(async () => resolveInitialSummary({ rollover: {
+      run_id: 'run-a', from_season: 2027, to_season: 2028,
+      transitioned_players: 1, metadata: {}
+    } }))
+    expect(await screen.findByText('Player transition response belongs to another Run or season.')).toBeInTheDocument()
+    expect(screen.getByText('Next-season player response belongs to another Run or season.')).toBeInTheDocument()
+
+    // A filter changed while evidence was invalid must not permanently memoize [].
+    fireEvent.change(screen.getByLabelText('player_id filter'), { target: { value: 'p1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    await waitFor(() => expect(api.getRolloverBySeason).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.queryByText('Player transition response belongs to another Run or season.')).not.toBeInTheDocument())
+    await waitFor(() => expect((screen.getAllByText(/"player_id": "P1"/)).length).toBe(2))
+    expect(screen.queryByText('No transition records match the active player_id filter.')).not.toBeInTheDocument()
+    expect(screen.queryByText('No next-season players match the active player_id filter.')).not.toBeInTheDocument()
   })
 
   it('hides a transition record with an explicitly foreign target season even without row run_id', async () => {

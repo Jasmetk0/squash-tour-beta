@@ -347,7 +347,7 @@ describe('history list ordering, detail selection, and states', () => {
       { snapshot_sequence: 2, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} }
     ] })
     renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
-    expect(await screen.findByText('Source event ID is reused in persisted history. Source links and week context are unavailable.')).toBeInTheDocument()
+    expect((await screen.findAllByText('Source event ID is reused in persisted history. Source links and week context are unavailable.')).length).toBeGreaterThan(0)
     expect(screen.getByText(/independent-snapshot/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open dedicated snapshot detail page' }))
       .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/4')

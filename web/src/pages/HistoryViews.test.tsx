@@ -185,7 +185,7 @@ describe('history list ordering, detail selection, and states', () => {
     expect(screen.getByRole('link', { name: /Open planned-event detail page/i })).toHaveAttribute('href', '/runs/run-a/calendar/E2')
     expect(screen.getByRole('link', { name: /Open week detail page \(W9\)/i })).toHaveAttribute('href', '/runs/run-a/weeks/9')
     expect(screen.getByRole('link', { name: /Open season calendar browser/i })).toHaveAttribute('href', '/runs/run-a/calendar')
-    expect(screen.getByRole('link', { name: /Open race snapshots for matching source_event_id/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Open race snapshot history/i })).toHaveAttribute(
       'href',
       '/runs/run-a/snapshots/race'
     )

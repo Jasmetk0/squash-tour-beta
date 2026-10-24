@@ -270,7 +270,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             snapshot={selected}
             mode={mode}
             runId={runId}
-            plannedContext={selected.source_event_id ? plannedContext.get(selected.source_event_id) : undefined}
+            plannedContext={selected.source_event_id ? plannedForSource(selected.source_event_id) : undefined}
             persistedEvent={selected.source_event_id ? persistedEventsById.get(selected.source_event_id) : undefined}
             siblingMode={siblingMode}
             siblingMatchCount={siblingMatchCount}

@@ -268,7 +268,7 @@ const czech: Record<string, string> = {
   "No player payload available.": "Obsah hráčů není dostupný.",
   "Loading next-season players...": "Načítání hráčů další sezony…",
   "Loading rollover summary...": "Načítání přechodu sezony…",
-  "Loading transitions...": "Načítání hráčských přechodů…"
+  "Loading transitions...": "Načítání hráčských přechodů…",
   "Refresh read-only data": "Obnovit načtená data (pouze čtení)",
   "Reset filters": "Vymazat filtry",
   "Stored legacy SimulationRun history. This view does not verify Product Run Saved Revision authority.": "Uložená historie legacy SimulationRun. Tento přehled neověřuje kanonickou autoritu Saved Revision v Product Runu.",
@@ -310,7 +310,7 @@ const czech: Record<string, string> = {
   "Failed to load rollover summary": "Nepodařilo se načíst souhrn přechodu",
   "Failed to load transitions": "Nepodařilo se načíst přechody hráčů",
   "Failed to load next-season players": "Nepodařilo se načíst hráče další sezony",
-  "Selected event has no stored tournament result.": "Vybraná událost nemá uložený turnajový výsledek.",
+  "Selected event has no stored tournament result.": "Vybraná událost nemá uložený turnajový výsledek."
 }
 
 export function useHistoryText(): (english: string) => string {

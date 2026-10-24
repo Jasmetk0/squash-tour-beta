@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getRun, getRunActivity, listEvents } from '../api/client'
@@ -70,7 +70,6 @@ export function ActivityPage(): JSX.Element {
   const t = useHistoryText()
   const { runId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [kindFilter, setKindFilter] = useState('')
   const [seasonFilter, setSeasonFilter] = useState('')
   const [weekFilter, setWeekFilter] = useState('')
@@ -190,25 +189,12 @@ export function ActivityPage(): JSX.Element {
     return values
   }, [items, plannedContextByEventId, persistedEventById, ambiguousPersistedEventIds])
 
-  useEffect(() => {
-    if (!filteredItems.length) {
-      setSelectedIndex(null)
-      return
-    }
-
-    if (hasRequestedSelectedIndex && filteredItems.some((entry) => entry.index === requestedSelectedIndex)) {
-      if (selectedIndex !== requestedSelectedIndex) {
-        setSelectedIndex(requestedSelectedIndex)
-      }
-      return
-    }
-
-    if (selectedIndex == null || !filteredItems.some((entry) => entry.index === selectedIndex)) {
-      setSelectedIndex(filteredItems[0].index)
-    }
-  }, [filteredItems, hasRequestedSelectedIndex, requestedSelectedIndex, selectedIndex])
-
-  const selectedEntry = filteredItems.find((entry) => entry.index === selectedIndex) ?? null
+  // URL-backed selection follows Back/Forward navigation, even when filtered
+  // records or refreshed source evidence change independently.
+  const selectedEntry = (hasRequestedSelectedIndex
+    ? filteredItems.find((entry) => entry.index === requestedSelectedIndex)
+    : undefined) ?? filteredItems[0] ?? null
+  const selectedIndex = selectedEntry?.index ?? null
   const selectedItem = selectedEntry?.item ?? null
   const selectedContextEventId = selectedItem?.event_id ?? selectedItem?.source_event_id ?? null
   const matchedPlan = selectedContextEventId ? plannedContextByEventId.get(selectedContextEventId) : undefined
@@ -330,7 +316,6 @@ export function ActivityPage(): JSX.Element {
             }}
             isSelected={(entry) => entry.index === selectedIndex}
             onSelect={(entry) => {
-              setSelectedIndex(entry.index)
               setSearchParams((current) => {
                 const next = new URLSearchParams(current)
                 next.set('selectedItem', String(entry.index))

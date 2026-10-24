@@ -48,8 +48,19 @@ export function FinalsResultDetailPage(): JSX.Element {
     ))
   ))
   const safeSummary = summaryMismatch ? null : summaryQuery.data
+  // The result summary and detail are separate reads. An explicit event
+  // identity or as-of snapshot disagreement cannot prove the same result.
+  const summaryResult = safeSummary?.result
   const resultMismatch = Boolean(resultQuery.data && (
-    resultQuery.data.run_id !== runId || (safeSummary && resultQuery.data.season !== safeSummary.season)
+    resultQuery.data.run_id !== runId ||
+    (safeSummary && resultQuery.data.season !== safeSummary.season) ||
+    (summaryResult && (
+      (summaryResult.event_id != null && resultQuery.data.event_id !== summaryResult.event_id) ||
+      (summaryResult.source_as_of_season != null &&
+        resultQuery.data.source_as_of_season !== summaryResult.source_as_of_season) ||
+      (summaryResult.source_as_of_week != null &&
+        resultQuery.data.source_as_of_week !== summaryResult.source_as_of_week)
+    ))
   ))
   const safeResult = resultMismatch ? null : resultQuery.data
 
@@ -82,8 +93,8 @@ export function FinalsResultDetailPage(): JSX.Element {
       />
 
       <SectionCard title={t('Summary')}>
-        {resultMismatch && <p role="alert" className="error">{t('Finals result identity differs from the selected Run or summary season.')}</p>}
-        {summaryMismatch && <p role="alert" className="error">{t('Finals result identity differs from the selected Run or summary season.')}</p>}
+        {resultMismatch && <p role="alert" className="error">{t('Finals result detail conflicts with the stored summary or selected Run.')}</p>}
+        {summaryMismatch && <p role="alert" className="error">{t('Finals result detail conflicts with the stored summary or selected Run.')}</p>}
         {resultQuery.isLoading ? <p className="status">{t('Loading Finals result detail...')}</p> : null}
         {hasSummaryError ? <p className="error">{t('Failed to load Finals summary')}: {formatApiError(summaryQuery.error)}</p> : null}
         {hasResultError ? <p className="error">{t('Failed to load Finals result')}: {formatApiError(resultQuery.error)}</p> : null}

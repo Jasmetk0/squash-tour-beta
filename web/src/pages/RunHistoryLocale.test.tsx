@@ -181,4 +181,30 @@ describe('Run historical UI CS/EN read-only behavior', () => {
     expect(screen.queryByText('31. WEEK')).not.toBeInTheDocument()
   })
 
+  it('translates snapshot filter labels without re-reading either ranking or race history', async () => {
+    const user = userEvent.setup()
+    renderHistory(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    await screen.findByRole('list', { name: 'Ranking snapshots list' })
+    await user.type(screen.getByLabelText('Filter snapshots by source event'), 'E1')
+    expect(screen.getByLabelText('Filter snapshots by source event')).toHaveValue('E1')
+
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(screen.getByLabelText('Filtrovat snímky podle zdrojové události')).toHaveValue('E1')
+    expect(screen.getByLabelText('Filtrovat snímky podle týdne')).toBeInTheDocument()
+    expect(screen.getByLabelText('Filtrovat snímky podle kategorie')).toBeInTheDocument()
+    expect(api.listRankingSnapshots).toHaveBeenCalledTimes(1)
+    expect(api.listRaceSnapshots).toHaveBeenCalledTimes(1)
+    expect(api.getEvent).not.toHaveBeenCalled()
+  })
+
+  it('distinguishes unavailable planned snapshot context from an absent plan match', async () => {
+    api.getRun.mockRejectedValueOnce(new Error('plan offline'))
+    renderHistory(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    const list = await screen.findByRole('list', { name: 'Ranking snapshots list' })
+    expect(within(list).getAllByRole('button')).toHaveLength(1)
+    expect(await screen.findByText('Failed to load planned season context: plan offline')).toBeInTheDocument()
+    expect(screen.queryByText('No ordered-plan match for source_event_id.')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)
+  })
+
 })

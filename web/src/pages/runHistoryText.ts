@@ -453,7 +453,16 @@ const czech: Record<string, string> = {
   "View sibling snapshot history": "Zobrazit historii souvisejících snímků",
   "View related snapshot list": "Zobrazit seznam souvisejících snímků",
   "Related snapshots currently unavailable": "Související snímky nejsou právě dostupné",
-  "Source links require recorded relations": "Odkazy na zdroje vyžadují uložené vazby"
+  "Source links require recorded relations": "Odkazy na zdroje vyžadují uložené vazby",
+  "Run season and ordered plan disagree. Planned links are unavailable.": "Sezona Runu se neshoduje s uspořádaným plánem. Odkazy na plán nejsou dostupné.",
+  "Current-season week link unavailable for this historic event.": "Odkaz na aktuální sezonní týden není pro tuto historickou událost dostupný.",
+  "Source event season does not match the current plan. Planned links are hidden.": "Sezona zdrojové události se neshoduje s aktuálním plánem. Odkazy na plán jsou skryté.",
+  "Stored event belongs to another season. Current-week navigation is hidden.": "Uložená událost pochází z jiné sezony. Navigace na aktuální týden je skrytá.",
+  "Snapshot source event belongs to a different season.": "Zdrojová událost snímku pochází z jiné sezony.",
+  "Event season differs from current Run season.": "Sezona události se liší od aktuální sezony Runu.",
+  "Historical season": "Historická sezona",
+  "Current-season navigation": "Navigace v aktuální sezoně",
+  "Planned context unavailable because seasons disagree": "Plánovaný kontext není dostupný kvůli rozdílným sezonám"
 }
 
 export function useHistoryText(): (english: string) => string {

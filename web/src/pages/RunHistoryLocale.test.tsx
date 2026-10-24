@@ -163,4 +163,22 @@ describe('Run historical UI CS/EN read-only behavior', () => {
     expect(api.getFinalsResult).toHaveBeenCalledTimes(1)
   })
 
+  it('distinguishes a not-found activity endpoint from a genuinely empty loaded feed', async () => {
+    api.getRunActivity.mockRejectedValue(new api.ApiError('not found', 404))
+    renderHistory(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByText('Run activity could not be found for this Run.')).toBeInTheDocument()
+    expect(screen.queryByText('No activity has been persisted for this run yet.')).not.toBeInTheDocument()
+    expect(api.getRunActivity).toHaveBeenCalledWith('run-a')
+  })
+
+  it('rejects a snapshot list with explicit foreign Run identity without claiming no snapshots exist', async () => {
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'foreign-run', snapshots: [
+      { snapshot_sequence: 31, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: { invalid: true } }
+    ] })
+    renderHistory(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Snapshot history belongs to another Run; its records are hidden.')
+    expect(screen.queryByText('No snapshots are available for this run yet.')).not.toBeInTheDocument()
+    expect(screen.queryByText('31. WEEK')).not.toBeInTheDocument()
+  })
+
 })

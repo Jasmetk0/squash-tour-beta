@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getRun, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
@@ -26,7 +26,6 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   const t = useHistoryText()
   const { runId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [selectedSequence, setSelectedSequence] = useState<number | null>(null)
   const [weekFilter, setWeekFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [sourceEventFilter, setSourceEventFilter] = useState('')
@@ -132,25 +131,12 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
     return Array.from(values)
   }, [plannedContext, ambiguousPersistedEventIds, snapshots])
 
-  useEffect(() => {
-    if (!filteredSnapshots.length) {
-      setSelectedSequence(null)
-      return
-    }
-
-    if (hasRequestedSequence && filteredSnapshots.some((snapshot) => snapshot.snapshot_sequence === requestedSequence)) {
-      if (selectedSequence !== requestedSequence) {
-        setSelectedSequence(requestedSequence)
-      }
-      return
-    }
-
-    if (!selectedSequence || !filteredSnapshots.some((snapshot) => snapshot.snapshot_sequence === selectedSequence)) {
-      setSelectedSequence(filteredSnapshots[0].snapshot_sequence)
-    }
-  }, [filteredSnapshots, hasRequestedSequence, requestedSequence, selectedSequence])
-
-  const selected = filteredSnapshots.find((snapshot) => snapshot.snapshot_sequence === selectedSequence) ?? null
+  // URL-backed selection follows Back/Forward and filters without a second
+  // local state that may momentarily select an outdated snapshot.
+  const selected = (hasRequestedSequence
+    ? filteredSnapshots.find((snapshot) => snapshot.snapshot_sequence === requestedSequence)
+    : undefined) ?? filteredSnapshots[0] ?? null
+  const selectedSequence = selected?.snapshot_sequence ?? null
 
   const title = mode === 'ranking' ? t('Ranking snapshots') : t('Race snapshots')
   const selectedSourceAmbiguous = Boolean(selected?.source_event_id && ambiguousPersistedEventIds.has(selected.source_event_id))
@@ -264,7 +250,6 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             }}
             isSelected={(snapshot) => snapshot.snapshot_sequence === selectedSequence}
             onSelect={(snapshot) => {
-              setSelectedSequence(snapshot.snapshot_sequence)
               setSearchParams((current) => {
                 const next = new URLSearchParams(current)
                 next.set('selectedSequence', String(snapshot.snapshot_sequence))

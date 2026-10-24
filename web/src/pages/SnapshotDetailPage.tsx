@@ -84,7 +84,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
   const siblingMismatch = Boolean(siblingSnapshotsQuery.data?.run_id && siblingSnapshotsQuery.data.run_id !== runId)
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const sourceEventId = snapshot?.source_event_id ?? null
-  const neighboringSnapshots = historyMismatch ? [] : (snapshotsQuery.data?.snapshots ?? []).slice().sort((a, b) => a.snapshot_sequence - b.snapshot_sequence)
+  const neighboringSnapshots = historyMismatch ? [] : (snapshotsQuery.data?.snapshots ?? [])
   const currentSnapshotIndex = neighboringSnapshots.findIndex((item) => item.snapshot_sequence === parsedSequence)
   const previousSnapshot = currentSnapshotIndex > 0 ? neighboringSnapshots[currentSnapshotIndex - 1] : null
   const nextSnapshot =

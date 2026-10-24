@@ -16,7 +16,9 @@ import {
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
 import { formatApiError } from '../utils/apiErrors'
 
+import { useHistoryText } from './runHistoryText'
 export function EventsPage(): JSX.Element {
+  const t = useHistoryText()
   const { runId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
@@ -119,25 +121,25 @@ export function EventsPage(): JSX.Element {
   return (
     <section className="panel">
       <RunScopedHeader
-        title="Events history"
+        title={t('Events history')}
         runId={runId}
-        subtitle="Browse persisted event history, map events back to the planned season, and jump to linked read-only detail views."
+        subtitle={t('Browse persisted event history, map events back to the planned season, and jump to linked read-only detail views.')}
       />
       <CurrentContextStrip
         items={[
-          { label: 'Run', value: runId || 'unknown' },
-          { label: 'Persisted events', value: events.length },
-          { label: 'Matching filters', value: filteredEvents.length },
-          { label: 'Selected', value: selectedEvent?.event_id ?? 'None' }
+          { label: t('Run'), value: runId || 'unknown' },
+          { label: t('Persisted events'), value: events.length },
+          { label: t('Matching filters'), value: filteredEvents.length },
+          { label: t('Selected'), value: selectedEvent?.event_id ?? t('None') }
         ]}
       />
 
-      <SectionCard title="Filters">
+      <SectionCard title={t('Filters')}>
         <div className="grid">
           <label>
-            Week
-            <select data-run-navigation-readonly aria-label="Filter events by week" value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
-              <option value="">All weeks</option>
+            {t('Week')}
+            <select data-run-navigation-readonly aria-label={t('Filter events by week')} value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
+              <option value="">{t('All weeks')}</option>
               {weekOptions.map((week) => (
                 <option key={week} value={week}>
                   W{week}
@@ -146,13 +148,13 @@ export function EventsPage(): JSX.Element {
             </select>
           </label>
           <label>
-            Category
+            {t('Category')}
             <select data-run-navigation-readonly
-              aria-label="Filter events by category"
+              aria-label={t('Filter events by category')}
               value={categoryFilter}
               onChange={(event) => setCategoryFilter(event.target.value)}
             >
-              <option value="">All categories</option>
+              <option value="">{t('All categories')}</option>
               {categoryOptions.map((category) => (
                 <option key={category} value={category}>
                   {category}
@@ -161,25 +163,25 @@ export function EventsPage(): JSX.Element {
             </select>
           </label>
           <label>
-            Event/template text
+            {t('Event/template text')}
             <input data-run-navigation-readonly
-              aria-label="Filter events by event or template"
+              aria-label={t('Filter events by event or template')}
               value={textFilter}
               onChange={(event) => setTextFilter(event.target.value)}
-              placeholder="Event ID or template ID"
+              placeholder={t('Event ID or template ID')}
             />
           </label>
         </div>
       </SectionCard>
 
-      <SectionCard title="Event timeline">
-        {eventsQuery.isLoading && <p className="status">Loading events history...</p>}
+      <SectionCard title={t('Event timeline')}>
+        {eventsQuery.isLoading && <p className="status">{t('Loading events history...')}</p>}
         {eventsQuery.error && <p className="error">Failed to load events history: {formatApiError(eventsQuery.error)}</p>}
         {!eventsQuery.isLoading && !eventsQuery.error && events.length === 0 && (
-          <EmptyState message="No events are available for this run yet." />
+          <EmptyState message={t('No events are available for this run yet.')} />
         )}
         {!eventsQuery.isLoading && !eventsQuery.error && events.length > 0 && filteredEvents.length === 0 && (
-          <EmptyState message="No persisted events match the current filters." />
+          <EmptyState message={t('No persisted events match the current filters.')} />
         )}
 
         {filteredEvents.length > 0 && (
@@ -192,7 +194,7 @@ export function EventsPage(): JSX.Element {
               const week = event.week ?? plannedContext?.week
 
               if (!plannedContext && week == null) {
-                return 'No week or ordered-plan context'
+                return t('No week or ordered-plan context')
               }
 
               const segments = []
@@ -202,7 +204,7 @@ export function EventsPage(): JSX.Element {
                 segments.push(plannedContext.category)
                 segments.push(plannedContext.tour)
               } else {
-                segments.push('No ordered-plan match')
+                segments.push(t('No ordered-plan match'))
               }
 
               return segments.join(' · ')
@@ -216,48 +218,48 @@ export function EventsPage(): JSX.Element {
                 return next
               })
             }}
-            ariaLabel="Events history list"
+            ariaLabel={t('Events history list')}
           />
         )}
       </SectionCard>
 
-      <SectionCard title="Selected event detail">
+      <SectionCard title={t('Selected event detail')}>
         {selectedEvent ? (
           <>
             <MetadataList
               items={[
-                { label: 'Event ID', value: selectedEvent.event_id },
-                { label: 'Sequence', value: selectedEvent.event_sequence },
-                { label: 'Season', value: selectedEvent.season ?? '—' },
-                { label: 'Week', value: selectedEventWeek != null ? selectedEventWeek : '—' },
-                { label: 'Plan position', value: selectedEventPlanContext ? selectedEventPlanContext.planPosition : 'No ordered-plan match' },
-                { label: 'Planned tour', value: selectedEventPlanContext?.tour ?? 'No ordered-plan match' },
-                { label: 'Planned category', value: selectedEventPlanContext?.category ?? 'No ordered-plan match' },
-                { label: 'Planned template', value: selectedEventPlanContext?.templateId ?? selectedEvent.template_id ?? '—' }
+                { label: t('Event ID'), value: selectedEvent.event_id },
+                { label: t('Sequence'), value: selectedEvent.event_sequence },
+                { label: t('Season'), value: selectedEvent.season ?? '—' },
+                { label: t('Week'), value: selectedEventWeek != null ? selectedEventWeek : '—' },
+                { label: t('Plan position'), value: selectedEventPlanContext ? selectedEventPlanContext.planPosition : t('No ordered-plan match') },
+                { label: t('Planned tour'), value: selectedEventPlanContext?.tour ?? t('No ordered-plan match') },
+                { label: t('Planned category'), value: selectedEventPlanContext?.category ?? t('No ordered-plan match') },
+                { label: t('Planned template'), value: selectedEventPlanContext?.templateId ?? selectedEvent.template_id ?? '—' }
               ]}
             />
             <SummaryPills
               items={[
-                { label: 'Week context', value: selectedEventWeek != null ? `W${selectedEventWeek}` : 'Not available' },
-                { label: 'Planned context', value: selectedEventPlanContext ? 'Matched' : 'No ordered-plan match' }
+                { label: t('Week context'), value: selectedEventWeek != null ? `W${selectedEventWeek}` : t('Not available') },
+                { label: t('Planned context'), value: selectedEventPlanContext ? t('Matched') : t('No ordered-plan match') }
               ]}
             />
             <CompactSummaryCard
               items={[
                 {
-                  label: 'Persisted detail',
+                  label: t('Persisted detail'),
                   value: <Link to={`/runs/${runId}/events/${selectedEvent.event_id}`}>Open dedicated event detail page</Link>
                 },
                 {
-                  label: 'Planned event detail',
+                  label: t('Planned event detail'),
                   value: selectedEventPlanContext ? (
                     <Link to={`/runs/${runId}/calendar/${selectedEvent.event_id}`}>Open planned-event detail page</Link>
                   ) : (
-                    'No ordered-plan match for this persisted event.'
+                    t('No ordered-plan match for this persisted event.')
                   )
                 },
                 {
-                  label: 'Week detail',
+                  label: t('Week detail'),
                   value:
                     selectedEventWeek != null ? (
                       <Link to={`/runs/${runId}/weeks/${selectedEventWeek}`}>Open week detail page (W{selectedEventWeek})</Link>
@@ -266,27 +268,27 @@ export function EventsPage(): JSX.Element {
                     )
                 },
                 {
-                  label: 'Season calendar',
+                  label: t('Season calendar'),
                   value: <Link to={`/runs/${runId}/calendar`}>Open season calendar browser</Link>
                 }
               ]}
             />
 
             {runQuery.error ? <p className="error">Failed to load planned season context: {formatApiError(runQuery.error)}</p> : null}
-            {eventDetailQuery.isLoading && <p className="status">Loading selected event payload...</p>}
+            {eventDetailQuery.isLoading && <p className="status">{t('Loading selected event payload...')}</p>}
             {eventDetailQuery.error && (
               <p className="error">Failed to load selected event payload: {formatApiError(eventDetailQuery.error)}</p>
             )}
             {eventDetailQuery.data && (
               <JsonPayloadBlock
-                title="Event payload"
-                emptyText="No event payload is available for this item."
+                title={t('Event payload')}
+                emptyText={t('No event payload is available for this item.')}
                 payload={eventDetailQuery.data}
               />
             )}
           </>
         ) : (
-          <EmptyState message="Select an event to inspect details." />
+          <EmptyState message={t('Select an event to inspect details.')} />
         )}
       </SectionCard>
     </section>

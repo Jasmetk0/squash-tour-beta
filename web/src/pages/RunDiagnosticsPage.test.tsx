@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RunDiagnosticsPage } from './RunDiagnosticsPage'
@@ -662,4 +662,26 @@ describe('RunDiagnosticsPage', () => {
       '/runs/run-a/weeks/8'
     )
   })
+  it('drops a cached latest event after its independent refresh fails and restores it on recovery', async () => {
+    const history = { run_id: 'run-a', events: [
+      { event_sequence: 5, event_id: 'E5', season: 2028, week: 12,
+        template_id: null, tournament_result: { done: true } }
+    ] }
+    api.listEvents.mockResolvedValueOnce(history)
+      .mockRejectedValueOnce(new Error('temporary event outage'))
+      .mockResolvedValueOnce(history)
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+    expect(await screen.findByRole('link', { name: 'Inspect latest completed event (E5)' }))
+      .toHaveAttribute('href', '/runs/run-a/events/E5')
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load events: temporary event outage')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Inspect latest completed event (E5)' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Inspect latest ranking snapshot (17)' }))
+      .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/17')
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByRole('link', { name: 'Inspect latest completed event (E5)' }))
+      .toHaveAttribute('href', '/runs/run-a/events/E5')
+    expect(api.listEvents).toHaveBeenCalledTimes(3)
+  })
+
 })

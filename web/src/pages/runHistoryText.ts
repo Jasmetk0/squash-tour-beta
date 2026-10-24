@@ -318,8 +318,8 @@ const czech: Record<string, string> = {
   "Source persisted event detail": "Detail zdrojové uložené události",
   "Open source planned-event detail": "Otevřít detail zdrojové plánované události",
   "Open source persisted event detail": "Otevřít detail zdrojové uložené události",
-  "No ordered-plan context for this snapshot source event.": "Zdrojová událost snímku nemá potvrzený záznam v plánu.",
-  "No persisted-event context for this snapshot source event.": "Zdrojová událost snímku není potvrzena v načtené historii.",
+  "No ordered-plan context for this snapshot source event.": "Zdrojová událost snímku nemá potvrzený kontext plánu.",
+  "No persisted-event context for this snapshot source event.": "Zdrojová událost snímku není potvrzena v historii uložených událostí.",
   "Open finals qualification detail": "Otevřít detail kvalifikace Finals",
   "Open finals result detail": "Otevřít detail výsledku Finals",
   "Rollover detail": "Detail přechodu sezony",
@@ -441,7 +441,19 @@ const czech: Record<string, string> = {
   "Not returned by this source": "Tento zdroj údaj neposkytuje",
   "Loading related snapshots...": "Načítání souvisejících snímků…",
   "Unable to verify related snapshots.": "Související snímky nelze ověřit.",
-  "Unavailable until history is loaded": "Nedostupné do načtení historie"
+  "Unavailable until history is loaded": "Nedostupné do načtení historie",
+  "Ranking": "Žebříček",
+  "Race": "Race",
+  "Open ranking snapshot history": "Otevřít historii snímků žebříčku",
+  "Open race snapshot history": "Otevřít historii snímků Race",
+  "Stored snapshot records only": "Pouze uložené záznamy snímků",
+  "Source context unavailable": "Kontext zdroje není dostupný",
+  "Persisted event context unavailable": "Kontext uložených událostí není dostupný",
+  "Planned event context unavailable": "Kontext plánovaných událostí není dostupný",
+  "View sibling snapshot history": "Zobrazit historii souvisejících snímků",
+  "View related snapshot list": "Zobrazit seznam souvisejících snímků",
+  "Related snapshots currently unavailable": "Související snímky nejsou právě dostupné",
+  "Source links require recorded relations": "Odkazy na zdroje vyžadují uložené vazby"
 }
 
 export function useHistoryText(): (english: string) => string {

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { FinalsQualificationDetailPage } from './FinalsQualificationDetailPage'
@@ -105,6 +105,22 @@ describe('FinalsQualificationDetailPage', () => {
     expect(await screen.findByText('Failed to load Finals summary: summary offline')).toBeInTheDocument()
     expect(screen.getByText(/qualified_player_ids/)).toBeInTheDocument()
     expect(screen.queryByText('Finals qualification detail conflicts with the stored summary or selected Run.')).not.toBeInTheDocument()
+  })
+
+  it('does not retain a stale qualification payload after refresh failure and restores it on retry', async () => {
+    const saved = { run_id: 'run-a', season: 2027, source_as_of_season: 2027,
+      source_as_of_week: 42, qualification: { qualified_player_ids: ['P_STORED'], groups: [] } }
+    api.getFinalsQualification.mockResolvedValueOnce(saved)
+      .mockRejectedValueOnce(new api.ApiError('temporary qualification outage', 503))
+      .mockResolvedValueOnce(saved)
+    renderWithRoute(<FinalsQualificationDetailPage />, '/runs/run-a/finals/qualification')
+    expect(await screen.findByText(/"P_STORED"/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load Finals qualification: temporary qualification outage')).toBeInTheDocument()
+    expect(screen.queryByText(/"P_STORED"/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText(/"P_STORED"/)).toBeInTheDocument()
+    expect(api.getFinalsQualification).toHaveBeenCalledTimes(3)
   })
 
 })

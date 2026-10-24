@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { getWorldPackage, getWorldPackageCountries, getWorldPackageGeography, getWorldPackageValidation, listWorldPackages } from '../../api/client'
 import type { WorldPackageValidationCheck } from '../../api/types'
@@ -14,13 +14,72 @@ const categories: Record<PackageCategory,{cs:string,en:string}> = {
   calendar:{cs:'Kalendáře',en:'Calendar'}, setup:{cs:'Nastavení',en:'Setup'},
   players:{cs:'Hráči',en:'Players'}, hybrid:{cs:'Hybridní',en:'Hybrid'}
 }
+/** Presentation only: unknown future registry values stay byte-for-byte visible. */
+function statusText(value: string, cs: boolean): string {
+  if (value === 'active') return cs ? 'aktivní' : 'active'
+  if (value === 'archived') return cs ? 'archivovaný' : 'archived'
+  if (value === 'warnings') return cs ? 'varování' : 'warnings'
+  if (value === 'valid') return cs ? 'platné' : 'valid'
+  if (value === 'error') return cs ? 'chyba' : 'error'
+  if (value === 'errors') return cs ? 'chyby' : 'errors'
+  if (value === 'warning') return cs ? 'varování' : 'warning'
+  if (value === 'info') return cs ? 'informace' : 'info'
+  return value
+}
+/** Show the recorded check outcome as well as severity; preserve API status codes. */
+function validationOutcome(value: string, cs: boolean): string {
+  if (!cs) return value
+  const labels: Record<string,string> = {
+    passed: 'splněno', warning: 'varování', failed: 'nesplněno'
+  }
+  return labels[value] ? `${labels[value]} (${value})` : value
+}
+function sourceText(value: string, cs: boolean): string {
+  if (value === 'built_in') return cs ? 'vestavěný' : 'built-in'
+  if (value === 'custom') return cs ? 'vlastní' : 'custom'
+  return value
+}
+/** UI wording only: values, filters, IDs and API data remain numeric/raw. */
+function quantity(count: number, cs: boolean, cz: [string,string,string], en: [string,string]): string {
+  const label = cs ? (count === 1 ? cz[0] : count >= 2 && count <= 4 ? cz[1] : cz[2])
+    : (count === 1 ? en[0] : en[1])
+  return `${count} ${label}`
+}
 const tools: Partial<Record<PackageCategory,string>> = {
   world:'/admin/world/library',countries:'/admin/world/library',
   category:'/admin/tour-seasons/categories',series:'/admin/tour-seasons/tournaments',
   calendar:'/admin/tour-seasons/season-templates',setup:'/admin/tour-seasons'
 }
-function Inventory() {
-  const query = useQuery({ queryKey:['world-packages'], queryFn:listWorldPackages, retry:false })
+/** Read-only query recovery: never creates, imports or updates package state. */
+function RetryRead({ cs, fetching, onRetry, what }: {
+  cs: boolean; fetching: boolean; onRetry: () => void; what: 'catalog' | 'detail' | 'countries' | 'geography' | 'validation'
+}): JSX.Element {
+  const names = {
+    catalog: ['seznam balíčků', 'package catalog'],
+    detail: ['detail balíčku', 'package details'],
+    countries: ['země', 'countries'],
+    geography: ['geografii', 'geography'],
+    validation: ['kontrolu', 'validation']
+  }
+  const subject = names[what][cs ? 0 : 1]
+  return <button type="button" disabled={fetching} onClick={onRetry}>
+    {fetching ? (cs ? 'Opakuji načítání…' : 'Retrying…')
+      : (cs ? `Znovu načíst ${subject}` : `Retry ${subject}`)}
+  </button>
+}
+
+/** A successful HTTP response is not trustworthy if it belongs to a different World. */
+function WrongWorldResponse({cs,expected,actual,what,fetching,onRetry}:{
+  cs:boolean;expected:string;actual:string;what:'detail'|'countries'|'geography'|'validation';
+  fetching:boolean;onRetry:()=>void
+}):JSX.Element {
+  return <><p role="alert" className="error">{cs
+    ? `Odpověď patří jinému World balíčku (požadováno ${expected}, vráceno ${actual}). Data nebyla zobrazena.`
+    : `Response belongs to a different World package (requested ${expected}, received ${actual}). Data was not displayed.`}</p>
+    <RetryRead cs={cs} what={what} fetching={fetching} onRetry={onRetry}/></>
+}
+function Inventory(enabled=true) {
+  const query = useQuery({ queryKey:['world-packages'], queryFn:listWorldPackages, enabled, retry:false })
   const items = useMemo(() => catalogFromWorlds(query.data?.packages ?? []), [query.data])
   return {query,items}
 }
@@ -37,7 +96,7 @@ function PackageRow({item}:{item:CatalogItem}): JSX.Element {
   return <li className="package-index-row">
     <div><strong><Link to={catalogPath(item)}>{item.name}</Link></strong>
       <p className="status">{item.description}</p>
-      <small className="status">{item.key} · {item.status} · {item.version} · {item.editable?(cs?'vlastní':'custom'):(cs?'chráněný':'protected')}</small>
+      <small className="status">{item.key} · {sourceText(item.origin,cs)} · {statusText(item.status,cs)} · {item.version} · {item.editable?(cs?'vlastní':'custom'):(cs?'chráněný':'protected')}</small>
       <div className="package-index-tags">{item.categories.map(cat => <span key={cat}>{categories[cat][language]}</span>)}</div>
     </div>
     <Link to={catalogPath(item)}>{cs?'Detail':'Details'} →</Link>
@@ -47,19 +106,20 @@ export function PackagesHomePage():JSX.Element {
   const {language}=useLanguage(), cs=language==='cs', {query,items}=Inventory()
   return <section className="panel package-index">
     <div className="page-intro"><h2>{cs?'Balíčky':'Packages'}</h2>
-      <p className="subtitle">{cs?'Rozcestník ověřených zdrojových dat, bez aktivního Runu.':'Verified source content categories, without an active Run.'}</p></div>
+      <p className="subtitle">{cs?'Rozcestník zdrojových kategorií bez otevřeného Runu. Aktuální přenosný registr obsahuje pouze World Packages.':'Source-category hub without an active Run. Only World Packages have a portable registry today.'}</p></div>
     <p><Link className="button-link" to="/admin/packages/all">{cs?'Všechny balíčky':'All packages'} →</Link></p>
     {query.isPending && <p role="status">{cs?'Načítám registry…':'Loading registry…'}</p>}
-    {query.isError && <p className="error" role="alert">{formatApiError(query.error)}</p>}
+    {query.isError && <><p className="error" role="alert">{cs ? 'Registr balíčků se nepodařilo načíst: ' : 'Package registry failed to load: '}{formatApiError(query.error)}</p><RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} /></>}
+    {query.isSuccess && <RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} />}
     <div className="package-index-categories">{packageCategories.map(cat =>
       <Link key={cat} className="package-index-category" to={'/admin/packages/category/'+cat}>
         <h3>{categories[cat][language]} →</h3>
         <p>{cat==='hybrid'
-          ? (cs?'Jen balíčky s ověřeným vícetypovým obsahem.':'Verified multi-type packages only.')
+          ? (cs?'Samostatný hybridní registr není podporován; závislosti z balíčku nedělají hybridní balíček.':'No independent hybrid registry is supported; dependencies do not constitute a hybrid package.')
           : cat==='players'
-            ? (cs?'Payload zatím není schválen.':'Payload not yet specified.')
+            ? (cs?'Přenosný obsah hráčských balíčků zatím není definován.':'Portable Player-package payload is not specified yet.')
             : (cs?'Otevřít seznam této kategorie.':'Browse this category.')}</p>
-        <small className="status">{(cat==='world'||cat==='countries') && query.isSuccess ? inCategory(items,cat).length+(cs?' registrovaných':' registered') : (cs?'Registr zatím není dostupný':'Registry not available')}</small>
+        <small className="status">{(cat==='world'||cat==='countries') && query.isSuccess ? quantity(inCategory(items,cat).length,cs,['registrovaný','registrované','registrovaných'],['registered package','registered packages']) : (cs ? (cat==='world'||cat==='countries' ? (query.isPending ? 'Načítám registr…' : 'Registr není ověřen') : 'Samostatný registr není dostupný') : (cat==='world'||cat==='countries' ? (query.isPending ? 'Loading registry…' : 'Registry unverified') : 'Independent registry unavailable'))}</small>
       </Link>)}</div>
     <SourceNote />
   </section>
@@ -69,34 +129,62 @@ export function PackagesListPage():JSX.Element {
   const {pathname}=useLocation()
   const resolvedCategory=pathname==='/admin/packages/all'?'all':categoryId
   const {language}=useLanguage(),cs=language==='cs'
-  const {query,items}=Inventory()
   const [search,setSearch]=useState(''),[origin,setOrigin]=useState('any'),[status,setStatus]=useState('any')
+  const [sort,setSort]=useState<'source'|'name'|'countries'>('source')
+  // The router may reuse this list when selecting another source category.
+  // Do not let stale local filters hide a different category's inventory.
+  useEffect(()=>{setSearch('');setOrigin('any');setStatus('any');setSort('source')},[resolvedCategory])
   const cat:PackageFilter|null=resolvedCategory==='all'||packageCategories.some(c=>c===resolvedCategory) ? resolvedCategory as PackageFilter : null
-  if(!cat) return <section className="panel"><h2>{cs?'Neznámá kategorie':'Unknown category'}</h2><Link to="/admin/packages">Packages</Link></section>
+  const registrySupported = cat === 'all' || cat === 'world' || cat === 'countries'
+  // Unsupported categories must not make a misleading World-registry request.
+  // Keep the hook unconditional even for unknown routes.
+  const {query,items}=Inventory(registrySupported)
+  if(!cat) return <section className="panel"><h2>{cs?'Neznámá kategorie':'Unknown category'}</h2><Link to="/admin/packages">{cs ? "Balíčky" : "Packages"}</Link></section>
   const members=inCategory(items,cat)
+  const searchTerm=normalizeCatalogSearch(search)
   const shown=members.filter(item=>(origin==='any'||(origin==='custom'?item.editable:!item.editable))
     &&(status==='any'||item.status===status)
-    &&[item.key,item.name,item.description].some(s=>s.toLowerCase().includes(search.toLowerCase().trim())))
+    &&[item.key,item.name,item.description].some(s=>normalizeCatalogSearch(s).includes(searchTerm)))
+    .sort((a,b)=>sort==='name'
+      ? a.name.localeCompare(b.name,cs?'cs-CZ':'en-US')||a.key.localeCompare(b.key)
+      : sort==='countries' ? b.countryCount-a.countryCount||a.key.localeCompare(b.key) : 0)
   return <section className="panel package-index">
     <p><Link to="/admin/packages">← {cs?'Kategorie':'Categories'}</Link></p>
     <div className="page-intro"><h2>{cat==='all'?(cs?'Všechny balíčky':'All packages'):categories[cat][language]}</h2>
       <p className="subtitle">{cs?'Jedna identita = jedna položka.':'One identity, one inventory row.'}</p></div>
-    <div className="package-index-filters">
+    {registrySupported && <div className="package-index-filters">
       <label>{cs?'Hledání':'Search'}<input type="search" value={search} onChange={e=>setSearch(e.target.value)} /></label>
-      <label>{cs?'Původ':'Origin'}<select aria-label="Package origin" value={origin} onChange={e=>setOrigin(e.target.value)}><option value="any">{cs?'Vše':'All'}</option><option value="custom">{cs?'Vlastní':'Custom'}</option><option value="protected">{cs?'Chráněné':'Protected'}</option></select></label>
-      <label>{cs?'Stav':'Status'}<select aria-label="Package status" value={status} onChange={e=>setStatus(e.target.value)}><option value="any">{cs?'Vše':'All'}</option><option value="active">Active</option><option value="archived">Archived</option></select></label>
-    </div>
-    {query.isPending && <p role="status">{cs?'Načítám…':'Loading…'}</p>}
-    {query.isError && <p role="alert" className="error">{formatApiError(query.error)}</p>}
-    {query.isSuccess && <><p className="status">{cat==='all'||cat==='world'||cat==='countries'?shown.length+' / '+members.length:(cs?'Samostatný registr této kategorie zatím není dostupný.':'No independent registry for this category yet.')}</p>
-      {shown.length ? <ul className="package-index-list">{shown.map(item=><PackageRow key={item.key} item={item}/>)}</ul>
-      : <p>{cat==='all'||cat==='world'||cat==='countries' ? (cs?'Žádný evidovaný balíček neodpovídá filtru.':'No indexed packages match this filter.') : (cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.')}</p>}</>}
+      <label>{cs?'Typ přístupu':'Access type'}<select aria-label="Package origin" value={origin} onChange={e=>setOrigin(e.target.value)}><option value="any">{cs?'Vše':'All'}</option><option value="custom">{cs?'Vlastní':'Custom'}</option><option value="protected">{cs?'Chráněné':'Protected'}</option></select></label>
+      <label>{cs?'Stav':'Status'}<select aria-label="Package status" value={status} onChange={e=>setStatus(e.target.value)}><option value="any">{cs?'Vše':'All'}</option><option value="active">{cs ? "Aktivní" : "Active"}</option><option value="archived">{cs ? "Archivované" : "Archived"}</option></select></label>
+      <label>{cs?'Řadit balíčky':'Sort packages'}<select aria-label="Package catalog sort" value={sort} onChange={e=>setSort(e.target.value as typeof sort)}>
+        <option value="source">{cs?'Původní pořadí':'Source order'}</option>
+        <option value="name">{cs?'Podle názvu A–Z':'By name A–Z'}</option>
+        <option value="countries">{cs?'Podle počtu zemí sestupně':'By country count descending'}</option>
+      </select></label>
+    </div>}
+    {!registrySupported && <p role="status" className="status">{cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.'}</p>}
+    {registrySupported && query.isPending && <p role="status">{cs?'Načítám…':'Loading…'}</p>}
+    {registrySupported && query.isError && <><p role="alert" className="error">{cs ? 'Registr balíčků se nepodařilo načíst: ' : 'Package registry failed to load: '}{formatApiError(query.error)}</p><RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} /></>}
+    {registrySupported && query.isSuccess && <RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} />}
+    {registrySupported && query.isSuccess && <><p className="status">{registrySupported?shown.length+' / '+members.length:(cs?'Samostatný registr této kategorie zatím není dostupný.':'No independent registry for this category yet.')}</p>
+      {registrySupported && shown.length ? <ul className="package-index-list" aria-label="World package catalog">{shown.map(item=><PackageRow key={item.key} item={item}/>)}</ul>
+      : <p>{registrySupported ? (members.length === 0 ? (cs ? 'Registr nevrátil žádný balíček v této kategorii.' : 'The registry returned no packages in this category.') : (cs?'Žádný evidovaný balíček neodpovídá filtru.':'No indexed packages match this filter.')) : (cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.')}</p>}
+      {registrySupported && members.length>0 && shown.length===0 && (searchTerm || origin!=='any' || status!=='any')
+        ? <button type="button" onClick={()=>{setSearch('');setOrigin('any');setStatus('any')}}>{cs?'Vymazat filtry':'Clear filters'}</button> : null}</>}
     {cat!=='all' && <SourceNote category={cat} />}
   </section>
 }
+/** Accents, case and surrounding whitespace affect only search, never saved country fields. */
+function normalizeCatalogSearch(value:string):string {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()
+}
+/** Only canonical countries/<CODE>/... storage paths identify a country.
+ * Never turn an arbitrary status, field name or unrelated directory into a link. */
 function resolveCountry(check:WorldPackageValidationCheck,codes:string[]):string|null {
-  const raw=[check.path,check.field].filter(Boolean).join('/')
-  return codes.find(code => raw.split(/[^A-Za-z0-9]+/).some(part => part.toUpperCase()===code.toUpperCase())) ?? null
+  if (!check.path) return null
+  const match=/(?:^|[\\/])countries[\\/]([A-Za-z]{3})(?=$|[\\/])/i.exec(check.path)
+  if (!match) return null
+  return codes.find(code=>code.toUpperCase()===match[1].toUpperCase())??null
 }
 export function PackageWorldDetailPage():JSX.Element {
   const {worldId=''}=useParams()
@@ -104,35 +192,83 @@ export function PackageWorldDetailPage():JSX.Element {
   const [params,setParams]=useSearchParams(),tab=params.get('tab')||'overview'
   const active=tab==='contents'||tab==='validation'?tab:'overview'
   const [countrySearch,setCountrySearch]=useState('')
+  const [countrySort,setCountrySort]=useState<'source'|'name'|'population'>('source')
+  const [geographySearch,setGeographySearch]=useState('')
+  const [severityFilter,setSeverityFilter]=useState('all')
+  const [outcomeFilter,setOutcomeFilter]=useState<'all'|'passed'|'warning'|'failed'>('all')
+  const [checkSearch,setCheckSearch]=useState('')
+  // The router can reuse this component for another World ID: local display
+  // filters belong to that World, not to the previous package's inventory.
+  useEffect(()=>{
+    setCountrySearch('')
+    setCountrySort('source')
+    setGeographySearch('')
+    setSeverityFilter('all')
+    setOutcomeFilter('all')
+    setCheckSearch('')
+  },[worldId])
   const q=useQuery({queryKey:['world-package',worldId],queryFn:()=>getWorldPackage(worldId),enabled:Boolean(worldId),retry:false})
   const countriesQuery=useQuery({queryKey:['world-package-countries',worldId],queryFn:()=>getWorldPackageCountries(worldId),enabled:active!=='overview',retry:false})
   const geoQuery=useQuery({queryKey:['world-package-geography',worldId],queryFn:()=>getWorldPackageGeography(worldId),enabled:active==='contents',retry:false})
   const valQuery=useQuery({queryKey:['world-package-validation',worldId],queryFn:()=>getWorldPackageValidation(worldId),enabled:active==='validation',retry:false})
-  const pkg=q.data?.world_id===worldId?q.data:null
-  const countries=countriesQuery.data?.world_id===worldId?countriesQuery.data.countries:null
-  const geo=geoQuery.data?.world_id===worldId?geoQuery.data:null
-  const validation=valQuery.data?.world_id===worldId?valQuery.data:null
+  // React Query retains last successful data after a failed refetch.
+  // Do not present an old snapshot as current after the latest read failed.
+  const pkg=q.isSuccess && q.data.world_id===worldId?q.data:null
+  const countries=countriesQuery.isSuccess && countriesQuery.data.world_id===worldId?countriesQuery.data.countries:null
+  const geo=geoQuery.isSuccess && geoQuery.data.world_id===worldId?geoQuery.data:null
+  const validation=valQuery.isSuccess && valQuery.data.world_id===worldId?valQuery.data:null
+  const detailMismatch=q.isSuccess && q.data.world_id!==worldId
+  const countriesMismatch=countriesQuery.isSuccess && countriesQuery.data.world_id!==worldId
+  const geoMismatch=geoQuery.isSuccess && geoQuery.data.world_id!==worldId
+  const valMismatch=valQuery.isSuccess && valQuery.data.world_id!==worldId
+  const countryTerm=normalizeCatalogSearch(countrySearch)
+  // Sort a filtered copy only; never mutate the query cache's authoritative order.
+  const visibleCountries=(countries?.filter(c=>normalizeCatalogSearch([c.name,c.code,c.region].join(' ')).includes(countryTerm))??[])
+    .sort((a,b)=>countrySort==='name'
+      ? a.name.localeCompare(b.name,cs?'cs-CZ':'en-US')||a.code.localeCompare(b.code)
+      : countrySort==='population' ? b.population-a.population||a.code.localeCompare(b.code) : 0)
+  const geoTerm=normalizeCatalogSearch(geographySearch)
+  // Stable technical group IDs prevent language switches from collapsing
+  // the expanded geography section while preserving the original source order.
+  const geoGroups = geo ? ([
+    ['continents',cs ? 'Kontinenty' : 'Continents',geo.continents.map(x=>x.code+' '+x.name)],
+    ['regions',cs ? 'Regiony' : 'Regions',geo.regions.map(x=>x.code+' '+x.name)],
+    ['travel_regions',cs ? 'Cestovní regiony' : 'Travel regions',geo.travel_regions.map(x=>x.code+' '+x.name)],
+    ['timezone_areas',cs ? 'Časové oblasti' : 'Timezone areas',geo.timezone_areas.map(x=>x.code+' '+x.name)]
+  ] as [string,string,string[]][]).map(([id,name,values])=>({
+    id,name,values,matches:values.filter(value=>normalizeCatalogSearch(value).includes(geoTerm))
+  })) : []
+  const geoTotal=geoGroups.reduce((sum,group)=>sum+group.values.length,0)
+  const geoMatches=geoGroups.reduce((sum,group)=>sum+group.matches.length,0)
+  const checkTerm=normalizeCatalogSearch(checkSearch)
+  // Presentation-only combination: API validation result and counts remain unmodified.
+  const visibleChecks=validation?.checks.filter(c=>
+    (severityFilter==='all'||c.severity===severityFilter) &&
+    (outcomeFilter==='all'||c.status===outcomeFilter) &&
+    [c.code,c.message,c.path??'',c.field??''].some(value=>normalizeCatalogSearch(value).includes(checkTerm)))??[]
   const source='/admin/world/library/'+encodeURIComponent(worldId)
   return <section className="panel package-index">
     <p><Link to="/admin/packages/category/world">← {cs?'World balíčky':'World packages'}</Link></p>
     <div className="page-intro"><p className="eyebrow">WORLD PACKAGE · {worldId}</p><h2>{pkg?.name??worldId}</h2>
       <p className="subtitle">{pkg?.description}</p></div>
     {q.isPending&&<p role="status">{cs?'Načítám zdroj…':'Loading source…'}</p>}
-    {q.isError&&<p className="error" role="alert">{formatApiError(q.error)}</p>}
+    {q.isError&&<><p className="error" role="alert">{cs ? 'Detail balíčku se nepodařilo načíst: ' : 'Failed to load package details: '}{formatApiError(q.error)}</p><RetryRead cs={cs} what="detail" fetching={q.isFetching} onRetry={() => { void q.refetch() }} /></>}
+    {detailMismatch&&<WrongWorldResponse cs={cs} expected={worldId} actual={q.data?.world_id ?? ''} what="detail" fetching={q.isFetching} onRetry={()=>{void q.refetch()}}/>}
     {pkg && <>
-      <nav className="package-index-tabs" aria-label="Package tabs">{(['overview','contents','validation'] as const).map(k=>
-        <button type="button" key={k} aria-current={active===k?'page':undefined} onClick={()=>setParams({tab:k})}>
+      <nav className="package-index-tabs" aria-label={cs ? "Záložky balíčku" : "Package tabs"}>{(['overview','contents','validation'] as const).map(k=>
+        <button type="button" key={k} aria-current={active===k?'page':undefined} onClick={()=>setParams(previous=>{const next=new URLSearchParams(previous);next.set('tab',k);return next})}>
           {k==='overview'?(cs?'Přehled':'Overview'):k==='contents'?(cs?'Obsah':'Contents'):(cs?'Kontrola':'Validation')}
         </button>)}</nav>
       {active==='overview'&&<article className="package-index-detail">
         <h3>{cs?'Informace a původ':'Metadata and provenance'}</h3>
+        <RetryRead cs={cs} what="detail" fetching={q.isFetching} onRetry={()=>{void q.refetch()}}/>
         <dl><dt>ID</dt><dd>{pkg.world_id}</dd><dt>{cs?'Verze':'Version'}</dt><dd>{pkg.version}</dd>
-          <dt>{cs?'Zdroj':'Source'}</dt><dd>{pkg.source} · {pkg.type}</dd>
-          <dt>Status</dt><dd>{pkg.status} · {pkg.editable?'Editable':'Protected'}</dd>
-          <dt>Fingerprint</dt><dd><code>{pkg.fingerprint}</code></dd>
+          <dt>{cs ? "Zdroj" : "Source"}</dt><dd>{sourceText(pkg.source,cs)} · {pkg.type}</dd>
+          <dt>{cs ? "Stav" : "Status"}</dt><dd>{statusText(pkg.status,cs)} · {pkg.editable ? (cs ? "upravitelný" : "Editable") : (cs ? "chráněný" : "Protected")}</dd>
+          <dt>{cs ? "Otisk" : "Fingerprint"}</dt><dd><code>{pkg.fingerprint}</code></dd>
           <dt>{cs?'Použití':'Usage'}</dt><dd>{pkg.used_by_run_count??(cs?'Nedostupné':'Unavailable')}</dd></dl>
         <h3>{cs?'Skutečně obsažené části':'Actual contents'}</h3>
-        <p>{pkg.country_count} countries · {pkg.continent_count} continents · {pkg.region_count} regions · {pkg.travel_region_count} travel regions · {pkg.timezone_area_count} timezone areas</p>
+        <p>{quantity(pkg.country_count,cs,['země','země','zemí'],['country','countries'])} · {quantity(pkg.continent_count,cs,['kontinent','kontinenty','kontinentů'],['continent','continents'])} · {quantity(pkg.region_count,cs,['region','regiony','regionů'],['region','regions'])} · {quantity(pkg.travel_region_count,cs,['cestovní region','cestovní regiony','cestovních regionů'],['travel region','travel regions'])} · {quantity(pkg.timezone_area_count,cs,['časová oblast','časové oblasti','časových oblastí'],['timezone area','timezone areas'])}</p>
         <p><Link to={source}>{pkg.editable?(cs?'Upravit zdroj':'Edit custom source'):(cs?'Vytvořit vlastní kopii':'Create custom copy')} →</Link></p>
         <p><Link to={'/admin/packages/world/'+encodeURIComponent(worldId)+'/apply'}>{cs?'Použít v Runu — vybrat obsah':'Apply to Run — select contents'} →</Link></p>
         <p className="status">{cs?'Selektivní import funguje pro World entity; export tohoto konkrétního zdroje zatím není hotový.':'Selective import supports World entities; source-specific export is not yet available.'}</p>
@@ -140,34 +276,80 @@ export function PackageWorldDetailPage():JSX.Element {
       </article>}
       {active==='contents'&&<article className="package-index-detail">
         <h3>{cs?'Země':'Countries'} ({pkg.country_count})</h3>
-        {countriesQuery.isPending&&<p role="status">Loading countries…</p>}
-        {countriesQuery.isError&&<p role="alert" className="error">{formatApiError(countriesQuery.error)}</p>}
-        {countries&&<><label>{cs?'Hledat zemi':'Search countries'}<input type="search" value={countrySearch} onChange={e=>setCountrySearch(e.target.value)}/></label>
-          <ul className="package-index-countries">{countries.filter(c=>(c.name+' '+c.code).toLowerCase().includes(countrySearch.toLowerCase())).map(c=>
+        {countriesQuery.isPending&&<p role="status">{cs ? "Načítám země…" : "Loading countries…"}</p>}
+        {countriesQuery.isError&&<><p role="alert" className="error">{cs ? 'Země se nepodařilo načíst: ' : 'Failed to load countries: '}{formatApiError(countriesQuery.error)}</p><RetryRead cs={cs} what="countries" fetching={countriesQuery.isFetching} onRetry={() => { void countriesQuery.refetch() }} /></>}
+        {countriesMismatch&&<WrongWorldResponse cs={cs} expected={worldId} actual={countriesQuery.data?.world_id ?? ''} what="countries" fetching={countriesQuery.isFetching} onRetry={()=>{void countriesQuery.refetch()}}/>}
+        {countries&&<><p role="status" className="status">{cs ? 'Ověřený seznam zemí' : 'Verified country inventory'}: {countries.length}</p>
+          <RetryRead cs={cs} what="countries" fetching={countriesQuery.isFetching} onRetry={()=>{void countriesQuery.refetch()}} />
+          <label>{cs?'Hledat zemi, kód nebo region':'Search countries, codes or regions'}<input type="search" value={countrySearch} onChange={e=>setCountrySearch(e.target.value)}/></label>
+          <label>{cs?'Seřadit země':'Sort countries'}<select aria-label="Package country sort" value={countrySort} onChange={e=>setCountrySort(e.target.value as typeof countrySort)}>
+            <option value="source">{cs?'Původní pořadí':'Source order'}</option>
+            <option value="name">{cs?'Podle názvu A–Z':'By name A–Z'}</option>
+            <option value="population">{cs?'Podle populace sestupně':'By population descending'}</option>
+          </select></label>
+          {countryTerm&&<p role="status" className="status">{cs ? `Zobrazeno ${visibleCountries.length} z ${countries.length} zemí. Filtr nemění obsah balíčku.` : `Showing ${visibleCountries.length} of ${countries.length} countries. Filtering does not change the package.`}</p>}
+          <ul className="package-index-countries" aria-label="World package countries">{visibleCountries.map(c=>
             <li key={c.code}><Link to={source+'/countries/'+encodeURIComponent(c.code)}>{c.name} ({c.code})</Link>
-              <span className="status">{c.region} · {c.population.toLocaleString()}</span></li>)}</ul></>}
+              <span className="status">{c.region} · {c.population.toLocaleString(cs ? 'cs-CZ' : 'en-US')}</span></li>)}</ul>
+          {countries.length === 0 ? <p role="status">{cs ? "V balíčku nejsou žádné země." : "This package contains no countries."}</p> : visibleCountries.length === 0 ? <>
+            <p role="status">{cs ? "Žádná země neodpovídá hledání." : "No country matches the search."}</p>
+            <button type="button" onClick={()=>setCountrySearch('')}>{cs?'Vymazat hledání zemí':'Clear country search'}</button>
+          </> : null}</>}
         <h3>{cs?'Geografie':'Geography'}</h3>
-        {geoQuery.isPending&&<p role="status">Loading geography…</p>}
-        {geoQuery.isError&&<p className="error" role="alert">{formatApiError(geoQuery.error)}</p>}
-        {geo&&<div>{([
-          ['Continents',geo.continents.map(x=>x.code+' '+x.name)],
-          ['Regions',geo.regions.map(x=>x.code+' '+x.name)],
-          ['Travel regions',geo.travel_regions.map(x=>x.code+' '+x.name)],
-          ['Timezone areas',geo.timezone_areas.map(x=>x.code+' '+x.name)]
-        ] as [string,string[]][]).map(([name,values])=><details key={name}><summary>{name} ({values.length})</summary><ul>{values.map(x=><li key={x}>{x}</li>)}</ul></details>)}</div>}
+        {geoQuery.isPending&&<p role="status">{cs ? "Načítám geografii…" : "Loading geography…"}</p>}
+        {geoQuery.isError&&<><p className="error" role="alert">{cs ? 'Geografii se nepodařilo načíst: ' : 'Failed to load geography: '}{formatApiError(geoQuery.error)}</p><RetryRead cs={cs} what="geography" fetching={geoQuery.isFetching} onRetry={() => { void geoQuery.refetch() }} /></>}
+        {geoMismatch&&<WrongWorldResponse cs={cs} expected={worldId} actual={geoQuery.data?.world_id ?? ''} what="geography" fetching={geoQuery.isFetching} onRetry={()=>{void geoQuery.refetch()}}/>}
+        {geo&&<div>
+          <RetryRead cs={cs} what="geography" fetching={geoQuery.isFetching} onRetry={()=>{void geoQuery.refetch()}}/>
+          <label>{cs?'Hledat geografický kód nebo název':'Search geography code or name'}
+            <input type="search" aria-label="Package geography search" value={geographySearch} onChange={e=>setGeographySearch(e.target.value)}/>
+          </label>
+          {geoTerm&&<p role="status" className="status">{cs?`Zobrazeno ${geoMatches} z ${geoTotal} geografických položek.`:`Showing ${geoMatches} of ${geoTotal} geography entries.`}</p>}
+          {geoGroups.filter(group=>!geoTerm||group.matches.length>0).map(({id,name,values,matches})=>
+            <details key={id}><summary>{name} ({geoTerm?`${matches.length} / ${values.length}`:values.length})</summary>
+              {matches.length ? <ul>{matches.map(value=><li key={value}>{value}</li>)}</ul>
+                : <p role="status">{cs?'V této části nejsou žádné položky.':'No entries in this section.'}</p>}
+            </details>)}
+          {geoTerm&&geoMatches===0&&<><p role="status">{cs?'Žádná geografická položka neodpovídá hledání.':'No geography entries match the search.'}</p>
+            <button type="button" onClick={()=>setGeographySearch('')}>{cs?'Vymazat hledání geografie':'Clear geography search'}</button></>}
+        </div>}
       </article>}
       {active==='validation'&&<article className="package-index-detail">
         <h3>{cs?'Skutečné výsledky kontroly':'Actual validation results'}</h3>
-        {valQuery.isPending&&<p role="status">Loading validation…</p>}
-        {valQuery.isError&&<p role="alert" className="error">{formatApiError(valQuery.error)}</p>}
-        {validation&&<><p>{validation.status} · {validation.error_count} errors · {validation.warning_count} warnings · {validation.info_count} info</p>
-          <ul className="package-index-checks">{validation.checks.map((check,i)=>{
+        {valQuery.isPending&&<p role="status">{cs ? "Načítám výsledky kontroly…" : "Loading validation…"}</p>}
+        {valQuery.isError&&<><p role="alert" className="error">{cs ? 'Kontrolu se nepodařilo načíst: ' : 'Failed to load validation: '}{formatApiError(valQuery.error)}</p><RetryRead cs={cs} what="validation" fetching={valQuery.isFetching} onRetry={() => { void valQuery.refetch() }} /></>}
+        {valMismatch&&<WrongWorldResponse cs={cs} expected={worldId} actual={valQuery.data?.world_id ?? ''} what="validation" fetching={valQuery.isFetching} onRetry={()=>{void valQuery.refetch()}}/>}
+        {validation&&<><p className="status">{cs ? "Diagnostické zprávy jsou zobrazeny v původním znění." : "Diagnostic messages are shown verbatim."}</p>
+          <RetryRead cs={cs} what="validation" fetching={valQuery.isFetching} onRetry={()=>{void valQuery.refetch()}} /><p>{statusText(validation.status,cs)} · {quantity(validation.error_count,cs,['chyba','chyby','chyb'],['error','errors'])} · {quantity(validation.warning_count,cs,['varování','varování','varování'],['warning','warnings'])} · {quantity(validation.info_count,cs,['informace','informace','informací'],['info','info'])}</p>
+          <label>{cs?'Filtrovat kontroly podle závažnosti':'Filter checks by severity'}<select aria-label="Package validation severity filter" value={severityFilter} onChange={event=>setSeverityFilter(event.target.value)}>
+            <option value="all">{cs?'Všechny kontroly':'All checks'}</option>
+            <option value="error">{cs?'Chyby':'Errors'}</option>
+            <option value="warning">{cs?'Varování':'Warnings'}</option>
+            <option value="info">{cs?'Informace':'Information'}</option>
+          </select></label>
+          <label>{cs?'Filtrovat kontroly podle výsledku':'Filter checks by outcome'}<select aria-label="Package validation outcome filter" value={outcomeFilter} onChange={e=>setOutcomeFilter(e.target.value as typeof outcomeFilter)}>
+            <option value="all">{cs?'Všechny výsledky':'All outcomes'}</option>
+            <option value="passed">{cs?'Splněno':'Passed'}</option>
+            <option value="warning">{cs?'Varování':'Warning'}</option>
+            <option value="failed">{cs?'Nesplněno':'Failed'}</option>
+          </select></label>
+          <label>{cs?'Hledat kód, zprávu, cestu nebo pole kontroly':'Search check code, message, path or field'}<input type="search" aria-label="Package validation search" value={checkSearch} onChange={e=>setCheckSearch(e.target.value)}/></label>
+          <p role="status" className="status">{cs ? `Zobrazeno ${visibleChecks.length} z ${validation.checks.length} kontrol. Souhrn validace se filtrem nemění.` : `Showing ${visibleChecks.length} of ${validation.checks.length} checks. Validation totals remain unchanged.`}</p>
+          <ul className="package-index-checks">{visibleChecks.map((check,i)=>{
             const country=resolveCountry(check,countries?.map(c=>c.code)??[])
-            return <li key={check.code+':'+i}><strong>{check.severity.toUpperCase()} · {check.code}</strong>
+            return <li key={check.code+':'+i}><strong>{cs ? statusText(check.severity, true).toUpperCase() : check.severity.toUpperCase()} · {check.code}</strong>
+              <p className="status">{cs?'Výsledek kontroly':'Check outcome'}: {validationOutcome(check.status,cs)}</p>
               <p>{check.message}</p><small className="status">{check.path}{check.field&&' · '+check.field}</small>
               {country&&<p><Link to={source+'/countries/'+encodeURIComponent(country)}>{cs?'Otevřít dotčenou zemi':'Open affected country'}: {country} →</Link></p>}</li>
           })}</ul>
-          {countriesQuery.isError&&<p className="status">{cs?'Odkazy na jednotlivé země nejsou dostupné.':'Country links cannot be verified.'}</p>}
+          {validation.checks.length === 0 ? <p role="status">{cs ? "Kontrola nevrátila žádné jednotlivé záznamy." : "Validation returned no individual checks."}</p> : visibleChecks.length===0 ? <>
+            <p role="status">{cs ? "Zvolenému filtru neodpovídají žádné záznamy kontroly." : "No validation checks match this filter."}</p>
+            <button type="button" onClick={()=>{setSeverityFilter('all');setOutcomeFilter('all');setCheckSearch('')}}>{cs?'Zobrazit všechny kontroly':'Show all checks'}</button>
+          </> : null}
+          {countriesQuery.isPending&&<p role="status" className="status">{cs?'Ověřuji odkazy na jednotlivé země…':'Verifying country links…'}</p>}
+          {countriesQuery.isError&&<><p className="status">{cs?'Odkazy na jednotlivé země nejsou dostupné.':'Country links cannot be verified.'} {formatApiError(countriesQuery.error)}</p>
+            <RetryRead cs={cs} what="countries" fetching={countriesQuery.isFetching} onRetry={() => { void countriesQuery.refetch() }} /></>}
+          {countriesMismatch&&<WrongWorldResponse cs={cs} expected={worldId} actual={countriesQuery.data.world_id} what="countries" fetching={countriesQuery.isFetching} onRetry={()=>{void countriesQuery.refetch()}}/>}
         </>}
       </article>}
     </>}

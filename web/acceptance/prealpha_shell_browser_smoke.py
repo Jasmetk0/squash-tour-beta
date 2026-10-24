@@ -85,12 +85,14 @@ def main() -> None:
             ).click()
             expect(page.get_by_role("heading", name="Testovací laboratoř")).to_be_visible()
             for module, suffix in (
-                ("Match Test Lab", "match"),
-                ("Tournament Test Lab", "tournament"),
-                ("Player Test Lab", "player"),
+                ("Laboratoř zápasů", "match"),
+                ("Laboratoř turnajů", "tournament"),
+                ("Laboratoř hráčů", "player"),
             ):
-                expect(page.get_by_role("heading", name=module)).to_be_visible()
-                expect(page.locator(f'a[href="/admin/labs/{suffix}"]')).to_be_visible()
+                heading = page.get_by_role("heading", name=module, exact=True)
+                expect(heading).to_be_visible()
+                card = page.get_by_role("article").filter(has=heading)
+                expect(card.locator(f'a[href="/admin/labs/{suffix}"]')).to_be_visible()
             assert page.get_by_role("combobox", name="Admin active Run").count() == 0
             evidence["labs_without_run"] = 3
 
@@ -99,6 +101,15 @@ def main() -> None:
             page.reload()
             expect(page.get_by_role("heading", name="Test Lab", exact=True)).to_be_visible()
             assert page.get_by_role("combobox", name="Language / Jazyk").input_value() == "en"
+            for module, suffix in (
+                ("Match Test Lab", "match"),
+                ("Tournament Test Lab", "tournament"),
+                ("Player Test Lab", "player"),
+            ):
+                heading = page.get_by_role("heading", name=module, exact=True)
+                expect(heading).to_be_visible()
+                card = page.get_by_role("article").filter(has=heading)
+                expect(card.locator(f'a[href="/admin/labs/{suffix}"]')).to_be_visible()
             evidence["language_persisted"] = "en"
 
             # Browse actual registered World packages, never synthetic hybrids.
@@ -122,7 +133,9 @@ def main() -> None:
                 evidence["world_package_detail"] = world["world_id"]
             page.goto(base + "/admin/packages/category/hybrid")
             expect(page.get_by_role("heading", name="Hybrid", exact=True)).to_be_visible()
-            expect(page.get_by_text("No independent registry for this category yet.")).to_be_visible()
+            expect(page.get_by_role("status").filter(
+                has_text="A verified package inventory for this category is not yet available."
+            )).to_be_visible()
             expect(page.locator(".package-index-row")).to_have_count(0)
             evidence["packages_registered"] = len({w["world_id"] for w in worlds})
 

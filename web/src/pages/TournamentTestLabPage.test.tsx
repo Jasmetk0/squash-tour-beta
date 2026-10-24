@@ -1,5 +1,6 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { TournamentTestLabPage } from './TournamentTestLabPage'
@@ -19,7 +20,13 @@ const api = vi.hoisted(() => ({
   copySavedRevisionTournamentToLab: vi.fn()
 }))
 vi.mock('../api/client', () => api)
-vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en', t: (key: string) => key})}))
+const uiLocale = vi.hoisted(() => ({language: 'en' as 'en' | 'cs'}))
+vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: uiLocale.language, t: (key: string) => key})}))
+function LocalizedPage(): JSX.Element {
+  const [czech, setCzech] = useState(false)
+  uiLocale.language = czech ? 'cs' : 'en'
+  return <><button type="button" onClick={() => setCzech(value => !value)}>Toggle test language</button><TournamentTestLabPage /></>
+}
 
 const participant = (id: string, base: number) => ({
   player: {
@@ -169,6 +176,7 @@ const result = {
 
 describe('TournamentTestLabPage', () => {
   beforeEach(() => {
+    uiLocale.language = 'en'
     vi.clearAllMocks()
     api.getTournamentLabBuiltInScenarios.mockResolvedValue([{
       scenario_id: scenario.scenario_id,
@@ -186,6 +194,36 @@ describe('TournamentTestLabPage', () => {
     api.runTournamentTestLab.mockResolvedValue(result)
   })
 
+
+
+  it('rejects malformed batch seeds with localized feedback but no Tournament execution', async () => {
+    renderWithRoute(<LocalizedPage />, '/admin/labs/tournament')
+    fireEvent.click(await screen.findByRole('button', {name: 'Load scratch copy'}))
+    fireEvent.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    fireEvent.change(screen.getByLabelText('Tournament Lab batch match seeds'), {target: {value: '2, broken'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Spustit turnajový scénář'}))
+    expect(screen.getByRole('alert')).toHaveTextContent('Seedy zápasů musí být celá čísla oddělená čárkami.')
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+    expect(api.createTournamentLabSession).not.toHaveBeenCalled()
+  })
+
+  it('switches CS/EN without changing scratch tournament JSON, batch seeds or writes', async () => {
+    renderWithRoute(<LocalizedPage />, '/admin/labs/tournament')
+    fireEvent.click(await screen.findByRole('button', {name: 'Load scratch copy'}))
+    fireEvent.change(screen.getByLabelText('Tournament Lab batch match seeds'), {target: {value: '31, 32'}})
+    const previous = (screen.getByLabelText('Tournament Lab scenario JSON') as HTMLTextAreaElement).value
+    fireEvent.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    expect(screen.getByLabelText('Tournament Lab batch match seeds')).toHaveValue('31, 32')
+    expect(screen.getByLabelText('Tournament Lab scenario JSON')).toHaveValue(previous)
+    expect(api.createTournamentLabSession).not.toHaveBeenCalled()
+    expect(api.updateTournamentLabSession).not.toHaveBeenCalled()
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name: 'Spustit turnajový scénář'}))
+    await waitFor(() => expect(api.runTournamentTestLab).toHaveBeenCalledWith(expect.objectContaining({
+      batch_match_seeds: [31, 32],
+      scenario: expect.objectContaining({scenario_id: 'standard-four-player'})
+    })))
+  })
 
   it('creates an isolated Session from a scratch tournament without applying a Run proposal', async () => {
     const user = userEvent.setup()
@@ -275,6 +313,48 @@ describe('TournamentTestLabPage', () => {
     expect(api.runTournamentTestLab).toHaveBeenCalledTimes(1)
   })
 
+  it('localizes known match statuses without altering selected filter or rerunning the experiment', async () => {
+    const user = userEvent.setup()
+    api.runTournamentTestLab.mockResolvedValue({
+      ...result,
+      runs: [{
+        ...result.runs[0],
+        match_results: [
+          ...result.runs[0].match_results,
+          {...result.runs[0].match_results[0], node_id: 'R1-BYE', status: 'bye',
+            winner_player_id: 'P2', set_scores: [], rally_count: 0}
+        ]
+      }]
+    })
+    renderWithRoute(<LocalizedPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', {name: 'Load scratch copy'}))
+    await user.click(screen.getByRole('button', {name: 'Run tournament scenario'}))
+    const filter = await screen.findByRole('combobox', {name: 'Tournament Lab match status filter'})
+    await user.selectOptions(filter, 'bye')
+    expect(filter).toHaveValue('bye')
+    await user.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    expect(filter).toHaveValue('bye')
+    expect(screen.getByRole('option', {name: 'volný postup (bye)'})).toBeInTheDocument()
+    const table = screen.getByRole('table', {name: 'Tournament Lab match results'})
+    expect(within(table).getByRole('cell', {name: 'volný postup (bye)'})).toBeInTheDocument()
+    expect(within(table).queryByRole('cell', {name: 'R1-M1'})).not.toBeInTheDocument()
+    expect(api.runTournamentTestLab).toHaveBeenCalledTimes(1)
+    expect(api.createTournamentLabSession).not.toHaveBeenCalled()
+  })
+
+  it('localizes assertion status in Czech while preserving the original result and single execution', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<LocalizedPage />, '/admin/labs/tournament')
+    await user.click(await screen.findByRole('button', {name: 'Load scratch copy'}))
+    await user.click(screen.getByRole('button', {name: 'Run tournament scenario'}))
+    const table = await screen.findByRole('table', {name: 'Tournament Lab assertions'})
+    expect(within(table).getByRole('cell', {name: 'passed'})).toBeInTheDocument()
+    await user.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    expect(within(table).getByRole('cell', {name: 'splněno (passed)'})).toBeInTheDocument()
+    expect(api.runTournamentTestLab).toHaveBeenCalledTimes(1)
+    expect(api.createTournamentLabSession).not.toHaveBeenCalled()
+  })
+
   it('hides previous inspection and run evidence when the editable scenario changes', async () => {
     const user = userEvent.setup()
     renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
@@ -309,6 +389,21 @@ describe('TournamentTestLabPage', () => {
     await user.click(screen.getByRole('button', { name: 'Run tournament scenario' }))
     expect(screen.getByText('Batch match seeds must be comma-separated integers.')).toBeInTheDocument()
     expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+  })
+
+  it('retries an unavailable built-in tournament list without overwriting scratch changes', async () => {
+    const user = userEvent.setup()
+    api.getTournamentLabBuiltInScenarios.mockRejectedValueOnce(new Error('Tournament registry offline'))
+    renderWithRoute(<TournamentTestLabPage />, '/admin/labs/tournament')
+    const editor = screen.getByRole('textbox', { name: 'Tournament Lab scenario JSON' })
+    fireEvent.change(editor, { target: { value: '{"local":"draft"}' } })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Tournament registry offline')
+    await user.click(screen.getByRole('button', {name: 'Refresh built-in scenarios'}))
+    expect(await screen.findByRole('button', {name: 'Load scratch copy'})).toBeInTheDocument()
+    expect(editor).toHaveValue('{"local":"draft"}')
+    expect(api.getTournamentLabBuiltInScenarios).toHaveBeenCalledTimes(2)
+    expect(api.runTournamentTestLab).not.toHaveBeenCalled()
+    expect(api.createTournamentLabSession).not.toHaveBeenCalled()
   })
 
   it('manually refreshes Tournament Test Sessions without simulating or saving a session', async () => {

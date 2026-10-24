@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { useState } from 'react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -10,7 +11,13 @@ const api = vi.hoisted(() => ({
   listRunBranches: vi.fn().mockResolvedValue({run_branches: []}),
   listSavedRevisionHistory: vi.fn().mockResolvedValue({saved_revisions: []}), runMatchTestLab: vi.fn(), getMatchLabBuiltInScenarios: vi.fn(), getMatchLabSessions: vi.fn(), createMatchLabSession: vi.fn(), updateMatchLabSession: vi.fn(), runMatchLabSession: vi.fn(), importMatchLabSavedRevisionPlayer: vi.fn() }))
 vi.mock('../api/client', () => api)
-vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en', t: (key: string) => key})}))
+const testLocale = vi.hoisted(() => ({language: 'en' as 'en' | 'cs'}))
+vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: testLocale.language, t: (key: string) => key})}))
+function LocalizedMatchPage(): JSX.Element {
+  const [cs, setCs] = useState(false)
+  testLocale.language = cs ? 'cs' : 'en'
+  return <><button type="button" onClick={() => setCs(value => !value)}>Toggle test language</button><MatchTestLabPage /></>
+}
 
 const result = {
   schema_version: 'match_test_lab_result.v1',
@@ -63,6 +70,7 @@ const result = {
 
 describe('MatchTestLabPage', () => {
   beforeEach(() => {
+    testLocale.language = 'en'
     for (const fn of Object.values(api)) fn.mockReset()
     api.runMatchTestLab.mockResolvedValue(result)
     api.runMatchLabSession.mockResolvedValue(result)
@@ -71,6 +79,36 @@ describe('MatchTestLabPage', () => {
     api.importMatchLabSavedRevisionPlayer.mockResolvedValue(undefined)
   })
 
+
+  it('shows Czech batch-seed validation without issuing a Match request', async () => {
+    renderWithRoute(<LocalizedMatchPage />, '/admin/labs/match')
+    fireEvent.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    fireEvent.change(screen.getByLabelText('Match Lab batch seeds'), {target: {value: '1, 1'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Spustit scénář'}))
+    expect(screen.getByRole('alert')).toHaveTextContent('Seedy dávky se nesmí opakovat.')
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+    expect(api.createMatchLabSession).not.toHaveBeenCalled()
+  })
+
+  it('keeps the scratch JSON, seed and request intact when switching to Czech', async () => {
+    renderWithRoute(<LocalizedMatchPage />, '/admin/labs/match')
+    const editor = screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement
+    const draft = JSON.parse(editor.value)
+    draft.seed = 429
+    fireEvent.change(editor, {target: {value: JSON.stringify(draft)}})
+    fireEvent.change(screen.getByLabelText('Match Lab batch seeds'), {target: {value: '12, 13'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    expect(screen.getByLabelText('Match Lab batch seeds')).toHaveValue('12, 13')
+    expect(JSON.parse((screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement).value).seed).toBe(429)
+    expect(api.createMatchLabSession).not.toHaveBeenCalled()
+    expect(api.updateMatchLabSession).not.toHaveBeenCalled()
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name: 'Spustit scénář'}))
+    await waitFor(() => expect(api.runMatchTestLab).toHaveBeenCalledWith(expect.objectContaining({
+      scenario: expect.objectContaining({seed: 429}),
+      batch_seeds: [12, 13]
+    })))
+  })
 
   it('creates an isolated Session from the current scratch JSON without automatically running', async () => {
     const user = userEvent.setup()
@@ -126,6 +164,18 @@ describe('MatchTestLabPage', () => {
     expect(screen.getByText(/LAB-B: 1/)).toBeInTheDocument()
   })
 
+  it('shows localized completion reason without altering canonical Match results or recomputing', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<LocalizedMatchPage />, '/admin/labs/match')
+    await user.click(screen.getByRole('button', {name: 'Run scenario'}))
+    const table = await screen.findByRole('table', {name: 'Match Lab results'})
+    expect(within(table).getAllByRole('cell', {name: 'COMPLETED'})).toHaveLength(2)
+    await user.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    expect(within(table).getAllByRole('cell', {name: 'dohráno (COMPLETED)'})).toHaveLength(2)
+    expect(api.runMatchTestLab).toHaveBeenCalledTimes(1)
+    expect(api.createMatchLabSession).not.toHaveBeenCalled()
+  })
+
   it('filters Match Lab batch results by winner without changing diagnostics or rerunning the API', async () => {
     const user = userEvent.setup()
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
@@ -175,6 +225,23 @@ describe('MatchTestLabPage', () => {
     await user.click(screen.getByRole('button', { name: 'Run scenario' }))
     expect(screen.getByRole('alert')).toHaveTextContent('Batch seeds must be comma-separated integers.')
     expect(api.runMatchTestLab).not.toHaveBeenCalled()
+  })
+
+  it('recovers a failed built-in list in Czech without replacing scratch JSON or writing', async () => {
+    const user = userEvent.setup()
+    api.getMatchLabBuiltInScenarios.mockRejectedValueOnce(new Error('Match registry offline'))
+      .mockResolvedValue([])
+    renderWithRoute(<LocalizedMatchPage />, '/admin/labs/match')
+    await user.click(screen.getByRole('button', { name: 'Toggle test language' }))
+    const editor = screen.getByRole('textbox', { name: 'Match Lab scenario JSON' })
+    fireEvent.change(editor, { target: { value: '{"preserve":"local"}' } })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Match registry offline')
+    await user.click(screen.getByRole('button', { name: 'Obnovit vestavěné scénáře' }))
+    expect(await screen.findByText('Registr neobsahuje žádné vestavěné scénáře.')).toBeInTheDocument()
+    expect(editor).toHaveValue('{"preserve":"local"}')
+    expect(api.getMatchLabBuiltInScenarios).toHaveBeenCalledTimes(2)
+    expect(api.runMatchTestLab).not.toHaveBeenCalled()
+    expect(api.createMatchLabSession).not.toHaveBeenCalled()
   })
 
   it('manually refreshes Match Test Session inventory without modifying or running any session', async () => {

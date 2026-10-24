@@ -1,5 +1,6 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { onlineManager } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -23,7 +24,13 @@ const api = vi.hoisted(() => ({
   initialPopulationExportUrl: vi.fn()
 }))
 vi.mock('../api/client', () => api)
-vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: 'en', t: (key: string) => key})}))
+const uiLocale = vi.hoisted(() => ({language: 'en' as 'en' | 'cs'}))
+vi.mock('../i18n/LanguageContext', () => ({useLanguage: () => ({language: uiLocale.language, t: (key: string) => key})}))
+function LocalizedPage(): JSX.Element {
+  const [czech, setCzech] = useState(false)
+  uiLocale.language = czech ? 'cs' : 'en'
+  return <><button type="button" onClick={() => setCzech(value => !value)}>Toggle test language</button><PlayerTestLabPage /></>
+}
 
 const scenario = {
   schema_version: 'player_test_lab_scenario.v1',
@@ -167,6 +174,7 @@ const result = {
 
 describe('PlayerTestLabPage', () => {
   beforeEach(() => {
+    uiLocale.language = 'en'
     api.getPlayerLabBuiltInScenarios.mockReset()
     api.runPlayerTestLab.mockReset()
     api.listPlayerLabSessions.mockReset().mockResolvedValue([])
@@ -182,6 +190,24 @@ describe('PlayerTestLabPage', () => {
       scenario
     }])
     api.runPlayerTestLab.mockResolvedValue(result)
+  })
+
+
+  it('preserves a selected saved Session and unchanged Run payload on a CS/EN switch', async () => {
+    const saved = {session_id: 'original', version: 1, session_fingerprint: 'a'.repeat(64), display_name: 'Original test', scenario}
+    api.listPlayerLabSessions.mockResolvedValue([saved])
+    renderWithRoute(<LocalizedPage />, '/admin/labs/player')
+    await screen.findByRole('option', {name: 'Original test'})
+    fireEvent.change(screen.getByLabelText('Open Player Test Session'), {target: {value: saved.session_id}})
+    expect(screen.getByLabelText('Open Player Test Session')).toHaveValue(saved.session_id)
+    fireEvent.click(screen.getByRole('button', {name: 'Toggle test language'}))
+    expect(screen.getByLabelText('Open Player Test Session')).toHaveValue(saved.session_id)
+    expect((screen.getByLabelText('Player Lab scenario JSON') as HTMLTextAreaElement).value).toContain('development-activity-baseline')
+    expect(api.savePlayerLabSession).not.toHaveBeenCalled()
+    expect(api.importPlayerLabHistory).not.toHaveBeenCalled()
+    expect(api.runPlayerLabSession).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name: 'Spustit scénář'}))
+    await waitFor(() => expect(api.runPlayerLabSession).toHaveBeenCalledWith(saved.session_id, saved.session_fingerprint))
   })
 
   it.each(['saved', 'scratch'])('keeps the submitted %s source when a paused request resumes after switching selection', async kind => {
@@ -264,6 +290,32 @@ describe('PlayerTestLabPage', () => {
     expect(JSON.parse(editor.value)).toEqual(submitted)
     await user.click(screen.getByRole('button', {name: 'Run scenario'}))
     expect(api.runPlayerLabSession).toHaveBeenCalledWith('saved-player', '3'.repeat(64))
+  })
+
+  it('requires fresh discard consent after an additional local Player Session edit',async()=>{
+    const saved={session_id:'saved-player',version:1,session_fingerprint:'1'.repeat(64),display_name:'Saved Player',scenario}
+    api.listPlayerLabSessions.mockResolvedValueOnce([saved]).mockResolvedValue([{...saved,version:2,session_fingerprint:'2'.repeat(64)}])
+    const user=userEvent.setup()
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    await screen.findByRole('option',{name:'Saved Player'})
+    await user.selectOptions(screen.getByLabelText('Open Player Test Session'),'saved-player')
+    const editor=screen.getByRole('textbox',{name:'Player Lab scenario JSON'})
+    const first=JSON.stringify({...scenario,scenario_id:'first-unsaved'})
+    fireEvent.change(editor,{target:{value:first}})
+    await user.click(screen.getByRole('button',{name:'Refresh Player Test Sessions'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('saved Test Session changed')
+    const consent=screen.getByRole('checkbox',{name:'Discard local edits when reloading'})
+    const reload=screen.getByRole('button',{name:'Reload saved Test Session'})
+    expect(reload).toBeDisabled()
+    await user.click(consent)
+    expect(reload).toBeEnabled()
+    const second=JSON.stringify({...scenario,scenario_id:'newer-unsaved'})
+    fireEvent.change(editor,{target:{value:second}})
+    expect(editor).toHaveValue(second)
+    expect(screen.getByRole('checkbox',{name:'Discard local edits when reloading'})).not.toBeChecked()
+    expect(screen.getByRole('button',{name:'Reload saved Test Session'})).toBeDisabled()
+    expect(api.savePlayerLabSession).not.toHaveBeenCalled()
+    expect(api.runPlayerLabSession).not.toHaveBeenCalled()
   })
 
   it('retains in-flight status after editing and never publishes the detached old result', async () => {
@@ -399,6 +451,21 @@ describe('PlayerTestLabPage', () => {
     expect(await screen.findByText('Development activity baseline')).toBeInTheDocument()
     expect(api.getPlayerLabBuiltInScenarios).toHaveBeenCalledTimes(2)
     expect(api.runPlayerTestLab).not.toHaveBeenCalled()
+  })
+
+  it('retries a failed Player built-in fetch without overriding an edited scratch scenario', async () => {
+    const user = userEvent.setup()
+    api.getPlayerLabBuiltInScenarios.mockRejectedValueOnce(new Error('Player registry offline'))
+    renderWithRoute(<PlayerTestLabPage />, '/admin/labs/player')
+    const editor = screen.getByRole('textbox', {name: 'Player Lab scenario JSON'})
+    fireEvent.change(editor, {target: {value: '{"local":"player"}'}})
+    expect(await screen.findByRole('alert')).toHaveTextContent('Player registry offline')
+    await user.click(screen.getByRole('button', {name: 'Refresh built-in scenarios'}))
+    expect(await screen.findByText('Development activity baseline')).toBeInTheDocument()
+    expect(editor).toHaveValue('{"local":"player"}')
+    expect(api.getPlayerLabBuiltInScenarios).toHaveBeenCalledTimes(2)
+    expect(api.runPlayerTestLab).not.toHaveBeenCalled()
+    expect(api.savePlayerLabSession).not.toHaveBeenCalled()
   })
 
   it('shows a failed Player Lab built-in fetch as an error, not an empty list', async () => {

@@ -85,6 +85,8 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const sourceEventId = snapshot?.source_event_id ?? null
   const neighboringSnapshots = historyMismatch ? [] : (snapshotsQuery.data?.snapshots ?? [])
+  const neighborHistoryUnavailable = snapshotsQuery.isLoading || Boolean(snapshotsQuery.error) || historyMismatch ||
+    !snapshotsQuery.data || !neighboringSnapshots.some((item) => item.snapshot_sequence === parsedSequence)
   const currentSnapshotIndex = neighboringSnapshots.findIndex((item) => item.snapshot_sequence === parsedSequence)
   const previousSnapshot = currentSnapshotIndex > 0 ? neighboringSnapshots[currentSnapshotIndex - 1] : null
   const nextSnapshot =
@@ -96,6 +98,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
     ? (eventsMismatch ? null : eventsQuery.data?.events.find((event) => event.event_id === sourceEventId) ?? null)
     : null
   const plannedSourceEvent = sourceEventId && runQuery.data?.run.run_id === runId ? findPlannedEventContext(runQuery.data, sourceEventId) : null
+  const relatedSiblingUnavailable = siblingSnapshotsQuery.isLoading || Boolean(siblingSnapshotsQuery.error) || siblingMismatch || !siblingSnapshotsQuery.data
   const relatedSiblingSnapshots = sourceEventId
     ? (siblingMismatch ? [] : siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === sourceEventId) ?? [])
     : []
@@ -128,7 +131,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
                   #{previousSnapshot.snapshot_sequence}
                 </Link>
               ) : (
-                t('None (start of history)')
+                neighborHistoryUnavailable ? t('Unavailable') : t('None (start of history)')
               )
             },
             {
@@ -136,7 +139,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
               value: nextSnapshot ? (
                 <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}/${nextSnapshot.snapshot_sequence}`}>#{nextSnapshot.snapshot_sequence}</Link>
               ) : (
-                t('None (latest snapshot)')
+                neighborHistoryUnavailable ? t('Unavailable') : t('None (latest snapshot)')
               )
             }
           ]}
@@ -163,8 +166,11 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
           <SectionCard title={t('Snapshot summary')}>
             <button type="button" onClick={() => void snapshotQuery.refetch()}>{t('Refresh read-only data')}</button>
             {snapshotMismatch && <p role="alert" className="error">{t('Snapshot detail does not match the requested sequence.')}</p>}
+            {siblingMismatch && <p role="alert" className="error">{t('Snapshot sibling history belongs to another Run.')}</p>}
+            {eventsMismatch && <p role="alert" className="error">{t('Event context belongs to another Run.')}</p>}
             {historyMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
-            {snapshotQuery.isLoading && <p className="status">{t('Loading snapshot details...')}</p>}
+            {snapshotsQuery.error && <p role="alert" className="error">{t('Failed to load snapshots history')}: {formatApiError(snapshotsQuery.error)}</p>}
+            {snapshotQuery.isLoading && <p role="status" className="status">{t('Loading snapshot details...')}</p>}
             {snapshotQuery.error && !isApiNotFound(snapshotQuery.error) && (
               <p className="error">{t('Failed to load snapshot details')}: {formatApiError(snapshotQuery.error)}</p>
             )}
@@ -185,6 +191,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
                 plannedSourceEventUnavailable={runQuery.isLoading || Boolean(runQuery.error) || runQuery.data?.run.run_id !== runId}
                 relatedSiblingSnapshots={relatedSiblingSnapshots}
                 siblingMode={siblingMode}
+                relatedSiblingUnavailable={relatedSiblingUnavailable}
               />
             </SectionCard>
           ) : null}
@@ -238,7 +245,8 @@ function SourceEventContext({
   plannedSourceEvent,
   plannedSourceEventUnavailable,
   relatedSiblingSnapshots,
-  siblingMode
+  siblingMode,
+  relatedSiblingUnavailable
 }: {
   runId: string
   sourceEventId: string | null
@@ -248,6 +256,7 @@ function SourceEventContext({
   plannedSourceEventUnavailable: boolean
   relatedSiblingSnapshots: Array<RankingSnapshot | RaceSnapshot>
   siblingMode: SnapshotMode
+  relatedSiblingUnavailable: boolean
 }): JSX.Element {
   const t = useHistoryText()
   if (!sourceEventId) {
@@ -308,7 +317,9 @@ function SourceEventContext({
         <EmptyState message={t('source_event_id is present, but this event is not in season_state.ordered_events for the current run.')} />
       )}
 
-      {relatedSiblingSnapshots.length > 0 ? (
+      {relatedSiblingUnavailable ? (
+        <p role="status" className="status">{t('Related snapshots currently unavailable')}</p>
+      ) : relatedSiblingSnapshots.length > 0 ? (
         <>
           <h4>{t('Related')} {siblingMode} {t('snapshots from the same source event')}</h4>
           <ul className="item-list" aria-label={`${t('Related')} ${siblingMode} snapshots`}>

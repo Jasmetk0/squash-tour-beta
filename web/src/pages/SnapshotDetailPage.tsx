@@ -174,7 +174,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
             {snapshotMismatch && <p role="alert" className="error">{t('Snapshot detail does not match the requested sequence.')}</p>}
             {siblingMismatch && <p role="alert" className="error">{t('Snapshot sibling history belongs to another Run.')}</p>}
             {eventsMismatch && <p role="alert" className="error">{t('Event context belongs to another Run.')}</p>}
-            {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>
+            {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>}
             {sourceSeasonMismatch && <p role="alert" className="error">{t('Source event season does not match the current plan. Planned links are hidden.')}</p>}
             {historyMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
             {snapshotsQuery.error && <p role="alert" className="error">{t('Failed to load snapshots history')}: {formatApiError(snapshotsQuery.error)}</p>}

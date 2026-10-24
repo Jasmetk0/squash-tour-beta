@@ -193,7 +193,7 @@ export function RunDiagnosticsPage(): JSX.Element {
 
       <SectionCard title={t('Run diagnostics summary')}>
         {runQuery.isLoading && <p className="status">{t('Loading run diagnostics...')}</p>}
-        {runQuery.error && <p className="error">Failed to load run details: {formatApiError(runQuery.error)}</p>}
+        {runQuery.error && <p className="error">{t('Failed to load run details')}: {formatApiError(runQuery.error)}</p>}
         {runMismatch && <p role="alert" className="error">{t('Run details belong to another Run. Its progress and planned week are hidden.')}</p>}
         {(seasonStateMismatch || nextEventSeasonMismatch) && (
           <p role="alert" className="error">{t('Run calendar and progress disagree. Current-week links are hidden.')}</p>
@@ -202,7 +202,7 @@ export function RunDiagnosticsPage(): JSX.Element {
           <p role="alert" className="error">{t('Run detail and status summary disagree on season or progress. Current-week links are hidden.')}</p>
         )}
         {statusSummaryQuery.error && (
-          <p className="error">Failed to load status summary: {formatApiError(statusSummaryQuery.error)}</p>
+          <p className="error">{t('Failed to load status summary')}: {formatApiError(statusSummaryQuery.error)}</p>
         )}
         {statusMismatch && <p role="alert" className="error">{t('Status summary belongs to another Run. Its progress and counts are hidden.')}</p>}
         {(safeRun || safeStatus) && (
@@ -247,7 +247,7 @@ export function RunDiagnosticsPage(): JSX.Element {
       <SectionCard title={t('Finals and rollover')}>
         {(finalsSummaryQuery.isLoading || latestRolloverQuery.isLoading) && <p className="status">{t('Loading finals and rollover...')}</p>}
         {finalsSummaryQuery.error && !isApiNotFound(finalsSummaryQuery.error) && (
-          <p className="error">Failed to load Finals summary: {formatApiError(finalsSummaryQuery.error)}</p>
+          <p className="error">{t('Failed to load Finals summary')}: {formatApiError(finalsSummaryQuery.error)}</p>
         )}
         {finalsMismatch && <p role="alert" className="error">{t('Finals summary contains mismatched Run or season data. Its status and inspection links are hidden.')}</p>}
         {rolloverMismatch && <p role="alert" className="error">{t('Rollover summary belongs to another Run. Its result and inspection link are hidden.')}</p>}
@@ -278,17 +278,17 @@ export function RunDiagnosticsPage(): JSX.Element {
           <EmptyState message={t('No rollover has been executed for this run yet.')} />
         )}
         {latestRolloverQuery.error && !isApiNotFound(latestRolloverQuery.error) && (
-          <p className="error">Failed to load latest rollover: {formatApiError(latestRolloverQuery.error)}</p>
+          <p className="error">{t('Failed to load latest rollover')}: {formatApiError(latestRolloverQuery.error)}</p>
         )}
       </SectionCard>
 
       <SectionCard title={t('Source and lineage')}>
         {(sourceQuery.isLoading || lineageQuery.isLoading) && <p className="status">{t('Loading source and lineage...')}</p>}
         {sourceQuery.error && !isApiNotFound(sourceQuery.error) && (
-          <p className="error">Failed to load run source: {formatApiError(sourceQuery.error)}</p>
+          <p className="error">{t('Failed to load run source')}: {formatApiError(sourceQuery.error)}</p>
         )}
         {lineageQuery.error && !isApiNotFound(lineageQuery.error) && (
-          <p className="error">Failed to load run lineage: {formatApiError(lineageQuery.error)}</p>
+          <p className="error">{t('Failed to load run lineage')}: {formatApiError(lineageQuery.error)}</p>
         )}
         {lineageMismatch && <p role="alert" className="error">{t('Lineage belongs to another Run. Child count and season-chain inspection link are hidden.')}</p>}
         {sourceQuery.data && (
@@ -387,7 +387,7 @@ export function RunDiagnosticsPage(): JSX.Element {
           isLoading={eventsQuery.isLoading}
           loadingText={t('Loading recent events...')}
           errorText={eventsMismatch ? t('Event history belongs to a different Run.') :
-            eventsQuery.error ? `Failed to load events: ${formatApiError(eventsQuery.error)}` : undefined}
+            eventsQuery.error ? `${t('Failed to load events')}: ${formatApiError(eventsQuery.error)}` : undefined}
           items={safeEvents.slice().sort((a, b) => b.event_sequence - a.event_sequence).slice(0, 3)}
           emptyText={t('No events are available yet.')}
           listAriaLabel="Diagnostics recent events"

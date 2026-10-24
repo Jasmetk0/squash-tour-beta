@@ -85,6 +85,14 @@ The Finals summary, the per-artifact detail, and rollover records are loaded fro
 
 No backend endpoints, shared API types, query keys, simulation controls, router, global i18n, or cross-PR files were touched. Exact-head CI evidence must include the stable baseline, changed test suites, and TypeScript + Vite production build.
 
+## Follow-up — delayed query updates and plan indices
+
+- **Stored event plan positions:** the ordered season plan is an array internally indexed from zero, but the UI now consistently presents **position 1 for the first event**. This matches the existing Activity/Snapshots conventions and does not reorder or mutate server data. A regression checks the first two positions.
+- **Rollover source revalidation:** a completed player/transitions read can become invalid when its separately loaded rollover summary later reveals a different source season, and can become valid again after a read-only refresh. The filtered payload memoization now depends on the **validated** transition/player arrays, not only the raw query responses. This prevents a previously filtered empty list from remaining falsely empty when independent source evidence changes.
+- **Regression:** one test deliberately resolves the rollover summary later than the unchanged player responses, changes the active player filter while the source is invalid, and then revalidates the same data through the existing read-only refresh. The original zero-valued player state remains intact.
+
+No query keys, API calls, mutation endpoints, global components, or native Product Run history implementation were modified.
+
 ## Verification plan and evidence
 
 - Retained English historical regressions explicitly select English inside their test mocks; they do not weaken or delete legacy sequence/progress mismatch assertions.

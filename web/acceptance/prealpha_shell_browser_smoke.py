@@ -133,7 +133,9 @@ def main() -> None:
                 evidence["world_package_detail"] = world["world_id"]
             page.goto(base + "/admin/packages/category/hybrid")
             expect(page.get_by_role("heading", name="Hybrid", exact=True)).to_be_visible()
-            expect(page.get_by_text("No independent registry for this category yet.")).to_be_visible()
+            expect(page.get_by_role("status").filter(
+                has_text="A verified package inventory for this category is not yet available."
+            )).to_be_visible()
             expect(page.locator(".package-index-row")).to_have_count(0)
             evidence["packages_registered"] = len({w["world_id"] for w in worlds})
 

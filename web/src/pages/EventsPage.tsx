@@ -39,7 +39,7 @@ export function EventsPage(): JSX.Element {
   const planUnavailable = runQuery.isLoading || Boolean(runQuery.error) || !runQuery.data || runMismatch || planSeasonMismatch
   const orderedEventContext = useMemo(() => {
     const map = new Map<string, { season: number; week: number; tour: string; category: string; templateId: string; planPosition: number }>()
-    const orderedEvents = runQuery.data?.run.run_id === runId && !planSeasonMismatch ? runQuery.data.season_state.ordered_events : []
+    const orderedEvents = !planUnavailable ? runQuery.data?.season_state.ordered_events ?? [] : []
 
     orderedEvents.forEach((event, index) => {
       if (event.season !== runQuery.data?.season_state.season) return
@@ -54,7 +54,7 @@ export function EventsPage(): JSX.Element {
     })
 
     return map
-  }, [runId, runQuery.data, planSeasonMismatch])
+  }, [runId, runQuery.data, planUnavailable])
   // Persisted event IDs may be reused across seasons; join only matching seasons.
   const getEventPlanContext = (event: (typeof events)[number]) => {
     const context = orderedEventContext.get(event.event_id)

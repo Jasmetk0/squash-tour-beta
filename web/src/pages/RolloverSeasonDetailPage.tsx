@@ -89,7 +89,7 @@ export function RolloverSeasonDetailPage(): JSX.Element {
         subtitle={t('Read-only inspection for one rollover target season.')}
       />
       <p className="status">{t('Stored legacy SimulationRun history. This view does not verify Product Run Saved Revision authority.')}</p>
-      <button type="button" onClick={() => { void seasonSummaryQuery.refetch(); void transitionsQuery.refetch(); void playersQuery.refetch() }}>{t('Refresh read-only data')}</button>
+      <button type="button" disabled={invalidSeasonParam} onClick={() => { void seasonSummaryQuery.refetch(); void transitionsQuery.refetch(); void playersQuery.refetch() }}>{t('Refresh read-only data')}</button>
       <CurrentContextStrip
         items={[
           { label: t('Run'), value: runId || 'unknown' },

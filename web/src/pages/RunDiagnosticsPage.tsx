@@ -167,6 +167,12 @@ export function RunDiagnosticsPage(): JSX.Element {
       <p>
         <Link to={`/runs/${encodeURIComponent(runId)}/world-generation`}>{t('Open world generation diagnostics')}</Link>
       </p>
+      <p className="status">{t('Stored legacy SimulationRun history. This view does not verify Product Run Saved Revision authority.')}</p>
+      <button type="button" onClick={() => {
+        void runQuery.refetch(); void statusSummaryQuery.refetch(); void finalsSummaryQuery.refetch()
+        void latestRolloverQuery.refetch(); void sourceQuery.refetch(); void lineageQuery.refetch()
+        void eventsQuery.refetch(); void rankingSnapshotsQuery.refetch(); void raceSnapshotsQuery.refetch()
+      }}>{t('Refresh read-only data')}</button>
       <CurrentContextStrip
         items={[
           { label: t('Season'), value: safeStatus?.season ?? safeRun?.run.season ?? '—' },

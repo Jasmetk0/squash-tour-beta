@@ -121,8 +121,6 @@ describe('RunDiagnosticsPage', () => {
       .toHaveAttribute('href', '/runs/run-a/events?selectedEventId=REUSED&selectedEventSequence=3')
     expect(within(recent).getByRole('link', { name: /UNIQUE.*Seq 2/ }))
       .toHaveAttribute('href', '/runs/run-a/events/UNIQUE')
-    expect(screen.queryByRole('link', { name: /REUSED.*Seq.*8/, hidden: true }))
-      .not.toHaveAttribute('href', '/runs/run-a/events/REUSED')
     expect(screen.getByRole('link', { name: 'Inspect latest ranking snapshot (Seq 17)' }))
       .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/17')
   })

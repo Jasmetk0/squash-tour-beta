@@ -1,18 +1,37 @@
 # Native final-week Edition closing candidate — 24 October 2026
 
-Verified `buuk` `16c6ff737372d27b97c3237b21f7b988218df1ab` includes owner-merged
-#1639 and #1640. The single `feat/native-final-week-closing-20261024` branch
-continues the existing Tour/Full Simulation authorities with a versioned terminal
-Edition result, genuine outgoing Closing Ranking, separate result/closure approvals
-and manual Saves, Saved final season summary and explicit completed extension.
-Original calendar/source/target and old result formats remain immutable.
+Verified base `buuk` `16c6ff737372d27b97c3237b21f7b988218df1ab` includes owner-merged
+#1639 and #1640. One implementation branch `feat/native-final-week-closing-20261024`
+and PR #1642; only the owner merges. No merge or auto-merge is performed.
 
-Initial actual short original-Branch HTTP/SQLite final-week match/points, late
-closure rollback, cold restart and extension/continuation passed in 322.28 s;
-104 focused contracts passed in 3.35 s. Further native fork, W52/W61/W80, actual
-Chromium, adversarial and final-head checks are pending. **WAIT**; no merge or
-pre-alpha release claim. See [scoped contract](docs/NATIVE_FINAL_WEEK_CLOSING.md).
-Only the owner merges; reserved parallel Admin and Lab/Packages files are untouched.
+The existing native Tour/MatchEngine and Full Simulation worker now retain a
+versioned actual final-week Edition result without a fictional publication week.
+Separate result confirmation/Tour Save and closure approval/final Save remain
+explicit. The outgoing Closing Ranking and Saved final season summary include
+real points; final completion opens no week, intake, development or Official
+Ranking beyond the original horizon. Explicit strict extension and a new reviewed
+command can publish that same source once in the genuinely opened next season.
+Historical terminal sources/forks keep their original clock, closure and tasks.
+A newly created historical native fork gets only the already available Run range
+in its new Saved envelope; inherited closure is read-only history, not its own
+completion authority.
+
+Local evidence: original + independent/nested-fork short production HTTP/SQLite
+matrix passed (711.29 s), real final-week Chromium and physical/browser restart
+passed (174.02 s), two actual Editions/Best N = 1 passed (438.40 s), full W52
+final-week/closure/extension passed on the preceding runtime (993.08 s), then its
+actual cold copied fixture passed the final source verifier (37.83 s). Six
+separately rehashed result/physical-source/closing forgeries were rejected with a
+positive cold reopen (100.05 s). Current inherited-summary/task non-mutation read
+passed (18.25 s); 132 focused contracts and 91 frontend contracts passed, build
+passed. These are bounded local proofs, not final-head hosted or release claims.
+
+The complete final-head Native Full Simulation (including new final-week six-case
+matrix and W52/W61/W80), native Tour API/browser, Season, Saved Branch and shared
+control gates must actually execute successfully before recommending merge.
+Draft skips do not count. See [scoped contract and evidence](docs/NATIVE_FINAL_WEEK_CLOSING.md).
+The whole pre-alpha, reference 50-season release gate, reserved parallel Admin/
+Lab/Packages work and known broader Viewer debt remain outside this slice.
 
 ---
 

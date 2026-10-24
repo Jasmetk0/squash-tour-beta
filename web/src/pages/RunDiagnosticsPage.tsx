@@ -441,7 +441,7 @@ export function RunDiagnosticsPage(): JSX.Element {
                     ? t('Available')
                     : t('None yet')
             },
-            { label: t('Source metadata'), value: t(artifactAvailability({ isLoading: sourceQuery.isLoading, error: sourceQuery.error, availableLabel: sourceQuery.data ? t('Available') : '', noneLabel: 'None yet' })) },
+            { label: t('Source metadata'), value: t(artifactAvailability({ isLoading: sourceQuery.isLoading, error: sourceQuery.error, availableLabel: safeSource ? t('Available') : '', noneLabel: 'None yet' })) },
             { label: t('Lineage metadata'), value: t(artifactAvailability({ isLoading: lineageQuery.isLoading, error: lineageMismatch ? new Error('Run mismatch') : lineageQuery.error, availableLabel: safeLineage ? t('Available') : '', noneLabel: 'None yet' })) },
             {
               label: t('Events'),

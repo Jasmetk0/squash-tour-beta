@@ -55,7 +55,9 @@ function getEffectiveWeek(
   return persistedEventById.get(contextEventId)?.week ?? plannedContextByEventId.get(contextEventId)?.week ?? null
 }
 
+import { useHistoryText } from './runHistoryText'
 export function ActivityPage(): JSX.Element {
+  const t = useHistoryText()
   const { runId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
@@ -187,25 +189,25 @@ export function ActivityPage(): JSX.Element {
   return (
     <section className="panel">
       <RunScopedHeader
-        title="Run activity"
+        title={t('Run activity')}
         runId={runId}
-        subtitle="Deterministic run-level feed browser with filterable activity and compact bridge navigation."
+        subtitle={t('Deterministic run-level feed browser with filterable activity and compact bridge navigation.')}
       />
       <CurrentContextStrip
         items={[
-          { label: 'Run', value: runId || 'unknown' },
-          { label: 'Items', value: items.length },
-          { label: 'Matching filters', value: filteredItems.length },
-          { label: 'Selected', value: selectedItem?.label ?? 'None' }
+          { label: t('Run'), value: runId || 'unknown' },
+          { label: t('Items'), value: items.length },
+          { label: t('Matching filters'), value: filteredItems.length },
+          { label: t('Selected'), value: selectedItem?.label ?? t('None') }
         ]}
       />
 
-      <SectionCard title="Filters">
+      <SectionCard title={t('Filters')}>
         <div className="grid">
           <label>
-            Kind
-            <select aria-label="Filter activity by kind" value={kindFilter} onChange={(event) => setKindFilter(event.target.value)}>
-              <option value="">All kinds</option>
+            {t('Kind')}
+            <select aria-label={t('Filter activity by kind')} value={kindFilter} onChange={(event) => setKindFilter(event.target.value)}>
+              <option value="">{t('All kinds')}</option>
               {kindOptions.map((kind) => (
                 <option key={kind} value={kind}>
                   {kind}
@@ -214,9 +216,9 @@ export function ActivityPage(): JSX.Element {
             </select>
           </label>
           <label>
-            Season
-            <select aria-label="Filter activity by season" value={seasonFilter} onChange={(event) => setSeasonFilter(event.target.value)}>
-              <option value="">All seasons</option>
+            {t('Season')}
+            <select aria-label={t('Filter activity by season')} value={seasonFilter} onChange={(event) => setSeasonFilter(event.target.value)}>
+              <option value="">{t('All seasons')}</option>
               {seasonOptions.map((season) => (
                 <option key={season} value={season}>
                   {season}
@@ -225,9 +227,9 @@ export function ActivityPage(): JSX.Element {
             </select>
           </label>
           <label>
-            Week
-            <select aria-label="Filter activity by week" value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
-              <option value="">All weeks</option>
+            {t('Week')}
+            <select aria-label={t('Filter activity by week')} value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
+              <option value="">{t('All weeks')}</option>
               {weekOptions.map((week) => (
                 <option key={week} value={week}>
                   W{week}
@@ -238,23 +240,23 @@ export function ActivityPage(): JSX.Element {
           <label>
             Text
             <input
-              aria-label="Filter activity by label or identifier text"
+              aria-label={t('Filter activity by label or identifier text')}
               value={textFilter}
               onChange={(event) => setTextFilter(event.target.value)}
-              placeholder="Label, event ID, or related run ID"
+              placeholder={t('Label, event ID, or related run ID')}
             />
           </label>
         </div>
       </SectionCard>
 
-      <SectionCard title="Activity feed">
-        {activityQuery.isLoading ? <p className="status">Loading activity feed...</p> : null}
+      <SectionCard title={t('Activity feed')}>
+        {activityQuery.isLoading ? <p className="status">{t('Loading activity feed...')}</p> : null}
         {activityQuery.error ? <p className="error">Failed to load activity feed: {formatApiError(activityQuery.error)}</p> : null}
         {!activityQuery.isLoading && !activityQuery.error && items.length === 0 ? (
-          <EmptyState message="No activity has been persisted for this run yet." />
+          <EmptyState message={t('No activity has been persisted for this run yet.')} />
         ) : null}
         {!activityQuery.isLoading && !activityQuery.error && items.length > 0 && filteredItems.length === 0 ? (
-          <EmptyState message="No activity items match the current filters." />
+          <EmptyState message={t('No activity items match the current filters.')} />
         ) : null}
         {filteredItems.length > 0 ? (
           <SelectableHistoryList
@@ -278,48 +280,48 @@ export function ActivityPage(): JSX.Element {
                 return next
               })
             }}
-            ariaLabel="Run activity feed list"
+            ariaLabel={t('Run activity feed list')}
           />
         ) : null}
       </SectionCard>
 
-      <SectionCard title="Selected activity detail">
+      <SectionCard title={t('Selected activity detail')}>
         {selectedItem ? (
           <>
             <MetadataList
               items={[
-                { label: 'Label', value: selectedItem.label },
-                { label: 'Kind', value: selectedItem.kind },
-                { label: 'Sequence', value: selectedItem.sequence ?? '—' },
-                { label: 'Season', value: selectedItem.season ?? '—' },
-                { label: 'Week context', value: makeWeekContext(selectedItem, selectedWeek) },
-                { label: 'Event ID', value: selectedItem.event_id ?? '—' },
-                { label: 'Source event ID', value: selectedItem.source_event_id ?? '—' },
-                { label: 'Related run ID', value: selectedItem.related_run_id ?? '—' },
+                { label: t('Label'), value: selectedItem.label },
+                { label: t('Kind'), value: selectedItem.kind },
+                { label: t('Sequence'), value: selectedItem.sequence ?? '—' },
+                { label: t('Season'), value: selectedItem.season ?? '—' },
+                { label: t('Week context'), value: t(makeWeekContext(selectedItem, selectedWeek)) },
+                { label: t('Event ID'), value: selectedItem.event_id ?? '—' },
+                { label: t('Source event ID'), value: selectedItem.source_event_id ?? '—' },
+                { label: t('Related run ID'), value: selectedItem.related_run_id ?? '—' },
                 {
-                  label: 'Plan context',
+                  label: t('Plan context'),
                   value: selectedPlannedContext
                     ? `Plan #${selectedPlannedContext.planPosition} (${selectedPlannedContext.category}, ${selectedPlannedContext.templateId})`
-                    : 'No ordered-plan match'
+                    : t('No ordered-plan match')
                 }
               ]}
             />
             <SummaryPills
               items={[
-                { label: 'Week detail', value: selectedWeek != null ? `W${selectedWeek}` : 'Unavailable' },
+                { label: t('Week detail'), value: selectedWeek != null ? `W${selectedWeek}` : t('Unavailable') },
                 {
-                  label: 'Bridge links',
+                  label: t('Bridge links'),
                   value:
-                    activityBridgeItems(runId, selectedItem, selectedWeek, {
+                    activityBridgeItems(runId, selectedItem, selectedWeek, t, {
                       contextEventId: selectedContextEventId,
                       hasPersistedContext: Boolean(selectedPersistedEvent),
                       hasPlannedContext: Boolean(selectedPlannedContext)
-                    }).length || 'None'
+                    }).length || t('None')
                 }
               ]}
             />
             <CompactSummaryCard
-              items={activityBridgeItems(runId, selectedItem, selectedWeek, {
+              items={activityBridgeItems(runId, selectedItem, selectedWeek, t, {
                 contextEventId: selectedContextEventId,
                 hasPersistedContext: Boolean(selectedPersistedEvent),
                 hasPlannedContext: Boolean(selectedPlannedContext)
@@ -329,7 +331,7 @@ export function ActivityPage(): JSX.Element {
             {eventsQuery.error ? <p className="error">Failed to load persisted events context: {formatApiError(eventsQuery.error)}</p> : null}
           </>
         ) : (
-          <EmptyState message="Select an activity item to inspect details." />
+          <EmptyState message={t('Select an activity item to inspect details.')} />
         )}
       </SectionCard>
     </section>
@@ -340,6 +342,7 @@ function activityBridgeItems(
   runId: string,
   item: RunActivityItem,
   selectedWeek: number | null,
+  t: (english: string) => string,
   snapshotContext: { contextEventId: string | null; hasPersistedContext: boolean; hasPlannedContext: boolean }
 ): Array<{ label: string; value: JSX.Element | string }> {
   const { contextEventId, hasPersistedContext, hasPlannedContext } = snapshotContext
@@ -352,14 +355,14 @@ function activityBridgeItems(
     })
     links.push({
       label: 'Planned-event detail',
-      value: <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>Open planned-event detail</Link>
+      value: <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open planned-event detail')}</Link>
     })
   }
 
   if ((item.kind === 'ranking_snapshot' || item.kind === 'race_snapshot') && item.snapshot_sequence != null) {
     const mode = item.kind === 'ranking_snapshot' ? 'ranking' : 'race'
     links.push({
-      label: 'Snapshot detail',
+      label: t('Snapshot detail'),
       value: <Link to={`/runs/${runId}/snapshots/${mode}/${item.snapshot_sequence}`}>Open {mode} snapshot detail</Link>
     })
     links.push({
@@ -384,14 +387,14 @@ function activityBridgeItems(
 
   if (item.kind === 'finals_qualification') {
     links.push({
-      label: 'Finals qualification detail',
+      label: t('Finals qualification detail'),
       value: <Link to={`/runs/${runId}/finals/qualification`}>Open finals qualification detail</Link>
     })
   }
 
   if (item.kind === 'finals_result') {
     links.push({
-      label: 'Finals result detail',
+      label: t('Finals result detail'),
       value: <Link to={`/runs/${runId}/finals/result`}>Open finals result detail</Link>
     })
   }
@@ -475,13 +478,13 @@ function activityBridgeItems(
     item.kind === 'admin_late_replacement_lucky_loser'
   if (supportsWeekInspection && selectedWeek != null) {
     links.push({
-      label: 'Week detail',
+      label: t('Week detail'),
       value: <Link to={`/runs/${runId}/weeks/${selectedWeek}`}>Open week detail page (W{selectedWeek})</Link>
     })
   }
 
   if (links.length === 0) {
-    links.push({ label: 'Links', value: 'No direct bridge links available for this activity item.' })
+    links.push({ label: 'Links', value: t('No direct bridge links available for this activity item.') })
   }
 
   return links

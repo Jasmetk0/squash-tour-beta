@@ -39,7 +39,10 @@ Save and closure boundaries as Admin.
   retains its authentic immutable pre-upgrade root and reviewed receipts.
 - Complete v7 tournament views derive from accepted slot matches. They do not
   apply effects again or grant points to incomplete brackets. Native fork v8
-  views additionally retain actual inherited match owners. Runtime v2 is used
+  views additionally retain actual inherited match owners. Inherited partial-bracket terminal completion additionally uses
+  `calendar_terminal_edition_result.v2`, retaining the original Edition Branch
+  while owning the new result on its actual independent target. Existing v1
+  terminal records keep their old owner contract. Runtime v2 is used
   only when the fork has its own global slot ledger; v1 bytes remain unchanged.
 - Source matches in an inherited partial slot are referenced by ID through the
   authenticated original Saved source. They are not replayed as new target

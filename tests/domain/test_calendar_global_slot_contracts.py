@@ -102,3 +102,37 @@ def test_scheduler_uses_the_nearest_real_slot_without_day_or_seven_slot_limits(s
         ("parallel-a", i) for i in range(4)
     ]
     assert all(len(ids) == 2 for _, _, ids in due)
+
+
+def test_inherited_terminal_record_preserves_original_edition_owner_and_extension_once():
+    from beta_engine.domain.calendar.run_calendar import RunCalendar
+    from beta_engine.domain.rankings.calendar_terminal_result import (
+        CalendarInheritedTerminalRankingResult,
+    )
+    from tests.domain.test_calendar_terminal_result import terminal
+
+    original = terminal(RunCalendar(4, 2, 2040, 1))
+    body = original.model_dump(mode="json")
+    body.update(
+        schema_version="calendar_terminal_edition_result.v2",
+        branch_id="independent",
+        source_edition_branch_id="branch",
+    )
+    result = CalendarInheritedTerminalRankingResult.model_validate_json(
+        __import__("json").dumps(body)
+    )
+    assert result.source_edition_branch_id == original.branch_id
+    assert (
+        result.branch_id == "independent"
+        and result.completed_week == original.completed_week
+    )
+    assert (
+        result.for_publication(RunCalendar(4, 2, 2040, 2)).source_fingerprint
+        == original.source_fingerprint
+    )
+    assert "first_publication_week" not in result.model_dump(mode="json")
+    body["source_edition_branch_id"] = "independent"
+    with pytest.raises(ValueError, match="distinct"):
+        CalendarInheritedTerminalRankingResult.model_validate_json(
+            __import__("json").dumps(body)
+        )

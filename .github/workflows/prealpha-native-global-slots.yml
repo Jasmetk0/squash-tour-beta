@@ -14,7 +14,7 @@ on:
       - 'src/beta_engine/infrastructure/db/native_fork*'
       - 'src/beta_engine/infrastructure/db/repositories.py'
       - 'tests/api/test_calendar_global_slots*.py'
-      - 'tests/domain/test_calendar_global_slots.py'
+      - 'tests/domain/test_calendar_global_slot_contracts.py'
       - 'scripts/native_global_slots_browser.py'
       - 'web/src/pages/CalendarTourPanel*'
       - 'web/src/api/calendarTour.ts'

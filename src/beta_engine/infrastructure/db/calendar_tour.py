@@ -183,7 +183,7 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                     "Edition lacks authentic played event and Saved origin"
                 )
             results = edition_results(authority, event)
-            if results and getattr(results[0], "schema_version", None) == "calendar_terminal_edition_result.v1":
+            if results and getattr(results[0], "schema_version", None) in {"calendar_terminal_edition_result.v1", "calendar_terminal_edition_result.v2"}:
                 receipts = confirmations.get(authority.edition.edition_id, [])
                 if authority.result_confirmed != bool(receipts) or len(receipts) > 1 or (
                     receipts and receipts[0].result.get("results") != [r.model_dump(mode="json") for r in results]
@@ -596,7 +596,7 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None):
     for receipt in state.receipts:
         if receipt.request.get("command", {}).get("action") == "confirm-result":
             for result in receipt.result.get("results", []):
-                if result.get("schema_version") == "calendar_terminal_edition_result.v1":
+                if result.get("schema_version") in {"calendar_terminal_edition_result.v1", "calendar_terminal_edition_result.v2"}:
                     terminal_clocks.setdefault(result["edition_id"], []).append(result["completed_week"]["calendar"])
     for authority in state.editions:
         if not authority.played_saved_head:

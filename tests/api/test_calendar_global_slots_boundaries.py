@@ -23,22 +23,17 @@ pytestmark = pytest.mark.smoke
 
 
 def finish(server):
+    from tests.api.test_native_fork_public_continuation import Tour
+
+    tour = Tour(server, getattr(server, "native_task_branch", "branch"))
     for index in (1, 2):
-        execute(
-            server, command(inspect(server), "next-slot", name=f"boundary-slot-{index}")
-        )
-        save_tour(server)
+        tour.execute("next-slot", f"boundary-slot-{index}")
+        tour.save()
     for eid in ("parallel-a", "parallel-b"):
-        result, _ = execute(
-            server,
-            command(
-                inspect(server),
-                "confirm-result",
-                name=eid + ":boundary-confirm",
-                edition_id=eid,
-            ),
+        result, _ = tour.execute(
+            "confirm-result", eid + ":boundary-confirm", edition_id=eid
         )
-        save_tour(server)
+        tour.save()
         yield result
 
 
@@ -86,16 +81,37 @@ def test_global_slots_all_weeks_and_actual_season_boundary(tmp_path, prepared_sl
         assert inspect(server)["state"] == final["state"]
 
 
-def test_global_original_final_week_closing_restart_extension_once(tmp_path):
+@pytest.mark.parametrize(
+    "forked", [False, True], ids=["original", "partial-native-fork"]
+)
+def test_global_original_final_week_closing_restart_extension_once(tmp_path, forked):
     from tests.api.test_calendar_sporting_horizon_extension import extend, extension
+    from tests.api.test_native_fork_public_continuation import fork
+    from tests.api.test_native_full_simulation_tasks import inspect, save_tour
 
     path = tmp_path / "global-terminal.db"
     database = f"sqlite:///{path}"
     with ApiServer(database_url=database) as server:
         ready(server, 4, seasons=1)
+        branch = "branch"
+        if forked:
+            execute(
+                server,
+                command(inspect(server), "next-match", name="terminal-source-partial"),
+            )
+            saved = save_tour(server)
+            branch = fork(
+                server, saved["revision_id"], name="Terminal partial slot fork"
+            )["branch_id"]
+            server.native_task_branch = branch
         results = list(finish(server))
         assert all(
-            r["schema_version"] == "calendar_terminal_edition_result.v1"
+            r["schema_version"]
+            == (
+                "calendar_terminal_edition_result.v2"
+                if forked
+                else "calendar_terminal_edition_result.v1"
+            )
             and "first_publication_week" not in r
             for result in results
             for r in result["results"]
@@ -140,6 +156,7 @@ def test_global_original_final_week_closing_restart_extension_once(tmp_path):
             revision_id=closed["revision_id"]
         )
     with ApiServer(database_url=database) as server:
+        server.native_task_branch = branch
         assert wait(server, task_id)["state"] == "complete"
         assert inspect(server)["state"] == state
         code, review = extension(server, 2)

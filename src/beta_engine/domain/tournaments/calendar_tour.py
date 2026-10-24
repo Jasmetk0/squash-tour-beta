@@ -470,11 +470,14 @@ def edition_results(authority, event):
         "played": played_fingerprint,
     }
     if terminal:
-        if (event.run_id, event.branch_id, event.source_saved_head) != (
-            authority.ranking_authority.run_id, authority.ranking_authority.branch_id, authority.played_saved_head
-        ):
+        inherited = event.schema_version == "calendar_followup_knockout.v8" and event.branch_id != authority.ranking_authority.branch_id
+        if event.run_id != authority.ranking_authority.run_id or event.source_saved_head != authority.played_saved_head or (event.branch_id != authority.ranking_authority.branch_id and not inherited):
             raise ValueError("Terminal Edition has a foreign played owner/source")
-        return tuple(CalendarTerminalRankingResult(
+        from beta_engine.domain.rankings.calendar_terminal_result import CalendarInheritedTerminalRankingResult
+        result_type = CalendarInheritedTerminalRankingResult if inherited else CalendarTerminalRankingResult
+        inherited_source = {"source_edition_branch_id":authority.ranking_authority.branch_id} if inherited else {}
+        return tuple(result_type(
+            **inherited_source,
             run_id=event.run_id, branch_id=event.branch_id,
             edition_id=event.tournament_id, player_id=award.player_id,
             completed_week=event.week, closing_eligibility_ordinal=event.week.ordinal + 1,

@@ -1,7 +1,7 @@
 import {tourWeekOffset} from './nativeTourCalendar'
 
 export type TourWeek = {calendar:{schema_version:string;weeks_per_year:number;season_start_year_week:number;start_year:number;season_count:number};season_index:number;week:number}
-export type TourResult = {edition_id:string;player_id:string;main_points:number;qualification_points:number;source_fingerprint:string;validity_weeks:number;completed_week:{season_index:number;week:number};first_publication_week?:{season_index:number;week:number};schema_version?:'calendar_terminal_edition_result.v1';closing_eligibility_ordinal?:number}
+export type TourResult = {edition_id:string;player_id:string;main_points:number;qualification_points:number;source_fingerprint:string;validity_weeks:number;completed_week:{season_index:number;week:number};first_publication_week?:{season_index:number;week:number};schema_version?:'calendar_terminal_edition_result.v1'|'calendar_terminal_edition_result.v2';source_edition_branch_id?:string;closing_eligibility_ordinal?:number}
 export type TourContribution = TourResult & {status?:string}
 export type TourSaveReceipt = {schema_version:'calendar_tour_save_receipt.v1';run_id:string;branch_id:string;saved_revision:{revision_id:string;run_id:string;branch_id:string;content_hash:string}}
 export type TourPlayer = {run_id:string;branch_id:string;saved_head_revision_id:string;checkpoint_fingerprint:string;record:{player_id:string;attributes:[string,number][];current_form:number;match_sharpness:number;long_term_fatigue:number};lifecycle:null|{age:number;status:string}}

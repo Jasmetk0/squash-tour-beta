@@ -8,7 +8,7 @@ on:
       - 'src/beta_engine/domain/tournaments/calendar_global_slots.py'
       - 'src/beta_engine/infrastructure/db/calendar_global_slot_origins.py'
       - 'tests/api/test_calendar_global_slots*.py'
-      - 'tests/domain/test_calendar_global_slots.py'
+      - 'tests/domain/test_calendar_global_slot_contracts.py'
       - '.github/workflows/prealpha-native-tour-browser.yml'
       - 'scripts/native_tour_browser_acceptance.py'
       - 'scripts/native_birth_readiness_browser_acceptance.py'

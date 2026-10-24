@@ -49,7 +49,8 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
     enabled: Boolean(runId)
   })
 
-  const snapshots = query.data?.snapshots ?? []
+  const snapshotMismatch = Boolean(query.data && query.data.run_id !== runId)
+  const snapshots = snapshotMismatch ? [] : query.data?.snapshots ?? []
   const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
   const plannedContext = useMemo(() => {
     const map = new Map<string, { week: number; category: string; tour: string; templateId: string; planPosition: number }>()
@@ -139,6 +140,8 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         runId={runId}
         subtitle="Browse stored snapshot history and inspect payload details by sequence."
       />
+      <p className="status">{t('Stored historical snapshot; it is not necessarily the current ranking. The endpoint does not provide a timestamp.')}</p>
+      <p className="status">{t('Stored legacy SimulationRun history. This view does not verify Product Run Saved Revision authority.')}</p>
       <CurrentContextStrip
         items={[
           { label: t('Run'), value: runId || 'unknown' },
@@ -187,12 +190,15 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             />
           </label>
         </div>
+        <button type="button" onClick={() => { setWeekFilter(''); setCategoryFilter(''); setSourceEventFilter('') }}>{t('Reset filters')}</button>
       </SectionCard>
 
       <SectionCard title={t('Snapshot timeline')}>
+        {snapshotMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
+        <button type="button" onClick={() => void query.refetch()}>{t('Refresh read-only data')}</button>
         {query.isLoading && <p className="status">{t('Loading snapshots history...')}</p>}
         {query.error && <p className="error">Failed to load snapshots history: {formatApiError(query.error)}</p>}
-        {!query.isLoading && !query.error && snapshots.length === 0 && (
+        {!query.isLoading && !query.error && !snapshotMismatch && snapshots.length === 0 && (
           <EmptyState message={t('No snapshots are available for this run yet.')} />
         )}
         {!query.isLoading && !query.error && snapshots.length > 0 && filteredSnapshots.length === 0 && (

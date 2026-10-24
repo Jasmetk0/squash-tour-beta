@@ -87,7 +87,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
     runQuery.data.season_state.season != null &&
     runQuery.data.season_state.season !== runQuery.data.run.season)
   const sourceEventId = snapshot?.source_event_id ?? null
-  const neighboringSnapshots = historyMismatch ? [] : (snapshotsQuery.data?.snapshots ?? [])
+  const neighboringSnapshots = historyMismatch || snapshotsQuery.error ? [] : (snapshotsQuery.data?.snapshots ?? [])
   const neighborHistoryUnavailable = snapshotsQuery.isLoading || Boolean(snapshotsQuery.error) || historyMismatch ||
     !snapshotsQuery.data || !neighboringSnapshots.some((item) => item.snapshot_sequence === parsedSequence)
   const currentSnapshotIndex = neighboringSnapshots.findIndex((item) => item.snapshot_sequence === parsedSequence)
@@ -107,7 +107,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
   const plannedSourceEvent = sourceSeasonMismatch ? null : plannedCandidate
   const relatedSiblingUnavailable = siblingSnapshotsQuery.isLoading || Boolean(siblingSnapshotsQuery.error) || siblingMismatch || !siblingSnapshotsQuery.data
   const relatedSiblingSnapshots = sourceEventId
-    ? (siblingMismatch ? [] : siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === sourceEventId) ?? [])
+    ? (siblingMismatch || siblingSnapshotsQuery.error ? [] : siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === sourceEventId) ?? [])
     : []
 
   return (

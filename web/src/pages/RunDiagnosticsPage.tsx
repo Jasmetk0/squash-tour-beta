@@ -93,8 +93,8 @@ export function RunDiagnosticsPage(): JSX.Element {
   // Other independently valid diagnostics remain available if either is wrong.
   const runMismatch = Boolean(runQuery.data && runQuery.data.run.run_id !== runId)
   const statusMismatch = Boolean(statusSummaryQuery.data && statusSummaryQuery.data.run_id !== runId)
-  const safeRun = runQuery.data?.run.run_id === runId ? runQuery.data : null
-  const safeStatus = statusSummaryQuery.data?.run_id === runId ? statusSummaryQuery.data : null
+  const safeRun = !runQuery.error && runQuery.data?.run.run_id === runId ? runQuery.data : null
+  const safeStatus = !statusSummaryQuery.error && statusSummaryQuery.data?.run_id === runId ? statusSummaryQuery.data : null
 
   // Finals include independently identified qualification and result records.
   // A matching outer summary must not conceal a foreign or cross-season artifact.
@@ -111,17 +111,18 @@ export function RunDiagnosticsPage(): JSX.Element {
   ))
   const rolloverMismatch = Boolean(latestRolloverQuery.data && latestRolloverQuery.data.rollover.run_id !== runId)
   const lineageMismatch = Boolean(lineageQuery.data && lineageQuery.data.lineage.run_id !== runId)
-  const safeFinals = !finalsMismatch && finalsSummaryQuery.data?.run_id === runId ? finalsSummaryQuery.data : null
-  const safeRollover = latestRolloverQuery.data?.rollover.run_id === runId ? latestRolloverQuery.data : null
-  const safeLineage = lineageQuery.data?.lineage.run_id === runId ? lineageQuery.data : null
+  const safeFinals = !finalsMismatch && !finalsSummaryQuery.error && finalsSummaryQuery.data?.run_id === runId ? finalsSummaryQuery.data : null
+  const safeRollover = !latestRolloverQuery.error && latestRolloverQuery.data?.rollover.run_id === runId ? latestRolloverQuery.data : null
+  const safeLineage = !lineageQuery.error && lineageQuery.data?.lineage.run_id === runId ? lineageQuery.data : null
+  const safeSource = !sourceQuery.error ? sourceQuery.data : null
 
   // Every history response has a Run ID; never display another Run's artifacts.
   const eventsMismatch = Boolean(eventsQuery.data && eventsQuery.data.run_id !== runId)
   const rankingsMismatch = Boolean(rankingSnapshotsQuery.data && rankingSnapshotsQuery.data.run_id !== runId)
   const racesMismatch = Boolean(raceSnapshotsQuery.data && raceSnapshotsQuery.data.run_id !== runId)
-  const safeEvents = eventsQuery.data?.run_id === runId ? eventsQuery.data.events : []
-  const safeRankingSnapshots = rankingSnapshotsQuery.data?.run_id === runId ? rankingSnapshotsQuery.data.snapshots : []
-  const safeRaceSnapshots = raceSnapshotsQuery.data?.run_id === runId ? raceSnapshotsQuery.data.snapshots : []
+  const safeEvents = !eventsQuery.error && eventsQuery.data?.run_id === runId ? eventsQuery.data.events : []
+  const safeRankingSnapshots = !rankingSnapshotsQuery.error && rankingSnapshotsQuery.data?.run_id === runId ? rankingSnapshotsQuery.data.snapshots : []
+  const safeRaceSnapshots = !raceSnapshotsQuery.error && raceSnapshotsQuery.data?.run_id === runId ? raceSnapshotsQuery.data.snapshots : []
 
   // History endpoints return ascending sequences; the first item is the oldest.
   // Select by persisted sequence rather than relying on response array order.
@@ -228,15 +229,15 @@ export function RunDiagnosticsPage(): JSX.Element {
             />
             <SummaryPills
               items={[
-                { label: t('Events'), value: safeStatus?.history_counts.events ?? (eventsQuery.data?.run_id === runId ? safeEvents.length : '—') },
+                { label: t('Events'), value: safeStatus?.history_counts.events ?? (!eventsQuery.error && eventsQuery.data?.run_id === runId ? safeEvents.length : '—') },
                 {
                   label: t('Ranking snapshots'),
                   value:
-                    safeStatus?.history_counts.ranking_snapshots ?? (rankingSnapshotsQuery.data?.run_id === runId ? safeRankingSnapshots.length : '—')
+                    safeStatus?.history_counts.ranking_snapshots ?? (!rankingSnapshotsQuery.error && rankingSnapshotsQuery.data?.run_id === runId ? safeRankingSnapshots.length : '—')
                 },
                 {
                   label: t('Race snapshots'),
-                  value: safeStatus?.history_counts.race_snapshots ?? (raceSnapshotsQuery.data?.run_id === runId ? safeRaceSnapshots.length : '—')
+                  value: safeStatus?.history_counts.race_snapshots ?? (!raceSnapshotsQuery.error && raceSnapshotsQuery.data?.run_id === runId ? safeRaceSnapshots.length : '—')
                 }
               ]}
             />
@@ -291,14 +292,14 @@ export function RunDiagnosticsPage(): JSX.Element {
           <p className="error">{t('Failed to load run lineage')}: {formatApiError(lineageQuery.error)}</p>
         )}
         {lineageMismatch && <p role="alert" className="error">{t('Lineage belongs to another Run. Child count and season-chain inspection link are hidden.')}</p>}
-        {sourceQuery.data && (
+        {safeSource && (
           <CompactSummaryCard
             items={[
-              { label: t('Source type'), value: sourceQuery.data.source.source_type || t('Unknown') },
+              { label: t('Source type'), value: safeSource.source.source_type || t('Unknown') },
               {
                 label: t('Parent run'),
-                value: sourceQuery.data.source.parent_run_id ? (
-                  <Link to={`/runs/${encodeURIComponent(sourceQuery.data.source.parent_run_id)}`}>{sourceQuery.data.source.parent_run_id}</Link>
+                value: safeSource.source.parent_run_id ? (
+                  <Link to={`/runs/${encodeURIComponent(safeSource.source.parent_run_id)}`}>{safeSource.source.parent_run_id}</Link>
                 ) : (
                   t('No parent run')
                 )
@@ -307,7 +308,7 @@ export function RunDiagnosticsPage(): JSX.Element {
             ]}
           />
         )}
-        {!sourceQuery.data && isApiNotFound(sourceQuery.error) && <EmptyState message={t('No source metadata available.')} />}
+        {!safeSource && isApiNotFound(sourceQuery.error) && <EmptyState message={t('No source metadata available.')} />}
         {!safeLineage && isApiNotFound(lineageQuery.error) && <EmptyState message={t('No lineage metadata available.')} />}
       </SectionCard>
 

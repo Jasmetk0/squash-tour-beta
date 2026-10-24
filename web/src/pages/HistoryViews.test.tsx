@@ -354,7 +354,7 @@ describe('history list ordering, detail selection, and states', () => {
     expect(screen.queryByRole('link', { name: 'Open source event detail page' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Open planned-event detail page' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Open week detail page/i })).not.toBeInTheDocument()
-    expect(screen.getByText('Unavailable: the event ID identifies multiple stored records.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Unavailable: the event ID identifies multiple stored records.')).not.toBeInTheDocument()
     expect(screen.queryByText('W35')).not.toBeInTheDocument()
     expect(screen.queryByText('W9')).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Open race snapshot history' })).not.toBeInTheDocument()

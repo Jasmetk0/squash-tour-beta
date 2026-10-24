@@ -21,7 +21,9 @@ function parseToSeasonParam(toSeasonParam: string | undefined): number | null {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
 }
 
+import { useHistoryText } from './runHistoryText'
 export function RolloverSeasonDetailPage(): JSX.Element {
+  const t = useHistoryText()
   const { runId = '', toSeason: toSeasonParam } = useParams()
   const [playerIdFilter, setPlayerIdFilter] = useState('')
 
@@ -68,33 +70,33 @@ export function RolloverSeasonDetailPage(): JSX.Element {
   return (
     <section className="panel">
       <RunScopedHeader
-        title="Rollover season detail"
+        title={t('Rollover season detail')}
         runId={runId}
-        subtitle="Read-only inspection for one rollover target season."
+        subtitle={t('Read-only inspection for one rollover target season.')}
       />
       <CurrentContextStrip
         items={[
-          { label: 'Run', value: runId || 'unknown' },
-          { label: 'Target season', value: toSeason ?? 'Invalid' },
-          { label: 'Filter', value: normalizedFilter || 'None' }
+          { label: t('Run'), value: runId || 'unknown' },
+          { label: t('Target season'), value: toSeason ?? t('Invalid') },
+          { label: 'Filter', value: normalizedFilter || t('None') }
         ]}
       />
 
-      <SectionCard title="Rollover season context">
+      <SectionCard title={t('Rollover season context')}>
         <MetadataList
           items={[
-            { label: 'Overview', value: <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>Back to rollover overview</Link> },
-            { label: 'Run', value: runId || 'unknown' },
-            { label: 'To season parameter', value: toSeasonParam ?? 'missing' }
+            { label: t('Overview'), value: <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>{t('Back to rollover overview')}</Link> },
+            { label: t('Run'), value: runId || 'unknown' },
+            { label: t('To season parameter'), value: toSeasonParam ?? 'missing' }
           ]}
         />
-        {invalidSeasonParam ? <EmptyState message="Invalid or missing target season in URL. Use a positive integer season." /> : null}
+        {invalidSeasonParam ? <EmptyState message={t('Invalid or missing target season in URL. Use a positive integer season.')} /> : null}
       </SectionCard>
 
       {!invalidSeasonParam ? (
         <>
           <SectionCard title={`Rollover summary (S${toSeason})`}>
-            {seasonSummaryQuery.isLoading && <p className="status">Loading rollover summary...</p>}
+            {seasonSummaryQuery.isLoading && <p className="status">{t('Loading rollover summary...')}</p>}
             {seasonNotFound && <EmptyState message={`No rollover summary found for season ${toSeason}.`} />}
             {seasonSummaryQuery.error && !seasonNotFound && (
               <p className="error">Failed to load rollover summary: {formatApiError(seasonSummaryQuery.error)}</p>
@@ -103,16 +105,16 @@ export function RolloverSeasonDetailPage(): JSX.Element {
               <>
                 <SummaryPills
                   items={[
-                    { label: 'From season', value: seasonSummaryQuery.data.rollover.from_season },
-                    { label: 'To season', value: seasonSummaryQuery.data.rollover.to_season },
-                    { label: 'Transitioned players', value: seasonSummaryQuery.data.rollover.transitioned_players }
+                    { label: t('From season'), value: seasonSummaryQuery.data.rollover.from_season },
+                    { label: t('To season'), value: seasonSummaryQuery.data.rollover.to_season },
+                    { label: t('Transitioned players'), value: seasonSummaryQuery.data.rollover.transitioned_players }
                   ]}
                 />
                 <CompactSummaryCard
                   items={[
-                    { label: 'Run ID', value: seasonSummaryQuery.data.rollover.run_id },
+                    { label: t('Run ID'), value: seasonSummaryQuery.data.rollover.run_id },
                     {
-                      label: 'Metadata keys',
+                      label: t('Metadata keys'),
                       value: Object.keys(seasonSummaryQuery.data.rollover.metadata ?? {}).length
                     }
                   ]}
@@ -121,50 +123,50 @@ export function RolloverSeasonDetailPage(): JSX.Element {
             ) : null}
           </SectionCard>
 
-          <SectionCard title="Inspection summary">
+          <SectionCard title={t('Inspection summary')}>
             <SummaryPills
               items={[
-                { label: 'Target season', value: toSeason },
-                { label: 'Transition records', value: transitionsQuery.isLoading ? 'Loading...' : filteredTransitions.length },
-                { label: 'Next-season players', value: playersQuery.isLoading ? 'Loading...' : filteredPlayers.length }
+                { label: t('Target season'), value: toSeason },
+                { label: t('Transition records'), value: transitionsQuery.isLoading ? t('Loading...') : filteredTransitions.length },
+                { label: t('Next-season players'), value: playersQuery.isLoading ? t('Loading...') : filteredPlayers.length }
               ]}
             />
             <label>
-              player_id filter
+              {t('player_id filter')}
               <input
                 type="text"
                 value={playerIdFilter}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => setPlayerIdFilter(event.target.value)}
-                placeholder="Filter by player_id"
-                aria-label="player_id filter"
+                placeholder={t('Filter by player_id')}
+                aria-label={t('player_id filter')}
               />
             </label>
           </SectionCard>
 
-          <SectionCard title="Player transitions">
-            {transitionsQuery.isLoading && <p className="status">Loading transitions...</p>}
+          <SectionCard title={t('Player transitions')}>
+            {transitionsQuery.isLoading && <p className="status">{t('Loading transitions...')}</p>}
             {transitionsQuery.error && <p className="error">Failed to load transitions: {formatApiError(transitionsQuery.error)}</p>}
             {transitionsQuery.data ? (
               filteredTransitions.length === 0 ? (
                 <EmptyState
-                  message={normalizedFilter ? 'No transition records match the active player_id filter.' : 'No transition records are available for this season.'}
+                  message={normalizedFilter ? t('No transition records match the active player_id filter.') : t('No transition records are available for this season.')}
                 />
               ) : (
-                <JsonPayloadBlock title="Transitions payload" payload={filteredTransitions} emptyText="No transition payload available." />
+                <JsonPayloadBlock title={t('Transitions payload')} payload={filteredTransitions} emptyText={t('No transition payload available.')} />
               )
             ) : null}
           </SectionCard>
 
-          <SectionCard title="Next-season players">
-            {playersQuery.isLoading && <p className="status">Loading next-season players...</p>}
+          <SectionCard title={t('Next-season players')}>
+            {playersQuery.isLoading && <p className="status">{t('Loading next-season players...')}</p>}
             {playersQuery.error && <p className="error">Failed to load next-season players: {formatApiError(playersQuery.error)}</p>}
             {playersQuery.data ? (
               filteredPlayers.length === 0 ? (
                 <EmptyState
-                  message={normalizedFilter ? 'No next-season players match the active player_id filter.' : 'No next-season players are available for this season.'}
+                  message={normalizedFilter ? t('No next-season players match the active player_id filter.') : t('No next-season players are available for this season.')}
                 />
               ) : (
-                <JsonPayloadBlock title="Next-season players payload" payload={filteredPlayers} emptyText="No player payload available." />
+                <JsonPayloadBlock title={t('Next-season players payload')} payload={filteredPlayers} emptyText={t('No player payload available.')} />
               )
             ) : null}
           </SectionCard>

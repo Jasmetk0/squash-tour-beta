@@ -13,7 +13,14 @@ import { FinalsResultDetailPage } from './FinalsResultDetailPage'
 const api = vi.hoisted(() => ({
   getRunActivity: vi.fn(), getRun: vi.fn(), listEvents: vi.fn(), getEvent: vi.fn(),
   listRankingSnapshots: vi.fn(), listRaceSnapshots: vi.fn(),
-  getFinalsSummary: vi.fn(), getFinalsResult: vi.fn()
+  getFinalsSummary: vi.fn(), getFinalsResult: vi.fn(),
+  ApiError: class ApiError extends Error {
+    status: number
+    constructor(message: string, status: number) {
+      super(message)
+      this.status = status
+    }
+  }
 }))
 vi.mock('../api/client', () => api)
 

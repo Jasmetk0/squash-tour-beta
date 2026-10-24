@@ -54,6 +54,8 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   const siblingMismatch = Boolean(siblingSnapshotsQuery.data?.run_id && siblingSnapshotsQuery.data.run_id !== runId)
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const runMismatch = Boolean(runQuery.data?.run.run_id && runQuery.data.run.run_id !== runId)
+  const planUnavailable = runQuery.isLoading || Boolean(runQuery.error) || !runQuery.data || runMismatch
+  const eventsUnavailable = eventsQuery.isLoading || Boolean(eventsQuery.error) || !eventsQuery.data || eventsMismatch
   const orderedEvents = runQuery.data?.run.run_id === runId ? runQuery.data.season_state.ordered_events : []
   const plannedContext = useMemo(() => {
     const map = new Map<string, { week: number; category: string; tour: string; templateId: string; planPosition: number }>()
@@ -141,7 +143,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
       <RunScopedHeader
         title={title}
         runId={runId}
-        subtitle="Browse stored snapshot history and inspect payload details by sequence."
+        subtitle={t('Browse stored snapshot history and inspect payload details by sequence.')}
       />
       <p className="status">{t('Stored historical snapshot; it is not necessarily the current ranking. The endpoint does not provide a timestamp.')}</p>
       <p className="status">{t('Stored legacy SimulationRun history. This view does not verify Product Run Saved Revision authority.')}</p>
@@ -159,7 +161,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         <div className="grid">
           <label>
             {t('Week')}
-            <select aria-label="Filter snapshots by week" value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
+            <select aria-label={t('Filter snapshots by week')} value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
               <option value="">{t('All weeks')}</option>
               {weekOptions.map((week) => (
                 <option key={week} value={week}>
@@ -171,7 +173,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
           <label>
             {t('Category')}
             <select
-              aria-label="Filter snapshots by category"
+              aria-label={t('Filter snapshots by category')}
               value={categoryFilter}
               onChange={(event) => setCategoryFilter(event.target.value)}
             >
@@ -184,9 +186,9 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             </select>
           </label>
           <label>
-            Source event text
+            {t('Source event text')}
             <input
-              aria-label="Filter snapshots by source event"
+              aria-label={t('Filter snapshots by source event')}
               value={sourceEventFilter}
               onChange={(event) => setSourceEventFilter(event.target.value)}
               placeholder="source_event_id"
@@ -196,7 +198,11 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         <button type="button" onClick={() => { setWeekFilter(''); setCategoryFilter(''); setSourceEventFilter('') }}>{t('Reset filters')}</button>
       </SectionCard>
 
-      {(runMismatch || eventsMismatch || siblingMismatch) && <p role="alert" className="error">{t('Snapshot sibling history belongs to another Run.')}</p>}
+      {runMismatch && <p role="alert" className="error">{t('Planned context belongs to another Run.')}</p>}
+      {eventsMismatch && <p role="alert" className="error">{t('Event context belongs to another Run.')}</p>}
+      {siblingMismatch && <p role="alert" className="error">{t('Snapshot sibling history belongs to another Run.')}</p>}
+      {runQuery.error && <p role="alert" className="error">{t('Failed to load planned season context')}: {formatApiError(runQuery.error)}</p>}
+      {eventsQuery.error && <p role="alert" className="error">{t('Failed to load persisted events context')}: {formatApiError(eventsQuery.error)}</p>}
       <SectionCard title={t('Snapshot timeline')}>
         {snapshotMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
         <button type="button" onClick={() => void query.refetch()}>{t('Refresh read-only data')}</button>
@@ -258,6 +264,8 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             persistedEvent={selected.source_event_id ? persistedEventsById.get(selected.source_event_id) : undefined}
             siblingMode={siblingMode}
             siblingMatchCount={siblingMatchCount}
+            planUnavailable={planUnavailable}
+            eventsUnavailable={eventsUnavailable}
           />
         ) : (
           <EmptyState message={t('Select a snapshot to inspect details.')} />
@@ -274,7 +282,9 @@ function SnapshotDetail({
   plannedContext,
   persistedEvent,
   siblingMode,
-  siblingMatchCount
+  siblingMatchCount,
+  planUnavailable,
+  eventsUnavailable
 }: {
   snapshot: RankingSnapshot | RaceSnapshot
   mode: Mode
@@ -283,10 +293,13 @@ function SnapshotDetail({
   persistedEvent?: { eventSequence: number; week: number | null }
   siblingMode: Mode
   siblingMatchCount: number | null
+  planUnavailable: boolean
+  eventsUnavailable: boolean
 }): JSX.Element {
   const t = useHistoryText()
   const sourceEventId = snapshot.source_event_id
   const sourceWeek = persistedEvent?.week ?? plannedContext?.week
+  const missingPlan = planUnavailable ? t('Unavailable') : t('No ordered-plan match')
 
   return (
     <>
@@ -296,12 +309,12 @@ function SnapshotDetail({
           { label: t('Kind'), value: snapshot.snapshot_kind },
           { label: t('Mode'), value: mode },
           { label: t('Source event ID'), value: sourceEventId ?? '—' },
-          { label: t('Week context'), value: sourceWeek != null ? `W${sourceWeek}` : t('No week context') },
-          { label: t('Planned category'), value: plannedContext?.category ?? t('No ordered-plan match') },
-          { label: t('Planned tour'), value: plannedContext?.tour ?? t('No ordered-plan match') },
-          { label: t('Planned template'), value: plannedContext?.templateId ?? t('No ordered-plan match') },
-          { label: t('Plan position'), value: plannedContext?.planPosition ?? t('No ordered-plan match') },
-          { label: t('Persisted source event'), value: persistedEvent ? `${t('Found')} (${t('Sequence').toLowerCase()} ${persistedEvent.eventSequence})` : t('Not found') }
+          { label: t('Week context'), value: sourceWeek != null ? `W${sourceWeek}` : planUnavailable || eventsUnavailable ? t('Unavailable') : t('No week context') },
+          { label: t('Planned category'), value: plannedContext?.category ?? missingPlan },
+          { label: t('Planned tour'), value: plannedContext?.tour ?? missingPlan },
+          { label: t('Planned template'), value: plannedContext?.templateId ?? missingPlan },
+          { label: t('Plan position'), value: plannedContext?.planPosition ?? missingPlan },
+          { label: t('Persisted source event'), value: persistedEvent ? `${t('Found')} (${t('Sequence').toLowerCase()} ${persistedEvent.eventSequence})` : eventsUnavailable ? t('Unavailable') : t('Not found') }
         ]}
       />
       <SummaryPills
@@ -322,7 +335,7 @@ function SnapshotDetail({
               sourceEventId && persistedEvent ? (
                 <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(sourceEventId)}`}>{t('Open source event detail page')}</Link>
               ) : (
-                t('Source persisted event detail unavailable.')
+                eventsUnavailable ? t('Unavailable') : t('Source persisted event detail unavailable.')
               )
           },
           {
@@ -330,7 +343,7 @@ function SnapshotDetail({
             value: sourceEventId && plannedContext ? (
               <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(sourceEventId)}`}>{t('Open planned-event detail page')}</Link>
             ) : (
-              t('No ordered-plan match for source_event_id.')
+              missingPlan
             )
           },
           {
@@ -339,7 +352,7 @@ function SnapshotDetail({
               sourceWeek != null ? (
                 <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${sourceWeek}`}>{t('Open week detail page')} (W{sourceWeek})</Link>
               ) : (
-                t('No source week context available.')
+                planUnavailable || eventsUnavailable ? t('Unavailable') : t('No source week context available.')
               )
           },
           { label: t('Season calendar'), value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>{t('Open season calendar browser')}</Link> },
@@ -347,9 +360,9 @@ function SnapshotDetail({
             label: t(siblingMode === 'ranking' ? 'Ranking snapshots' : 'Race snapshots'),
             value:
               sourceEventId && siblingMatchCount !== null && siblingMatchCount > 0 ? (
-                <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${siblingMode}`}>Open {siblingMode} snapshots for matching source_event_id</Link>
+                <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${siblingMode}`}>{t(siblingMode === 'ranking' ? 'Open ranking snapshot history' : 'Open race snapshot history')}</Link>
               ) : (
-                t('No snapshots share this source_event_id.')
+                siblingMatchCount === null ? t('Unavailable') : t('No snapshots share this source_event_id.')
               )
           }
         ]}

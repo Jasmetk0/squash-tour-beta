@@ -183,7 +183,7 @@ export function EventsPage(): JSX.Element {
         {eventsMismatch && <p role="alert" className="error">{t('Events response belongs to another Run; its records are hidden.')}</p>}
         <button type="button" onClick={() => void eventsQuery.refetch()}>{t('Refresh read-only data')}</button>
         {eventsQuery.isLoading && <p className="status">{t('Loading events history...')}</p>}
-        {eventsQuery.error && <p className="error">Failed to load events history: {formatApiError(eventsQuery.error)}</p>}
+        {eventsQuery.error && <p className="error">{t('Failed to load events history')}: {formatApiError(eventsQuery.error)}</p>}
         {!eventsQuery.isLoading && !eventsQuery.error && !eventsMismatch && events.length === 0 && (
           <EmptyState message={t('No events are available for this run yet.')} />
         )}
@@ -256,12 +256,12 @@ export function EventsPage(): JSX.Element {
               items={[
                 {
                   label: t('Persisted detail'),
-                  value: <Link to={`/runs/${runId}/events/${selectedEvent.event_id}`}>Open dedicated event detail page</Link>
+                  value: <Link to={`/runs/${encodeURIComponent(runId)}/events/${selectedEvent.event_id}`}>Open dedicated event detail page</Link>
                 },
                 {
                   label: t('Planned event detail'),
                   value: selectedEventPlanContext ? (
-                    <Link to={`/runs/${runId}/calendar/${selectedEvent.event_id}`}>Open planned-event detail page</Link>
+                    <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${selectedEvent.event_id}`}>Open planned-event detail page</Link>
                   ) : (
                     t('No ordered-plan match for this persisted event.')
                   )
@@ -270,24 +270,24 @@ export function EventsPage(): JSX.Element {
                   label: t('Week detail'),
                   value:
                     selectedEventWeek != null ? (
-                      <Link to={`/runs/${runId}/weeks/${selectedEventWeek}`}>Open week detail page (W{selectedEventWeek})</Link>
+                      <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${selectedEventWeek}`}>Open week detail page (W{selectedEventWeek})</Link>
                     ) : (
                       'No week context available for this persisted event.'
                     )
                 },
                 {
                   label: t('Season calendar'),
-                  value: <Link to={`/runs/${runId}/calendar`}>Open season calendar browser</Link>
+                  value: <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>Open season calendar browser</Link>
                 }
               ]}
             />
 
-            {runQuery.error ? <p className="error">Failed to load planned season context: {formatApiError(runQuery.error)}</p> : null}
+            {runQuery.error ? <p className="error">{t('Failed to load planned season context')}: {formatApiError(runQuery.error)}</p> : null}
             {eventDetailMismatch && <p role="alert" className="error">{t('Event detail does not match the selected event; its payload is hidden.')}</p>}
             <button type="button" onClick={() => void eventDetailQuery.refetch()} disabled={!selectedEvent}>{t('Refresh read-only data')}</button>
             {eventDetailQuery.isLoading && <p className="status">{t('Loading selected event payload...')}</p>}
             {eventDetailQuery.error && (
-              <p className="error">Failed to load selected event payload: {formatApiError(eventDetailQuery.error)}</p>
+              <p className="error">{t('Failed to load selected event payload')}: {formatApiError(eventDetailQuery.error)}</p>
             )}
             {eventDetailQuery.data && !eventDetailMismatch && (
               <JsonPayloadBlock

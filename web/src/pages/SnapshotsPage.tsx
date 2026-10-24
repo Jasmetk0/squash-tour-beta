@@ -343,7 +343,7 @@ function SnapshotDetail({
             value: sourceEventId && plannedContext ? (
               <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(sourceEventId)}`}>{t('Open planned-event detail page')}</Link>
             ) : (
-              missingPlan
+              planUnavailable ? t('Unavailable') : t('No ordered-plan match for source_event_id.')
             )
           },
           {

@@ -211,6 +211,70 @@ describe('history list ordering, detail selection, and states', () => {
   })
 
 
+  it('selects each reused event ID by stable persisted sequence without merging rows or leaking another detail', async () => {
+    const user = userEvent.setup()
+    api.listEvents.mockResolvedValueOnce({
+      run_id: 'run-a',
+      events: [
+        { event_sequence: 7, event_id: 'REUSED', season: 2027, week: 9,
+          template_id: 'CURRENT', tournament_result: { winner: 'P7' } },
+        { event_sequence: 2, event_id: 'REUSED', season: 2026, week: 32,
+          template_id: 'HISTORICAL', tournament_result: { winner: 'P2' } }
+      ]
+    })
+    // This ID-only API resolves the current-season event; it cannot identify
+    // the historic record from event_id alone.
+    api.getEvent.mockResolvedValue({
+      event_id: 'REUSED', event_sequence: 7, season: 2027, week: 9,
+      detail: 'CURRENT_SEASON_PAYLOAD'
+    })
+    renderWithRoute(<EventsPage />, '/runs/run-a/events?selectedEventId=REUSED&selectedEventSequence=2')
+
+    const list = await screen.findByRole('list', { name: 'Events history list' })
+    const items = within(list).getAllByRole('button')
+    expect(items).toHaveLength(2)
+    expect(items[0]).toHaveTextContent('7. REUSED')
+    expect(items[1]).toHaveTextContent('2. REUSED')
+    expect(items[1]).toHaveAttribute('aria-current', 'true')
+    expect(items[0]).not.toHaveAttribute('aria-current', 'true')
+    expect(await screen.findByText('Event detail does not match the selected event; its payload is hidden.')).toBeInTheDocument()
+    expect(screen.queryByText(/CURRENT_SEASON_PAYLOAD/)).not.toBeInTheDocument()
+    expect(screen.getByText('Unavailable: the event ID identifies multiple stored records.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open dedicated event detail page' })).not.toBeInTheDocument()
+    expect(screen.getByText('Event ID is reused in this Run. Use the selected sequence to identify the stored record; direct ID-only navigation is unavailable.')).toBeInTheDocument()
+
+    await user.click(items[0])
+    expect(items[0]).toHaveAttribute('aria-current', 'true')
+    expect(items[1]).not.toHaveAttribute('aria-current', 'true')
+    expect(await screen.findByText(/CURRENT_SEASON_PAYLOAD/)).toBeInTheDocument()
+    expect(api.getEvent).toHaveBeenCalledTimes(2)
+    await user.click(items[1])
+    expect(items[1]).toHaveAttribute('aria-current', 'true')
+    expect(screen.queryByText(/CURRENT_SEASON_PAYLOAD/)).not.toBeInTheDocument()
+  })
+
+  it('accepts legacy event-ID bookmarks but rejects unverifiable ID-only details for reused IDs', async () => {
+    api.listEvents.mockResolvedValueOnce({
+      run_id: 'run-a',
+      events: [
+        { event_sequence: 7, event_id: 'DUP', season: 2027, week: 9,
+          template_id: null, tournament_result: null },
+        { event_sequence: 2, event_id: 'DUP', season: 2026, week: 32,
+          template_id: null, tournament_result: null }
+      ]
+    })
+    api.getEvent.mockResolvedValue({ event_id: 'DUP', detail: 'UNVERIFIABLE_SAME_ID_PAYLOAD' })
+    renderWithRoute(<EventsPage />, '/runs/run-a/events?selectedEventId=DUP&selectedEventSequence=7junk')
+
+    const list = await screen.findByRole('list', { name: 'Events history list' })
+    const buttons = within(list).getAllByRole('button')
+    expect(buttons[0]).toHaveAttribute('aria-current', 'true')
+    expect(buttons[1]).not.toHaveAttribute('aria-current', 'true')
+    expect(await screen.findByText('Event detail does not match the selected event; its payload is hidden.')).toBeInTheDocument()
+    expect(screen.queryByText(/UNVERIFIABLE_SAME_ID_PAYLOAD/)).not.toBeInTheDocument()
+    expect(api.getEvent).toHaveBeenCalledWith('run-a', 'DUP')
+  })
+
   it('renders week and planned-event bridge links in selected event detail', async () => {
     renderWithRoute(<EventsPage />, '/runs/run-a/events')
 

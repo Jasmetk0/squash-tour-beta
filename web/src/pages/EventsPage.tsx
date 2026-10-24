@@ -120,7 +120,14 @@ export function EventsPage(): JSX.Element {
     enabled: Boolean(runId && selectedEventId)
   })
 
-  const eventDetailMismatch = Boolean(eventDetailQuery.data && selectedEvent && eventDetailQuery.data.event_id !== selectedEvent.event_id)
+  // The list and detail may be read at different times. Do not present a
+  // same-ID payload with contradictory stored sequence/season/week as evidence.
+  const eventDetailMismatch = Boolean(eventDetailQuery.data && selectedEvent && (
+    eventDetailQuery.data.event_id !== selectedEvent.event_id ||
+    (Number.isSafeInteger(eventDetailQuery.data.event_sequence) && eventDetailQuery.data.event_sequence !== selectedEvent.event_sequence) ||
+    (eventDetailQuery.data.season != null && selectedEvent.season != null && eventDetailQuery.data.season !== selectedEvent.season) ||
+    (eventDetailQuery.data.week != null && selectedEvent.week != null && eventDetailQuery.data.week !== selectedEvent.week)
+  ))
 
   return (
     <section className="panel">

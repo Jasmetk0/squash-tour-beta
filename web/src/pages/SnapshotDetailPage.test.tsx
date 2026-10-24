@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -268,6 +268,24 @@ describe('SnapshotDetailPage', () => {
     expect(await screen.findByText('Run season and ordered plan disagree. Planned links are unavailable.')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Open planned-event detail' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Open week detail/ })).not.toBeInTheDocument()
+  })
+
+  it('hides cached direct snapshot payload after refresh failure and restores it on retry', async () => {
+    const saved = { snapshot_sequence: 10, snapshot_kind: 'WEEK', source_event_id: 'E3',
+      payload: { marker: 'RECOVERABLE_SNAPSHOT', points: 0 } }
+    api.getRankingSnapshot.mockResolvedValueOnce(saved)
+      .mockRejectedValueOnce(new Error('temporary snapshot outage'))
+      .mockResolvedValueOnce(saved)
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [saved] })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [] })
+    renderSnapshotDetailRoute('/runs/run-a/snapshots/ranking/10', 'ranking')
+    expect(await screen.findByText(/RECOVERABLE_SNAPSHOT/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load snapshot details: temporary snapshot outage')).toBeInTheDocument()
+    expect(screen.queryByText(/RECOVERABLE_SNAPSHOT/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText(/RECOVERABLE_SNAPSHOT/)).toBeInTheDocument()
+    expect(api.getRankingSnapshot).toHaveBeenCalledTimes(3)
   })
 
 })

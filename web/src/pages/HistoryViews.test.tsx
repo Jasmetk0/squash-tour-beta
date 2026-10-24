@@ -327,6 +327,40 @@ describe('history list ordering, detail selection, and states', () => {
     expect(buttons[1]).toHaveTextContent('1. ALPHA-EVENT')
   })
 
+
+  it.each([
+    ['older first', [
+      { event_sequence: 2, event_id: 'E2', season: 2026, week: 35, template_id: 'OLD', tournament_result: null },
+      { event_sequence: 7, event_id: 'E2', season: 2027, week: 9, template_id: 'NEW', tournament_result: null }
+    ]],
+    ['current first', [
+      { event_sequence: 7, event_id: 'E2', season: 2027, week: 9, template_id: 'NEW', tournament_result: null },
+      { event_sequence: 2, event_id: 'E2', season: 2026, week: 35, template_id: 'OLD', tournament_result: null }
+    ]]
+  ])('keeps snapshot payload but suppresses ambiguous source event links (%s)', async (_name, duplicated) => {
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-a', events: duplicated })
+    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 4, snapshot_kind: 'WEEK', source_event_id: 'E2',
+        payload: { name: 'independent-snapshot', points: 0 } }
+    ] })
+    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 2, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} }
+    ] })
+    renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    expect(await screen.findByText('Source event ID is reused in persisted history. Source links and week context are unavailable.')).toBeInTheDocument()
+    expect(screen.getByText(/independent-snapshot/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open dedicated snapshot detail page' }))
+      .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/4')
+    expect(screen.queryByRole('link', { name: 'Open source event detail page' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail page' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail page/i })).not.toBeInTheDocument()
+    expect(screen.getByText('Unavailable: the event ID identifies multiple stored records.')).not.toBeInTheDocument()
+    expect(screen.queryByText('W35')).not.toBeInTheDocument()
+    expect(screen.queryByText('W9')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open race snapshot history' })).not.toBeInTheDocument()
+    expect(screen.getByText(/"points": 0/)).toBeInTheDocument()
+  })
+
   it('renders ranking snapshots in API order with default selected styling and click-to-update detail', async () => {
     const user = userEvent.setup()
     api.listRaceSnapshots.mockResolvedValue({

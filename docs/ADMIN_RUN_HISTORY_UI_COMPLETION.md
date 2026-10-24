@@ -94,6 +94,18 @@ No backend endpoints, shared API types, query keys, simulation controls, router,
 
 No query keys, API calls, mutation endpoints, global components, or native Product Run history implementation were modified.
 
+## Follow-up — failed refresh versus cached history evidence
+
+The read-only screens use React Query, which may retain a previous successful `data` value when a later manual `refetch()` fails. Presenting that cached response next to an error as if it were the outcome of the latest read is misleading.
+
+- **Activity, events and snapshot history lists:** after a failed source read, the list and the selected record derived from it are no longer displayed as current; a successful retry restores them. Selected URLs and backend ordering/identity contracts remain unchanged. Event payload from an independently failed detail read is likewise suppressed.
+- **Dedicated snapshot detail:** a failed detail refresh removes the stale summary/source/payload while preserving independent history navigation and its error explanation. A successful retry restores the same payload, including valid zero values.
+- **Finals qualification/result and rollover:** each independently failed artifact read hides only its own cached data. A still-valid complementary resource remains available; previously observed provenance comparisons continue to apply when both resources are healthy.
+- **Run diagnostics:** Run, status, Finals, rollover, lineage, source and historical artifact evidence now excludes resources whose latest request failed. Cached 'latest event' links and numeric fallback counts cannot survive a failed event read as if verified; unrelated ranking/Run evidence remains visible.
+- **Regression tests:** explicitly exercise successful read → failed manual refresh → successful recovery for activity, events, ranking snapshots, direct snapshot detail, Finals qualification/result, rollover transitions and diagnostics. Tests preserve independent sibling data and show no writes.
+
+These guards do not alter the React Query client, shared components, global retry policy, backend endpoints, or native Product Run saved-history authority. They intentionally distinguish a successful historical read from stale cached data after a failed read, not certify end-to-end browser or backend behavior.
+
 ## Verification plan and evidence
 
 - Retained English historical regressions explicitly select English inside their test mocks; they do not weaken or delete legacy sequence/progress mismatch assertions.

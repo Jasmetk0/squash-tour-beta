@@ -138,7 +138,8 @@ export function FinalsQualificationDetailPage(): JSX.Element {
               value: safeSummary?.result ? (
                 <Link to={`/runs/${encodeURIComponent(runId)}/finals/result`}>{t('Open Finals result detail')}</Link>
               ) : (
-                t('Result not available yet')
+                summaryQuery.isLoading ? t('Waiting for Finals summary') :
+                  !safeSummary ? t('Result cannot be verified without a valid Finals summary') : t('Result not available yet')
               )
             }
           ]}

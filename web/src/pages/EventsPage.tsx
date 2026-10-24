@@ -34,6 +34,7 @@ export function EventsPage(): JSX.Element {
 
   const runMismatch = Boolean(runQuery.data?.run.run_id && runQuery.data.run.run_id !== runId)
   const planSeasonMismatch = Boolean(runQuery.data && runQuery.data.run.run_id === runId &&
+    runQuery.data.season_state.season != null &&
     runQuery.data.season_state.season !== runQuery.data.run.season)
   const planUnavailable = runQuery.isLoading || Boolean(runQuery.error) || !runQuery.data || runMismatch || planSeasonMismatch
   const orderedEventContext = useMemo(() => {

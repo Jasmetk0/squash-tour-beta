@@ -79,7 +79,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
   })
 
   const snapshotMismatch = Boolean(snapshotQuery.data && snapshotQuery.data.snapshot_sequence !== parsedSequence)
-  const snapshot = snapshotMismatch ? null : snapshotQuery.data ?? null
+  const snapshot = snapshotMismatch || snapshotQuery.error ? null : snapshotQuery.data ?? null
   const historyMismatch = Boolean(snapshotsQuery.data?.run_id && snapshotsQuery.data.run_id !== runId)
   const siblingMismatch = Boolean(siblingSnapshotsQuery.data?.run_id && siblingSnapshotsQuery.data.run_id !== runId)
   const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
@@ -98,9 +98,9 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
       : null
   const title = mode === 'ranking' ? t('Ranking snapshot detail') : t('Race snapshot detail')
   const persistedSourceEvent = sourceEventId
-    ? (eventsMismatch ? null : eventsQuery.data?.events.find((event) => event.event_id === sourceEventId) ?? null)
+    ? (eventsMismatch || eventsQuery.error ? null : eventsQuery.data?.events.find((event) => event.event_id === sourceEventId) ?? null)
     : null
-  const plannedCandidate = sourceEventId && runQuery.data?.run.run_id === runId && !planSeasonMismatch
+  const plannedCandidate = sourceEventId && !runQuery.error && runQuery.data?.run.run_id === runId && !planSeasonMismatch
     ? findPlannedEventContext(runQuery.data, sourceEventId) : null
   const sourceSeasonMismatch = Boolean(plannedCandidate && persistedSourceEvent &&
     persistedSourceEvent.season != null && persistedSourceEvent.season !== plannedCandidate.season)

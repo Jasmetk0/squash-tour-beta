@@ -268,7 +268,7 @@ export function ActivityPage(): JSX.Element {
             </select>
           </label>
           <label>
-            Text
+            {t('Text search')}
             <input
               aria-label={t('Filter activity by label or identifier text')}
               value={textFilter}

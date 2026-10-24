@@ -64,6 +64,8 @@ describe('FinalsQualificationDetailPage', () => {
     expect(await screen.findByText('Failed to load Finals summary: summary unavailable')).toBeInTheDocument()
     expect(screen.getByText('Unknown')).toBeInTheDocument()
     expect(screen.queryByText('Not simulated')).not.toBeInTheDocument()
+    expect(screen.getByText('Result cannot be verified without a valid Finals summary')).toBeInTheDocument()
+    expect(screen.queryByText('Result not available yet')).not.toBeInTheDocument()
   })
 
   it('keeps both statuses loading when the services have not responded yet', async () => {
@@ -72,6 +74,7 @@ describe('FinalsQualificationDetailPage', () => {
     renderWithRoute(<FinalsQualificationDetailPage />, '/runs/run-a/finals/qualification')
     expect(await screen.findByText('Loading Finals qualification detail...')).toBeInTheDocument()
     expect(screen.getAllByText('Loading')).toHaveLength(2)
+    expect(screen.getByText('Waiting for Finals summary')).toBeInTheDocument()
   })
 
   it('shows readable empty state when qualification is missing', async () => {

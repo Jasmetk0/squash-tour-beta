@@ -80,8 +80,8 @@ export function ActivityPage(): JSX.Element {
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
 
-  const activityMismatch = Boolean(activityQuery.data && activityQuery.data.run_id !== runId)
-  const eventsMismatch = Boolean(eventsQuery.data && eventsQuery.data.run_id !== runId)
+  const activityMismatch = Boolean(activityQuery.data?.run_id && activityQuery.data.run_id !== runId)
+  const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
   const items = activityMismatch ? [] : activityQuery.data?.items ?? []
   const indexedItems = useMemo<IndexedActivityItem[]>(() => items.map((item, index) => ({ item, index })), [items])
 

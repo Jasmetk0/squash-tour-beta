@@ -63,6 +63,16 @@ A separate follow-up to the same **Draft PR #1641** closes additional practical 
 
 These are presentation-level, existing-endpoint changes only. A fresh final-HEAD frontend test/build run is required to validate this follow-up independently of the earlier 309 passing tests.
 
+## Follow-up hardening — cross-season provenance
+
+The existing legacy SimulationRun history endpoints are **not** a canonical multi-season Product Run event log. Consequently, a matching `event_id` or `source_event_id` is not, by itself, proof that a stored historical entry belongs to the currently opened season plan.
+
+- **Events:** plan joins now require consistent Run/season-state headers, season-matching planned entries and (when supplied) a matching persisted event season. A stored earlier-season event stays browsable, but does not link to the current season's plan/week using a reused event ID.
+- **Activity:** derived week context checks season identity in the persisted and planned source indexes. Admin plan links and current-week bridges require an evidenced current-season relation. Seasonless admin records can still obtain a week bridge from a matching source record.
+- **Snapshot list and detail:** planned context requires consistent Run/season-state headers. If persisted source and planned source disagree on season, the list doesn't join them; the dedicated detail warns and suppresses mismatched planned/week links. Historic payloads and valid persisted-source inspection remain available.
+- **No schema/endpoint changes:** these guards use only already-returned Run, season-state and event history fields. A snapshot without a source season cannot independently prove a Saved Revision; no absent timestamp is fabricated.
+- **Regression cases:** stale Run season-state, reused event ID with a different stored season, historic snapshots, seasonless admin source context and dedicated snapshot detail are covered by colocated tests. Existing ordering, URL and read-only behavior are retained.
+
 ## Verification plan and evidence
 
 - Retained English historical regressions explicitly select English inside their test mocks; they do not weaken or delete legacy sequence/progress mismatch assertions.

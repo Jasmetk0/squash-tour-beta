@@ -101,8 +101,9 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
     : null
   const plannedCandidate = sourceEventId && runQuery.data?.run.run_id === runId && !planSeasonMismatch
     ? findPlannedEventContext(runQuery.data, sourceEventId) : null
-  const plannedSourceEvent = plannedCandidate && (!persistedSourceEvent || persistedSourceEvent.season === plannedCandidate.season)
-    ? plannedCandidate : null
+  const sourceSeasonMismatch = Boolean(plannedCandidate && persistedSourceEvent &&
+    persistedSourceEvent.season !== plannedCandidate.season)
+  const plannedSourceEvent = sourceSeasonMismatch ? null : plannedCandidate
   const relatedSiblingUnavailable = siblingSnapshotsQuery.isLoading || Boolean(siblingSnapshotsQuery.error) || siblingMismatch || !siblingSnapshotsQuery.data
   const relatedSiblingSnapshots = sourceEventId
     ? (siblingMismatch ? [] : siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === sourceEventId) ?? [])
@@ -173,7 +174,8 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
             {snapshotMismatch && <p role="alert" className="error">{t('Snapshot detail does not match the requested sequence.')}</p>}
             {siblingMismatch && <p role="alert" className="error">{t('Snapshot sibling history belongs to another Run.')}</p>}
             {eventsMismatch && <p role="alert" className="error">{t('Event context belongs to another Run.')}</p>}
-            {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>}
+            {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>
+            {sourceSeasonMismatch && <p role="alert" className="error">{t('Source event season does not match the current plan. Planned links are hidden.')}</p>}
             {historyMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
             {snapshotsQuery.error && <p role="alert" className="error">{t('Failed to load snapshots history')}: {formatApiError(snapshotsQuery.error)}</p>}
             {snapshotQuery.isLoading && <p role="status" className="status">{t('Loading snapshot details...')}</p>}
@@ -194,7 +196,7 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
                 persistedSourceEventSequence={persistedSourceEvent?.event_sequence ?? null}
                 persistedSourceEventUnavailable={eventsQuery.isLoading || Boolean(eventsQuery.error) || eventsMismatch}
                 plannedSourceEvent={plannedSourceEvent}
-                plannedSourceEventUnavailable={runQuery.isLoading || Boolean(runQuery.error) || runQuery.data?.run.run_id !== runId || planSeasonMismatch}
+                plannedSourceEventUnavailable={runQuery.isLoading || Boolean(runQuery.error) || runQuery.data?.run.run_id !== runId || planSeasonMismatch || sourceSeasonMismatch}
                 relatedSiblingSnapshots={relatedSiblingSnapshots}
                 siblingMode={siblingMode}
                 relatedSiblingUnavailable={relatedSiblingUnavailable}

@@ -256,7 +256,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
                 return next
               })
             }}
-            ariaLabel={`${title} list`}
+            ariaLabel={t(mode === 'ranking' ? 'Ranking snapshots list' : 'Race snapshots list')}
           />
         )}
       </SectionCard>

@@ -140,17 +140,9 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
     if source is None and isinstance(checkpoint, GlobalCompetitionCheckpoint):
         from beta_engine.infrastructure.db.run_prospect_source_state import RunProspectSourceSnapshot
         source = RunProspectSourceSnapshot("run_prospect_source.v1", run_id, (), canonical_hash([]))
-    scoped = source_proofs.setdefault("_global_verified_states", {}) if source_proofs is not None else {}
-    identity = (checkpoint.fingerprint, state.fingerprint)
-    actual_inputs = (world.fingerprint, getattr(evidence, "knockout", evidence).fingerprint,
-        tuple(s.fingerprint for s in life), tuple(s.fingerprint for s in health),
-        source.for_week(checkpoint.week.ordinal).fingerprint if source is not None else None)
-    known = scoped.get(identity)
-    if known is not None and actual_inputs[:2] == known[:2] and actual_inputs[2] == known[2][:len(actual_inputs[2])] and actual_inputs[3] == known[3][:len(actual_inputs[3])] and actual_inputs[4] == known[4]:
-        # This exact sporting/Tour state was independently produced while
-        # verifying another revision in this one caller-owned lineage walk.
-        # Every physical row/owner/origin is still checked by the repository.
-        return
+    # Older revisions may reuse only the exact complete history recorded in
+    # has_replayed_global_components. An arbitrary shorter lifecycle/Health
+    # prefix is not sufficient evidence for this sporting/Tour state.
     if prefix is None:
         if (
             saved_checkpoint(old, evidence, run_id=run_id, branch_id=branch_id) != root_cp
@@ -340,8 +332,6 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
             verified_states.append((cp, previous))
     if event_index != len(checkpoint.events) or cp != checkpoint or previous != state:
         raise ValueError("Native competition differs from complete confirmed history")
-    for verified_cp, verified_tour in verified_states:
-        scoped[(verified_cp.fingerprint, verified_tour.fingerprint)] = (*actual_inputs[:4], source.for_week(verified_cp.week.ordinal).fingerprint if source is not None else None)
     if source_proofs is not None and verified_states:
         raw_inputs = _raw_global_inputs(payload)
         values = source_proofs.setdefault('_global_replayed_values', {})
@@ -357,8 +347,6 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
                 )
         while len(values) > 128:
             values.pop(next(iter(values)))
-    while len(scoped) > 128:
-        scoped.pop(next(iter(scoped)))
 
 
 def authenticated_global_prefix(payload, checkpoint, state, prefix):

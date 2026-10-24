@@ -50,7 +50,9 @@ retains at most two inputs/32 MiB of serialized source bytes after the full
 physical Saved gate; every lookup hashes the complete actual payload and returns
 defensive copies. Routing hints retain only actual-byte hashes and booleans. Private pure-replay projections and
 fingerprints end with that replay, including failure, and never authorize a later
-physical read. No stored schema, hash, seed or result changes.
+physical read. The older typed-history-prefix shortcut is removed: a truncated
+lifecycle/Health prefix must fall back to the full verifier, even when a later
+state was replayed. No stored schema, hash, seed or result changes.
 
 On an isolated backup of the actual failed W52 workflow's W26 SQLite history,
 an intermediate cold read completed in 49.12 s. This is recovery/read evidence,

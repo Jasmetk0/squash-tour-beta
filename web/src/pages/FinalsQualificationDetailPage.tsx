@@ -83,9 +83,9 @@ export function FinalsQualificationDetailPage(): JSX.Element {
         {qualificationMismatch && <p role="alert" className="error">{t('Finals qualification identity differs from the selected Run or summary season.')}</p>}
         {summaryMismatch && <p role="alert" className="error">{t('Finals qualification identity differs from the selected Run or summary season.')}</p>}
         {qualificationQuery.isLoading ? <p className="status">{t('Loading Finals qualification detail...')}</p> : null}
-        {hasSummaryError ? <p className="error">Failed to load Finals summary: {formatApiError(summaryQuery.error)}</p> : null}
+        {hasSummaryError ? <p className="error">{t('Failed to load Finals summary')}: {formatApiError(summaryQuery.error)}</p> : null}
         {hasQualificationError ? (
-          <p className="error">Failed to load Finals qualification: {formatApiError(qualificationQuery.error)}</p>
+          <p className="error">{t('Failed to load Finals qualification')}: {formatApiError(qualificationQuery.error)}</p>
         ) : null}
         {qualificationNotFound ? <EmptyState message={t('No Finals qualification is available for this run yet.')} /> : null}
         {safeQualification ? (
@@ -111,11 +111,11 @@ export function FinalsQualificationDetailPage(): JSX.Element {
       <SectionCard title={t('Inspection context')}>
         <MetadataList
           items={[
-            { label: t('Overview'), value: <Link to={`/runs/${runId}/finals`}>{t('Open Finals overview page')}</Link> },
+            { label: t('Overview'), value: <Link to={`/runs/${encodeURIComponent(runId)}/finals`}>{t('Open Finals overview page')}</Link> },
             {
               label: t('Result detail'),
               value: safeSummary?.result ? (
-                <Link to={`/runs/${runId}/finals/result`}>{t('Open Finals result detail')}</Link>
+                <Link to={`/runs/${encodeURIComponent(runId)}/finals/result`}>{t('Open Finals result detail')}</Link>
               ) : (
                 t('Result not available yet')
               )

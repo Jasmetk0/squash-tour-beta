@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RunDiagnosticsPage } from './RunDiagnosticsPage'
@@ -24,6 +24,8 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('../api/client', () => api)
+// Legacy assertions verify the existing English copy; CS/EN transitions have separate coverage.
+vi.mock('../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }))
 
 const finalsQualification = (runId: string, season = 2028) => ({
   run_id: runId, season, source_as_of_season: season, source_as_of_week: 60,
@@ -95,6 +97,32 @@ describe('RunDiagnosticsPage', () => {
     api.listRaceSnapshots.mockImplementation(async (runId: string) => ({ run_id: runId,
       snapshots: [{ snapshot_sequence: 14, snapshot_kind: 'WEEK', source_event_id: 'E5', payload: {} }]
     }))
+  })
+
+
+  it('routes reused persisted event IDs to their sequence-selected timeline instead of ambiguous ID-only detail', async () => {
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-a', events: [
+      { event_sequence: 8, event_id: 'REUSED', season: 2028, week: 13, template_id: null,
+        tournament_result: { winner: 'P8' } },
+      { event_sequence: 3, event_id: 'REUSED', season: 2027, week: 35, template_id: null,
+        tournament_result: { winner: 'P3' } },
+      { event_sequence: 2, event_id: 'UNIQUE', season: 2028, week: 4, template_id: null,
+        tournament_result: { winner: 'P2' } }
+    ] })
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+    expect(await screen.findByText('Some event IDs are reused. Event links open their selected sequence in history.')).toBeInTheDocument()
+    const targeted = '/runs/run-a/events?selectedEventId=REUSED&selectedEventSequence=8'
+    expect(screen.getByRole('link', { name: 'Inspect latest completed event (REUSED)' }))
+      .toHaveAttribute('href', targeted)
+    const recent = screen.getByRole('list', { name: 'Diagnostics recent events' })
+    expect(within(recent).getByRole('link', { name: /REUSED.*Seq 8/ }))
+      .toHaveAttribute('href', targeted)
+    expect(within(recent).getByRole('link', { name: /REUSED.*Seq 3/ }))
+      .toHaveAttribute('href', '/runs/run-a/events?selectedEventId=REUSED&selectedEventSequence=3')
+    expect(within(recent).getByRole('link', { name: /UNIQUE.*Seq 2/ }))
+      .toHaveAttribute('href', '/runs/run-a/events/UNIQUE')
+    expect(screen.getByRole('link', { name: 'Inspect latest ranking snapshot (Seq 17)' }))
+      .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/17')
   })
 
   it('encodes Run and parent Run IDs in all diagnostics navigation while retaining raw API identity', async () => {
@@ -660,4 +688,26 @@ describe('RunDiagnosticsPage', () => {
       '/runs/run-a/weeks/8'
     )
   })
+  it('drops a cached latest event after its independent refresh fails and restores it on recovery', async () => {
+    const history = { run_id: 'run-a', events: [
+      { event_sequence: 5, event_id: 'E5', season: 2028, week: 12,
+        template_id: null, tournament_result: { done: true } }
+    ] }
+    api.listEvents.mockResolvedValueOnce(history)
+      .mockRejectedValueOnce(new Error('temporary event outage'))
+      .mockResolvedValueOnce(history)
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+    expect(await screen.findByRole('link', { name: 'Inspect latest completed event (E5)' }))
+      .toHaveAttribute('href', '/runs/run-a/events/E5')
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load events: temporary event outage')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Inspect latest completed event (E5)' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Inspect latest ranking snapshot (Seq 17)' }))
+      .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/17')
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByRole('link', { name: 'Inspect latest completed event (E5)' }))
+      .toHaveAttribute('href', '/runs/run-a/events/E5')
+    expect(api.listEvents).toHaveBeenCalledTimes(3)
+  })
+
 })

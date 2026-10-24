@@ -1,5 +1,7 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { EventsPage } from './EventsPage'
@@ -22,6 +24,8 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('../api/client', () => api)
+// Legacy assertions verify the existing English copy; CS/EN transitions have separate coverage.
+vi.mock('../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }))
 
 describe('history list ordering, detail selection, and states', () => {
   beforeEach(() => {
@@ -57,6 +61,45 @@ describe('history list ordering, detail selection, and states', () => {
     })
   })
 
+  it('numbers planned event positions from one consistently with snapshot and activity history', async () => {
+    renderWithRoute(<EventsPage />, '/runs/run-a/events')
+    const list = await screen.findByRole('list', { name: 'Events history list' })
+    const items = within(list).getAllByRole('button')
+    expect(items[0]).toHaveTextContent('2. E2')
+    expect(items[0]).toHaveTextContent('Plan #1')
+    expect(items[1]).toHaveTextContent('1. E1')
+    expect(items[1]).toHaveTextContent('Plan #2')
+    expect(screen.queryByText('Plan #0')).not.toBeInTheDocument()
+  })
+
+  it('does not preserve a stale planned-event link when a formerly valid run-context refresh fails', async () => {
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2027, seed: 42, next_event_index: 1,
+        total_events: 2, completed_event_ids: ['E2'] },
+      season_state: { season: 2027, next_event_index: 1,
+        completed_event_ids: ['E2'], ordered_events: [
+          { event_id: 'E2', season: 2027, week: 9, tour: 'World Tour',
+            category: 'Diamond', template_id: 'WT-DIAMOND' },
+          { event_id: 'E1', season: 2027, week: 8, tour: 'Elite Tour',
+            category: 'Gold', template_id: 'ET-GOLD' }
+        ] }
+    }).mockRejectedValueOnce(new Error('temporary season plan outage'))
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={['/runs/run-a/events']}>
+          <Routes><Route path="/runs/:runId/events" element={<EventsPage />} /></Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
+    )
+    expect(await screen.findByRole('link', { name: 'Open planned-event detail page' })).toBeInTheDocument()
+    await act(async () => { await client.refetchQueries({ queryKey: ['run', 'run-a'] }) })
+    expect(await screen.findByText('Failed to load planned season context: temporary season plan outage')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail page' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open dedicated event detail page' }))
+      .toHaveAttribute('href', '/runs/run-a/events/E2')
+  })
+
   it('renders events in API order with default selected styling and click-to-update detail', async () => {
     const user = userEvent.setup()
     renderWithRoute(<EventsPage />, '/runs/run-a/events')
@@ -90,6 +133,67 @@ describe('history list ordering, detail selection, and states', () => {
     expect(screen.getByRole('button', { name: /2\. E2/i })).not.toHaveClass('is-selected')
   }, 10000)
 
+  it.each([
+    ['stored sequence', { event_sequence: 900 }],
+    ['stored season', { season: 2030 }],
+    ['stored week', { week: 44 }]
+  ])('rejects event details contradicting the list %s even when event_id agrees', async (_field, conflicting) => {
+    api.getEvent.mockResolvedValueOnce({
+      event_id: 'E2', event_sequence: 2, season: 2027, week: 9,
+      template_id: null, tournament_result: null,
+      detail: 'UNTRUSTED_DETAIL', ...conflicting
+    })
+    renderWithRoute(<EventsPage />, '/runs/run-a/events')
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Event detail does not match the selected event; its payload is hidden.'
+    )
+    expect(screen.queryByText(/UNTRUSTED_DETAIL/)).not.toBeInTheDocument()
+    expect(api.getEvent).toHaveBeenCalledWith('run-a', 'E2')
+  })
+
+  it('preserves a stored historical event but hides links into the wrong current season', async () => {
+    api.listEvents.mockResolvedValueOnce({
+      run_id: 'run-a',
+      events: [{ event_sequence: 2, event_id: 'E2', season: 2026, week: 9,
+        template_id: 'WT-OLD', tournament_result: null }]
+    })
+    renderWithRoute(<EventsPage />, '/runs/run-a/events')
+    expect(await screen.findByText('Current-season week link unavailable for this historic event.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail page' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail page/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open dedicated event detail page' })).toHaveAttribute('href', '/runs/run-a/events/E2')
+  })
+
+  it('rejects a same-Run but stale season_state plan without hiding persisted events', async () => {
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2027, seed: 42, next_event_index: 1,
+        total_events: 1, completed_event_ids: [] },
+      season_state: { season: 2026, next_event_index: 1, completed_event_ids: [],
+        ordered_events: [{ event_id: 'E2', season: 2026, week: 9, tour: 'WORLD',
+          category: 'Gold', template_id: 'ST-ALE' }] }
+    })
+    renderWithRoute(<EventsPage />, '/runs/run-a/events')
+    expect(await screen.findByText('Run season and ordered plan disagree. Planned links are unavailable.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail page' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open dedicated event detail page' })).toHaveAttribute('href', '/runs/run-a/events/E2')
+  })
+
+  it('keeps a snapshot payload but rejects cross-season source event plan/weekly bridges', async () => {
+    api.listEvents.mockResolvedValueOnce({
+      run_id: 'run-a',
+      events: [{ event_sequence: 2, event_id: 'E2', season: 2026, week: 9,
+        template_id: 'WT-OLD', tournament_result: null }]
+    })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [] })
+    renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    expect(await screen.findByText(/snapshot-4/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail page' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open week detail page (W9)' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open dedicated snapshot detail page' })).toHaveAttribute(
+      'href', '/runs/run-a/snapshots/ranking/4'
+    )
+  })
+
   it('respects a valid selectedEventId query param and falls back when invalid or missing', async () => {
     const validView = renderWithRoute(<EventsPage />, '/runs/run-a/events?selectedEventId=E1')
 
@@ -106,6 +210,70 @@ describe('history list ordering, detail selection, and states', () => {
     expect(screen.getByRole('button', { name: /2\. E2/i })).toHaveClass('is-selected')
   })
 
+
+  it('selects each reused event ID by stable persisted sequence without merging rows or leaking another detail', async () => {
+    const user = userEvent.setup()
+    api.listEvents.mockResolvedValueOnce({
+      run_id: 'run-a',
+      events: [
+        { event_sequence: 7, event_id: 'REUSED', season: 2027, week: 9,
+          template_id: 'CURRENT', tournament_result: { winner: 'P7' } },
+        { event_sequence: 2, event_id: 'REUSED', season: 2026, week: 32,
+          template_id: 'HISTORICAL', tournament_result: { winner: 'P2' } }
+      ]
+    })
+    // This ID-only API resolves the current-season event; it cannot identify
+    // the historic record from event_id alone.
+    api.getEvent.mockResolvedValue({
+      event_id: 'REUSED', event_sequence: 7, season: 2027, week: 9,
+      detail: 'CURRENT_SEASON_PAYLOAD'
+    })
+    renderWithRoute(<EventsPage />, '/runs/run-a/events?selectedEventId=REUSED&selectedEventSequence=2')
+
+    const list = await screen.findByRole('list', { name: 'Events history list' })
+    const items = within(list).getAllByRole('button')
+    expect(items).toHaveLength(2)
+    expect(items[0]).toHaveTextContent('7. REUSED')
+    expect(items[1]).toHaveTextContent('2. REUSED')
+    expect(items[1]).toHaveAttribute('aria-current', 'true')
+    expect(items[0]).not.toHaveAttribute('aria-current', 'true')
+    expect(await screen.findByText('Event detail does not match the selected event; its payload is hidden.')).toBeInTheDocument()
+    expect(screen.queryByText(/CURRENT_SEASON_PAYLOAD/)).not.toBeInTheDocument()
+    expect(screen.getByText('Unavailable: the event ID identifies multiple stored records.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open dedicated event detail page' })).not.toBeInTheDocument()
+    expect(screen.getByText('Event ID is reused in this Run. Use the selected sequence to identify the stored record; direct ID-only navigation is unavailable.')).toBeInTheDocument()
+
+    await user.click(items[0])
+    expect(items[0]).toHaveAttribute('aria-current', 'true')
+    expect(items[1]).not.toHaveAttribute('aria-current', 'true')
+    expect(await screen.findByText(/CURRENT_SEASON_PAYLOAD/)).toBeInTheDocument()
+    expect(api.getEvent).toHaveBeenCalledTimes(2)
+    await user.click(items[1])
+    expect(items[1]).toHaveAttribute('aria-current', 'true')
+    expect(screen.queryByText(/CURRENT_SEASON_PAYLOAD/)).not.toBeInTheDocument()
+  })
+
+  it('accepts legacy event-ID bookmarks but rejects unverifiable ID-only details for reused IDs', async () => {
+    api.listEvents.mockResolvedValueOnce({
+      run_id: 'run-a',
+      events: [
+        { event_sequence: 7, event_id: 'DUP', season: 2027, week: 9,
+          template_id: null, tournament_result: null },
+        { event_sequence: 2, event_id: 'DUP', season: 2026, week: 32,
+          template_id: null, tournament_result: null }
+      ]
+    })
+    api.getEvent.mockResolvedValue({ event_id: 'DUP', detail: 'UNVERIFIABLE_SAME_ID_PAYLOAD' })
+    renderWithRoute(<EventsPage />, '/runs/run-a/events?selectedEventId=DUP&selectedEventSequence=7junk')
+
+    const list = await screen.findByRole('list', { name: 'Events history list' })
+    const buttons = within(list).getAllByRole('button')
+    expect(buttons[0]).toHaveAttribute('aria-current', 'true')
+    expect(buttons[1]).not.toHaveAttribute('aria-current', 'true')
+    expect(await screen.findByText('Event detail does not match the selected event; its payload is hidden.')).toBeInTheDocument()
+    expect(screen.queryByText(/UNVERIFIABLE_SAME_ID_PAYLOAD/)).not.toBeInTheDocument()
+    expect(api.getEvent).toHaveBeenCalledWith('run-a', 'DUP')
+  })
 
   it('renders week and planned-event bridge links in selected event detail', async () => {
     renderWithRoute(<EventsPage />, '/runs/run-a/events')
@@ -159,6 +327,40 @@ describe('history list ordering, detail selection, and states', () => {
     expect(buttons[1]).toHaveTextContent('1. ALPHA-EVENT')
   })
 
+
+  it.each([
+    ['older first', [
+      { event_sequence: 2, event_id: 'E2', season: 2026, week: 35, template_id: 'OLD', tournament_result: null },
+      { event_sequence: 7, event_id: 'E2', season: 2027, week: 9, template_id: 'NEW', tournament_result: null }
+    ]],
+    ['current first', [
+      { event_sequence: 7, event_id: 'E2', season: 2027, week: 9, template_id: 'NEW', tournament_result: null },
+      { event_sequence: 2, event_id: 'E2', season: 2026, week: 35, template_id: 'OLD', tournament_result: null }
+    ]]
+  ])('keeps snapshot payload but suppresses ambiguous source event links (%s)', async (_name, duplicated) => {
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-a', events: duplicated })
+    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 4, snapshot_kind: 'WEEK', source_event_id: 'E2',
+        payload: { name: 'independent-snapshot', points: 0 } }
+    ] })
+    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 2, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} }
+    ] })
+    renderWithRoute(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    expect((await screen.findAllByText('Source event ID is reused in persisted history. Source links and week context are unavailable.')).length).toBeGreaterThan(0)
+    expect(screen.getByText(/independent-snapshot/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open dedicated snapshot detail page' }))
+      .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/4')
+    expect(screen.queryByRole('link', { name: 'Open source event detail page' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open planned-event detail page' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail page/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('Unavailable: the event ID identifies multiple stored records.')).not.toBeInTheDocument()
+    expect(screen.queryByText('W35')).not.toBeInTheDocument()
+    expect(screen.queryByText('W9')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open race snapshot history' })).not.toBeInTheDocument()
+    expect(screen.getByText(/"points": 0/)).toBeInTheDocument()
+  })
+
   it('renders ranking snapshots in API order with default selected styling and click-to-update detail', async () => {
     const user = userEvent.setup()
     api.listRaceSnapshots.mockResolvedValue({
@@ -183,7 +385,7 @@ describe('history list ordering, detail selection, and states', () => {
     expect(screen.getByRole('link', { name: /Open planned-event detail page/i })).toHaveAttribute('href', '/runs/run-a/calendar/E2')
     expect(screen.getByRole('link', { name: /Open week detail page \(W9\)/i })).toHaveAttribute('href', '/runs/run-a/weeks/9')
     expect(screen.getByRole('link', { name: /Open season calendar browser/i })).toHaveAttribute('href', '/runs/run-a/calendar')
-    expect(screen.getByRole('link', { name: /Open race snapshots for matching source_event_id/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Open race snapshot history/i })).toHaveAttribute(
       'href',
       '/runs/run-a/snapshots/race'
     )

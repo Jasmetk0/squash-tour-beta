@@ -37,7 +37,9 @@ type PlannedEventContext = {
   plannedStatus: PlannedEventStatus
 }
 
+import { useHistoryText } from './runHistoryText'
 export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Element {
+  const t = useHistoryText()
   const { runId = '', snapshotSequence = '' } = useParams()
   // parseInt accepts invalid route suffixes such as "12abc" or "1.5".
   // Only a complete positive safe integer may identify a stored snapshot.
@@ -76,22 +78,49 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
     enabled: Boolean(runId && isValidSequence)
   })
 
-  const snapshot = snapshotQuery.data ?? null
+  const snapshotMismatch = Boolean(snapshotQuery.data && snapshotQuery.data.snapshot_sequence !== parsedSequence)
+  const snapshot = snapshotMismatch || snapshotQuery.error ? null : snapshotQuery.data ?? null
+  const historyMismatch = Boolean(snapshotsQuery.data?.run_id && snapshotsQuery.data.run_id !== runId)
+  const siblingMismatch = Boolean(siblingSnapshotsQuery.data?.run_id && siblingSnapshotsQuery.data.run_id !== runId)
+  const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
+  const planSeasonMismatch = Boolean(runQuery.data && runQuery.data.run.run_id === runId &&
+    runQuery.data.season_state.season != null &&
+    runQuery.data.season_state.season !== runQuery.data.run.season)
   const sourceEventId = snapshot?.source_event_id ?? null
-  const neighboringSnapshots = snapshotsQuery.data?.snapshots ?? []
-  const currentSnapshotIndex = neighboringSnapshots.findIndex((item) => item.snapshot_sequence === parsedSequence)
+  const neighboringSnapshots = historyMismatch || snapshotsQuery.error ? [] : (snapshotsQuery.data?.snapshots ?? [])
+  const matchingHistoryEntries = neighboringSnapshots.filter((item) => item.snapshot_sequence === parsedSequence)
+  // The index and direct detail are read independently. If they disagree on
+  // the same sequence's source/kind, neither one can prove source navigation.
+  const snapshotHistoryConflict = Boolean(snapshot && matchingHistoryEntries.length > 0 && (
+    matchingHistoryEntries.length !== 1 ||
+    matchingHistoryEntries[0].source_event_id !== snapshot.source_event_id ||
+    matchingHistoryEntries[0].snapshot_kind !== snapshot.snapshot_kind
+  ))
+  const neighborHistoryUnavailable = snapshotsQuery.isLoading || Boolean(snapshotsQuery.error) || historyMismatch ||
+    snapshotHistoryConflict || !snapshotsQuery.data || matchingHistoryEntries.length !== 1
+  const currentSnapshotIndex = neighborHistoryUnavailable ? -1 :
+    neighboringSnapshots.findIndex((item) => item.snapshot_sequence === parsedSequence)
   const previousSnapshot = currentSnapshotIndex > 0 ? neighboringSnapshots[currentSnapshotIndex - 1] : null
   const nextSnapshot =
     currentSnapshotIndex >= 0 && currentSnapshotIndex < neighboringSnapshots.length - 1
       ? neighboringSnapshots[currentSnapshotIndex + 1]
       : null
-  const title = mode === 'ranking' ? 'Ranking snapshot detail' : 'Race snapshot detail'
-  const persistedSourceEvent = sourceEventId
-    ? (eventsQuery.data?.events.find((event) => event.event_id === sourceEventId) ?? null)
-    : null
-  const plannedSourceEvent = sourceEventId ? findPlannedEventContext(runQuery.data, sourceEventId) : null
+  const title = mode === 'ranking' ? t('Ranking snapshot detail') : t('Race snapshot detail')
+  const matchedSourceEvents = sourceEventId && !eventsMismatch && !eventsQuery.error
+    ? eventsQuery.data?.events.filter((event) => event.event_id === sourceEventId) ?? []
+    : []
+  // A snapshot only records source_event_id, not the originating event season.
+  // Multiple matching persisted records cannot be disambiguated by this ID.
+  const ambiguousSourceEvent = matchedSourceEvents.length > 1
+  const persistedSourceEvent = ambiguousSourceEvent ? null : matchedSourceEvents[0] ?? null
+  const plannedCandidate = sourceEventId && !runQuery.error && runQuery.data?.run.run_id === runId && !planSeasonMismatch
+    ? findPlannedEventContext(runQuery.data, sourceEventId) : null
+  const sourceSeasonMismatch = Boolean(plannedCandidate && persistedSourceEvent &&
+    persistedSourceEvent.season != null && persistedSourceEvent.season !== plannedCandidate.season)
+  const plannedSourceEvent = sourceSeasonMismatch || ambiguousSourceEvent || snapshotHistoryConflict ? null : plannedCandidate
+  const relatedSiblingUnavailable = snapshotHistoryConflict || ambiguousSourceEvent || siblingSnapshotsQuery.isLoading || Boolean(siblingSnapshotsQuery.error) || siblingMismatch || !siblingSnapshotsQuery.data
   const relatedSiblingSnapshots = sourceEventId
-    ? (siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === sourceEventId) ?? [])
+    ? (siblingMismatch || siblingSnapshotsQuery.error ? [] : siblingSnapshotsQuery.data?.snapshots.filter((item) => item.source_event_id === sourceEventId) ?? [])
     : []
 
   return (
@@ -99,89 +128,103 @@ export function SnapshotDetailPage({ mode }: { mode: SnapshotMode }): JSX.Elemen
       <RunScopedHeader
         title={title}
         runId={runId}
-        subtitle="Inspect snapshot metadata and payload for a single history snapshot sequence."
+        subtitle={t('Inspect snapshot metadata and payload for a single history snapshot sequence.')}
       />
 
+      <p className="status">{t('Stored historical snapshot; it is not necessarily the current ranking. The endpoint does not provide a timestamp.')}</p>
       <CurrentContextStrip
         items={[
-          { label: 'Run', value: runId || 'unknown' },
-          { label: 'Mode', value: mode },
-          { label: 'Sequence', value: snapshotSequence || 'unknown' },
-          { label: 'Status', value: snapshot ? 'Loaded' : 'Pending' }
+          { label: t('Run'), value: runId || 'unknown' },
+          { label: t('Mode'), value: mode },
+          { label: t('Sequence'), value: snapshotSequence || 'unknown' },
+          { label: t('Status'), value: snapshot ? t('Loaded') : snapshotMismatch ? t('Error') : snapshotQuery.isLoading ? t('Loading') : isApiNotFound(snapshotQuery.error) ? t('Missing') : snapshotQuery.error ? t('Failed') : t('Unavailable') }
         ]}
       />
 
-      <SectionCard title="Snapshot context">
+      <SectionCard title={t('Snapshot context')}>
         <SummaryPills
           items={[
             {
-              label: 'Previous snapshot',
+              label: t('Previous snapshot'),
               value: previousSnapshot ? (
-                <Link to={`/runs/${runId}/snapshots/${mode}/${previousSnapshot.snapshot_sequence}`}>
+                <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}/${previousSnapshot.snapshot_sequence}`}>
                   #{previousSnapshot.snapshot_sequence}
                 </Link>
               ) : (
-                'None (start of history)'
+                neighborHistoryUnavailable ? t('Unavailable') : t('None (start of history)')
               )
             },
             {
-              label: 'Next snapshot',
+              label: t('Next snapshot'),
               value: nextSnapshot ? (
-                <Link to={`/runs/${runId}/snapshots/${mode}/${nextSnapshot.snapshot_sequence}`}>#{nextSnapshot.snapshot_sequence}</Link>
+                <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}/${nextSnapshot.snapshot_sequence}`}>#{nextSnapshot.snapshot_sequence}</Link>
               ) : (
-                'None (latest snapshot)'
+                neighborHistoryUnavailable ? t('Unavailable') : t('None (latest snapshot)')
               )
             }
           ]}
         />
         <p>
-          <Link to={`/runs/${runId}/snapshots/${mode}`}>Back to {mode} snapshots history</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}`}>{t('Back to')} {mode} {t('snapshot history')}</Link>
         </p>
       </SectionCard>
 
       {!snapshotSequence && (
-        <SectionCard title="Snapshot lookup">
-          <EmptyState message="No snapshot sequence was provided in the URL." />
+        <SectionCard title={t('Snapshot lookup')}>
+          <EmptyState message={t('No snapshot sequence was provided in the URL.')} />
         </SectionCard>
       )}
 
       {snapshotSequence && !isValidSequence && (
-        <SectionCard title="Snapshot lookup">
-          <EmptyState message={`Snapshot sequence "${snapshotSequence}" is invalid. Use a positive integer sequence.`} />
+        <SectionCard title={t('Snapshot lookup')}>
+          <EmptyState message={`${t('Snapshot sequence')} "${snapshotSequence}" ${t('is invalid. Use a positive integer sequence.')}`} />
         </SectionCard>
       )}
 
       {snapshotSequence && isValidSequence && (
         <>
-          <SectionCard title="Snapshot summary">
-            {snapshotQuery.isLoading && <p className="status">Loading snapshot details...</p>}
+          <SectionCard title={t('Snapshot summary')}>
+            <button type="button" onClick={() => void snapshotQuery.refetch()}>{t('Refresh read-only data')}</button>
+            {snapshotMismatch && <p role="alert" className="error">{t('Snapshot detail does not match the requested sequence.')}</p>}
+            {siblingMismatch && <p role="alert" className="error">{t('Snapshot sibling history belongs to another Run.')}</p>}
+            {eventsMismatch && <p role="alert" className="error">{t('Event context belongs to another Run.')}</p>}
+            {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>}
+            {sourceSeasonMismatch && <p role="alert" className="error">{t('Source event season does not match the current plan. Planned links are hidden.')}</p>}
+            {ambiguousSourceEvent && <p role="alert" className="error">{t('Source event ID is reused in persisted history. Source links and week context are unavailable.')}</p>}
+            {snapshotHistoryConflict && <p role="alert" className="error">{t('Snapshot detail and history index disagree on source identity. Navigation links are unavailable.')}</p>}
+            {historyMismatch && <p role="alert" className="error">{t('Snapshot history belongs to another Run; its records are hidden.')}</p>}
+            {snapshotsQuery.error && <p role="alert" className="error">{t('Failed to load snapshots history')}: {formatApiError(snapshotsQuery.error)}</p>}
+            {snapshotQuery.isLoading && <p role="status" className="status">{t('Loading snapshot details...')}</p>}
             {snapshotQuery.error && !isApiNotFound(snapshotQuery.error) && (
-              <p className="error">Failed to load snapshot details: {formatApiError(snapshotQuery.error)}</p>
+              <p className="error">{t('Failed to load snapshot details')}: {formatApiError(snapshotQuery.error)}</p>
             )}
             {isApiNotFound(snapshotQuery.error) && (
-              <EmptyState message={`Snapshot sequence ${snapshotSequence} was not found for this run.`} />
+              <EmptyState message={`${t('Snapshot sequence')} ${snapshotSequence} ${t('was not found for this run.')}`} />
             )}
             {snapshot && <SnapshotSummary mode={mode} snapshot={snapshot} runId={runId} />}
           </SectionCard>
 
           {snapshot ? (
-            <SectionCard title="Source event context">
+            <SectionCard title={t('Source event context')}>
               <SourceEventContext
                 runId={runId}
                 sourceEventId={sourceEventId}
-                persistedSourceEventSequence={persistedSourceEvent?.event_sequence ?? null}
+                persistedSourceEventSequence={snapshotHistoryConflict ? null : persistedSourceEvent?.event_sequence ?? null}
+                persistedSourceEventUnavailable={snapshotHistoryConflict || ambiguousSourceEvent || eventsQuery.isLoading || Boolean(eventsQuery.error) || eventsMismatch}
                 plannedSourceEvent={plannedSourceEvent}
+                plannedSourceEventUnavailable={snapshotHistoryConflict || ambiguousSourceEvent || runQuery.isLoading || Boolean(runQuery.error) || runQuery.data?.run.run_id !== runId || planSeasonMismatch || sourceSeasonMismatch}
                 relatedSiblingSnapshots={relatedSiblingSnapshots}
                 siblingMode={siblingMode}
+                relatedSiblingUnavailable={relatedSiblingUnavailable}
               />
             </SectionCard>
           ) : null}
 
-          <SectionCard title="Raw snapshot payload">
+          <SectionCard title={t('Raw snapshot payload')}>
             {snapshot && (
               <JsonPayloadBlock
-                title="Snapshot record"
-                emptyText="No snapshot payload is available for this snapshot."
+                title={t('Snapshot record')}
+                emptyText={t('No snapshot payload is available for this snapshot.')}
                 payload={snapshot.payload}
               />
             )}
@@ -201,16 +244,17 @@ function SnapshotSummary({
   snapshot: RankingSnapshot | RaceSnapshot
   runId: string
 }): JSX.Element {
+  const t = useHistoryText()
   return (
     <CompactSummaryCard
       items={[
-        { label: 'Sequence', value: snapshot.snapshot_sequence },
-        { label: 'Kind', value: snapshot.snapshot_kind },
-        { label: 'Mode', value: mode },
-        { label: 'Source event ID', value: snapshot.source_event_id ?? '—' },
+        { label: t('Sequence'), value: snapshot.snapshot_sequence },
+        { label: t('Kind'), value: snapshot.snapshot_kind },
+        { label: t('Mode'), value: mode },
+        { label: t('Source event ID'), value: snapshot.source_event_id ?? '—' },
         {
-          label: 'Navigation',
-          value: <Link to={`/runs/${runId}/snapshots/${mode}`}>Back to snapshot history</Link>
+          label: t('Navigation'),
+          value: <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}`}>{t('Back to snapshot history')}</Link>
         }
       ]}
     />
@@ -221,53 +265,60 @@ function SourceEventContext({
   runId,
   sourceEventId,
   persistedSourceEventSequence,
+  persistedSourceEventUnavailable,
   plannedSourceEvent,
+  plannedSourceEventUnavailable,
   relatedSiblingSnapshots,
-  siblingMode
+  siblingMode,
+  relatedSiblingUnavailable
 }: {
   runId: string
   sourceEventId: string | null
   persistedSourceEventSequence: number | null
+  persistedSourceEventUnavailable: boolean
   plannedSourceEvent: PlannedEventContext | null
+  plannedSourceEventUnavailable: boolean
   relatedSiblingSnapshots: Array<RankingSnapshot | RaceSnapshot>
   siblingMode: SnapshotMode
+  relatedSiblingUnavailable: boolean
 }): JSX.Element {
+  const t = useHistoryText()
   if (!sourceEventId) {
-    return <EmptyState message="This snapshot has no source_event_id, so event-level context links are unavailable." />
+    return <EmptyState message={t('This snapshot has no source_event_id, so event-level context links are unavailable.')} />
   }
 
   return (
     <>
       <CompactSummaryCard
         items={[
-          { label: 'Source event ID', value: sourceEventId },
+          { label: t('Source event ID'), value: sourceEventId },
           {
-            label: 'Persisted event',
+            label: t('Persisted event'),
             value:
               persistedSourceEventSequence !== null
-                ? `Found (event sequence ${persistedSourceEventSequence})`
-                : 'Not found in persisted event history'
+                ? `${t('Found')} (${t('Event')} ${t('Sequence').toLowerCase()} ${persistedSourceEventSequence})`
+                 : persistedSourceEventUnavailable ? t('Unavailable') : t('Not found in persisted event history')
           },
-          { label: 'Season plan context', value: plannedSourceEvent ? 'Found in ordered season plan' : 'No ordered-plan match' }
+          { label: t('Season plan context'), value: plannedSourceEvent ? t('Found in ordered season plan') : plannedSourceEventUnavailable ? t('Unavailable') : t('No ordered-plan match') }
         ]}
       />
 
       <p>
-        <Link to={`/runs/${runId}/events`}>Open events history</Link> ·{' '}
-        <Link to={`/runs/${runId}/calendar`}>Open season calendar</Link> · <Link to={`/runs/${runId}/activity`}>Open activity</Link>
+        <Link to={`/runs/${encodeURIComponent(runId)}/events`}>{t('Open events history')}</Link> ·{' '}
+        <Link to={`/runs/${encodeURIComponent(runId)}/calendar`}>{t('Open season calendar')}</Link> · <Link to={`/runs/${encodeURIComponent(runId)}/activity`}>{t('Open activity')}</Link>
       </p>
 
       <p>
         {persistedSourceEventSequence !== null ? (
-          <Link to={`/runs/${runId}/events/${encodeURIComponent(sourceEventId)}`}>Open source event detail</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(sourceEventId)}`}>{t('Open source event detail')}</Link>
         ) : (
-          <span>Source event detail unavailable (event not present in persisted event history).</span>
+          <span>{persistedSourceEventUnavailable ? t('Unavailable') : t('Source event detail unavailable (event not present in persisted event history).')}</span>
         )}{' '}
-        · <Link to={`/runs/${runId}/calendar/${encodeURIComponent(sourceEventId)}`}>Open planned-event detail</Link>
+        {plannedSourceEvent ? <>· <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(sourceEventId)}`}>{t('Open planned-event detail')}</Link></> : null}
         {plannedSourceEvent ? (
           <>
             {' '}
-            · <Link to={`/runs/${runId}/weeks/${plannedSourceEvent.week}`}>Open week detail (W{plannedSourceEvent.week})</Link>
+            · <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${plannedSourceEvent.week}`}>{t('Open week detail')} (W{plannedSourceEvent.week})</Link>
           </>
         ) : null}
       </p>
@@ -275,27 +326,31 @@ function SourceEventContext({
       {plannedSourceEvent ? (
         <MetadataList
           items={[
-            { label: 'Season', value: plannedSourceEvent.season },
-            { label: 'Week', value: plannedSourceEvent.week },
-            { label: 'Tour', value: plannedSourceEvent.tour },
-            { label: 'Category', value: plannedSourceEvent.category },
-            { label: 'Template ID', value: plannedSourceEvent.templateId },
-            { label: 'Plan position', value: plannedSourceEvent.planPosition },
-            { label: 'Planned status', value: plannedSourceEvent.plannedStatus }
+            { label: t('Season'), value: plannedSourceEvent.season },
+            { label: t('Week'), value: plannedSourceEvent.week },
+            { label: t('Tour'), value: plannedSourceEvent.tour },
+            { label: t('Category'), value: plannedSourceEvent.category },
+            { label: t('Template ID'), value: plannedSourceEvent.templateId },
+            { label: t('Plan position'), value: plannedSourceEvent.planPosition },
+            { label: t('Planned status'), value: plannedSourceEvent.plannedStatus }
           ]}
         />
+      ) : plannedSourceEventUnavailable ? (
+        <p className="status">{t('Unavailable')}</p>
       ) : (
-        <EmptyState message="source_event_id is present, but this event is not in season_state.ordered_events for the current run." />
+        <EmptyState message={t('source_event_id is present, but this event is not in season_state.ordered_events for the current run.')} />
       )}
 
-      {relatedSiblingSnapshots.length > 0 ? (
+      {relatedSiblingUnavailable ? (
+        <p role="status" className="status">{t('Related snapshots currently unavailable')}</p>
+      ) : relatedSiblingSnapshots.length > 0 ? (
         <>
-          <h4>Related {siblingMode} snapshots from the same source event</h4>
-          <ul className="item-list" aria-label={`Related ${siblingMode} snapshots`}>
+          <h4>{t('Related')} {siblingMode} {t('snapshots from the same source event')}</h4>
+          <ul className="item-list" aria-label={`${t('Related')} ${siblingMode} snapshots`}>
             {relatedSiblingSnapshots.map((item) => (
               <li key={`${siblingMode}-${item.snapshot_sequence}`}>
-                <Link to={`/runs/${runId}/snapshots/${siblingMode}/${item.snapshot_sequence}`}>
-                  {siblingMode} snapshot #{item.snapshot_sequence}
+                <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${siblingMode}/${item.snapshot_sequence}`}>
+                  {t(siblingMode === 'ranking' ? 'Ranking' : 'Race').toLowerCase()} {t('snapshot')} #{item.snapshot_sequence}
                 </Link>
               </li>
             ))}
@@ -307,13 +362,15 @@ function SourceEventContext({
 }
 
 function findPlannedEventContext(runData: SeasonStateResponse | undefined, eventId: string): PlannedEventContext | null {
-  const orderedEvents = runData?.season_state?.ordered_events ?? []
+  if (!runData || runData.run.season !== runData.season_state.season) return null
+  const orderedEvents = runData.season_state.ordered_events
   const matchedIndex = orderedEvents.findIndex((event) => event.event_id === eventId)
   if (matchedIndex < 0) {
     return null
   }
 
   const matchedEvent = orderedEvents[matchedIndex]
+  if (matchedEvent.season !== runData.season_state.season) return null
   const completedEventIds = new Set(runData?.season_state?.completed_event_ids ?? [])
   const nextEventIndex = runData?.season_state?.next_event_index ?? 0
   const plannedStatus = getPlannedEventStatus({

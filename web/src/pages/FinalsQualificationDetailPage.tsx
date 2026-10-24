@@ -19,7 +19,9 @@ function readArrayFieldLength(payload: Record<string, unknown> | null | undefine
   return Array.isArray(value) ? value.length : null
 }
 
+import { useHistoryText } from './runHistoryText'
 export function FinalsQualificationDetailPage(): JSX.Element {
+  const t = useHistoryText()
   const { runId = '' } = useParams()
   const summaryQuery = useQuery({
     queryKey: ['finals-summary', runId],
@@ -34,94 +36,127 @@ export function FinalsQualificationDetailPage(): JSX.Element {
     retry: false
   })
 
+  const summaryMismatch = Boolean(summaryQuery.data && (
+    summaryQuery.data.run_id !== runId ||
+    (summaryQuery.data.qualification && (
+      summaryQuery.data.qualification.run_id !== runId ||
+      (summaryQuery.data.qualification.season != null && summaryQuery.data.qualification.season !== summaryQuery.data.season)
+    )) ||
+    (summaryQuery.data.result && (
+      summaryQuery.data.result.run_id !== runId ||
+      (summaryQuery.data.result.season != null && summaryQuery.data.result.season !== summaryQuery.data.season)
+    ))
+  ))
+  const safeSummary = summaryMismatch || summaryQuery.error ? null : summaryQuery.data
+  // A summary and a detail may be fetched at different times. If both
+  // identify the same artifact, differing source snapshots must not be
+  // silently presented together as one consistent qualification record.
+  const summaryQualification = safeSummary?.qualification
+  const qualificationMismatch = Boolean(qualificationQuery.data && (
+    qualificationQuery.data.run_id !== runId ||
+    (safeSummary && qualificationQuery.data.season !== safeSummary.season) ||
+    (summaryQualification && (
+      (summaryQualification.source_as_of_season != null &&
+        qualificationQuery.data.source_as_of_season !== summaryQualification.source_as_of_season) ||
+      (summaryQualification.source_as_of_week != null &&
+        qualificationQuery.data.source_as_of_week !== summaryQualification.source_as_of_week)
+    ))
+  ))
+  const safeQualification = qualificationMismatch || qualificationQuery.error ? null : qualificationQuery.data
+
   const qualificationNotFound = isApiNotFound(qualificationQuery.error)
   const hasSummaryError = summaryQuery.error && !isApiNotFound(summaryQuery.error)
   const hasQualificationError = qualificationQuery.error && !qualificationNotFound
 
-  const qualificationStatus = qualificationQuery.data ? 'Available'
-    : qualificationQuery.isLoading ? 'Loading'
-    : qualificationNotFound ? 'Missing'
-    : qualificationQuery.error ? 'Failed' : 'Unavailable'
-  const resultStatus = summaryQuery.isLoading ? 'Loading'
-    : summaryQuery.error || !summaryQuery.data ? 'Unknown'
-    : summaryQuery.data.result ? 'Recorded' : 'Not simulated'
+  const qualificationStatus = safeQualification ? t('Available')
+    : qualificationQuery.isLoading ? t('Loading')
+    : qualificationNotFound ? t('Missing')
+    : qualificationQuery.error ? t('Failed') : t('Unavailable')
+  const resultStatus = summaryQuery.isLoading ? t('Loading')
+    : summaryQuery.error || !safeSummary ? t('Unknown')
+    : safeSummary.result ? t('Recorded') : t('Not simulated')
 
-  const qualifiedPlayersCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'qualified_player_ids')
-  const groupCount = readArrayFieldLength(qualificationQuery.data?.qualification, 'groups')
+  const qualifiedPlayersCount = readArrayFieldLength(safeQualification?.qualification, 'qualified_player_ids') ?? readArrayFieldLength(safeQualification?.qualification, 'qualified')
+  const groupCount = readArrayFieldLength(safeQualification?.qualification, 'groups')
 
   return (
     <section className="panel">
       <RunScopedHeader
-        title="Finals qualification detail"
+        title={t('Finals qualification detail')}
         runId={runId}
-        subtitle="Summary-first inspection for World Tour Finals qualification."
+        subtitle={t('Summary-first inspection for World Tour Finals qualification.')}
       />
+      <p className="status">{t('Stored legacy SimulationRun history. This view does not verify Product Run Saved Revision authority.')}</p>
+      <button type="button" onClick={() => { void qualificationQuery.refetch(); void summaryQuery.refetch() }}>{t('Refresh read-only data')}</button>
       <CurrentContextStrip
         items={[
-          { label: 'Run', value: runId || 'unknown' },
+          { label: t('Run'), value: runId || 'unknown' },
           {
-            label: 'Season',
-            value: qualificationQuery.data?.season ?? summaryQuery.data?.season ?? summaryQuery.data?.qualification?.season ?? '—'
+            label: t('Season'),
+            value: safeQualification?.season ?? safeSummary?.season ?? safeSummary?.qualification?.season ?? '—'
           },
-          { label: 'Qualification', value: qualificationStatus },
-          { label: 'Result', value: resultStatus }
+          { label: t('Qualification'), value: qualificationStatus },
+          { label: t('Result'), value: resultStatus }
         ]}
       />
 
-      <SectionCard title="Summary">
-        {qualificationQuery.isLoading ? <p className="status">Loading Finals qualification detail...</p> : null}
-        {hasSummaryError ? <p className="error">Failed to load Finals summary: {formatApiError(summaryQuery.error)}</p> : null}
+      <SectionCard title={t('Summary')}>
+        {qualificationMismatch && <p role="alert" className="error">{t('Finals qualification detail conflicts with the stored summary or selected Run.')}</p>}
+        {summaryMismatch && <p role="alert" className="error">{t('Finals qualification detail conflicts with the stored summary or selected Run.')}</p>}
+        {qualificationQuery.isLoading ? <p className="status">{t('Loading Finals qualification detail...')}</p> : null}
+        {hasSummaryError ? <p className="error">{t('Failed to load Finals summary')}: {formatApiError(summaryQuery.error)}</p> : null}
         {hasQualificationError ? (
-          <p className="error">Failed to load Finals qualification: {formatApiError(qualificationQuery.error)}</p>
+          <p className="error">{t('Failed to load Finals qualification')}: {formatApiError(qualificationQuery.error)}</p>
         ) : null}
-        {qualificationNotFound ? <EmptyState message="No Finals qualification is available for this run yet." /> : null}
-        {qualificationQuery.data ? (
+        {qualificationNotFound ? <EmptyState message={t('No Finals qualification is available for this run yet.')} /> : null}
+        {safeQualification ? (
           <>
             <SummaryPills
               items={[
-                { label: 'As of season', value: qualificationQuery.data.source_as_of_season },
-                { label: 'As of week', value: qualificationQuery.data.source_as_of_week },
-                { label: 'Qualified players', value: qualifiedPlayersCount ?? 'Unknown' },
-                { label: 'Groups', value: groupCount ?? 'Unknown' }
+                { label: t('As of season'), value: safeQualification.source_as_of_season },
+                { label: t('As of week'), value: safeQualification.source_as_of_week },
+                { label: t('Qualified players'), value: qualifiedPlayersCount ?? t('Unknown') },
+                { label: t('Groups'), value: groupCount ?? t('Unknown') }
               ]}
             />
             <CompactSummaryCard
               items={[
-                { label: 'Run ID', value: qualificationQuery.data.run_id },
-                { label: 'Season', value: qualificationQuery.data.season }
+                { label: t('Run ID'), value: safeQualification.run_id },
+                { label: t('Season'), value: safeQualification.season }
               ]}
             />
           </>
         ) : null}
       </SectionCard>
 
-      <SectionCard title="Inspection context">
+      <SectionCard title={t('Inspection context')}>
         <MetadataList
           items={[
-            { label: 'Overview', value: <Link to={`/runs/${runId}/finals`}>Open Finals overview page</Link> },
+            { label: t('Overview'), value: <Link to={`/runs/${encodeURIComponent(runId)}/finals`}>{t('Open Finals overview page')}</Link> },
             {
-              label: 'Result detail',
-              value: summaryQuery.data?.result ? (
-                <Link to={`/runs/${runId}/finals/result`}>Open Finals result detail</Link>
+              label: t('Result detail'),
+              value: safeSummary?.result ? (
+                <Link to={`/runs/${encodeURIComponent(runId)}/finals/result`}>{t('Open Finals result detail')}</Link>
               ) : (
-                'Result not available yet'
+                summaryQuery.isLoading ? t('Waiting for Finals summary') :
+                  !safeSummary ? t('Result cannot be verified without a valid Finals summary') : t('Result not available yet')
               )
             }
           ]}
         />
       </SectionCard>
 
-      <SectionCard title="Qualification payload">
-        {qualificationQuery.data ? (
+      <SectionCard title={t('Qualification payload')}>
+        {safeQualification ? (
           <JsonPayloadBlock
-            title="Raw qualification payload"
-            payload={qualificationQuery.data.qualification}
-            emptyText="No qualification payload available."
+            title={t('Raw qualification payload')}
+            payload={safeQualification.qualification}
+            emptyText={t('No qualification payload available.')}
           />
         ) : qualificationNotFound ? (
-          <EmptyState message="No qualification payload is available yet." />
-        ) : !qualificationQuery.isLoading && !hasQualificationError ? (
-          <EmptyState message="No qualification data available." />
+          <EmptyState message={t('No qualification payload is available yet.')} />
+        ) : !qualificationQuery.isLoading && !hasQualificationError && !qualificationMismatch ? (
+          <EmptyState message={t('No qualification data available.')} />
         ) : null}
       </SectionCard>
     </section>

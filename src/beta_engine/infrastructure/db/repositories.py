@@ -5963,6 +5963,9 @@ class SimulationPersistenceRepository:
         target_viewer_id = ""
         verified_native_save_receipt = None
         verified_native_save_signature = None
+        global_append_before = None
+        global_append_ancestors = ()
+        committed_global_append = None
         try:
             with self._session_factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
@@ -5970,6 +5973,29 @@ class SimulationPersistenceRepository:
                     session=session, run_id=run_id, branch_id=branch_id,
                     include_revision_state=True,
                 )
+                if (expected_calendar_tour_fingerprint is not None
+                    and 'native_branch_closures' not in state.saved_revision.payload.get('run', {})
+                    and state.saved_revision.payload.get('content', {}).get('calendar_tour_authority', {}).get('state', {}).get('schema_version') == 'calendar_tour_authority.v5'):
+                    from beta_engine.infrastructure.db.native_fork_runtime_state import (
+                        actual_dependency_signature, has_actual_dependency_proof,
+                        actual_saved_revision_reference, native_read_proof_scope,
+                    )
+                    with native_read_proof_scope():
+                        actual = actual_dependency_signature(session,
+                            session.get(BranchSavedRevisionModel, state.saved_head_revision_id), repository=self)
+                        if has_actual_dependency_proof(self, actual, run_id=run_id, branch_id=branch_id):
+                            global_append_before = actual
+                            own = []
+                            cursor = state.saved_head_revision_id
+                            while cursor:
+                                reference = actual_saved_revision_reference(session, run_id, cursor)
+                                if reference is None or reference[1:3] != (run_id, branch_id):
+                                    break
+                                if cursor in own:
+                                    raise WorkingDraftConflictError('Global Save ancestry contains a cycle')
+                                own.append(cursor)
+                                cursor = reference[4]
+                            global_append_ancestors = tuple(own)
                 run = session.get(RunContainerModel, run_id)
                 branch = session.get(RunBranchModel, branch_id)
                 if run.read_only or branch.read_only:
@@ -6181,16 +6207,17 @@ class SimulationPersistenceRepository:
                 authenticated_tour = decode_authenticated_tour(
                     state.saved_revision.payload, run_id=run_id, branch_id=branch_id,
                 )
-                capture_saved_calendar_match(
+                captured_sources = capture_saved_calendar_match(
                     session, payload, run_id=run_id, branch_id=branch_id,
                     _defer_full_verification=verify_coupled_calendar,
                     _authenticated_tour_prefix=authenticated_tour,
                     _repository=self,
                 )
                 if verify_coupled_calendar:
-                    # A native Tour Save captures live rows first, then runs the
-                    # COMPLETE source verifier exactly once on that final
-                    # in-transaction payload. The source fold authenticates
+                    # A native Tour Save captures every actual live row first.
+                    # Its COMPLETE source math must either replay now or match
+                    # the exact complete payload independently replayed by the
+                    # mandatory post-command context. That fold authenticates
                     # MatchEngine events, 57-attribute population checkpoints,
                     # Official ranking transitions, lifecycle/Entry history and
                     # source fingerprints. Pre-play Saved origins were checked
@@ -6204,21 +6231,29 @@ class SimulationPersistenceRepository:
                     # The existing Saved HEAD was fully authenticated by
                     # _viewer_branch_working_draft_in_session inside THIS
                     # transaction. Its exact sporting source is now a trusted
-                    # prefix; the new Save must still replay every NEW event and
-                    # compare the full successor state byte-for-byte.
-                    _saved_evidence, signed_prefix, _saved_tour = (
-                        decoded_global_tour_source(
+                    # prefix; every NEW event must have been independently
+                    # replayed and the full successor compared byte-for-byte.
+                    # The command's mandatory post-write context independently
+                    # replayed this EXACT complete live payload already. A Save
+                    # captures every actual live component again and authenticates
+                    # its physical Saved sources above/below; only identical
+                    # mathematical input may reuse that completed math proof.
+                    from beta_engine.domain.run_packages import canonical_hash
+                    proof_key = (state.saved_head_revision_id, canonical_hash(payload))
+                    with self._revision_validation_lock:
+                        replayed = proof_key in getattr(self, '_global_working_proofs', {})
+                    if not replayed:
+                        _saved_evidence, signed_prefix, _saved_tour = decoded_global_tour_source(
                             self, state.saved_revision,
                             lambda source: decode_prevalidated_calendar_sources(
                                 source.payload, run_id=run_id, branch_id=branch_id,
                             ),
                         )
-                    )
-                    load_saved_calendar_sources(
-                        payload, run_id=run_id, branch_id=branch_id,
-                        _verified_saved_prefix=signed_prefix,
-                        _verified_global_prefix=(signed_prefix, _saved_tour, state.saved_revision.payload),
-                    )
+                        load_saved_calendar_sources(
+                            payload, run_id=run_id, branch_id=branch_id,
+                            _verified_saved_prefix=signed_prefix,
+                            _verified_global_prefix=(signed_prefix, _saved_tour, state.saved_revision.payload),
+                        )
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,
                     viewer_branch_id=target_viewer_id,
@@ -6415,6 +6450,8 @@ class SimulationPersistenceRepository:
                         "player_health_fingerprint": component["fingerprint"],
                     }
                 sequence = state.saved_revision.sequence + 1
+                if 'native_branch_closures' in payload.get('run', {}):
+                    global_append_before = None
                 content_hash = saved_revision_content_hash(
                     revision_id=revision_id,
                     run_id=run_id,
@@ -6468,7 +6505,12 @@ class SimulationPersistenceRepository:
                         change_summary_json=_to_json(summary),
                     )
                 )
-                branch.saved_head_revision_id = revision_id
+                # For a verified global append, keep the old HEAD installed
+                # until the new actual row passes physical source gates. Its
+                # unchanged ancestors retain their real proofs during that
+                # verification. No transient state escapes this transaction.
+                if global_append_before is None:
+                    branch.saved_head_revision_id = revision_id
                 run.official_branch_id = target_viewer_id
                 session.add(
                     BranchRevisionAuditEventModel(
@@ -6509,6 +6551,13 @@ class SimulationPersistenceRepository:
                     if (
                         verified_native_save_receipt.content_hash_algorithm
                         != CONTENT_HASH_ALGORITHM
+                        or verified_native_save_receipt.content_hash != content_hash
+                        or verified_native_save_receipt.payload != payload
+                        or verified_native_save_receipt.change_summary != summary
+                        or verified_native_save_receipt.sequence != sequence
+                        or verified_native_save_receipt.parent_revision_id != state.saved_head_revision_id
+                        or verified_native_save_receipt.kind != revision_kind
+                        or verified_native_save_receipt.payload_schema_version != RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION
                         or verified_native_save_receipt.content_hash
                         != _saved_revision_record_content_hash(
                             verified_native_save_receipt
@@ -6539,6 +6588,34 @@ class SimulationPersistenceRepository:
                         verified_native_save_receipt.payload,
                         run_id=run_id, branch_id=branch_id,
                     )
+                    if global_append_before is not None:
+                        from beta_engine.infrastructure.db.native_fork_runtime_state import (
+                            actual_dependency_signature, assert_global_save_append,
+                            native_read_proof_scope,
+                        )
+                        from beta_engine.infrastructure.db.calendar_global_slot_origins import verify_saved_global_origins
+                        from beta_engine.infrastructure.db.calendar_terminal_results import verify_saved_terminal_results
+                        from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
+
+                        with native_read_proof_scope():
+                            staged = actual_dependency_signature(session, new_row, repository=self)
+                            assert_global_save_append(global_append_before, staged,
+                                run_id=run_id, branch_id=branch_id, revision_id=revision_id, installed=False)
+                            # The new components passed complete mathematical
+                            # replay above. These are the independent actual-row
+                            # origin/terminal/closure gates, BEFORE installing it.
+                            verify_saved_global_origins(self, session, verified_native_save_receipt)
+                            verify_saved_terminal_results(self, session, verified_native_save_receipt)
+                            verify_saved_native_closure(self, session, verified_native_save_receipt)
+                            branch.saved_head_revision_id = revision_id
+                            session.flush()
+                            installed = actual_dependency_signature(session, new_row, repository=self)
+                            eligible = assert_global_save_append(global_append_before, installed,
+                                run_id=run_id, branch_id=branch_id, revision_id=revision_id, installed=True)
+                            ancestors = (*global_append_ancestors, revision_id)
+                            if not set(ancestors) <= set(eligible):
+                                raise WorkingDraftConflictError('Global Save lost authenticated own ancestry')
+                            committed_global_append = installed, ancestors
                     verified_native_save_signature = _saved_revision_validation_signature(new_row)
         except IntegrityError as exc:
             raise WorkingDraftIdentityConflictError(
@@ -6553,6 +6630,18 @@ class SimulationPersistenceRepository:
             self._remember_validated_revision(
                 verified_native_save_signature, verified_native_save_receipt,
             )
+        if committed_global_append is not None:
+            from beta_engine.infrastructure.db.native_fork_runtime_state import remember_committed_global_append
+
+            remember_committed_global_append(self, *committed_global_append,
+                run_id=run_id, branch_id=branch_id)
+            # These exact models were strictly captured from actual live rows,
+            # their complete payload passed math and physical origin gates, and
+            # the inserted row matched it before successful commit. Retain only
+            # an isolated DTO copy, keyed by the complete authenticated payload;
+            # subsequent independent readers still authenticate physical sources.
+            from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_tour_source
+            decoded_global_tour_source(self, verified_native_save_receipt, lambda _source: captured_sources)
         revision = (
             verified_native_save_receipt
             if verified_native_save_receipt is not None

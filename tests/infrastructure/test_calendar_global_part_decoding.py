@@ -242,3 +242,33 @@ def test_live_value_retention_is_bounded_and_has_no_oversize_or_failed_entries(m
         projection.decoded_live_calendar_component(other, run_id='run', branch_id='branch',
             kind='sporting', raw='{"values":{"a":1}}', parse=Part.model_validate_json)
     assert not hasattr(other, '_live_calendar_value_cache')
+
+
+def test_actual_value_fingerprint_reuse_ends_before_nested_mutation_can_escape():
+    import json
+    from beta_engine.domain.tournaments.calendar_global_slots import _replay_fingerprint, global_replay_projection_scope
+    from beta_engine.infrastructure.db.native_fork_source_projection import decoded_live_calendar_component
+
+    class HashedPart(Part):
+        @property
+        def fingerprint(self):
+            return _replay_fingerprint(self)
+
+    repo = SimpleNamespace(_revision_validation_lock=Lock())
+    calls = []
+
+    def parse(raw):
+        calls.append(1)
+        return HashedPart.model_validate_json(raw)
+
+    args = dict(run_id='run', branch_id='branch', kind='sporting',
+        raw=json.dumps({'values': {'a': 1}}), parse=parse, _with_fingerprint=True)
+    with global_replay_projection_scope():
+        first, expected = decoded_live_calendar_component(repo, **args)
+        second, actual = decoded_live_calendar_component(repo, **args)
+        assert first == second and expected == actual == second.fingerprint
+    second.values['a'] = 99
+    assert second.fingerprint != actual
+    recovered, fingerprint = decoded_live_calendar_component(repo, **args)
+    assert recovered.values == {'a': 1} and recovered.fingerprint == fingerprint == expected
+    assert len(calls) == 1

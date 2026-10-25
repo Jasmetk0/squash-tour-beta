@@ -90,6 +90,7 @@ def native_working_context(
         branch_id=branch_id,
         _verified_saved_prefix=saved,
         _verified_global_prefix=(saved, signed, revision.saved_revision.payload),
+        _predecoded_checkpoint=checkpoint if checkpoint.schema_version == 'calendar_sporting_checkpoint.v13' else None,
     )
     if (
         verified != checkpoint

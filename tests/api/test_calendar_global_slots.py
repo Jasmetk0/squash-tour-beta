@@ -80,6 +80,105 @@ def copy_database(source, target):
         source_db.backup(target_db)
 
 
+def test_global_save_verifies_actual_append_before_install_and_rejects_changed_ancestor(
+    tmp_path, prepared_slots, monkeypatch
+):
+    from sqlalchemy import update
+    from sqlalchemy.orm import object_session
+    from beta_engine.domain.run_revisions import saved_revision_content_hash
+    from beta_engine.infrastructure.db import calendar_global_slot_origins
+    from beta_engine.infrastructure.db import repositories as repository_module
+    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel, RunBranchModel
+
+    path = tmp_path / 'verified-append.db'
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f'sqlite:///{path}') as server:
+        repo = server.app.state.runtime.repository
+        execute(server, command(inspect(server), 'next-match', name='append-first'))
+        old = inspect(server)['saved_head_revision_id']
+        original_gate = calendar_global_slot_origins.verify_saved_global_origins
+        checked = []
+
+        def actual_gate(repository, session, revision, **kwargs):
+            checked.append((revision.revision_id, session.get(RunBranchModel, 'branch').saved_head_revision_id))
+            return original_gate(repository, session, revision, **kwargs)
+
+        monkeypatch.setattr(calendar_global_slot_origins, 'verify_saved_global_origins', actual_gate)
+        replay = repository_module.load_saved_calendar_sources
+        replayed = []
+
+        def independent_math(payload, **kwargs):
+            replayed.append(payload)
+            return replay(payload, **kwargs)
+
+        monkeypatch.setattr(repository_module, 'load_saved_calendar_sources', independent_math)
+        saved = save_tour(server)
+        assert checked == [(saved['revision_id'], old)]
+        assert not replayed, 'identical complete actual payload already passed independent live replay'
+        assert inspect(server)['saved_head_revision_id'] == saved['revision_id']
+        from beta_engine.infrastructure.db.calendar_standalone_match_state import decode_prevalidated_calendar_sources
+        from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_tour_source
+
+        record = repo.get_branch_saved_revision(revision_id=saved['revision_id'])
+
+        def no_second_decode(_source):
+            pytest.fail('the committed exact captured DTO should already be retained')
+
+        assert decoded_global_tour_source(repo, record, no_second_decode) == decode_prevalidated_calendar_sources(
+            record.payload, run_id='run', branch_id='branch',
+        )
+
+        execute(server, command(inspect(server), 'next-match', name='append-second'))
+        view = inspect(server)
+        original_decode = repo._to_branch_saved_revision
+        injected = []
+
+        def change_actual_ancestor(model, **kwargs):
+            result = original_decode(model, **kwargs)
+            if model.parent_revision_id == saved['revision_id'] and not injected:
+                session = object_session(model)
+                source = session.get(BranchSavedRevisionModel, saved['revision_id'])
+                body = json.loads(source.payload_json)
+                body['run']['display_name'] = 'Rehashed during the Save transaction'
+                digest = saved_revision_content_hash(
+                    revision_id=source.revision_id, run_id=source.run_id, branch_id=source.branch_id,
+                    sequence=source.sequence, parent_revision_id=source.parent_revision_id,
+                    kind=source.kind, payload_schema_version=source.payload_schema_version,
+                    payload=body, change_summary=json.loads(source.change_summary_json),
+                )
+                session.execute(update(BranchSavedRevisionModel).where(
+                    BranchSavedRevisionModel.revision_id == source.revision_id,
+                ).values(payload_json=json.dumps(body), content_hash=digest)
+                    .execution_options(synchronize_session=False))
+                injected.append(True)
+            return result
+
+        monkeypatch.setattr(repo, '_to_branch_saved_revision', change_actual_ancestor)
+        code, rejected = _request('POST', tour_url(server) + '/save', {
+            'expected_draft_version': view['draft_version'],
+            'expected_calendar_tour_fingerprint': view['tour_fingerprint'],
+        })
+        assert injected and code == 409, rejected
+        assert 'dependenc' in str(rejected).lower()
+        monkeypatch.setattr(repo, '_to_branch_saved_revision', original_decode)
+        after = inspect(server)
+        assert after['saved_head_revision_id'] == saved['revision_id']
+        assert after['tour_fingerprint'] == view['tour_fingerprint'] and not after['saved']
+        # A different captured body cannot reuse the old completed math proof,
+        # even when its changed field does not itself alter sporting outcomes.
+        base_payload = repository_module.viewer_branch_saved_revision_payload
+
+        def changed_capture(**kwargs):
+            payload = base_payload(**kwargs)
+            payload['content']['test_actual_capture_change'] = {'value': 'new'}
+            return payload
+
+        monkeypatch.setattr(repository_module, 'viewer_branch_saved_revision_payload', changed_capture)
+        replayed.clear()
+        assert save_tour(server)['revision_id'] != saved['revision_id']
+        assert len(replayed) == 1
+
+
 def test_metadata_only_global_history_keeps_payload_until_physical_gates_finish(
     tmp_path, prepared_slots, monkeypatch
 ):

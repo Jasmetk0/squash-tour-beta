@@ -4,6 +4,7 @@ import hashlib
 import json
 
 from beta_engine.domain.tournaments.calendar_tour import (
+    CalendarEditionAuthority,
     calculate_tour_ranking,
     edition_results,
     effective_policy,
@@ -26,9 +27,9 @@ def load_tour(session, *, run_id, branch_id, _repository=None):
     if row is None:
         return None
     from beta_engine.infrastructure.db.native_fork_source_projection import decoded_live_calendar_component
-    state = decoded_live_calendar_component(_repository, run_id=run_id, branch_id=branch_id,
-        kind=COMPONENT_KEY, raw=row.payload_json, parse=parse_tour_json)
-    if (state.run_id, state.branch_id, state.fingerprint) != (
+    state, fingerprint = decoded_live_calendar_component(_repository, run_id=run_id, branch_id=branch_id,
+        kind=COMPONENT_KEY, raw=row.payload_json, parse=parse_tour_json, _with_fingerprint=True)
+    if (state.run_id, state.branch_id, fingerprint) != (
         run_id,
         branch_id,
         row.fingerprint,
@@ -422,6 +423,7 @@ def capture_tour(
             life = load_saved_lifecycle(payload, run_id=run_id, branch_id=branch_id)
             if not life or life[-1].fingerprint != state.lifecycle_fingerprint:
                 raise ValueError("Tour Save lacks its coupled current lifecycle")
+    return state
 
 
 def restore_tour(
@@ -450,12 +452,12 @@ def restore_tour(
         put_tour(session, target)
 
 
-def _origin_inputs(row, cache, *, with_health=False):
+def _origin_inputs(row, cache, *, with_health=False, _decode_tour=True):
     """Decode a narrow source projection, never a physical validation proof."""
     if cache is None:
         payload = json.loads(row.payload_json)
         component = payload.get('content', {}).get(COMPONENT_KEY, {})
-        return payload, parse_tour_json(json.dumps(component['state'])) if component else None
+        return payload, parse_tour_json(json.dumps(component['state'])) if component and _decode_tour else None
     key = (row.run_id, row.branch_id, row.revision_id,
         hashlib.sha256(row.payload_json.encode('utf-8')).digest(), with_health)
     known = cache.get(key)
@@ -464,12 +466,12 @@ def _origin_inputs(row, cache, *, with_health=False):
         # cannot mutate another source read or poison a subsequent cache hit.
         projection = json.loads(known[1])
         component = projection['content'].get(COMPONENT_KEY, {})
-        origin = parse_tour_json(json.dumps(component['state'])) if component else None
+        origin = parse_tour_json(json.dumps(component['state'])) if component and _decode_tour else None
         return projection, origin
     payload = json.loads(row.payload_json)
     content = payload.get('content', {})
     component = content.get(COMPONENT_KEY, {})
-    origin = parse_tour_json(json.dumps(component['state'])) if component else None
+    origin = parse_tour_json(json.dumps(component['state'])) if component and _decode_tour else None
     projection = {
         'run': payload.get('run'), 'branch': payload.get('branch'),
         'content': {
@@ -499,6 +501,7 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin
         BranchSavedRevisionModel,
         RunBranchModel,
     )
+    from beta_engine.infrastructure.db.native_fork_runtime_state import actual_saved_revision_reference
 
     branch = session.get(RunBranchModel, state.branch_id)
     revision_id = (
@@ -511,10 +514,10 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin
         if revision_id in reachable:
             raise ValueError("Tour source Saved lineage contains a cycle")
         reachable.add(revision_id)
-        row = session.get(BranchSavedRevisionModel, revision_id)
-        if row is None or row.run_id != state.run_id:
+        row = actual_saved_revision_reference(session, state.run_id, revision_id)
+        if row is None or row[1] != state.run_id:
             raise ValueError("Tour source Saved lineage is missing or foreign")
-        revision_id = row.parent_revision_id
+        revision_id = row[4]
 
     if _reachable_revision_ids is not None:
         # A historical fork may only inherit authorities already present at its
@@ -600,6 +603,7 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin
             )
         root_count = len(state.competition_root_tour.receipts)
         start = len(prefix.receipts) if prefix is not None else root_count
+        expected_receipts = [receipt.model_dump(mode='json') for receipt in state.receipts]
         previous_source = None
         if start > root_count:
             previous_id = state.receipts[start - 1].request["command"]["expected_saved_head"]
@@ -609,7 +613,7 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin
             ) != (state.run_id, state.branch_id):
                 raise ValueError("Verified global prefix source is missing or foreign")
             from beta_engine.infrastructure.db.run_prospect_source_state import load_saved_run_prospect_source
-            previous_payload, _ = _origin_inputs(previous_row, _origin_cache)
+            previous_payload, _ = _origin_inputs(previous_row, _origin_cache, _decode_tour=False)
             previous_source = load_saved_run_prospect_source(previous_payload, run_id=state.run_id)
         for index, receipt in enumerate(state.receipts[start:], start=start - root_count):
             command = receipt.request["command"]
@@ -623,7 +627,7 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin
                 raise ValueError(
                     "Native competition Saved origin is missing or foreign"
                 )
-            payload, origin = _origin_inputs(row, _origin_cache)
+            payload, origin = _origin_inputs(row, _origin_cache, _decode_tour=index == 0)
             content = payload.get("content", {})
             raw = content.get(COMPONENT_KEY, {})
             cp = content.get("calendar_player_sporting_checkpoint", {})
@@ -659,10 +663,13 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin
                 )
             # Configuration may share one Working Draft, but its Saved base must
             # already own a prefix of the actual confirmed predecessor receipts.
-            previous_receipts = state.receipts[
-                : len(state.competition_root_tour.receipts) + index
-            ]
-            if origin.receipts != previous_receipts[: len(origin.receipts)]:
+            # Physical source/component gates already authenticated this row.
+            # Compare its actual receipt values; do not decode every unrelated
+            # ranking snapshot again merely to inspect one immutable prefix.
+            previous_receipts = expected_receipts[:root_count + index]
+            actual_receipts = raw.get('state', {}).get('receipts')
+            if (not isinstance(actual_receipts, list)
+                or actual_receipts != previous_receipts[:len(actual_receipts)]):
                 raise ValueError(
                     "Native competition Saved origin is not its preceding history"
                 )
@@ -706,23 +713,17 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin
             )
         ):
             raise ValueError("Edition played origin is missing or foreign")
-        origin_payload, origin = _origin_inputs(row, _origin_cache)
+        origin_payload, _ = _origin_inputs(row, _origin_cache, _decode_tour=False)
         # The terminal record's clock must have existed at actual play. An
         # extension/rehashed event cannot retroactively create publication time.
         if any(clock != origin_payload["run"]["run_calendar"] for clock in terminal_clocks.get(authority.edition.edition_id, ())):
             raise ValueError("Terminal result calendar did not exist in its actual played Saved origin")
-        frozen = (
-            next(
-                (
-                    a
-                    for a in origin.editions
-                    if a.edition.edition_id == authority.edition.edition_id
-                ),
-                None,
-            )
-            if origin
-            else None
-        )
+        body = origin_payload.get('content', {}).get(COMPONENT_KEY, {}).get('state', {})
+        edition = next((a for a in body.get('editions', [])
+            if a.get('edition', {}).get('edition_id') == authority.edition.edition_id), None)
+        # The complete source is independently authenticated; strictly decode
+        # the one pre-play authority needed here, retaining all original checks.
+        frozen = CalendarEditionAuthority.model_validate_json(json.dumps(edition)) if edition else None
         if (
             frozen is None
             or frozen.tournament_fingerprint is not None

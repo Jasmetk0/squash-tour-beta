@@ -49,7 +49,11 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     let active=true
     const valid=()=>active&&epoch.current===stamp
     setView(null);setError(null);setReview(null);setSelectedSlotMatch('');setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setIntakeReport(null);setBirthSportingReport(null);intakeReadRequest.current++;setBusy(true)
-    void read(controller.signal).then(v=>{if(valid()){
+    // StrictMode cleans up its discarded mount before this microtask. Do not
+    // start an expensive server read that its AbortController cannot stop once
+    // the synchronous backend has begun. Real dispatched reads still abort and
+    // keep the scope/epoch fence when this Run/Branch/HEAD changes.
+    void Promise.resolve().then(()=>valid()?read(controller.signal):null).then(v=>{if(v&&valid()){
       setView(v)
       const clock=v.state?{...v.state.week,calendar:v.run_calendar??v.state.week.calendar}:null
       const first=clock?tourWeekOffset(clock,2):null

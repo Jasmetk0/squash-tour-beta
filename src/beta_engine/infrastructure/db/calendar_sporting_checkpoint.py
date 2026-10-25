@@ -100,9 +100,9 @@ def load_checkpoint(session, *, run_id, branch_id, _verified_source=None, _repos
             # live byte's decoded value; never trust only its stored hash column.
             return _verified_source
     from beta_engine.infrastructure.db.native_fork_source_projection import decoded_live_calendar_component
-    state = decoded_live_calendar_component(_repository, run_id=run_id, branch_id=branch_id,
-        kind=COMPONENT_KEY, raw=row.payload_json, parse=parse_checkpoint_json)
-    if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, row.fingerprint):
+    state, fingerprint = decoded_live_calendar_component(_repository, run_id=run_id, branch_id=branch_id,
+        kind=COMPONENT_KEY, raw=row.payload_json, parse=parse_checkpoint_json, _with_fingerprint=True)
+    if (state.run_id, state.branch_id, fingerprint) != (run_id, branch_id, row.fingerprint):
         raise ValueError('Calendar sporting checkpoint SQLite identity/hash mismatch')
     return state
 
@@ -242,7 +242,8 @@ def verify_checkpoint(state, world, evidence, *, _prefix_proofs=None,
 
 
 def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=None,
-                     _verified_saved_prefix=None, _verified_global_prefix=None):
+                     _verified_saved_prefix=None, _verified_global_prefix=None,
+                     _predecoded_checkpoint=None):
     from beta_engine.infrastructure.db.initial_world_state import (
         load_saved_initial_world,
     )
@@ -251,8 +252,21 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
     if component is not None:
         if not isinstance(component, dict) or set(component) != {'fingerprint', 'state'}:
             raise ValueError('Malformed Saved calendar sporting checkpoint component')
-        state = parse_checkpoint_json(json.dumps(component['state']),
-            _parsed_global_parts=_prefix_proofs.setdefault('_global_decoded_parts', {}) if _prefix_proofs is not None else None)
+        if _predecoded_checkpoint is not None:
+            # The private live-context caller just strictly decoded and checked
+            # the actual SQLite row, and built this body from that owned model.
+            # Bind the complete actual value again; only duplicate structural
+            # decoding is omitted. Independent full math/source verification
+            # below remains mandatory.
+            from beta_engine.domain.run_packages import canonical_hash
+            from beta_engine.domain.tournaments.calendar_global_slots import GlobalCompetitionCheckpoint
+            if (not isinstance(_predecoded_checkpoint, GlobalCompetitionCheckpoint)
+                or canonical_hash(component['state']) != _predecoded_checkpoint.fingerprint):
+                raise ValueError('Predecoded global checkpoint differs from actual complete component')
+            state = _predecoded_checkpoint
+        else:
+            state = parse_checkpoint_json(json.dumps(component['state']),
+                _parsed_global_parts=_prefix_proofs.setdefault('_global_decoded_parts', {}) if _prefix_proofs is not None else None)
         if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, component['fingerprint']):
             raise ValueError('Saved calendar sporting checkpoint identity/hash mismatch')
     if state is not None and state.schema_version in {'calendar_sporting_checkpoint.v12', 'calendar_sporting_checkpoint.v13'}:
@@ -320,6 +334,7 @@ def capture_checkpoint(session, payload, evidence, *, run_id, branch_id,
         from beta_engine.domain.run_packages import canonical_hash
         body = state.model_dump(mode='json')
         payload['content'][COMPONENT_KEY] = {'fingerprint': canonical_hash(body), 'state': body}
+    return state
 
 
 def restore_checkpoint(session, *, current_payload, target_payload, current, target, run_id, branch_id,
@@ -342,8 +357,9 @@ def restore_checkpoint(session, *, current_payload, target_payload, current, tar
         put_checkpoint(session, replacement)
 
 
-def replace_checkpoint(session, *, previous, successor):
-    live = load_checkpoint(session, run_id=previous.run_id, branch_id=previous.branch_id)
+def replace_checkpoint(session, *, previous, successor, _verified_previous=None):
+    live = load_checkpoint(session, run_id=previous.run_id, branch_id=previous.branch_id,
+        _verified_source=_verified_previous)
     if live != previous or (successor.run_id, successor.branch_id) != (previous.run_id, previous.branch_id):
         raise ValueError('Population sporting checkpoint changed before atomic replacement')
     row = session.get(CalendarPlayerSportingCheckpointModel, (previous.run_id, previous.branch_id))

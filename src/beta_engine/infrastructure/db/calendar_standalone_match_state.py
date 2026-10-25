@@ -344,16 +344,16 @@ def replace_saved_knockout_with_prepared_awards(
 
 def capture_saved_calendar_match(session: Session, payload: dict, *, run_id: str, branch_id: str,
                                  _defer_full_verification: bool = False,
-                                 _authenticated_tour_prefix=None, _repository=None) -> None:
+                                 _authenticated_tour_prefix=None, _repository=None):
     states = load_match_rows(session, run_id=run_id, branch_id=branch_id)
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
         capture_checkpoint,
     )
-    capture_checkpoint(session, payload, states[0] if len(states) == 1 else None,
+    checkpoint = capture_checkpoint(session, payload, states[0] if len(states) == 1 else None,
                        run_id=run_id, branch_id=branch_id,
                        _defer_full_verification=_defer_full_verification, _repository=_repository)
     from beta_engine.infrastructure.db.calendar_tour import capture_tour
-    capture_tour(session, payload, run_id=run_id, branch_id=branch_id,
+    tour = capture_tour(session, payload, run_id=run_id, branch_id=branch_id,
                  _defer_full_verification=_defer_full_verification,
                  _authenticated_prefix=_authenticated_tour_prefix, _repository=_repository)
     if states:
@@ -365,6 +365,7 @@ def capture_saved_calendar_match(session: Session, payload: dict, *, run_id: str
             "fingerprint": state.fingerprint,
             "state": state.model_dump(mode="json"),
         }
+    return (states[0] if states else None), checkpoint, tour
 
 
 def _parse_saved_calendar_match_evidence(payload: dict, *, run_id: str, branch_id: str) -> CalendarMatchEvidence | None:

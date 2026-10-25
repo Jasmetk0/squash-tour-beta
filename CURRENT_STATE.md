@@ -1,3 +1,27 @@
+# Global-slot whole-operation and restart repair — 25 October 2026 candidate
+
+Continuation remains in #1643. Head `c15f35b3` passed seven hosted workflows and
+all native Full Simulation jobs, but W80/1,000 still exceeded its whole-browser
+deadline. W52 completed every real week and Season Transition, then timed out on
+final cold reopen; W61/W80 whole-calendar jobs reached their limit.
+
+The follow-up verifies a new actual global Saved row before moving HEAD, compares
+the complete before/staged/installed physical graphs, and retains bounded proofs
+only after successful commit for exact unchanged own ancestry plus the new row.
+Any changed dependency rejects/rolls back; every independent read rehashes the
+complete actual graph. Exact complete-payload math proofs and isolated captured
+DTOs avoid duplicate work; changed inputs retain full verification. Parent-edge
+reads are snapshot-bound metadata, and pure value fingerprints never become
+physical authority. The UI avoids StrictMode's discarded initial HTTP dispatch.
+
+Actual Save mutation/rollback/recovery and changed-capture fallback regressions,
+source/snapshot/mutation guards, 31 Tour frontend contracts and production build
+passed. The real W52 failure database reopened in 81.84 s under cProfile before
+the last refinements. Complete final-head hosted acceptance is the merge gate;
+check the exact SHA/results in #1643. This is not full pre-alpha certification.
+
+---
+
 # Native global-slot acceptance repairs — 25 October 2026 candidate
 
 Follow-up after `3d6906c6`: seven hosted workflows and all native Full Simulation

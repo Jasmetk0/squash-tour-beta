@@ -122,19 +122,15 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     expect(screen.queryByLabelText('Confirm Tour command')).not.toBeInTheDocument()
     expect(api.executeCalendarTour).not.toHaveBeenCalled()
   })
-  it('ignores a superseded StrictMode read while a newer command is pending',async()=>{
-    let oldRead!:(v:TourView)=>void,finishPreview!:(v:TourPreview)=>void,command!:TourCommand
-    api.inspectCalendarTour.mockReturnValueOnce(new Promise(r=>{oldRead=r}))
-      .mockImplementation((r,b)=>Promise.resolve(view(r,b)))
+  it('dispatches one StrictMode mount read and keeps its command review independently pending',async()=>{
+    let finishPreview!:(v:TourPreview)=>void,command!:TourCommand
     api.previewCalendarTour.mockImplementation((_r,_b,c)=>{command=c;return new Promise(r=>{finishPreview=r})})
     render(<StrictMode>{panel()}</StrictMode>)
     await screen.findByLabelText('Tour operation reason')
-    expect(api.inspectCalendarTour.mock.calls[0][2].aborted).toBe(true)
-    expect(api.inspectCalendarTour.mock.calls[1][2].aborted).toBe(false)
+    expect(api.inspectCalendarTour).toHaveBeenCalledTimes(1)
+    expect(api.inspectCalendarTour.mock.calls[0][2].aborted).toBe(false)
     fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Current review'}})
     fireEvent.click(screen.getByRole('button',{name:'Review Tour initialization'}))
-    expect(screen.getByRole('button',{name:'Refresh state'})).toBeDisabled()
-    await act(async()=>oldRead({...view(),can_initialize:false}))
     expect(screen.getByRole('button',{name:'Refresh state'})).toBeDisabled()
     await act(async()=>finishPreview(preview(command)))
     await screen.findByLabelText('Confirm Tour command')
@@ -143,9 +139,11 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
   it('does not revive responses after switching Run A→B→A',async()=>{
     let resolve!:(v:TourView)=>void
     api.inspectCalendarTour.mockReturnValueOnce(new Promise(r=>{resolve=r})).mockImplementation((r,b)=>Promise.resolve(view(r,b)))
-    const page=render(panel());page.rerender(panel('other'));page.rerender(panel())
+    const page=render(panel());await act(async()=>{})
+    page.rerender(panel('other'));page.rerender(panel())
     await screen.findByLabelText('Tour operation reason')
     await act(async()=>resolve({...view(),can_initialize:false}))
+    expect(api.inspectCalendarTour.mock.calls[0][2].aborted).toBe(true)
     fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Current input'}})
     expect(screen.getByRole('button',{name:'Review Tour initialization'})).toBeEnabled()
   })

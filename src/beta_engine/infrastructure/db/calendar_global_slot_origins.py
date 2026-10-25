@@ -18,7 +18,7 @@ def verify_saved_global_origins(
         raise ValueError('Global slot physical Saved origin is missing')
     cache = sporting_component_proofs.setdefault('_global_origin_inputs', {}) if sporting_component_proofs is not None else {}
     from beta_engine.infrastructure.db.native_fork_runtime_state import (
-        actual_dependency_signature,
+        actual_dependency_signature, actual_saved_revision_reference,
     )
 
     actual_dependency_signature(session, physical, repository=repository)
@@ -31,10 +31,10 @@ def verify_saved_global_origins(
         if parent in reachable:
             raise ValueError("Global slot Saved source lineage contains a cycle")
         reachable.add(parent)
-        row = session.get(BranchSavedRevisionModel, parent)
-        if row is None or row.run_id != revision.run_id:
+        row = actual_saved_revision_reference(session, revision.run_id, parent)
+        if row is None or row[1] != revision.run_id:
             raise ValueError("Global slot Saved source is missing or foreign")
-        parent = row.parent_revision_id
+        parent = row[4]
     ids = {
         r.request["command"]["expected_saved_head"]
         for r in state.receipts[len(state.competition_root_tour.receipts) :]
@@ -74,8 +74,8 @@ def verify_saved_global_origins(
     # Even when a parent proves ancestry, the current commands must independently
     # name actual same-Branch ancestors, never a foreign row in a shared past.
     for source_id in ids:
-        row = session.get(BranchSavedRevisionModel, source_id)
-        if row is None or (row.run_id, row.branch_id) != (revision.run_id, revision.branch_id):
+        row = actual_saved_revision_reference(session, revision.run_id, source_id)
+        if row is None or row[1:3] != (revision.run_id, revision.branch_id):
             raise ValueError("Global slot command source has a foreign owner")
     verified_prefix = None
     if parent_is_global:

@@ -1,3 +1,15 @@
+# Global-slot whole-operation and restart repair — 25 October 2026 candidate
+
+Finish #1643's actual whole-browser and every-week acceptance. The follow-up
+authenticates new Saved origins before HEAD installation and compares complete
+actual graphs around the append, preserving all tamper/rollback fences. It reuses
+only exact completed math/value proofs, narrows snapshot-bound parent reads and
+avoids StrictMode's discarded dispatch. Actual source mutation and changed-input
+fallback tests pass; genuine W52 cold reopen measured 81.84 s under cProfile.
+Only final-head hosted green checks permit the owner merge recommendation.
+
+---
+
 # Native global-slot acceptance repairs — 25 October 2026 candidate
 
 The follow-up after `3d6906c6` addresses the remaining W80/1,000-player whole

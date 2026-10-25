@@ -186,7 +186,10 @@ def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=No
     else:
         successor, completed_slot = accept_slot(cp, slot, match_id=match_id)
     if persist:
-        replace_checkpoint(session, previous=cp, successor=successor)
+        # ctx owns the fully authenticated live checkpoint. The writer still
+        # hashes the complete actual SQLite content before accepting equality;
+        # changed bytes fall back to ordinary strict decoding and comparison.
+        replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp)
         _fault_injection_point("after_global_slot_matches_write")
     events = {e.tournament_id: e for e in successor.tournaments}
     starts = {

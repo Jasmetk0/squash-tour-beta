@@ -103,6 +103,21 @@ def _replay_fingerprint(value, *, sporting=False):
     return fingerprint
 
 
+def _prime_private_fingerprint(value, fingerprint):
+    """Reuse an actual canonical value hash only in a private frozen scope.
+
+    Callers must have computed it from strictly decoded actual content (or its
+    authenticated identical-byte DTO). This is never a physical/source proof.
+    Outside the private scope ordinary properties always compute fresh hashes.
+    """
+    scope = _replay_projections.get()
+    if scope is not None:
+        memo = scope['fingerprints']
+        memo[(id(value), False)] = (value, fingerprint)
+        while len(memo) > 256:
+            memo.pop(next(iter(memo)))
+
+
 def is_slot_edition(authority):
     return authority.edition.schema_version == "calendar_tournament_edition.v2"
 
@@ -158,7 +173,13 @@ class GlobalSlot(FrozenInput):
 
     @property
     def snapshot_fingerprint(self):
-        return canonical_hash(
+        scope = _replay_projections.get()
+        memo = scope["fingerprints"] if scope is not None else {}
+        key = (id(self), "slot_snapshot")
+        known = memo.get(key)
+        if known is not None and known[0] is self:
+            return known[1]
+        result = canonical_hash(
             {
                 "schema_version": "calendar_slot_snapshot.v1",
                 "run_id": self.run_id,
@@ -171,6 +192,11 @@ class GlobalSlot(FrozenInput):
                 "authorities": [a.execution_fingerprint for a in self.authorities],
             }
         )
+        if scope is not None:
+            memo[key] = (self, result)
+            while len(memo) > 256:
+                memo.pop(next(iter(memo)))
+        return result
 
     @property
     def conflicts(self):
@@ -191,7 +217,7 @@ class GlobalSlot(FrozenInput):
 
     @property
     def fingerprint(self):
-        return canonical_hash(self.model_dump(mode="json"))
+        return _replay_fingerprint(self)
 
     @model_validator(mode="after")
     def canonical_evidence(self):

@@ -141,7 +141,7 @@ def _fault_injection_point(name):
 class CalendarTourService:
     repository: object
 
-    def _context(self, session, run_id, branch_id):
+    def _context(self, session, run_id, branch_id, *, _fingerprints=None):
         from beta_engine.application.calendar_standalone_match_service import (
             CalendarStandaloneMatchService,
         )
@@ -160,9 +160,18 @@ class CalendarTourService:
         # return. Memoize their derived fingerprints only inside this assembly;
         # no model/projection proof survives it or authorizes a physical read.
         with global_replay_projection_scope():
-            return self._context_from_saved(
+            result = self._context_from_saved(
                 session, run_id, branch_id, proofs, clock, revision, world,
             )
+            if _fingerprints is not None:
+                # Carry only this operation's already computed canonical hashes
+                # alongside its private models, never a cross-request proof.
+                for value in (result[0][4], result[0][5], result[1], result[2]):
+                    if getattr(value, 'schema_version', None) in {
+                        'calendar_sporting_checkpoint.v13', 'calendar_tour_authority.v5',
+                    }:
+                        _fingerprints[id(value)] = (value, value.fingerprint)
+            return result
 
     def _context_from_saved(self, session, run_id, branch_id, proofs, clock, revision, world):
         from beta_engine.application.calendar_knockout_health import saved_knockout_health
@@ -386,9 +395,11 @@ class CalendarTourService:
             return NativeForkRuntimeService(self.repository).inspect(run_id=run_id, branch_id=branch_id)
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
-            ctx, state, signed = self._context(session, run_id, branch_id)
+            fingerprints = {}
+            ctx, state, signed = self._context(session, run_id, branch_id, _fingerprints=fingerprints)
             _clock, rev, world, _health, cp, saved, _ = ctx
-            checkpoint_fingerprint = cp.fingerprint if cp else None
+            checkpoint_fingerprint = (fingerprints[id(cp)][1] if id(cp) in fingerprints
+                else cp.fingerprint if cp else None)
             # _context verified the full live lifecycle against its Saved
             # owner (or rebuilt an unsaved one). Read the authenticated current
             # row instead of replaying every historical birth/Entry week again.
@@ -598,9 +609,18 @@ class CalendarTourService:
             }
 
     def _prepare(self, session, run_id, branch_id, command, *, loaded=None):
+        from beta_engine.domain.tournaments.calendar_global_slots import global_replay_projection_scope, _prime_private_fingerprint
+
+        fingerprints = {}
         ctx, state, signed = (
-            loaded if loaded is not None else self._context(session, run_id, branch_id)
+            loaded if loaded is not None else self._context(session, run_id, branch_id, _fingerprints=fingerprints)
         )
+        with global_replay_projection_scope():
+            for value, fingerprint in fingerprints.values():
+                _prime_private_fingerprint(value, fingerprint)
+            return self._prepare_from_context(session, run_id, branch_id, command, ctx, state, signed)
+
+    def _prepare_from_context(self, session, run_id, branch_id, command, ctx, state, signed):
         _clock, rev, _world, _health, cp, saved, evidence = ctx
         from beta_engine.application.native_full_simulation_closure import (
             saved_native_closure,
@@ -809,7 +829,8 @@ class CalendarTourService:
         with self.repository._session_factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             # Authenticate the live/signed owners even on exact retries.
-            loaded = self._context(session, run_id, branch_id)
+            fingerprints = {}
+            loaded = self._context(session, run_id, branch_id, _fingerprints=fingerprints)
             _, current, _ = loaded
             if current:
                 for receipt in current.receipts:
@@ -819,35 +840,39 @@ class CalendarTourService:
                                 "Command ID already has a different payload or confirmation"
                             )
                         return receipt.result
-            preview, ctx, state, authority, transition_successor = self._prepare(
-                session, run_id, branch_id, command, loaded=loaded
-            )
-            if preview["preview_fingerprint"] != request.expected_preview_fingerprint:
-                raise ValueError(
-                    "Confirmation is stale; review the current inputs again"
+            from beta_engine.domain.tournaments.calendar_global_slots import global_replay_projection_scope, _prime_private_fingerprint
+
+            # The authenticated private inputs remain frozen through this
+            # calculation. End the projection scope BEFORE independently reading
+            # and verifying the actual coupled rows written below.
+            with global_replay_projection_scope():
+                for value, fingerprint in fingerprints.values():
+                    _prime_private_fingerprint(value, fingerprint)
+                preview, ctx, state, authority, transition_successor = self._prepare(
+                    session, run_id, branch_id, command, loaded=loaded
                 )
-            successor, result = self._apply(
-                session,
-                ctx,
-                state,
-                authority,
-                command,
-                transition_candidate=(preview["impact"], transition_successor),
-            )
-            successor = successor.model_copy(
-                update={
-                    "receipts": successor.receipts
-                    + (
-                        CalendarTourReceipt(
-                            command_id=command.command_id,
-                            request=request.model_dump(mode="json"),
-                            result=result,
-                        ),
+                if preview["preview_fingerprint"] != request.expected_preview_fingerprint:
+                    raise ValueError(
+                        "Confirmation is stale; review the current inputs again"
                     )
-                }
-            )
-            put_tour(session, successor)
-            _fault_injection_point("after_tour_write")
+                successor, result = self._apply(
+                    session, ctx, state, authority, command,
+                    transition_candidate=(preview["impact"], transition_successor),
+                )
+                successor = successor.model_copy(
+                    update={
+                        "receipts": successor.receipts
+                        + (
+                            CalendarTourReceipt(
+                                command_id=command.command_id,
+                                request=request.model_dump(mode="json"),
+                                result=result,
+                            ),
+                        )
+                    }
+                )
+                put_tour(session, successor)
+                _fault_injection_point("after_tour_write")
             if successor.schema_version in {
                 "calendar_tour_authority.v3",
                 "calendar_tour_authority.v4", "calendar_tour_authority.v5",
@@ -901,7 +926,7 @@ class CalendarTourService:
             )
         )
         if persist:
-            replace_checkpoint(session, previous=cp, successor=successor)
+            replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp)
             _fault_injection_point("after_native_matches_write")
         receipt = CalendarFollowupKnockoutService._receipt(event, successor)
         receipt["participant_identities"] = {
@@ -1157,7 +1182,7 @@ class CalendarTourService:
             previous_cp = cp
             cp = competition_checkpoint(cp)
             if persist:
-                replace_checkpoint(session, previous=previous_cp, successor=cp)
+                replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp)
             state = state.model_copy(update={"checkpoint_fingerprint": cp.fingerprint})
             ctx = (*ctx[:4], cp, *ctx[5:])
         if command.action == "create-edition" and command.data.get("schema_version") == "calendar_tournament_edition.v2" and state.schema_version != "native_fork_tour.v1":
@@ -1165,7 +1190,7 @@ class CalendarTourService:
             previous_cp = cp
             state, cp = upgrade(state, cp, command.expected_saved_head)
             if persist and cp != previous_cp:
-                replace_checkpoint(session, previous=previous_cp, successor=cp)
+                replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp)
             ctx = (*ctx[:4], cp, *ctx[5:])
         if command.action in {"next-slot", "next-match"}:
             from beta_engine.application.calendar_global_slot_service import (
@@ -1301,7 +1326,7 @@ class CalendarTourService:
         elif command.action in {"transition", "season-transition"}:
             impact, successor = transition_candidate
             if persist:
-                replace_checkpoint(session, previous=cp, successor=successor)
+                replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp)
             _fault_injection_point("after_development_write")
             from beta_engine.domain.rankings.calendar_official import (
                 CalendarOfficialRankingSnapshot,

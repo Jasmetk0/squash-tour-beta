@@ -7,6 +7,58 @@ owner-merged #1642. The parallel Draft #1641 owns its listed diagnostic and
 historical frontend pages; this change excludes those files and their tests.
 Only the owner merges. Auto-merge remains disabled.
 
+## Whole-operation and restart follow-up — 25 October 2026
+
+The `c15f35b3` head passed seven hosted workflows, including all 12 native Full
+Simulation jobs. Its W80/1,000-player browser still hit the unchanged 18-minute
+deadline. All actual W52 weeks and Season Transition completed, but the final
+cold SQLite reopen exceeded 120 seconds. W61/W80 whole calendars reached their
+90-minute job limit. These remain failed/incomplete earlier-head evidence.
+
+The next candidate addresses complete operations rather than transport budgets:
+
+- Pure operation fingerprints remain private and end before independent
+  post-write verification. Actual value fingerprints can accompany the same
+  privately owned models within one operation; no hash survives model exposure.
+- Parent-edge reads select five actual identity/topology fields, reusing a full
+  physical read only inside its unchanged SQLite snapshot. Writes, pending ORM
+  changes, savepoint rollback and a new read snapshot invalidate that reuse.
+- A closure-free global Save keeps the prior HEAD installed while verifying its
+  new stored row's origins and terminal facts. Complete physical graphs before
+  insertion, after insertion and after installation must differ ONLY by the exact
+  new row and the selected Branch's HEAD. Any changed ancestor, owner, topology or
+  other source HEAD rejects and rolls back. Only after successful commit are
+  bounded graph proofs retained for the new row and its authenticated own
+  ancestry. Foreign ancestry is never promoted. Every later read still hashes
+  the complete actual graph before matching those proof keys.
+- Mathematical replay is reused only for the exact complete actual payload that
+  the mandatory independent post-command context already replayed. Any changed
+  captured value forces the full verifier. The private live context can reuse
+  its already strictly decoded checkpoint after binding its complete actual
+  value; full independent mathematical/source checks still run.
+- Authenticated origin reads compare actual receipt values and strictly decode
+  the selected complete pre-play Edition, retaining every original scope,
+  provenance, clock and source check. Unrelated ranking snapshots need not be
+  decoded for each source lookup. After a verified global Save commits, isolated
+  captured DTOs can populate the existing complete-payload-keyed value cache.
+- StrictMode's discarded mount is cancelled before dispatch rather than starting
+  a duplicate expensive HTTP read. Real requests keep abort and epoch/scope
+  fencing; explicit preview, confirmation, Save and fresh post-command reads stay.
+
+Actual SQLite regressions pass for the pre-install source gate, rehashed ancestor
+mutation during Save with full rollback/recovery, exact captured-body replay reuse
+and mandatory fallback for a changed captured body. DTO priming matches an
+independent strict decode of the stored Saved source. Snapshot write/rollback,
+nested mutable isolation, changed-source and private-scope guards pass; 31 Tour
+frontend contracts and production build pass. Four actual global sporting/source
+scenarios passed during iteration; the broader final suite remains a check.
+On the genuine failed W52 database, cold reopen completed in 81.84 s with cProfile
+enabled before the final narrow-projection refinements. Larger HTTP probes are
+development measurements, not completed Chromium or full-calendar certification.
+No seed, result, persisted schema/hash, population, timeout or assertion changes.
+Require every relevant hosted workflow on the final head; the PR records its
+exact SHA and actual result. No complete pre-alpha/50-season release is inferred.
+
 ## Continuation performance evidence — 25 October 2026
 
 The `3d6906c6` candidate passed Fast CI, Sporting Context Profile, native Tour

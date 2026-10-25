@@ -121,6 +121,27 @@ class PlayerSportingRecord(FrozenInput):
     long_term_fatigue: int = Field(ge=0, le=100)
     health_state: Literal["unsupported"] = "unsupported"
 
+    def __deepcopy__(self, memo=None):
+        # This record's large 57-attribute catalog is a tuple of immutable
+        # (str, int) tuples. Isolate the model, its field dictionary and field
+        # set while sharing only those deeply immutable tuple values. Fall back
+        # for subclasses or noncanonical model_copy/model_construct inputs.
+        attributes = self.attributes
+        if (
+            type(self) is PlayerSportingRecord
+            and self.__pydantic_extra__ is None
+            and getattr(self, '__pydantic_private__', None) is None
+            and all(type(value) in (str, int) for key, value in self.__dict__.items() if key != 'attributes')
+            and type(attributes) is tuple
+            and all(type(pair) is tuple and len(pair) == 2
+                and type(pair[0]) is str and type(pair[1]) is int for pair in attributes)
+        ):
+            result = self.__copy__()
+            if memo is not None:
+                memo[id(self)] = result
+            return result
+        return super().__deepcopy__(memo)
+
     @model_validator(mode="after")
     def exact_catalog(self):
         names = [name for name, _ in self.attributes]

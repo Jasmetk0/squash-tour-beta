@@ -48,6 +48,19 @@ def parse_checkpoint_json(raw, *, _parsed_global_parts=None):
         from beta_engine.domain.players.calendar_followup_knockout import CalendarFollowupKnockout
         from beta_engine.domain.players.calendar_native_sporting_checkpoint import CalendarNativeSportingWeek
 
+        root, stored_events = body.get('competition_root'), body.get('events', [])
+        if (
+            isinstance(root, dict) and 'schema_version' not in root
+            or isinstance(stored_events, list) and any(
+                isinstance(entry, dict) and 'schema_version' not in entry
+                for entry in stored_events
+            )
+        ):
+            # The original strict models allow their version field's default.
+            # Preserve that noncanonical input contract through the original
+            # Union validator; stored canonical histories take the fast path.
+            return GlobalCompetitionCheckpoint.model_validate_json(raw)
+
         def strict_part(part, parse):
             if not isinstance(part, dict):
                 raise TypeError('Global checkpoint part must be a versioned object')
@@ -90,14 +103,22 @@ def load_checkpoint(session, *, run_id, branch_id, _verified_source=None, _repos
     if (_verified_source is not None
         and (_verified_source.run_id,_verified_source.branch_id)==(run_id,branch_id)):
         from beta_engine.domain.run_packages import canonical_hash
+        from beta_engine.infrastructure.db.native_fork_source_projection import (
+            known_live_value_fingerprint, remember_live_value_fingerprint,
+        )
 
         expected = _verified_source.fingerprint
-        if (row.fingerprint == expected
-            and canonical_hash(json.loads(row.payload_json)) == expected):
+        actual = known_live_value_fingerprint(_repository, run_id=run_id, branch_id=branch_id,
+            kind=COMPONENT_KEY, raw=row.payload_json)
+        if actual is None:
+            actual = canonical_hash(json.loads(row.payload_json))
+            remember_live_value_fingerprint(_repository, run_id=run_id, branch_id=branch_id,
+                kind=COMPONENT_KEY, raw=row.payload_json, fingerprint=actual)
+        if row.fingerprint == expected and actual == expected:
             # Saved serialization sorts mapping keys (e.g. sets_won), while
-            # live MatchEngine JSON retains insertion order. Compare the same
-            # canonical content hash, not order-sensitive JSON text. Hash every
-            # live byte's decoded value; never trust only its stored hash column.
+            # live MatchEngine JSON retains insertion order. Compare canonical
+            # values; a known decode result is bound to every actual raw byte,
+            # including Run/Branch/component scope. Never trust the hash column.
             return _verified_source
     from beta_engine.infrastructure.db.native_fork_source_projection import decoded_live_calendar_component
     state, fingerprint = decoded_live_calendar_component(_repository, run_id=run_id, branch_id=branch_id,
@@ -321,9 +342,11 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
 
 
 def capture_checkpoint(session, payload, evidence, *, run_id, branch_id,
-                       _defer_full_verification: bool = False, _repository=None):
+                       _defer_full_verification: bool = False, _repository=None,
+                       _verified_source=None):
     from beta_engine.infrastructure.db.initial_world_state import get_initial_world
-    state = load_checkpoint(session, run_id=run_id, branch_id=branch_id, _repository=_repository)
+    state = load_checkpoint(session, run_id=run_id, branch_id=branch_id,
+        _repository=_repository, _verified_source=_verified_source)
     world = get_initial_world(session, run_id=run_id, branch_id=branch_id) if state or evidence else None
     # Only the native Tour Save coordinator may defer this replay. It then
     # authenticates the complete freshly captured revision once, atomically,

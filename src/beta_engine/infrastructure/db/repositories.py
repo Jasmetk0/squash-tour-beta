@@ -6124,6 +6124,7 @@ class SimulationPersistenceRepository:
 
                 payload = viewer_branch_saved_revision_payload(
                     base_payload=state.saved_revision.payload,
+                    _stored_json_copy=True,
                     run_id=run_id,
                     display_name=run.display_name or run_id,
                     run_status=run.status,
@@ -6212,6 +6213,7 @@ class SimulationPersistenceRepository:
                     _defer_full_verification=verify_coupled_calendar,
                     _authenticated_tour_prefix=authenticated_tour,
                     _repository=self,
+                    _captured_checkpoint=live_calendar_owner,
                 )
                 if verify_coupled_calendar:
                     # A native Tour Save captures every actual live row first.

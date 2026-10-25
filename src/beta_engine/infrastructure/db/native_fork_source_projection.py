@@ -17,6 +17,29 @@ MAX_GLOBAL_TOUR_BYTES = 64 * 1024 * 1024
 MAX_LIVE_COMPONENT_BYTES = 64 * 1024 * 1024
 
 
+def known_live_value_fingerprint(repository, *, run_id, branch_id, kind, raw):
+    """Decode result for these complete actual bytes, never source authority."""
+    if repository is None:
+        return None
+    key = (run_id, branch_id, kind, hashlib.sha256(raw.encode('utf-8')).digest())
+    with repository._revision_validation_lock:
+        return getattr(repository, '_live_value_fingerprints', {}).get(key)
+
+
+def remember_live_value_fingerprint(repository, *, run_id, branch_id, kind, raw, fingerprint):
+    if repository is None:
+        return
+    key = (run_id, branch_id, kind, hashlib.sha256(raw.encode('utf-8')).digest())
+    with repository._revision_validation_lock:
+        cache = getattr(repository, '_live_value_fingerprints', None)
+        if cache is None:
+            cache = repository._live_value_fingerprints = {}
+        cache.pop(key, None)
+        cache[key] = fingerprint
+        while len(cache) > 32:
+            cache.pop(next(iter(cache)))
+
+
 def decoded_original_source(repository, source, decode):
     return _decoded_value(repository, source, decode,
         cache_name='_native_source_projection_cache', byte_limit=MAX_SOURCE_BYTES,
@@ -77,6 +100,9 @@ def decoded_live_calendar_component(repository, *, run_id, branch_id, kind, raw,
         return value
     value = parse(raw)
     fingerprint = value.fingerprint if _with_fingerprint else None
+    if fingerprint is not None:
+        remember_live_value_fingerprint(repository, run_id=run_id, branch_id=branch_id,
+            kind=kind, raw=raw, fingerprint=fingerprint)
     retained = deepcopy(value)
     with repository._revision_validation_lock:
         cache[key] = (size, retained, fingerprint)

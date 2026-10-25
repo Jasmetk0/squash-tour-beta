@@ -1,5 +1,14 @@
 # Global-slot whole-operation and restart repair — 25 October 2026 candidate
 
+The `01c2776c9` W80 Tour browser passed cold restart but exceeded the unchanged
+whole-script limit during the second draw. Continue #1643 with isolated sporting
+record copies that share only runtime-checked immutable attribute tuples,
+independent stored-JSON snapshot copying, actual-byte rebinding of Save's private
+checkpoint and private inspection projection memoization. Preserve all nested
+mutable isolation, full source/graph/math guards and version-default contracts.
+Local HTTP corruption/isolation/DTO regressions and final-head hosted whole-flow
+acceptance remain mandatory; no timeout or sporting assertion is relaxed.
+
 The `c5c4ce92` Tour browser reached W5 but failed its unchanged cold-restart
 deadline. The next candidate removes wrong Union trial decoding through strict
 schema-directed v13 parsing and includes actual Entry submissions in the exact

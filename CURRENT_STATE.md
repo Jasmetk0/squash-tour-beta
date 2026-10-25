@@ -1,5 +1,34 @@
 # Global-slot whole-operation and restart repair — 25 October 2026 candidate
 
+On `01c2776c9`, W52/W61 Tour Chromium passed and W80/1,000 passed the formerly
+failing cold restart, then hit the unchanged 18-minute total limit at the second
+draw. A real local HTTP sequence completed both tournaments and Saves in 1,151 s,
+but also failed that total bound before its final transition. The isolated final
+transition, Save and 560-point result passed separately; this is not a whole-flow
+pass. The signed-restore job's initial test-server startup failure was rerun alone.
+
+The next candidate isolates each sporting record copy while reusing only its
+runtime-checked deeply immutable attribute tuples; mutable bypass values and
+subclasses retain ordinary deep copying. Actual large DTO copying measured
+1.30 s versus 2.26 s. Actual stored JSON snapshots get an independent JSON value
+tree rather than millions of scalar deepcopy calls. Save rebinds its already
+captured checkpoint to complete actual row bytes before reuse; changed bytes
+force strict decoding. Inspection memoization ends with its private JSON
+projection, including on failure. Original version-default validation remains
+available for noncanonical nested input. Copy isolation, real completed-history
+DTO equivalence and error cleanup, Entry/ancestor/changed-capture contracts pass;
+the additional in-transaction captured-row tamper case and 1,000-player flow are
+running. Require all final-head hosted acceptance before the owner merge gate.
+
+The captured-row tamper case now passes: changing and rehashing the actual
+checkpoint between its private preload and capture triggers strict rejection and
+rollback. Complete actual raw bytes can also reuse their computed value hash in
+a repository-local 32-entry decode-result cache; Run/Branch/component and every
+raw byte are part of the key. Declared row hashes never authorize reuse, changed
+bytes miss, and the full Saved graph/source gates still run. 29 copy/byte-binding
+contracts pass. Earlier `01c2776c9` now has seven green hosted workflows, including
+the successful isolated retry of the test-server startup and Full Simulation.
+
 The `c5c4ce92` follow-up passes the six completed shorter hosted workflows and
 the real global-slot Chromium/HTTP matrices. Its W80/1,000-player Tour browser
 now finishes the first tournament and W5 transition, but fails the unchanged

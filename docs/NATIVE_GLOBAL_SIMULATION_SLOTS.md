@@ -9,6 +9,49 @@ Only the owner merges. Auto-merge remains disabled.
 
 ## Whole-operation and restart follow-up — 25 October 2026
 
+The `01c2776c9` W52/W61 Tour browsers pass. Its large W80 browser passed the former
+cold-restart failure and reached the second draw before the unchanged 18-minute
+script deadline. The real local 1,000-player HTTP probe completed both tournaments
+and their Saves in 1,151 s, exceeding that total budget before the final
+transition. That final transition, Save and actual 560 points passed separately
+on an isolated backup. Neither result certifies the complete browser scenario.
+
+The next candidate removes redundant copying, preserving actual data authority:
+
+- Each `PlayerSportingRecord` remains a new model with an independent field
+  dictionary/set. Only runtime-checked `(str, int)` attribute tuples are shared.
+  Mutable `model_copy` bypass inputs and subclasses use ordinary deep copying.
+  Large actual DTO copying measured 1.30 s rather than 2.26 s. Generic scalar
+  model copying and alternative serializers did not help enough and are not used.
+- Physical Saved JSON gets a fresh JSON value tree before capture, preserving
+  unknown nested fields, Unicode and all JSON values while isolating containers.
+  Generic in-process snapshot callers retain their original copying contract.
+- Save's second checkpoint capture can use its earlier private model only after
+  `load_checkpoint` binds the entire current actual row to that value again;
+  changed/rehashed content takes the ordinary strict decoder. Mathematical and
+  physical-source checks still run over the complete captured payload.
+- Inspection assembles its JSON DTO in a private projection scope after actual
+  context verification. Real completed-history tests compare uncached/scoped
+  DTOs exactly and prove scope release on an interrupted projection and recovery.
+- Missing nested version fields retain the original strict Union validator's
+  default-version acceptance/rejection. Canonical stored versions use direct
+  strict dispatch; malformed explicit versions still reject.
+
+Complete actual raw bytes may reuse only their already computed value hash in a
+repository-local 32-entry decode-result cache, keyed by Run/Branch/component and
+SHA-256 of every raw byte. This removes repeated JSON parsing/canonicalization
+when rebinding an independently authenticated Saved model to an unchanged live
+row. It never uses the row's declared hash as its key and never replaces the
+Saved graph/source gates. Changed/rehashed live bytes take strict decoding and
+the full subsequent verifier. The actual in-transaction captured-row mutation
+case passes; 29 copy/byte-binding contracts pass. Earlier `01c2776c9` now has
+seven green hosted workflows, including Full Simulation and the isolated retry
+of its initial test-server startup failure. Its large browser remains failed.
+
+Copy/value tests, actual Entry/ancestor rollback and changed-capture full replay
+regressions pass. The new captured-row mutation check and final large flow are
+still running. Only complete green final-head hosted evidence permits merge.
+
 The `c5c4ce92` follow-up passes the six completed shorter hosted workflows and
 the actual global-slot Chromium/HTTP matrices. Its W80/1,000-player Tour browser
 finishes the first tournament and W5 transition, then exceeds the existing

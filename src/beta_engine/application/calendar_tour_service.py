@@ -397,176 +397,191 @@ class CalendarTourService:
             session.execute(text("BEGIN"))
             fingerprints = {}
             ctx, state, signed = self._context(session, run_id, branch_id, _fingerprints=fingerprints)
-            _clock, rev, world, _health, cp, saved, _ = ctx
-            checkpoint_fingerprint = (fingerprints[id(cp)][1] if id(cp) in fingerprints
-                else cp.fingerprint if cp else None)
-            # _context verified the full live lifecycle against its Saved
-            # owner (or rebuilt an unsaved one). Read the authenticated current
-            # row instead of replaying every historical birth/Entry week again.
-            lifecycle = (
-                get_lifecycle(
-                    session, run_id=run_id, branch_id=branch_id, week=state.week
-                )
-                if state
-                else None
+            from beta_engine.domain.tournaments.calendar_global_slots import (
+                global_replay_projection_scope, _prime_private_fingerprint,
             )
-            identities = (
-                {p.player_id: p for p in lifecycle.players} if lifecycle else {}
-            )
-            sporting = {p.player_id: p for p in cp.players} if cp else {}
-            names = {p.player_id: p.name for p in world.players}
-            if identities.keys() - names.keys():
-                from beta_engine.infrastructure.db.run_prospect_source_state import (
-                    load_saved_run_prospect_source,
+
+            # These authenticated copies stay private until their JSON DTO is
+            # complete. Reuse derived tournament views/fingerprints only during
+            # this projection, after the independent physical context gate.
+            with global_replay_projection_scope():
+                for value, fingerprint in fingerprints.values():
+                    _prime_private_fingerprint(value, fingerprint)
+                return self._inspection_from_context(
+                    session, run_id, branch_id, ctx, state, signed, fingerprints,
                 )
 
-                source = load_saved_run_prospect_source(
-                    rev.saved_revision.payload, run_id=run_id
-                )
-                names.update(
-                    {
-                        r["prospect_id"]: r.get("display_name") or r["prospect_id"]
-                        for r in source.records
-                        if r["prospect_id"] in identities
-                    }
-                )
-            population = tuple(identities) if identities else tuple(names)
-            evidence = {}
-            contributions = {}
-            if state and cp:
-                for a in state.editions:
-                    event = next(
-                        (
-                            t
-                            for t in cp.tournaments
-                            if t.tournament_id == a.edition.edition_id
-                        ),
-                        None,
-                    )
-                    if event is None or not a.tournament_fingerprint:
-                        continue
-                    from beta_engine.domain.players.calendar_native_competition import (
-                        native_match_slot,
-                    )
+    def _inspection_from_context(self, session, run_id, branch_id, ctx, state, signed, fingerprints):
+        _clock, rev, world, _health, cp, saved, _ = ctx
+        checkpoint_fingerprint = (fingerprints[id(cp)][1] if id(cp) in fingerprints
+            else cp.fingerprint if cp else None)
+        # _context verified the full live lifecycle against its Saved
+        # owner (or rebuilt an unsaved one). Read the authenticated current
+        # row instead of replaying every historical birth/Entry week again.
+        lifecycle = (
+            get_lifecycle(
+                session, run_id=run_id, branch_id=branch_id, week=state.week
+            )
+            if state
+            else None
+        )
+        identities = (
+            {p.player_id: p for p in lifecycle.players} if lifecycle else {}
+        )
+        sporting = {p.player_id: p for p in cp.players} if cp else {}
+        names = {p.player_id: p.name for p in world.players}
+        if identities.keys() - names.keys():
+            from beta_engine.infrastructure.db.run_prospect_source_state import (
+                load_saved_run_prospect_source,
+            )
 
-                    evidence[a.edition.edition_id] = {
-                        "results": [
-                            {**r.model_dump(mode="json"), "stage": award.reached_stage}
-                            for r, award in zip(
-                                edition_results(a, event),
-                                event.prepared_awards,
-                                strict=True,
-                            )
-                        ],
-                        "matches": [
-                            {
-                                "match_id": m.match_id,
-                                "slot": native_match_slot(a, i)
-                                if event.schema_version
-                                in {"calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8"}
-                                else a.edition.start_slot + 3 + i,
-                                "player_a_id": m.result.player_a_id,
-                                "player_b_id": m.result.player_b_id,
-                                "winner_player_id": m.result.winner_player_id,
-                                "rally_count": len(m.result.rally_log.events),
-                            }
-                            for i, m in enumerate(event.matches)
-                        ],
-                    }
-                    if a.result_confirmed:
-                        counted = {
-                            r.source_fingerprint
-                            for row in state.rankings[-1].rows
-                            for r in row.counted_results
+            source = load_saved_run_prospect_source(
+                rev.saved_revision.payload, run_id=run_id
+            )
+            names.update(
+                {
+                    r["prospect_id"]: r.get("display_name") or r["prospect_id"]
+                    for r in source.records
+                    if r["prospect_id"] in identities
+                }
+            )
+        population = tuple(identities) if identities else tuple(names)
+        evidence = {}
+        contributions = {}
+        if state and cp:
+            for a in state.editions:
+                event = next(
+                    (
+                        t
+                        for t in cp.tournaments
+                        if t.tournament_id == a.edition.edition_id
+                    ),
+                    None,
+                )
+                if event is None or not a.tournament_fingerprint:
+                    continue
+                from beta_engine.domain.players.calendar_native_competition import (
+                    native_match_slot,
+                )
+
+                evidence[a.edition.edition_id] = {
+                    "results": [
+                        {**r.model_dump(mode="json"), "stage": award.reached_stage}
+                        for r, award in zip(
+                            edition_results(a, event),
+                            event.prepared_awards,
+                            strict=True,
+                        )
+                    ],
+                    "matches": [
+                        {
+                            "match_id": m.match_id,
+                            "slot": native_match_slot(a, i)
+                            if event.schema_version
+                            in {"calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8"}
+                            else a.edition.start_slot + 3 + i,
+                            "player_a_id": m.result.player_a_id,
+                            "player_b_id": m.result.player_b_id,
+                            "winner_player_id": m.result.winner_player_id,
+                            "rally_count": len(m.result.rally_log.events),
                         }
-                        for r in edition_results(a, event):
-                            age = state.week.ordinal - result_activation_ordinal(r, state.week.calendar)
-                            status = (
-                                "closing_only"
-                                if isinstance(r, CalendarTerminalRankingResult) and age < 0
-                                else "awaiting_activation"
-                                if age < 0
-                                else "expired"
-                                if age >= r.validity_weeks
-                                else "counted"
-                                if r.source_fingerprint in counted
-                                else "excluded_best_n"
-                            )
-                            contributions.setdefault(r.player_id, []).append(
-                                {**r.model_dump(mode="json"), "status": status}
-                            )
-            from beta_engine.application.calendar_global_slot_service import (
-                slot_inspection,
+                        for i, m in enumerate(event.matches)
+                    ],
+                }
+                if a.result_confirmed:
+                    counted = {
+                        r.source_fingerprint
+                        for row in state.rankings[-1].rows
+                        for r in row.counted_results
+                    }
+                    for r in edition_results(a, event):
+                        age = state.week.ordinal - result_activation_ordinal(r, state.week.calendar)
+                        status = (
+                            "closing_only"
+                            if isinstance(r, CalendarTerminalRankingResult) and age < 0
+                            else "awaiting_activation"
+                            if age < 0
+                            else "expired"
+                            if age >= r.validity_weeks
+                            else "counted"
+                            if r.source_fingerprint in counted
+                            else "excluded_best_n"
+                        )
+                        contributions.setdefault(r.player_id, []).append(
+                            {**r.model_dump(mode="json"), "status": status}
+                        )
+        from beta_engine.application.calendar_global_slot_service import (
+            slot_inspection,
+        )
+        return {
+            "schema_version": "calendar_tour_inspection.v1",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "saved_head_revision_id": rev.saved_head_revision_id,
+            "draft_version": rev.working_draft.draft_version,
+            "run_calendar": _clock.to_metadata(),
+            "saved_completed_seasons": (
+                completed_season_indices(signed, saved_final_closure(rev.saved_revision.payload, branch_id)) if signed else ()
+            ),
+            "checkpoint_fingerprint": checkpoint_fingerprint,
+            "tour_fingerprint": state.fingerprint if state else None,
+            "saved": bool(state and signed == state and cp == saved),
+            "sporting_saved": bool(cp and cp == saved),
+            "post_birth_competition_supported": bool(
+                cp
+                and cp.schema_version
+                in {
+                    "calendar_sporting_checkpoint.v11",
+                    "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13",
+                }
+            ),
+            "can_initialize": state is None
+            and cp is not None
+            and cp == saved
+            and cp.week.week >= 2,
+            "players": [
+                {
+                    "player_id": pid,
+                    "name": names[pid],
+                    "age": identities[pid].age
+                    if pid in identities
+                    else next(
+                        p.age_years_at_season_start
+                        for p in world.players
+                        if p.player_id == pid
+                    ),
+                    "status": identities[pid].status
+                    if pid in identities
+                    else "active",
+                    "form": sporting[pid].current_form if pid in sporting else None,
+                    "sharpness": sporting[pid].match_sharpness
+                    if pid in sporting
+                    else None,
+                    "fatigue": sporting[pid].long_term_fatigue
+                    if pid in sporting
+                    else None,
+                }
+                for pid in population
+            ],
+            "state": state.model_dump(mode="json") if state else None,
+            "edition_evidence": evidence,
+            "next_slot": slot_inspection(state, cp) if state and cp and any(a.edition.schema_version.endswith(".v2") for a in state.editions) else None,
+            "contributions": contributions,
+            "transition_blockers": self._transition_blockers(
+                state, ctx, session, _checkpoint_fingerprint=checkpoint_fingerprint
             )
-            return {
-                "schema_version": "calendar_tour_inspection.v1",
-                "run_id": run_id,
-                "branch_id": branch_id,
-                "saved_head_revision_id": rev.saved_head_revision_id,
-                "draft_version": rev.working_draft.draft_version,
-                "run_calendar": _clock.to_metadata(),
-                "saved_completed_seasons": (
-                    completed_season_indices(signed, saved_final_closure(rev.saved_revision.payload, branch_id)) if signed else ()
-                ),
-                "checkpoint_fingerprint": checkpoint_fingerprint,
-                "tour_fingerprint": state.fingerprint if state else None,
-                "saved": bool(state and signed == state and cp == saved),
-                "sporting_saved": bool(cp and cp == saved),
-                "post_birth_competition_supported": bool(
-                    cp
-                    and cp.schema_version
-                    in {
-                        "calendar_sporting_checkpoint.v11",
-                        "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13",
-                    }
-                ),
-                "can_initialize": state is None
-                and cp is not None
-                and cp == saved
-                and cp.week.week >= 2,
-                "players": [
-                    {
-                        "player_id": pid,
-                        "name": names[pid],
-                        "age": identities[pid].age
-                        if pid in identities
-                        else next(
-                            p.age_years_at_season_start
-                            for p in world.players
-                            if p.player_id == pid
-                        ),
-                        "status": identities[pid].status
-                        if pid in identities
-                        else "active",
-                        "form": sporting[pid].current_form if pid in sporting else None,
-                        "sharpness": sporting[pid].match_sharpness
-                        if pid in sporting
-                        else None,
-                        "fatigue": sporting[pid].long_term_fatigue
-                        if pid in sporting
-                        else None,
-                    }
-                    for pid in population
-                ],
-                "state": state.model_dump(mode="json") if state else None,
-                "edition_evidence": evidence,
-                "next_slot": slot_inspection(state, cp) if state and cp and any(a.edition.schema_version.endswith(".v2") for a in state.editions) else None,
-                "contributions": contributions,
-                "transition_blockers": self._transition_blockers(
-                    state, ctx, session, _checkpoint_fingerprint=checkpoint_fingerprint
-                )
-                if state
-                else ["tour_authority_missing"],
-                "season_transition_blockers": self._transition_blockers(
-                    state,
-                    ctx,
-                    session,
-                    _checkpoint_fingerprint=checkpoint_fingerprint,
-                    season=True,
-                )
-                if state
-                else ["tour_authority_missing"],
-            }
+            if state
+            else ["tour_authority_missing"],
+            "season_transition_blockers": self._transition_blockers(
+                state,
+                ctx,
+                session,
+                _checkpoint_fingerprint=checkpoint_fingerprint,
+                season=True,
+            )
+            if state
+            else ["tour_authority_missing"],
+        }
 
     def player(self, *, run_id, branch_id, player_id):
         from beta_engine.application.native_fork_runtime_service import (

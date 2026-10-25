@@ -57,11 +57,14 @@ def test_viewer_branch_change_bundle_has_one_strict_canonical_shape() -> None:
         viewer_branch_id_from_changes([])
 
 
-def test_viewer_branch_save_materializes_branch_without_losing_content() -> None:
+@pytest.mark.parametrize('stored_json_copy', [False, True])
+def test_viewer_branch_save_materializes_branch_without_losing_content(stored_json_copy) -> None:
     base = {
         "run": {"run_id": "run-1", "viewer_branch_id": "branch-1"},
         "branch": {"branch_id": "branch-1"},
-        "content": {"future": {"preserved": True}},
+        "content": {"future": {"preserved": True, "nested": [
+            {'text': 'Žluťoučký 🟢', 'none': None, 'values': [0, 7, 1.25, False]},
+        ]}},
     }
 
     materialized = viewer_branch_saved_revision_payload(
@@ -77,10 +80,15 @@ def test_viewer_branch_save_materializes_branch_without_losing_content() -> None
         forked_from_branch_id="branch-1",
         forked_from_saved_revision_id="revision-1",
         viewer_branch_id="branch-2",
+        _stored_json_copy=stored_json_copy,
     )
 
     assert materialized["run"]["viewer_branch_id"] == "branch-2"
     assert materialized["branch"]["branch_id"] == "branch-2"
-    assert materialized["content"] == {"future": {"preserved": True}}
+    assert materialized["content"] == base['content']
     assert base["run"]["viewer_branch_id"] == "branch-1"
     assert base["branch"]["branch_id"] == "branch-1"
+    materialized['content']['future']['preserved'] = False
+    materialized['content']['future']['nested'][0]['values'].append(8)
+    assert base['content']['future']['preserved'] is True
+    assert base['content']['future']['nested'][0]['values'] == [0, 7, 1.25, False]

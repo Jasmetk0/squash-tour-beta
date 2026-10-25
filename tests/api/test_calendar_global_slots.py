@@ -157,6 +157,31 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
             ))
             entry.payload_json, entry.fingerprint = original_entry
         assert inspect(server)['tour_fingerprint'] == view['tour_fingerprint']
+        # Reusing the private checkpoint captured earlier in THIS Save still
+        # rehashes the actual row. A changed/rehashed row must decode afresh.
+        from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
+        from beta_engine.domain.run_packages import canonical_hash
+
+        capture = repository_module.capture_saved_calendar_match
+        capture_checked = []
+
+        def changed_live_checkpoint(session, payload, **kwargs):
+            assert kwargs['_captured_checkpoint'] is not None
+            row = session.get(CalendarPlayerSportingCheckpointModel, ('run', 'branch'))
+            body = json.loads(row.payload_json)
+            body['unexpected_capture_field'] = True
+            row.payload_json, row.fingerprint = json.dumps(body), canonical_hash(body)
+            session.flush()
+            capture_checked.append(True)
+            return capture(session, payload, **kwargs)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(repository_module, 'capture_saved_calendar_match', changed_live_checkpoint)
+            assert _request('POST', tour_url(server) + '/save', {
+                'expected_draft_version': view['draft_version'],
+                'expected_calendar_tour_fingerprint': view['tour_fingerprint'],
+            })[0] == 409
+        assert capture_checked and inspect(server)['tour_fingerprint'] == view['tour_fingerprint']
         original_decode = repo._to_branch_saved_revision
         injected = []
 
@@ -226,6 +251,22 @@ def test_version_directed_global_decode_preserves_strict_union_validation(tmp_pa
     assert directed.model_dump_json() == original.model_dump_json()
     assert parse_checkpoint_json(raw, _parsed_global_parts={}) == directed
     original_body = json.loads(raw)
+    # Version defaults remain accepted exactly as by the original strict Union.
+    for part in ('competition_root', 'event'):
+        defaulted = deepcopy(original_body)
+        value = defaulted['events'][-1] if part == 'event' else defaulted[part]
+        value.pop('schema_version')
+        defaulted_json = json.dumps(defaulted)
+        try:
+            expected = GlobalCompetitionCheckpoint.model_validate_json(defaulted_json)
+        except ValueError:
+            # A historical nondefault root version may require explicit schema.
+            for options in ({}, {'_parsed_global_parts': {}}):
+                with pytest.raises(ValueError):
+                    parse_checkpoint_json(defaulted_json, **options)
+        else:
+            for options in ({}, {'_parsed_global_parts': {}}):
+                assert parse_checkpoint_json(defaulted_json, **options) == expected
     bad = []
     body = deepcopy(original_body); body['unexpected_owner_field'] = True; bad.append(body)
     body = deepcopy(original_body); body['competition_root']['unexpected_root_field'] = True; bad.append(body)
@@ -346,7 +387,7 @@ def test_first_global_edition_after_birth_keeps_the_actual_native_root(tmp_path)
         assert inspect(reopened)["state"] == expected
 
 
-def test_real_overlapping_slots_save_restart_and_points(tmp_path, prepared_slots):
+def test_real_overlapping_slots_save_restart_and_points(tmp_path, prepared_slots, monkeypatch):
     path = tmp_path / "slots.db"
     copy_database(prepared_slots, path)
     db = f"sqlite:///{path}"
@@ -388,6 +429,31 @@ def test_real_overlapping_slots_save_restart_and_points(tmp_path, prepared_slots
         save_tour(server)
         rows = inspect(server)["state"]["rankings"][-1]["rows"]
         assert sorted(r["points"] for r in rows) == [30, 30, 30, 30, 60, 60, 100, 100]
+        from sqlalchemy import text
+        from beta_engine.application.calendar_tour_service import CalendarTourService
+        from beta_engine.domain.tournaments.calendar_global_slots import _replay_projections
+
+        service = CalendarTourService(server.app.state.runtime.repository)
+        with service.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            fingerprints = {}
+            ctx, state, signed = service._context(session, 'run', 'branch', _fingerprints=fingerprints)
+            # The uncached projection and the private scoped projection must
+            # return the same actual complete histories and public JSON DTO.
+            expected = service._inspection_from_context(session, 'run', 'branch', ctx, state, signed, fingerprints)
+        assert service.inspect(run_id='run', branch_id='branch') == expected
+        assert _replay_projections.get() is None
+
+        def interrupted_projection(*_args):
+            assert _replay_projections.get() is not None
+            raise ValueError('Interrupted private inspection')
+
+        with monkeypatch.context() as patch:
+            patch.setattr(service, '_inspection_from_context', interrupted_projection)
+            with pytest.raises(ValueError, match='Interrupted private inspection'):
+                service.inspect(run_id='run', branch_id='branch')
+        assert _replay_projections.get() is None
+        assert service.inspect(run_id='run', branch_id='branch') == expected
 
 
 def sporting(server):

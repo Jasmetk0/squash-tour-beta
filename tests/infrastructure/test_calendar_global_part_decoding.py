@@ -16,6 +16,37 @@ class Part(FrozenInput):
     values: dict[str, int]
 
 
+def test_live_value_fingerprint_binds_complete_actual_bytes_and_scope():
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db.native_fork_source_projection import (
+        decoded_live_calendar_component, known_live_value_fingerprint,
+        remember_live_value_fingerprint,
+    )
+
+    class FingerprintedPart(Part):
+        @property
+        def fingerprint(self):
+            return canonical_hash(self.model_dump(mode='json'))
+
+    repository = SimpleNamespace(_revision_validation_lock=Lock())
+    fields = dict(run_id='run', branch_id='branch', kind='checkpoint')
+    raw = '{"values":{"a":1}}'
+    assert known_live_value_fingerprint(repository, raw=raw, **fields) is None
+    value, fingerprint = decoded_live_calendar_component(repository, raw=raw,
+        parse=FingerprintedPart.model_validate_json, _with_fingerprint=True, **fields)
+    value.values['a'] = 999
+    assert known_live_value_fingerprint(repository, raw=raw, **fields) == fingerprint
+    for changed in ('{"values":{"a":2}}', '{"values":{"a":1},"changed":true}'):
+        assert known_live_value_fingerprint(repository, raw=changed, **fields) is None
+    for key in fields:
+        assert known_live_value_fingerprint(repository, raw=raw,
+            **{**fields, key: 'foreign'}) is None
+    assert known_live_value_fingerprint(SimpleNamespace(_revision_validation_lock=Lock()), raw=raw, **fields) is None
+    for number in range(40):
+        remember_live_value_fingerprint(repository, raw=str(number), fingerprint=str(number), **fields)
+    assert len(repository._live_value_fingerprints) == 32
+
+
 def test_equal_parts_decode_once_but_changed_bytes_require_their_own_validation():
     calls = []
     cache = {}

@@ -41,6 +41,34 @@ def record(
     )
 
 
+@pytest.mark.pr_critical
+def test_sporting_copy_isolates_models_and_mutable_bypass_values():
+    from copy import deepcopy
+
+    source = record()
+    copied, alias = deepcopy([source, source])
+    assert copied == source and copied is alias and copied is not source
+    assert copied.model_dump_json() == source.model_dump_json()
+    assert copied.__dict__ is not source.__dict__
+    assert copied.__pydantic_fields_set__ is not source.__pydantic_fields_set__
+    copied.__dict__['current_form'] = 1
+    copied.__pydantic_fields_set__.clear()
+    assert source.current_form == 120 and source.__pydantic_fields_set__
+    # Bypassing normal validation must never make mutable input share a cache.
+    bypassed = source.model_copy(update={'attributes': [['mutable', 100]]})
+    copy = deepcopy(bypassed)
+    copy.attributes[0][1] = 1
+    assert bypassed.attributes == [['mutable', 100]]
+
+    class ExtendedRecord(PlayerSportingRecord):
+        additional: dict[str, list[int]]
+
+    extended = ExtendedRecord(**source.model_dump(), additional={'values': [3]})
+    copy = deepcopy(extended)
+    copy.additional['values'].append(4)
+    assert extended.additional == {'values': [3]}
+
+
 def state(players, *, policy=None):
     return PlayerSportingWeekState(
         run_id="run",

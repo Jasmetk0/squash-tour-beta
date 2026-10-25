@@ -59,6 +59,9 @@ def test_sporting_copy_isolates_models_and_mutable_bypass_values():
     copy = deepcopy(bypassed)
     copy.attributes[0][1] = 1
     assert bypassed.attributes == [['mutable', 100]]
+    incomplete = PlayerSportingRecord.model_construct(player_id='incomplete')
+    copy = deepcopy(incomplete)
+    assert copy is not incomplete and copy.__dict__ == incomplete.__dict__
 
     class ExtendedRecord(PlayerSportingRecord):
         additional: dict[str, list[int]]

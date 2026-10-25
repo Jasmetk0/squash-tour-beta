@@ -126,7 +126,7 @@ class PlayerSportingRecord(FrozenInput):
         # (str, int) tuples. Isolate the model, its field dictionary and field
         # set while sharing only those deeply immutable tuple values. Fall back
         # for subclasses or noncanonical model_copy/model_construct inputs.
-        attributes = self.attributes
+        attributes = self.__dict__.get('attributes')
         if (
             type(self) is PlayerSportingRecord
             and self.__pydantic_extra__ is None

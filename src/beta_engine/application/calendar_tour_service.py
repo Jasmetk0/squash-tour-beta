@@ -142,33 +142,37 @@ class CalendarTourService:
     repository: object
 
     def _context(self, session, run_id, branch_id):
-        from beta_engine.application.calendar_knockout_health import (
-            saved_knockout_health,
-        )
         from beta_engine.application.calendar_standalone_match_service import (
             CalendarStandaloneMatchService,
         )
-        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
-            load_checkpoint,
-            verify_checkpoint,
-        )
-        from beta_engine.infrastructure.db.calendar_standalone_match_state import (
-            decode_prevalidated_calendar_sources,
-            load_match_rows,
-        )
+        from beta_engine.domain.tournaments.calendar_global_slots import global_replay_projection_scope
 
         proofs = {}
         clock, revision, world = CalendarStandaloneMatchService(
             self.repository
         )._context(
-            session,
-            run_id=run_id,
-            branch_id=branch_id,
-            allow_calendar_health=True,
-            allow_calendar_sporting=True,
-            allow_completed=True,
-            _sporting_component_proofs=proofs,
+            session, run_id=run_id, branch_id=branch_id,
+            allow_calendar_health=True, allow_calendar_sporting=True,
+            allow_completed=True, _sporting_component_proofs=proofs,
         )
+        # Physical Saved verification above has its own scopes. Everything below
+        # owns fresh decoded/copy-isolated frozen values, never exposed until
+        # return. Memoize their derived fingerprints only inside this assembly;
+        # no model/projection proof survives it or authorizes a physical read.
+        with global_replay_projection_scope():
+            return self._context_from_saved(
+                session, run_id, branch_id, proofs, clock, revision, world,
+            )
+
+    def _context_from_saved(self, session, run_id, branch_id, proofs, clock, revision, world):
+        from beta_engine.application.calendar_knockout_health import saved_knockout_health
+        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+            load_checkpoint, verify_checkpoint,
+        )
+        from beta_engine.infrastructure.db.calendar_standalone_match_state import (
+            decode_prevalidated_calendar_sources, load_match_rows,
+        )
+
         # CalendarStandaloneMatchService._context has just authenticated this
         # exact Saved HEAD via the repository's signed lineage validator. The
         # latter either strictly folds all sporting/Tour sources or reuses an
@@ -191,7 +195,8 @@ class CalendarTourService:
         )
         evidence = rows[0] if len(rows) == 1 else None
         checkpoint = load_checkpoint(
-            session, run_id=run_id, branch_id=branch_id, _verified_source=saved
+            session, run_id=run_id, branch_id=branch_id, _verified_source=saved,
+            _repository=self.repository,
         )
         if saved and (
             checkpoint is None
@@ -209,7 +214,7 @@ class CalendarTourService:
             "calendar_sporting_checkpoint.v11",
             "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13",
         }
-        state = load_tour(session, run_id=run_id, branch_id=branch_id)
+        state = load_tour(session, run_id=run_id, branch_id=branch_id, _repository=self.repository)
         if native:
             from beta_engine.application.calendar_native_tour_context import (
                 native_working_context,

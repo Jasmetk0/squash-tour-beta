@@ -7,6 +7,43 @@ owner-merged #1642. The parallel Draft #1641 owns its listed diagnostic and
 historical frontend pages; this change excludes those files and their tests.
 Only the owner merges. Auto-merge remains disabled.
 
+## Continuation performance evidence — 25 October 2026
+
+The `3d6906c6` candidate passed Fast CI, Sporting Context Profile, native Tour
+API, Shell browser, Saved Revision Branch Review, calendar boundary API and all
+12 native Full Simulation jobs, including the formerly failing W80 worker cold
+reopen. W52/W61 Tour browsers and the other Tour browser scenarios passed.
+The W80/1,000-player browser passed the earlier 90-second Save check but reached
+the unchanged 18-minute whole-script limit during its first Edition. Its all-week
+global matrices were still running when this follow-up was prepared. These are
+earlier-head results, not acceptance of the next candidate.
+
+The follow-up avoids decoding every historical payload when the complete actual
+dependency graph still matches a successful proof and those exact bytes proved
+the native closure key absent. A closure marker, including a malformed or foreign
+one, retains full validation. Metadata and absence evidence share the existing
+128-entry bound. Every physical graph/signature is still checked first.
+
+Live checkpoint/Tour decoding is a separate repository-local value cache keyed
+by Run, Branch, component kind and SHA-256 of the complete actual SQLite JSON.
+It retains at most four values/64 MiB of serialized bytes and returns defensive
+copies. It never certifies live mathematics or sources. The already authenticated
+Saved DTO cache retains at most two values/64 MiB, accommodating the required
+1,000-player history. Unchanged live components preserve their exact authenticated
+Saved representation; changed ones still enter full independent replay. Private
+derived fingerprints end with context assembly, including exceptions, before
+models are exposed. Serialization hashes the same body once; slot omission and
+snapshot hashes retain their exact historical content.
+
+Local evidence includes the actual metadata-only physical gate with newly
+inserted/rehashed malformed closure rejection, recovery after restoring bytes,
+and actual retry/concurrency/stale/rollback/rehashed-source and native-birth cases.
+51 focused contracts passed. On an isolated SQLite backup from the failed
+W80/1,000-player browser, the pending third-slot Save completed in 52.96 seconds
+with cProfile enabled; the following Saved inspection took 17.15 seconds. This
+measures a real late operation, not a complete browser pass. Final-head hosted
+acceptance, including the whole browser and every-week matrices, remains required.
+
 ## Independent completion review
 
 The published candidate `502914ee` was not merge-ready: the simultaneous-player
@@ -46,7 +83,7 @@ lifecycle/Health histories. Every actual value is hashed, and physical rows,
 ancestry and source ownership still validate independently. Parsed immutable
 parts are bounded to 16 MiB/128 entries; origin projections to 32 MiB/128 entries;
 these live for this one caller-owned walk only. A separate decoded Tour DTO cache
-retains at most two inputs/32 MiB of serialized source bytes after the full
+retained at most two inputs/32 MiB of serialized source bytes before the follow-up above; it runs after the full
 physical Saved gate; every lookup hashes the complete actual payload and returns
 defensive copies. Routing hints retain only actual-byte hashes and booleans. Private pure-replay projections and
 fingerprints end with that replay, including failure, and never authorize a later

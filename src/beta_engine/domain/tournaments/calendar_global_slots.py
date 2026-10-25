@@ -9,7 +9,7 @@ from contextvars import ContextVar
 from types import SimpleNamespace
 from typing import Literal
 
-from pydantic import Field, model_serializer, model_validator
+from pydantic import Field, model_validator
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
@@ -149,14 +149,12 @@ class GlobalSlot(FrozenInput):
     authorities: tuple[CalendarEditionAuthority, ...]
     scheduled: tuple[FrozenSlotMatch, ...]
     accepted: tuple[CalendarContinuationMatch, ...] = ()
-    inherited_match_ids: tuple[str, ...] = ()
-
-    @model_serializer(mode="wrap")
-    def historical_shape(self, handler):
-        body = handler(self)
-        if not self.inherited_match_ids:
-            body.pop("inherited_match_ids", None)
-        return body
+    # Keep the original empty-field omission in the native serializer. A wrap
+    # serializer materializes every player's full attributes and rally log an
+    # extra time whenever an enclosing checkpoint is serialized.
+    inherited_match_ids: tuple[str, ...] = Field(
+        default=(), exclude_if=lambda value: not value,
+    )
 
     @property
     def snapshot_fingerprint(self):
@@ -210,9 +208,10 @@ class GlobalSlot(FrozenInput):
             or not set(done) <= set(ids)
         ):
             raise ValueError("Global slot has noncanonical or foreign match evidence")
+        snapshot = self.snapshot_fingerprint if self.accepted else None
         if any(
             (m.run_id, m.branch_id, m.week, m.source_checkpoint_fingerprint)
-            != (self.run_id, self.branch_id, self.week, self.snapshot_fingerprint)
+            != (self.run_id, self.branch_id, self.week, snapshot)
             for m in self.accepted
         ):
             raise ValueError("Accepted match differs from frozen global slot owner")
@@ -594,6 +593,7 @@ def freeze_slot(state, checkpoint, *, world, lifecycle, health, source, head):
 
 
 def calculate_match(slot, item):
+    snapshot = slot.snapshot_fingerprint
     ctx = MatchContext(
         match_id=item.match_id,
         player_a=canonical_participant(item.projections[0]),
@@ -604,10 +604,10 @@ def calculate_match(slot, item):
     )
     nested = {
         "command_id": "global-match:"
-        + canonical_hash({"slot": slot.snapshot_fingerprint, "match": item.match_id}),
+        + canonical_hash({"slot": snapshot, "match": item.match_id}),
         "match_id": item.match_id,
         "expected_saved_head": item.source_saved_head,
-        "expected_checkpoint_fingerprint": slot.snapshot_fingerprint,
+        "expected_checkpoint_fingerprint": snapshot,
         "player_a_id": item.projections[0].player_id,
         "player_b_id": item.projections[1].player_id,
         "seed": item.seed,
@@ -623,7 +623,7 @@ def calculate_match(slot, item):
         "command_id": nested["command_id"],
         "match_id": item.match_id,
         "source_saved_head": item.source_saved_head,
-        "source_checkpoint_fingerprint": slot.snapshot_fingerprint,
+        "source_checkpoint_fingerprint": snapshot,
         "seed": item.seed,
         "operator_label": nested["operator_label"],
         "audit_reason": nested["audit_reason"],

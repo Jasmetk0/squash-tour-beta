@@ -83,7 +83,7 @@ def parse_checkpoint_json(raw, *, _parsed_global_parts=None):
     return model.model_validate_json(raw)
 
 
-def load_checkpoint(session, *, run_id, branch_id, _verified_source=None):
+def load_checkpoint(session, *, run_id, branch_id, _verified_source=None, _repository=None):
     row = session.get(CalendarPlayerSportingCheckpointModel, (run_id, branch_id))
     if row is None:
         return None
@@ -99,7 +99,9 @@ def load_checkpoint(session, *, run_id, branch_id, _verified_source=None):
             # canonical content hash, not order-sensitive JSON text. Hash every
             # live byte's decoded value; never trust only its stored hash column.
             return _verified_source
-    state = parse_checkpoint_json(row.payload_json)
+    from beta_engine.infrastructure.db.native_fork_source_projection import decoded_live_calendar_component
+    state = decoded_live_calendar_component(_repository, run_id=run_id, branch_id=branch_id,
+        kind=COMPONENT_KEY, raw=row.payload_json, parse=parse_checkpoint_json)
     if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, row.fingerprint):
         raise ValueError('Calendar sporting checkpoint SQLite identity/hash mismatch')
     return state
@@ -305,9 +307,9 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
 
 
 def capture_checkpoint(session, payload, evidence, *, run_id, branch_id,
-                       _defer_full_verification: bool = False):
+                       _defer_full_verification: bool = False, _repository=None):
     from beta_engine.infrastructure.db.initial_world_state import get_initial_world
-    state = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
+    state = load_checkpoint(session, run_id=run_id, branch_id=branch_id, _repository=_repository)
     world = get_initial_world(session, run_id=run_id, branch_id=branch_id) if state or evidence else None
     # Only the native Tour Save coordinator may defer this replay. It then
     # authenticates the complete freshly captured revision once, atomically,
@@ -315,7 +317,9 @@ def capture_checkpoint(session, payload, evidence, *, run_id, branch_id,
     if not _defer_full_verification:
         verify_checkpoint(state, world, evidence)
     if state is not None:
-        payload['content'][COMPONENT_KEY] = {'fingerprint': state.fingerprint, 'state': state.model_dump(mode='json')}
+        from beta_engine.domain.run_packages import canonical_hash
+        body = state.model_dump(mode='json')
+        payload['content'][COMPONENT_KEY] = {'fingerprint': canonical_hash(body), 'state': body}
 
 
 def restore_checkpoint(session, *, current_payload, target_payload, current, target, run_id, branch_id,

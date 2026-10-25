@@ -1,5 +1,18 @@
 # Native global-slot acceptance repairs — 25 October 2026 candidate
 
+Follow-up after `3d6906c6`: seven hosted workflows and all native Full Simulation
+jobs passed, including the W80 worker. The W80/1,000-player Tour browser still
+hit its unchanged whole-script deadline; the three all-week matrices were still
+running. The next candidate adds bounded actual-byte live DTO decoding, reuses
+unchanged authenticated component representations, and avoids old payload
+decoding only after the full physical graph proof plus exact closure-key absence.
+Changed/rehashed sources and inserted malformed closure markers still reject.
+51 focused contracts and the actual birth/metadata/retry regression cases passed.
+A genuine late 1,000-player third-slot Save took 52.96 seconds under cProfile,
+then 17.15 seconds to inspect. The merge gate is complete successful hosted
+acceptance on the final head; the PR records its exact SHA and current result.
+These local measurements do not certify merge readiness or complete pre-alpha.
+
 Continuation stays in PR #1643, branch `feat/native-global-simulation-slots-20261024`,
 from base `buuk` `94737b0dab67c38c57682480f66bfae365c3225e`. The inherited
 `afc10bbc` head failed three Native Tour browser checks and W80 worker cold reopen;

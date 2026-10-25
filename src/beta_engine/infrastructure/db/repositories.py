@@ -1491,6 +1491,7 @@ class SimulationPersistenceRepository:
         # Every lookup rehashes the exact stored bytes and metadata; tampering,
         # including a rewritten content hash, invalidates the proof.
         self._revision_validation_cache: dict[tuple, BranchSavedRevisionRecord] = {}
+        self._revision_validation_no_closure: set[tuple] = set()
         self._revision_validation_lock = Lock()
         # Bounded single-flight locks prevent concurrent cold Admin reads from
         # replaying the same exact immutable revision at the same time. Proofs
@@ -2566,6 +2567,19 @@ class SimulationPersistenceRepository:
                 complete = has_actual_dependency_proof(self, dependency_signature,
                     run_id=model.run_id, branch_id=model.branch_id)
                 if complete:
+                    if not materialize_payload:
+                        with self._revision_validation_lock:
+                            metadata = self._revision_validation_cache.get(signature)
+                            no_closure = signature in self._revision_validation_no_closure
+                        if metadata is not None and no_closure:
+                            # The COMPLETE actual dependency graph just matched
+                            # a successful physical proof. These exact bytes
+                            # also proved the closure key absent. Return only
+                            # metadata without decoding every old rally again.
+                            # Any marker (including malformed/foreign markers)
+                            # or cache miss retains the full path below.
+                            memo[proof_key] = metadata
+                            return metadata
                     # The cache proves COMPLETE actual dependency bytes, owners,
                     # topology and source reachability, not just this row's hash.
                     # Reparse JSON for isolation; never share mutable payloads.
@@ -2599,8 +2613,12 @@ class SimulationPersistenceRepository:
                         sporting_component_proofs=sporting_component_proofs,
                     )
                     from beta_engine.infrastructure.db.calendar_standalone_match_state import decode_prevalidated_calendar_sources
-                    _, parent_checkpoint, parent_tour = decode_prevalidated_calendar_sources(
-                        parent_revision.payload, run_id=model.run_id, branch_id=model.branch_id,
+                    from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_tour_source
+                    _, parent_checkpoint, parent_tour = decoded_global_tour_source(
+                        self, parent_revision,
+                        lambda source: decode_prevalidated_calendar_sources(
+                            source.payload, run_id=model.run_id, branch_id=model.branch_id,
+                        ),
                     )
                     verified_global_prefix = (parent_checkpoint, parent_tour, parent_revision.payload)
             with work_lock:
@@ -2709,10 +2727,14 @@ class SimulationPersistenceRepository:
             return metadata
         with self._revision_validation_lock:
             self._revision_validation_cache[signature] = metadata
+            if 'native_branch_closures' not in revision.payload.get('run', {}):
+                self._revision_validation_no_closure.add(signature)
+            else:
+                self._revision_validation_no_closure.discard(signature)
             if len(self._revision_validation_cache) > 128:
-                self._revision_validation_cache.pop(
-                    next(iter(self._revision_validation_cache))
-                )
+                oldest = next(iter(self._revision_validation_cache))
+                self._revision_validation_cache.pop(oldest)
+                self._revision_validation_no_closure.discard(oldest)
         return metadata
 
     def _validated_branch_revision_lineage_in_session(self, **kwargs):
@@ -6142,7 +6164,7 @@ class SimulationPersistenceRepository:
                     load_checkpoint,
                 )
                 live_calendar_owner = load_checkpoint(
-                    session, run_id=run_id, branch_id=branch_id
+                    session, run_id=run_id, branch_id=branch_id, _repository=self,
                 )
                 verify_coupled_calendar = (
                     expected_calendar_tour_fingerprint is not None
@@ -6163,6 +6185,7 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id,
                     _defer_full_verification=verify_coupled_calendar,
                     _authenticated_tour_prefix=authenticated_tour,
+                    _repository=self,
                 )
                 if verify_coupled_calendar:
                     # A native Tour Save captures live rows first, then runs the
@@ -6175,15 +6198,20 @@ class SimulationPersistenceRepository:
                     from beta_engine.infrastructure.db.calendar_standalone_match_state import (
                         decode_prevalidated_calendar_sources,
                     )
+                    from beta_engine.infrastructure.db.native_fork_source_projection import (
+                        decoded_global_tour_source,
+                    )
                     # The existing Saved HEAD was fully authenticated by
                     # _viewer_branch_working_draft_in_session inside THIS
                     # transaction. Its exact sporting source is now a trusted
                     # prefix; the new Save must still replay every NEW event and
                     # compare the full successor state byte-for-byte.
                     _saved_evidence, signed_prefix, _saved_tour = (
-                        decode_prevalidated_calendar_sources(
-                            state.saved_revision.payload,
-                            run_id=run_id, branch_id=branch_id,
+                        decoded_global_tour_source(
+                            self, state.saved_revision,
+                            lambda source: decode_prevalidated_calendar_sources(
+                                source.payload, run_id=run_id, branch_id=branch_id,
+                            ),
                         )
                     )
                     load_saved_calendar_sources(

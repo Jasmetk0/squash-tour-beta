@@ -69,6 +69,29 @@ def test_legacy_edition_json_and_hash_are_unchanged_by_the_new_executor():
     assert restored == old.edition
 
 
+@pytest.mark.parametrize("inherited", [(), ("inherited-match",)])
+def test_slot_serialization_preserves_the_complete_historical_shape(inherited):
+    import json
+
+    from beta_engine.domain.tournaments.calendar_global_slots import GlobalSlot
+
+    # Isolate the serialization contract. Sporting validity is exercised by the
+    # production SQLite scenarios, not by this deliberately empty slot value.
+    slot = GlobalSlot.model_construct(
+        run_id="run", branch_id="branch", week=authority("edition").edition.week,
+        number=1, source_checkpoint_fingerprint="a" * 64,
+        source_health_fingerprint="b" * 64, players=(), authorities=(),
+        scheduled=(), accepted=(), inherited_match_ids=inherited,
+    )
+    body = slot.model_dump(mode="json")
+    assert ("inherited_match_ids" in body) == bool(inherited)
+    if inherited:
+        assert body["inherited_match_ids"] == list(inherited)
+    assert json.loads(slot.model_dump_json()) == body
+    assert slot.fingerprint == canonical_hash(body)
+    assert "accepted" not in slot.model_dump(mode="json", exclude={"accepted"})
+
+
 def test_slot_seed_uses_immutable_match_identity_and_not_command_or_collection_position():
     a, b = authority("parallel-a"), authority("parallel-b")
     mids = ("qf1", "qf2", "qf3", "qf4")

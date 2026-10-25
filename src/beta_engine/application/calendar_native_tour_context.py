@@ -2,6 +2,7 @@
 
 import json
 
+from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
     COMPONENT_KEY as SPORTING_KEY,
 )
@@ -37,22 +38,32 @@ def native_working_context(
         "content": dict(revision.saved_revision.payload["content"]),
     }
     validate_live_run_prospect_source_against_saved(session, payload, run_id=run_id)
-    payload["content"][SPORTING_KEY] = {
-        "state": checkpoint.model_dump(mode="json"),
-        "fingerprint": checkpoint.fingerprint,
-    }
-    payload["content"][TOUR_KEY] = {
-        "state": state.model_dump(mode="json"),
-        "fingerprint": state.fingerprint,
-    }
+    same_checkpoint, same_tour = checkpoint == saved, state == signed
+    # The caller independently authenticated the Saved payload and checked the
+    # actual live row content against these models. Preserve the exact original
+    # component when equal; serializing thousands of unchanged player attributes
+    # and all previous rally logs again adds no evidence. Changed components
+    # still enter the complete live replay and actual-value proof below.
+    if not same_checkpoint:
+        body = checkpoint.model_dump(mode="json")
+        payload["content"][SPORTING_KEY] = {
+            "state": body,
+            "fingerprint": canonical_hash(body),
+        }
+    if not same_tour:
+        body = state.model_dump(mode="json")
+        payload["content"][TOUR_KEY] = {
+            "state": body,
+            "fingerprint": canonical_hash(body),
+        }
     capture_saved_lifecycle(session, payload, run_id=run_id, branch_id=branch_id)
     capture_saved_health(session, payload, run_id=run_id, branch_id=branch_id)
     # The caller authenticated this immutable Saved HEAD in this transaction.
     # Reuse it only if EVERY captured live component is still exactly equal.
     # Different live bytes always get the independent full replay below.
     if (
-        checkpoint == saved
-        and state == signed
+        same_checkpoint
+        and same_tour
         and payload == revision.saved_revision.payload
     ):
         return _parse_health_json(
@@ -64,7 +75,6 @@ def native_working_context(
     cache = None
     signature = None
     if repository is not None and checkpoint.schema_version == "calendar_sporting_checkpoint.v13":
-        from beta_engine.domain.run_packages import canonical_hash
         signature = (revision.saved_head_revision_id, canonical_hash(payload))
         with repository._revision_validation_lock:
             cache = getattr(repository, "_global_working_proofs", None)

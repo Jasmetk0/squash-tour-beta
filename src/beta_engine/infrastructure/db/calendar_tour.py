@@ -21,11 +21,13 @@ def require_exhibition_timeline(session, run_id, branch_id):
         )
 
 
-def load_tour(session, *, run_id, branch_id):
+def load_tour(session, *, run_id, branch_id, _repository=None):
     row = session.get(CalendarTourAuthorityModel, (run_id, branch_id))
     if row is None:
         return None
-    state = parse_tour_json(row.payload_json)
+    from beta_engine.infrastructure.db.native_fork_source_projection import decoded_live_calendar_component
+    state = decoded_live_calendar_component(_repository, run_id=run_id, branch_id=branch_id,
+        kind=COMPONENT_KEY, raw=row.payload_json, parse=parse_tour_json)
     if (state.run_id, state.branch_id, state.fingerprint) != (
         run_id,
         branch_id,
@@ -382,13 +384,13 @@ def saved_tour(
 
 def capture_tour(
     session, payload, *, run_id, branch_id, _defer_full_verification: bool = False,
-    _authenticated_prefix=None,
+    _authenticated_prefix=None, _repository=None,
 ):
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
         load_checkpoint,
     )
 
-    state = load_tour(session, run_id=run_id, branch_id=branch_id)
+    state = load_tour(session, run_id=run_id, branch_id=branch_id, _repository=_repository)
     from beta_engine.infrastructure.db.initial_world_state import get_initial_world
 
     if not _defer_full_verification:
@@ -406,9 +408,11 @@ def capture_tour(
     )
     verify_tour_origins(session, state, _verified_global_prefix=prefix)
     if state:
+        from beta_engine.domain.run_packages import canonical_hash
+        body = state.model_dump(mode="json")
         payload["content"][COMPONENT_KEY] = {
-            "fingerprint": state.fingerprint,
-            "state": state.model_dump(mode="json"),
+            "fingerprint": canonical_hash(body),
+            "state": body,
         }
         from beta_engine.infrastructure.db.player_lifecycle_state import (
             load_saved_lifecycle,

@@ -199,3 +199,46 @@ def test_oversized_tour_decoding_is_not_retained(monkeypatch):
     for _ in range(2):
         projection.decoded_global_tour_source(repo, source, lambda value: calls.append(1) or value.payload)
     assert len(calls) == 2 and not hasattr(repo, '_global_tour_projection_cache')
+
+
+def test_live_value_decoding_binds_actual_bytes_scope_and_kind_and_isolates_mutation():
+    import json
+
+    from beta_engine.infrastructure.db.native_fork_source_projection import decoded_live_calendar_component
+
+    repo = SimpleNamespace(_revision_validation_lock=Lock())
+    calls = []
+
+    def parse(raw):
+        calls.append(raw)
+        return Part.model_validate_json(raw)
+
+    args = dict(run_id='run', branch_id='branch', kind='sporting', raw=json.dumps({'values': {'a': 1}}), parse=parse)
+    first = decoded_live_calendar_component(repo, **args)
+    first.values['a'] = 999
+    assert decoded_live_calendar_component(repo, **args).values == {'a': 1}
+    assert len(calls) == 1
+    for change in ({'run_id': 'other'}, {'branch_id': 'other'}, {'kind': 'tour'}, {'raw': '{"values":{"a":2}}'}):
+        decoded_live_calendar_component(repo, **{**args, **change})
+    assert len(calls) == 5
+    with pytest.raises(ValueError):
+        decoded_live_calendar_component(repo, **{**args, 'raw': '{"values":{"a":"invalid"}}'})
+    assert len(calls) == 6
+
+
+def test_live_value_retention_is_bounded_and_has_no_oversize_or_failed_entries(monkeypatch):
+    import json
+
+    from beta_engine.infrastructure.db import native_fork_source_projection as projection
+
+    repo = SimpleNamespace(_revision_validation_lock=Lock())
+    for i in range(8):
+        projection.decoded_live_calendar_component(repo, run_id='run', branch_id='branch',
+            kind='sporting', raw=json.dumps({'values': {'a': i}}), parse=Part.model_validate_json)
+    assert len(repo._live_calendar_value_cache) == 4
+    monkeypatch.setattr(projection, 'MAX_LIVE_COMPONENT_BYTES', 1)
+    other = SimpleNamespace(_revision_validation_lock=Lock())
+    for _ in range(2):
+        projection.decoded_live_calendar_component(other, run_id='run', branch_id='branch',
+            kind='sporting', raw='{"values":{"a":1}}', parse=Part.model_validate_json)
+    assert not hasattr(other, '_live_calendar_value_cache')

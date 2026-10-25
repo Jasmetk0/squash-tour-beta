@@ -112,6 +112,48 @@ def test_metadata_only_global_history_keeps_payload_until_physical_gates_finish(
             )
         assert checked
         assert all(not revision.payload for revision in lineage)
+        ancestor_id = checked[0]
+        checked.clear()
+        with repo._session_factory() as session:
+            session.execute(text("BEGIN"))
+            warm = repo._validated_branch_revision_lineage_in_session(
+                session=session, branch=session.get(RunBranchModel, "branch"),
+                payload_revision_ids=frozenset(),
+            )
+        assert warm == lineage
+        assert not checked, "unchanged complete graph and absent closure need only metadata"
+
+        # A newly inserted, rehashed marker must invalidate that absence proof,
+        # even though every sporting/Tour component remains byte-for-byte equal.
+        from beta_engine.domain.run_revisions import saved_revision_content_hash
+
+        with repo._session_factory.begin() as session:
+            row = session.get(BranchSavedRevisionModel, ancestor_id)
+            original_bytes = row.payload_json, row.content_hash
+            body = json.loads(row.payload_json)
+            body["run"]["native_branch_closures"] = "not a closure history"
+            row.payload_json = json.dumps(body)
+            row.content_hash = saved_revision_content_hash(
+                revision_id=row.revision_id, run_id=row.run_id, branch_id=row.branch_id,
+                sequence=row.sequence, parent_revision_id=row.parent_revision_id,
+                kind=row.kind, payload_schema_version=row.payload_schema_version,
+                payload=body, change_summary=json.loads(row.change_summary_json),
+            )
+        with repo._session_factory() as session, pytest.raises(ValueError, match="[Cc]losure"):
+            session.execute(text("BEGIN"))
+            repo._validated_branch_revision_lineage_in_session(
+                session=session, branch=session.get(RunBranchModel, "branch"),
+                payload_revision_ids=frozenset(),
+            )
+        with repo._session_factory.begin() as session:
+            row = session.get(BranchSavedRevisionModel, ancestor_id)
+            row.payload_json, row.content_hash = original_bytes
+        with repo._session_factory() as session:
+            session.execute(text("BEGIN"))
+            assert repo._validated_branch_revision_lineage_in_session(
+                session=session, branch=session.get(RunBranchModel, "branch"),
+                payload_revision_ids=frozenset(),
+            ) == lineage
 
 
 def test_first_global_edition_after_birth_keeps_the_actual_native_root(tmp_path):

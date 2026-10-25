@@ -1,6 +1,6 @@
 # Admin Run history UI — CS/EN read-only completion ledger
 
-**Scope:** PR #1641, feature branch `feat/admin-run-history-csen-readonly-20261024`, against the independently verified `buuk` starting point `e39d962bb6797960c47c1c659d57be1dc67bba6b`. **Status: Draft — CI on the final HEAD is required before merge.** The owner alone merges.
+**Scope:** PR #1641, feature branch `feat/admin-run-history-csen-readonly-20261024`, against the independently verified `buuk` starting point `e39d962bb6797960c47c1c659d57be1dc67bba6b`. **Status: implementation and independent scope review complete; successful final-head CI remains required before owner merge.** The owner alone merges.
 
 ## Source authority and safety boundary
 
@@ -39,7 +39,7 @@ The snapshot list/detail DTOs expose a sequence, kind, optional source event ID 
 | 23 | Preserved + corrected | `??` prevents valid 0/false being replaced by fallback text; a failed/mismatched rollover read is **unavailable**, not a displayed count of zero. |
 | 24 | Partially implemented | Filter controls use labels, targeted errors use `role=alert`, and refresh/reset have readable button text. Shared `RunScopedUi`, global responsive wrappers, and global accessibility contracts are explicitly untouched. |
 | 25 | Implemented + tested | Independent live-language tests exercise an open selection/filter and a pending read: language changes do not initiate new API requests or writes. |
-| 26 | Implemented, verification gate still open | Existing scoped regressions are retained, live CS/EN/read-only tests added. Exact-head automated test and TypeScript/Vite build results must be recorded from CI, not assumed from earlier commits. |
+| 26 | Implemented and independently reproduced | Existing scoped regressions are retained, live CS/EN/read-only tests added. The 25 October review reproduced 163 history tests, 199 stable critical tests and TypeScript/Vite build; hosted final-head CI remains the merge gate. |
 
 **Legend:** Implemented = this PR adds display-only behavior; Preserved = already correct and intentionally not rewritten; Partially implemented = remaining work crosses an explicit source/shared-component boundary; verification evidence is independent of this checklist.
 
@@ -156,3 +156,23 @@ The sequence-scoped snapshot detail and the independently loaded history index c
 - Final gate: GitHub **Fast CI**, including stable critical baseline, changed/colocated Vitest suites, and TypeScript + Vite production build, all passing on the **same final SHA**. Draft-skipped workflows count neither as executed nor as passed. A full backend/simulation matrix is intentionally not run for this display-only scope.
 
 **Important limitations / review questions:** these legacy endpoints do not supply an authenticated Product Run Saved Revision scope or an actual snapshot timestamp. A detail DTO without its own Run ID can be validated against the specific requested event/sequence but cannot independently prove the owning Run. Some test fixtures deliberately omit optional identity metadata; guards activate when the real DTO actually provides it. The existing shared UI and large-table responsiveness have not been redesigned in this PR. Product Run native history should be reviewed separately with #1639, not inferred from these legacy views.
+
+
+## Independent completion review — 25 October 2026
+
+The implementation at `8cd5aa707e27bfedf2c28d59616893bb18e84d16` was reviewed
+independently for Run/season/source identity, reused IDs, snapshot-index conflicts,
+stale refresh errors, URL Back/Forward selection, CS/EN and read-only behavior.
+No blocking defect was found within this display-only scope. This completion
+update changes only this evidence document; the reviewed runtime is unchanged.
+
+Reproduced locally: **163 tests across the eight history test files**, **199 tests
+across the fourteen stable critical frontend files**, and the production
+TypeScript/Vite build. Hosted Fast CI also succeeded on that implementation SHA.
+Any later documentation head must still obtain its own successful relevant CI
+before merge; previous checks or Draft skips do not replace that gate.
+
+These component tests mock API boundaries. No real Chromium acceptance or native
+Product Run authority is claimed for this PR. Missing trusted timestamps, shared
+layout/responsiveness and broader Viewer/release debt remain as documented above.
+Only the owner merges. The global-slot/native-runtime PR #1643 remains separate.

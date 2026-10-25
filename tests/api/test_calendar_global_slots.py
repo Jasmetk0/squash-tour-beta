@@ -83,12 +83,13 @@ def copy_database(source, target):
 def test_global_save_verifies_actual_append_before_install_and_rejects_changed_ancestor(
     tmp_path, prepared_slots, monkeypatch
 ):
-    from sqlalchemy import update
+    from sqlalchemy import update, select
     from sqlalchemy.orm import object_session
     from beta_engine.domain.run_revisions import saved_revision_content_hash
     from beta_engine.infrastructure.db import calendar_global_slot_origins
     from beta_engine.infrastructure.db import repositories as repository_module
-    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel, RunBranchModel
+    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel, RunBranchModel, TournamentApplicationSubmissionAuthorityModel
+    from beta_engine.domain.tournaments.application_submission_authority import TournamentApplicationSubmissionAuthority
 
     path = tmp_path / 'verified-append.db'
     copy_database(prepared_slots, path)
@@ -130,6 +131,32 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
 
         execute(server, command(inspect(server), 'next-match', name='append-second'))
         view = inspect(server)
+        # A validly rehashed production row cannot diverge from the confirmed
+        # Tour's Entry authorities, even after its complete math proof is warm.
+        with repo._session_factory.begin() as session:
+            entry = session.scalar(select(TournamentApplicationSubmissionAuthorityModel).where(
+                TournamentApplicationSubmissionAuthorityModel.run_id == 'run',
+                TournamentApplicationSubmissionAuthorityModel.branch_id == 'branch',
+            ).limit(1))
+            entry_id = entry.application_id
+            original_entry = entry.payload_json, entry.fingerprint
+            changed = TournamentApplicationSubmissionAuthority.model_validate_json(entry.payload_json).model_copy(
+                update={'provenance': 'Rehashed changed production Entry provenance'},
+            )
+            entry.payload_json, entry.fingerprint = changed.model_dump_json(), changed.fingerprint
+        code, rejected = _request('POST', tour_url(server) + '/save', {
+            'expected_draft_version': view['draft_version'],
+            'expected_calendar_tour_fingerprint': view['tour_fingerprint'],
+        })
+        assert code == 409 and 'Entry authority' in str(rejected), rejected
+        with repo._session_factory.begin() as session:
+            entry = session.scalar(select(TournamentApplicationSubmissionAuthorityModel).where(
+                TournamentApplicationSubmissionAuthorityModel.application_id == entry_id,
+                TournamentApplicationSubmissionAuthorityModel.run_id == 'run',
+                TournamentApplicationSubmissionAuthorityModel.branch_id == 'branch',
+            ))
+            entry.payload_json, entry.fingerprint = original_entry
+        assert inspect(server)['tour_fingerprint'] == view['tour_fingerprint']
         original_decode = repo._to_branch_saved_revision
         injected = []
 
@@ -177,6 +204,40 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
         replayed.clear()
         assert save_tour(server)['revision_id'] != saved['revision_id']
         assert len(replayed) == 1
+
+
+def test_version_directed_global_decode_preserves_strict_union_validation(tmp_path, prepared_slots):
+    from beta_engine.domain.tournaments.calendar_global_slots import GlobalCompetitionCheckpoint
+    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import parse_checkpoint_json
+    from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
+
+    path = tmp_path / 'strict-dispatch.db'
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f'sqlite:///{path}') as server:
+        execute(server, command(inspect(server), 'next-match', name='strict-partial-source'))
+        with server.app.state.runtime.repository._session_factory() as session:
+            row = session.get(CalendarPlayerSportingCheckpointModel, ('run', 'branch'))
+            raw = row.payload_json
+            expected_hash = row.fingerprint
+    original = GlobalCompetitionCheckpoint.model_validate_json(raw)
+    directed = parse_checkpoint_json(raw)
+    assert directed == original and directed.fingerprint == original.fingerprint == expected_hash
+    assert directed.model_dump(mode='json') == original.model_dump(mode='json')
+    assert directed.model_dump_json() == original.model_dump_json()
+    assert parse_checkpoint_json(raw, _parsed_global_parts={}) == directed
+    original_body = json.loads(raw)
+    bad = []
+    body = deepcopy(original_body); body['unexpected_owner_field'] = True; bad.append(body)
+    body = deepcopy(original_body); body['competition_root']['unexpected_root_field'] = True; bad.append(body)
+    body = deepcopy(original_body); body['events'][-1]['unexpected_event_field'] = True; bad.append(body)
+    body = deepcopy(original_body); body['events'][-1]['number'] = 0; bad.append(body)
+    body = deepcopy(original_body); body['events'][-1]['schema_version'] = 'unknown'; bad.append(body)
+    for body in bad:
+        changed = json.dumps(body)
+        with pytest.raises((ValueError, TypeError)):
+            GlobalCompetitionCheckpoint.model_validate_json(changed)
+        with pytest.raises((ValueError, TypeError)):
+            parse_checkpoint_json(changed)
 
 
 def test_metadata_only_global_history_keeps_payload_until_physical_gates_finish(

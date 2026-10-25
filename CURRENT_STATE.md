@@ -1,5 +1,20 @@
 # Global-slot whole-operation and restart repair — 25 October 2026 candidate
 
+The `c5c4ce92` follow-up passes the six completed shorter hosted workflows and
+the real global-slot Chromium/HTTP matrices. Its W80/1,000-player Tour browser
+now finishes the first tournament and W5 transition, but fails the unchanged
+120-second cold-restart read. Full Simulation and every-week matrices were still
+running when the next repair was prepared; these are not final-head evidence.
+
+The next repair always strictly decodes v13 root/events by their explicit schema,
+avoiding repeated wrong Union alternatives without changing accepted values,
+serialized bytes or fingerprints. The native working proof now captures actual
+production Entry submissions, exactly as Save does; changed/rehashed Entry
+authority independently rejects at Save. Actual HTTP tests compare the directed
+parser with the original validator, including malformed nested parts, and prove
+Entry tamper rejection, ancestor rollback and changed-payload replay fallback.
+Final-head hosted green acceptance remains required.
+
 Continuation remains in #1643. Head `c15f35b3` passed seven hosted workflows and
 all native Full Simulation jobs, but W80/1,000 still exceeded its whole-browser
 deadline. W52 completed every real week and Season Transition, then timed out on

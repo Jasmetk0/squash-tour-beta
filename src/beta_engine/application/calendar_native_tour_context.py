@@ -56,6 +56,11 @@ def native_working_context(
             "state": body,
             "fingerprint": canonical_hash(body),
         }
+    if checkpoint.schema_version == 'calendar_sporting_checkpoint.v13':
+        from beta_engine.infrastructure.db.tournament_application_submissions import capture_saved_application_submissions
+        # The complete candidate body must include the same actual production
+        # Entry authority captured by manual Save, not its earlier Saved copy.
+        capture_saved_application_submissions(session, payload, run_id=run_id, branch_id=branch_id)
     capture_saved_lifecycle(session, payload, run_id=run_id, branch_id=branch_id)
     capture_saved_health(session, payload, run_id=run_id, branch_id=branch_id)
     # The caller authenticated this immutable Saved HEAD in this transaction.

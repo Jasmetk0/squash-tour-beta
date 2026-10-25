@@ -9,6 +9,30 @@ Only the owner merges. Auto-merge remains disabled.
 
 ## Whole-operation and restart follow-up — 25 October 2026
 
+The `c5c4ce92` follow-up passes the six completed shorter hosted workflows and
+the actual global-slot Chromium/HTTP matrices. Its W80/1,000-player Tour browser
+finishes the first tournament and W5 transition, then exceeds the existing
+120-second cold-restart read. Full Simulation and every-week matrices were still
+running when the next candidate was prepared. No merge claim follows from those
+partial results.
+
+The next candidate strictly dispatches every v13 root/event by its stored schema
+even without a per-walk decoder cache. Each nested strict JSON validator and the
+outer owner/root validator still runs. An actual partial-slot fixture compares
+values, exact JSON and fingerprints with the original Union validator and checks
+that both reject unexpected owner/root/event fields and invalid slot versions or
+numbers. A diagnostic on actual 1,000-player history reduced structural decoding
+from roughly 8–9 seconds to 2–3 seconds; this is not browser acceptance.
+
+The native working replay candidate also captures actual production Entry
+submissions, matching manual Save's complete body. The proof key still includes
+the entire captured payload. Save independently compares actual v2 submissions
+with every edition's signed submissions before capture. The real HTTP regression
+changes and genuinely rehashes a production Entry row after warming the working
+proof: Save rejects, restoration recovers, and ancestor mutation/rollback and
+unknown captured-content replay fallback still pass. No component is excluded
+from the proof and no timeout, population or acceptance assertion changes.
+
 The `c15f35b3` head passed seven hosted workflows, including all 12 native Full
 Simulation jobs. Its W80/1,000-player browser still hit the unchanged 18-minute
 deadline. All actual W52 weeks and Season Transition completed, but the final

@@ -392,6 +392,15 @@ def capture_tour(
     )
 
     state = load_tour(session, run_id=run_id, branch_id=branch_id, _repository=_repository)
+    if state is not None and state.schema_version == 'calendar_tour_authority.v5':
+        from beta_engine.infrastructure.db.tournament_application_submissions import TournamentApplicationSubmissionStore
+
+        actual = {item.fingerprint for item in TournamentApplicationSubmissionStore(session).list(
+            run_id=run_id, branch_id=branch_id,
+        ) if item.schema_version.endswith('.v2')}
+        expected = {item.fingerprint for authority in state.editions for item in authority.submissions}
+        if actual != expected:
+            raise ValueError('Tour Save submissions differ from actual production Entry authority')
     from beta_engine.infrastructure.db.initial_world_state import get_initial_world
 
     if not _defer_full_verification:

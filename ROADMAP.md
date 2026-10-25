@@ -1,5 +1,12 @@
 # Global-slot whole-operation and restart repair — 25 October 2026 candidate
 
+The `c5c4ce92` Tour browser reached W5 but failed its unchanged cold-restart
+deadline. The next candidate removes wrong Union trial decoding through strict
+schema-directed v13 parsing and includes actual Entry submissions in the exact
+complete working proof. Save separately rejects changed production Entry truth.
+Parser equivalence/malformed-input and real Save tamper/rollback tests pass;
+all final-head hosted workflows remain the owner merge gate.
+
 Finish #1643's actual whole-browser and every-week acceptance. The follow-up
 authenticates new Saved origins before HEAD installation and compares complete
 actual graphs around the append, preserving all tamper/rollback fences. It reuses

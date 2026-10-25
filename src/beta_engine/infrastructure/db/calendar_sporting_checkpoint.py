@@ -45,33 +45,33 @@ def parse_checkpoint_json(raw, *, _parsed_global_parts=None):
             GlobalCompetitionCheckpoint,
             GlobalSlot,
         )
-        if _parsed_global_parts is not None:
-            from beta_engine.domain.players.calendar_followup_knockout import (
-                CalendarFollowupKnockout,
-            )
-            from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
-                CalendarNativeSportingWeek,
-            )
+        from beta_engine.domain.players.calendar_followup_knockout import CalendarFollowupKnockout
+        from beta_engine.domain.players.calendar_native_sporting_checkpoint import CalendarNativeSportingWeek
 
-            values = dict(body)
-            values['competition_root'] = _parsed_global_part(
-                body.get('competition_root'), _parsed_global_parts, parse_checkpoint_json,
-            )
-            events = []
-            if not isinstance(body.get('events', []), list):
-                raise ValueError('Global checkpoint events must be an array')
-            for entry in body.get('events', ()):
-                if not isinstance(entry, dict):
-                    raise TypeError('Global checkpoint event must be a versioned object')
-                model = (GlobalSlot if entry.get('schema_version') == 'calendar_global_slot.v1'
-                    else CalendarNativeSportingWeek if entry.get('schema_version') == 'calendar_native_sporting_week.v1'
-                    else CalendarFollowupKnockout)
-                events.append(_parsed_global_part(entry, _parsed_global_parts, model.model_validate_json))
-            values['events'] = tuple(events)
-            # All nested values passed their ordinary strict JSON validators.
-            # The outer owner/root validation still runs for every revision.
-            return GlobalCompetitionCheckpoint.model_validate(values)
-        return GlobalCompetitionCheckpoint.model_validate_json(raw)
+        def strict_part(part, parse):
+            if not isinstance(part, dict):
+                raise TypeError('Global checkpoint part must be a versioned object')
+            if _parsed_global_parts is not None:
+                return _parsed_global_part(part, _parsed_global_parts, parse)
+            return parse(json.dumps(part))
+
+        values = dict(body)
+        values['competition_root'] = strict_part(body.get('competition_root'), parse_checkpoint_json)
+        events = []
+        if not isinstance(body.get('events', []), list):
+            raise ValueError('Global checkpoint events must be an array')
+        for entry in body.get('events', ()):
+            if not isinstance(entry, dict):
+                raise TypeError('Global checkpoint event must be a versioned object')
+            model = (GlobalSlot if entry.get('schema_version') == 'calendar_global_slot.v1'
+                else CalendarNativeSportingWeek if entry.get('schema_version') == 'calendar_native_sporting_week.v1'
+                else CalendarFollowupKnockout)
+            events.append(strict_part(entry, model.model_validate_json))
+        values['events'] = tuple(events)
+        # Every nested value runs its ordinary strict JSON validator. Dispatch
+        # by explicit schema avoids trial-decoding large histories through each
+        # wrong Union alternative. The outer owner/root validator still runs.
+        return GlobalCompetitionCheckpoint.model_validate(values)
     if body.get('schema_version') == 'calendar_sporting_checkpoint.v12':
         from beta_engine.domain.players.calendar_native_competition import (
             CalendarNativeCompetitionCheckpoint,

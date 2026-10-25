@@ -755,6 +755,7 @@ class ViewerSavedRevisionSnapshot:
     simulation_slot_component: dict[str, object] | None
     definitive_wild_cards: tuple[object, ...] | None
     run_package_state: object | None = None
+    calendar_tour: object | None = None
 
 
 class BranchExecutionTargetResolutionError(ValueError):
@@ -2603,15 +2604,18 @@ class SimulationPersistenceRepository:
                     )
                     verified_global_prefix = (parent_checkpoint, parent_tour, parent_revision.payload)
             with work_lock:
-                revision = self._validate_saved_revision_once(
+                revision, baseline = self._validate_saved_revision_once(
                     session=session, model=model, signature=signature,
-                    materialize_payload=materialize_payload,
+                    # Source/closure gates below need the complete native
+                    # payload even when the caller wants metadata only. Strip
+                    # it only AFTER all physical gates finish successfully.
+                    materialize_payload=(materialize_payload or global_slots
+                        or model.payload_schema_version == "native_fork_saved_root.v2"),
                     sporting_component_proofs=sporting_component_proofs,
                     verified_global_prefix=verified_global_prefix,
                 )
             # Source resolution can validate other revisions. Never hold a stripe
             # lock here: unrelated source/target signatures may share that lock.
-            baseline = load_native_fork_saved_root(revision)
             if baseline is not None:
                 verify_native_fork_saved_root(
                     self, session, revision=revision, baseline=baseline
@@ -2628,8 +2632,8 @@ class SimulationPersistenceRepository:
                 verify_with_actual_dependencies(self, session, revision, lambda: None)
             if baseline is not None:
                 memo[(id(session), signature, True)] = revision
-                if not materialize_payload:
-                    revision = replace(revision, payload={}, change_summary={})
+            if not materialize_payload:
+                revision = replace(revision, payload={}, change_summary={})
             memo[proof_key] = revision
             return revision
         except (TypeError, ValueError) as exc:
@@ -2646,6 +2650,7 @@ class SimulationPersistenceRepository:
             verified = self._revision_validation_cache.get(signature)
         revision = (
             self._to_branch_saved_revision(model, validate_components=verified is None,
+                validate_native_root=False,
                 sporting_component_proofs=sporting_component_proofs,
                 verified_global_prefix=verified_global_prefix)
             if materialize_payload or verified is None
@@ -2662,8 +2667,12 @@ class SimulationPersistenceRepository:
             raise BranchRevisionStateConflictError(
                 "Pending native fork has no authenticated baseline root"
             )
+        # Parse the structural native root once, then carry that exact result
+        # into the out-of-lock physical dependency verifier. Re-decoding the
+        # growing runtime here and again after recursive replay is redundant.
+        baseline = load_native_fork_saved_root(revision)
         if verified is not None:
-            return revision
+            return revision, baseline
         payload_run = revision.payload.get("run")
         payload_branch = revision.payload.get("branch")
         if (
@@ -2688,10 +2697,10 @@ class SimulationPersistenceRepository:
             )
         # This root depends on other physical rows. Its own bytes alone cannot
         # certify source integrity; reauthenticate outside the work lock each time.
-        if load_native_fork_saved_root(revision) is not None:
-            return revision
+        if baseline is not None:
+            return revision, baseline
         metadata = self._remember_validated_revision(signature, revision)
-        return revision if materialize_payload else metadata
+        return (revision if materialize_payload else metadata), None
 
     def _remember_validated_revision(self, signature, revision):
         """Retain only proof metadata after all source and identity checks pass."""
@@ -6143,9 +6152,17 @@ class SimulationPersistenceRepository:
                         in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
                     )
                 )
+                from beta_engine.infrastructure.db.calendar_tour import decode_authenticated_tour
+                # This exact predecessor passed the physical lineage gate in
+                # the current Save transaction. Only NEW origins need another
+                # source fold; the captured successor still gets full replay.
+                authenticated_tour = decode_authenticated_tour(
+                    state.saved_revision.payload, run_id=run_id, branch_id=branch_id,
+                )
                 capture_saved_calendar_match(
                     session, payload, run_id=run_id, branch_id=branch_id,
                     _defer_full_verification=verify_coupled_calendar,
+                    _authenticated_tour_prefix=authenticated_tour,
                 )
                 if verify_coupled_calendar:
                     # A native Tour Save captures live rows first, then runs the
@@ -6541,6 +6558,10 @@ class SimulationPersistenceRepository:
     ) -> ViewerSavedRevisionSnapshot:
         """Resolve and validate the sole immutable source for Viewer reads."""
         with self._session_factory() as session:
+            # Owner, selected HEAD and every physical dependency belong to one
+            # SQLite snapshot. Autogenerated SQLAlchemy transactions alone do
+            # not begin a SQLite read transaction on the supported drivers.
+            session.execute(text("BEGIN"))
             container = session.get(RunContainerModel, product_run_id)
             if container is None:
                 raise ViewerOfficialRunContextNotFoundError(
@@ -6625,8 +6646,13 @@ class SimulationPersistenceRepository:
                 if isinstance(saved_world, dict)
                 else None
             )
-            from beta_engine.infrastructure.db.calendar_tour import saved_tour
-            native_tour = saved_tour(revision.payload,run_id=product_run_id,branch_id=component_branch_id)
+            from beta_engine.infrastructure.db.calendar_tour import decode_authenticated_tour
+            # The exact payload just passed the complete physical lineage and
+            # sporting replay gate. Decode its projection; never replay the
+            # same matches again to obtain the public clock or response.
+            native_tour = decode_authenticated_tour(
+                revision.payload, run_id=product_run_id, branch_id=component_branch_id,
+            )
             context = ViewerOfficialRunContext(
                 product_run_id=container.run_id,
                 product_run_display_name=container.display_name or container.run_id,
@@ -6664,6 +6690,7 @@ class SimulationPersistenceRepository:
                 simulation_slot_component=simulation,
                 definitive_wild_cards=wild_cards,
                 run_package_state=run_package_state,
+                calendar_tour=native_tour,
             )
 
     def get_branch_execution_target(self, *, branch_id: str) -> BranchExecutionTarget:

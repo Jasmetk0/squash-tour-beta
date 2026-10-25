@@ -149,3 +149,41 @@ record retains both owners and the original clock without changing v1 meaning.
 It also bound rendered Tour data to the exact UI selection epoch so a scope
 change cannot briefly render an older loaded result. Final acceptance of these
 corrections remains required; review is not a substitute for executed checks.
+
+
+## 25 October continuation: read/Save regression repairs
+
+The inherited `afc10bbc` candidate still failed Native Tour W52/W61 Viewer GETs
+(30 s timeout), W80/1,000-player Save (93.6 s versus 90 s), and W80 worker cold
+Tour reopen (120 s). Three complete global-calendar jobs were cancelled, not
+passes. All corresponding exact-head gates remain required after these repairs.
+
+Publication previously replayed the same accepted sporting/Tour history in its
+Saved snapshot clock projection and again in the public endpoint. It now starts
+an explicit SQLite read transaction before resolving Viewer selection/HEAD and
+validates the complete lineage and actual dependencies there. A fresh, scoped
+Tour projection from those authenticated bytes is carried with that snapshot;
+no public input or new Save candidate can use it as a replacement validator.
+
+For global origins, the fully physically verified parent may certify only its
+unchanged root and exact receipt prefix. Every new command still checks actual
+same-owner reachable Saved sources, effective calendar, checkpoint/Tour bindings,
+prospect-source extension and actual played draw. All actual dependency bytes
+are freshly authenticated before complete-proof reuse. An unchanged live Tour
+reuses its just-authenticated Saved origin proof; changed live/Save states verify
+the new suffix, and new sporting content still receives full replay.
+
+Native root structure is decoded once under the component lock and carried into
+the out-of-lock actual dependency verifier. Metadata-only native history keeps
+its full payload until the source/terminal/closure gates finish, then strips it
+for the requested response. Storage formats, hashes and old replay semantics do
+not change. No timeout, population or mandatory test was reduced.
+
+Added regressions exercise a concurrent external owner edit during a real Viewer
+read snapshot; warm publication with MatchEngine forbidden; rejected rehashed
+physical source followed by recovery; and metadata-only lineage validation with
+real complete native payloads at the physical gates. Existing genuine API cases
+continue to exercise birth, collision, concurrency, exact retry and rollback.
+The new source/metadata cases passed together in 105.48 s locally (including the
+75.06 s genuine fixture setup). Hosted acceptance and actual browser gates must
+still succeed on the final SHA before a merge recommendation.

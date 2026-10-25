@@ -302,6 +302,27 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
             )
 
 
+def decode_authenticated_tour(payload, *, run_id, branch_id):
+    """Project ONLY the exact payload already authenticated by the repository.
+
+    Internal to repository projections/Save, after its full immutable
+    lineage/component/physical-source gate. This is not an alternative validator
+    for raw JSON, live state or new Save candidates. Return a freshly decoded
+    value, never a shared mutable object or a cached physical-source proof.
+    """
+    component = payload.get("content", {}).get(COMPONENT_KEY)
+    if component is None:
+        return None
+    if not isinstance(component, dict) or set(component) != {"state", "fingerprint"}:
+        raise ValueError("Malformed authenticated Saved Tour projection")
+    state = parse_tour_json(json.dumps(component["state"]))
+    if (state.run_id, state.branch_id, state.fingerprint) != (
+        run_id, branch_id, component["fingerprint"],
+    ):
+        raise ValueError("Authenticated Saved Tour projection identity/hash changed")
+    return state
+
+
 def saved_tour(
     payload, *, run_id, branch_id, checkpoint=None, _verified_competition=None
 ):
@@ -360,7 +381,8 @@ def saved_tour(
 
 
 def capture_tour(
-    session, payload, *, run_id, branch_id, _defer_full_verification: bool = False
+    session, payload, *, run_id, branch_id, _defer_full_verification: bool = False,
+    _authenticated_prefix=None,
 ):
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
         load_checkpoint,
@@ -377,7 +399,12 @@ def capture_tour(
         )
     # The standalone Saved component validator does not inspect pre-play
     # origin revisions. This independent live-origin guard is always required.
-    verify_tour_origins(session, state)
+    prefix = (
+        _authenticated_prefix if state is not None and _authenticated_prefix is not None
+        and state.schema_version == _authenticated_prefix.schema_version == 'calendar_tour_authority.v5'
+        else None
+    )
+    verify_tour_origins(session, state, _verified_global_prefix=prefix)
     if state:
         payload["content"][COMPONENT_KEY] = {
             "fingerprint": state.fingerprint,
@@ -459,7 +486,8 @@ def _origin_inputs(row, cache, *, with_health=False):
     return projection, origin
 
 
-def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin_cache=None):
+def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin_cache=None,
+                        _verified_global_prefix=None):
     """Each played event must reference a Signed revision already owning its draw."""
     if state is None:
         return
@@ -550,15 +578,36 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin
                 first_source = source
 
     if state.schema_version in {"calendar_tour_authority.v4", "calendar_tour_authority.v5"}:
-        verify_tour_origins(
-            session, state.competition_root_tour,
-            _reachable_revision_ids=_reachable_revision_ids,
-            _origin_cache=_origin_cache,
-        )
-        previous_source = None
-        for index, receipt in enumerate(
-            state.receipts[len(state.competition_root_tour.receipts) :]
+        prefix = _verified_global_prefix
+        if prefix is not None and (
+            state.schema_version != "calendar_tour_authority.v5"
+            or prefix.schema_version != state.schema_version
+            or (prefix.run_id, prefix.branch_id) != (state.run_id, state.branch_id)
+            or prefix.competition_root_tour != state.competition_root_tour
+            or prefix.competition_root_saved_head != state.competition_root_saved_head
+            or state.receipts[:len(prefix.receipts)] != prefix.receipts
         ):
+            raise ValueError("Verified global origin prefix differs from current history")
+        if prefix is None:
+            verify_tour_origins(
+                session, state.competition_root_tour,
+                _reachable_revision_ids=_reachable_revision_ids,
+                _origin_cache=_origin_cache,
+            )
+        root_count = len(state.competition_root_tour.receipts)
+        start = len(prefix.receipts) if prefix is not None else root_count
+        previous_source = None
+        if start > root_count:
+            previous_id = state.receipts[start - 1].request["command"]["expected_saved_head"]
+            previous_row = session.get(BranchSavedRevisionModel, previous_id)
+            if previous_id not in reachable or previous_row is None or (
+                previous_row.run_id, previous_row.branch_id
+            ) != (state.run_id, state.branch_id):
+                raise ValueError("Verified global prefix source is missing or foreign")
+            from beta_engine.infrastructure.db.run_prospect_source_state import load_saved_run_prospect_source
+            previous_payload, _ = _origin_inputs(previous_row, _origin_cache)
+            previous_source = load_saved_run_prospect_source(previous_payload, run_id=state.run_id)
+        for index, receipt in enumerate(state.receipts[start:], start=start - root_count):
             command = receipt.request["command"]
             source_id = command["expected_saved_head"]
             row = session.get(BranchSavedRevisionModel, source_id)
@@ -658,7 +707,6 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin
         # extension/rehashed event cannot retroactively create publication time.
         if any(clock != origin_payload["run"]["run_calendar"] for clock in terminal_clocks.get(authority.edition.edition_id, ())):
             raise ValueError("Terminal result calendar did not exist in its actual played Saved origin")
-        component = origin_payload.get("content", {}).get(COMPONENT_KEY)
         frozen = (
             next(
                 (

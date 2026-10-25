@@ -77,8 +77,22 @@ def verify_saved_global_origins(
         row = session.get(BranchSavedRevisionModel, source_id)
         if row is None or (row.run_id, row.branch_id) != (revision.run_id, revision.branch_id):
             raise ValueError("Global slot command source has a foreign owner")
+    verified_prefix = None
+    if parent_is_global:
+        # The parent passed its COMPLETE physical dependency/source gate above,
+        # after this read snapshot authenticated all actual dependency bytes.
+        # Reuse only its exact immutable command prefix, never a declared hash.
+        _, previous = _origin_inputs(parent_row, cache)
+        if (
+            previous is not None
+            and (previous.run_id, previous.branch_id) == (state.run_id, state.branch_id)
+            and state.competition_root_tour == previous.competition_root_tour
+            and state.competition_root_saved_head == previous.competition_root_saved_head
+            and state.receipts[:len(previous.receipts)] == previous.receipts
+        ):
+            verified_prefix = previous
     verify_tour_origins(session, state, _reachable_revision_ids=reachable,
-        _origin_cache=cache)
+        _origin_cache=cache, _verified_global_prefix=verified_prefix)
 
 
 def is_global_slot_row(row, *, repository=None):

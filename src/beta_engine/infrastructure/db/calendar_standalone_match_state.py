@@ -343,7 +343,8 @@ def replace_saved_knockout_with_prepared_awards(
 
 
 def capture_saved_calendar_match(session: Session, payload: dict, *, run_id: str, branch_id: str,
-                                 _defer_full_verification: bool = False) -> None:
+                                 _defer_full_verification: bool = False,
+                                 _authenticated_tour_prefix=None) -> None:
     states = load_match_rows(session, run_id=run_id, branch_id=branch_id)
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
         capture_checkpoint,
@@ -353,7 +354,8 @@ def capture_saved_calendar_match(session: Session, payload: dict, *, run_id: str
                        _defer_full_verification=_defer_full_verification)
     from beta_engine.infrastructure.db.calendar_tour import capture_tour
     capture_tour(session, payload, run_id=run_id, branch_id=branch_id,
-                 _defer_full_verification=_defer_full_verification)
+                 _defer_full_verification=_defer_full_verification,
+                 _authenticated_prefix=_authenticated_tour_prefix)
     if states:
         # Exactly one operation-scoped completed standalone match in this slice.
         if len(states) != 1:

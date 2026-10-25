@@ -73,6 +73,33 @@ def test_physical_reads_reuse_one_snapshot_and_reread_after_external_commit(sour
         event.remove(engine, "before_cursor_execute", count)
 
 
+def test_viewer_projection_and_its_physical_gate_share_one_read_snapshot(source, monkeypatch):
+    """A concurrent owner edit is visible on the next read, never half a read."""
+    engine, factory = source
+    repository = SimulationPersistenceRepository(engine=engine, session_factory=factory)
+    original = repository._validated_branch_revision_lineage_in_session
+    observed = []
+
+    def read_with_concurrent_change(*, session, **kwargs):
+        assert session.connection().connection.driver_connection.in_transaction
+        result = original(session=session, **kwargs)
+        if not observed:
+            with factory.begin() as writer:
+                writer.execute(text("UPDATE run_branches SET read_only=1 WHERE branch_id='branch'"))
+            # Independent physical read still sees the selected immutable owner
+            # from this transaction, rather than mixing the committed edit in.
+            observed.append(session.scalar(text("SELECT read_only FROM run_branches WHERE branch_id='branch'")))
+        return result
+
+    monkeypatch.setattr(repository, '_validated_branch_revision_lineage_in_session', read_with_concurrent_change)
+    before = repository.get_viewer_saved_revision_snapshot(product_run_id='run')
+    after = repository.get_viewer_saved_revision_snapshot(product_run_id='run')
+    assert observed == [0]
+    assert before.context.official_branch_read_only is False
+    assert after.context.official_branch_read_only is True
+    assert before.revision == after.revision
+
+
 def test_rehashed_actual_saved_bytes_invalidate_cached_rows_and_stale_orm(source):
     _engine, factory = source
     with factory() as session, native_read_proof_scope():

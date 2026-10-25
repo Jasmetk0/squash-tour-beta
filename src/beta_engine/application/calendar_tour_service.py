@@ -244,9 +244,19 @@ class CalendarTourService:
         context = (clock, revision, world, health, checkpoint, saved, evidence)
         if not native and (state != signed or checkpoint != saved):
             verify_tour(state, checkpoint, world)
-        verify_tour_origins(session, state,
-            _origin_cache=proofs.setdefault('_global_origin_inputs', {})
-                if state is not None and state.schema_version == 'calendar_tour_authority.v5' else None)
+        global_prefix = (
+            signed if state is not None and signed is not None
+            and state.schema_version == signed.schema_version == 'calendar_tour_authority.v5'
+            else None
+        )
+        # The exact Saved Tour just passed the full physical source gate. An
+        # unchanged live Tour has no new origins; a changed one must authenticate
+        # every new command against that actual immutable predecessor.
+        if global_prefix is None or state != signed:
+            verify_tour_origins(session, state,
+                _origin_cache=proofs.setdefault('_global_origin_inputs', {})
+                    if state is not None and state.schema_version == 'calendar_tour_authority.v5' else None,
+                _verified_global_prefix=global_prefix)
         # The exact Saved HEAD has been fully authenticated in _context's
         # repository lineage walk. Comparing immutable Saved lifecycle bytes
         # to independently parsed live rows is sufficient for unchanged Tour

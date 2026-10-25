@@ -80,6 +80,40 @@ def copy_database(source, target):
         source_db.backup(target_db)
 
 
+def test_metadata_only_global_history_keeps_payload_until_physical_gates_finish(
+    tmp_path, prepared_slots, monkeypatch
+):
+    from sqlalchemy import text
+
+    from beta_engine.infrastructure.db import calendar_terminal_results
+    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel, RunBranchModel
+
+    path = tmp_path / "metadata-source-gates.db"
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        repo = server.app.state.runtime.repository
+        verify = calendar_terminal_results.verify_saved_terminal_results
+        checked = []
+
+        def complete_payload(repository, session, revision, **kwargs):
+            physical = session.get(BranchSavedRevisionModel, revision.revision_id)
+            raw = json.loads(physical.payload_json)
+            if raw.get("content", {}).get("calendar_tour_authority", {}).get("state", {}).get("schema_version") == "calendar_tour_authority.v5":
+                assert revision.payload == raw
+                checked.append(revision.revision_id)
+            return verify(repository, session, revision, **kwargs)
+
+        monkeypatch.setattr(calendar_terminal_results, "verify_saved_terminal_results", complete_payload)
+        with repo._session_factory() as session:
+            session.execute(text("BEGIN"))
+            lineage = repo._validated_branch_revision_lineage_in_session(
+                session=session, branch=session.get(RunBranchModel, "branch"),
+                payload_revision_ids=frozenset(),
+            )
+        assert checked
+        assert all(not revision.payload for revision in lineage)
+
+
 def test_first_global_edition_after_birth_keeps_the_actual_native_root(tmp_path):
     from tests.api.test_calendar_native_birth_week_execution import sign_prospects
 
@@ -329,6 +363,19 @@ def test_retry_concurrent_stale_rollback_and_rehashed_slot(
     with ApiServer(database_url=f"sqlite:///{path}") as server:
         repo = server.app.state.runtime.repository
         view = inspect(server)
+        viewer_url = server.base_url + "/viewer/runs/run/calendar-tour"
+        code, public = _request("GET", viewer_url)
+        assert code == 200, public
+        # Warm publication reauthenticates actual Saved bytes and sources, but
+        # cannot run the MatchEngine again just to project that same history.
+        from beta_engine.domain.matches.match_engine import MatchEngine
+
+        def unexpected_replay(*_args, **_kwargs):
+            raise AssertionError("Authenticated publication replayed accepted matches")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(MatchEngine, "simulate", unexpected_replay)
+            assert _request("GET", viewer_url) == (200, public)
         first = command(view, "next-match", name="concurrent-exact")
         stale = command(view, "next-match", name="concurrent-other")
         requests = []
@@ -425,10 +472,12 @@ def test_retry_concurrent_stale_rollback_and_rehashed_slot(
                 change_summary=json.loads(row.change_summary_json),
             )
         assert _request("GET", tour_url(server))[0] == 409
+        assert _request("GET", viewer_url)[0] == 409
         with repo._session_factory.begin() as session:
             row = session.get(BranchSavedRevisionModel, source_id)
             row.payload_json, row.content_hash = original_source
         assert inspect(server)["next_slot"]["completed"] == 1
+        assert _request("GET", viewer_url) == (200, public)
 
 
 def test_restore_partial_slot_retains_accepted_result_and_exact_retry(

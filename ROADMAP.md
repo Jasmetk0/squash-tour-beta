@@ -1,3 +1,33 @@
+# Native global-slot acceptance repairs — 25 October 2026 candidate
+
+Continuation stays in PR #1643, branch `feat/native-global-simulation-slots-20261024`,
+from base `buuk` `94737b0dab67c38c57682480f66bfae365c3225e`. The inherited
+`afc10bbc` head failed three Native Tour browser checks and W80 worker cold reopen;
+its three all-week global matrices were cancelled. These remain failures/missing
+evidence until the new exact head executes the required acceptance green.
+
+Viewer publication now opens one actual SQLite read snapshot, authenticates the
+complete Saved lineage/physical graph, and carries its decoded Tour projection
+into public read DTOs rather than replaying the same sporting history twice more.
+Global origin checks reuse only the exact command prefix of the physically
+verified Saved predecessor; new live/Saved command origins still validate. Native
+fork structural decoding is carried into its physical verifier once. Metadata-only
+history drops native payloads only after source and closure gates finish.
+No persisted schema/hash/seed/result, sporting rule, population, timeout or required
+acceptance assertion changes. PR #1641 frontend files remain separate.
+
+Local evidence on the candidate: three actual production HTTP/SQLite regression
+cases passed (birth/first global Edition, concurrent retry/stale/rollback/rehashed
+source and player collision); the expanded source test also proves warm Viewer
+reads do not run MatchEngine and reject changed/rehashed physical sources. The new
+metadata-only physical-gate scenario passed. A concurrent real SQLite owner edit
+cannot split one Viewer snapshot and appears in the next request. Focused contracts
+and compile checks passed; final hosted native/global/Tour/Saved acceptance remains
+the merge gate. These targeted proofs do not certify complete pre-alpha or the
+reference 50-season release. Only the owner merges; auto-merge stays disabled.
+
+---
+
 # Native global Simulation Slots candidate — 24 October 2026
 
 Verified `buuk` `94737b0dab67c38c57682480f66bfae365c3225e` includes owner-merged

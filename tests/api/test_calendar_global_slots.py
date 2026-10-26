@@ -721,6 +721,7 @@ def test_real_overlapping_slots_save_restart_and_points(tmp_path, prepared_slots
         assert sorted(r["points"] for r in rows) == [30, 30, 30, 30, 60, 60, 100, 100]
         from sqlalchemy import text
         from beta_engine.application.calendar_tour_service import CalendarTourService
+        from beta_engine.domain.run_packages import canonical_hash
         from beta_engine.domain.tournaments.calendar_global_slots import _replay_projections
 
         service = CalendarTourService(server.app.state.runtime.repository)
@@ -731,6 +732,13 @@ def test_real_overlapping_slots_save_restart_and_points(tmp_path, prepared_slots
             # The uncached projection and the private scoped projection must
             # return the same actual complete histories and public JSON DTO.
             expected = service._inspection_from_context(session, 'run', 'branch', ctx, state, signed, fingerprints)
+        # The public envelope also carries optional Save value continuity.
+        # Derive it independently from the complete immutable Saved payload;
+        # keep the full sporting DTO equality below, including after failure.
+        record = service.repository.get_branch_saved_revision(
+            revision_id=expected["saved_head_revision_id"],
+        )
+        expected["save_projection_fingerprint"] = canonical_hash(record.payload)
         assert service.inspect(run_id='run', branch_id='branch') == expected
         assert _replay_projections.get() is None
 

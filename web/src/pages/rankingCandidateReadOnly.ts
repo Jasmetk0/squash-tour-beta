@@ -15,7 +15,7 @@ const cs: Record<string, string> = {
   'No ranking candidates have been prepared for this Branch.': 'Pro tuto větev zatím nebyli připraveni žádní kandidáti žebříčku.',
   'No candidate is stored for this week.': 'Pro tento týden není uložen žádný kandidát.',
   'Select a week to inspect its ranking.': 'Vyber týden pro zobrazení kandidáta.',
-  'players': 'hráčů',
+  'players': 'hráčů', 'points': 'bodů', 'Branch': 'Větev',
   'Best': 'Nejlepších',
   'Unpublished candidate': 'Nepublikovaný kandidát',
   'Not Official Ranking': 'Nikoli Official Ranking',

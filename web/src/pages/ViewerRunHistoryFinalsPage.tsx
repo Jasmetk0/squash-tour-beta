@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
 import { getViewerFinalsRace, getViewerTournamentHistory, getViewerTournamentResult, listViewerOfficialRankingHistory } from '../api/client'
-import type { ViewerFinalsRaceHistory, ViewerFinalsRacePublication, ViewerFinalsRaceRow } from '../api/types'
+import type { ViewerFinalsRaceHistory, ViewerFinalsRacePublication, ViewerFinalsRaceRow, ViewerTournamentResult } from '../api/types'
 import {
   CurrentContextStrip,
   EmptyState,
@@ -328,25 +328,64 @@ export function ViewerRunFinalsQualificationPage(): JSX.Element {
   )
 }
 
+function validFinalsResultHistory(history: ViewerFinalsRaceHistory, runId: string): boolean {
+  return history?.schema_version === 'viewer_finals_race_history.v1' &&
+    history.product_run_id === runId &&
+    typeof history.viewer_branch_id === 'string' && Boolean(history.viewer_branch_id) &&
+    Array.isArray(history.publications) &&
+    history.publications.every(publication =>
+      publication?.schema_version === 'viewer_finals_race_publication.v1' &&
+      publication.product_run_id === runId &&
+      publication.viewer_branch_id === history.viewer_branch_id &&
+      typeof publication.selection_published === 'boolean' &&
+      (publication.finals_event_id === null ||
+        (typeof publication.finals_event_id === 'string' && Boolean(publication.finals_event_id))))
+}
+
+function validFinalsResult(result: ViewerTournamentResult, runId: string, branchId: string, eventId: string): boolean {
+  return result?.schema_version === 'viewer_tournament_result.v1' &&
+    result.product_run_id === runId &&
+    result.viewer_branch_id === branchId &&
+    result.event_id === eventId &&
+    Array.isArray(result.players) && Array.isArray(result.matches) &&
+    Array.isArray(result.qualification_winner_ids) &&
+    typeof result.champion_player_id === 'string' &&
+    typeof result.finalist_player_id === 'string'
+}
+
 export function ViewerRunFinalsResultPage(): JSX.Element {
   const { productRunId: runId } = useViewerProductRunRouteContext()
   const raceQuery = useQuery({
     queryKey: ['viewer-finals-race', runId],
-    queryFn: () => getViewerFinalsRace(runId),
+    queryFn: async () => {
+      const history = await getViewerFinalsRace(runId)
+      if (!validFinalsResultHistory(history, runId)) {
+        throw new Error('Finals publication scope does not match the selected Viewer Run.')
+      }
+      return history
+    },
     enabled: Boolean(runId),
     retry: false
   })
-  const publication = latestFinalsPublication(raceQuery.data)
-  const eventId = publication?.finals_event_id ?? null
+  const publication = latestFinalsPublication(raceQuery.isSuccess ? raceQuery.data : undefined)
+  // A stored event ID is not independently proof that its public selection was published.
+  const eventId = publication?.selection_published ? publication.finals_event_id : null
+  const branchId = publication?.viewer_branch_id ?? null
   const resultQuery = useQuery({
-    queryKey: ['viewer-finals-result', runId, eventId],
-    queryFn: () => getViewerTournamentResult(runId, eventId ?? ''),
-    enabled: Boolean(runId && eventId),
+    queryKey: ['viewer-finals-result', runId, branchId, eventId],
+    queryFn: async () => {
+      const result = await getViewerTournamentResult(runId, eventId ?? '')
+      if (!eventId || !branchId || !validFinalsResult(result, runId, branchId, eventId)) {
+        throw new Error('Finals Tournament Result does not match the published event and Viewer Branch.')
+      }
+      return result
+    },
+    enabled: Boolean(runId && branchId && eventId),
     retry: false
   })
 
   const resultNotFound = isApiNotFound(resultQuery.error)
-  const result = resultQuery.data
+  const result = resultQuery.isSuccess ? resultQuery.data : undefined
   const resultStatus = result
     ? 'Published'
     : resultNotFound

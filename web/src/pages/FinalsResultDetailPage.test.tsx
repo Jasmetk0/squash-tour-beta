@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { FinalsResultDetailPage } from './FinalsResultDetailPage'
@@ -17,6 +17,8 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('../api/client', () => api)
+// Legacy assertions verify the existing English copy; CS/EN transitions have separate coverage.
+vi.mock('../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }))
 
 describe('FinalsResultDetailPage', () => {
   beforeEach(() => {
@@ -62,6 +64,8 @@ describe('FinalsResultDetailPage', () => {
     expect(await screen.findByText('Failed to load Finals summary: summary unavailable')).toBeInTheDocument()
     expect(screen.getByText('Unknown')).toBeInTheDocument()
     expect(screen.queryByText('Not generated')).not.toBeInTheDocument()
+    expect(screen.getByText('Qualification cannot be verified without a valid Finals summary')).toBeInTheDocument()
+    expect(screen.queryByText('Qualification not available')).not.toBeInTheDocument()
   })
 
   it('keeps qualification and result loading states while both requests are unresolved', async () => {
@@ -70,6 +74,7 @@ describe('FinalsResultDetailPage', () => {
     renderWithRoute(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
     expect(await screen.findByText('Loading Finals result detail...')).toBeInTheDocument()
     expect(screen.getAllByText('Loading')).toHaveLength(2)
+    expect(screen.getByText('Waiting for Finals summary')).toBeInTheDocument()
   })
 
   it('shows readable empty state when result is missing', async () => {
@@ -79,4 +84,44 @@ describe('FinalsResultDetailPage', () => {
     expect(await screen.findByText('Finals result has not been recorded for this run yet.')).toBeInTheDocument()
     expect(screen.getByText('No Finals result payload is available yet.')).toBeInTheDocument()
   })
+  it.each([
+    ['event ID', { event_id: 'OTHER_FINALS', source_as_of_season: 2027, source_as_of_week: 42 }],
+    ['source season', { event_id: 'WORLD_TOUR_FINALS', source_as_of_season: 2026, source_as_of_week: 42 }],
+    ['source week', { event_id: 'WORLD_TOUR_FINALS', source_as_of_season: 2027, source_as_of_week: 41 }]
+  ])('hides a Finals result detail contradicting summary %s', async (_dimension, source) => {
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2027, qualification: { run_id: 'run-a', season: 2027 },
+      result: { run_id: 'run-a', season: 2027, ...source }
+    })
+    renderWithRoute(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText('Finals result detail conflicts with the stored summary or selected Run.')).toBeInTheDocument()
+    expect(screen.queryByText(/runner_up_player_id/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Finals overview page' })).toBeInTheDocument()
+  })
+
+  it('keeps a valid standalone Finals result when summary evidence is unavailable', async () => {
+    api.getFinalsSummary.mockRejectedValueOnce(new api.ApiError('summary offline', 503))
+    renderWithRoute(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText('Failed to load Finals summary: summary offline')).toBeInTheDocument()
+    expect(screen.getByText(/runner_up_player_id/)).toBeInTheDocument()
+    expect(screen.queryByText('Finals result detail conflicts with the stored summary or selected Run.')).not.toBeInTheDocument()
+  })
+
+  it('hides a cached Finals result after a failed read-only refresh and restores the same payload after retry', async () => {
+    const savedResult = { run_id: 'run-a', season: 2027, event_id: 'WORLD_TOUR_FINALS',
+      source_as_of_season: 2027, source_as_of_week: 42,
+      result: { champion_player_id: 'P_STORED', runner_up_player_id: 'P2' } }
+    api.getFinalsResult.mockResolvedValueOnce(savedResult)
+      .mockRejectedValueOnce(new api.ApiError('temporary result outage', 503))
+      .mockResolvedValueOnce(savedResult)
+    renderWithRoute(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText(/"champion_player_id": "P_STORED"/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load Finals result: temporary result outage')).toBeInTheDocument()
+    expect(screen.queryByText(/"champion_player_id": "P_STORED"/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText(/"champion_player_id": "P_STORED"/)).toBeInTheDocument()
+    expect(api.getFinalsResult).toHaveBeenCalledTimes(3)
+  })
+
 })

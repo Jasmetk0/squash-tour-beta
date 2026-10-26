@@ -1,0 +1,355 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { LanguageProvider, useLanguage } from '../i18n/LanguageContext'
+import { ActivityPage } from './ActivityPage'
+import { EventsPage } from './EventsPage'
+import { SnapshotsPage } from './SnapshotsPage'
+import { FinalsResultDetailPage } from './FinalsResultDetailPage'
+
+const api = vi.hoisted(() => ({
+  getRunActivity: vi.fn(), getRun: vi.fn(), listEvents: vi.fn(), getEvent: vi.fn(),
+  listRankingSnapshots: vi.fn(), listRaceSnapshots: vi.fn(),
+  getFinalsSummary: vi.fn(), getFinalsResult: vi.fn(),
+  ApiError: class ApiError extends Error {
+    status: number
+    constructor(message: string, status: number) {
+      super(message)
+      this.status = status
+    }
+  }
+}))
+vi.mock('../api/client', () => api)
+
+const event = (eventId: string, eventSequence: number, result: Record<string, unknown> | null = null) => ({
+  event_id: eventId, event_sequence: eventSequence, week: eventSequence, season: 2027,
+  template_id: 'TEMPLATE', tournament_result: result
+})
+const item = (eventId: string, index: number) => ({
+  kind: 'event', label: eventId, sequence: index, season: 2027, week: index,
+  event_id: eventId, source_event_id: null, snapshot_sequence: null, related_run_id: null
+})
+
+function LanguageToggle(): JSX.Element {
+  const { language, setLanguage } = useLanguage()
+  return <button type="button" onClick={() => setLanguage(language === 'cs' ? 'en' : 'cs')}>Switch locale</button>
+}
+
+function HistoryNavigationControls(): JSX.Element {
+  const navigate = useNavigate()
+  const location = useLocation()
+  return (
+    <>
+      <button type="button" onClick={() => navigate(-1)}>History Back</button>
+      <button type="button" onClick={() => navigate(1)}>History Forward</button>
+      <output aria-label="History query">{location.search}</output>
+    </>
+  )
+}
+
+function renderHistory(ui: JSX.Element, route: string, withNavigation = false): void {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(
+    <LanguageProvider>
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={[route]}>
+          <LanguageToggle />
+          {withNavigation && <HistoryNavigationControls />}
+          <Routes><Route path="/runs/:runId/*" element={ui} /></Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
+    </LanguageProvider>
+  )
+}
+
+describe('Run historical UI CS/EN read-only behavior', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    localStorage.setItem('squash-engine-language-v1', 'en')
+    api.getRun.mockResolvedValue({
+      run: { run_id: 'run-a', season: 2027 },
+      season_state: { ordered_events: [
+        { event_id: 'E1', week: 1, tour: 'W', category: 'GOLD', template_id: 'TEMPLATE' },
+        { event_id: 'E2', week: 2, tour: 'W', category: 'GOLD', template_id: 'TEMPLATE' }
+      ] }
+    })
+    api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [event('E1', 1), event('E2', 2, { score: 0 })] })
+    api.getEvent.mockImplementation((_runId: string, id: string) =>
+      Promise.resolve(id === 'E1' ? event('E1', 1) : event('E2', 2, { score: 0 })))
+    api.getRunActivity.mockResolvedValue({ run_id: 'run-a', items: [item('E1', 1), item('E2', 2)] })
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 1, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: { points: 0 } }
+    ] })
+    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [] })
+  })
+
+  it('synchronizes activity selection with Back and Forward without clearing filters or refetching', async () => {
+    const user = userEvent.setup()
+    renderHistory(<ActivityPage />, '/runs/run-a/activity?selectedItem=0', true)
+    const list = await screen.findByRole('list', { name: 'Run activity feed list' })
+    let buttons = within(list).getAllByRole('button')
+    expect(buttons[0]).toHaveAttribute('aria-current', 'true')
+    await user.type(screen.getByLabelText('Filter activity by label or identifier text'), 'E')
+    buttons = within(list).getAllByRole('button')
+    await user.click(buttons[1])
+    expect(screen.getByLabelText('History query')).toHaveTextContent('selectedItem=1')
+    expect(buttons[1]).toHaveAttribute('aria-current', 'true')
+    await user.click(screen.getByRole('button', { name: 'History Back' }))
+    expect(screen.getByLabelText('History query')).toHaveTextContent('selectedItem=0')
+    expect(buttons[0]).toHaveAttribute('aria-current', 'true')
+    expect(buttons[1]).not.toHaveAttribute('aria-current', 'true')
+    await user.click(screen.getByRole('button', { name: 'History Forward' }))
+    expect(buttons[1]).toHaveAttribute('aria-current', 'true')
+    expect(screen.getByLabelText('Filter activity by label or identifier text')).toHaveValue('E')
+    expect(api.getRunActivity).toHaveBeenCalledTimes(1)
+    expect(api.listEvents).toHaveBeenCalledTimes(1)
+    expect(api.getEvent).not.toHaveBeenCalled()
+  })
+
+  it('synchronizes snapshot selection with Back and Forward without losing a source filter', async () => {
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 1, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: { points: 0 } },
+      { snapshot_sequence: 2, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: { points: 5 } }
+    ] })
+    const user = userEvent.setup()
+    renderHistory(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking?selectedSequence=1', true)
+    const list = await screen.findByRole('list', { name: 'Ranking snapshots list' })
+    let buttons = within(list).getAllByRole('button')
+    expect(buttons[0]).toHaveAttribute('aria-current', 'true')
+    await user.type(screen.getByLabelText('Filter snapshots by source event'), 'E1')
+    buttons = within(list).getAllByRole('button')
+    await user.click(buttons[1])
+    expect(screen.getByLabelText('History query')).toHaveTextContent('selectedSequence=2')
+    expect(buttons[1]).toHaveAttribute('aria-current', 'true')
+    await user.click(screen.getByRole('button', { name: 'History Back' }))
+    expect(screen.getByLabelText('History query')).toHaveTextContent('selectedSequence=1')
+    expect(buttons[0]).toHaveAttribute('aria-current', 'true')
+    expect(buttons[1]).not.toHaveAttribute('aria-current', 'true')
+    await user.click(screen.getByRole('button', { name: 'History Forward' }))
+    expect(buttons[1]).toHaveAttribute('aria-current', 'true')
+    expect(screen.getByLabelText('Filter snapshots by source event')).toHaveValue('E1')
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(within(screen.getByRole('list', { name: 'Seznam snímků žebříčku' })).getAllByRole('button')[1])
+      .toHaveAttribute('aria-current', 'true')
+    expect(api.listRankingSnapshots).toHaveBeenCalledTimes(1)
+    expect(api.listRaceSnapshots).toHaveBeenCalledTimes(1)
+  })
+
+  it('preserves an active activity filter and selection across language changes without another request', async () => {
+    const user = userEvent.setup()
+    renderHistory(<ActivityPage />, '/runs/run-a/activity')
+    const list = await screen.findByRole('list', { name: 'Run activity feed list' })
+    expect(within(list).getAllByRole('button')).toHaveLength(2)
+    await user.type(screen.getByLabelText('Filter activity by label or identifier text'), 'E2')
+    expect(within(list).getAllByRole('button')).toHaveLength(1)
+
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(screen.getByText('Aktivita Runu')).toBeInTheDocument()
+    expect(screen.getByText('Textové vyhledávání')).toBeInTheDocument()
+    expect(screen.getByLabelText('Filtrovat podle popisu nebo identifikátoru')).toHaveValue('E2')
+    expect(within(screen.getByRole('list', { name: 'Seznam aktivity Runu' })).getAllByRole('button')).toHaveLength(1)
+    expect(api.getRunActivity).toHaveBeenCalledTimes(1)
+    expect(api.getEvent).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: 'Vymazat filtry' }))
+    expect(within(screen.getByRole('list', { name: 'Seznam aktivity Runu' })).getAllByRole('button')).toHaveLength(2)
+  })
+
+  it('keeps a selected event and distinguishes an absent result from a stored zero-valued result', async () => {
+    const user = userEvent.setup()
+    renderHistory(<EventsPage />, '/runs/run-a/events')
+    const list = await screen.findByRole('list', { name: 'Events history list' })
+    expect(await screen.findByText('No tournament result evidenced')).toBeInTheDocument()
+    const buttons = within(list).getAllByRole('button')
+    await user.click(buttons[1])
+    expect(await screen.findByText('Recorded tournament result')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(screen.getByText('Turnajový výsledek uložen')).toBeInTheDocument()
+    const translatedButtons = within(screen.getByRole('list', { name: 'Seznam historických událostí' })).getAllByRole('button')
+    expect(translatedButtons[1]).toHaveAttribute('aria-current', 'true')
+    expect(translatedButtons).toHaveLength(2)
+    expect(api.listEvents).toHaveBeenCalledTimes(1)
+  })
+
+  it('marks saved snapshot history as historical and never invents a timestamp', async () => {
+    const user = userEvent.setup()
+    renderHistory(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    expect(await screen.findByText('Stored historical snapshot; it is not necessarily the current ranking. The endpoint does not provide a timestamp.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(screen.getByText('Uložený historický snímek, nikoli nutně aktuální žebříček. Endpoint neposkytuje časové razítko.')).toBeInTheDocument()
+    expect(api.listRankingSnapshots).toHaveBeenCalledTimes(1)
+    expect(api.listRaceSnapshots).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects explicitly foreign activity lists without presenting them as empty history', async () => {
+    api.getRunActivity.mockResolvedValue({ run_id: 'foreign-run', items: [item('E1', 1)] })
+    renderHistory(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Activity response belongs to another Run; its records are hidden.')
+    expect(screen.queryByText('No activity has been persisted for this run yet.')).not.toBeInTheDocument()
+  })
+  it('changes language while a read is pending without replacing its request or data', async () => {
+    let resolveActivity!: (payload: unknown) => void
+    api.getRunActivity.mockReturnValue(new Promise((resolve) => { resolveActivity = resolve }))
+    const user = userEvent.setup()
+    renderHistory(<ActivityPage />, '/runs/run-a/activity')
+    expect(screen.getByText('Loading activity feed...')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(screen.getByText('Načítání aktivity…')).toBeInTheDocument()
+    resolveActivity({ run_id: 'run-a', items: [item('E1', 1)] })
+    expect(await screen.findByRole('list', { name: 'Seznam aktivity Runu' })).toBeInTheDocument()
+    expect(api.getRunActivity).toHaveBeenCalledTimes(1)
+    expect(api.getRunActivity).toHaveBeenCalledWith('run-a')
+  })
+
+  it('refetches only the read-only activity resource when Refresh is clicked', async () => {
+    const user = userEvent.setup()
+    renderHistory(<ActivityPage />, '/runs/run-a/activity')
+    await screen.findByRole('list', { name: 'Run activity feed list' })
+    await user.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    await waitFor(() => expect(api.getRunActivity).toHaveBeenCalledTimes(2))
+    expect(api.getRun).toHaveBeenCalledTimes(1)
+    expect(api.listEvents).toHaveBeenCalledTimes(1)
+  })
+
+  it('never fabricates a Finals result from available qualification and keeps 404 separate from read failure', async () => {
+    api.getFinalsSummary.mockResolvedValue({
+      run_id: 'run-a', season: 2027,
+      qualification: { run_id: 'run-a', season: 2027 }, result: null
+    })
+    api.getFinalsResult.mockRejectedValue({ status: 404, message: 'No stored result' })
+    const user = userEvent.setup()
+    renderHistory(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText('Finals result has not been recorded for this run yet.')).toBeInTheDocument()
+    expect(screen.queryByText('P1')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(screen.getByText('Pro tento Run nebyl v tomto zdroji nalezen uložený výsledek Finals.')).toBeInTheDocument()
+    expect(api.getFinalsResult).toHaveBeenCalledTimes(1)
+  })
+
+  it('distinguishes a not-found activity endpoint from a genuinely empty loaded feed', async () => {
+    api.getRunActivity.mockRejectedValue(new api.ApiError('not found', 404))
+    renderHistory(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByText('Run activity could not be found for this Run.')).toBeInTheDocument()
+    expect(screen.queryByText('No activity has been persisted for this run yet.')).not.toBeInTheDocument()
+    expect(api.getRunActivity).toHaveBeenCalledWith('run-a')
+  })
+
+  it('rejects a snapshot list with explicit foreign Run identity without claiming no snapshots exist', async () => {
+    api.listRankingSnapshots.mockResolvedValue({ run_id: 'foreign-run', snapshots: [
+      { snapshot_sequence: 31, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: { invalid: true } }
+    ] })
+    renderHistory(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Snapshot history belongs to another Run; its records are hidden.')
+    expect(screen.queryByText('No snapshots are available for this run yet.')).not.toBeInTheDocument()
+    expect(screen.queryByText('31. WEEK')).not.toBeInTheDocument()
+  })
+
+  it('translates snapshot filter labels without re-reading either ranking or race history', async () => {
+    const user = userEvent.setup()
+    renderHistory(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    await screen.findByRole('list', { name: 'Ranking snapshots list' })
+    await user.type(screen.getByLabelText('Filter snapshots by source event'), 'E1')
+    expect(screen.getByLabelText('Filter snapshots by source event')).toHaveValue('E1')
+
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(screen.getByLabelText('Filtrovat snímky podle zdrojové události')).toHaveValue('E1')
+    expect(screen.getByLabelText('Filtrovat snímky podle týdne')).toBeInTheDocument()
+    expect(screen.getByLabelText('Filtrovat snímky podle kategorie')).toBeInTheDocument()
+    expect(api.listRankingSnapshots).toHaveBeenCalledTimes(1)
+    expect(api.listRaceSnapshots).toHaveBeenCalledTimes(1)
+    expect(api.getEvent).not.toHaveBeenCalled()
+  })
+
+  it('distinguishes unavailable planned snapshot context from an absent plan match', async () => {
+    api.getRun.mockRejectedValueOnce(new Error('plan offline'))
+    renderHistory(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    const list = await screen.findByRole('list', { name: 'Ranking snapshots list' })
+    expect(within(list).getAllByRole('button')).toHaveLength(1)
+    expect(await screen.findByText('Failed to load planned season context: plan offline')).toBeInTheDocument()
+    expect(screen.queryByText('No ordered-plan match for source_event_id.')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)
+  })
+
+  it('translates a Finals summary/detail provenance conflict without refetching or leaking the result', async () => {
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2027, qualification: null,
+      result: { run_id: 'run-a', season: 2027, event_id: 'OLD_FINALS',
+        source_as_of_season: 2027, source_as_of_week: 42 }
+    })
+    api.getFinalsResult.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2027, event_id: 'WORLD_TOUR_FINALS',
+      source_as_of_season: 2027, source_as_of_week: 42,
+      result: { champion_player_id: 'SHOULD_NOT_DISPLAY' }
+    })
+    renderHistory(<FinalsResultDetailPage />, '/runs/run-a/finals/result')
+    expect(await screen.findByText('Finals result detail conflicts with the stored summary or selected Run.')).toBeInTheDocument()
+    expect(screen.queryByText(/SHOULD_NOT_DISPLAY/)).not.toBeInTheDocument()
+
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Switch locale' }))
+    expect(screen.getByText('Detail výsledku Finals se neshoduje s uloženým souhrnem nebo vybraným Runem.')).toBeInTheDocument()
+    expect(screen.queryByText(/SHOULD_NOT_DISPLAY/)).not.toBeInTheDocument()
+    expect(api.getFinalsSummary).toHaveBeenCalledTimes(1)
+    expect(api.getFinalsResult).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides cached activity rows after a failed read-only refresh and restores them after recovery', async () => {
+    const first = { run_id: 'run-a', items: [item('E1', 1)] }
+    api.getRunActivity.mockResolvedValueOnce(first)
+      .mockRejectedValueOnce(new Error('temporary activity outage'))
+      .mockResolvedValueOnce(first)
+    const user = userEvent.setup()
+    renderHistory(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByRole('list', { name: 'Run activity feed list' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load activity feed: temporary activity outage')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Run activity feed list' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open persisted event detail' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByRole('list', { name: 'Run activity feed list' })).toBeInTheDocument()
+    expect(api.getRunActivity).toHaveBeenCalledTimes(3)
+  })
+
+  it('never displays cached event detail or event list as current after their own refresh fails', async () => {
+    const stored = { run_id: 'run-a', events: [event('E1', 1)] }
+    api.listEvents.mockResolvedValueOnce(stored)
+      .mockRejectedValueOnce(new Error('temporary events outage'))
+      .mockResolvedValueOnce(stored)
+    const user = userEvent.setup()
+    renderHistory(<EventsPage />, '/runs/run-a/events')
+    expect(await screen.findByRole('list', { name: 'Events history list' })).toBeInTheDocument()
+    const timeline = screen.getByRole('heading', { name: 'Event timeline' }).closest('article') as HTMLElement
+    await user.click(within(timeline).getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load events history: temporary events outage')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Events history list' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open dedicated event detail page' })).not.toBeInTheDocument()
+    await user.click(within(timeline).getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByRole('list', { name: 'Events history list' })).toBeInTheDocument()
+    expect(api.listEvents).toHaveBeenCalledTimes(3)
+  })
+
+  it('hides cached snapshot list after a failed refresh but restores the same stored zero on success', async () => {
+    const stored = { run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 1, snapshot_kind: 'WEEK', source_event_id: 'E1',
+        payload: { points: 0 } }
+    ] }
+    api.listRankingSnapshots.mockResolvedValueOnce(stored)
+      .mockRejectedValueOnce(new Error('temporary ranking outage'))
+      .mockResolvedValueOnce(stored)
+    const user = userEvent.setup()
+    renderHistory(<SnapshotsPage mode="ranking" />, '/runs/run-a/snapshots/ranking')
+    expect(await screen.findByRole('list', { name: 'Ranking snapshots list' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load snapshots history: temporary ranking outage')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Ranking snapshots list' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open dedicated snapshot detail page' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByRole('list', { name: 'Ranking snapshots list' })).toBeInTheDocument()
+    expect(screen.getByText(/"points": 0/)).toBeInTheDocument()
+    expect(api.listRankingSnapshots).toHaveBeenCalledTimes(3)
+  })
+
+})

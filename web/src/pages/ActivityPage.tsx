@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getRun, getRunActivity, listEvents } from '../api/client'
@@ -14,7 +14,7 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
-import { formatApiError } from '../utils/apiErrors'
+import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 
 type IndexedActivityItem = {
   item: RunActivityItem
@@ -40,8 +40,9 @@ function makeWeekContext(item: RunActivityItem, effectiveWeek: number | null): s
 
 function getEffectiveWeek(
   item: RunActivityItem,
-  plannedContextByEventId: Map<string, { week: number; category: string; templateId: string; planPosition: number }>,
-  persistedEventById: Map<string, { week: number | null; eventSequence: number }>
+  plannedContextByEventId: Map<string, { season: number; week: number; category: string; templateId: string; planPosition: number }>,
+  persistedEventById: Map<string, { season: number | null; week: number | null; eventSequence: number }>,
+  ambiguousEventIds: Set<string>
 ): number | null {
   if (item.week != null) {
     return item.week
@@ -52,13 +53,23 @@ function getEffectiveWeek(
     return null
   }
 
-  return persistedEventById.get(contextEventId)?.week ?? plannedContextByEventId.get(contextEventId)?.week ?? null
+  // This ID may identify entries from multiple seasons. Avoid guessing.
+  if (ambiguousEventIds.has(contextEventId)) return null
+  const persisted = persistedEventById.get(contextEventId)
+  const planned = plannedContextByEventId.get(contextEventId)
+  // A seasonless activity must not borrow a week from two contradictory
+  // sources merely because they reuse the same event ID.
+  if (item.season == null && persisted?.season != null && planned?.season != null &&
+    persisted.season !== planned.season) return null
+  return (persisted && (item.season == null || item.season === persisted.season) ? persisted.week : null) ??
+    (planned && (item.season == null || item.season === planned.season) ? planned.week : null) ?? null
 }
 
+import { useHistoryText } from './runHistoryText'
 export function ActivityPage(): JSX.Element {
+  const t = useHistoryText()
   const { runId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [kindFilter, setKindFilter] = useState('')
   const [seasonFilter, setSeasonFilter] = useState('')
   const [weekFilter, setWeekFilter] = useState('')
@@ -78,14 +89,25 @@ export function ActivityPage(): JSX.Element {
   const runQuery = useQuery({ queryKey: ['run', runId], queryFn: () => getRun(runId), enabled: Boolean(runId) })
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) })
 
-  const items = activityQuery.data?.items ?? []
+  const activityMismatch = Boolean(activityQuery.data?.run_id && activityQuery.data.run_id !== runId)
+  const eventsMismatch = Boolean(eventsQuery.data?.run_id && eventsQuery.data.run_id !== runId)
+  const items = activityMismatch || activityQuery.error ? [] : activityQuery.data?.items ?? []
+  const planSeasonMismatch = Boolean(runQuery.data && runQuery.data.run.run_id === runId &&
+    runQuery.data.season_state.season != null &&
+    runQuery.data.season_state.season !== runQuery.data.run.season)
+  const plannedContextUnavailable = runQuery.isLoading || Boolean(runQuery.error) ||
+    !runQuery.data || runQuery.data.run.run_id !== runId || planSeasonMismatch
+  const persistedContextUnavailable = eventsQuery.isLoading || Boolean(eventsQuery.error) ||
+    !eventsQuery.data || eventsMismatch
   const indexedItems = useMemo<IndexedActivityItem[]>(() => items.map((item, index) => ({ item, index })), [items])
 
   const plannedContextByEventId = useMemo(() => {
-    const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
-    const map = new Map<string, { week: number; category: string; templateId: string; planPosition: number }>()
+    const orderedEvents = !plannedContextUnavailable ? runQuery.data?.season_state.ordered_events ?? [] : []
+    const map = new Map<string, { season: number; week: number; category: string; templateId: string; planPosition: number }>()
     orderedEvents.forEach((event, index) => {
+      if (event.season !== runQuery.data?.season_state.season) return
       map.set(event.event_id, {
+        season: event.season,
         week: event.week,
         category: event.category,
         templateId: event.template_id,
@@ -93,19 +115,27 @@ export function ActivityPage(): JSX.Element {
       })
     })
     return map
-  }, [runQuery.data?.season_state.ordered_events])
+  }, [runId, runQuery.data, plannedContextUnavailable])
 
-  const persistedEventById = useMemo(() => {
-    const map = new Map<string, { week: number | null; eventSequence: number }>()
-    ;(eventsQuery.data?.events ?? []).forEach((event) => {
-      map.set(event.event_id, { week: event.week, eventSequence: event.event_sequence })
+  const persistedEvidence = useMemo(() => {
+    const byId = new Map<string, { season: number | null; week: number | null; eventSequence: number }>()
+    const ambiguousIds = new Set<string>()
+    ;(eventsMismatch || eventsQuery.error ? [] : eventsQuery.data?.events ?? []).forEach((event) => {
+      if (byId.has(event.event_id) || ambiguousIds.has(event.event_id)) {
+        byId.delete(event.event_id)
+        ambiguousIds.add(event.event_id)
+      } else {
+        byId.set(event.event_id, { season: event.season, week: event.week, eventSequence: event.event_sequence })
+      }
     })
-    return map
-  }, [eventsQuery.data?.events])
+    return { byId, ambiguousIds }
+  }, [eventsMismatch, eventsQuery.error, eventsQuery.data?.events])
+  const persistedEventById = persistedEvidence.byId
+  const ambiguousPersistedEventIds = persistedEvidence.ambiguousIds
 
   const normalizedTextFilter = textFilter.trim().toLowerCase()
   const filteredItems = indexedItems.filter(({ item }) => {
-    const effectiveWeek = getEffectiveWeek(item, plannedContextByEventId, persistedEventById)
+    const effectiveWeek = getEffectiveWeek(item, plannedContextByEventId, persistedEventById, ambiguousPersistedEventIds)
     const kindMatches = kindFilter ? item.kind === kindFilter : true
     const seasonMatches = seasonFilter ? String(item.season) === seasonFilter : true
     const weekMatches = weekFilter ? String(effectiveWeek) === weekFilter : true
@@ -148,7 +178,7 @@ export function ActivityPage(): JSX.Element {
     const seen = new Set<string>()
     const values: string[] = []
     items.forEach((item) => {
-      const effectiveWeek = getEffectiveWeek(item, plannedContextByEventId, persistedEventById)
+      const effectiveWeek = getEffectiveWeek(item, plannedContextByEventId, persistedEventById, ambiguousPersistedEventIds)
       if (effectiveWeek == null) return
       const normalized = String(effectiveWeek)
       if (!seen.has(normalized)) {
@@ -157,66 +187,76 @@ export function ActivityPage(): JSX.Element {
       }
     })
     return values
-  }, [items, plannedContextByEventId, persistedEventById])
+  }, [items, plannedContextByEventId, persistedEventById, ambiguousPersistedEventIds])
 
-  useEffect(() => {
-    if (!filteredItems.length) {
-      setSelectedIndex(null)
-      return
-    }
-
-    if (hasRequestedSelectedIndex && filteredItems.some((entry) => entry.index === requestedSelectedIndex)) {
-      if (selectedIndex !== requestedSelectedIndex) {
-        setSelectedIndex(requestedSelectedIndex)
-      }
-      return
-    }
-
-    if (selectedIndex == null || !filteredItems.some((entry) => entry.index === selectedIndex)) {
-      setSelectedIndex(filteredItems[0].index)
-    }
-  }, [filteredItems, hasRequestedSelectedIndex, requestedSelectedIndex, selectedIndex])
-
-  const selectedEntry = filteredItems.find((entry) => entry.index === selectedIndex) ?? null
+  // URL-backed selection follows Back/Forward navigation, even when filtered
+  // records or refreshed source evidence change independently.
+  const selectedEntry = (hasRequestedSelectedIndex
+    ? filteredItems.find((entry) => entry.index === requestedSelectedIndex)
+    : undefined) ?? filteredItems[0] ?? null
+  const selectedIndex = selectedEntry?.index ?? null
   const selectedItem = selectedEntry?.item ?? null
   const selectedContextEventId = selectedItem?.event_id ?? selectedItem?.source_event_id ?? null
-  const selectedPlannedContext = selectedContextEventId ? plannedContextByEventId.get(selectedContextEventId) : undefined
-  const selectedPersistedEvent = selectedContextEventId ? persistedEventById.get(selectedContextEventId) : undefined
-  const selectedWeek = selectedItem ? getEffectiveWeek(selectedItem, plannedContextByEventId, persistedEventById) : null
+  const matchedPlan = selectedContextEventId ? plannedContextByEventId.get(selectedContextEventId) : undefined
+  const matchedPersistedEvent = selectedContextEventId ? persistedEventById.get(selectedContextEventId) : undefined
+  const ambiguousEventSeason = Boolean((selectedContextEventId && ambiguousPersistedEventIds.has(selectedContextEventId)) ||
+    (selectedItem && selectedItem.season == null &&
+    matchedPlan && matchedPersistedEvent && matchedPersistedEvent.season != null &&
+    matchedPersistedEvent.season !== matchedPlan.season))
+  const selectedPlannedContext = !ambiguousEventSeason && matchedPlan &&
+    (selectedItem?.season == null || matchedPlan.season === selectedItem.season) ? matchedPlan : undefined
+  const selectedPersistedEvent = !ambiguousEventSeason && matchedPersistedEvent &&
+    (selectedItem?.season == null || matchedPersistedEvent.season === selectedItem.season) ? matchedPersistedEvent : undefined
+  const selectedWeek = selectedItem ? getEffectiveWeek(selectedItem, plannedContextByEventId, persistedEventById, ambiguousPersistedEventIds) : null
+  const selectedEvidenceSeason = selectedItem?.season ?? selectedPlannedContext?.season ?? selectedPersistedEvent?.season ?? null
+  const canInspectCurrentWeek = selectedItem && !plannedContextUnavailable && !ambiguousEventSeason &&
+    selectedEvidenceSeason != null && selectedEvidenceSeason === runQuery.data?.run.season
+  const bridgeItems = selectedItem ? activityBridgeItems(runId, selectedItem, selectedWeek, t, {
+    contextEventId: selectedContextEventId,
+    hasPersistedContext: Boolean(selectedPersistedEvent),
+    hasPlannedContext: Boolean(selectedPlannedContext),
+    plannedContextUnavailable: plannedContextUnavailable || ambiguousEventSeason,
+    persistedContextUnavailable: persistedContextUnavailable || ambiguousEventSeason,
+    canInspectCurrentWeek: Boolean(canInspectCurrentWeek),
+    sourceIdentityAmbiguous: ambiguousEventSeason
+  }) : []
+  const availableBridgeLinks = bridgeItems.filter(({ value }) => typeof value !== 'string').length
 
   return (
     <section className="panel">
       <RunScopedHeader
-        title="Run activity"
+        title={t('Run activity')}
         runId={runId}
-        subtitle="Deterministic run-level feed browser with filterable activity and compact bridge navigation."
+        subtitle={t('Deterministic run-level feed browser with filterable activity and compact bridge navigation.')}
       />
+      <p className="status">{t('Stored legacy SimulationRun history. This view does not verify Product Run Saved Revision authority.')}</p>
+      <p className="status">{t('History records shown are only those returned by this endpoint; they do not certify a complete Product Run history.')}</p>
       <CurrentContextStrip
         items={[
-          { label: 'Run', value: runId || 'unknown' },
-          { label: 'Items', value: items.length },
-          { label: 'Matching filters', value: filteredItems.length },
-          { label: 'Selected', value: selectedItem?.label ?? 'None' }
+          { label: t('Run'), value: runId || 'unknown' },
+          { label: t('Items'), value: items.length },
+          { label: t('Matching filters'), value: filteredItems.length },
+          { label: t('Selected'), value: selectedItem?.label ?? t('None') }
         ]}
       />
 
-      <SectionCard title="Filters">
+      <SectionCard title={t('Filters')}>
         <div className="grid">
           <label>
-            Kind
-            <select aria-label="Filter activity by kind" value={kindFilter} onChange={(event) => setKindFilter(event.target.value)}>
-              <option value="">All kinds</option>
+            {t('Kind')}
+            <select aria-label={t('Filter activity by kind')} value={kindFilter} onChange={(event) => setKindFilter(event.target.value)}>
+              <option value="">{t('All kinds')}</option>
               {kindOptions.map((kind) => (
                 <option key={kind} value={kind}>
-                  {kind}
+                  {t(kind)}
                 </option>
               ))}
             </select>
           </label>
           <label>
-            Season
-            <select aria-label="Filter activity by season" value={seasonFilter} onChange={(event) => setSeasonFilter(event.target.value)}>
-              <option value="">All seasons</option>
+            {t('Season')}
+            <select aria-label={t('Filter activity by season')} value={seasonFilter} onChange={(event) => setSeasonFilter(event.target.value)}>
+              <option value="">{t('All seasons')}</option>
               {seasonOptions.map((season) => (
                 <option key={season} value={season}>
                   {season}
@@ -225,9 +265,9 @@ export function ActivityPage(): JSX.Element {
             </select>
           </label>
           <label>
-            Week
-            <select aria-label="Filter activity by week" value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
-              <option value="">All weeks</option>
+            {t('Week')}
+            <select aria-label={t('Filter activity by week')} value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
+              <option value="">{t('All weeks')}</option>
               {weekOptions.map((week) => (
                 <option key={week} value={week}>
                   W{week}
@@ -236,25 +276,30 @@ export function ActivityPage(): JSX.Element {
             </select>
           </label>
           <label>
-            Text
+            {t('Text search')}
             <input
-              aria-label="Filter activity by label or identifier text"
+              aria-label={t('Filter activity by label or identifier text')}
               value={textFilter}
               onChange={(event) => setTextFilter(event.target.value)}
-              placeholder="Label, event ID, or related run ID"
+              placeholder={t('Label, event ID, or related run ID')}
             />
           </label>
         </div>
+        <button type="button" onClick={() => { setKindFilter(''); setSeasonFilter(''); setWeekFilter(''); setTextFilter('') }}>{t('Reset filters')}</button>
       </SectionCard>
 
-      <SectionCard title="Activity feed">
-        {activityQuery.isLoading ? <p className="status">Loading activity feed...</p> : null}
-        {activityQuery.error ? <p className="error">Failed to load activity feed: {formatApiError(activityQuery.error)}</p> : null}
-        {!activityQuery.isLoading && !activityQuery.error && items.length === 0 ? (
-          <EmptyState message="No activity has been persisted for this run yet." />
+      <SectionCard title={t('Activity feed')}>
+        {activityMismatch && <p role="alert" className="error">{t('Activity response belongs to another Run; its records are hidden.')}</p>}
+        <button type="button" onClick={() => void activityQuery.refetch()}>{t('Refresh read-only data')}</button>
+        {activityQuery.isLoading ? <p className="status">{t('Loading activity feed...')}</p> : null}
+        {isApiNotFound(activityQuery.error)
+          ? <EmptyState message={t('Run activity could not be found for this Run.')} />
+          : activityQuery.error ? <p role="alert" className="error">{t('Failed to load activity feed')}: {formatApiError(activityQuery.error)}</p> : null}
+        {!activityQuery.isLoading && !activityQuery.error && !activityMismatch && items.length === 0 ? (
+          <EmptyState message={t('No activity has been persisted for this run yet.')} />
         ) : null}
-        {!activityQuery.isLoading && !activityQuery.error && items.length > 0 && filteredItems.length === 0 ? (
-          <EmptyState message="No activity items match the current filters." />
+        {!activityQuery.isLoading && !activityQuery.error && !activityMismatch && items.length > 0 && filteredItems.length === 0 ? (
+          <EmptyState message={t('No activity items match the current filters.')} />
         ) : null}
         {filteredItems.length > 0 ? (
           <SelectableHistoryList
@@ -262,7 +307,7 @@ export function ActivityPage(): JSX.Element {
             getKey={({ index, item }) => `${index}-${item.kind}-${item.sequence ?? 'none'}`}
             getLabel={({ item, index }) => `${index + 1}. ${item.label}`}
             getSubLabel={({ item }) => {
-              const segments: string[] = [item.kind]
+              const segments: string[] = [t(item.kind)]
               if (item.season != null) segments.push(`S${item.season}`)
               if (item.week != null) segments.push(`W${item.week}`)
               if (item.event_id) segments.push(item.event_id)
@@ -271,65 +316,58 @@ export function ActivityPage(): JSX.Element {
             }}
             isSelected={(entry) => entry.index === selectedIndex}
             onSelect={(entry) => {
-              setSelectedIndex(entry.index)
               setSearchParams((current) => {
                 const next = new URLSearchParams(current)
                 next.set('selectedItem', String(entry.index))
                 return next
               })
             }}
-            ariaLabel="Run activity feed list"
+            ariaLabel={t('Run activity feed list')}
           />
         ) : null}
       </SectionCard>
 
-      <SectionCard title="Selected activity detail">
+      <SectionCard title={t('Selected activity detail')}>
+        {planSeasonMismatch && <p role="alert" className="error">{t('Run season and ordered plan disagree. Planned links are unavailable.')}</p>}
+        {ambiguousEventSeason && <p role="alert" className="error">{t('Activity source event ID has conflicting seasons. Its navigation links are unavailable.')}</p>}
         {selectedItem ? (
           <>
             <MetadataList
               items={[
-                { label: 'Label', value: selectedItem.label },
-                { label: 'Kind', value: selectedItem.kind },
-                { label: 'Sequence', value: selectedItem.sequence ?? '—' },
-                { label: 'Season', value: selectedItem.season ?? '—' },
-                { label: 'Week context', value: makeWeekContext(selectedItem, selectedWeek) },
-                { label: 'Event ID', value: selectedItem.event_id ?? '—' },
-                { label: 'Source event ID', value: selectedItem.source_event_id ?? '—' },
-                { label: 'Related run ID', value: selectedItem.related_run_id ?? '—' },
+                { label: t('Label'), value: selectedItem.label },
+                { label: t('Kind'), value: t(selectedItem.kind) },
+                { label: t('Sequence'), value: selectedItem.sequence ?? '—' },
+                { label: t('Season'), value: selectedItem.season ?? '—' },
+                { label: t('Week context'), value: t(makeWeekContext(selectedItem, selectedWeek)) },
+                { label: t('Event ID'), value: selectedItem.event_id ?? '—' },
+                { label: t('Source event ID'), value: selectedItem.source_event_id ?? '—' },
+                { label: t('Related run ID'), value: selectedItem.related_run_id ?? '—' },
                 {
-                  label: 'Plan context',
+                  label: t('Plan context'),
                   value: selectedPlannedContext
                     ? `Plan #${selectedPlannedContext.planPosition} (${selectedPlannedContext.category}, ${selectedPlannedContext.templateId})`
-                    : 'No ordered-plan match'
+                    : plannedContextUnavailable || ambiguousEventSeason ? t('Unavailable') : t('No ordered-plan match')
                 }
               ]}
             />
             <SummaryPills
               items={[
-                { label: 'Week detail', value: selectedWeek != null ? `W${selectedWeek}` : 'Unavailable' },
+                { label: t('Week detail'), value: selectedWeek != null ? `W${selectedWeek}` : t('Unavailable') },
                 {
-                  label: 'Bridge links',
+                  label: t('Bridge links'),
                   value:
-                    activityBridgeItems(runId, selectedItem, selectedWeek, {
-                      contextEventId: selectedContextEventId,
-                      hasPersistedContext: Boolean(selectedPersistedEvent),
-                      hasPlannedContext: Boolean(selectedPlannedContext)
-                    }).length || 'None'
+                    availableBridgeLinks
                 }
               ]}
             />
             <CompactSummaryCard
-              items={activityBridgeItems(runId, selectedItem, selectedWeek, {
-                contextEventId: selectedContextEventId,
-                hasPersistedContext: Boolean(selectedPersistedEvent),
-                hasPlannedContext: Boolean(selectedPlannedContext)
-              })}
+              items={bridgeItems}
             />
-            {runQuery.error ? <p className="error">Failed to load ordered-plan context: {formatApiError(runQuery.error)}</p> : null}
-            {eventsQuery.error ? <p className="error">Failed to load persisted events context: {formatApiError(eventsQuery.error)}</p> : null}
+            {runQuery.error ? <p className="error">{t('Failed to load ordered-plan context')}: {formatApiError(runQuery.error)}</p> : null}
+            {eventsQuery.error ? <p className="error">{t('Failed to load persisted events context')}: {formatApiError(eventsQuery.error)}</p> : null}
           </>
         ) : (
-          <EmptyState message="Select an activity item to inspect details." />
+          <EmptyState message={t('Select an activity item to inspect details.')} />
         )}
       </SectionCard>
     </section>
@@ -340,128 +378,140 @@ function activityBridgeItems(
   runId: string,
   item: RunActivityItem,
   selectedWeek: number | null,
-  snapshotContext: { contextEventId: string | null; hasPersistedContext: boolean; hasPlannedContext: boolean }
+  t: (english: string) => string,
+  snapshotContext: {
+    contextEventId: string | null
+    hasPersistedContext: boolean
+    hasPlannedContext: boolean
+    plannedContextUnavailable: boolean
+    persistedContextUnavailable: boolean
+    canInspectCurrentWeek: boolean
+    sourceIdentityAmbiguous: boolean
+  }
 ): Array<{ label: string; value: JSX.Element | string }> {
-  const { contextEventId, hasPersistedContext, hasPlannedContext } = snapshotContext
+  const { contextEventId, hasPersistedContext, hasPlannedContext, plannedContextUnavailable, persistedContextUnavailable, canInspectCurrentWeek, sourceIdentityAmbiguous } = snapshotContext
   const links: Array<{ label: string; value: JSX.Element | string }> = []
 
   if (item.kind === 'event' && item.event_id) {
     links.push({
-      label: 'Persisted event detail',
-      value: <Link to={`/runs/${runId}/events/${encodeURIComponent(item.event_id)}`}>Open persisted event detail</Link>
+      label: t('Persisted event detail'),
+      value: sourceIdentityAmbiguous ? t('Unavailable') :
+        <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>{t('Open persisted event detail')}</Link>
     })
     links.push({
-      label: 'Planned-event detail',
-      value: <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>Open planned-event detail</Link>
+      label: t('Planned-event detail'),
+      value: hasPlannedContext
+        ? <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open planned-event detail')}</Link>
+        : plannedContextUnavailable ? t('Unavailable') : t('No ordered-plan match')
     })
   }
 
   if ((item.kind === 'ranking_snapshot' || item.kind === 'race_snapshot') && item.snapshot_sequence != null) {
     const mode = item.kind === 'ranking_snapshot' ? 'ranking' : 'race'
     links.push({
-      label: 'Snapshot detail',
-      value: <Link to={`/runs/${runId}/snapshots/${mode}/${item.snapshot_sequence}`}>Open {mode} snapshot detail</Link>
+      label: t('Snapshot detail'),
+      value: <Link to={`/runs/${encodeURIComponent(runId)}/snapshots/${mode}/${item.snapshot_sequence}`}>{mode === 'ranking' ? t('Open ranking snapshot detail') : t('Open race snapshot detail')}</Link>
     })
     links.push({
-      label: 'Source planned-event detail',
+      label: t('Source planned-event detail'),
       value:
         contextEventId && hasPlannedContext ? (
-          <Link to={`/runs/${runId}/calendar/${encodeURIComponent(contextEventId)}`}>Open source planned-event detail</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(contextEventId)}`}>{t('Open source planned-event detail')}</Link>
         ) : (
-          'No ordered-plan context for this snapshot source event.'
+          plannedContextUnavailable ? t('Unavailable') : t('No ordered-plan context for this snapshot source event.')
         )
     })
     links.push({
-      label: 'Source persisted event detail',
+      label: t('Source persisted event detail'),
       value:
         contextEventId && hasPersistedContext ? (
-          <Link to={`/runs/${runId}/events/${encodeURIComponent(contextEventId)}`}>Open source persisted event detail</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(contextEventId)}`}>{t('Open source persisted event detail')}</Link>
         ) : (
-          'No persisted-event context for this snapshot source event.'
+          persistedContextUnavailable ? t('Unavailable') : t('No persisted-event context for this snapshot source event.')
         )
     })
   }
 
   if (item.kind === 'finals_qualification') {
     links.push({
-      label: 'Finals qualification detail',
-      value: <Link to={`/runs/${runId}/finals/qualification`}>Open finals qualification detail</Link>
+      label: t('Finals qualification detail'),
+      value: <Link to={`/runs/${encodeURIComponent(runId)}/finals/qualification`}>{t('Open finals qualification detail')}</Link>
     })
   }
 
   if (item.kind === 'finals_result') {
     links.push({
-      label: 'Finals result detail',
-      value: <Link to={`/runs/${runId}/finals/result`}>Open finals result detail</Link>
+      label: t('Finals result detail'),
+      value: <Link to={`/runs/${encodeURIComponent(runId)}/finals/result`}>{t('Open finals result detail')}</Link>
     })
   }
 
   if (item.kind === 'rollover') {
     links.push({
-      label: 'Rollover detail',
+      label: t('Rollover detail'),
       value:
         item.season != null ? (
-          <Link to={`/runs/${runId}/rollover/${item.season}`}>Open rollover season detail</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/rollover/${item.season}`}>{t('Open rollover season detail')}</Link>
         ) : (
-          <Link to={`/runs/${runId}/rollover`}>Open rollover page</Link>
+          <Link to={`/runs/${encodeURIComponent(runId)}/rollover`}>{t('Open rollover page')}</Link>
         )
     })
   }
 
   if (item.kind === 'bootstrap_child' && item.related_run_id) {
     links.push({
-      label: 'Child run detail',
-      value: <Link to={`/runs/${item.related_run_id}`}>Open child run detail</Link>
+      label: t('Child run detail'),
+      value: <Link to={`/runs/${encodeURIComponent(item.related_run_id)}`}>{t('Open child run detail')}</Link>
     })
     links.push({
-      label: 'Season chain',
-      value: <Link to={`/runs/${item.related_run_id}/season-chain`}>Open child run season chain</Link>
+      label: t('Season chain'),
+      value: <Link to={`/runs/${encodeURIComponent(item.related_run_id)}/season-chain`}>{t('Open child run season chain')}</Link>
     })
   }
 
   if (item.kind === 'admin_wildcard_assignment' && item.event_id) {
     links.push({
-      label: 'Wildcard event planned detail',
-      value: <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>Open wildcard event planned detail</Link>
+      label: t('Wildcard event planned detail'),
+      value: hasPlannedContext ? <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open wildcard event planned detail')}</Link> : plannedContextUnavailable ? t('Unavailable') : t('No ordered-plan match')
     })
     links.push({
-      label: 'Wildcard event persisted detail',
+      label: t('Wildcard event persisted detail'),
       value: hasPersistedContext ? (
-        <Link to={`/runs/${runId}/events/${encodeURIComponent(item.event_id)}`}>Open wildcard event persisted detail</Link>
+        <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>{t('Open wildcard event persisted detail')}</Link>
       ) : (
-        'Wildcard event has not been persisted yet.'
+        persistedContextUnavailable ? t('Unavailable') : t('Wildcard event has not been persisted yet.')
       )
     })
   }
   if (item.kind === 'admin_pre_draw_withdrawal_replacement' && item.event_id) {
     links.push({
-      label: 'Pre-draw event planned detail',
+      label: t('Pre-draw event planned detail'),
       value: (
-        <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>Open pre-draw event planned detail</Link>
+        hasPlannedContext ? <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open pre-draw event planned detail')}</Link> : plannedContextUnavailable ? t('Unavailable') : t('No ordered-plan match')
       )
     })
     links.push({
-      label: 'Pre-draw event persisted detail',
+      label: t('Pre-draw event persisted detail'),
       value: hasPersistedContext ? (
-        <Link to={`/runs/${runId}/events/${encodeURIComponent(item.event_id)}`}>Open pre-draw event persisted detail</Link>
+        <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>{t('Open pre-draw event persisted detail')}</Link>
       ) : (
-        'Pre-draw event has not been persisted yet.'
+        persistedContextUnavailable ? t('Unavailable') : t('Pre-draw event has not been persisted yet.')
       )
     })
   }
   if (item.kind === 'admin_late_replacement_lucky_loser' && item.event_id) {
     links.push({
-      label: 'Late-replacement event planned detail',
+      label: t('Late-replacement event planned detail'),
       value: (
-        <Link to={`/runs/${runId}/calendar/${encodeURIComponent(item.event_id)}`}>Open late-replacement event planned detail</Link>
+        hasPlannedContext ? <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(item.event_id)}`}>{t('Open late-replacement event planned detail')}</Link> : plannedContextUnavailable ? t('Unavailable') : t('No ordered-plan match')
       )
     })
     links.push({
-      label: 'Late-replacement event persisted detail',
+      label: t('Late-replacement event persisted detail'),
       value: hasPersistedContext ? (
-        <Link to={`/runs/${runId}/events/${encodeURIComponent(item.event_id)}`}>Open late-replacement event persisted detail</Link>
+        <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(item.event_id)}`}>{t('Open late-replacement event persisted detail')}</Link>
       ) : (
-        'Late-replacement event has not been persisted yet.'
+        persistedContextUnavailable ? t('Unavailable') : t('Late-replacement event has not been persisted yet.')
       )
     })
   }
@@ -473,15 +523,15 @@ function activityBridgeItems(
     item.kind === 'admin_wildcard_assignment' ||
     item.kind === 'admin_pre_draw_withdrawal_replacement' ||
     item.kind === 'admin_late_replacement_lucky_loser'
-  if (supportsWeekInspection && selectedWeek != null) {
+  if (supportsWeekInspection && selectedWeek != null && canInspectCurrentWeek) {
     links.push({
-      label: 'Week detail',
-      value: <Link to={`/runs/${runId}/weeks/${selectedWeek}`}>Open week detail page (W{selectedWeek})</Link>
+      label: t('Week detail'),
+      value: <Link to={`/runs/${encodeURIComponent(runId)}/weeks/${selectedWeek}`}>{t('Open week detail page')} (W{selectedWeek})</Link>
     })
   }
 
   if (links.length === 0) {
-    links.push({ label: 'Links', value: 'No direct bridge links available for this activity item.' })
+    links.push({ label: t('Links'), value: t('No direct bridge links available for this activity item.') })
   }
 
   return links

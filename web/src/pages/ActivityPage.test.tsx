@@ -19,6 +19,8 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('../api/client', () => api)
+// Legacy assertions verify the existing English copy; CS/EN transitions have separate coverage.
+vi.mock('../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }))
 
 const baseItems = [
   {
@@ -90,6 +92,37 @@ function mockContext(): void {
 }
 
 describe('ActivityPage', () => {
+
+  it.each([
+    ['historical-first', [
+      { event_sequence: 2, event_id: 'E1', season: 2026, week: 35, template_id: 'OLD', tournament_result: null },
+      { event_sequence: 11, event_id: 'E1', season: 2027, week: 1, template_id: 'NEW', tournament_result: null }
+    ]],
+    ['current-first', [
+      { event_sequence: 11, event_id: 'E1', season: 2027, week: 1, template_id: 'NEW', tournament_result: null },
+      { event_sequence: 2, event_id: 'E1', season: 2026, week: 35, template_id: 'OLD', tournament_result: null }
+    ]]
+  ])('does not borrow weeks or source links from duplicated event history (%s)', async (_name, duplicates) => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [{
+      kind: 'ranking_snapshot', sequence: 10, label: 'Historic snapshot E1',
+      season: 2027, week: null, event_id: null, snapshot_sequence: 10,
+      source_event_id: 'E1', related_run_id: null
+    }] })
+    mockContext()
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-a', events: duplicates })
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+
+    expect(await screen.findByText('Activity source event ID has conflicting seasons. Its navigation links are unavailable.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open ranking snapshot detail' }))
+      .toHaveAttribute('href', '/runs/run-a/snapshots/ranking/10')
+    expect(screen.queryByRole('link', { name: 'Open source persisted event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open source planned-event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail page/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('W35')).not.toBeInTheDocument()
+    expect(screen.queryByText('W1')).not.toBeInTheDocument()
+    expect(screen.getByText('No week context available')).toBeInTheDocument()
+  })
+
   it('renders activity items in backend order', async () => {
     api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: baseItems })
     mockContext()
@@ -368,4 +401,103 @@ describe('ActivityPage', () => {
     expect(await screen.findByText('No activity items match the current filters.')).toBeInTheDocument()
     expect(screen.getByText('Select an activity item to inspect details.')).toBeInTheDocument()
   })
+  it('does not invent planned detail links for a technical record without matching run plan evidence', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [{
+      kind: 'admin_wildcard_assignment', sequence: 7, label: 'Wildcard E-NOT-PLANNED',
+      season: 2027, week: null, event_id: 'E-NOT-PLANNED', source_event_id: null,
+      snapshot_sequence: null, related_run_id: null
+    }] })
+    mockContext()
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+    const list = await screen.findByRole('list', { name: 'Run activity feed list' })
+    expect(within(list).getByRole('button', { name: /Wildcard E-NOT-PLANNED/ })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open wildcard event planned detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open wildcard event persisted detail' })).not.toBeInTheDocument()
+    expect(screen.getAllByText('No ordered-plan match').length).toBeGreaterThan(0)
+  })
+
+  it('keeps technical source context unavailable when the run context read fails', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [{
+      kind: 'admin_pre_draw_withdrawal_replacement', sequence: 8, label: 'Pre-draw E1',
+      season: 2027, week: null, event_id: 'E1', source_event_id: null,
+      snapshot_sequence: null, related_run_id: null
+    }] })
+    mockContext()
+    api.getRun.mockRejectedValueOnce(new Error('plan offline'))
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByText('Failed to load ordered-plan context: plan offline')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open pre-draw event planned detail' })).not.toBeInTheDocument()
+    expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)
+  })
+
+  it('keeps historic snapshot activity but refuses to borrow week and plan links from a reused event ID', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [{
+      kind: 'ranking_snapshot', sequence: 9, label: 'Historic ranking E1',
+      season: 2026, week: null, event_id: null, snapshot_sequence: 9,
+      source_event_id: 'E1', related_run_id: null
+    }] })
+    mockContext()
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByRole('link', { name: 'Open ranking snapshot detail' })).toHaveAttribute(
+      'href', '/runs/run-a/snapshots/ranking/9'
+    )
+    expect(screen.queryByRole('link', { name: 'Open source planned-event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open source persisted event detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail page/i })).not.toBeInTheDocument()
+  })
+
+  it('reports inconsistent current-season run/calendar evidence without guessing administrative links', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [{
+      kind: 'admin_wildcard_assignment', sequence: 12, label: 'Admin wildcard E1',
+      season: null, week: null, event_id: 'E1', snapshot_sequence: null,
+      source_event_id: null, related_run_id: null
+    }] })
+    mockContext()
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2027, next_event_index: 0, total_events: 1,
+        completed_event_ids: [] },
+      season_state: { season: 2026, next_event_index: 0, completed_event_ids: [],
+        ordered_events: [{ event_id: 'E1', season: 2026, week: 1, tour: 'WORLD',
+          category: 'PLATINUM', template_id: 'T-E1' }] }
+    })
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByText('Run season and ordered plan disagree. Planned links are unavailable.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open wildcard event planned detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail page/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open wildcard event persisted detail' })).toHaveAttribute(
+      'href', '/runs/run-a/events/E1'
+    )
+  })
+
+  it.each([
+    ['event', 'Open persisted event detail'],
+    ['ranking_snapshot', 'Open source persisted event detail'],
+    ['admin_wildcard_assignment', 'Open wildcard event persisted detail']
+  ])('does not cross-link seasonless %s activity when persisted and planned event IDs collide', async (kind, unsafeLink) => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [{
+      kind, sequence: 9, label: 'Ambiguous E1',
+      season: null, week: null,
+      event_id: kind === 'ranking_snapshot' ? null : 'E1',
+      source_event_id: kind === 'ranking_snapshot' ? 'E1' : null,
+      snapshot_sequence: kind === 'ranking_snapshot' ? 9 : null,
+      related_run_id: null
+    }] })
+    mockContext()
+    api.listEvents.mockResolvedValueOnce({ run_id: 'run-a', events: [
+      { event_sequence: 9, event_id: 'E1', season: 2026, week: 31,
+        template_id: 'OLD-E1', tournament_result: null }
+    ] })
+    renderWithRoute(<ActivityPage />, '/runs/run-a/activity')
+    expect(await screen.findByText('Activity source event ID has conflicting seasons. Its navigation links are unavailable.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: unsafeLink })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open .*planned.event detail/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Open week detail page/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('W31')).not.toBeInTheDocument()
+    if (kind === 'ranking_snapshot') {
+      expect(screen.getByRole('link', { name: 'Open ranking snapshot detail' })).toHaveAttribute(
+        'href', '/runs/run-a/snapshots/ranking/9'
+      )
+    }
+  })
+
 })

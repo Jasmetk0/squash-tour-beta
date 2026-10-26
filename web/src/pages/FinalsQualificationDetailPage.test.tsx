@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { FinalsQualificationDetailPage } from './FinalsQualificationDetailPage'
@@ -17,6 +17,8 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('../api/client', () => api)
+// Legacy assertions verify the existing English copy; CS/EN transitions have separate coverage.
+vi.mock('../i18n/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }))
 
 describe('FinalsQualificationDetailPage', () => {
   beforeEach(() => {
@@ -62,6 +64,8 @@ describe('FinalsQualificationDetailPage', () => {
     expect(await screen.findByText('Failed to load Finals summary: summary unavailable')).toBeInTheDocument()
     expect(screen.getByText('Unknown')).toBeInTheDocument()
     expect(screen.queryByText('Not simulated')).not.toBeInTheDocument()
+    expect(screen.getByText('Result cannot be verified without a valid Finals summary')).toBeInTheDocument()
+    expect(screen.queryByText('Result not available yet')).not.toBeInTheDocument()
   })
 
   it('keeps both statuses loading when the services have not responded yet', async () => {
@@ -70,6 +74,7 @@ describe('FinalsQualificationDetailPage', () => {
     renderWithRoute(<FinalsQualificationDetailPage />, '/runs/run-a/finals/qualification')
     expect(await screen.findByText('Loading Finals qualification detail...')).toBeInTheDocument()
     expect(screen.getAllByText('Loading')).toHaveLength(2)
+    expect(screen.getByText('Waiting for Finals summary')).toBeInTheDocument()
   })
 
   it('shows readable empty state when qualification is missing', async () => {
@@ -79,4 +84,43 @@ describe('FinalsQualificationDetailPage', () => {
     expect(await screen.findByText('No Finals qualification is available for this run yet.')).toBeInTheDocument()
     expect(screen.getByText('No qualification payload is available yet.')).toBeInTheDocument()
   })
+  it.each([
+    ['source season', { source_as_of_season: 2026, source_as_of_week: 42 }],
+    ['source week', { source_as_of_season: 2027, source_as_of_week: 41 }]
+  ])('hides a Finals qualification detail contradicting summary %s', async (_dimension, source) => {
+    api.getFinalsSummary.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2027,
+      qualification: { run_id: 'run-a', season: 2027, ...source },
+      result: null
+    })
+    renderWithRoute(<FinalsQualificationDetailPage />, '/runs/run-a/finals/qualification')
+    expect(await screen.findByText('Finals qualification detail conflicts with the stored summary or selected Run.')).toBeInTheDocument()
+    expect(screen.queryByText(/qualified_player_ids/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Finals overview page' })).toBeInTheDocument()
+  })
+
+  it('keeps an independently identified qualification available without a summary read', async () => {
+    api.getFinalsSummary.mockRejectedValueOnce(new api.ApiError('summary offline', 503))
+    renderWithRoute(<FinalsQualificationDetailPage />, '/runs/run-a/finals/qualification')
+    expect(await screen.findByText('Failed to load Finals summary: summary offline')).toBeInTheDocument()
+    expect(screen.getByText(/qualified_player_ids/)).toBeInTheDocument()
+    expect(screen.queryByText('Finals qualification detail conflicts with the stored summary or selected Run.')).not.toBeInTheDocument()
+  })
+
+  it('does not retain a stale qualification payload after refresh failure and restores it on retry', async () => {
+    const saved = { run_id: 'run-a', season: 2027, source_as_of_season: 2027,
+      source_as_of_week: 42, qualification: { qualified_player_ids: ['P_STORED'], groups: [] } }
+    api.getFinalsQualification.mockResolvedValueOnce(saved)
+      .mockRejectedValueOnce(new api.ApiError('temporary qualification outage', 503))
+      .mockResolvedValueOnce(saved)
+    renderWithRoute(<FinalsQualificationDetailPage />, '/runs/run-a/finals/qualification')
+    expect(await screen.findByText(/"P_STORED"/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText('Failed to load Finals qualification: temporary qualification outage')).toBeInTheDocument()
+    expect(screen.queryByText(/"P_STORED"/)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh read-only data' }))
+    expect(await screen.findByText(/"P_STORED"/)).toBeInTheDocument()
+    expect(api.getFinalsQualification).toHaveBeenCalledTimes(3)
+  })
+
 })

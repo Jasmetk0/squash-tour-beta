@@ -32,11 +32,16 @@ result_slot is printed rather than suppressed.
 - Candidate history remains scoped by Run + Branch, with optional selected season/week
   in the URL. Manual refresh does not navigate.
 - The response and nested candidate Run/Branch, candidate_only publication
-  status and usable fingerprints are checked before rendering.
+  status and usable fingerprints are checked before rendering. Ambiguous duplicate
+  URL weeks/fingerprints, out-of-range legacy week coordinates and malformed rows
+  are rejected before displaying a candidate. This is UI fail-closed validation,
+  not a claim that the browser independently recomputed the stored fingerprint.
 - Input and source responses are separately matched against the selected Run,
   Branch, exact season/week, candidate fingerprint and candidate_only
   publication status. Source version and disciplinary input owner identities
-  are also checked. An untrusted response is an error, not verified evidence.
+  are also checked. Malformed source entries, unverifiable claimed stored
+  disciplinary history and unknown tie-reason codes are rejected rather than
+  being shown as verified. An untrusted response is an error, not verified evidence.
 - complete_manifest requires stored roster/results; a
   legacy_without_manifest response must have manifest: null. Legacy,
   empty-but-verified, loading, error and non-empty verified states remain separate.
@@ -55,7 +60,8 @@ result_slot is printed rather than suppressed.
 
 The component tests cover legacy/no candidate, exact week selection, CS/EN,
 source and input lazy loading, provenance, historic ties and disciplinary zeros,
-foreign identities, delayed previous-Branch delivery, zero/null display,
+foreign identities, duplicate weeks, malformed source/row responses, unsupported
+  tie reasons, missing decision evidence, delayed previous-Branch delivery, zero/null display,
 manual refresh and error recovery, and absence of automatic preparation / save
 calls. Mocked API responses establish **component contracts only**, not real
 production HTTP/SQLite/browser acceptance.

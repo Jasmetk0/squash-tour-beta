@@ -258,6 +258,13 @@ export function validCandidateResponse(
   // A claimed verified decision history without its historical versions
   // cannot be represented as a verified source history in this view.
   if (data.zero_history_status === 'verified_stored_history' && !Array.isArray(data.zero_sources)) return false
+  if (data.command_audits !== undefined &&
+      (!Array.isArray(data.command_audits) || data.command_audits.some(entry =>
+        !entry || !nonempty(entry.command_id) ||
+        !nonempty(entry.audit?.actor_label) || !nonempty(entry.audit?.reason)))) return false
+  if (data.zero_history_status !== undefined && ![
+    'verified_stored_history', 'caller_resolved', 'legacy_without_manifest',
+  ].includes(data.zero_history_status)) return false
   if (data.tie_explanations !== undefined &&
       (!Array.isArray(data.tie_explanations) ||
         data.tie_explanations.some(tie => !tie || ![

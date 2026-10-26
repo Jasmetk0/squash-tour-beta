@@ -114,6 +114,27 @@ export function sameWeek(actual: CandidateWeek | null | undefined, expected: Can
   return actual?.season_index === expected.season_index && actual?.week === expected.week
 }
 
+function validLegacyWeek(week: CandidateWeek | null | undefined): boolean {
+  return Boolean(week &&
+    Number.isInteger(week.season_index) && week.season_index >= 0 && week.season_index < 50 &&
+    Number.isInteger(week.week) && week.week >= 1 && week.week <= 61)
+}
+
+type DisplayAward = {
+  edition_id: string
+  qualification_points: number
+  main_points: number
+  completed_week: CandidateWeek
+  first_publication_week: CandidateWeek
+  validity_weeks: number
+}
+function validAward(award: DisplayAward | null | undefined): boolean {
+  return Boolean(award && typeof award.edition_id === 'string' &&
+    Number.isFinite(award.qualification_points) && Number.isFinite(award.main_points) &&
+    validLegacyWeek(award.completed_week) && validLegacyWeek(award.first_publication_week) &&
+    Number.isInteger(award.validity_weeks))
+}
+
 // These guards are for displaying API responses only, not a replacement for
 // authoritative server-side lineage, fingerprint and stored-manifest verification.
 export function validCandidateHistory(data: RankingCandidateHistory, runId: string, branchId: string): boolean {
@@ -127,8 +148,7 @@ export function validCandidateHistory(data: RankingCandidateHistory, runId: stri
     const week = snapshot?.week
     if (candidate?.publication_status !== 'candidate_only' ||
         !snapshot || snapshot.run_id !== runId || snapshot.branch_id !== branchId ||
-        !week || !Number.isInteger(week.season_index) || week.season_index < 0 || week.season_index >= 50 ||
-        !Number.isInteger(week.week) || week.week < 1 || week.week > 61 ||
+        !validLegacyWeek(week) ||
         typeof candidate.fingerprint !== 'string' || !candidate.fingerprint ||
         !Array.isArray(candidate.command_ids) ||
         !snapshot.policy || !Number.isInteger(snapshot.policy.best_n) || snapshot.policy.best_n < 1 ||
@@ -141,8 +161,9 @@ export function validCandidateHistory(data: RankingCandidateHistory, runId: stri
     fingerprints.add(candidate.fingerprint)
 
     return snapshot.rows.every(row =>
-      row !== null &&
-      Array.isArray(row.counted_results) &&
+      row !== null && typeof row.player_id === 'string' &&
+      Number.isInteger(row.rank) && Number.isFinite(row.points) &&
+      Array.isArray(row.counted_results) && row.counted_results.every(validAward) &&
       (row.disciplinary_zeros === undefined ||
         (Array.isArray(row.disciplinary_zeros) && row.disciplinary_zeros.every(z =>
           z?.run_id === runId && z.branch_id === branchId))))
@@ -162,12 +183,14 @@ export function validCandidateResponse(
       source !== null &&
       typeof source.fingerprint === 'string' && Boolean(source.fingerprint) &&
       source.version?.run_id === runId && source.version.branch_id === branchId &&
-      source.version.result !== null && typeof source.version.result === 'object')
+      validLegacyWeek(source.version.effective_week) && validAward(source.version.result))
   }
 
   if (data.verification_status === 'legacy_without_manifest') return data.manifest === null
   if (data.verification_status !== 'complete_manifest' || !data.manifest ||
-      !Array.isArray(data.manifest.players) || !Array.isArray(data.manifest.results)) return false
+      !Array.isArray(data.manifest.players) || !Array.isArray(data.manifest.results) ||
+      !data.manifest.players.every(player => player && typeof player.player_id === 'string' && validLegacyWeek(player.tour_entry_week)) ||
+      !data.manifest.results.every(validAward)) return false
   if (data.manifest.disciplinary_zeros !== undefined &&
       (!Array.isArray(data.manifest.disciplinary_zeros) ||
         data.manifest.disciplinary_zeros.some(z => !z || z.run_id !== runId || z.branch_id !== branchId))) return false

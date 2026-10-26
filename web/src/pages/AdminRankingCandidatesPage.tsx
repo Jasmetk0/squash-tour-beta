@@ -8,8 +8,7 @@ import { getRankingCandidates, getRankingCandidateSources } from '../api/client'
 import type { CandidateWeek } from '../api/rankingCandidates'
 import { EmptyState, PageIntro, SectionCard } from '../components/RunScopedUi'
 import { useLanguage } from '../i18n/LanguageContext'
-import { formatApiError } from '../utils/apiErrors'
-import { sameWeek, tr, validCandidateHistory, validCandidateResponse, weekLabel } from './rankingCandidateReadOnly'
+import { rankingReadError, sameWeek, tr, validCandidateHistory, validCandidateResponse, weekLabel } from './rankingCandidateReadOnly'
 
 export function AdminRankingCandidatesPage(): JSX.Element {
   const { language } = useLanguage()
@@ -24,7 +23,7 @@ export function AdminRankingCandidatesPage(): JSX.Element {
     queryKey: ['ranking-candidates', runId, branchId],
     queryFn: async () => {
       const response = await getRankingCandidates(runId, branchId)
-      if (!validCandidateHistory(response, runId, branchId)) throw new Error(t('Ranking history does not match this candidate.'))
+      if (!validCandidateHistory(response, runId, branchId)) throw new Error('Ranking history does not match this candidate.')
       return response
     },
     enabled: Boolean(runId && branchId && valid),
@@ -41,7 +40,7 @@ export function AdminRankingCandidatesPage(): JSX.Element {
     <Link to={'/admin/runs/' + encodeURIComponent(runId) + '/branches'}>{t('Back to Branches')}</Link>
     {!valid ? <p role="alert">{t('Invalid season or week.')}</p>
       : query.isPending || query.isFetching ? <p role="status">{t('Loading ranking history…')}</p> : null}
-    {valid && query.isError && <div role="alert"><p>{formatApiError(query.error)}</p>
+    {valid && query.isError && <div role="alert"><p>{rankingReadError(query.error, language)}</p>
       <button type="button" disabled={query.isFetching} onClick={() => void query.refetch()}>{t('Retry loading')}</button></div>}
     {valid && data && <div hidden={query.isFetching || query.isError || !query.isSuccess}>
       <RankingPreparationPanel key={'prepare/' + runId + '/' + branchId} runId={runId} branchId={branchId} latest={data.candidates[data.candidates.length - 1]} />
@@ -113,7 +112,7 @@ function RankingSources({ runId, branchId, week, fingerprint }: {
     queryFn: async () => {
       const response = await getRankingCandidateSources(runId, branchId, week.season_index, week.week)
       if (!validCandidateResponse(response, runId, branchId, week, fingerprint)) {
-        throw new Error(t('Source history does not match this candidate.'))
+        throw new Error('Source history does not match this candidate.')
       }
       return response
     },
@@ -126,7 +125,7 @@ function RankingSources({ runId, branchId, week, fingerprint }: {
       : <>
         <button type="button" disabled={query.isFetching} onClick={() => void query.refetch()}>{t('Refresh source results')}</button>
         {query.isPending || query.isFetching ? <p role="status">{t('Loading source results…')}</p> : null}
-        {query.isError && <div role="alert"><p>{formatApiError(query.error)}</p>
+        {query.isError && <div role="alert"><p>{rankingReadError(query.error, language)}</p>
           <button type="button" disabled={query.isFetching} onClick={() => void query.refetch()}>{t('Retry source results')}</button></div>}
         {query.data && <div hidden={query.isFetching || !query.isSuccess}>
           {query.data.sources.length === 0 ? <p>{t('No source results at this boundary.')}</p>

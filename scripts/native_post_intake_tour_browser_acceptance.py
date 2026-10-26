@@ -99,6 +99,16 @@ def main():
                         )
 
                     def write(suffix, click):
+                        if suffix == "/calendar-tour/execute":
+                            with page.expect_response(
+                                lambda r: r.request.method == "POST"
+                                and r.url.endswith(suffix + "?include_inspection=true")
+                            ) as written:
+                                click()
+                            assert written.value.status == 201, written.value.text()
+                            body = written.value.json()
+                            assert body["schema_version"] == "calendar_tour_execution_inspection.v1"
+                            return body["result"], body["inspection"]
                         acknowledged = False
                         reads = set()
 

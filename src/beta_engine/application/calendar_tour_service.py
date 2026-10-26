@@ -399,20 +399,33 @@ class CalendarTourService:
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
             fingerprints = {}
-            ctx, state, signed = self._context(session, run_id, branch_id, _fingerprints=fingerprints)
-            from beta_engine.domain.tournaments.calendar_global_slots import (
-                global_replay_projection_scope, _prime_private_fingerprint,
+            loaded = self._context(session, run_id, branch_id, _fingerprints=fingerprints)
+            return self._project_inspection(session, run_id, branch_id, loaded, fingerprints)
+
+    def _project_inspection(self, session, run_id, branch_id, loaded, fingerprints):
+        from beta_engine.domain.tournaments.calendar_global_slots import (
+            _prime_private_fingerprint,
+            global_replay_projection_scope,
+        )
+
+        # Project only after this snapshot's complete physical context gate.
+        # Mutation callers use the independent POST-WRITE context, never their
+        # pre-command models or the calculated successor as read authority.
+        with global_replay_projection_scope():
+            for value, fingerprint in fingerprints.values():
+                _prime_private_fingerprint(value, fingerprint)
+            return self._inspection_from_context(
+                session, run_id, branch_id, *loaded, fingerprints,
             )
 
-            # These authenticated copies stay private until their JSON DTO is
-            # complete. Reuse derived tournament views/fingerprints only during
-            # this projection, after the independent physical context gate.
-            with global_replay_projection_scope():
-                for value, fingerprint in fingerprints.values():
-                    _prime_private_fingerprint(value, fingerprint)
-                return self._inspection_from_context(
-                    session, run_id, branch_id, ctx, state, signed, fingerprints,
-                )
+    def _execution_inspection(self, session, run_id, branch_id, result, loaded, fingerprints):
+        return {
+            "schema_version": "calendar_tour_execution_inspection.v1",
+            "result": result,
+            "inspection": self._project_inspection(
+                session, run_id, branch_id, loaded, fingerprints,
+            ),
+        }
 
     def _inspection_from_context(self, session, run_id, branch_id, ctx, state, signed, fingerprints):
         _clock, rev, world, _health, cp, saved, _ = ctx
@@ -836,13 +849,20 @@ class CalendarTourService:
             session.execute(text("BEGIN"))
             return self._prepare(session, run_id, branch_id, command)[0]
 
-    def execute(self, *, run_id, branch_id, request):
+    def execute(self, *, run_id, branch_id, request, include_inspection=False):
         from beta_engine.application.native_fork_runtime_service import (
             NativeForkRuntimeService,
             is_native_fork,
         )
         if is_native_fork(self.repository, run_id, branch_id):
-            return NativeForkRuntimeService(self.repository).execute(run_id=run_id, branch_id=branch_id, request=request)
+            service = NativeForkRuntimeService(self.repository)
+            result = service.execute(run_id=run_id, branch_id=branch_id, request=request)
+            # Forks retain their existing independent read and transaction path.
+            if include_inspection:
+                return {"schema_version": "calendar_tour_execution_inspection.v1",
+                    "result": result,
+                    "inspection": service.inspect(run_id=run_id, branch_id=branch_id)}
+            return result
         command = request.command
         with self.repository._session_factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
@@ -856,6 +876,10 @@ class CalendarTourService:
                         if receipt.request != request.model_dump(mode="json"):
                             raise ValueError(
                                 "Command ID already has a different payload or confirmation"
+                            )
+                        if include_inspection:
+                            return self._execution_inspection(
+                                session, run_id, branch_id, receipt.result, loaded, fingerprints,
                             )
                         return receipt.result
             from beta_engine.domain.tournaments.calendar_global_slots import global_replay_projection_scope, _prime_private_fingerprint
@@ -891,14 +915,25 @@ class CalendarTourService:
                 )
                 put_tour(session, successor)
                 _fault_injection_point("after_tour_write")
+            post_fingerprints = {} if include_inspection else None
+            post_context = None
             if successor.schema_version in {
                 "calendar_tour_authority.v3",
                 "calendar_tour_authority.v4", "calendar_tour_authority.v5",
             }:
                 # Reject any coupled-write discrepancy before this transaction
                 # commits, not on the next inspection or eventual manual Save.
-                self._context(session, run_id, branch_id)
+                post_context = self._context(session, run_id, branch_id, _fingerprints=post_fingerprints)
                 _fault_injection_point("after_native_replay")
+            if include_inspection:
+                if post_context is None:
+                    post_context = self._context(session, run_id, branch_id, _fingerprints=post_fingerprints)
+                # Returning exits the transaction context first: a failed
+                # projection/commit cannot deliver a successful inspection.
+                # The receipt stored above remains the original small result.
+                return self._execution_inspection(
+                    session, run_id, branch_id, result, post_context, post_fingerprints,
+                )
             return result
 
     def _play_native(

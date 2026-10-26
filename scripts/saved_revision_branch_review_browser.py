@@ -219,7 +219,7 @@ def main():
                         with page.expect_response(
                             lambda r: (
                                 r.request.method == "POST"
-                                and r.url.endswith("/calendar-tour/execute")
+                                and r.url.endswith("/calendar-tour/execute?include_inspection=true")
                             )
                         ) as execution:
                             tour.get_by_role(

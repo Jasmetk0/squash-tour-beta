@@ -100,7 +100,7 @@ def main():
         panel.get_by_label("Confirm Tour command").check()
         with page.expect_response(
             lambda r: (
-                r.request.method == "POST" and r.url.endswith("/calendar-tour/execute")
+                r.request.method == "POST" and r.url.endswith("/calendar-tour/execute?include_inspection=true")
             )
         ) as result:
             panel.get_by_role(
@@ -111,7 +111,10 @@ def main():
                 exact=True,
             ).click()
         assert result.value.status == 201, result.value.text()
-        return result.value.json()
+        body = result.value.json()
+        assert body["schema_version"] == "calendar_tour_execution_inspection.v1"
+        assert not body["inspection"]["saved"]
+        return body["result"]
 
     def manual_save(page, panel, language):
         panel.get_by_label("Confirm Tour Save").check()

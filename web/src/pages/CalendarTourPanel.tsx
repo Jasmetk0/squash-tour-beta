@@ -96,9 +96,19 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
       }
       if(action==='commit'){
         if(!review||!consent)return
-        await executeCalendarTour(runId,branchId,review.command,review.preview_fingerprint)
+        const outcome=await executeCalendarTour(runId,branchId,review.command,review.preview_fingerprint,true)
         if(!valid())return
-        const next=await read();if(!valid())return
+        let next:TourView
+        if(outcome&&typeof outcome==='object'&&('inspection' in outcome||('schema_version' in outcome&&outcome.schema_version==='calendar_tour_execution_inspection.v1'))){
+          if(!('schema_version' in outcome)||outcome.schema_version!=='calendar_tour_execution_inspection.v1'||!('inspection' in outcome))throw Error('Tour execution inspection is invalid')
+          if(!('result' in outcome)||!outcome.result||typeof outcome.result!=='object'||!('command_id' in outcome.result)||outcome.result.command_id!==review.command.command_id||!('action' in outcome.result)||outcome.result.action!==review.command.action)throw Error('Tour execution result does not match the confirmed command')
+          next=validateTourView(outcome.inspection as TourView,runId,branchId)
+          if(next.saved_head_revision_id!==review.command.expected_saved_head)throw Error('Tour execution Saved source changed; refresh Tour')
+        }else{
+          // Older servers return only the original command result.
+          next=await read()
+        }
+        if(!valid())return
         invalidate();setSelectedSlotMatch('');setView(next);setNotice(cs?'Změna je v Working Draft. Proveďte ruční Save.':'Change is in Working Draft. Save manually.');return
       }
       if(action==='refresh'){

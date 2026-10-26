@@ -16,6 +16,46 @@ const preview=(c:TourCommand):TourPreview=>({schema_version:'calendar_tour_comma
 describe('configured Tour consent (HTTP boundary mocked)',()=>{
   beforeEach(()=>{vi.clearAllMocks();localStorage.setItem('squash-engine-language-v1','en');api.inspectCalendarTour.mockImplementation((r,b)=>Promise.resolve(view(r,b)))})
   const slotView=(run='r',branch='b'):TourView=>({...view(run,branch),saved:true,sporting_saved:true,tour_fingerprint:'c'.repeat(64),next_slot:{schema_version:'calendar_global_slot_inspection.v1',number:14,snapshot_fingerprint:null,completed:0,remaining:2,matches:[{edition_id:'a',match_id:'a:sf1',player_a_id:'p1',player_b_id:'p2',completed:false},{edition_id:'b',match_id:'b:sf1',player_a_id:'p3',player_b_id:'p4',completed:false}]},state:{week:{calendar:{schema_version:'run_calendar.v1',weeks_per_year:80,season_start_year_week:80,start_year:2030,season_count:2},season_index:0,week:4},editions:[],rankings:[],transitions:[]}})
+
+  it('uses the verified post-write inspection without another full Tour read or implicit Save',async()=>{
+    const current=slotView()
+    const next={...current,saved:false,checkpoint_fingerprint:'d'.repeat(64)}
+    api.inspectCalendarTour.mockResolvedValue(current)
+    api.previewCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve(preview(c)))
+    api.executeCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve({schema_version:'calendar_tour_execution_inspection.v1',result:{command_id:c.command_id,action:c.action},inspection:next}))
+    render(panel());await screen.findByLabelText('Global slot match')
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Verified post-write state'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review Next Slot'}))
+    await screen.findByLabelText('Confirm Tour command')
+    fireEvent.click(screen.getByLabelText('Confirm Tour command'))
+    fireEvent.click(screen.getByRole('button',{name:'Execute confirmed operation'}))
+    await screen.findByText('Change is in Working Draft. Save manually.')
+    expect(api.executeCalendarTour.mock.calls[0][4]).toBe(true)
+    expect(api.inspectCalendarTour).toHaveBeenCalledTimes(1)
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
+  it.each(['foreign Run','changed Saved HEAD','different command','unknown envelope'])('rejects %s in the post-write inspection',async(problem)=>{
+    const current=slotView()
+    api.inspectCalendarTour.mockResolvedValue(current)
+    api.previewCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve(preview(c)))
+    api.executeCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve({
+      schema_version:problem==='unknown envelope'?'unexpected.v1':'calendar_tour_execution_inspection.v1',
+      result:{command_id:problem==='different command'?'foreign-command':c.command_id,action:c.action},
+      inspection:{...current,saved:false,
+        run_id:problem==='foreign Run'?'foreign':current.run_id,
+        saved_head_revision_id:problem==='changed Saved HEAD'?'foreign-head':current.saved_head_revision_id},
+    }))
+    render(panel());await screen.findByLabelText('Global slot match')
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Reviewed frozen input'}})
+    fireEvent.click(screen.getByRole('button',{name:'Review Next Slot'}))
+    await screen.findByLabelText('Confirm Tour command')
+    fireEvent.click(screen.getByLabelText('Confirm Tour command'))
+    fireEvent.click(screen.getByRole('button',{name:'Execute confirmed operation'}))
+    await screen.findByRole('alert')
+    expect(screen.queryByText('Change is in Working Draft. Save manually.')).not.toBeInTheDocument()
+    expect(api.inspectCalendarTour).toHaveBeenCalledTimes(1)
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
   it('selects an independent match in the shared slot and retains the exact confirmed request after a lost reply',async()=>{
     api.inspectCalendarTour.mockResolvedValue(slotView())
     api.previewCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve(preview(c)))

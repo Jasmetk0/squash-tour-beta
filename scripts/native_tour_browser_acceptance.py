@@ -301,13 +301,20 @@ def main():
                 # asserting the Working Draft UI; a 30s auto-retry of a locator
                 # alone confuses slow but successful reads with missing controls.
                 commit_started = time.monotonic()
-                response, refreshed = confirmed_write_and_read(
-                    "/calendar-tour/execute",
-                    lambda: panel.get_by_role("button", name="Execute confirmed operation", exact=True).click(),
-                )
+                # The opt-in response contains the same independently verified
+                # post-write inspection. It reaches HTTP only after COMMIT.
+                # Save below still performs its separate Saved read/restart gate.
+                with page.expect_response(
+                    lambda r: r.request.method == "POST"
+                    and r.url == api + "/admin/runs/run/branches/branch/calendar-tour/execute?include_inspection=true"
+                ) as written:
+                    panel.get_by_role("button", name="Execute confirmed operation", exact=True).click()
+                response = written.value
                 assert response.status == 201, response.text()
-                assert refreshed.status == 200, refreshed.text()
-                refreshed_view = refreshed.json()
+                response_body = response.json()
+                assert response_body["schema_version"] == "calendar_tour_execution_inspection.v1"
+                assert response_body["result"]["command_id"] == preview_http.json()["command"]["command_id"]
+                refreshed_view = response_body["inspection"]
                 assert not refreshed_view["saved"], "The confirmed operation must remain an unsaved Working Draft"
                 assert refreshed_view["run_id"] == "run" and refreshed_view["branch_id"] == "branch"
                 assert refreshed_view["saved_head_revision_id"] == evidence["last_saved_head"]

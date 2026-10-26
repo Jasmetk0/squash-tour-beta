@@ -174,10 +174,12 @@ def execute(
     branch_id: str,
     payload: CalendarTourCommit,
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    include_inspection: bool = Query(False),
 ):
     try:
         return CalendarTourService(runtime.repository).execute(
-            run_id=run_id, branch_id=branch_id, request=payload
+            run_id=run_id, branch_id=branch_id, request=payload,
+            include_inspection=include_inspection,
         )
     except (KeyError, ValueError, TypeError) as exc:
         raise conflict(exc) from exc

@@ -1,3 +1,41 @@
+# Post-command inspection response — 26 October 2026 candidate
+
+The preceding 0f0f6eca head completed eight workflows successfully, including
+all Global Slots weeks/Season Transition and all Full Simulation jobs. Its sole
+remaining failure was the whole W80/1,000 Tour Chromium at the unchanged
+18-minute deadline. This still blocks owner merge handoff. #1641 has been
+merged by the owner into buuk (3ee384253); its files remain separate.
+
+The opt-in POST /calendar-tour/execute?include_inspection=true returns the
+original command result plus the current Tour inspection. The ordinary command
+receipt, persisted history and default API response are unchanged. Native
+commands project the SAME independently authenticated POST-WRITE context that
+already ran before commit; they do not authorize reads from the calculated
+successor or pre-command state. Projection/commit failure cannot return success.
+Exact retries still authenticate the current physical context and preserve the
+original result. Forks retain their existing execute plus independent read path.
+
+The Admin panel validates envelope/version, command identity/action, Run/Branch
+and the unchanged Saved source, with its existing scope/input/epoch fences. It
+uses the supplied inspection without another full GET; old result-only servers
+retain the ordinary GET fallback. Explicit consent and manual Save remain.
+Browser observers use the post-write response; independent Saved GET, physical
+restart, 1,000-player population, real matches/points and every original sporting
+assertion/deadline remain. No GC, copy compiler, cache-budget or schema experiment
+is included. No source validation, hash, seed, replay or transaction fence changes.
+
+Local evidence: two actual HTTP/SQLite cases verify full equality with an
+independent GET, both before/after gates, rehashed coupled-write rejection,
+projection failure rollback and default/opt-in exact retries. All 36 Tour panel
+component tests and TypeScript/Vite build pass. The new UI cases verify no
+redundant read/implicit Save and reject foreign Run, changed HEAD, mismatched
+command and unknown envelope. The genuine failed 1,000-player SQLite flow is
+being measured separately; it is not a whole-browser pass. Final-head hosted
+Chromium, fork/restart and all relevant acceptance matrices must actually pass
+before owner merge. Complete pre-alpha/50-season release acceptance is separate.
+
+---
+
 # Save origin values and Working Draft projection — 26 October 2026 candidate
 
 Preceding `bc5d60a5` completed eight of nine hosted workflows successfully,

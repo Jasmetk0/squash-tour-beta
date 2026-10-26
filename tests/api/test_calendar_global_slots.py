@@ -818,7 +818,14 @@ def test_partial_source_public_fork_is_independent(tmp_path, prepared_slots):
         created = fork(server, saved["revision_id"], name="Independent partial slot")
         target = Tour(server, created["branch_id"])
         assert target.view()["next_slot"]["remaining"] == 3
-        target.execute("next-match", "target-second-match")
+        target_result, target_request = target.execute("next-match", "target-second-match")
+        status, projected = _request(
+            "POST", target.url + "/execute?include_inspection=true", target_request,
+        )
+        assert status == 201, projected
+        assert projected["schema_version"] == "calendar_tour_execution_inspection.v1"
+        assert projected["result"] == target_result
+        assert projected["inspection"] == target.view()
         target_partial = target.save()
         nested_created = fork(
             server,
@@ -1169,3 +1176,75 @@ def test_same_player_collision_blocks_only_affected_matches(tmp_path, prepared_s
             )[0]
             == 409
         )
+
+
+@pytest.mark.parametrize("failure", ["projection", "coupled-write"])
+def test_execution_inspection_uses_independent_postwrite_context_and_atomic_retry(
+    tmp_path, prepared_slots, monkeypatch, failure,
+):
+    from beta_engine.application.calendar_tour_service import CalendarTourService
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db.models import (
+        CalendarPlayerSportingCheckpointModel,
+    )
+    from tests.api.test_player_generation_calendar_gate import _dump
+
+    path = tmp_path / "execution-inspection.db"
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        view = inspect(server)
+        cmd = command(view, "next-match", name="inspection-next-match")
+        code, preview = _request("POST", tour_url(server) + "/preview", cmd)
+        assert code == 200, preview
+        request = {"command": cmd, "expected_preview_fingerprint": preview["preview_fingerprint"],
+            "explicit_confirmation": True}
+        endpoint = tour_url(server) + "/execute?include_inspection=true"
+        before = _dump(path)
+        original = CalendarTourService._context
+        calls = []
+
+        def context(self, session, *args, **kwargs):
+            calls.append(1)
+            if failure == "coupled-write" and len(calls) == 2:
+                row = session.get(CalendarPlayerSportingCheckpointModel, ("run", "branch"))
+                body = json.loads(row.payload_json)
+                body["branch_id"] = "foreign-owner"
+                row.payload_json = json.dumps(body)
+                row.fingerprint = canonical_hash(body)
+                session.flush()
+            return original(self, session, *args, **kwargs)
+
+        def failed_projection(*args, **kwargs):
+            raise ValueError("Injected post-verification inspection projection failure")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(CalendarTourService, "_context", context)
+            if failure == "projection":
+                patch.setattr(CalendarTourService, "_inspection_from_context", failed_projection)
+            code, refused = _request("POST", endpoint, request)
+            assert code == 409, refused
+        assert len(calls) == 2, "Both independent before/after physical gates must execute"
+        assert _dump(path) == before
+
+        calls.clear()
+        def counted(self, *args, **kwargs):
+            calls.append(1)
+            return original(self, *args, **kwargs)
+        with monkeypatch.context() as patch:
+            patch.setattr(CalendarTourService, "_context", counted)
+            code, response = _request("POST", endpoint, request)
+        assert code == 201, response
+        assert len(calls) == 2, "Project the verified post-write context without a third full read"
+        assert response["schema_version"] == "calendar_tour_execution_inspection.v1"
+        assert response["result"]["command_id"] == cmd["command_id"]
+        assert response["result"]["action"] == "next-match"
+        current = response["inspection"]
+        assert current == inspect(server)
+        assert current["saved_head_revision_id"] == view["saved_head_revision_id"]
+        assert current["checkpoint_fingerprint"] != view["checkpoint_fingerprint"]
+        assert not current["saved"] and current["next_slot"]["completed"] == 1
+        committed = _dump(path)
+        # The stored command receipt and default HTTP contract are unchanged.
+        assert _request("POST", tour_url(server) + "/execute", request) == (201, response["result"])
+        assert _request("POST", endpoint, request) == (201, response)
+        assert _dump(path) == committed

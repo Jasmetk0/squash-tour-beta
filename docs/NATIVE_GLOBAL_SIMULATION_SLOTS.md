@@ -1,3 +1,45 @@
+# Save origin values and Working Draft projection — 26 October 2026 candidate
+
+Preceding `bc5d60a5` completed eight of nine hosted workflows successfully,
+including every actual W52/W61/W80 week and Season Transition, cold restart,
+all Full Simulation jobs, and both global CS/EN Chromium scenarios. The sole
+remaining failure was the whole W80/1,000 Tour browser's unchanged 18-minute
+limit during the second tournament. It still blocks owner merge handoff.
+
+This follow-up gives each Save its own borrowed map of bounded immutable origin
+JSON values. Capture and the staged physical origin gate share that map, while
+every lookup still hashes complete current source bytes and binds Run/Branch/
+revision. Only JSON values are retained after successful commit; no source or
+math proofs are borrowed or published. Failure leaves the shared value map
+unchanged. The original before/staged/installed dependency fences remain.
+
+The Save gate can project its already decoded actual new row only after its
+FULL original canonical JSON equals every current SQLite byte. A mutated private
+payload or noncanonical stored encoding takes the original raw parser. Ordinary
+cold readers keep their existing path. Physical ownership, reachable sources,
+independent mathematical replay and terminal/closure checks all remain.
+
+A Working Draft DTO can use the existing small exact-byte/hash-verified Run
+projection after authenticating the entire actual global lineage. It needs only
+the Saved Viewer selection. Internal callers requesting revision state still get
+the full payload. Eviction, changed actual bytes or an unavailable projection
+falls back to full materialization; ancestor corruption/closure still fails.
+
+Local evidence: seven actual HTTP/SQLite cases passed the origin-pool change,
+including partial matches, Save/restart/points, concurrent retry, rehashed-source
+and Health rejection/recovery. Final focused staging/raw-value/draft checks pass
+six cases, including private-payload mutation, whitespace reencoding, cache
+eviction and rehashed ancestor closure rejection. Eleven general Working Draft
+API/application regressions and 28 focused value/calendar contracts also pass.
+On the genuine failed 1,000-player CI database, three late Saves under profiling
+improved from 157.72 s combined to 126.68 s, reaching W6 and 560 points. This
+measures the origin-pool change before the additional draft projection; it is
+not whole-browser acceptance. A separate whole HTTP protocol diagnostic is
+being measured; final-head hosted Chromium and complete relevant matrices must
+actually pass before owner merge. Only the owner merges; #1641 stays separate.
+
+---
+
 # Global-slot whole-browser follow-up — 26 October 2026 candidate
 
 On `add6b6ee`, eight hosted workflows passed, including every W52/W61/W80

@@ -385,7 +385,7 @@ def saved_tour(
 
 def capture_tour(
     session, payload, *, run_id, branch_id, _defer_full_verification: bool = False,
-    _authenticated_prefix=None, _repository=None,
+    _authenticated_prefix=None, _repository=None, _origin_cache=None,
 ):
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
         load_checkpoint,
@@ -416,7 +416,8 @@ def capture_tour(
         and state.schema_version == _authenticated_prefix.schema_version == 'calendar_tour_authority.v5'
         else None
     )
-    verify_tour_origins(session, state, _verified_global_prefix=prefix)
+    verify_tour_origins(session, state, _verified_global_prefix=prefix,
+        _origin_cache=_origin_cache)
     if state:
         from beta_engine.domain.run_packages import canonical_hash
         body = state.model_dump(mode="json")
@@ -514,6 +515,8 @@ def remember_verified_origin_projection(row, payload, cache):
 
     Its caller binds that value to the complete actual row signature first.
     Retain immutable JSON; later readers still hash every actual raw byte.
+    This grants no source authority. A Save keeps its map private until all
+    source/ownership gates and the transaction have completed successfully.
     """
     key = (row.run_id, row.branch_id, row.revision_id,
         hashlib.sha256(row.payload_json.encode('utf-8')).digest(), False)

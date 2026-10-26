@@ -4322,14 +4322,39 @@ class SimulationPersistenceRepository:
             )
 
     def _validated_branch_revision_state_in_session(
-        self, *, session: Session, branch: RunBranchModel, sporting_component_proofs: dict | None = None
+        self, *, session: Session, branch: RunBranchModel, sporting_component_proofs: dict | None = None,
+        _saved_run_only: bool = False,
     ) -> BranchRevisionStateRecord:
+        # The Working Draft DTO needs only the Saved Run's Viewer selection.
+        # Keep ordinary callers' full payload contract. The narrow internal
+        # path still authenticates EVERY actual physical dependency below;
+        # only already hash-verified exact Run JSON may replace materialization.
+        head_model = None
+        project_run = False
+        if _saved_run_only and branch.saved_head_revision_id:
+            head_model = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
+            if head_model is not None and self._known_saved_run_projection(head_model) is not None:
+                from beta_engine.infrastructure.db.calendar_global_slot_origins import (
+                    is_global_slot_row,
+                )
+                project_run = is_global_slot_row(head_model, repository=self)
         revision = self._validated_branch_revision_lineage_in_session(
             session=session,
             branch=branch,
-            payload_revision_ids=frozenset({branch.saved_head_revision_id}),
+            payload_revision_ids=frozenset() if project_run else frozenset({branch.saved_head_revision_id}),
             sporting_component_proofs=sporting_component_proofs,
         )[0]
+        if project_run:
+            run_projection = self._known_saved_run_projection(head_model)
+            if run_projection is None:
+                # Concurrent cache eviction or changed actual bytes must take
+                # the original full materialization/validation path.
+                revision = self._validated_saved_revision_in_session(
+                    session=session, model=head_model,
+                    sporting_component_proofs=sporting_component_proofs,
+                )
+            else:
+                revision = replace(revision, payload={'run': _from_json(run_projection)})
         draft_model = session.execute(
             select(BranchWorkingDraftModel).where(
                 BranchWorkingDraftModel.branch_id == branch.branch_id
@@ -4403,7 +4428,7 @@ class SimulationPersistenceRepository:
             )
         try:
             state = self._validated_branch_revision_state_in_session(
-                session=session, branch=branch
+                session=session, branch=branch, _saved_run_only=not include_revision_state,
             )
             saved_viewer_id = saved_viewer_branch_id(state.saved_revision.payload)
             if state.working_draft.status == CLEAN_WORKING_DRAFT_STATUS:
@@ -6004,6 +6029,7 @@ class SimulationPersistenceRepository:
         global_append_before = None
         global_append_ancestors = ()
         committed_global_append = None
+        origin_value_projections = {}
         try:
             with self._session_factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
@@ -6239,6 +6265,16 @@ class SimulationPersistenceRepository:
                         in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
                     )
                 )
+                if verify_coupled_calendar:
+                    from beta_engine.infrastructure.db.calendar_tour import (
+                        borrow_origin_projection_values,
+                    )
+
+                    # Immutable decode values only, in this Save's own map.
+                    # Each lookup still hashes every actual source-row byte;
+                    # capture and the staged/installed physical gates below
+                    # independently authenticate owners, topology and history.
+                    borrow_origin_projection_values(self, origin_value_projections)
                 from beta_engine.infrastructure.db.calendar_tour import decode_authenticated_tour
                 # This exact predecessor passed the physical lineage gate in
                 # the current Save transaction. Only NEW origins need another
@@ -6252,6 +6288,7 @@ class SimulationPersistenceRepository:
                     _authenticated_tour_prefix=authenticated_tour,
                     _repository=self,
                     _captured_checkpoint=live_calendar_owner,
+                    _origin_cache=origin_value_projections.get('_global_origin_inputs'),
                 )
                 if verify_coupled_calendar:
                     # A native Tour Save captures every actual live row first.
@@ -6644,7 +6681,10 @@ class SimulationPersistenceRepository:
                             # The new components passed complete mathematical
                             # replay above. These are the independent actual-row
                             # origin/terminal/closure gates, BEFORE installing it.
-                            verify_saved_global_origins(self, session, verified_native_save_receipt)
+                            verify_saved_global_origins(self, session, verified_native_save_receipt,
+                                sporting_component_proofs=origin_value_projections,
+                                _validated_value_signature=_saved_revision_validation_signature(new_row),
+                                _reuse_actual_payload=True)
                             verify_saved_terminal_results(self, session, verified_native_save_receipt)
                             verify_saved_native_closure(self, session, verified_native_save_receipt)
                             branch.saved_head_revision_id = revision_id
@@ -6682,6 +6722,12 @@ class SimulationPersistenceRepository:
             # subsequent independent readers still authenticate physical sources.
             from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_tour_source
             decoded_global_tour_source(self, verified_native_save_receipt, lambda _source: captured_sources)
+            # Publish only immutable JSON values after the complete Save
+            # transaction succeeds. No typed source/math proofs survive it.
+            from beta_engine.infrastructure.db.calendar_tour import (
+                retain_origin_projection_values,
+            )
+            retain_origin_projection_values(self, origin_value_projections)
         revision = (
             verified_native_save_receipt
             if verified_native_save_receipt is not None

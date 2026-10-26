@@ -13,7 +13,7 @@ from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
 
 def verify_saved_global_origins(
     repository, session, revision, *, sporting_component_proofs=None,
-    _validated_value_signature=None,
+    _validated_value_signature=None, _reuse_actual_payload=False,
 ):
     physical = session.get(BranchSavedRevisionModel, revision.revision_id)
     if physical is None:
@@ -27,11 +27,33 @@ def verify_saved_global_origins(
     actual_dependency_signature(session, physical, repository=repository)
     assert_current_saved_row(session, physical)
     signature = _saved_revision_validation_signature(physical)
+    value_key = (physical.run_id, physical.branch_id, physical.revision_id,
+        hashlib.sha256(physical.payload_json.encode('utf-8')).digest(), False
+    ) if _reuse_actual_payload and _validated_value_signature == signature else None
+
+    def seed_actual_payload():
+        if value_key in cache:
+            return
+        from beta_engine.domain.run_revisions import canonical_json
+
+        # Reuse an already decoded actual row only when its FULL original JSON
+        # equals every current SQLite byte. Noncanonical encoding or mutation
+        # of the private payload takes the ordinary raw parser. This is decode
+        # data, never an owner, reachability or mathematical proof.
+        try:
+            same_value = canonical_json(revision.payload) == physical.payload_json
+        except (TypeError, ValueError):
+            same_value = False
+        if same_value:
+            remember_verified_origin_projection(physical, revision.payload, cache)
+
     state = None
     if _validated_value_signature == signature:
         from beta_engine.infrastructure.db.calendar_native_competition import replayed_global_tour_value
         state = replayed_global_tour_value(revision.payload, sporting_component_proofs,
             run_id=revision.run_id, branch_id=revision.branch_id)
+        if state is None and _reuse_actual_payload:
+            seed_actual_payload()
     if state is None:
         _, state = _origin_inputs(physical, cache)
     if state is None or state.schema_version != 'calendar_tour_authority.v5':
@@ -124,7 +146,10 @@ def verify_saved_global_origins(
             assert_current_saved_row(session, physical)
             if _saved_revision_validation_signature(physical) != signature:
                 raise ValueError('Global origin changed during physical validation')
-            remember_verified_origin_projection(physical, revision.payload, cache)
+            if _reuse_actual_payload:
+                seed_actual_payload()
+            else:
+                remember_verified_origin_projection(physical, revision.payload, cache)
 
 
 def is_global_slot_row(row, *, repository=None, _decoded_out=None):

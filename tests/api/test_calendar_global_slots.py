@@ -99,10 +99,19 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
         old = inspect(server)['saved_head_revision_id']
         original_gate = calendar_global_slot_origins.verify_saved_global_origins
         checked = []
+        save_origin_maps = []
 
         def actual_gate(repository, session, revision, **kwargs):
             checked.append((revision.revision_id, session.get(RunBranchModel, 'branch').saved_head_revision_id))
-            return original_gate(repository, session, revision, **kwargs)
+            values = kwargs['sporting_component_proofs']
+            assert set(values) == {'_global_origin_inputs'}
+            assert values['_global_origin_inputs'] is not repository._origin_projection_values
+            before = dict(repository._origin_projection_values)
+            result = original_gate(repository, session, revision, **kwargs)
+            assert repository._origin_projection_values == before, 'staged values must remain private until commit'
+            assert any(key[2] == revision.revision_id for key in values['_global_origin_inputs'])
+            save_origin_maps.append(values['_global_origin_inputs'])
+            return result
 
         monkeypatch.setattr(calendar_global_slot_origins, 'verify_saved_global_origins', actual_gate)
         replay = repository_module.load_saved_calendar_sources
@@ -115,6 +124,8 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
         monkeypatch.setattr(repository_module, 'load_saved_calendar_sources', independent_math)
         saved = save_tour(server)
         assert checked == [(saved['revision_id'], old)]
+        assert save_origin_maps
+        assert any(key[2] == saved['revision_id'] for key in repo._origin_projection_values)
         assert not replayed, 'identical complete actual payload already passed independent live replay'
         assert inspect(server)['saved_head_revision_id'] == saved['revision_id']
         from beta_engine.infrastructure.db.calendar_standalone_match_state import decode_prevalidated_calendar_sources
@@ -184,6 +195,7 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
         assert capture_checked and inspect(server)['tour_fingerprint'] == view['tour_fingerprint']
         original_decode = repo._to_branch_saved_revision
         injected = []
+        before_failed_save_origins = dict(repo._origin_projection_values)
 
         def change_actual_ancestor(model, **kwargs):
             result = original_decode(model, **kwargs)
@@ -211,6 +223,7 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
             'expected_calendar_tour_fingerprint': view['tour_fingerprint'],
         })
         assert injected and code == 409, rejected
+        assert repo._origin_projection_values == before_failed_save_origins
         assert 'dependenc' in str(rejected).lower()
         monkeypatch.setattr(repo, '_to_branch_saved_revision', original_decode)
         after = inspect(server)
@@ -229,6 +242,63 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
         replayed.clear()
         assert save_tour(server)['revision_id'] != saved['revision_id']
         assert len(replayed) == 1
+
+
+@pytest.mark.parametrize('mode', ['canonical', 'private-mutation', 'noncanonical-encoding'])
+def test_origin_projection_seeding_binds_complete_current_raw_payload(
+    tmp_path, prepared_slots, monkeypatch, mode,
+):
+    from sqlalchemy import text
+
+    from beta_engine.infrastructure.db import calendar_global_slot_origins as origins
+    from beta_engine.infrastructure.db.calendar_tour import _origin_inputs
+    from beta_engine.infrastructure.db.models import (
+        BranchSavedRevisionModel,
+        RunBranchModel,
+    )
+    from beta_engine.infrastructure.db.repositories import (
+        _saved_revision_validation_signature,
+    )
+
+    path = tmp_path / ('origin-raw-' + mode + '.db')
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f'sqlite:///{path}') as server:
+        repo = server.app.state.runtime.repository
+        with repo._session_factory() as session:
+            session.execute(text('BEGIN'))
+            branch = session.get(RunBranchModel, 'branch')
+            revision = repo._validated_saved_revision_in_session(
+                session=session, model=session.get(BranchSavedRevisionModel, branch.saved_head_revision_id),
+            )
+            row = session.get(BranchSavedRevisionModel, revision.revision_id)
+            actual_payload = json.loads(row.payload_json)
+            if mode == 'private-mutation':
+                revision.payload['run']['run_id'] = 'forged-private-owner'
+                revision.payload['run']['display_name'] = 'Not the actual SQLite payload'
+            elif mode == 'noncanonical-encoding':
+                row.payload_json = json.dumps(actual_payload, indent=2)
+                session.flush()
+            signature = _saved_revision_validation_signature(row)
+            proofs = {'_global_origin_inputs': {}}
+            reads = []
+            original_inputs = origins._origin_inputs
+
+            def counted_inputs(current, cache, **kwargs):
+                if current.revision_id == revision.revision_id:
+                    reads.append(any(key[2] == current.revision_id for key in cache))
+                return original_inputs(current, cache, **kwargs)
+
+            with monkeypatch.context() as patch:
+                patch.setattr(origins, '_origin_inputs', counted_inputs)
+                origins.verify_saved_global_origins(repo, session, revision,
+                    sporting_component_proofs=proofs, _validated_value_signature=signature,
+                    _reuse_actual_payload=True)
+            assert reads and reads[0] is (mode == 'canonical')
+            projected, _ = _origin_inputs(row, proofs['_global_origin_inputs'])
+            assert projected['run'] == actual_payload['run']
+            assert projected['branch'] == actual_payload['branch']
+            assert projected['content']['calendar_tour_authority'] == actual_payload['content']['calendar_tour_authority']
+            session.rollback()
 
 
 def test_verified_working_health_reuses_only_the_complete_unchanged_history(tmp_path, prepared_slots, monkeypatch):
@@ -444,6 +514,59 @@ def test_version_directed_global_decode_preserves_strict_union_validation(tmp_pa
             parse_checkpoint_json(changed)
 
 
+def test_global_draft_read_projects_only_verified_run_and_falls_back_on_changed_bytes(
+    tmp_path, prepared_slots, monkeypatch,
+):
+    from sqlalchemy import text
+
+    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
+    from beta_engine.infrastructure.db.repositories import (
+        _saved_revision_validation_signature,
+    )
+
+    path = tmp_path / 'draft-run-projection.db'
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f'sqlite:///{path}') as server:
+        repo = server.app.state.runtime.repository
+        with repo._session_factory() as session:
+            session.execute(text('BEGIN'))
+            expected, full = repo._viewer_branch_working_draft_in_session(
+                session=session, run_id='run', branch_id='branch', include_revision_state=True,
+            )
+            head = full.saved_head_revision_id
+            assert full.saved_revision.payload['content']['calendar_tour_authority']
+            signature = _saved_revision_validation_signature(session.get(BranchSavedRevisionModel, head))
+        original_decode = repo._to_branch_saved_revision
+        materialized = []
+
+        def decoded(model, **kwargs):
+            if model.revision_id == head:
+                materialized.append(head)
+            return original_decode(model, **kwargs)
+
+        monkeypatch.setattr(repo, '_to_branch_saved_revision', decoded)
+        assert repo.get_viewer_branch_working_draft(run_id='run', branch_id='branch') == expected
+        assert not materialized, 'complete actual graph plus exact Run projection needs no full head DTO'
+        with repo._revision_validation_lock:
+            projected = repo._revision_run_projection_cache.pop(signature)
+        assert repo.get_viewer_branch_working_draft(run_id='run', branch_id='branch') == expected
+        assert materialized, 'evicted projection must take the full validated payload path'
+        with repo._revision_validation_lock:
+            repo._revision_run_projection_cache[signature] = projected
+        materialized.clear()
+        with repo._session_factory.begin() as session:
+            row = session.get(BranchSavedRevisionModel, head)
+            original_raw = row.payload_json
+            row.payload_json = json.dumps(json.loads(original_raw), indent=2)
+        assert repo.get_viewer_branch_working_draft(run_id='run', branch_id='branch') == expected
+        assert materialized, 'the same declared hash cannot certify different actual raw bytes'
+        with repo._session_factory.begin() as session:
+            session.get(BranchSavedRevisionModel, head).payload_json = original_raw
+        materialized.clear()
+        assert repo.get_viewer_branch_working_draft(run_id='run', branch_id='branch') == expected
+        assert not materialized
+
+
 def test_metadata_only_global_history_keeps_payload_until_physical_gates_finish(
     tmp_path, prepared_slots, monkeypatch
 ):
@@ -486,6 +609,7 @@ def test_metadata_only_global_history_keeps_payload_until_physical_gates_finish(
             )
         assert warm == lineage
         assert not checked, "unchanged complete graph and absent closure need only metadata"
+        expected_draft = repo.get_viewer_branch_working_draft(run_id='run', branch_id='branch')
 
         # A newly inserted, rehashed marker must invalidate that absence proof,
         # even though every sporting/Tour component remains byte-for-byte equal.
@@ -509,6 +633,8 @@ def test_metadata_only_global_history_keeps_payload_until_physical_gates_finish(
                 session=session, branch=session.get(RunBranchModel, "branch"),
                 payload_revision_ids=frozenset(),
             )
+        with pytest.raises(ValueError, match='[Cc]losure'):
+            repo.get_viewer_branch_working_draft(run_id='run', branch_id='branch')
         with repo._session_factory.begin() as session:
             row = session.get(BranchSavedRevisionModel, ancestor_id)
             row.payload_json, row.content_hash = original_bytes
@@ -518,6 +644,7 @@ def test_metadata_only_global_history_keeps_payload_until_physical_gates_finish(
                 session=session, branch=session.get(RunBranchModel, "branch"),
                 payload_revision_ids=frozenset(),
             ) == lineage
+        assert repo.get_viewer_branch_working_draft(run_id='run', branch_id='branch') == expected_draft
 
 
 def test_first_global_edition_after_birth_keeps_the_actual_native_root(tmp_path):

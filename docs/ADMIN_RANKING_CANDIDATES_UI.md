@@ -40,8 +40,8 @@ result_slot is printed rather than suppressed.
   Branch, exact season/week, candidate fingerprint and candidate_only
   publication status. Source version and disciplinary input owner identities
   are also checked. Malformed source entries, unverifiable claimed stored
-  disciplinary history and unknown tie-reason codes are rejected rather than
-  being shown as verified. An untrusted response is an error, not verified evidence.
+  disciplinary history, incomplete award numeric values and unknown tie-reason
+  codes are rejected rather than being shown as verified or summed as NaN. An untrusted response is an error, not verified evidence.
 - complete_manifest requires stored roster/results; a
   legacy_without_manifest response must have manifest: null. Legacy,
   empty-but-verified, loading, error and non-empty verified states remain separate.

@@ -34,7 +34,10 @@ result_slot is printed rather than suppressed.
 - The response and nested candidate Run/Branch, candidate_only publication
   status and usable fingerprints are checked before rendering. Ambiguous duplicate
   URL weeks/fingerprints, out-of-range legacy week coordinates and malformed rows
-  are rejected before displaying a candidate. This is UI fail-closed validation,
+  are rejected before displaying a candidate. The UI also rejects counted awards,
+  source versions, stored result publication and zero-decision versions effective
+  after the requested candidate week; no future-only inputs may masquerade as
+  historically available. This is UI fail-closed validation,
   not a claim that the browser independently recomputed the stored fingerprint.
 - Input and source responses are separately matched against the selected Run,
   Branch, exact season/week, candidate fingerprint and candidate_only
@@ -62,7 +65,8 @@ The component tests cover legacy/no candidate, exact week selection, CS/EN,
 source and input lazy loading, provenance, historic ties and disciplinary zeros,
 foreign identities, duplicate weeks, malformed source/row responses, unsupported
   tie reasons, missing decision evidence, delayed previous-Branch delivery, zero/null display,
-manual refresh and error recovery, and absence of automatic preparation / save
+manual refresh and error recovery, language switching after an identity failure,
+  and absence of automatic preparation / save
 calls. Mocked API responses establish **component contracts only**, not real
 production HTTP/SQLite/browser acceptance.
 

@@ -384,3 +384,62 @@ it('does not attach a delayed source response to a refreshed different candidate
   expect(screen.queryByText('No source results at this boundary.')).not.toBeInTheDocument()
   expect(screen.getByRole('button',{name:'Load source results'})).toBeVisible()
 })
+
+
+it('keeps already opened source and input sections within the same URL context after history refresh', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  vi.mocked(getRankingCandidateSources).mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',publication_status:'candidate_only',sources:[],
+  })
+  vi.mocked(getRankingCandidateInputs).mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',publication_status:'candidate_only',
+    verification_status:'complete_manifest',manifest:{players:[],results:[]},
+  })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Load source results'}))
+  expect(await screen.findByText('No source results at this boundary.')).toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText('The stored roster is empty.')).toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'Refresh candidates'}))
+  await waitFor(() => expect(fetchHistory).toHaveBeenCalledTimes(2))
+  expect(screen.getByRole('link',{name:'2000/01 · Week 2'})).toHaveAttribute('aria-current','page')
+  expect(screen.getByRole('button',{name:'Refresh source results'})).toBeVisible()
+  expect(screen.getByRole('button',{name:'Refresh stored inputs'})).toBeVisible()
+})
+
+it('recovers stored inputs from a failing manual refresh without treating old data as verified', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  const good = {
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',
+    publication_status:'candidate_only' as const,verification_status:'complete_manifest' as const,
+    manifest:{players:[],results:[]},
+  }
+  vi.mocked(getRankingCandidateInputs).mockResolvedValueOnce(good)
+    .mockRejectedValueOnce(new Error('Stored refresh failed')).mockResolvedValue(good)
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText('The stored roster is empty.')).toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'Refresh stored inputs'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Stored refresh failed')
+  expect(screen.getByText('The stored roster is empty.')).not.toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'Retry stored inputs'}))
+  expect(await screen.findByText('The stored roster is empty.')).toBeVisible()
+})
+
+it('does not verify source versions owned by a different Branch', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  vi.mocked(getRankingCandidateSources).mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',
+    publication_status:'candidate_only',sources:[{
+      fingerprint:'version',counted:false,
+      version:{run_id:'run',branch_id:'other',effective_week:{season_index:0,week:2},previous_fingerprint:null,
+        result:{edition_id:'edition',player_id:'player-a',source_fingerprint:'origin',qualification_points:0,main_points:0,
+          first_publication_week:{season_index:0,week:2},validity_weeks:61,ranked:false,
+          completed_week:{season_index:0,week:1},terminal_status:'completed'}},
+    }],
+  })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Load source results'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Source history does not match this candidate.')
+  expect(screen.queryByText('edition')).not.toBeInTheDocument()
+})

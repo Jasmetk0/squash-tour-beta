@@ -566,7 +566,7 @@ it('renders an omitted tie value as missing, not null or numeric zero', async ()
     verification_status:'complete_manifest',manifest:{players:[],results:[]},
     tie_explanations:[{higher_rank:1,lower_rank:2,points:0,higher_player_id:'a',lower_player_id:'b',
       reason:'previous_position',result_slot:0,higher_value:0,lower_value:undefined}],
-  } as RankingCandidateInputs)
+  } as unknown as RankingCandidateInputs)
   show('/0/2')
   await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
   expect(await screen.findByText((_, el) => el?.tagName === 'LI' &&

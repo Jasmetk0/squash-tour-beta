@@ -520,4 +520,39 @@ describe('ViewerRunHistoryFinalsPage', () => {
     expect(screen.queryByRole('list',{name:'Canonical Finals player results'})).not.toBeInTheDocument()
   })
 
+
+
+  it.each([
+    '/viewer/runs/viewer-run-2e/finals',
+    '/viewer/runs/viewer-run-2e/finals/qualification',
+  ])('rejects foreign scoped participant publications on %s', async (route) => {
+    const history = await api.getViewerFinalsRace('viewer-run-2e')
+    api.getViewerFinalsRace.mockResolvedValue({
+      ...history,
+      publications: history.publications.map((publication: {viewer_branch_id: string}) =>
+        ({...publication, viewer_branch_id: 'other-viewer-branch'})),
+    })
+    renderViewerRoute(route)
+    expect(await screen.findByText(/Finals publication scope does not match the selected Viewer Run/)).toBeInTheDocument()
+    expect(screen.queryByRole('table',{name:'Canonical World Tour Finals participants'})).not.toBeInTheDocument()
+    expect(screen.queryByText('WTF-2031')).not.toBeInTheDocument()
+  })
+
+  it.each([
+    '/viewer/runs/viewer-run-2e/finals',
+    '/viewer/runs/viewer-run-2e/finals/qualification',
+  ])('does not disclose an unpublished Finals event ID on %s', async (route) => {
+    const history = await api.getViewerFinalsRace('viewer-run-2e')
+    api.getViewerFinalsRace.mockResolvedValue({
+      ...history,
+      publications: history.publications.map((publication: {selection_published: boolean}) =>
+        ({...publication, selection_published: false})),
+    })
+    renderViewerRoute(route)
+    expect(await screen.findByText('Not selected yet')).toBeInTheDocument()
+    expect(screen.queryByText('WTF-2031')).not.toBeInTheDocument()
+    expect(screen.getByText('Confirmed World Tour Finals participants are not published yet.')).toBeInTheDocument()
+    expect(api.getViewerTournamentResult).not.toHaveBeenCalled()
+  })
+
 })

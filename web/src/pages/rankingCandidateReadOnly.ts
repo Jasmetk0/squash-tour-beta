@@ -146,8 +146,35 @@ type DisplayAward = {
   first_publication_week: CandidateWeek
   validity_weeks: number
 }
+function nonempty(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0
+}
+
+function provenanceLink(value: unknown): boolean {
+  return value === null || nonempty(value)
+}
+
+function storedResultFields(value: unknown): boolean {
+  if (value === null || typeof value !== 'object') return false
+  const result = value as { player_id?: unknown; source_fingerprint?: unknown; ranked?: unknown; terminal_status?: unknown }
+  return nonempty(result.player_id) && nonempty(result.source_fingerprint) &&
+    typeof result.ranked === 'boolean' &&
+    (result.terminal_status === 'completed' || result.terminal_status === 'abandoned')
+}
+
+function validZero(value: unknown, runId: string, branchId: string, boundary: CandidateWeek, playerId?: string): boolean {
+  if (value === null || typeof value !== 'object') return false
+  const zero = value as { run_id?: unknown; branch_id?: unknown; player_id?: unknown;
+    zero_id?: unknown; source_fingerprint?: unknown; effective_week?: CandidateWeek; duration_weeks?: unknown }
+  return zero.run_id === runId && zero.branch_id === branchId &&
+    nonempty(zero.player_id) && (playerId === undefined || zero.player_id === playerId) &&
+    nonempty(zero.zero_id) && nonempty(zero.source_fingerprint) &&
+    notAfter(zero.effective_week, boundary) &&
+    typeof zero.duration_weeks === 'number' && Number.isInteger(zero.duration_weeks) && zero.duration_weeks > 0
+}
+
 function validAward(award: DisplayAward | null | undefined): boolean {
-  return Boolean(award && typeof award.edition_id === 'string' &&
+  return Boolean(award && nonempty(award.edition_id) &&
     Number.isFinite(award.qualification_points) && Number.isFinite(award.main_points) &&
     validLegacyWeek(award.completed_week) && validLegacyWeek(award.first_publication_week) &&
     Number.isInteger(award.validity_weeks) && award.validity_weeks > 0)
@@ -168,8 +195,9 @@ export function validCandidateHistory(data: RankingCandidateHistory, runId: stri
         !snapshot || snapshot.run_id !== runId || snapshot.branch_id !== branchId ||
         !validLegacyWeek(week) ||
         typeof candidate.fingerprint !== 'string' || !candidate.fingerprint ||
-        !Array.isArray(candidate.command_ids) || !candidate.command_ids.every(id => typeof id === 'string') ||
-        !snapshot.policy || !Number.isInteger(snapshot.policy.best_n) || snapshot.policy.best_n < 1 ||
+        !Array.isArray(candidate.command_ids) || !candidate.command_ids.every(nonempty) ||
+        !snapshot.policy || !nonempty(snapshot.policy.policy_id) ||
+        !Number.isInteger(snapshot.policy.best_n) || snapshot.policy.best_n < 1 ||
         !Array.isArray(snapshot.rows)) return false
 
     // A weekly candidate cannot have two competing versions on the same URL.
@@ -179,14 +207,13 @@ export function validCandidateHistory(data: RankingCandidateHistory, runId: stri
     fingerprints.add(candidate.fingerprint)
 
     return snapshot.rows.every(row =>
-      row !== null && typeof row.player_id === 'string' &&
+      row !== null && nonempty(row.player_id) &&
       Number.isInteger(row.rank) && Number.isFinite(row.points) &&
       Array.isArray(row.counted_results) && row.counted_results.every(award =>
         validAward(award) && notAfter(award.completed_week, week) && notAfter(award.first_publication_week, week)) &&
       (row.disciplinary_zeros === undefined ||
         (Array.isArray(row.disciplinary_zeros) && row.disciplinary_zeros.every(z =>
-          z?.run_id === runId && z.branch_id === branchId && z.player_id === row.player_id &&
-          notAfter(z.effective_week, week)))))
+          validZero(z, runId, branchId, week, row.player_id)))))
   })
 }
 
@@ -201,9 +228,11 @@ export function validCandidateResponse(
   if ('sources' in data) {
     return Array.isArray(data.sources) && data.sources.every(source =>
       source !== null &&
-      typeof source.fingerprint === 'string' && Boolean(source.fingerprint) &&
+      nonempty(source.fingerprint) && typeof source.counted === 'boolean' &&
       source.version?.run_id === runId && source.version.branch_id === branchId &&
+      provenanceLink(source.version.previous_fingerprint) &&
       notAfter(source.version.effective_week, week) && validAward(source.version.result) &&
+      storedResultFields(source.version.result) &&
       notAfter(source.version.result.completed_week, week) &&
       notAfter(source.version.result.first_publication_week, week))
   }
@@ -211,16 +240,20 @@ export function validCandidateResponse(
   if (data.verification_status === 'legacy_without_manifest') return data.manifest === null
   if (data.verification_status !== 'complete_manifest' || !data.manifest ||
       !Array.isArray(data.manifest.players) || !Array.isArray(data.manifest.results) ||
-      !data.manifest.players.every(player => player && typeof player.player_id === 'string' && validLegacyWeek(player.tour_entry_week)) ||
-      !data.manifest.results.every(result => validAward(result) &&
+      !data.manifest.players.every(player => player && nonempty(player.player_id) &&
+        nonempty(player.tie_break_token) && typeof player.retired === 'boolean' &&
+        validLegacyWeek(player.tour_entry_week) && notAfter(player.tour_entry_week, week)) ||
+      !data.manifest.results.every(result => validAward(result) && storedResultFields(result) &&
         notAfter(result.completed_week, week) && notAfter(result.first_publication_week, week))) return false
   if (data.manifest.disciplinary_zeros !== undefined &&
       (!Array.isArray(data.manifest.disciplinary_zeros) ||
-        data.manifest.disciplinary_zeros.some(z => !z || z.run_id !== runId || z.branch_id !== branchId || !notAfter(z.effective_week, week)))) return false
+        data.manifest.disciplinary_zeros.some(z => !validZero(z, runId, branchId, week)))) return false
   if (data.zero_sources !== undefined &&
       (!Array.isArray(data.zero_sources) || data.zero_sources.some(s =>
-        !s?.version?.zero || s.version.zero.run_id !== runId || s.version.zero.branch_id !== branchId ||
-        !notAfter(s.version.effective_week, week) || !notAfter(s.version.zero.effective_week, week)))) return false
+        !s || !nonempty(s.fingerprint) || ![
+          'superseded', 'expired', 'reserves_slot', 'player_not_classified',
+        ].includes(s.impact) || !provenanceLink(s.version?.previous_fingerprint) ||
+        !notAfter(s.version?.effective_week, week) || !validZero(s.version?.zero, runId, branchId, week)))) return false
 
   // A claimed verified decision history without its historical versions
   // cannot be represented as a verified source history in this view.

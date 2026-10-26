@@ -188,6 +188,7 @@ export function validCandidateHistory(data: RankingCandidateHistory, runId: stri
 
   const weeks = new Set<string>()
   const fingerprints = new Set<string>()
+  let previousOrdinal = -1
   return data.candidates.every(candidate => {
     const snapshot = candidate?.snapshot
     const week = snapshot?.week
@@ -202,18 +203,34 @@ export function validCandidateHistory(data: RankingCandidateHistory, runId: stri
 
     // A weekly candidate cannot have two competing versions on the same URL.
     const weekKey = week.season_index + '/' + week.week
-    if (weeks.has(weekKey) || fingerprints.has(candidate.fingerprint)) return false
+    const ordinal = week.season_index * 61 + week.week
+    if (weeks.has(weekKey) || fingerprints.has(candidate.fingerprint) ||
+        ordinal <= previousOrdinal) return false
+    previousOrdinal = ordinal
     weeks.add(weekKey)
     fingerprints.add(candidate.fingerprint)
 
-    return snapshot.rows.every(row =>
-      row !== null && nonempty(row.player_id) &&
-      Number.isInteger(row.rank) && Number.isFinite(row.points) &&
-      Array.isArray(row.counted_results) && row.counted_results.every(award =>
-        validAward(award) && notAfter(award.completed_week, week) && notAfter(award.first_publication_week, week)) &&
-      (row.disciplinary_zeros === undefined ||
-        (Array.isArray(row.disciplinary_zeros) && row.disciplinary_zeros.every(z =>
-          validZero(z, runId, branchId, week, row.player_id)))))
+    // The last candidate drives the existing Preparation panel. Reject a
+    // misordered history or ranking table instead of using an incorrect head.
+    const playerIds = new Set<string>()
+    return snapshot.rows.every((row, index) => {
+      if (!row || !nonempty(row.player_id) || playerIds.has(row.player_id) ||
+          row.rank !== index + 1 || !Number.isInteger(row.points) || row.points < 0 ||
+          (index > 0 && snapshot.rows[index - 1].points < row.points) ||
+          !Array.isArray(row.counted_results)) return false
+      playerIds.add(row.player_id)
+      const zeroes = row.disciplinary_zeros ?? []
+      if (!Array.isArray(zeroes) || zeroes.length > snapshot.policy.best_n ||
+          new Set(zeroes.map(z => z?.zero_id)).size !== zeroes.length ||
+          !zeroes.every(z => validZero(z, runId, branchId, week, row.player_id)) ||
+          row.counted_results.length > snapshot.policy.best_n - zeroes.length ||
+          new Set(row.counted_results.map(award => award?.edition_id)).size !== row.counted_results.length ||
+          !row.counted_results.every(award =>
+            validAward(award) && notAfter(award.completed_week, week) &&
+            notAfter(award.first_publication_week, week))) return false
+      return row.points === row.counted_results.reduce(
+        (total, award) => total + award.qualification_points + award.main_points, 0)
+    })
   })
 }
 

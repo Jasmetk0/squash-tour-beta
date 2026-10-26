@@ -712,3 +712,58 @@ it('rejects malformed preparation audits instead of presenting an incomplete ver
   expect(await screen.findByRole('alert')).toHaveTextContent('Stored inputs do not match this candidate.')
   expect(screen.queryByText('Verified: stored inputs reproduce this candidate.')).not.toBeInTheDocument()
 })
+
+
+it('accepts a chronologically ordered candidate sequence and selects the exact later week', async () => {
+  const ordered = structuredClone(populated)
+  ordered.candidates.push({
+    ...structuredClone(populated.candidates[0]),
+    fingerprint:'next-week',
+    snapshot:{...structuredClone(populated.candidates[0].snapshot),week:{season_index:0,week:3}},
+  })
+  fetchHistory.mockResolvedValue(ordered)
+  show('/0/3')
+  expect(await screen.findByRole('link',{name:'2000/01 · Week 3'})).toHaveAttribute('aria-current','page')
+  expect(screen.getByText('player-a')).toBeVisible()
+  expect(screen.queryByText('Ranking history does not match this candidate.')).not.toBeInTheDocument()
+})
+
+it('rejects reversed candidate chronology instead of handing the older head to Preparation', async () => {
+  const reversed = structuredClone(populated)
+  reversed.candidates.unshift({
+    ...structuredClone(populated.candidates[0]),
+    fingerprint:'later-week',
+    snapshot:{...structuredClone(populated.candidates[0].snapshot),week:{season_index:0,week:3}},
+  })
+  fetchHistory.mockResolvedValue(reversed)
+  show('/0/2')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Ranking history does not match this candidate.')
+  expect(screen.queryByText('player-a')).not.toBeInTheDocument()
+})
+
+it.each([
+  ['non-contiguous ranks', (candidate: RankingCandidateHistory) => {
+    candidate.candidates[0].snapshot.rows[0].rank = 2
+  }],
+  ['points not equal to counted award sum', (candidate: RankingCandidateHistory) => {
+    candidate.candidates[0].snapshot.rows[0].points = 121
+  }],
+  ['duplicate player IDs', (candidate: RankingCandidateHistory) => {
+    candidate.candidates[0].snapshot.rows.push({
+      ...structuredClone(candidate.candidates[0].snapshot.rows[0]), rank:2,
+    })
+  }],
+  ['ranking points increasing down the table', (candidate: RankingCandidateHistory) => {
+    const second = structuredClone(candidate.candidates[0].snapshot.rows[0])
+    second.rank=2; second.player_id='player-b'; second.points=130
+    second.counted_results[0].main_points=110
+    candidate.candidates[0].snapshot.rows.push(second)
+  }],
+])('rejects a ranking snapshot with %s before rendering a misleading table', async (_label, mutate) => {
+  const candidate=structuredClone(populated)
+  mutate(candidate)
+  fetchHistory.mockResolvedValue(candidate)
+  show('/0/2')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Ranking history does not match this candidate.')
+  expect(screen.queryByText('Candidate ranking table')).not.toBeInTheDocument()
+})

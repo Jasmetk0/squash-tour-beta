@@ -29,7 +29,7 @@ def _json_object(raw: str, *, label: str) -> dict:
 
 
 def resolve_revision_run_calendar(
-    session: Session, *, run_id: str, revision_id: str
+    session: Session, *, run_id: str, revision_id: str, _repository=None
 ) -> RunCalendar:
     """Read one hash-verified immutable calendar selected by an existing authority.
 
@@ -43,25 +43,31 @@ def resolve_revision_run_calendar(
     revision = session.get(BranchSavedRevisionModel, revision_id)
     if revision is None or revision.run_id != run_id:
         raise ValueError("Run calendar Saved head is missing or outside this Run")
-    payload = _json_object(revision.payload_json, label="Saved Revision payload")
-    changes = _json_object(revision.change_summary_json, label="Saved Revision change summary")
-    if (
-        revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
-        or saved_revision_content_hash(
-            revision_id=revision.revision_id,
-            run_id=revision.run_id,
-            branch_id=revision.branch_id,
-            sequence=revision.sequence,
-            parent_revision_id=revision.parent_revision_id,
-            kind=revision.kind,
-            payload_schema_version=revision.payload_schema_version,
-            payload=payload,
-            change_summary=changes,
-        ) != revision.content_hash
-    ):
-        raise ValueError("Run calendar Saved Revision failed content-hash validation")
-
-    saved_run = payload.get("run")
+    projection = _repository._known_saved_run_projection(revision) if _repository is not None else None
+    if projection is None:
+        payload = _json_object(revision.payload_json, label="Saved Revision payload")
+        changes = _json_object(revision.change_summary_json, label="Saved Revision change summary")
+        if (
+            revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
+            or saved_revision_content_hash(
+                revision_id=revision.revision_id,
+                run_id=revision.run_id,
+                branch_id=revision.branch_id,
+                sequence=revision.sequence,
+                parent_revision_id=revision.parent_revision_id,
+                kind=revision.kind,
+                payload_schema_version=revision.payload_schema_version,
+                payload=payload,
+                change_summary=changes,
+            ) != revision.content_hash
+        ):
+            raise ValueError("Run calendar Saved Revision failed content-hash validation")
+        saved_run = payload.get("run")
+    else:
+        # This repository already checked the original FULL content hash for
+        # these exact actual bytes. The immutable projection omits no part of
+        # this reader's Run identity/calendar contract. Changed bytes miss.
+        saved_run = _json_object(projection, label="Saved Revision Run")
     if not isinstance(saved_run, dict) or saved_run.get("run_id") != run_id:
         raise ValueError("Saved Revision Run identity is corrupt")
 
@@ -74,7 +80,7 @@ def resolve_revision_run_calendar(
 
 
 def resolve_saved_run_calendar(
-    session: Session, *, run_id: str, branch_id: str
+    session: Session, *, run_id: str, branch_id: str, _repository=None
 ) -> RunCalendar:
     """Return the verified calendar without modifying Run or Saved history.
 
@@ -108,7 +114,7 @@ def resolve_saved_run_calendar(
         return current_calendar
 
     saved_calendar = resolve_revision_run_calendar(
-        session, run_id=run_id, revision_id=branch.saved_head_revision_id
+        session, run_id=run_id, revision_id=branch.saved_head_revision_id, _repository=_repository
     )
 
     if saved_calendar != current_calendar:

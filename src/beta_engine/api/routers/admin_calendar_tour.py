@@ -174,10 +174,12 @@ def execute(
     branch_id: str,
     payload: CalendarTourCommit,
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    include_inspection: bool = Query(False),
 ):
     try:
         return CalendarTourService(runtime.repository).execute(
-            run_id=run_id, branch_id=branch_id, request=payload
+            run_id=run_id, branch_id=branch_id, request=payload,
+            include_inspection=include_inspection,
         )
     except (KeyError, ValueError, TypeError) as exc:
         raise conflict(exc) from exc
@@ -219,6 +221,32 @@ def save(
         # This command receipt needs its identity/hash, not another transfer of
         # every population snapshot and rally log. History/detail owns that read.
         revision = result.saved_revision
+        from sqlalchemy import text
+
+        from beta_engine.application.calendar_tour_save_projection import (
+            saved_inspection_value_fingerprint,
+        )
+
+        with service.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            continuity = saved_inspection_value_fingerprint(
+                session, revision.payload, expected_head=revision.revision_id,
+            )
+        saved_projection = None
+        draft = result.working_draft
+        if (continuity is not None and draft.status == "clean" and draft.change_count == 0
+            and draft.base_saved_revision_id == revision.revision_id):
+            content = revision.payload["content"]
+            saved_projection = {
+                "schema_version": "calendar_tour_saved_projection.v1",
+                "payload_fingerprint": continuity,
+                "run_id": run_id, "branch_id": branch_id,
+                "previous_saved_head_revision_id": revision.parent_revision_id,
+                "saved_head_revision_id": revision.revision_id,
+                "draft_version": draft.draft_version,
+                "checkpoint_fingerprint": content["calendar_player_sporting_checkpoint"]["fingerprint"],
+                "tour_fingerprint": content["calendar_tour_authority"]["fingerprint"],
+            }
         return {
             "schema_version": "calendar_tour_save_receipt.v1",
             "run_id": result.run_id,
@@ -242,6 +270,7 @@ def save(
                 )
             },
             "working_draft": result.working_draft,
+            "saved_projection": saved_projection,
             "audit_event": result.audit_event,
         }
     except (KeyError, ValueError, TypeError) as exc:

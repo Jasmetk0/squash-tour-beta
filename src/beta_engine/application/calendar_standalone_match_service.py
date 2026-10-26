@@ -61,13 +61,13 @@ class CalendarStandaloneMatchService:
             or branch.status != "active"
         ):
             raise ValueError("Calendar match requires an active writable custom Run/Branch")
-        clock = resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id)
-        if clock.schema_version != "run_calendar.v1":
-            raise ValueError("Calendar match requires versioned Run calendar")
         state = self.repository._validated_branch_revision_state_in_session(
             session=session, branch=branch,
             sporting_component_proofs=_sporting_component_proofs,
         )
+        clock = resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id, _repository=self.repository)
+        if clock.schema_version != "run_calendar.v1":
+            raise ValueError("Calendar match requires versioned Run calendar")
         from beta_engine.application.native_full_simulation_closure import saved_native_closure
         if not allow_completed and saved_native_closure(state.saved_revision.payload, branch_id=branch_id, calendar=clock):
             raise ValueError("This native Branch is completed; explicitly extend the Run before new sporting work")

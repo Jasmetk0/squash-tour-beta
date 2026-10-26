@@ -755,6 +755,7 @@ class ViewerSavedRevisionSnapshot:
     simulation_slot_component: dict[str, object] | None
     definitive_wild_cards: tuple[object, ...] | None
     run_package_state: object | None = None
+    calendar_tour: object | None = None
 
 
 class BranchExecutionTargetResolutionError(ValueError):
@@ -1490,6 +1491,8 @@ class SimulationPersistenceRepository:
         # Every lookup rehashes the exact stored bytes and metadata; tampering,
         # including a rewritten content hash, invalidates the proof.
         self._revision_validation_cache: dict[tuple, BranchSavedRevisionRecord] = {}
+        self._revision_run_projection_cache: dict[tuple, str] = {}
+        self._revision_validation_no_closure: set[tuple] = set()
         self._revision_validation_lock = Lock()
         # Bounded single-flight locks prevent concurrent cold Admin reads from
         # replaying the same exact immutable revision at the same time. Proofs
@@ -2516,6 +2519,8 @@ class SimulationPersistenceRepository:
     def _validated_saved_revision_in_session(self, **kwargs):
         from beta_engine.infrastructure.db.native_fork_runtime_state import native_read_proof_scope
         with native_read_proof_scope():
+            if kwargs.get('sporting_component_proofs') is None:
+                kwargs['sporting_component_proofs'] = {}
             return self._validated_saved_revision_core_in_session(**kwargs)
 
     def _validated_saved_revision_core_in_session(
@@ -2525,6 +2530,7 @@ class SimulationPersistenceRepository:
         model: BranchSavedRevisionModel,
         materialize_payload: bool = True,
         sporting_component_proofs: dict | None = None,
+        _decoded_payload=None,
     ) -> BranchSavedRevisionRecord:
         """Load one immutable revision and validate its stored owner and hash."""
 
@@ -2550,7 +2556,13 @@ class SimulationPersistenceRepository:
             return memo[proof_key]
         token = _active_saved_revision_proofs.set(active | {key})
         try:
-            if model.payload_schema_version == "native_fork_saved_root.v2":
+            from beta_engine.infrastructure.db.calendar_global_slot_origins import is_global_slot_row
+            # Routing hints are keyed by all actual JSON bytes, including any
+            # unexpected mixed-owner component; they never certify a source.
+            decoded_value = ({'value': _decoded_payload} if _decoded_payload is not None
+                and _decoded_payload[0] == model.payload_json else {})
+            global_slots = is_global_slot_row(model, repository=self, _decoded_out=decoded_value)
+            if model.payload_schema_version == "native_fork_saved_root.v2" or global_slots:
                 from beta_engine.infrastructure.db.native_fork_runtime_state import (
                     actual_dependency_signature,
                     has_actual_dependency_proof,
@@ -2559,37 +2571,101 @@ class SimulationPersistenceRepository:
                 complete = has_actual_dependency_proof(self, dependency_signature,
                     run_id=model.run_id, branch_id=model.branch_id)
                 if complete:
+                    if not materialize_payload:
+                        with self._revision_validation_lock:
+                            metadata = self._revision_validation_cache.get(signature)
+                            no_closure = signature in self._revision_validation_no_closure
+                        if metadata is not None and no_closure:
+                            # The COMPLETE actual dependency graph just matched
+                            # a successful physical proof. These exact bytes
+                            # also proved the closure key absent. Return only
+                            # metadata without decoding every old rally again.
+                            # Any marker (including malformed/foreign markers)
+                            # or cache miss retains the full path below.
+                            memo[proof_key] = metadata
+                            return metadata
                     # The cache proves COMPLETE actual dependency bytes, owners,
                     # topology and source reachability, not just this row's hash.
                     # Reparse JSON for isolation; never share mutable payloads.
-                    revision = self._to_branch_saved_revision(model, validate_components=False, validate_native_root=False)
+                    revision = self._to_branch_saved_revision(model, validate_components=False, validate_native_root=False,
+                        _decoded_payload=decoded_value.get('value'))
                     from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
                     verify_saved_native_closure(self, session, revision)
+                    if global_slots and sporting_component_proofs is not None:
+                        # This exact current row was just decoded after its full
+                        # actual dependency proof. Seed the same isolated value
+                        # projection used by subsequent live command-source checks.
+                        from beta_engine.infrastructure.db.calendar_tour import remember_verified_origin_projection
+                        remember_verified_origin_projection(model, revision.payload,
+                            sporting_component_proofs.setdefault('_global_origin_inputs', {}))
                     if not materialize_payload:
                         revision = replace(revision, payload={}, change_summary={})
                     memo[proof_key] = revision
                     return revision
+            verified_global_prefix = None
+            with self._revision_validation_lock:
+                needs_component_validation = signature not in self._revision_validation_cache
+            if global_slots and needs_component_validation and model.parent_revision_id:
+                parent_model = session.get(BranchSavedRevisionModel, model.parent_revision_id)
+                with self._revision_validation_lock:
+                    parent_component_known = (
+                        parent_model is not None
+                        and _saved_revision_validation_signature(parent_model) in self._revision_validation_cache
+                    )
+                if (parent_model is not None
+                    and parent_component_known
+                    and (parent_model.run_id, parent_model.branch_id, parent_model.sequence)
+                    == (model.run_id, model.branch_id, model.sequence - 1)
+                    and is_global_slot_row(parent_model, repository=self)):
+                    # Authenticate the actual immutable predecessor before
+                    # entering the striped work lock. Only its unchanged prefix
+                    # may anchor this revision's independently replayed suffix.
+                    parent_revision = self._validated_saved_revision_in_session(
+                        session=session, model=parent_model,
+                        sporting_component_proofs=sporting_component_proofs,
+                    )
+                    from beta_engine.infrastructure.db.calendar_standalone_match_state import decode_prevalidated_calendar_sources
+                    from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_tour_source
+                    _, parent_checkpoint, parent_tour = decoded_global_tour_source(
+                        self, parent_revision,
+                        lambda source: decode_prevalidated_calendar_sources(
+                            source.payload, run_id=model.run_id, branch_id=model.branch_id,
+                        ),
+                    )
+                    verified_global_prefix = (parent_checkpoint, parent_tour, parent_revision.payload)
             with work_lock:
-                revision = self._validate_saved_revision_once(
+                revision, baseline = self._validate_saved_revision_once(
                     session=session, model=model, signature=signature,
-                    materialize_payload=materialize_payload,
+                    # Source/closure gates below need the complete native
+                    # payload even when the caller wants metadata only. Strip
+                    # it only AFTER all physical gates finish successfully.
+                    materialize_payload=(materialize_payload or global_slots
+                        or model.payload_schema_version == "native_fork_saved_root.v2"),
                     sporting_component_proofs=sporting_component_proofs,
+                    verified_global_prefix=verified_global_prefix,
+                    _decoded_payload=decoded_value.get('value'),
                 )
             # Source resolution can validate other revisions. Never hold a stripe
             # lock here: unrelated source/target signatures may share that lock.
-            baseline = load_native_fork_saved_root(revision)
             if baseline is not None:
                 verify_native_fork_saved_root(
                     self, session, revision=revision, baseline=baseline
                 )
+            from beta_engine.infrastructure.db.calendar_global_slot_origins import verify_saved_global_origins
+            if global_slots:
+                verify_saved_global_origins(self, session, revision, sporting_component_proofs=sporting_component_proofs,
+                    _validated_value_signature=signature)
             from beta_engine.infrastructure.db.calendar_terminal_results import verify_saved_terminal_results
             verify_saved_terminal_results(self, session, revision, sporting_component_proofs=sporting_component_proofs)
             from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
             verify_saved_native_closure(self, session, revision)
+            if global_slots:
+                from beta_engine.infrastructure.db.native_fork_runtime_state import verify_with_actual_dependencies
+                verify_with_actual_dependencies(self, session, revision, lambda: None)
             if baseline is not None:
                 memo[(id(session), signature, True)] = revision
-                if not materialize_payload:
-                    revision = replace(revision, payload={}, change_summary={})
+            if not materialize_payload:
+                revision = replace(revision, payload={}, change_summary={})
             memo[proof_key] = revision
             return revision
         except (TypeError, ValueError) as exc:
@@ -2599,14 +2675,18 @@ class SimulationPersistenceRepository:
 
     def _validate_saved_revision_once(
         self, *, session, model, signature, materialize_payload,
-        sporting_component_proofs,
+        sporting_component_proofs, verified_global_prefix=None,
+        _decoded_payload=None,
     ):
         """One exact-byte validation in flight; every waiter still checks owner."""
         with self._revision_validation_lock:
             verified = self._revision_validation_cache.get(signature)
         revision = (
             self._to_branch_saved_revision(model, validate_components=verified is None,
-                sporting_component_proofs=sporting_component_proofs)
+                validate_native_root=False,
+                sporting_component_proofs=sporting_component_proofs,
+                verified_global_prefix=verified_global_prefix,
+                _decoded_payload=_decoded_payload)
             if materialize_payload or verified is None
             else verified
         )
@@ -2621,8 +2701,12 @@ class SimulationPersistenceRepository:
             raise BranchRevisionStateConflictError(
                 "Pending native fork has no authenticated baseline root"
             )
+        # Parse the structural native root once, then carry that exact result
+        # into the out-of-lock physical dependency verifier. Re-decoding the
+        # growing runtime here and again after recursive replay is redundant.
+        baseline = load_native_fork_saved_root(revision)
         if verified is not None:
-            return revision
+            return revision, baseline
         payload_run = revision.payload.get("run")
         payload_branch = revision.payload.get("branch")
         if (
@@ -2647,23 +2731,44 @@ class SimulationPersistenceRepository:
             )
         # This root depends on other physical rows. Its own bytes alone cannot
         # certify source integrity; reauthenticate outside the work lock each time.
-        if load_native_fork_saved_root(revision) is not None:
-            return revision
+        if baseline is not None:
+            return revision, baseline
         metadata = self._remember_validated_revision(signature, revision)
-        return revision if materialize_payload else metadata
+        return (revision if materialize_payload else metadata), None
 
     def _remember_validated_revision(self, signature, revision):
         """Retain only proof metadata after all source and identity checks pass."""
         metadata = replace(revision, payload={}, change_summary={})
         if load_native_fork_saved_root(revision) is not None:
             return metadata
+        # A small immutable value projection of this hash-verified actual row.
+        # It certifies only the existing calendar reader's content-hash gate;
+        # physical source/lineage gates remain independently mandatory.
+        run_projection = _to_json(revision.payload.get('run'))
         with self._revision_validation_lock:
             self._revision_validation_cache[signature] = metadata
+            if len(run_projection.encode('utf-8')) <= 32 * 1024:
+                self._revision_run_projection_cache[signature] = run_projection
+                while len(self._revision_run_projection_cache) > 128:
+                    self._revision_run_projection_cache.pop(next(iter(self._revision_run_projection_cache)))
+            if 'native_branch_closures' not in revision.payload.get('run', {}):
+                self._revision_validation_no_closure.add(signature)
+            else:
+                self._revision_validation_no_closure.discard(signature)
             if len(self._revision_validation_cache) > 128:
-                self._revision_validation_cache.pop(
-                    next(iter(self._revision_validation_cache))
-                )
+                oldest = next(iter(self._revision_validation_cache))
+                self._revision_validation_cache.pop(oldest)
+                self._revision_validation_no_closure.discard(oldest)
+                self._revision_run_projection_cache.pop(oldest, None)
         return metadata
+
+    def _known_saved_run_projection(self, model):
+        """Pure Run value only when EVERY current raw byte/metadata still matches."""
+        signature = _saved_revision_validation_signature(model)
+        with self._revision_validation_lock:
+            if signature not in self._revision_validation_cache:
+                return None
+            return self._revision_run_projection_cache.get(signature)
 
     def _validated_branch_revision_lineage_in_session(self, **kwargs):
         from beta_engine.infrastructure.db.native_fork_runtime_state import native_read_proof_scope
@@ -4034,9 +4139,15 @@ class SimulationPersistenceRepository:
         validate_components: bool = True,
         sporting_component_proofs: dict | None = None,
         validate_native_root: bool = True,
+        verified_global_prefix=None,
+        _decoded_payload=None,
     ) -> BranchSavedRevisionRecord:
         try:
-            payload = _from_json(model.payload_json)
+            # The routing peek owns this fresh JSON tree from the SAME complete
+            # raw bytes. Reuse only structural decoding; all component, owner,
+            # content-hash, source and closure checks below still run.
+            payload = (_decoded_payload[1] if _decoded_payload is not None
+                and _decoded_payload[0] == model.payload_json else _from_json(model.payload_json))
             change_summary = _from_json(model.change_summary_json)
         except (TypeError, ValueError) as exc:
             raise BranchRevisionStateConflictError(
@@ -4054,10 +4165,13 @@ class SimulationPersistenceRepository:
                 load_saved_run_package_state(
                     payload, run_id=model.run_id, branch_id=model.branch_id
                 )
-                load_saved_calendar_match(
-                    payload, run_id=model.run_id, branch_id=model.branch_id,
-                    _sporting_component_proofs=sporting_component_proofs,
-                )
+                from beta_engine.infrastructure.db.calendar_native_competition import has_replayed_global_components
+                if not has_replayed_global_components(payload, sporting_component_proofs):
+                    load_saved_calendar_match(
+                        payload, run_id=model.run_id, branch_id=model.branch_id,
+                        _sporting_component_proofs=sporting_component_proofs,
+                        _verified_global_prefix=verified_global_prefix,
+                    )
         except (TypeError, ValueError) as exc:
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {model.revision_id} has invalid ranking content: {exc}"
@@ -4208,14 +4322,39 @@ class SimulationPersistenceRepository:
             )
 
     def _validated_branch_revision_state_in_session(
-        self, *, session: Session, branch: RunBranchModel, sporting_component_proofs: dict | None = None
+        self, *, session: Session, branch: RunBranchModel, sporting_component_proofs: dict | None = None,
+        _saved_run_only: bool = False,
     ) -> BranchRevisionStateRecord:
+        # The Working Draft DTO needs only the Saved Run's Viewer selection.
+        # Keep ordinary callers' full payload contract. The narrow internal
+        # path still authenticates EVERY actual physical dependency below;
+        # only already hash-verified exact Run JSON may replace materialization.
+        head_model = None
+        project_run = False
+        if _saved_run_only and branch.saved_head_revision_id:
+            head_model = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
+            if head_model is not None and self._known_saved_run_projection(head_model) is not None:
+                from beta_engine.infrastructure.db.calendar_global_slot_origins import (
+                    is_global_slot_row,
+                )
+                project_run = is_global_slot_row(head_model, repository=self)
         revision = self._validated_branch_revision_lineage_in_session(
             session=session,
             branch=branch,
-            payload_revision_ids=frozenset({branch.saved_head_revision_id}),
+            payload_revision_ids=frozenset() if project_run else frozenset({branch.saved_head_revision_id}),
             sporting_component_proofs=sporting_component_proofs,
         )[0]
+        if project_run:
+            run_projection = self._known_saved_run_projection(head_model)
+            if run_projection is None:
+                # Concurrent cache eviction or changed actual bytes must take
+                # the original full materialization/validation path.
+                revision = self._validated_saved_revision_in_session(
+                    session=session, model=head_model,
+                    sporting_component_proofs=sporting_component_proofs,
+                )
+            else:
+                revision = replace(revision, payload={'run': _from_json(run_projection)})
         draft_model = session.execute(
             select(BranchWorkingDraftModel).where(
                 BranchWorkingDraftModel.branch_id == branch.branch_id
@@ -4289,7 +4428,7 @@ class SimulationPersistenceRepository:
             )
         try:
             state = self._validated_branch_revision_state_in_session(
-                session=session, branch=branch
+                session=session, branch=branch, _saved_run_only=not include_revision_state,
             )
             saved_viewer_id = saved_viewer_branch_id(state.saved_revision.payload)
             if state.working_draft.status == CLEAN_WORKING_DRAFT_STATUS:
@@ -5424,7 +5563,7 @@ class SimulationPersistenceRepository:
                 native_birth_restore = (
                     target_content.get("calendar_player_sporting_checkpoint", {})
                     .get("state", {}).get("schema_version")
-                    in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
+                    in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
                 )
                 capture_saved_calendar_match(
                     session, payload, run_id=run_id, branch_id=branch_id,
@@ -5887,6 +6026,10 @@ class SimulationPersistenceRepository:
         target_viewer_id = ""
         verified_native_save_receipt = None
         verified_native_save_signature = None
+        global_append_before = None
+        global_append_ancestors = ()
+        committed_global_append = None
+        origin_value_projections = {}
         try:
             with self._session_factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
@@ -5894,6 +6037,29 @@ class SimulationPersistenceRepository:
                     session=session, run_id=run_id, branch_id=branch_id,
                     include_revision_state=True,
                 )
+                if (expected_calendar_tour_fingerprint is not None
+                    and 'native_branch_closures' not in state.saved_revision.payload.get('run', {})
+                    and state.saved_revision.payload.get('content', {}).get('calendar_tour_authority', {}).get('state', {}).get('schema_version') == 'calendar_tour_authority.v5'):
+                    from beta_engine.infrastructure.db.native_fork_runtime_state import (
+                        actual_dependency_signature, has_actual_dependency_proof,
+                        actual_saved_revision_reference, native_read_proof_scope,
+                    )
+                    with native_read_proof_scope():
+                        actual = actual_dependency_signature(session,
+                            session.get(BranchSavedRevisionModel, state.saved_head_revision_id), repository=self)
+                        if has_actual_dependency_proof(self, actual, run_id=run_id, branch_id=branch_id):
+                            global_append_before = actual
+                            own = []
+                            cursor = state.saved_head_revision_id
+                            while cursor:
+                                reference = actual_saved_revision_reference(session, run_id, cursor)
+                                if reference is None or reference[1:3] != (run_id, branch_id):
+                                    break
+                                if cursor in own:
+                                    raise WorkingDraftConflictError('Global Save ancestry contains a cycle')
+                                own.append(cursor)
+                                cursor = reference[4]
+                            global_append_ancestors = tuple(own)
                 run = session.get(RunContainerModel, run_id)
                 branch = session.get(RunBranchModel, branch_id)
                 if run.read_only or branch.read_only:
@@ -6022,6 +6188,7 @@ class SimulationPersistenceRepository:
 
                 payload = viewer_branch_saved_revision_payload(
                     base_payload=state.saved_revision.payload,
+                    _stored_json_copy=True,
                     run_id=run_id,
                     display_name=run.display_name or run_id,
                     run_status=run.status,
@@ -6088,24 +6255,46 @@ class SimulationPersistenceRepository:
                     load_checkpoint,
                 )
                 live_calendar_owner = load_checkpoint(
-                    session, run_id=run_id, branch_id=branch_id
+                    session, run_id=run_id, branch_id=branch_id, _repository=self,
                 )
                 verify_coupled_calendar = (
                     expected_calendar_tour_fingerprint is not None
                     or (
                         live_calendar_owner is not None
                         and live_calendar_owner.schema_version
-                        in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
+                        in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
                     )
                 )
-                capture_saved_calendar_match(
+                if verify_coupled_calendar:
+                    from beta_engine.infrastructure.db.calendar_tour import (
+                        borrow_origin_projection_values,
+                    )
+
+                    # Immutable decode values only, in this Save's own map.
+                    # Each lookup still hashes every actual source-row byte;
+                    # capture and the staged/installed physical gates below
+                    # independently authenticate owners, topology and history.
+                    borrow_origin_projection_values(self, origin_value_projections)
+                from beta_engine.infrastructure.db.calendar_tour import decode_authenticated_tour
+                # This exact predecessor passed the physical lineage gate in
+                # the current Save transaction. Only NEW origins need another
+                # source fold; the captured successor still gets full replay.
+                authenticated_tour = decode_authenticated_tour(
+                    state.saved_revision.payload, run_id=run_id, branch_id=branch_id,
+                )
+                captured_sources = capture_saved_calendar_match(
                     session, payload, run_id=run_id, branch_id=branch_id,
                     _defer_full_verification=verify_coupled_calendar,
+                    _authenticated_tour_prefix=authenticated_tour,
+                    _repository=self,
+                    _captured_checkpoint=live_calendar_owner,
+                    _origin_cache=origin_value_projections.get('_global_origin_inputs'),
                 )
                 if verify_coupled_calendar:
-                    # A native Tour Save captures live rows first, then runs the
-                    # COMPLETE source verifier exactly once on that final
-                    # in-transaction payload. The source fold authenticates
+                    # A native Tour Save captures every actual live row first.
+                    # Its COMPLETE source math must either replay now or match
+                    # the exact complete payload independently replayed by the
+                    # mandatory post-command context. That fold authenticates
                     # MatchEngine events, 57-attribute population checkpoints,
                     # Official ranking transitions, lifecycle/Entry history and
                     # source fingerprints. Pre-play Saved origins were checked
@@ -6113,21 +6302,35 @@ class SimulationPersistenceRepository:
                     from beta_engine.infrastructure.db.calendar_standalone_match_state import (
                         decode_prevalidated_calendar_sources,
                     )
+                    from beta_engine.infrastructure.db.native_fork_source_projection import (
+                        decoded_global_tour_source,
+                    )
                     # The existing Saved HEAD was fully authenticated by
                     # _viewer_branch_working_draft_in_session inside THIS
                     # transaction. Its exact sporting source is now a trusted
-                    # prefix; the new Save must still replay every NEW event and
-                    # compare the full successor state byte-for-byte.
-                    _saved_evidence, signed_prefix, _saved_tour = (
-                        decode_prevalidated_calendar_sources(
-                            state.saved_revision.payload,
-                            run_id=run_id, branch_id=branch_id,
+                    # prefix; every NEW event must have been independently
+                    # replayed and the full successor compared byte-for-byte.
+                    # The command's mandatory post-write context independently
+                    # replayed this EXACT complete live payload already. A Save
+                    # captures every actual live component again and authenticates
+                    # its physical Saved sources above/below; only identical
+                    # mathematical input may reuse that completed math proof.
+                    from beta_engine.domain.run_packages import canonical_hash
+                    proof_key = (state.saved_head_revision_id, canonical_hash(payload))
+                    with self._revision_validation_lock:
+                        replayed = proof_key in getattr(self, '_global_working_proofs', {})
+                    if not replayed:
+                        _saved_evidence, signed_prefix, _saved_tour = decoded_global_tour_source(
+                            self, state.saved_revision,
+                            lambda source: decode_prevalidated_calendar_sources(
+                                source.payload, run_id=run_id, branch_id=branch_id,
+                            ),
                         )
-                    )
-                    load_saved_calendar_sources(
-                        payload, run_id=run_id, branch_id=branch_id,
-                        _verified_saved_prefix=signed_prefix,
-                    )
+                        load_saved_calendar_sources(
+                            payload, run_id=run_id, branch_id=branch_id,
+                            _verified_saved_prefix=signed_prefix,
+                            _verified_global_prefix=(signed_prefix, _saved_tour, state.saved_revision.payload),
+                        )
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,
                     viewer_branch_id=target_viewer_id,
@@ -6324,6 +6527,8 @@ class SimulationPersistenceRepository:
                         "player_health_fingerprint": component["fingerprint"],
                     }
                 sequence = state.saved_revision.sequence + 1
+                if 'native_branch_closures' in payload.get('run', {}):
+                    global_append_before = None
                 content_hash = saved_revision_content_hash(
                     revision_id=revision_id,
                     run_id=run_id,
@@ -6377,7 +6582,12 @@ class SimulationPersistenceRepository:
                         change_summary_json=_to_json(summary),
                     )
                 )
-                branch.saved_head_revision_id = revision_id
+                # For a verified global append, keep the old HEAD installed
+                # until the new actual row passes physical source gates. Its
+                # unchanged ancestors retain their real proofs during that
+                # verification. No transient state escapes this transaction.
+                if global_append_before is None:
+                    branch.saved_head_revision_id = revision_id
                 run.official_branch_id = target_viewer_id
                 session.add(
                     BranchRevisionAuditEventModel(
@@ -6418,6 +6628,13 @@ class SimulationPersistenceRepository:
                     if (
                         verified_native_save_receipt.content_hash_algorithm
                         != CONTENT_HASH_ALGORITHM
+                        or verified_native_save_receipt.content_hash != content_hash
+                        or verified_native_save_receipt.payload != payload
+                        or verified_native_save_receipt.change_summary != summary
+                        or verified_native_save_receipt.sequence != sequence
+                        or verified_native_save_receipt.parent_revision_id != state.saved_head_revision_id
+                        or verified_native_save_receipt.kind != revision_kind
+                        or verified_native_save_receipt.payload_schema_version != RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION
                         or verified_native_save_receipt.content_hash
                         != _saved_revision_record_content_hash(
                             verified_native_save_receipt
@@ -6448,6 +6665,37 @@ class SimulationPersistenceRepository:
                         verified_native_save_receipt.payload,
                         run_id=run_id, branch_id=branch_id,
                     )
+                    if global_append_before is not None:
+                        from beta_engine.infrastructure.db.native_fork_runtime_state import (
+                            actual_dependency_signature, assert_global_save_append,
+                            native_read_proof_scope,
+                        )
+                        from beta_engine.infrastructure.db.calendar_global_slot_origins import verify_saved_global_origins
+                        from beta_engine.infrastructure.db.calendar_terminal_results import verify_saved_terminal_results
+                        from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
+
+                        with native_read_proof_scope():
+                            staged = actual_dependency_signature(session, new_row, repository=self)
+                            assert_global_save_append(global_append_before, staged,
+                                run_id=run_id, branch_id=branch_id, revision_id=revision_id, installed=False)
+                            # The new components passed complete mathematical
+                            # replay above. These are the independent actual-row
+                            # origin/terminal/closure gates, BEFORE installing it.
+                            verify_saved_global_origins(self, session, verified_native_save_receipt,
+                                sporting_component_proofs=origin_value_projections,
+                                _validated_value_signature=_saved_revision_validation_signature(new_row),
+                                _reuse_actual_payload=True)
+                            verify_saved_terminal_results(self, session, verified_native_save_receipt)
+                            verify_saved_native_closure(self, session, verified_native_save_receipt)
+                            branch.saved_head_revision_id = revision_id
+                            session.flush()
+                            installed = actual_dependency_signature(session, new_row, repository=self)
+                            eligible = assert_global_save_append(global_append_before, installed,
+                                run_id=run_id, branch_id=branch_id, revision_id=revision_id, installed=True)
+                            ancestors = (*global_append_ancestors, revision_id)
+                            if not set(ancestors) <= set(eligible):
+                                raise WorkingDraftConflictError('Global Save lost authenticated own ancestry')
+                            committed_global_append = installed, ancestors
                     verified_native_save_signature = _saved_revision_validation_signature(new_row)
         except IntegrityError as exc:
             raise WorkingDraftIdentityConflictError(
@@ -6462,6 +6710,24 @@ class SimulationPersistenceRepository:
             self._remember_validated_revision(
                 verified_native_save_signature, verified_native_save_receipt,
             )
+        if committed_global_append is not None:
+            from beta_engine.infrastructure.db.native_fork_runtime_state import remember_committed_global_append
+
+            remember_committed_global_append(self, *committed_global_append,
+                run_id=run_id, branch_id=branch_id)
+            # These exact models were strictly captured from actual live rows,
+            # their complete payload passed math and physical origin gates, and
+            # the inserted row matched it before successful commit. Retain only
+            # an isolated DTO copy, keyed by the complete authenticated payload;
+            # subsequent independent readers still authenticate physical sources.
+            from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_tour_source
+            decoded_global_tour_source(self, verified_native_save_receipt, lambda _source: captured_sources)
+            # Publish only immutable JSON values after the complete Save
+            # transaction succeeds. No typed source/math proofs survive it.
+            from beta_engine.infrastructure.db.calendar_tour import (
+                retain_origin_projection_values,
+            )
+            retain_origin_projection_values(self, origin_value_projections)
         revision = (
             verified_native_save_receipt
             if verified_native_save_receipt is not None
@@ -6495,6 +6761,10 @@ class SimulationPersistenceRepository:
     ) -> ViewerSavedRevisionSnapshot:
         """Resolve and validate the sole immutable source for Viewer reads."""
         with self._session_factory() as session:
+            # Owner, selected HEAD and every physical dependency belong to one
+            # SQLite snapshot. Autogenerated SQLAlchemy transactions alone do
+            # not begin a SQLite read transaction on the supported drivers.
+            session.execute(text("BEGIN"))
             container = session.get(RunContainerModel, product_run_id)
             if container is None:
                 raise ViewerOfficialRunContextNotFoundError(
@@ -6579,8 +6849,13 @@ class SimulationPersistenceRepository:
                 if isinstance(saved_world, dict)
                 else None
             )
-            from beta_engine.infrastructure.db.calendar_tour import saved_tour
-            native_tour = saved_tour(revision.payload,run_id=product_run_id,branch_id=component_branch_id)
+            from beta_engine.infrastructure.db.calendar_tour import decode_authenticated_tour
+            # The exact payload just passed the complete physical lineage and
+            # sporting replay gate. Decode its projection; never replay the
+            # same matches again to obtain the public clock or response.
+            native_tour = decode_authenticated_tour(
+                revision.payload, run_id=product_run_id, branch_id=component_branch_id,
+            )
             context = ViewerOfficialRunContext(
                 product_run_id=container.run_id,
                 product_run_display_name=container.display_name or container.run_id,
@@ -6618,6 +6893,7 @@ class SimulationPersistenceRepository:
                 simulation_slot_component=simulation,
                 definitive_wild_cards=wild_cards,
                 run_package_state=run_package_state,
+                calendar_tour=native_tour,
             )
 
     def get_branch_execution_target(self, *, branch_id: str) -> BranchExecutionTarget:

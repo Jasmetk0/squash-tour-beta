@@ -2,7 +2,7 @@ import {useEffect,useRef,useState} from 'react'
 import {Link} from 'react-router-dom'
 import {useQueryClient} from '@tanstack/react-query'
 import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason,inspectCalendarTourRecords,inspectNativeTourProspectIntake,previewCalendarTourNativeBirthSporting} from '../api/client'
-import {validateTourView,validateTourPreview,validateTourSeasonComparison,validateTourCareerRecords,validateNativeProspectIntake,validateNativeSportingBirthPreflight,type NativeSportingBirthPreflight,type NativeProspectIntakePreflight,type TourCareerRecords,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
+import {confirmedSavedTourView,validateTourView,validateTourPreview,validateTourSeasonComparison,validateTourCareerRecords,validateNativeProspectIntake,validateNativeSportingBirthPreflight,type NativeSportingBirthPreflight,type NativeProspectIntakePreflight,type TourCareerRecords,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
 import {newCommandId} from '../admin/branchSimulation'
 import {tourWeekOffset,scheduleTourEdition} from '../api/nativeTourCalendar'
 import {useLanguage} from '../i18n/LanguageContext'
@@ -18,10 +18,13 @@ const blockerLabels:Record<string,[string,string]>={season_transition_required:[
 
 export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:string;head:string}) {
   const cs=useLanguage().language==='cs',client=useQueryClient()
-  const scope=[runId,branchId,head].join('|'),current=useRef(scope),epoch=useRef(0)
+  const scope=JSON.stringify([runId,branchId,head]),current=useRef(scope),epoch=useRef(0)
   const inputs=useRef(0)
   if(current.current!==scope){current.current=scope;epoch.current++}
-  const [view,setView]=useState<TourView|null>(null),[error,setError]=useState<string|null>(null)
+  const [loadedView,setLoadedView]=useState<{scope:string;value:TourView}|null>(null),[error,setError]=useState<string|null>(null)
+  const savedHandoff=useRef<{scope:string;value:TourView}|null>(null)
+  const view=loadedView?.scope===scope?loadedView.value:null
+  const setView=(value:TourView|null)=>setLoadedView(value?{scope,value}:null)
   const [busy,setBusy]=useState(false),[review,setReview]=useState<TourPreview|null>(null)
   const [consent,setConsent]=useState(false),[saveConsent,setSaveConsent]=useState(false)
   const [reason,setReason]=useState(''),[seed,setSeed]=useState('231')
@@ -29,6 +32,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const [season,setSeason]=useState(''),[week,setWeek]=useState(''),[slot,setSlot]=useState('1')
   const [points,setPoints]=useState({champion:'100',finalist:'60',semifinal:'30',quarterfinal:'15'})
   const [selected,setSelected]=useState<string[]>([]),[contributions,setContributions]=useState<TourContribution[]|null>(null)
+  const [selectedSlotMatch,setSelectedSlotMatch]=useState('')
   const [notice,setNotice]=useState<string|null>(null)
   const [player,setPlayer]=useState(''),[playerDetail,setPlayerDetail]=useState<TourPlayer|null>(null)
   const detailRequest=useRef(0),seasonReadRequest=useRef(0),careerReadRequest=useRef(0),intakeReadRequest=useRef(0)
@@ -42,11 +46,17 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const read=async(signal?:AbortSignal)=>validateTourView(await inspectCalendarTour(runId,branchId,signal),runId,branchId)
   useEffect(()=>{
     const stamp=epoch.current
+    const handoff=savedHandoff.current?.scope===scope?savedHandoff.current.value:null
+    savedHandoff.current=null
     const controller=new AbortController()
     let active=true
     const valid=()=>active&&epoch.current===stamp
-    setView(null);setError(null);setReview(null);setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setIntakeReport(null);setBirthSportingReport(null);intakeReadRequest.current++;setBusy(true)
-    void read(controller.signal).then(v=>{if(valid()){
+    setView(null);setError(null);setReview(null);setSelectedSlotMatch('');setConsent(false);setSaveConsent(false);setSelected([]);setContributions(null);setNotice(null);setPlayer('');setPlayerDetail(null);detailRequest.current++;setSeasonReport(null);seasonReadRequest.current++;setCareerRecords(null);careerReadRequest.current++;setIntakeReport(null);setBirthSportingReport(null);intakeReadRequest.current++;setBusy(true)
+    // StrictMode cleans up its discarded mount before this microtask. Do not
+    // start an expensive server read that its AbortController cannot stop once
+    // the synchronous backend has begun. Real dispatched reads still abort and
+    // keep the scope/epoch fence when this Run/Branch/HEAD changes.
+    void Promise.resolve().then(()=>valid()?(handoff??read(controller.signal)):null).then(v=>{if(v&&valid()){
       setView(v)
       const clock=v.state?{...v.state.week,calendar:v.run_calendar??v.state.week.calendar}:null
       const first=clock?tourWeekOffset(clock,2):null
@@ -73,6 +83,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         const saved=await saveCalendarTour(runId,branchId,view.draft_version,view.tour_fingerprint)
         if(!valid())return
         if(saved.schema_version!=='calendar_tour_save_receipt.v1'||saved.run_id!==runId||saved.branch_id!==branchId||saved.saved_revision.run_id!==runId||saved.saved_revision.branch_id!==branchId||!/^[0-9a-f]{64}$/.test(saved.saved_revision.content_hash))throw Error('Tour Save source scope is invalid')
+        const savedView=confirmedSavedTourView(view,saved)
         invalidate()
         const key=['admin-run-branches',runId]
         const branches=client.getQueryData<RunBranchListResponse>(key)
@@ -81,6 +92,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           // Updating the shared selection starts ONE full read in the effect,
           // instead of loading the same large history before and after HEAD.
           setView(null)
+          savedHandoff.current=savedView?{scope:JSON.stringify([runId,branchId,saved.saved_revision.revision_id]),value:savedView}:null
           client.setQueryData<RunBranchListResponse>(key,{...branches,run_branches:branches.run_branches.map(b=>b.branch_id===branchId?{...b,saved_head_revision_id:saved.saved_revision.revision_id}:b)})
           void client.invalidateQueries();return
         }
@@ -89,10 +101,20 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
       }
       if(action==='commit'){
         if(!review||!consent)return
-        await executeCalendarTour(runId,branchId,review.command,review.preview_fingerprint)
+        const outcome=await executeCalendarTour(runId,branchId,review.command,review.preview_fingerprint,true)
         if(!valid())return
-        const next=await read();if(!valid())return
-        invalidate();setView(next);setNotice(cs?'Změna je v Working Draft. Proveďte ruční Save.':'Change is in Working Draft. Save manually.');return
+        let next:TourView
+        if(outcome&&typeof outcome==='object'&&('inspection' in outcome||('schema_version' in outcome&&outcome.schema_version==='calendar_tour_execution_inspection.v1'))){
+          if(!('schema_version' in outcome)||outcome.schema_version!=='calendar_tour_execution_inspection.v1'||!('inspection' in outcome))throw Error('Tour execution inspection is invalid')
+          if(!('result' in outcome)||!outcome.result||typeof outcome.result!=='object'||!('command_id' in outcome.result)||outcome.result.command_id!==review.command.command_id||!('action' in outcome.result)||outcome.result.action!==review.command.action)throw Error('Tour execution result does not match the confirmed command')
+          next=validateTourView(outcome.inspection as TourView,runId,branchId)
+          if(next.saved_head_revision_id!==review.command.expected_saved_head)throw Error('Tour execution Saved source changed; refresh Tour')
+        }else{
+          // Older servers return only the original command result.
+          next=await read()
+        }
+        if(!valid())return
+        invalidate();setSelectedSlotMatch('');setView(next);setNotice(cs?'Změna je v Working Draft. Proveďte ruční Save.':'Change is in Working Draft. Save manually.');return
       }
       if(action==='refresh'){
         const next=await read();if(!valid())return
@@ -106,13 +128,14 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         const schedule=scheduleTourEdition(current,Number(season)-1,Number(week))
         if(!schedule)throw Error(cs?'Turnaj musí být platně naplánován alespoň dva týdny dopředu v rámci Runu.':'Edition must be scheduled at least two weeks ahead, inside the Run horizon.')
         const table=Object.fromEntries(Object.entries(points).filter(([k])=>size===8||k!=='quarterfinal').map(([k,v])=>[k,Number(v)]))
-        data={edition_id:editionId,name,week:schedule.week,announcement_week:schedule.announcement_week,start_slot:Number(slot),main_entrant_count:size,ranked:true,point_table:table,validity_weeks:current.calendar.weeks_per_year}
+        data={schema_version:'calendar_tournament_edition.v2',simulation_seed:Number(seed),edition_id:editionId,name,week:schedule.week,announcement_week:schedule.announcement_week,start_slot:Number(slot),main_entrant_count:size,ranked:true,point_table:table,validity_weeks:current.calendar.weeks_per_year}
       } else if(action==='submit') data={player_ids:selected}
-      const command:TourCommand={action,command_id:newCommandId(),edition_id:id,expected_saved_head:view.saved_head_revision_id,expected_checkpoint_fingerprint:view.checkpoint_fingerprint,expected_tour_fingerprint:view.tour_fingerprint,seed:Number(seed),operator_label:'Admin',audit_reason:reason.trim(),data}
+      else if(action==='next-match'&&id) data={match_id:id}
+      const command:TourCommand={action,command_id:newCommandId(),edition_id:action==='next-match'?null:id,expected_saved_head:view.saved_head_revision_id,expected_checkpoint_fingerprint:view.checkpoint_fingerprint,expected_tour_fingerprint:view.tour_fingerprint,seed:Number(seed),operator_label:'Admin',audit_reason:reason.trim(),data}
       const checked=validateTourPreview(await previewCalendarTour(runId,branchId,command),command,runId,branchId)
       if(!valid())return
       setReview(checked);setConsent(false)
-    }catch(e){if(valid()){invalidate();setError(formatApiError(e))}}
+    }catch(e){if(valid()){if(action!=='commit')invalidate();setError(formatApiError(e))}}
     finally{if(epoch.current===stamp&&current.current===scope)setBusy(false)}
   }
   const loadSeasonReport=async()=>{
@@ -202,7 +225,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   }
   const names=new Map(view?.players.map(p=>[p.player_id,p.name])??[])
   const ready=Boolean(view&&!busy&&reason.trim()&&/^-?\d+$/.test(seed)&&Number.isSafeInteger(Number(seed))&&(view.saved||view.state)&&view.sporting_saved!==false)
-  const nativePopulation=Boolean(view?.state&&'schema_version' in view.state&&['calendar_tour_authority.v3','calendar_tour_authority.v4','native_fork_tour.v1'].includes(String(view.state.schema_version)))
+  const nativePopulation=Boolean(view?.state&&'schema_version' in view.state&&['calendar_tour_authority.v3','calendar_tour_authority.v4','calendar_tour_authority.v5','native_fork_tour.v1'].includes(String(view.state.schema_version)))
   const nativeOnly=Boolean(view?.state&&'schema_version' in view.state&&view.state.schema_version==='calendar_tour_authority.v3'&&view.post_birth_competition_supported!==true)
   const latest=view?.state?.rankings[view.state.rankings.length-1]
   const clock=view?.state?{...view.state.week,calendar:view.run_calendar??view.state.week.calendar}:null
@@ -259,11 +282,22 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           <p>{cs?'Platnost bodů':'Point validity'}: {view.state.week.calendar.weeks_per_year} {cs?'týdnů od prvního oficiálního rankingu':'weeks from first Official ranking'}</p>
           <button disabled={nativeOnly||!ready||!plannedEdition||!editionId.trim()||!name.trim()} onClick={()=>void perform('create-edition')}>{cs?'Zkontrolovat novou Edition':'Review new Edition'}</button>
         </details>
+        {view.next_slot&&<section aria-label="Global Simulation Slot">
+          <h3>{cs?'Nejbližší Simulation Slot':'Next Simulation Slot'} {view.next_slot.number}</h3>
+          <p>{cs?'Dokončeno':'Completed'}: {view.next_slot.completed} · {cs?'Zbývá':'Remaining'}: {view.next_slot.remaining}</p>
+          {view.next_slot.conflicts?.map(c=><p role="alert" key={c.player_id}>{cs?'Kolize hráče ve stejném slotu':'Player conflict in the same slot'}: {names.get(c.player_id)??c.player_id} · {c.match_ids.join(' / ')}</p>)}
+          <table><thead><tr><th>Edition</th><th>{cs?'Zápas':'Match'}</th><th>{cs?'Stav':'State'}</th></tr></thead><tbody>{view.next_slot.matches.map(m=><tr key={m.match_id}><td>{m.edition_id}</td><td>{names.get(m.player_a_id??'')??m.player_a_id} / {names.get(m.player_b_id??'')??m.player_b_id}</td><td>{m.completed?(cs?'Dokončeno':'Completed'):(cs?'Čeká':'Pending')}</td></tr>)}</tbody></table>
+          <button disabled={busy||!reason.trim()||Boolean(view.next_slot.conflicts?.length)} onClick={()=>void perform('next-slot')}>{cs?'Zkontrolovat Next Slot':'Review Next Slot'}</button>
+          <button disabled={busy||!reason.trim()} onClick={()=>void perform('next-match',selectedSlotMatch||null)}>{cs?'Zkontrolovat Next Match':'Review Next Match'}</button>
+          <label>{cs?'Zápas tohoto slotu':'Match in this slot'}<select aria-label="Global slot match" value={selectedSlotMatch} onChange={e=>{setSelectedSlotMatch(e.target.value);invalidate()}}><option value="">{cs?'První zbývající zápas':'First remaining match'}</option>{view.next_slot.matches.filter(m=>!m.completed).map(m=><option key={m.match_id} value={m.match_id}>{m.edition_id}: {names.get(m.player_a_id??'')??m.player_a_id} / {names.get(m.player_b_id??'')??m.player_b_id}</option>)}</select></label>
+          <p>{cs?'Všechny zápasy slotu používají stejný zmrazený vstup. Rozpracovaný slot lze ručně uložit a obnovit po restartu.':'Every match uses the same frozen slot input. Manually Save a partial slot to resume after restart.'}</p>
+        </section>}
         {view.state.editions.map(a=>{
           const id=a.edition.edition_id,active=a.edition.week.week===view.state!.week.week&&a.edition.week.season_index===view.state!.week.season_index
           const next: keyof typeof actionLabels=!a.field?'approve':!a.draw?'draw':!a.tournament_fingerprint?'play':'confirm-result'
           return <section key={id} aria-label={`Edition ${id}`}>
             <h3>{a.edition.name} · S{a.edition.week.season_index+1}/W{a.edition.week.week}</h3>
+            {a.edition.schema_version==='calendar_tournament_edition.v2'&&<p>{cs?'Uložený seed turnaje':'Stored tournament seed'}: {a.edition.simulation_seed}</p>}
             <p>{cs?'Přihlášky':'Applications'}: {a.submissions.length} · {cs?'Schválení':'Approved'}: {a.field?.direct_main_player_ids.length??0} · {a.result_confirmed?(cs?'Výsledky potvrzeny':'Results confirmed'):a.tournament_fingerprint?(cs?'Odehráno':'Played'):a.draw?(cs?'Vylosováno':'Drawn'):(cs?'Příprava':'Preparation')}</p>
             <p>{cs?'Bodová tabulka':'Point table'}: {Object.entries(a.edition.point_table).map(([k,v])=>`${cs?stageLabels[k]:k} ${v}`).join(' · ')}</p>
             {!a.field&&active&&<><select multiple aria-label={`Tour applicants ${id}`} value={selected} onChange={e=>{setSelected(Array.from(e.target.selectedOptions,o=>o.value));invalidate()}}>{view.players.filter(p=>p.status!=='retired'&&!a.submissions.some(s=>s.player_id===p.player_id)).map(p=><option key={p.player_id} value={p.player_id}>{p.name}</option>)}</select>
@@ -272,10 +306,10 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
             {a.draw&&<ol>{a.draw.main.slots.map(s=><li key={s.slot_index}>{names.get(s.player_id)??s.player_id}</li>)}</ol>}
             {view.edition_evidence[id]&&<>
               <table aria-label={`Played matches ${id}`}><thead><tr><th>Slot</th><th>{cs?'Zápas':'Match'}</th><th>{cs?'Vítěz':'Winner'}</th><th>{cs?'Rally':'Rallies'}</th></tr></thead><tbody>{view.edition_evidence[id].matches.map(m=><tr key={m.match_id}><td>{m.slot}</td><td>{names.get(m.player_a_id)} / {names.get(m.player_b_id)}</td><td>{names.get(m.winner_player_id)}</td><td>{m.rally_count}</td></tr>)}</tbody></table>
-              {view.edition_evidence[id].results.some(r=>r.schema_version==='calendar_terminal_edition_result.v1')&&<p>{cs?'Poslední týden původního Runu: potvrzení a ruční Save uloží výsledek pro Closing Ranking. Žádný další týden ani Official Ranking se neotevře. Závěrečné uzavření vyžaduje samostatné schválení a Save.':'Original Run final week: confirmation and manual Save retain this result for the Closing Ranking. No following week or Official Ranking opens. Final closure requires separate approval and Save.'}</p>}
+              {view.edition_evidence[id].results.some(r=>r.schema_version==='calendar_terminal_edition_result.v1'||r.schema_version==='calendar_terminal_edition_result.v2')&&<p>{cs?'Poslední týden původního Runu: potvrzení a ruční Save uloží výsledek pro Closing Ranking. Žádný další týden ani Official Ranking se neotevře. Závěrečné uzavření vyžaduje samostatné schválení a Save.':'Original Run final week: confirmation and manual Save retain this result for the Closing Ranking. No following week or Official Ranking opens. Final closure requires separate approval and Save.'}</p>}
               <table aria-label={`Edition results ${id}`}><thead><tr><th>{cs?'Hráč':'Player'}</th><th>{cs?'Výsledek':'Result'}</th><th>{cs?'Body':'Points'}</th></tr></thead><tbody>{view.edition_evidence[id].results.map(r=><tr key={r.player_id}><td>{names.get(r.player_id)}</td><td>{cs?stageLabels[r.stage]:r.stage}</td><td>{r.main_points}</td></tr>)}</tbody></table>
             </>}
-            {active&&!a.result_confirmed&&<button disabled={nativeOnly||!ready||(!view.saved&&(next==='play'||next==='confirm-result'))} onClick={()=>void perform(next,id)}>{actionLabels[next][cs?0:1]}</button>}
+            {active&&!a.result_confirmed&&!(next==='play'&&a.edition.schema_version==='calendar_tournament_edition.v2')&&<button disabled={nativeOnly||!ready||(!view.saved&&(next==='play'||next==='confirm-result'))} onClick={()=>void perform(next,id)}>{actionLabels[next][cs?0:1]}</button>}
             {a.tournament_fingerprint&&<button disabled={busy} onClick={()=>{
               const stamp=epoch.current;setBusy(true)
               void replayCalendarContinuation(runId,branchId,`${id}:final`).then(r=>{if(epoch.current===stamp)setNotice(`${cs?'Přesný replay':'Exact replay'}: ${r.exact_replay}`)}).catch(e=>{if(epoch.current===stamp)setError(formatApiError(e))}).finally(()=>{if(epoch.current===stamp)setBusy(false)})
@@ -368,6 +402,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
       {review&&<section aria-label="Tour command review"><h3>{cs?'Kontrola operace':'Operation review'}: {review.command.action}</h3>
         {'admitted_player_ids' in review.impact&&Array.isArray(review.impact.admitted_player_ids)&&review.impact.admitted_player_ids.length>0&&<p>{cs?'Nově přijímaní hráči':'Newly admitted players'}: {review.impact.admitted_player_ids.join(', ')}</p>}
         <p>HEAD: <code>{review.command.expected_saved_head}</code></p>
+        {review.impact.selected_match_ids&&<p>Simulation Slot {review.impact.slot} · {cs?'Vybrané zápasy':'Selected matches'}: {review.impact.selected_match_ids.join(', ')} · {cs?'Zbývá před operací':'Remaining before operation'}: {review.impact.remaining}</p>}
         {review.command.action==='create-edition'&&<p>{String(review.command.data.name)} · W{String((review.command.data.week as {week:number}).week)} · {cs?'Účastníci':'Participants'}: {String(review.command.data.main_entrant_count)} · {Object.entries(review.command.data.point_table as Record<string,number>).map(([k,v])=>`${cs?stageLabels[k]:k} ${v}`).join(' · ')}</p>}
         {review.command.action==='submit'&&<p>{cs?'Přihlášky':'Applications'}: {(review.command.data.player_ids as string[]).map(id=>names.get(id)??id).join(', ')}</p>}
         {review.impact.approved_field&&<p>{cs?'Schválený field':'Approved field'}: {review.impact.approved_field.direct_main_player_ids.map(id=>names.get(id)??id).join(', ')}</p>}

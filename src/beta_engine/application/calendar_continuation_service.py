@@ -289,7 +289,7 @@ class CalendarContinuationService:
                 CalendarNativeSportingCheckpoint,
             )
             native = isinstance(state, CalendarNativeSportingCheckpoint)
-            if state is not None and state.schema_version == 'calendar_sporting_checkpoint.v12':
+            if state is not None and state.schema_version in {'calendar_sporting_checkpoint.v12', 'calendar_sporting_checkpoint.v13'}:
                 if any(e.match_id == match_id for e in state.source_checkpoint.played_continuations):
                     native = True
                 else:

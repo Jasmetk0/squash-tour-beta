@@ -63,9 +63,10 @@ def native_tour_identities(state, world):
         raise ValueError("Season summary lacks unique saved national identities")
     # Native participants have no replacement InitialWorld profile. Their
     # names/nationality are frozen by the authenticated actual match projection.
-    if getattr(state,"schema_version",None) in {"calendar_tour_authority.v4", "native_fork_tour.v1"}:
+    if getattr(state,"schema_version",None) in {"calendar_tour_authority.v4", "calendar_tour_authority.v5", "native_fork_tour.v1"}:
         for receipt in state.receipts:
-            for pid, identity in receipt.result.get("played", {}).get("participant_identities", {}).items():
+            identities = {**receipt.result.get("played", {}).get("participant_identities", {}), **receipt.result.get("participant_identities", {})}
+            for pid, identity in identities.items():
                 if pid not in players:
                     players[pid] = SimpleNamespace(**identity)
     return players
@@ -95,6 +96,9 @@ def native_tour_season_summary(state, world, season_index, *, closure=None):
         for r in state.receipts
         if r.request.get("command", {}).get("action") == "play"
     }
+    played_by_edition = {eid:receipt.result["played"] for eid,receipt in receipts.items()}
+    for receipt in state.receipts:
+        played_by_edition.update(receipt.result.get("completed_editions", {}))
     editions = []
     for authority in state.editions:
         item = authority.edition
@@ -102,10 +106,9 @@ def native_tour_season_summary(state, world, season_index, *, closure=None):
             continue
         if item.week.ordinal > boundary.completed_week.ordinal:
             raise ValueError("Season summary attempted to read a future Edition")
-        receipt = receipts.get(item.edition_id)
-        if not receipt or receipt.result.get("played", {}).get("fingerprint") != authority.tournament_fingerprint:
+        played = played_by_edition.get(item.edition_id)
+        if not played or played.get("fingerprint") != authority.tournament_fingerprint:
             raise ValueError("Season Edition lacks authenticated played MatchEngine evidence")
-        played = receipt.result["played"]
         awards = played["prepared_awards"]
         if len(awards) != item.main_entrant_count:
             raise ValueError("Season Edition player awards differ from recorded field")

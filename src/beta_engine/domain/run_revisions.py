@@ -152,10 +152,15 @@ def viewer_branch_saved_revision_payload(
     forked_from_branch_id: str | None,
     forked_from_saved_revision_id: str | None,
     viewer_branch_id: str,
+    _stored_json_copy: bool = False,
 ) -> dict[str, object]:
     """Materialize a complete snapshot while preserving future content keys."""
 
-    payload = deepcopy(base_payload)
+    # Physical Saved payloads have already crossed the JSON boundary. A fresh
+    # JSON value tree isolates every nested container without Python-level
+    # deepcopy visiting millions of immutable scalar leaves. Keep the generic
+    # in-process contract for other callers, including non-JSON future values.
+    payload = json.loads(json.dumps(base_payload)) if _stored_json_copy else deepcopy(base_payload)
     run_payload = payload.get("run")
     branch_payload = payload.get("branch")
     if not isinstance(run_payload, dict) or not isinstance(branch_payload, dict):

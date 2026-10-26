@@ -1,3 +1,301 @@
+# Confirmed Save value continuity — 26 October 2026 candidate
+
+Preceding 37f627a4 passed fourteen hosted workflows; the complete global
+all-week matrix was still running. Whole W80/1,000 Chromium now completed and
+Saved BOTH seven-match tournaments and both result confirmations. Its unchanged
+18-minute deadline expired during the last Week Transition; it is still WAIT.
+The separate two-round hybrid browser passed a same-head retry after one
+ECONNRESET (its server log contained no exception). No failed result is hidden.
+
+This follow-up avoids another full read after confirmed Save in a deliberately
+narrow native v13/v5 case. The normal independently verified context exports
+only its private captured payload values after successful replay. The view may
+carry the fingerprint of that COMPLETE payload. After every original Save
+before/staged/installed/commit gate succeeds, its receipt may carry the actual
+Saved payload fingerprint, exact source/revision IDs, clean draft version and
+checkpoint/Tour fingerprints. A match permits a one-use UI handoff to the new
+HEAD. No client token authorizes a server action, and no source proof is copied.
+
+Forks, prospect sources, any live prospective/disciplinary/correction inputs,
+completed seasons, closures and differing Run/Tour calendars do NOT use this
+optimization. Missing or changed full values use the original GET. The UI still
+validates receipt/Run/Branch/old/new HEAD/draft/owner fingerprints and its scope
+and epoch fences. A handoff cannot be applied to another Run/Branch/HEAD.
+The stored payload, its original hash, all math/source gates and manual consent
+remain unchanged. There is no new cache, copier, schema/GC policy or timeout.
+
+Local final checks: five real HTTP/SQLite cases pass (including before/after
+write gates, rollback/retry, complete Saved DTO equality with independent GET,
+changed Run metadata despite unchanged Tour/CP fingerprints, and conservative
+external-source/calendar/fork/season/closure eligibility). Forty-six frontend
+component/value tests and TypeScript/Vite build pass. The genuine 1,000-player
+failed CI database completes actual manual Saves, result confirmation and W6
+with 560 points; all THREE retained Saved DTOs equal full independent GETs.
+Those Saved GETs cost 11.11/10.56/12.08 seconds in the diagnostic; they are omitted
+only by the eligible UI. The diagnostic includes extra verification GETs and
+concurrent local build load; it is not a whole-browser performance pass.
+
+The browser observer records whether a Save used full-payload continuity or an
+independent GET, verifies the actual receipt and Saved UI, and retains the real
+cold SQLite restart, exact final replays, player details, Viewer/public points,
+all original sporting assertions, 1,000 players and unchanged deadlines.
+Final-head hosted acceptance must execute successfully before owner merge.
+
+---
+
+# Post-command inspection response — 26 October 2026 candidate
+
+The preceding 0f0f6eca head completed eight workflows successfully, including
+all Global Slots weeks/Season Transition and all Full Simulation jobs. Its sole
+remaining failure was the whole W80/1,000 Tour Chromium at the unchanged
+18-minute deadline. This still blocks owner merge handoff. #1641 has been
+merged by the owner into buuk (3ee384253); its files remain separate.
+
+The opt-in POST /calendar-tour/execute?include_inspection=true returns the
+original command result plus the current Tour inspection. The ordinary command
+receipt, persisted history and default API response are unchanged. Native
+commands project the SAME independently authenticated POST-WRITE context that
+already ran before commit; they do not authorize reads from the calculated
+successor or pre-command state. Projection/commit failure cannot return success.
+Exact retries still authenticate the current physical context and preserve the
+original result. Forks retain their existing execute plus independent read path.
+
+The Admin panel validates envelope/version, command identity/action, Run/Branch
+and the unchanged Saved source, with its existing scope/input/epoch fences. It
+uses the supplied inspection without another full GET; old result-only servers
+retain the ordinary GET fallback. Explicit consent and manual Save remain.
+Browser observers use the post-write response; independent Saved GET, physical
+restart, 1,000-player population, real matches/points and every original sporting
+assertion/deadline remain. No GC, copy compiler, cache-budget or schema experiment
+is included. No source validation, hash, seed, replay or transaction fence changes.
+
+Local evidence: two actual HTTP/SQLite cases verify full equality with an
+independent GET, both before/after gates, rehashed coupled-write rejection,
+projection failure rollback and default/opt-in exact retries. All 36 Tour panel
+component tests and TypeScript/Vite build pass. The new UI cases verify no
+redundant read/implicit Save and reject foreign Run, changed HEAD, mismatched
+command and unknown envelope. The genuine failed 1,000-player SQLite flow is
+being measured separately; it is not a whole-browser pass. Final-head hosted
+Chromium, fork/restart and all relevant acceptance matrices must actually pass
+before owner merge. Complete pre-alpha/50-season release acceptance is separate.
+
+---
+
+# Save origin values and Working Draft projection — 26 October 2026 candidate
+
+Preceding `bc5d60a5` completed eight of nine hosted workflows successfully,
+including every actual W52/W61/W80 week and Season Transition, cold restart,
+all Full Simulation jobs, and both global CS/EN Chromium scenarios. The sole
+remaining failure was the whole W80/1,000 Tour browser's unchanged 18-minute
+limit during the second tournament. It still blocks owner merge handoff.
+
+This follow-up gives each Save its own borrowed map of bounded immutable origin
+JSON values. Capture and the staged physical origin gate share that map, while
+every lookup still hashes complete current source bytes and binds Run/Branch/
+revision. Only JSON values are retained after successful commit; no source or
+math proofs are borrowed or published. Failure leaves the shared value map
+unchanged. The original before/staged/installed dependency fences remain.
+
+The Save gate can project its already decoded actual new row only after its
+FULL original canonical JSON equals every current SQLite byte. A mutated private
+payload or noncanonical stored encoding takes the original raw parser. Ordinary
+cold readers keep their existing path. Physical ownership, reachable sources,
+independent mathematical replay and terminal/closure checks all remain.
+
+A Working Draft DTO can use the existing small exact-byte/hash-verified Run
+projection after authenticating the entire actual global lineage. It needs only
+the Saved Viewer selection. Internal callers requesting revision state still get
+the full payload. Eviction, changed actual bytes or an unavailable projection
+falls back to full materialization; ancestor corruption/closure still fails.
+
+Local evidence: seven actual HTTP/SQLite cases passed the origin-pool change,
+including partial matches, Save/restart/points, concurrent retry, rehashed-source
+and Health rejection/recovery. Final focused staging/raw-value/draft checks pass
+six cases, including private-payload mutation, whitespace reencoding, cache
+eviction and rehashed ancestor closure rejection. Eleven general Working Draft
+API/application regressions and 28 focused value/calendar contracts also pass.
+On the genuine failed 1,000-player CI database, three late Saves under profiling
+improved from 157.72 s combined to 126.68 s, reaching W6 and 560 points. This
+measures the origin-pool change before the additional draft projection; it is
+not whole-browser acceptance. A separate whole HTTP protocol diagnostic is
+being measured; final-head hosted Chromium and complete relevant matrices must
+actually pass before owner merge. Only the owner merges; #1641 stays separate.
+
+---
+
+# Global-slot whole-browser follow-up — 26 October 2026 candidate
+
+On `add6b6ee`, eight hosted workflows passed, including every W52/W61/W80
+actual week, real Season Transition, correct points/summary and final cold restart.
+All native Full Simulation jobs, global API/fork/worker and both global Chromium
+scenarios also passed. W80/1,000 Tour Chromium still exceeded its unchanged
+18-minute whole-flow limit during the second tournament. Its restart improved
+to about 88 seconds. This remaining failure blocks the owner merge handoff.
+
+The follow-up keeps immutable origin JSON projections in a repository-local,
+32 MiB/128-entry decode-value cache. Each lookup still hashes complete current
+source bytes and binds Run/Branch/revision; independent physical, ownership,
+reachability and math gates remain. Borrowed operation dictionaries are separate,
+and no source/math proofs enter this cache. A newly decoded actual Saved head
+seeds the projection only after its complete physical gate.
+
+Calendar reads reuse at most 128 small immutable Run projections (32 KiB each)
+only when every actual Saved byte and metadata field matches a completed content
+hash check. Changed payload, summary, declared hash, identity or rehashed clock
+takes the original full gate. The sporting context validates the complete
+Saved lineage before this reuse. Every current Run/calendar consistency check
+remains. Native Working Health returns a fresh strictly parsed head only after
+the complete actual history already passed replay or its exact full-payload proof.
+
+Defensive DTO copies retain new models, dictionaries and field sets. Only actual
+runtime-proven immutable (str,int) attribute tuples can reuse their copy-safety
+check; the tuple itself binds object identity and lives only with the bounded
+owning cache entry. Mutable replacements, subclasses and incomplete models keep
+ordinary deepcopy. No persisted schema/hash/seed/result, population, sporting
+rule, timeout or acceptance assertion changes.
+
+Local evidence: four real HTTP cases pass Save/ancestor rollback, rehashed-source
+and retry guards, partial results/restart/points, and older/latest rehashed Health
+rejection with recovery. 43 focused contracts and 12 calendar/concurrency checks
+pass. Actual large DTO copy measured about 0.59–0.65 s with retained immutable
+attribute hints versus 0.73–0.81 s without; a general copier had no reliable
+benefit and is excluded. A complete actual 1,000-player two-tournament HTTP probe
+is running; it is not Chromium acceptance. Require all relevant final-head hosted
+workflows to execute successfully before the owner merge recommendation.
+Only the owner merges; #1641 remains separate.
+
+---
+
+# Finish global-slot acceptance — 26 October 2026
+
+Continue #1643 through the remaining W80/1,000 whole-browser deadline and
+W61/W80 final cold restarts. On `a473cd2a`, seven hosted workflows and all native
+Full Simulation jobs passed; Global W52 also passed its complete real calendar,
+Season Transition and restart. W61/W80 completed all sporting assertions before
+their cold-restart failures. These are bounded results, not merge readiness.
+
+The follow-up binds private replayed Tour values and immutable origin projections
+to actual Saved input, transfers fresh routing JSON only for identical complete
+raw bytes, and computes the original checkpoint SHA incrementally across private
+immutable prefixes. An auxiliary ordered-JSON value digest cannot authorize math
+or sources without full completed replay/input evidence. Keep all physical graph,
+owner/reachability, mutation, rollback and canonical-value guards. Require every
+relevant workflow to execute successfully on the final head before owner handoff;
+the whole-browser and real all-week matrices remain mandatory.
+
+---
+
+# Global-slot whole-operation and restart repair — 25 October 2026 candidate
+
+The `01c2776c9` W80 Tour browser passed cold restart but exceeded the unchanged
+whole-script limit during the second draw. Continue #1643 with isolated sporting
+record copies that share only runtime-checked immutable attribute tuples,
+independent stored-JSON snapshot copying, actual-byte rebinding of Save's private
+checkpoint and private inspection projection memoization. Preserve all nested
+mutable isolation, full source/graph/math guards and version-default contracts.
+Local HTTP corruption/isolation/DTO regressions and final-head hosted whole-flow
+acceptance remain mandatory; no timeout or sporting assertion is relaxed.
+
+The `c5c4ce92` Tour browser reached W5 but failed its unchanged cold-restart
+deadline. The next candidate removes wrong Union trial decoding through strict
+schema-directed v13 parsing and includes actual Entry submissions in the exact
+complete working proof. Save separately rejects changed production Entry truth.
+Parser equivalence/malformed-input and real Save tamper/rollback tests pass;
+all final-head hosted workflows remain the owner merge gate.
+
+Finish #1643's actual whole-browser and every-week acceptance. The follow-up
+authenticates new Saved origins before HEAD installation and compares complete
+actual graphs around the append, preserving all tamper/rollback fences. It reuses
+only exact completed math/value proofs, narrows snapshot-bound parent reads and
+avoids StrictMode's discarded dispatch. Actual source mutation and changed-input
+fallback tests pass; genuine W52 cold reopen measured 81.84 s under cProfile.
+Only final-head hosted green checks permit the owner merge recommendation.
+
+---
+
+# Native global-slot acceptance repairs — 25 October 2026 candidate
+
+The follow-up after `3d6906c6` addresses the remaining W80/1,000-player whole
+browser deadline with bounded actual-byte DTO decoding, unchanged component
+reuse and metadata-only history decoding after complete physical proofs and
+exact closure-key absence. Actual tamper/rollback/retry/birth guards and 51
+focused contracts passed; a genuine late third-slot Save completed in 52.96 s
+under cProfile, followed by a 17.15 s inspection. Earlier-head native worker and
+seven hosted workflows passed. Require every relevant final-head workflow,
+especially the full large browser and all-week W52/W61/W80 matrices; the PR
+records the exact final SHA and hosted results used for the owner review.
+
+Continuation stays in PR #1643, branch `feat/native-global-simulation-slots-20261024`,
+from base `buuk` `94737b0dab67c38c57682480f66bfae365c3225e`. The inherited
+`afc10bbc` head failed three Native Tour browser checks and W80 worker cold reopen;
+its three all-week global matrices were cancelled. These remain failures/missing
+evidence until the new exact head executes the required acceptance green.
+
+Viewer publication now opens one actual SQLite read snapshot, authenticates the
+complete Saved lineage/physical graph, and carries its decoded Tour projection
+into public read DTOs rather than replaying the same sporting history twice more.
+Global origin checks reuse only the exact command prefix of the physically
+verified Saved predecessor; new live/Saved command origins still validate. Native
+fork structural decoding is carried into its physical verifier once. Metadata-only
+history drops native payloads only after source and closure gates finish.
+No persisted schema/hash/seed/result, sporting rule, population, timeout or required
+acceptance assertion changes. PR #1641 frontend files remain separate.
+
+Local evidence on the candidate: three actual production HTTP/SQLite regression
+cases passed (birth/first global Edition, concurrent retry/stale/rollback/rehashed
+source and player collision); the expanded source test also proves warm Viewer
+reads do not run MatchEngine and reject changed/rehashed physical sources. The new
+metadata-only physical-gate scenario passed. A concurrent real SQLite owner edit
+cannot split one Viewer snapshot and appears in the next request. Focused contracts
+and compile checks passed; final hosted native/global/Tour/Saved acceptance remains
+the merge gate. These targeted proofs do not certify complete pre-alpha or the
+reference 50-season release. Only the owner merges; auto-merge stays disabled.
+
+---
+
+# Native global Simulation Slots candidate — 24 October 2026
+
+Verified `buuk` `94737b0dab67c38c57682480f66bfae365c3225e` includes owner-merged
+#1642. Implementation continues in one PR #1643; only the owner merges.
+The parallel #1641 diagnostic/history pages and their tests remain excluded.
+
+New v2 Editions share the Branch's nearest chronological match slot. A v13
+sporting ledger and v5 Tour keep original frozen slot inputs and accepted real
+MatchEngine results across Next Match, Next Slot and manual Save. Completed
+brackets/awards derive from that ledger. The native worker uses slot children;
+Entry, results, Week/Season review, final approval and Saves remain explicit.
+Original schemas and history keep their original seeds, hashes and meaning.
+Native fork runtime v2 references accepted source matches and independently
+continues the remaining work, without rewriting their original owners.
+
+**WAIT — implementation/acceptance candidate.** Executed development checks
+include legacy/domain contracts, frontend contracts/build, a complete original
+HTTP/SQLite two-Edition Save/restart/points flow, equal batch/reversed-order
+sporting checkpoints and actual worker slot children/frozen target. Subsequent
+source-proof, summary and recovery corrections require the final candidate's
+full acceptance again. Earlier-head results and Draft skips are not final-head
+passes. Relevant W52/W61/W80 API, every-week Season Transition, final-week,
+native/Saved regressions and actual CS/EN Chromium must execute successfully.
+See [contract and verification ledger](docs/NATIVE_GLOBAL_SIMULATION_SLOTS.md).
+This is not a claim of completed pre-alpha or release acceptance.
+
+Independent completion review found and corrected simultaneous application batch
+reuse, the invalid empty v4 intermediate during the first post-birth global
+Edition, outdated whole-Edition browser controls and repeated overlapping origin
+walks. Actual collision, birth/Save/reopen and concurrent/retry/rollback/rehash
+scenarios passed locally; 54 backend and 125 frontend contracts/build passed.
+Long-calendar performance and exact-head hosted acceptance are still required.
+No timeout or required sporting/integrity assertion is relaxed.
+
+The next performance candidate bounds per-walk decoded parts/origin projections,
+reuses only exact fully replayed component values with complete source/history
+binding, and isolates decoded Tour DTO reuse behind physical authentication.
+62 focused contracts pass locally. The preceding published head still failed
+three browser budgets and the W80 worker; these remain failures until the new
+exact head executes those gates successfully. No release/merge claim is made.
+
+---
+
 # Native final-week Edition closing candidate — 24 October 2026
 
 Verified base `buuk` `16c6ff737372d27b97c3237b21f7b988218df1ab` includes owner-merged

@@ -41,6 +41,59 @@ def record(
     )
 
 
+@pytest.mark.pr_critical
+def test_sporting_copy_isolates_models_and_mutable_bypass_values():
+    from copy import deepcopy
+
+    source = record()
+    copied, alias = deepcopy([source, source])
+    assert copied == source and copied is alias and copied is not source
+    assert copied.model_dump_json() == source.model_dump_json()
+    assert copied.__dict__ is not source.__dict__
+    assert copied.__pydantic_fields_set__ is not source.__pydantic_fields_set__
+    copied.__dict__['current_form'] = 1
+    copied.__pydantic_fields_set__.clear()
+    assert source.current_form == 120 and source.__pydantic_fields_set__
+    # Bypassing normal validation must never make mutable input share a cache.
+    bypassed = source.model_copy(update={'attributes': [['mutable', 100]]})
+    copy = deepcopy(bypassed)
+    copy.attributes[0][1] = 1
+    assert bypassed.attributes == [['mutable', 100]]
+    incomplete = PlayerSportingRecord.model_construct(player_id='incomplete')
+    copy = deepcopy(incomplete)
+    assert copy is not incomplete and copy.__dict__ == incomplete.__dict__
+
+    class ExtendedRecord(PlayerSportingRecord):
+        additional: dict[str, list[int]]
+
+    extended = ExtendedRecord(**source.model_dump(), additional={'values': [3]})
+    copy = deepcopy(extended)
+    copy.additional['values'].append(4)
+    assert extended.additional == {'values': [3]}
+
+
+@pytest.mark.pr_critical
+def test_retained_attribute_copy_hints_never_share_models_or_mutable_replacements():
+    from beta_engine.infrastructure.db.native_fork_source_projection import _copy_decoded_value
+
+    source = record()
+    retained, hints = _copy_decoded_value((source, source))
+    copied, _ = _copy_decoded_value(retained, hints)
+    assert copied[0] is copied[1] and copied[0] is not retained[0]
+    assert copied[0].attributes is retained[0].attributes is source.attributes
+    assert copied[0].__dict__ is not retained[0].__dict__
+    assert copied[0].__pydantic_fields_set__ is not retained[0].__pydantic_fields_set__
+    copied[0].__dict__['current_form'] = 1
+    copied[0].__pydantic_fields_set__.clear()
+    assert retained[0].current_form == 120 and retained[0].__pydantic_fields_set__
+    # Old hints retain the old immutable tuple, never certify a replacement.
+    copied[0].__dict__['attributes'] = (['mutable replacement', 100],)
+    replaced, _ = _copy_decoded_value(copied, hints)
+    replaced[0].attributes[0][1] = 2
+    assert copied[0].attributes[0][1] == 100
+    assert retained[0].attributes == source.attributes
+
+
 def state(players, *, policy=None):
     return PlayerSportingWeekState(
         run_id="run",

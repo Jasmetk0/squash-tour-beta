@@ -10,7 +10,6 @@ from beta_engine.infrastructure.db import (
     ViewerOfficialRunContextConflictError,
     ViewerOfficialRunContextNotFoundError,
 )
-from beta_engine.infrastructure.db.calendar_tour import saved_tour
 
 router = APIRouter(tags=["viewer-calendar-tour"])
 
@@ -41,9 +40,7 @@ def read_signed_career_records(
             return {**signed_tour_records(state, world, as_of_season_index=as_of_season_index,
                 from_season_index=from_season_index, country_code=country_code, leaderboard_limit=leaderboard_limit),
                 "schema_version": "calendar_tour_signed_records_response.v1", "saved_head_revision_id": snapshot.revision.revision_id}
-        state = saved_tour(
-            payload, run_id=run_id, branch_id=snapshot.revision.branch_id,
-        )
+        state = snapshot.calendar_tour
         if state is None:
             raise ValueError("Signed career records need a Saved native Tour")
         world = load_saved_initial_world(
@@ -87,9 +84,7 @@ def read_signed_season_summary(
             state, world = _fork_publication(runtime.repository, snapshot.revision)
             return {"schema_version": "calendar_tour_season_comparison.v1", "run_id": run_id, "branch_id": state.branch_id,
                 "saved_head_revision_id": snapshot.revision.revision_id, **compare_completed_seasons(state, world, season_index, compare_to, closure=saved_final_closure(payload, state.branch_id, getattr(state, "inherited_final_closure", None)))}
-        state = saved_tour(
-            payload, run_id=run_id, branch_id=snapshot.revision.branch_id,
-        )
+        state = snapshot.calendar_tour
         if state is None:
             raise ValueError("Saved native Tour publication is unavailable")
         world = load_saved_initial_world(
@@ -121,11 +116,7 @@ def read_saved_tour(
         if snapshot.revision.payload_schema_version == "native_fork_saved_root.v2":
             state, _ = _fork_publication(runtime.repository, snapshot.revision)
         else:
-            state = saved_tour(
-                snapshot.revision.payload,
-                run_id=run_id,
-                branch_id=snapshot.revision.branch_id,
-            )
+            state = snapshot.calendar_tour
         if state is None:
             raise ValueError("Saved native Tour publication is unavailable")
         ordinal = state.week.ordinal if week_ordinal is None else week_ordinal

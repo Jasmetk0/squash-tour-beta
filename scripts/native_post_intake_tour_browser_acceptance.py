@@ -99,6 +99,16 @@ def main():
                         )
 
                     def write(suffix, click):
+                        if suffix == "/calendar-tour/execute":
+                            with page.expect_response(
+                                lambda r: r.request.method == "POST"
+                                and r.url.endswith(suffix + "?include_inspection=true")
+                            ) as written:
+                                click()
+                            assert written.value.status == 201, written.value.text()
+                            body = written.value.json()
+                            assert body["schema_version"] == "calendar_tour_execution_inspection.v1"
+                            return body["result"], body["inspection"]
                         acknowledged = False
                         reads = set()
 
@@ -241,7 +251,10 @@ def main():
                     operation("Review applications", edition, False)
                     operation("Review approval", edition, False)
                     operation("Review draw", edition)
-                    operation("Review play", edition)
+                    # New Editions use two shared slots for the actual
+                    # semifinals and final, including the admitted player.
+                    operation("Review Next Slot")
+                    operation("Review Next Slot")
                     operation("Review results", edition)
                     operation("Review Week Transition")
                     view = inspect(server)

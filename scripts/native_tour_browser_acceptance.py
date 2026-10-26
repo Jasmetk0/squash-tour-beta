@@ -185,18 +185,20 @@ def main():
             # any Tour-specific Save populates the receipt evidence.
             evidence["last_saved_head"] = panel.get_attribute("data-saved-head")
             assert evidence["last_saved_head"]
+            last_inspection = None
 
             def check_errors():
                 errors = panel.get_by_role("alert")
                 if errors.count():
                     raise AssertionError(errors.all_text_contents())
 
-            def confirmed_write_and_read(suffix, click):
+            def confirmed_write_and_read(suffix, click, *, continuity=None):
                 # A slow pre-command read (e.g. StrictMode/restart mount) may
                 # finish during the next write. Observe the request ISSUED
                 # after the actual commit ACK, not the next arbitrary response.
                 acknowledged = False
                 followup_requests = set()
+                followup_responses = []
 
                 def is_write(response):
                     return (response.request.method == "POST"
@@ -206,6 +208,8 @@ def main():
                     nonlocal acknowledged
                     if is_write(response):
                         acknowledged = True
+                    if response.request in followup_requests:
+                        followup_responses.append(response)
 
                 def observe_request(request):
                     if (acknowledged and request.method == "GET"
@@ -217,12 +221,20 @@ def main():
                 try:
                     # Retain the existing response timeout, including backend
                     # processing, rather than timing only request dispatch.
+                    with page.expect_response(is_write) as written:
+                        click()
+                    assert written.value.status == 201, written.value.text()
+                    projection = written.value.json().get("saved_projection") or {}
+                    if continuity and projection.get("payload_fingerprint") == continuity:
+                        return written.value, written.value
+                    if followup_responses:
+                        return written.value, followup_responses[0]
+                    # Listeners above retain even an already completed GET.
+                    # Otherwise install this waiter before yielding to events.
                     with page.expect_response(
                         lambda response: response.request in followup_requests
                     ) as next_read:
-                        with page.expect_response(is_write) as written:
-                            click()
-                        assert written.value.status == 201, written.value.text()
+                        pass
                     return written.value, next_read.value
                 finally:
                     page.remove_listener("response", observe)
@@ -234,11 +246,29 @@ def main():
                 response, loaded = confirmed_write_and_read(
                     "/calendar-tour/save",
                     lambda: panel.get_by_role("button", name="Manual Tour Save", exact=True).click(),
+                    continuity=(last_inspection or {}).get("save_projection_fingerprint"),
                 )
                 assert response.status == 201, response.text()
                 saved_head = response.json()["saved_revision"]["revision_id"]
-                assert loaded.status == 200, loaded.text()
-                saved_view = loaded.json()
+                if loaded is response:
+                    projection = response.json()["saved_projection"]
+                    assert projection["schema_version"] == "calendar_tour_saved_projection.v1"
+                    assert (projection["run_id"], projection["branch_id"]) == ("run", "branch")
+                    assert projection["previous_saved_head_revision_id"] == last_inspection["saved_head_revision_id"]
+                    assert projection["saved_head_revision_id"] == saved_head
+                    assert projection["checkpoint_fingerprint"] == last_inspection["checkpoint_fingerprint"]
+                    assert projection["tour_fingerprint"] == last_inspection["tour_fingerprint"]
+                    draft = response.json()["working_draft"]
+                    assert draft["status"] == "clean" and draft["change_count"] == 0
+                    assert draft["base_saved_revision_id"] == saved_head
+                    saved_view = projection
+                else:
+                    assert loaded.status == 200, loaded.text()
+                    saved_view = loaded.json()
+                evidence.setdefault("save_observations", []).append({
+                    "saved_head": saved_head,
+                    "method": "full-payload continuity" if loaded is response else "independent GET",
+                })
                 assert saved_view["saved_head_revision_id"] == saved_head
                 evidence["last_saved_head"] = saved_head
                 evidence["last_checkpoint_fingerprint"] = saved_view[
@@ -249,6 +279,7 @@ def main():
                 expect(panel.get_by_label("Tour operation reason")).to_be_visible()
                 expect(panel).to_have_attribute("data-active-head", saved_head)
                 expect(panel).to_have_attribute("data-saved-head", saved_head)
+                expect(panel).to_contain_text("State: Saved")
                 expect(
                     panel.get_by_role("button", name="Refresh state")
                 ).to_be_enabled()
@@ -266,6 +297,7 @@ def main():
                 return elapsed
 
             def operation(label, container=None, *, save_after=True):
+                nonlocal last_inspection
                 began = time.monotonic()
                 print(f"Native Tour: {label} started", flush=True)
                 source = container or panel
@@ -301,13 +333,21 @@ def main():
                 # asserting the Working Draft UI; a 30s auto-retry of a locator
                 # alone confuses slow but successful reads with missing controls.
                 commit_started = time.monotonic()
-                response, refreshed = confirmed_write_and_read(
-                    "/calendar-tour/execute",
-                    lambda: panel.get_by_role("button", name="Execute confirmed operation", exact=True).click(),
-                )
+                # The opt-in response contains the same independently verified
+                # post-write inspection. It reaches HTTP only after COMMIT.
+                # Save below still performs its separate Saved read/restart gate.
+                with page.expect_response(
+                    lambda r: r.request.method == "POST"
+                    and r.url == api + "/admin/runs/run/branches/branch/calendar-tour/execute?include_inspection=true"
+                ) as written:
+                    panel.get_by_role("button", name="Execute confirmed operation", exact=True).click()
+                response = written.value
                 assert response.status == 201, response.text()
-                assert refreshed.status == 200, refreshed.text()
-                refreshed_view = refreshed.json()
+                response_body = response.json()
+                assert response_body["schema_version"] == "calendar_tour_execution_inspection.v1"
+                assert response_body["result"]["command_id"] == preview_http.json()["command"]["command_id"]
+                refreshed_view = response_body["inspection"]
+                last_inspection = refreshed_view
                 assert not refreshed_view["saved"], "The confirmed operation must remain an unsaved Working Draft"
                 assert refreshed_view["run_id"] == "run" and refreshed_view["branch_id"] == "branch"
                 assert refreshed_view["saved_head_revision_id"] == evidence["last_saved_head"]
@@ -362,7 +402,11 @@ def main():
                 operation("Review applications", edition, save_after=False)
                 operation("Review approval", edition, save_after=False)
                 operation("Review draw", edition)
-                operation("Review play", edition)
+                # New UI Editions use the shared global-slot executor. An
+                # eight-player bracket has three actual rounds; keep all seven
+                # matches, effects, points and subsequent recovery assertions.
+                for _ in range(3):
+                    operation("Review Next Slot")
                 expect(
                     edition.get_by_role("table", name="Played matches " + name).locator(
                         "tbody tr"

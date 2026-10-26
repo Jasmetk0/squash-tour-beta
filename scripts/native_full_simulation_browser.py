@@ -107,7 +107,7 @@ def main():
                     panel.get_by_label("Tour operation reason").fill("Manually reviewed all three actual match results and points")
                     panel.get_by_role("button", name="Review results", exact=True).click()
                     panel.get_by_label("Confirm Tour command").check()
-                    with page.expect_response(lambda r: r.request.method == "POST" and r.url.endswith("/calendar-tour/execute")) as confirmed:
+                    with page.expect_response(lambda r: r.request.method == "POST" and r.url.endswith("/calendar-tour/execute?include_inspection=true")) as confirmed:
                         panel.get_by_role("button", name="Execute confirmed operation", exact=True).click()
                     assert confirmed.value.status == 201, confirmed.value.text()
                     tour_save()

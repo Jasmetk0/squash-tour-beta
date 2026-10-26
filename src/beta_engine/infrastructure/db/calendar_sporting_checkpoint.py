@@ -8,9 +8,31 @@ from beta_engine.domain.players.calendar_sporting_checkpoint import (
 from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
 
 COMPONENT_KEY = 'calendar_player_sporting_checkpoint'
+_MAX_GLOBAL_PART_BYTES = 16 * 1024 * 1024
+_MAX_GLOBAL_PARTS = 128
 
 
-def parse_checkpoint_json(raw):
+def _parsed_global_part(body, cache, parse):
+    """Value-keyed decoding only, confined to one caller's physical read walk."""
+    from beta_engine.domain.run_packages import canonical_hash
+
+    if not isinstance(body, dict):
+        raise TypeError('Global checkpoint part must be a versioned object')
+    encoded = json.dumps(body)
+    key = canonical_hash(body)
+    entry = cache.get(key)
+    if entry is not None and entry[1] == canonical_hash(entry[2].model_dump(mode='json')):
+        return entry[2]
+    value = parse(encoded)
+    size = len(encoded.encode("utf-8"))
+    if size <= _MAX_GLOBAL_PART_BYTES:
+        cache[key] = (size, canonical_hash(value.model_dump(mode='json')), value)
+        while len(cache) > _MAX_GLOBAL_PARTS or sum(item[0] for item in cache.values()) > _MAX_GLOBAL_PART_BYTES:
+            cache.pop(next(iter(cache)))
+    return value
+
+
+def parse_checkpoint_json(raw, *, _parsed_global_parts=None):
     from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
         CalendarNativeSportingCheckpoint,
     )
@@ -18,6 +40,51 @@ def parse_checkpoint_json(raw):
     body = json.loads(raw)
     if not isinstance(body, dict):
         raise ValueError('Calendar sporting checkpoint must be a versioned object')
+    if body.get('schema_version') == 'calendar_sporting_checkpoint.v13':
+        from beta_engine.domain.tournaments.calendar_global_slots import (
+            GlobalCompetitionCheckpoint,
+            GlobalSlot,
+        )
+        from beta_engine.domain.players.calendar_followup_knockout import CalendarFollowupKnockout
+        from beta_engine.domain.players.calendar_native_sporting_checkpoint import CalendarNativeSportingWeek
+
+        root, stored_events = body.get('competition_root'), body.get('events', [])
+        if (
+            isinstance(root, dict) and 'schema_version' not in root
+            or isinstance(stored_events, list) and any(
+                isinstance(entry, dict) and 'schema_version' not in entry
+                for entry in stored_events
+            )
+        ):
+            # The original strict models allow their version field's default.
+            # Preserve that noncanonical input contract through the original
+            # Union validator; stored canonical histories take the fast path.
+            return GlobalCompetitionCheckpoint.model_validate_json(raw)
+
+        def strict_part(part, parse):
+            if not isinstance(part, dict):
+                raise TypeError('Global checkpoint part must be a versioned object')
+            if _parsed_global_parts is not None:
+                return _parsed_global_part(part, _parsed_global_parts, parse)
+            return parse(json.dumps(part))
+
+        values = dict(body)
+        values['competition_root'] = strict_part(body.get('competition_root'), parse_checkpoint_json)
+        events = []
+        if not isinstance(body.get('events', []), list):
+            raise ValueError('Global checkpoint events must be an array')
+        for entry in body.get('events', ()):
+            if not isinstance(entry, dict):
+                raise TypeError('Global checkpoint event must be a versioned object')
+            model = (GlobalSlot if entry.get('schema_version') == 'calendar_global_slot.v1'
+                else CalendarNativeSportingWeek if entry.get('schema_version') == 'calendar_native_sporting_week.v1'
+                else CalendarFollowupKnockout)
+            events.append(strict_part(entry, model.model_validate_json))
+        values['events'] = tuple(events)
+        # Every nested value runs its ordinary strict JSON validator. Dispatch
+        # by explicit schema avoids trial-decoding large histories through each
+        # wrong Union alternative. The outer owner/root validator still runs.
+        return GlobalCompetitionCheckpoint.model_validate(values)
     if body.get('schema_version') == 'calendar_sporting_checkpoint.v12':
         from beta_engine.domain.players.calendar_native_competition import (
             CalendarNativeCompetitionCheckpoint,
@@ -29,24 +96,34 @@ def parse_checkpoint_json(raw):
     return model.model_validate_json(raw)
 
 
-def load_checkpoint(session, *, run_id, branch_id, _verified_source=None):
+def load_checkpoint(session, *, run_id, branch_id, _verified_source=None, _repository=None):
     row = session.get(CalendarPlayerSportingCheckpointModel, (run_id, branch_id))
     if row is None:
         return None
     if (_verified_source is not None
         and (_verified_source.run_id,_verified_source.branch_id)==(run_id,branch_id)):
         from beta_engine.domain.run_packages import canonical_hash
+        from beta_engine.infrastructure.db.native_fork_source_projection import (
+            known_live_value_fingerprint, remember_live_value_fingerprint,
+        )
 
         expected = _verified_source.fingerprint
-        if (row.fingerprint == expected
-            and canonical_hash(json.loads(row.payload_json)) == expected):
+        actual = known_live_value_fingerprint(_repository, run_id=run_id, branch_id=branch_id,
+            kind=COMPONENT_KEY, raw=row.payload_json)
+        if actual is None:
+            actual = canonical_hash(json.loads(row.payload_json))
+            remember_live_value_fingerprint(_repository, run_id=run_id, branch_id=branch_id,
+                kind=COMPONENT_KEY, raw=row.payload_json, fingerprint=actual)
+        if row.fingerprint == expected and actual == expected:
             # Saved serialization sorts mapping keys (e.g. sets_won), while
-            # live MatchEngine JSON retains insertion order. Compare the same
-            # canonical content hash, not order-sensitive JSON text. Hash every
-            # live byte's decoded value; never trust only its stored hash column.
+            # live MatchEngine JSON retains insertion order. Compare canonical
+            # values; a known decode result is bound to every actual raw byte,
+            # including Run/Branch/component scope. Never trust the hash column.
             return _verified_source
-    state = parse_checkpoint_json(row.payload_json)
-    if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, row.fingerprint):
+    from beta_engine.infrastructure.db.native_fork_source_projection import decoded_live_calendar_component
+    state, fingerprint = decoded_live_calendar_component(_repository, run_id=run_id, branch_id=branch_id,
+        kind=COMPONENT_KEY, raw=row.payload_json, parse=parse_checkpoint_json, _with_fingerprint=True)
+    if (state.run_id, state.branch_id, fingerprint) != (run_id, branch_id, row.fingerprint):
         raise ValueError('Calendar sporting checkpoint SQLite identity/hash mismatch')
     return state
 
@@ -186,7 +263,8 @@ def verify_checkpoint(state, world, evidence, *, _prefix_proofs=None,
 
 
 def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=None,
-                     _verified_saved_prefix=None):
+                     _verified_saved_prefix=None, _verified_global_prefix=None,
+                     _predecoded_checkpoint=None):
     from beta_engine.infrastructure.db.initial_world_state import (
         load_saved_initial_world,
     )
@@ -195,14 +273,28 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
     if component is not None:
         if not isinstance(component, dict) or set(component) != {'fingerprint', 'state'}:
             raise ValueError('Malformed Saved calendar sporting checkpoint component')
-        state = parse_checkpoint_json(json.dumps(component['state']))
+        if _predecoded_checkpoint is not None:
+            # The private live-context caller just strictly decoded and checked
+            # the actual SQLite row, and built this body from that owned model.
+            # Bind the complete actual value again; only duplicate structural
+            # decoding is omitted. Independent full math/source verification
+            # below remains mandatory.
+            from beta_engine.domain.run_packages import canonical_hash
+            from beta_engine.domain.tournaments.calendar_global_slots import GlobalCompetitionCheckpoint
+            if (not isinstance(_predecoded_checkpoint, GlobalCompetitionCheckpoint)
+                or canonical_hash(component['state']) != _predecoded_checkpoint.fingerprint):
+                raise ValueError('Predecoded global checkpoint differs from actual complete component')
+            state = _predecoded_checkpoint
+        else:
+            state = parse_checkpoint_json(json.dumps(component['state']),
+                _parsed_global_parts=_prefix_proofs.setdefault('_global_decoded_parts', {}) if _prefix_proofs is not None else None)
         if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, component['fingerprint']):
             raise ValueError('Saved calendar sporting checkpoint identity/hash mismatch')
-    if state is not None and state.schema_version == 'calendar_sporting_checkpoint.v12':
+    if state is not None and state.schema_version in {'calendar_sporting_checkpoint.v12', 'calendar_sporting_checkpoint.v13'}:
         from beta_engine.infrastructure.db.calendar_native_competition import (
             verify_competition_payload,
         )
-        verify_competition_payload(payload, state, evidence)
+        verify_competition_payload(payload, state, evidence, verified_global_prefix=_verified_global_prefix, source_proofs=_prefix_proofs)
         return state
     knockout = _knockout(evidence)
     required = knockout is not None and knockout.schema_version == 'calendar_opening_knockout.v5'
@@ -250,9 +342,11 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
 
 
 def capture_checkpoint(session, payload, evidence, *, run_id, branch_id,
-                       _defer_full_verification: bool = False):
+                       _defer_full_verification: bool = False, _repository=None,
+                       _verified_source=None):
     from beta_engine.infrastructure.db.initial_world_state import get_initial_world
-    state = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
+    state = load_checkpoint(session, run_id=run_id, branch_id=branch_id,
+        _repository=_repository, _verified_source=_verified_source)
     world = get_initial_world(session, run_id=run_id, branch_id=branch_id) if state or evidence else None
     # Only the native Tour Save coordinator may defer this replay. It then
     # authenticates the complete freshly captured revision once, atomically,
@@ -260,7 +354,10 @@ def capture_checkpoint(session, payload, evidence, *, run_id, branch_id,
     if not _defer_full_verification:
         verify_checkpoint(state, world, evidence)
     if state is not None:
-        payload['content'][COMPONENT_KEY] = {'fingerprint': state.fingerprint, 'state': state.model_dump(mode='json')}
+        from beta_engine.domain.run_packages import canonical_hash
+        body = state.model_dump(mode='json')
+        payload['content'][COMPONENT_KEY] = {'fingerprint': canonical_hash(body), 'state': body}
+    return state
 
 
 def restore_checkpoint(session, *, current_payload, target_payload, current, target, run_id, branch_id,
@@ -283,8 +380,9 @@ def restore_checkpoint(session, *, current_payload, target_payload, current, tar
         put_checkpoint(session, replacement)
 
 
-def replace_checkpoint(session, *, previous, successor):
-    live = load_checkpoint(session, run_id=previous.run_id, branch_id=previous.branch_id)
+def replace_checkpoint(session, *, previous, successor, _verified_previous=None):
+    live = load_checkpoint(session, run_id=previous.run_id, branch_id=previous.branch_id,
+        _verified_source=_verified_previous)
     if live != previous or (successor.run_id, successor.branch_id) != (previous.run_id, previous.branch_id):
         raise ValueError('Population sporting checkpoint changed before atomic replacement')
     row = session.get(CalendarPlayerSportingCheckpointModel, (previous.run_id, previous.branch_id))

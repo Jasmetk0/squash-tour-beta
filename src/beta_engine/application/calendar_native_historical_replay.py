@@ -7,7 +7,7 @@ from beta_engine.infrastructure.db.models import RunBranchModel
 
 
 def authenticated_pre_birth_root(repository, session, state):
-    if state.schema_version not in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}:
+    if state.schema_version not in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}:
         raise TypeError("Historical native replay requires a supported v11 owner")
     branch = session.get(RunBranchModel, state.branch_id)
     if branch is None or branch.run_id != state.run_id:
@@ -24,7 +24,7 @@ def authenticated_pre_birth_root(repository, session, state):
     )
     root = (
         signed.source_checkpoint
-        if signed is not None and signed.schema_version in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12"}
+        if signed is not None and signed.schema_version in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
         else signed
     )
     if root is None or root != state.source_checkpoint:

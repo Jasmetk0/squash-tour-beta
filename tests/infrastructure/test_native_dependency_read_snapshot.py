@@ -23,6 +23,36 @@ from tests.application.test_full_simulation_task_calendar import setup_calendar
 pytestmark = pytest.mark.pr_critical
 
 
+@pytest.mark.parametrize('installed', [False, True])
+def test_global_append_requires_unchanged_complete_graph_and_exact_head(installed):
+    from copy import deepcopy
+    from beta_engine.infrastructure.db.native_fork_runtime_state import assert_global_save_append
+
+    owner = ('branch', 'run', None, None, 'active', False)
+    foreign = ('foreign', 'run', None, None, 'active', False)
+    rows = (('old', 'old-actual-bytes', owner), ('foreign-source', 'foreign-bytes', foreign))
+    heads = (('branch', owner + ('old',)), ('foreign', foreign + ('foreign-source',)))
+    before = ('old', rows, heads)
+    after = ('new', rows + (('new', 'new-actual-bytes', owner),),
+        (('branch', owner + (('new' if installed else 'old'),)), heads[1]))
+    args = dict(run_id='run', branch_id='branch', revision_id='new', installed=installed)
+    assert set(assert_global_save_append(before, after, **args)) == {'old', 'new'}
+    changed = []
+    graph = list(deepcopy(after[1])); graph[0] = ('old', 'rehashed-changed-bytes', owner)
+    changed.append((after[0], tuple(graph), after[2]))
+    graph = list(after[1]); graph[0] = ('old', 'old-actual-bytes', owner[:-2] + ('closed', False))
+    changed.append((after[0], tuple(graph), after[2]))
+    changed.append((after[0], after[1][1:], after[2]))
+    changed.append((after[0], after[1] + (('unverified', 'extra', owner),), after[2]))
+    changed.append((after[0], after[1][:-1] + (('new', 'new-actual-bytes', foreign),), after[2]))
+    changed.append((after[0], after[1], (after[2][0], ('foreign', foreign + ('other-head',)))))
+    wrong_head = 'old' if installed else 'new'
+    changed.append((after[0], after[1], (('branch', owner + (wrong_head,)), after[2][1])))
+    for invalid in changed:
+        with pytest.raises(ValueError):
+            assert_global_save_append(before, invalid, **args)
+
+
 @pytest.fixture
 def source(tmp_path):
     engine, factory, _repo = setup_calendar(tmp_path, RunCalendar(80, 80, 2100, 2))
@@ -40,6 +70,36 @@ def rewrite_source(session, label):
     content_hash = saved_revision_content_hash(**fields, payload=payload, change_summary=json.loads(row.change_summary_json))
     session.execute(text("UPDATE branch_saved_revisions SET payload_json=:payload, content_hash=:content_hash WHERE revision_id='saved'"),
         {"payload": canonical_json(payload), "content_hash": content_hash})
+
+
+def test_small_actual_parent_reference_follows_snapshot_writes_and_rollback(source):
+    from beta_engine.infrastructure.db.native_fork_runtime_state import actual_saved_revision_reference
+
+    engine, factory = source
+    reads = []
+
+    def count(_connection, _cursor, statement, _parameters, _context, _many):
+        if statement.lstrip().upper().startswith('SELECT'):
+            reads.append(statement)
+
+    event.listen(engine, 'before_cursor_execute', count)
+    try:
+        with factory() as session, native_read_proof_scope():
+            session.execute(text('BEGIN'))
+            row = session.get(BranchSavedRevisionModel, 'saved')
+            actual_dependency_signature(session, row)
+            before = len(reads)
+            original = actual_saved_revision_reference(session, 'run', 'saved')
+            assert original == ('saved', 'run', 'branch', row.sequence, None)
+            assert len(reads) == before
+            session.execute(text('SAVEPOINT parent_reference'))
+            session.execute(text("UPDATE branch_saved_revisions SET parent_revision_id='changed' WHERE revision_id='saved'"))
+            assert actual_saved_revision_reference(session, 'run', 'saved')[-1] == 'changed'
+            assert 'payload_json' not in reads[-1]
+            session.execute(text('ROLLBACK TO SAVEPOINT parent_reference'))
+            assert actual_saved_revision_reference(session, 'run', 'saved') == original
+    finally:
+        event.remove(engine, 'before_cursor_execute', count)
 
 
 def test_physical_reads_reuse_one_snapshot_and_reread_after_external_commit(source):
@@ -71,6 +131,33 @@ def test_physical_reads_reuse_one_snapshot_and_reread_after_external_commit(sour
             assert len(reads) > count_before
     finally:
         event.remove(engine, "before_cursor_execute", count)
+
+
+def test_viewer_projection_and_its_physical_gate_share_one_read_snapshot(source, monkeypatch):
+    """A concurrent owner edit is visible on the next read, never half a read."""
+    engine, factory = source
+    repository = SimulationPersistenceRepository(engine=engine, session_factory=factory)
+    original = repository._validated_branch_revision_lineage_in_session
+    observed = []
+
+    def read_with_concurrent_change(*, session, **kwargs):
+        assert session.connection().connection.driver_connection.in_transaction
+        result = original(session=session, **kwargs)
+        if not observed:
+            with factory.begin() as writer:
+                writer.execute(text("UPDATE run_branches SET read_only=1 WHERE branch_id='branch'"))
+            # Independent physical read still sees the selected immutable owner
+            # from this transaction, rather than mixing the committed edit in.
+            observed.append(session.scalar(text("SELECT read_only FROM run_branches WHERE branch_id='branch'")))
+        return result
+
+    monkeypatch.setattr(repository, '_validated_branch_revision_lineage_in_session', read_with_concurrent_change)
+    before = repository.get_viewer_saved_revision_snapshot(product_run_id='run')
+    after = repository.get_viewer_saved_revision_snapshot(product_run_id='run')
+    assert observed == [0]
+    assert before.context.official_branch_read_only is False
+    assert after.context.official_branch_read_only is True
+    assert before.revision == after.revision
 
 
 def test_rehashed_actual_saved_bytes_invalidate_cached_rows_and_stale_orm(source):

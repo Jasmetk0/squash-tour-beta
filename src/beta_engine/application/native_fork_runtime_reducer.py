@@ -143,7 +143,7 @@ def _decode_sources(source):
 def initial_runtime(baseline, root_id, sources):
     # Current accepted Entry/draw adoption needs a separate source projection.
     # Never claim support by merely re-owning those immutable authorities.
-    if any(a.submissions and not a.result_confirmed for a in sources.tour.editions):
+    if any(a.submissions and not a.result_confirmed and a.edition.schema_version.endswith(".v1") for a in sources.tour.editions):
         raise ValueError(
             "Finish the current submitted Edition before native branching, or choose an earlier Saved Revision"
         )
@@ -203,6 +203,9 @@ def initial_runtime(baseline, root_id, sources):
         source_tour_fingerprint=sources.tour.fingerprint,
         inherited_transition_count=len(sources.tour.transitions),
     )
+    from beta_engine.domain.tournaments.calendar_global_slots import GlobalSlot, inherit_open_slot
+    inherited_slots = tuple(s for s in getattr(getattr(sources, "checkpoint", None), "global_slots", getattr(getattr(sources, "checkpoint", None), "events", ())) if isinstance(s, GlobalSlot) and s.remaining)
+    slots = tuple(inherit_open_slot(s, branch_id=baseline.branch_id) for s in inherited_slots)
     return cohere(
         NativeForkRuntime.model_construct(
             baseline=baseline,
@@ -211,6 +214,8 @@ def initial_runtime(baseline, root_id, sources):
             lifecycle=life,
             health=health,
             tour=tour,
+            global_slots=slots,
+            schema_version="native_fork_runtime.v2" if slots else "native_fork_runtime.v1",
         )
     )
 
@@ -491,7 +496,7 @@ def prepare_command(runtime, command, sources, *, saved_head, draft_version, is_
         "play": 3,
         "confirm-result": authority.edition.main_entrant_count + 2 if authority else 0,
     }
-    if authority and command.action in offsets:
+    if authority and authority.edition.schema_version.endswith(".v1") and command.action in offsets:
         if (
             authority.edition.start_slot + offsets[command.action]
             < runtime.tour.slot_cursor
@@ -519,22 +524,32 @@ def prepare_command(runtime, command, sources, *, saved_head, draft_version, is_
             cp,
             sources.opening,
         )
-        tour, result = actor._apply(
-            None,
-            ctx,
-            runtime.tour,
-            authority,
-            command,
-            persist=False,
-            _native_inputs=(runtime.lifecycle, sources.prospects),
-        )
-        updates = {"tour": tour}
-        if actor.played:
-            event, played = actor.played
-            updates.update(
-                players=played.players, tournaments=runtime.tournaments + (event,)
+        if command.action in {"next-slot", "next-match"}:
+            from beta_engine.application.calendar_global_slot_service import prepare_global_slot
+            from beta_engine.domain.tournaments.calendar_global_slots import accept_slot
+            slot, _ = prepare_global_slot(None, ctx, runtime.tour, command, native_inputs=(runtime.lifecycle, sources.prospects))
+            selected = command.data.get("match_id") or (slot.remaining[0].match_id if command.action == "next-match" else None)
+            played, _ = accept_slot(cp, slot, match_id=selected)
+            tour, result = actor._apply(None, ctx, runtime.tour, authority, command, persist=False,
+                _native_inputs=(runtime.lifecycle, sources.prospects, (slot, played)))
+            candidate = cohere(played.runtime, tour=tour)
+        else:
+            tour, result = actor._apply(
+                None,
+                ctx,
+                runtime.tour,
+                authority,
+                command,
+                persist=False,
+                _native_inputs=(runtime.lifecycle, sources.prospects),
             )
-        candidate = cohere(runtime, **updates)
+            updates = {"tour": tour}
+            if actor.played:
+                event, played = actor.played
+                updates.update(
+                    players=played.players, tournaments=runtime.tournaments + (event,)
+                )
+            candidate = cohere(runtime, **updates)
     preview = {
         "schema_version": "calendar_tour_command_preview.v1",
         "run_id": runtime.run_id,

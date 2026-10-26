@@ -371,8 +371,8 @@ export function inspectCalendarTourPlayer(run:string,branch:string,player:string
 export function previewCalendarTour(run:string,branch:string,command:import('./calendarTour').TourCommand):Promise<import('./calendarTour').TourPreview> {
   return request(calendarTourRoot(run,branch)+'/preview',{method:'POST',body:JSON.stringify(command)})
 }
-export function executeCalendarTour(run:string,branch:string,command:import('./calendarTour').TourCommand,preview:string):Promise<unknown> {
-  return request(calendarTourRoot(run,branch)+'/execute',{method:'POST',body:JSON.stringify({command,expected_preview_fingerprint:preview,explicit_confirmation:true})})
+export function executeCalendarTour(run:string,branch:string,command:import('./calendarTour').TourCommand,preview:string,includeInspection=false):Promise<unknown> {
+  return request(calendarTourRoot(run,branch)+'/execute'+(includeInspection?'?include_inspection=true':''),{method:'POST',body:JSON.stringify({command,expected_preview_fingerprint:preview,explicit_confirmation:true})})
 }
 export function saveCalendarTour(run:string,branch:string,version:number,fingerprint:string):Promise<import('./calendarTour').TourSaveReceipt> {
   return request(calendarTourRoot(run,branch)+'/save',{method:'POST',body:JSON.stringify({expected_draft_version:version,expected_calendar_tour_fingerprint:fingerprint})})

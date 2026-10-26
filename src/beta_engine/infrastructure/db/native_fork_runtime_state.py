@@ -87,6 +87,27 @@ def snapshot_proofs(session):
     return cache["proofs"] if cache is not None else {}
 
 
+def actual_saved_revision_reference(session, run_id, revision_id):
+    """Fresh identity/topology only, never a payload or component proof.
+
+    A complete actual graph read may already own these fields in this unchanged
+    SQLite snapshot. Otherwise select the five small fields, not every rally and
+    historical population merely to follow one parent edge.
+    """
+    from sqlalchemy import select
+
+    cache = _physical_read_cache(session)
+    known = cache["revisions"].get((run_id, revision_id)) if cache is not None else None
+    if known is not None:
+        return known[0][:5] if known[0] is not None else None
+    row = session.execute(select(
+        BranchSavedRevisionModel.revision_id, BranchSavedRevisionModel.run_id,
+        BranchSavedRevisionModel.branch_id, BranchSavedRevisionModel.sequence,
+        BranchSavedRevisionModel.parent_revision_id,
+    ).where(BranchSavedRevisionModel.revision_id == revision_id)).first()
+    return tuple(row) if row is not None else None
+
+
 def assert_current_saved_row(session, revision):
     """A source ORM identity is not evidence of its current physical bytes."""
     memo = _proofs.get()
@@ -473,6 +494,66 @@ def _dependency_proof_key(signature):
     # never mutable payloads. Longer histories can retain their proven prefixes
     # without an unbounded collection of overlapping graph tuples.
     return hashlib.sha256(canonical_json(signature).encode("utf-8")).hexdigest()
+
+
+def assert_global_save_append(before, after, *, run_id, branch_id, revision_id, installed):
+    """Compare complete actual graphs around one already verified global Save.
+
+    This is NOT component/origin validation. The Save coordinator must first
+    authenticate the old complete lineage and independently verify the new row.
+    No existing byte, owner, source HEAD or topology may change. Only the exact
+    new row and, after installation, this Branch's HEAD may be added/advanced.
+    """
+    if after[0] != revision_id or before[0] == revision_id:
+        raise ValueError("Global Save append has inconsistent revision identity")
+    old = {row[0]: row[1:] for row in before[1]}
+    new = {row[0]: row[1:] for row in after[1]}
+    if set(new) != set(old) | {revision_id} or any(new[key] != value for key, value in old.items()):
+        raise ValueError("Global Save changed an existing actual dependency")
+    digest, owner = new[revision_id]
+    if not digest or not owner or owner[:2] != (branch_id, run_id):
+        raise ValueError("Global Save append has a foreign actual owner")
+    old_heads, new_heads = dict(before[2]), dict(after[2])
+    if set(old_heads) != set(new_heads) or branch_id not in old_heads:
+        raise ValueError("Global Save changed its actual source owners")
+    for source_id, previous in old_heads.items():
+        current = new_heads[source_id]
+        if source_id == branch_id and installed:
+            if (not previous or not current or previous[:-1] != current[:-1]
+                or previous[-1] != before[0] or current[-1] != revision_id):
+                raise ValueError("Global Save did not install its exact actual HEAD")
+        elif current != previous:
+            raise ValueError("Global Save changed an actual source HEAD")
+    return tuple(row_id for row_id, (_digest, actual_owner) in new.items()
+        if actual_owner and actual_owner[:2] == (branch_id, run_id))
+
+
+def remember_committed_global_append(repository, signature, revision_ids, *, run_id, branch_id):
+    """Only after commit: retain proofs from the verified exact graph append.
+
+    Every later lookup still rebuilds the COMPLETE actual graph. Different source
+    bytes/heads/owners cannot match these keys. Shared foreign ancestry is never
+    promoted: its ordinary independent source proof remains required.
+    """
+    keys = tuple(_dependency_proof_key((revision_id, signature[1], signature[2]))
+        for revision_id in revision_ids)
+    head = _dependency_proof_key(signature)
+    with repository._revision_validation_lock:
+        proofs = getattr(repository, "_native_dependency_proofs", None)
+        if proofs is None:
+            proofs = repository._native_dependency_proofs = {}
+        for key in keys:
+            proofs[key] = True
+        while len(proofs) > _MAX_DEPENDENCY_PROOFS:
+            proofs.pop(next(iter(proofs)))
+        heads = getattr(repository, "_native_head_dependency_proofs", None)
+        if heads is None:
+            heads = repository._native_head_dependency_proofs = {}
+        key = (run_id, branch_id)
+        heads.pop(key, None)
+        heads[key] = head
+        while len(heads) > 16:
+            heads.pop(next(iter(heads)))
 
 
 def verify_with_actual_dependencies(repository, session, revision, verify):

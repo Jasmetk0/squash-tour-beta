@@ -114,15 +114,39 @@ export function sameWeek(actual: CandidateWeek | null | undefined, expected: Can
   return actual?.season_index === expected.season_index && actual?.week === expected.week
 }
 
+// These guards are for displaying API responses only, not a replacement for
+// authoritative server-side lineage, fingerprint and stored-manifest verification.
 export function validCandidateHistory(data: RankingCandidateHistory, runId: string, branchId: string): boolean {
-  return data?.run_id === runId && data.branch_id === branchId &&
-    data.publication_status === 'candidate_only' && Array.isArray(data.candidates) &&
-    data.candidates.every(c => c?.publication_status === 'candidate_only' &&
-      typeof c.fingerprint === 'string' && c.fingerprint.length > 0 &&
-      c.snapshot?.run_id === runId && c.snapshot.branch_id === branchId &&
-      Number.isInteger(c.snapshot.week?.season_index) && Number.isInteger(c.snapshot.week?.week) &&
-      Array.isArray(c.snapshot.rows) &&
-      c.snapshot.rows.every(row => !row.disciplinary_zeros?.some(z => z.run_id !== runId || z.branch_id !== branchId)))
+  if (!data || data.run_id !== runId || data.branch_id !== branchId ||
+      data.publication_status !== 'candidate_only' || !Array.isArray(data.candidates)) return false
+
+  const weeks = new Set<string>()
+  const fingerprints = new Set<string>()
+  return data.candidates.every(candidate => {
+    const snapshot = candidate?.snapshot
+    const week = snapshot?.week
+    if (candidate?.publication_status !== 'candidate_only' ||
+        !snapshot || snapshot.run_id !== runId || snapshot.branch_id !== branchId ||
+        !week || !Number.isInteger(week.season_index) || week.season_index < 0 || week.season_index >= 50 ||
+        !Number.isInteger(week.week) || week.week < 1 || week.week > 61 ||
+        typeof candidate.fingerprint !== 'string' || !candidate.fingerprint ||
+        !Array.isArray(candidate.command_ids) ||
+        !snapshot.policy || !Number.isInteger(snapshot.policy.best_n) || snapshot.policy.best_n < 1 ||
+        !Array.isArray(snapshot.rows)) return false
+
+    // A weekly candidate cannot have two competing versions on the same URL.
+    const weekKey = week.season_index + '/' + week.week
+    if (weeks.has(weekKey) || fingerprints.has(candidate.fingerprint)) return false
+    weeks.add(weekKey)
+    fingerprints.add(candidate.fingerprint)
+
+    return snapshot.rows.every(row =>
+      row !== null &&
+      Array.isArray(row.counted_results) &&
+      (row.disciplinary_zeros === undefined ||
+        (Array.isArray(row.disciplinary_zeros) && row.disciplinary_zeros.every(z =>
+          z?.run_id === runId && z.branch_id === branchId))))
+  })
 }
 
 export function validCandidateResponse(
@@ -132,17 +156,34 @@ export function validCandidateResponse(
   if (!data || data.run_id !== runId || data.branch_id !== branchId ||
       !sameWeek(data.week, week) || data.publication_status !== 'candidate_only' ||
       data.candidate_fingerprint !== fingerprint) return false
+
   if ('sources' in data) {
-    return Array.isArray(data.sources) && data.sources.every(s =>
-      s.version?.run_id === runId && s.version.branch_id === branchId)
+    return Array.isArray(data.sources) && data.sources.every(source =>
+      source !== null &&
+      typeof source.fingerprint === 'string' && Boolean(source.fingerprint) &&
+      source.version?.run_id === runId && source.version.branch_id === branchId &&
+      source.version.result !== null && typeof source.version.result === 'object')
   }
-  return data.verification_status === 'legacy_without_manifest'
-    ? data.manifest === null
-    : data.verification_status === 'complete_manifest' &&
-      data.manifest !== null && Array.isArray(data.manifest?.players) &&
-      Array.isArray(data.manifest?.results) &&
-      !data.manifest?.disciplinary_zeros?.some(z => z.run_id !== runId || z.branch_id !== branchId) &&
-      !data.zero_sources?.some(s => s.version.zero.run_id !== runId || s.version.zero.branch_id !== branchId)
+
+  if (data.verification_status === 'legacy_without_manifest') return data.manifest === null
+  if (data.verification_status !== 'complete_manifest' || !data.manifest ||
+      !Array.isArray(data.manifest.players) || !Array.isArray(data.manifest.results)) return false
+  if (data.manifest.disciplinary_zeros !== undefined &&
+      (!Array.isArray(data.manifest.disciplinary_zeros) ||
+        data.manifest.disciplinary_zeros.some(z => !z || z.run_id !== runId || z.branch_id !== branchId))) return false
+  if (data.zero_sources !== undefined &&
+      (!Array.isArray(data.zero_sources) || data.zero_sources.some(s =>
+        !s?.version?.zero || s.version.zero.run_id !== runId || s.version.zero.branch_id !== branchId))) return false
+
+  // A claimed verified decision history without its historical versions
+  // cannot be represented as a verified source history in this view.
+  if (data.zero_history_status === 'verified_stored_history' && !Array.isArray(data.zero_sources)) return false
+  if (data.tie_explanations !== undefined &&
+      (!Array.isArray(data.tie_explanations) ||
+        data.tie_explanations.some(tie => !tie || ![
+          'result_profile', 'completion_age', 'previous_position', 'stored_token',
+        ].includes(tie.reason)))) return false
+  return true
 }
 
 // Numeric zero, null and an absent field must remain distinguishable.

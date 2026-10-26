@@ -2529,6 +2529,7 @@ class SimulationPersistenceRepository:
         model: BranchSavedRevisionModel,
         materialize_payload: bool = True,
         sporting_component_proofs: dict | None = None,
+        _decoded_payload=None,
     ) -> BranchSavedRevisionRecord:
         """Load one immutable revision and validate its stored owner and hash."""
 
@@ -2557,7 +2558,9 @@ class SimulationPersistenceRepository:
             from beta_engine.infrastructure.db.calendar_global_slot_origins import is_global_slot_row
             # Routing hints are keyed by all actual JSON bytes, including any
             # unexpected mixed-owner component; they never certify a source.
-            global_slots = is_global_slot_row(model, repository=self)
+            decoded_value = ({'value': _decoded_payload} if _decoded_payload is not None
+                and _decoded_payload[0] == model.payload_json else {})
+            global_slots = is_global_slot_row(model, repository=self, _decoded_out=decoded_value)
             if model.payload_schema_version == "native_fork_saved_root.v2" or global_slots:
                 from beta_engine.infrastructure.db.native_fork_runtime_state import (
                     actual_dependency_signature,
@@ -2583,7 +2586,8 @@ class SimulationPersistenceRepository:
                     # The cache proves COMPLETE actual dependency bytes, owners,
                     # topology and source reachability, not just this row's hash.
                     # Reparse JSON for isolation; never share mutable payloads.
-                    revision = self._to_branch_saved_revision(model, validate_components=False, validate_native_root=False)
+                    revision = self._to_branch_saved_revision(model, validate_components=False, validate_native_root=False,
+                        _decoded_payload=decoded_value.get('value'))
                     from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
                     verify_saved_native_closure(self, session, revision)
                     if not materialize_payload:
@@ -2631,6 +2635,7 @@ class SimulationPersistenceRepository:
                         or model.payload_schema_version == "native_fork_saved_root.v2"),
                     sporting_component_proofs=sporting_component_proofs,
                     verified_global_prefix=verified_global_prefix,
+                    _decoded_payload=decoded_value.get('value'),
                 )
             # Source resolution can validate other revisions. Never hold a stripe
             # lock here: unrelated source/target signatures may share that lock.
@@ -2640,7 +2645,8 @@ class SimulationPersistenceRepository:
                 )
             from beta_engine.infrastructure.db.calendar_global_slot_origins import verify_saved_global_origins
             if global_slots:
-                verify_saved_global_origins(self, session, revision, sporting_component_proofs=sporting_component_proofs)
+                verify_saved_global_origins(self, session, revision, sporting_component_proofs=sporting_component_proofs,
+                    _validated_value_signature=signature)
             from beta_engine.infrastructure.db.calendar_terminal_results import verify_saved_terminal_results
             verify_saved_terminal_results(self, session, revision, sporting_component_proofs=sporting_component_proofs)
             from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
@@ -2662,6 +2668,7 @@ class SimulationPersistenceRepository:
     def _validate_saved_revision_once(
         self, *, session, model, signature, materialize_payload,
         sporting_component_proofs, verified_global_prefix=None,
+        _decoded_payload=None,
     ):
         """One exact-byte validation in flight; every waiter still checks owner."""
         with self._revision_validation_lock:
@@ -2670,7 +2677,8 @@ class SimulationPersistenceRepository:
             self._to_branch_saved_revision(model, validate_components=verified is None,
                 validate_native_root=False,
                 sporting_component_proofs=sporting_component_proofs,
-                verified_global_prefix=verified_global_prefix)
+                verified_global_prefix=verified_global_prefix,
+                _decoded_payload=_decoded_payload)
             if materialize_payload or verified is None
             else verified
         )
@@ -4107,9 +4115,14 @@ class SimulationPersistenceRepository:
         sporting_component_proofs: dict | None = None,
         validate_native_root: bool = True,
         verified_global_prefix=None,
+        _decoded_payload=None,
     ) -> BranchSavedRevisionRecord:
         try:
-            payload = _from_json(model.payload_json)
+            # The routing peek owns this fresh JSON tree from the SAME complete
+            # raw bytes. Reuse only structural decoding; all component, owner,
+            # content-hash, source and closure checks below still run.
+            payload = (_decoded_payload[1] if _decoded_payload is not None
+                and _decoded_payload[0] == model.payload_json else _from_json(model.payload_json))
             change_summary = _from_json(model.change_summary_json)
         except (TypeError, ValueError) as exc:
             raise BranchRevisionStateConflictError(

@@ -231,6 +231,119 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
         assert len(replayed) == 1
 
 
+def test_incremental_checkpoint_hash_is_the_original_full_canonical_hash(tmp_path, prepared_slots):
+    import hashlib
+    from pydantic_core import to_json
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.domain.tournaments.calendar_global_slots import (
+        GlobalCompetitionCheckpoint, GlobalSlot, global_replay_projection_scope, _replay_projections,
+    )
+    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import parse_checkpoint_json
+    from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
+
+    path = tmp_path / 'canonical-prefix-hash.db'
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f'sqlite:///{path}') as server:
+        execute(server, command(inspect(server), 'next-match', name='canonical-first-result'))
+        with server.app.state.runtime.repository._session_factory() as session:
+            raw = session.get(CalendarPlayerSportingCheckpointModel, ('run', 'branch')).payload_json
+    actual = parse_checkpoint_json(raw)
+    states = [actual.model_copy(update={'events': actual.events[:count]}) for count in range(len(actual.events) + 1)]
+    slot = actual.events[-1]
+    assert isinstance(slot, GlobalSlot) and len(slot.accepted) == 1
+    states.extend([
+        actual.model_copy(update={'events': actual.events[:-1] + (slot.model_copy(update={'accepted': ()}),)}),
+        actual,
+        actual.model_copy(update={'run_id': 'běh/漢', 'branch_id': 'větev "🟢"'}),
+        actual.model_copy(update={'events': actual.events[:-1] + (slot.model_copy(update={'number': slot.number + 1}),)}),
+    ])
+
+    class FutureCheckpoint(GlobalCompetitionCheckpoint):
+        future: str
+
+    class FutureSlot(GlobalSlot):
+        future: str
+
+    states.append(FutureCheckpoint.model_construct(
+        **{key: getattr(actual, key) for key in GlobalCompetitionCheckpoint.model_fields}, future='retained'))
+    future_slot = FutureSlot.model_construct(**{key: getattr(slot, key) for key in GlobalSlot.model_fields}, future='retained')
+    states.append(actual.model_copy(update={'events': actual.events[:-1] + (future_slot,)}))
+    expected = [canonical_hash(value.model_dump(mode='json')) for value in states]
+    with global_replay_projection_scope():
+        projection = _replay_projections.get()
+        projection['collect_checkpoint_value_hashes'] = True
+        for index in list(range(len(states))) + list(reversed(range(len(states)))):
+            assert states[index].fingerprint == expected[index]
+            if type(states[index]) is GlobalCompetitionCheckpoint and all(type(event) is not FutureSlot for event in states[index].events):
+                ordered = json.loads(json.dumps(states[index].model_dump(mode='json'), sort_keys=True, ensure_ascii=False))
+                assert projection['checkpoint_value_hashes'][expected[index]] == hashlib.sha256(
+                    to_json(ordered, inf_nan_mode='constants')).digest()
+    for value, fingerprint in zip(states, expected, strict=True):
+        assert value.fingerprint == fingerprint
+
+
+def test_replayed_tour_value_is_private_and_bound_to_complete_actual_state(tmp_path, prepared_slots):
+    from sqlalchemy import text
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db.calendar_native_competition import replayed_global_tour_value
+    from beta_engine.infrastructure.db.models import RunBranchModel
+
+    path = tmp_path / 'private-replayed-tour.db'
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f'sqlite:///{path}') as server:
+        repository = server.app.state.runtime.repository
+        with repository._session_factory() as session:
+            session.execute(text('BEGIN'))
+            branch = session.get(RunBranchModel, 'branch')
+            head = branch.saved_head_revision_id
+            proofs = {}
+            lineage = repository._validated_branch_revision_lineage_in_session(
+                session=session, branch=branch, payload_revision_ids=frozenset({head}),
+                sporting_component_proofs=proofs,
+            )
+            payload = next(row.payload for row in lineage if row.revision_id == head)
+            # The routing peek can transfer only this exact raw JSON tree to
+            # the structural decoder. Different actual bytes must decode anew.
+            from types import SimpleNamespace
+            from beta_engine.infrastructure.db.calendar_global_slot_origins import is_global_slot_row
+            from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
+
+            physical = session.get(BranchSavedRevisionModel, head)
+            observed = {}
+            assert is_global_slot_row(physical, _decoded_out=observed)
+            decoded = repository._to_branch_saved_revision(physical,
+                validate_components=False, validate_native_root=False, _decoded_payload=observed['value'])
+            assert decoded.payload == payload
+            detached = SimpleNamespace(**{
+                column.key: getattr(physical, column.key) for column in BranchSavedRevisionModel.__table__.columns
+            })
+            changed_json = deepcopy(payload)
+            changed_json['run']['display_name'] = 'Changed raw decoding input'
+            detached.payload_json = json.dumps(changed_json)
+            decoded = repository._to_branch_saved_revision(detached,
+                validate_components=False, validate_native_root=False, _decoded_payload=observed['value'])
+            assert decoded.payload == changed_json
+        scope = dict(run_id='run', branch_id='branch')
+        value = replayed_global_tour_value(payload, proofs, **scope)
+        assert value is not None
+        actual = payload['content']['calendar_tour_authority']
+        assert value.model_dump(mode='json') == actual['state']
+        original = deepcopy(payload)
+        for part in ('run_id', 'branch_id'):
+            assert replayed_global_tour_value(payload, proofs, **{**scope, part: 'foreign'}) is None
+        changed = deepcopy(payload)
+        component = changed['content']['calendar_tour_authority']
+        component['state']['receipts'][-1]['request']['command']['audit_reason'] = 'Changed actual source'
+        component['fingerprint'] = canonical_hash(component['state'])
+        assert replayed_global_tour_value(changed, proofs, **scope) is None
+        changed = deepcopy(payload)
+        changed['content']['calendar_tour_authority']['fingerprint'] = '0' * 64
+        assert replayed_global_tour_value(changed, proofs, **scope) is None
+        value.receipts[-1].request['command']['audit_reason'] = 'Mutated private witness'
+        assert replayed_global_tour_value(payload, proofs, **scope) is None
+        assert payload == original
+
+
 def test_version_directed_global_decode_preserves_strict_union_validation(tmp_path, prepared_slots):
     from beta_engine.domain.tournaments.calendar_global_slots import GlobalCompetitionCheckpoint
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import parse_checkpoint_json

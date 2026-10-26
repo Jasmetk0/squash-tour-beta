@@ -165,6 +165,52 @@ def test_raw_math_proof_binds_actual_components_complete_histories_and_source_sc
             has_replayed_global_components(changed, proofs)
 
 
+@pytest.mark.parametrize('expected,changed', [(1, True), (1, 1.0), (0.0, -0.0), (None, float('nan'))])
+def test_ordered_value_comparison_never_collapses_json_types_or_authorizes_math(expected, changed, monkeypatch):
+    import hashlib
+    import json
+    from pydantic_core import to_json
+    from beta_engine.infrastructure.db import calendar_native_competition as storage
+
+    cp = {'schema_version': 'calendar_sporting_checkpoint.v13', 'actual_value': expected}
+    cp = json.loads(json.dumps(cp, sort_keys=True))
+    tour = {'schema_version': 'calendar_tour_authority.v5', 'actual_value': 1}
+    payload = {'run': {'run_id': 'run'}, 'branch': {'branch_id': 'branch'}, 'content': {
+        'calendar_player_sporting_checkpoint': {'state': cp, 'fingerprint': storage.canonical_hash(cp)},
+        'calendar_tour_authority': {'state': tour, 'fingerprint': storage.canonical_hash(tour)},
+    }}
+    for name in ('player_lifecycle', 'player_health_state'):
+        states = [{'actual': 1}]
+        payload['content'][name] = {'states': states, 'fingerprint': storage.canonical_hash(states)}
+    identity = tuple(payload['content'][name]['fingerprint'] for name in (
+        'calendar_player_sporting_checkpoint', 'calendar_tour_authority'))
+    proofs = {'_prefixes': {
+        '_global_replayed_values': {identity: storage._raw_global_inputs(payload)},
+        '_global_checkpoint_json_values': {identity[0]: hashlib.sha256(to_json(cp, inf_nan_mode='constants')).digest()},
+    }}
+    original = storage.canonical_hash
+
+    def no_duplicate_canonicalization(value):
+        assert value is not cp, 'the complete ordered value comparison should be used'
+        return original(value)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(storage, 'canonical_hash', no_duplicate_canonicalization)
+        assert storage.has_replayed_global_components(payload, proofs)
+    mutated = deepcopy(payload)
+    mutated['content']['calendar_player_sporting_checkpoint']['state']['actual_value'] = changed
+    assert not storage.has_replayed_global_components(mutated, proofs)
+    reordered = deepcopy(payload)
+    body = reordered['content']['calendar_player_sporting_checkpoint']['state']
+    reordered['content']['calendar_player_sporting_checkpoint']['state'] = dict(reversed(list(body.items())))
+    assert storage.has_replayed_global_components(reordered, proofs)
+    assert not storage.has_replayed_global_components(payload, {'_prefixes': {
+        '_global_checkpoint_json_values': proofs['_prefixes']['_global_checkpoint_json_values'],
+    }})
+    proofs['_prefixes']['_global_checkpoint_json_values'][identity[0]] = b'invalid cached digest'
+    assert storage.has_replayed_global_components(payload, proofs)
+
+
 def test_routing_hint_and_origin_projection_follow_actual_bytes_and_detect_mutation():
     import json
 

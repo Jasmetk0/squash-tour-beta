@@ -461,6 +461,42 @@ def restore_tour(
         put_tour(session, target)
 
 
+def _origin_projection(payload, *, with_health=False):
+    content = payload.get('content', {})
+    return {
+        'run': payload.get('run'), 'branch': payload.get('branch'),
+        'content': {
+            COMPONENT_KEY: content.get(COMPONENT_KEY, {}),
+            'calendar_player_sporting_checkpoint': {
+                'fingerprint': content.get('calendar_player_sporting_checkpoint', {}).get('fingerprint')
+            },
+            **({k: content[k] for k in ('run_prospect_source',) if k in content}),
+            **({k: content[k] for k in ('player_health_state', 'initial_world', 'player_lifecycle') if with_health and k in content}),
+        },
+    }
+
+
+def _retain_origin_projection(cache, key, projection):
+    encoded = json.dumps(projection)
+    size = len(encoded.encode('utf-8'))
+    if size <= 32 * 1024 * 1024:
+        cache.pop(key, None)
+        cache[key] = (size, encoded)
+        while len(cache) > 128 or sum(v[0] for v in cache.values()) > 32 * 1024 * 1024:
+            cache.pop(next(iter(cache)))
+
+
+def remember_verified_origin_projection(row, payload, cache):
+    """Only the physical gate may seed its just-validated owned JSON value.
+
+    Its caller binds that value to the complete actual row signature first.
+    Retain immutable JSON; later readers still hash every actual raw byte.
+    """
+    key = (row.run_id, row.branch_id, row.revision_id,
+        hashlib.sha256(row.payload_json.encode('utf-8')).digest(), False)
+    _retain_origin_projection(cache, key, _origin_projection(payload))
+
+
 def _origin_inputs(row, cache, *, with_health=False, _decode_tour=True):
     """Decode a narrow source projection, never a physical validation proof."""
     if cache is None:
@@ -471,6 +507,8 @@ def _origin_inputs(row, cache, *, with_health=False, _decode_tour=True):
         hashlib.sha256(row.payload_json.encode('utf-8')).digest(), with_health)
     known = cache.get(key)
     if known is not None:
+        cache.pop(key)
+        cache[key] = known
         # Retain immutable JSON only. Each caller gets fresh values/models and
         # cannot mutate another source read or poison a subsequent cache hit.
         projection = json.loads(known[1])
@@ -481,23 +519,8 @@ def _origin_inputs(row, cache, *, with_health=False, _decode_tour=True):
     content = payload.get('content', {})
     component = content.get(COMPONENT_KEY, {})
     origin = parse_tour_json(json.dumps(component['state'])) if component and _decode_tour else None
-    projection = {
-        'run': payload.get('run'), 'branch': payload.get('branch'),
-        'content': {
-            COMPONENT_KEY: component,
-            'calendar_player_sporting_checkpoint': {
-                'fingerprint': content.get('calendar_player_sporting_checkpoint', {}).get('fingerprint')
-            },
-            **({k: content[k] for k in ('run_prospect_source',) if k in content}),
-            **({k: content[k] for k in ('player_health_state', 'initial_world', 'player_lifecycle') if with_health and k in content}),
-        },
-    }
-    encoded = json.dumps(projection)
-    size = len(encoded.encode('utf-8'))
-    if cache is not None and size <= 32 * 1024 * 1024:
-        cache[key] = (size, encoded)
-        while len(cache) > 128 or sum(v[0] for v in cache.values()) > 32 * 1024 * 1024:
-            cache.pop(next(iter(cache)))
+    projection = _origin_projection(payload, with_health=with_health)
+    _retain_origin_projection(cache, key, projection)
     return projection, origin
 
 

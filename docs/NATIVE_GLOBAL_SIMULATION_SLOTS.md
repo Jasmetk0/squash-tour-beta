@@ -1,3 +1,44 @@
+# Global-slot cold lineage repair — 26 October 2026 candidate
+
+Published `a473cd2a` finished seven hosted workflows successfully: Fast CI,
+Sporting Context, Saved Branch Review, Shell Browser, Calendar Boundary, Tour API
+and all native Full Simulation jobs. Global W52 completed every actual week,
+Season Transition, correct points/summary and cold restart. W61/W80 completed the
+same sporting assertions but failed only their final 120-second cold restart.
+The W80/1,000 Tour Chromium flow passed its restart, then exceeded the unchanged
+18-minute whole-flow deadline after the second draw. These are real remaining
+failures; neither PR readiness nor partial timings satisfy the owner merge gate.
+
+The follow-up reuses independently replayed private Tour values only after
+binding the complete actual component and fresh model fingerprint. Physical
+owner/reachability/source checks remain mandatory for every Saved revision.
+Already authenticated actual JSON can seed the bounded immutable origin
+projection, and routing transfers its fresh parse only when complete raw bytes
+still match. Changed input retains ordinary strict decoding.
+
+Checkpoint replay incrementally hashes the exact original sorted canonical JSON
+of private immutable prefixes; replacement, truncation, different owners and
+unsupported model extensions retain exact original semantics or full fallback.
+An optional separate ordered-JSON digest compares every actual checkpoint value
+against a fully replayed reference. It never changes persisted hashes or grants
+source/math authority by itself; full input/history binding and Tour hashes
+remain required. Reordered JSON or an unusable auxiliary digest falls back to
+the original canonical comparison.
+
+Local evidence before workspace loss: 24 domain/value contracts passed, including
+boolean/integer/float/signed-zero/NaN distinctions and rejection of auxiliary-only
+proofs. Real HTTP tests passed exact original checkpoint hashes, private witness
+mutation/foreign owner rejection, raw parse transfer, changed captured content,
+ancestor rollback and concurrent retry. The genuine failed W80 CI database has
+94 revisions; cold inspection improved from 198.6 to 143.7 seconds under cProfile.
+The latest plain measurement was 138.4 seconds, so sufficient hosted deadline
+margin remains unproven. The additional ordered-digest golden assertion and
+reconstructed candidate require final-head CI. No timeout, population, sporting
+assertion, schema, seed or result is relaxed. An interrupted later byte-digest
+memo experiment is excluded. Continue the same #1643; only the owner merges.
+
+---
+
 # Native global Simulation Slots
 
 Implementation candidate; not yet acceptance evidence.

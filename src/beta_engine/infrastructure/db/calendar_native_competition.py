@@ -1,6 +1,8 @@
 """Independent command/MatchEngine replay of the complete post-admission chain."""
 
 import json
+import hashlib
+from pydantic_core import to_json
 from types import SimpleNamespace
 
 from beta_engine.domain.players.calendar_native_competition import (
@@ -56,12 +58,46 @@ def has_replayed_global_components(payload, proofs):
         or cp['state'].get('schema_version') != 'calendar_sporting_checkpoint.v13'
         or tour['state'].get('schema_version') != 'calendar_tour_authority.v5'):
         return False
-    identity = canonical_hash(cp['state']), canonical_hash(tour['state'])
+    identity = cp['fingerprint'], tour['fingerprint']
     evidence = known.get(identity)
-    if evidence is None or identity != (cp['fingerprint'], tour['fingerprint']):
+    if evidence is None:
+        return False
+    # The declared fingerprint only selects a candidate. Hash EVERY actual
+    # value and compare with the independently replayed value's digest. This
+    # optional ordered-JSON digest is not a persisted hash or a source proof.
+    auxiliary = (proofs or {}).get('_prefixes', {}).get('_global_checkpoint_json_values', {}).get(identity[0])
+    try:
+        same_checkpoint = auxiliary is not None and hashlib.sha256(to_json(cp['state'], inf_nan_mode='constants')).digest() == auxiliary
+    except (TypeError, ValueError):
+        same_checkpoint = False
+    if not same_checkpoint and canonical_hash(cp['state']) != identity[0]:
+        return False
+    if canonical_hash(tour['state']) != identity[1]:
         return False
     actual = _raw_global_inputs(payload)
     return actual == evidence
+
+
+def replayed_global_tour_value(payload, proofs, *, run_id, branch_id):
+    """A private decode value, never a physical/source authorization proof.
+
+    The full replay already constructed these frozen intermediate values. Bind
+    the complete actual component again and rehash the retained model to reject
+    nested mutation. The caller still owns every physical Saved/source gate.
+    """
+    from beta_engine.domain.tournaments.calendar_global_slots import GlobalTourState
+
+    component = payload.get('content', {}).get('calendar_tour_authority', {})
+    if (not isinstance(component, dict) or set(component) != {'state', 'fingerprint'}
+        or not isinstance(component.get('state'), dict)):
+        return None
+    actual = canonical_hash(component['state'])
+    value = (proofs or {}).get('_prefixes', {}).get('_global_replayed_tours', {}).get(actual)
+    if (not isinstance(value, GlobalTourState)
+        or (value.run_id, value.branch_id) != (run_id, branch_id)
+        or actual != component['fingerprint'] or value.fingerprint != actual):
+        return None
+    return value
 
 
 def root_payload(payload, checkpoint, tour):
@@ -89,6 +125,10 @@ def verify_competition_payload(payload, checkpoint, evidence=None, *, verified_g
 
 
 def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_global_prefix=None, source_proofs=None):
+    from beta_engine.domain.tournaments.calendar_global_slots import _replay_projections
+    projection = _replay_projections.get()
+    if projection is not None and source_proofs is not None:
+        projection['collect_checkpoint_value_hashes'] = True
     from beta_engine.application.calendar_tour_service import (
         CalendarTourCommit,
         CalendarTourService,
@@ -335,7 +375,14 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
     if source_proofs is not None and verified_states:
         raw_inputs = _raw_global_inputs(payload)
         values = source_proofs.setdefault('_global_replayed_values', {})
+        tours = source_proofs.setdefault('_global_replayed_tours', {})
+        checkpoint_values = source_proofs.setdefault('_global_checkpoint_json_values', {})
         for verified_cp, verified_tour in verified_states:
+            tours[verified_tour.fingerprint] = verified_tour
+            fingerprint = verified_cp.fingerprint
+            value_hash = (projection or {}).get('checkpoint_value_hashes', {}).get(fingerprint)
+            if value_hash is not None:
+                checkpoint_values[fingerprint] = value_hash
             life_indices = [i for i, fp in enumerate(raw_inputs[1])
                 if fp == verified_tour.lifecycle_fingerprint]
             health_indices = [i for i, h in enumerate(health)
@@ -347,6 +394,10 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
                 )
         while len(values) > 128:
             values.pop(next(iter(values)))
+        while len(tours) > 128:
+            tours.pop(next(iter(tours)))
+        while len(checkpoint_values) > 128:
+            checkpoint_values.pop(next(iter(checkpoint_values)))
 
 
 def authenticated_global_prefix(payload, checkpoint, state, prefix):

@@ -1,3 +1,22 @@
+# Finish global-slot acceptance — 26 October 2026
+
+Continue #1643 through the remaining W80/1,000 whole-browser deadline and
+W61/W80 final cold restarts. On `a473cd2a`, seven hosted workflows and all native
+Full Simulation jobs passed; Global W52 also passed its complete real calendar,
+Season Transition and restart. W61/W80 completed all sporting assertions before
+their cold-restart failures. These are bounded results, not merge readiness.
+
+The follow-up binds private replayed Tour values and immutable origin projections
+to actual Saved input, transfers fresh routing JSON only for identical complete
+raw bytes, and computes the original checkpoint SHA incrementally across private
+immutable prefixes. An auxiliary ordered-JSON value digest cannot authorize math
+or sources without full completed replay/input evidence. Keep all physical graph,
+owner/reachability, mutation, rollback and canonical-value guards. Require every
+relevant workflow to execute successfully on the final head before owner handoff;
+the whole-browser and real all-week matrices remain mandatory.
+
+---
+
 # Global-slot whole-operation and restart repair — 25 October 2026 candidate
 
 The `01c2776c9` W80 Tour browser passed cold restart but exceeded the unchanged

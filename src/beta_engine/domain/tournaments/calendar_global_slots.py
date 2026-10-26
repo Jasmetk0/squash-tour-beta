@@ -6,10 +6,13 @@ that ledger, never a second mutable result store. Old executors retain old seeds
 
 from contextlib import contextmanager
 from contextvars import ContextVar
+import hashlib
+import json
 from types import SimpleNamespace
 from typing import Literal
 
 from pydantic import Field, model_validator
+from pydantic_core import to_json
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
@@ -92,14 +95,101 @@ def _replay_fingerprint(value, *, sporting=False):
     known = memo.get(key)
     if known is not None and known[0] is value:
         return known[1]
-    body = value.model_dump(mode="json")
-    if sporting:
-        body.pop("prepared_awards", None)
-    fingerprint = canonical_hash(body)
+    fingerprint = _incremental_checkpoint_fingerprint(value, scope) if scope is not None and not sporting else None
+    if fingerprint is None:
+        body = value.model_dump(mode="json")
+        if sporting:
+            body.pop("prepared_awards", None)
+        fingerprint = canonical_hash(body)
     if scope is not None:
         memo[key] = (value, fingerprint)
         while len(memo) > 256:
             memo.pop(next(iter(memo)))
+    return fingerprint
+
+
+def _incremental_checkpoint_fingerprint(value, scope):
+    """Hash the SAME canonical JSON, reusing only private immutable prefixes.
+
+    No alternate persisted hash, declared fingerprint or physical proof is used.
+    Exact event identities bind a reusable prefix; replacement/truncation drops
+    its suffix. Outside the private replay scope the ordinary full hash runs.
+    """
+    if (type(value) is not GlobalCompetitionCheckpoint
+        or set(type(value).model_fields) != {'schema_version', 'run_id', 'branch_id', 'competition_root', 'events'}
+        or type(value).model_computed_fields
+        or type(value).__pydantic_decorators__.model_serializers
+        or type(value).__pydantic_decorators__.field_serializers
+        or type(value.events) is not tuple or len(value.events) > 4096
+        or any(type(x) is not str for x in (value.run_id, value.branch_id, value.schema_version))
+        or any(type(event) not in (GlobalSlot, CalendarNativeSportingWeek, CalendarFollowupKnockout) for event in value.events)):
+        return None
+    def encode(body):
+        return json.dumps(body, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
+    cache = scope.setdefault('checkpoint_prefixes', {})
+    key = (id(value.competition_root), value.run_id, value.branch_id, value.schema_version)
+    entry = cache.get(key)
+    collect = scope.get('collect_checkpoint_value_hashes', False)
+    if entry is None or entry[0] is not value.competition_root or (collect and entry[4] is None):
+        body = value.model_dump(mode='json', exclude={'events'})
+        if set(body) != {'schema_version', 'run_id', 'branch_id', 'competition_root'}:
+            return None
+        before = [encode(k) + b':' + encode(body[k]) for k in sorted(body) if k < 'events']
+        after = [encode(k) + b':' + encode(body[k]) for k in sorted(body) if k > 'events']
+        prefix = b'{' + b','.join(before) + (b',' if before else b'') + b'"events":['
+        suffix = b']' + (b',' if after else b'') + b','.join(after) + b'}'
+        auxiliary = None
+        auxiliary_suffix = None
+        if collect:
+            try:
+                ordered = json.loads(encode(body))
+                def core(data):
+                    return to_json(data, inf_nan_mode='constants')
+                before_core = [core(k) + b':' + core(ordered[k]) for k in sorted(ordered) if k < 'events']
+                after_core = [core(k) + b':' + core(ordered[k]) for k in sorted(ordered) if k > 'events']
+                auxiliary = [hashlib.sha256(b'{' + b','.join(before_core) + (b',' if before_core else b'') + b'"events":[')]
+                auxiliary_suffix = b']' + (b',' if after_core else b'') + b','.join(after_core) + b'}'
+            except (TypeError, ValueError):
+                # Older compatible Pydantic installations can retain the full
+                # canonical-value path without this optional comparison hash.
+                scope['collect_checkpoint_value_hashes'] = False
+        entry = (value.competition_root, [], [hashlib.sha256(prefix)], suffix, auxiliary, auxiliary_suffix)
+        cache[key] = entry
+        while len(cache) > 4:
+            cache.pop(next(iter(cache)))
+    _, events, hashes, suffix, auxiliary, auxiliary_suffix = entry
+    shared = 0
+    while shared < min(len(events), len(value.events)) and events[shared] is value.events[shared]:
+        shared += 1
+    del events[shared:]
+    del hashes[shared + 1:]
+    if auxiliary is not None:
+        del auxiliary[shared + 1:]
+    for event in value.events[shared:]:
+        encoded = encode(event.model_dump(mode='json'))
+        state = hashes[-1].copy()
+        state.update((b',' if events else b'') + encoded)
+        if auxiliary is not None:
+            try:
+                state_core = auxiliary[-1].copy()
+                state_core.update((b',' if events else b'') + to_json(json.loads(encoded), inf_nan_mode='constants'))
+                auxiliary.append(state_core)
+            except (TypeError, ValueError):
+                auxiliary = None
+                scope['collect_checkpoint_value_hashes'] = False
+                cache[key] = (entry[0], events, hashes, suffix, None, None)
+        events.append(event)
+        hashes.append(state)
+    result = hashes[-1].copy()
+    result.update(suffix)
+    fingerprint = result.hexdigest()
+    if auxiliary is not None:
+        equivalent_value = auxiliary[-1].copy()
+        equivalent_value.update(auxiliary_suffix)
+        values = scope.setdefault('checkpoint_value_hashes', {})
+        values[fingerprint] = equivalent_value.digest()
+        while len(values) > 128:
+            values.pop(next(iter(values)))
     return fingerprint
 
 

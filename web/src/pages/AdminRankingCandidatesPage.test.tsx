@@ -648,3 +648,67 @@ it('retains original server errors when switching language', async () => {
   expect(screen.getByRole('alert')).toHaveTextContent('Conflict code 409 from server')
   expect(fetchHistory).toHaveBeenCalledTimes(1)
 })
+
+
+it.each([
+  ['missing counted flag', { fingerprint:'version', version:{
+    run_id:'run',branch_id:'branch',effective_week:{season_index:0,week:2},
+    previous_fingerprint:null,
+    result:{edition_id:'edition-1',player_id:'player-a',source_fingerprint:'origin',
+      qualification_points:0,main_points:10,completed_week:{season_index:0,week:1},
+      first_publication_week:{season_index:0,week:2},validity_weeks:61,ranked:true,terminal_status:'completed'},
+  }}],
+  ['missing previous fingerprint', { fingerprint:'version',counted:false, version:{
+    run_id:'run',branch_id:'branch',effective_week:{season_index:0,week:2},
+    result:{edition_id:'edition-1',player_id:'player-a',source_fingerprint:'origin',
+      qualification_points:0,main_points:10,completed_week:{season_index:0,week:1},
+      first_publication_week:{season_index:0,week:2},validity_weeks:61,ranked:true,terminal_status:'completed'},
+  }}],
+  ['missing ranked status', { fingerprint:'version',counted:false, version:{
+    run_id:'run',branch_id:'branch',effective_week:{season_index:0,week:2},
+    previous_fingerprint:null,
+    result:{edition_id:'edition-1',player_id:'player-a',source_fingerprint:'origin',
+      qualification_points:0,main_points:10,completed_week:{season_index:0,week:1},
+      first_publication_week:{season_index:0,week:2},validity_weeks:61,terminal_status:'completed'},
+  }}],
+])('refuses source data with %s rather than substituting a default state', async (_label, source) => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchSources.mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},
+    candidate_fingerprint:'hash',publication_status:'candidate_only',
+    sources:[source],
+  } as unknown as RankingCandidateSources)
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Load source results'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Source history does not match this candidate.')
+  expect(screen.queryByText('Not counted in this candidate')).not.toBeInTheDocument()
+})
+
+it('rejects a roster player with unknown retirement state', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},
+    candidate_fingerprint:'hash',publication_status:'candidate_only',
+    verification_status:'complete_manifest',
+    manifest:{players:[{player_id:'nr-player',tie_break_token:'stable',
+      tour_entry_week:{season_index:0,week:2}}],results:[]},
+  } as unknown as RankingCandidateInputs)
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Stored inputs do not match this candidate.')
+  expect(screen.queryByText('Not retired at this boundary')).not.toBeInTheDocument()
+})
+
+it('rejects malformed preparation audits instead of presenting an incomplete verified manifest', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},
+    candidate_fingerprint:'hash',publication_status:'candidate_only',
+    verification_status:'complete_manifest',manifest:{players:[],results:[]},
+    command_audits:[{command_id:'command-1',audit:{actor_label:'Operator'}}],
+  } as unknown as RankingCandidateInputs)
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Stored inputs do not match this candidate.')
+  expect(screen.queryByText('Verified: stored inputs reproduce this candidate.')).not.toBeInTheDocument()
+})

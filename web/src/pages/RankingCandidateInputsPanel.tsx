@@ -63,7 +63,7 @@ export function RankingCandidateInputsPanel({ runId, branchId, week, fingerprint
                         ? weekLabel({ season_index: Math.floor(v / 61), week: v % 61 + 1 }, language)
                         : value(v)
                     return <li key={tie.higher_rank + '/' + tie.lower_rank}>
-                      {tie.higher_rank}. {tie.higher_player_id} {t('precedes')} {tie.lower_rank}. {tie.lower_player_id} {t('at')} {tie.points} {t('Points').toLowerCase()}.
+                      {tie.higher_rank}. {tie.higher_player_id} {t('precedes')} {tie.lower_rank}. {tie.lower_player_id} {t('at')} {tie.points} {t('points')}.
                       {' '}{t(reason)}{tie.result_slot === null ? '' : ' ' + value(tie.result_slot)}: {tieValue(tie.higher_value)} {t('versus')} {tieValue(tie.lower_value)}.
                     </li>
                   })}</ul>}
@@ -113,7 +113,7 @@ export function RankingCandidateInputsPanel({ runId, branchId, week, fingerprint
               {data.manifest.results.length === 0 ? <p>{t('No result inputs were supplied.')}</p>
                 : <ul>{data.manifest.results.map(result => <li key={JSON.stringify([result.edition_id, result.player_id])}>
                   <strong>{result.player_id} · {result.edition_id}</strong>
-                  {' · '}{t('Award')} {result.qualification_points + result.main_points} {t('Points').toLowerCase()}
+                  {' · '}{t('Award')} {result.qualification_points + result.main_points} {t('points')}
                   {' · '}{result.ranked ? t('Ranked result') : t('Unranked result')}
                   <p>{t('First publication')} {weekLabel(result.first_publication_week, language)}
                     {' · '}{t('Validity')} {result.validity_weeks} {t('weeks')}</p>

@@ -572,3 +572,79 @@ it('renders an omitted tie value as missing, not null or numeric zero', async ()
   expect(await screen.findByText((_, el) => el?.tagName === 'LI' &&
     el.textContent?.includes('Previous Official position 0: 0 versus Missing') === true)).toBeVisible()
 })
+
+
+it('does not display a candidate with counted awards published after the candidate week', async () => {
+  const future = structuredClone(populated)
+  future.candidates[0].snapshot.rows[0].counted_results[0].first_publication_week = {season_index:0,week:3}
+  fetchHistory.mockResolvedValue(future)
+  show('/0/2')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Ranking history does not match this candidate.')
+  expect(screen.queryByText('player-a')).not.toBeInTheDocument()
+})
+
+it('rejects a future effective source correction despite matching Run/Branch and fingerprint', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchSources.mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},
+    candidate_fingerprint:'hash',publication_status:'candidate_only',sources:[{
+      fingerprint:'future-version',counted:false,version:{
+        run_id:'run',branch_id:'branch',effective_week:{season_index:0,week:3},previous_fingerprint:null,
+        result:{edition_id:'edition-future',player_id:'player-a',source_fingerprint:'original',
+          qualification_points:0,main_points:5,completed_week:{season_index:0,week:1},
+          first_publication_week:{season_index:0,week:2},validity_weeks:61,ranked:true,terminal_status:'completed'},
+      },
+    }],
+  })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Load source results'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Source history does not match this candidate.')
+  expect(screen.queryByText('edition-future')).not.toBeInTheDocument()
+})
+
+it('does not present future-effective zero decisions as verified stored history', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},
+    candidate_fingerprint:'hash',publication_status:'candidate_only',
+    verification_status:'complete_manifest',manifest:{players:[],results:[]},
+    zero_history_status:'verified_stored_history',
+    zero_sources:[{
+      fingerprint:'future-zero-version',impact:'reserves_slot',
+      version:{effective_week:{season_index:0,week:3},previous_fingerprint:null,
+        zero:{zero_id:'zero-future',run_id:'run',branch_id:'branch',player_id:'player-a',
+          source_fingerprint:'decision',effective_week:{season_index:0,week:2},duration_weeks:3}},
+    }],
+  })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Stored inputs do not match this candidate.')
+  expect(screen.queryByText(/Verified against the stored decisions effective/)).not.toBeInTheDocument()
+})
+
+it('translates an existing identity mismatch error when language changes without a new read', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({
+    run_id:'run',branch_id:'foreign-branch',week:{season_index:0,week:2},
+    candidate_fingerprint:'hash',publication_status:'candidate_only',
+    verification_status:'complete_manifest',manifest:{players:[],results:[]},
+  })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Stored inputs do not match this candidate.')
+  expect(fetchInputs).toHaveBeenCalledTimes(1)
+  await userEvent.click(screen.getByRole('button',{name:'Čeština'}))
+  expect(screen.getByRole('alert')).toHaveTextContent('Uložené vstupy neodpovídají tomuto kandidátovi.')
+  await userEvent.click(screen.getByRole('button',{name:'English'}))
+  expect(screen.getByRole('alert')).toHaveTextContent('Stored inputs do not match this candidate.')
+  expect(fetchInputs).toHaveBeenCalledTimes(1)
+})
+
+it('retains original server errors when switching language', async () => {
+  fetchHistory.mockRejectedValueOnce(new Error('Conflict code 409 from server'))
+  show('/0/2')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Conflict code 409 from server')
+  await userEvent.click(screen.getByRole('button',{name:'Čeština'}))
+  expect(screen.getByRole('alert')).toHaveTextContent('Conflict code 409 from server')
+  expect(fetchHistory).toHaveBeenCalledTimes(1)
+})

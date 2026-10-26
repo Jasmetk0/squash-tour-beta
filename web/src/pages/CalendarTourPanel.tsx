@@ -2,7 +2,7 @@ import {useEffect,useRef,useState} from 'react'
 import {Link} from 'react-router-dom'
 import {useQueryClient} from '@tanstack/react-query'
 import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason,inspectCalendarTourRecords,inspectNativeTourProspectIntake,previewCalendarTourNativeBirthSporting} from '../api/client'
-import {validateTourView,validateTourPreview,validateTourSeasonComparison,validateTourCareerRecords,validateNativeProspectIntake,validateNativeSportingBirthPreflight,type NativeSportingBirthPreflight,type NativeProspectIntakePreflight,type TourCareerRecords,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
+import {confirmedSavedTourView,validateTourView,validateTourPreview,validateTourSeasonComparison,validateTourCareerRecords,validateNativeProspectIntake,validateNativeSportingBirthPreflight,type NativeSportingBirthPreflight,type NativeProspectIntakePreflight,type TourCareerRecords,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
 import {newCommandId} from '../admin/branchSimulation'
 import {tourWeekOffset,scheduleTourEdition} from '../api/nativeTourCalendar'
 import {useLanguage} from '../i18n/LanguageContext'
@@ -22,6 +22,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const inputs=useRef(0)
   if(current.current!==scope){current.current=scope;epoch.current++}
   const [loadedView,setLoadedView]=useState<{scope:string;value:TourView}|null>(null),[error,setError]=useState<string|null>(null)
+  const savedHandoff=useRef<{scope:string;value:TourView}|null>(null)
   const view=loadedView?.scope===scope?loadedView.value:null
   const setView=(value:TourView|null)=>setLoadedView(value?{scope,value}:null)
   const [busy,setBusy]=useState(false),[review,setReview]=useState<TourPreview|null>(null)
@@ -45,6 +46,8 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const read=async(signal?:AbortSignal)=>validateTourView(await inspectCalendarTour(runId,branchId,signal),runId,branchId)
   useEffect(()=>{
     const stamp=epoch.current
+    const handoff=savedHandoff.current?.scope===scope?savedHandoff.current.value:null
+    savedHandoff.current=null
     const controller=new AbortController()
     let active=true
     const valid=()=>active&&epoch.current===stamp
@@ -53,7 +56,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     // start an expensive server read that its AbortController cannot stop once
     // the synchronous backend has begun. Real dispatched reads still abort and
     // keep the scope/epoch fence when this Run/Branch/HEAD changes.
-    void Promise.resolve().then(()=>valid()?read(controller.signal):null).then(v=>{if(v&&valid()){
+    void Promise.resolve().then(()=>valid()?(handoff??read(controller.signal)):null).then(v=>{if(v&&valid()){
       setView(v)
       const clock=v.state?{...v.state.week,calendar:v.run_calendar??v.state.week.calendar}:null
       const first=clock?tourWeekOffset(clock,2):null
@@ -80,6 +83,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         const saved=await saveCalendarTour(runId,branchId,view.draft_version,view.tour_fingerprint)
         if(!valid())return
         if(saved.schema_version!=='calendar_tour_save_receipt.v1'||saved.run_id!==runId||saved.branch_id!==branchId||saved.saved_revision.run_id!==runId||saved.saved_revision.branch_id!==branchId||!/^[0-9a-f]{64}$/.test(saved.saved_revision.content_hash))throw Error('Tour Save source scope is invalid')
+        const savedView=confirmedSavedTourView(view,saved)
         invalidate()
         const key=['admin-run-branches',runId]
         const branches=client.getQueryData<RunBranchListResponse>(key)
@@ -88,6 +92,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           // Updating the shared selection starts ONE full read in the effect,
           // instead of loading the same large history before and after HEAD.
           setView(null)
+          savedHandoff.current=savedView?{scope:JSON.stringify([runId,branchId,saved.saved_revision.revision_id]),value:savedView}:null
           client.setQueryData<RunBranchListResponse>(key,{...branches,run_branches:branches.run_branches.map(b=>b.branch_id===branchId?{...b,saved_head_revision_id:saved.saved_revision.revision_id}:b)})
           void client.invalidateQueries();return
         }

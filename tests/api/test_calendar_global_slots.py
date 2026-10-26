@@ -1248,3 +1248,99 @@ def test_execution_inspection_uses_independent_postwrite_context_and_atomic_retr
         assert _request("POST", tour_url(server) + "/execute", request) == (201, response["result"])
         assert _request("POST", endpoint, request) == (201, response)
         assert _dump(path) == committed
+
+
+@pytest.mark.parametrize("changed_metadata", [False, True])
+def test_confirmed_save_projection_binds_the_entire_actual_payload(
+    tmp_path, prepared_slots, changed_metadata,
+):
+    from beta_engine.infrastructure.db.models import RunContainerModel
+
+    path = tmp_path / "save-projection.db"
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        view = inspect(server)
+        cmd = command(view, "next-match", name="save-projection-next")
+        status, preview = _request("POST", tour_url(server) + "/preview", cmd)
+        assert status == 200, preview
+        status, result = _request("POST", tour_url(server) + "/execute?include_inspection=true", {
+            "command": cmd, "expected_preview_fingerprint": preview["preview_fingerprint"],
+            "explicit_confirmation": True,
+        })
+        assert status == 201, result
+        current = result["inspection"]
+        assert len(current["save_projection_fingerprint"]) == 64
+        if changed_metadata:
+            # A real isolated DB metadata mutation, never a sporting repair.
+            # The full Save must capture it; unchanged declared Tour/CP hashes
+            # alone cannot authorize reuse of the earlier inspection.
+            with server.app.state.runtime.repository._session_factory.begin() as session:
+                session.get(RunContainerModel, "run").display_name += " changed"
+        status, saved = _request("POST", tour_url(server) + "/save", {
+            "expected_draft_version": current["draft_version"],
+            "expected_calendar_tour_fingerprint": current["tour_fingerprint"],
+        })
+        assert status == 201, saved
+        binding = saved["saved_projection"]
+        assert binding["run_id"] == "run" and binding["branch_id"] == "branch"
+        assert binding["previous_saved_head_revision_id"] == current["saved_head_revision_id"]
+        assert binding["saved_head_revision_id"] == saved["saved_revision"]["revision_id"]
+        assert binding["checkpoint_fingerprint"] == current["checkpoint_fingerprint"]
+        assert binding["tour_fingerprint"] == current["tour_fingerprint"]
+        if changed_metadata:
+            assert binding["payload_fingerprint"] != current["save_projection_fingerprint"]
+        else:
+            assert binding["payload_fingerprint"] == current["save_projection_fingerprint"]
+            expected = {**current, "saved_head_revision_id": binding["saved_head_revision_id"],
+                "draft_version": binding["draft_version"], "saved": True,
+                "sporting_saved": True, "can_initialize": False}
+            assert inspect(server) == expected
+
+
+def test_save_projection_declines_external_sources_calendar_and_completed_seasons(
+    tmp_path, prepared_slots,
+):
+    from beta_engine.application.calendar_tour_save_projection import (
+        saved_inspection_value_fingerprint,
+    )
+    from beta_engine.infrastructure.db.models import (
+        StagedCalendarRankingResultVersionModel,
+        StagedCalendarRankingZeroVersionModel,
+    )
+    path = tmp_path / "save-projection-eligibility.db"
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        repo = server.app.state.runtime.repository
+        view = inspect(server)
+        assert view["save_projection_fingerprint"]
+        record = repo.get_branch_saved_revision(revision_id=view["saved_head_revision_id"])
+        with repo._session_factory() as session:
+            kwargs = {"expected_head": record.revision_id}
+            assert saved_inspection_value_fingerprint(session, record.payload, **kwargs)
+            assert saved_inspection_value_fingerprint(session, record.payload, expected_head="foreign") is None
+            for unsupported in ("clock", "prospects", "season", "closure", "fork"):
+                payload = deepcopy(record.payload)
+                if unsupported == "clock":
+                    payload["run"]["run_calendar"]["season_count"] += 1
+                elif unsupported == "prospects":
+                    payload["content"]["run_prospect_source"] = {}
+                elif unsupported == "season":
+                    payload["content"]["calendar_tour_authority"]["state"]["transitions"].append(
+                        {"public_event": {"kind": "season_transition_completed"}})
+                elif unsupported == "closure":
+                    payload["run"]["native_branch_closures"] = {"branch": {}}
+                else:
+                    payload["branch"]["forked_from_branch_id"] = "source"
+                assert saved_inspection_value_fingerprint(session, payload, **kwargs) is None
+        # Adversarial future staging rows are not sporting facts. Their mere
+        # presence disables this optimization, even beyond the current week.
+        for model in (StagedCalendarRankingZeroVersionModel, StagedCalendarRankingResultVersionModel):
+            with repo._session_factory.begin() as session:
+                identity = {"zero_id": "untrusted"} if model is StagedCalendarRankingZeroVersionModel else {
+                    "edition_id": "untrusted", "player_id": "untrusted"}
+                row = model(run_id="run", branch_id="branch", effective_ordinal=1000000,
+                    saved_head_revision_id=record.revision_id, fingerprint="0" * 64,
+                    payload_json="{}", **identity)
+                session.add(row);session.flush()
+                assert saved_inspection_value_fingerprint(session, record.payload, expected_head=record.revision_id) is None
+                session.delete(row)

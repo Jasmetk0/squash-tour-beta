@@ -187,11 +187,13 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Current input'}})
     expect(screen.getByRole('button',{name:'Review Tour initialization'})).toBeEnabled()
   })
-  it('loads the full Tour only once after a confirmed Save changes shared HEAD',async()=>{
+  it.each([false,true])('reads or safely hands off the confirmed Save when complete-payload continuity is %s',async(continuity)=>{
     let serverHead='head'
     const state={week:{calendar:{schema_version:'run_calendar.v1',weeks_per_year:52,season_start_year_week:35,start_year:2030,season_count:3},season_index:0,week:2},editions:[],rankings:[],transitions:[]}
-    api.inspectCalendarTour.mockImplementation(()=>Promise.resolve({...view(),state,tour_fingerprint:'c'.repeat(64),saved:serverHead==='saved',saved_head_revision_id:serverHead}))
-    api.saveCalendarTour.mockImplementation(()=>{serverHead='saved';return Promise.resolve({schema_version:'calendar_tour_save_receipt.v1',run_id:'r',branch_id:'b',saved_revision:{revision_id:'saved',run_id:'r',branch_id:'b',content_hash:'d'.repeat(64)}})})
+    api.inspectCalendarTour.mockImplementation(()=>Promise.resolve({...view(),state,tour_fingerprint:'c'.repeat(64),saved:serverHead==='saved',saved_head_revision_id:serverHead,save_projection_fingerprint:continuity?'e'.repeat(64):null}))
+    api.saveCalendarTour.mockImplementation(()=>{serverHead='saved';return Promise.resolve({schema_version:'calendar_tour_save_receipt.v1',run_id:'r',branch_id:'b',saved_revision:{revision_id:'saved',run_id:'r',branch_id:'b',content_hash:'d'.repeat(64)},
+      working_draft:{status:'clean',change_count:0,draft_version:2,base_saved_revision_id:'saved'},
+      saved_projection:continuity?{schema_version:'calendar_tour_saved_projection.v1',payload_fingerprint:'e'.repeat(64),run_id:'r',branch_id:'b',previous_saved_head_revision_id:'head',saved_head_revision_id:'saved',draft_version:2,checkpoint_fingerprint:'a'.repeat(64),tour_fingerprint:'c'.repeat(64)}:null})})
     function Host(){
       const {data}=useQuery({queryKey:['admin-run-branches','r'],queryFn:async()=>({run_branches:[{branch_id:'b',run_id:'r',saved_head_revision_id:serverHead}]})})
       return data?<CalendarTourPanel runId="r" branchId="b" head={data.run_branches[0].saved_head_revision_id}/>:null
@@ -201,7 +203,7 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     fireEvent.click(screen.getByLabelText('Confirm Tour Save'))
     fireEvent.click(screen.getByRole('button',{name:'Manual Tour Save'}))
     await screen.findByText(/State: Saved/)
-    expect(api.inspectCalendarTour).toHaveBeenCalledTimes(2)
+    expect(api.inspectCalendarTour).toHaveBeenCalledTimes(continuity?1:2)
     expect(api.saveCalendarTour).toHaveBeenCalledTimes(1)
   })
   it('reviews and explicitly confirms a terminal Season Transition without implicit Save',async()=>{

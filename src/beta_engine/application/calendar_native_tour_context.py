@@ -40,7 +40,8 @@ def _verified_health_head(payload):
 
 
 def native_working_context(
-    session, *, revision, checkpoint, saved, state, signed, evidence, repository=None
+    session, *, revision, checkpoint, saved, state, signed, evidence, repository=None,
+    _verified_payload_out=None,
 ):
     if state is None:
         raise ValueError("Native sporting owner lacks its coupled Tour authority")
@@ -49,6 +50,13 @@ def native_working_context(
         **revision.saved_revision.payload,
         "content": dict(revision.saved_revision.payload["content"]),
     }
+
+    def verified_head():
+        # Export only owned values AFTER a complete proof succeeds below.
+        # This carrier never grants physical/replay authority to another call.
+        if _verified_payload_out is not None:
+            _verified_payload_out["payload"] = payload
+        return _verified_health_head(payload)
     validate_live_run_prospect_source_against_saved(session, payload, run_id=run_id)
     same_checkpoint, same_tour = checkpoint == saved, state == signed
     # The caller independently authenticated the Saved payload and checked the
@@ -83,7 +91,7 @@ def native_working_context(
         and same_tour
         and payload == revision.saved_revision.payload
     ):
-        return _verified_health_head(payload)
+        return verified_head()
     # The caller just authenticated the Saved lineage against physical rows.
     # Reuse only a completed proof of these exact captured live bytes in this
     # repository; this is never a source-hash-only authorization shortcut.
@@ -100,7 +108,7 @@ def native_working_context(
             # The exact FULL actual payload, including every Health/lifecycle
             # state, already completed independent replay. The fresh Saved
             # physical/source gate above still runs on every request.
-            return _verified_health_head(payload)
+            return verified_head()
     verified = saved_checkpoint(
         payload,
         evidence,
@@ -132,5 +140,5 @@ def native_working_context(
     if checkpoint.schema_version == 'calendar_sporting_checkpoint.v13':
         # saved_checkpoint just independently verified all actual Health and
         # lifecycle histories plus the coupled checkpoint/Tour successor.
-        return _verified_health_head(payload)
+        return verified_head()
     return load_saved_health(payload, run_id=run_id, branch_id=branch_id)[-1]

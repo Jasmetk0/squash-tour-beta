@@ -1,3 +1,48 @@
+# Confirmed Save value continuity — 26 October 2026 candidate
+
+Preceding 37f627a4 passed fourteen hosted workflows; the complete global
+all-week matrix was still running. Whole W80/1,000 Chromium now completed and
+Saved BOTH seven-match tournaments and both result confirmations. Its unchanged
+18-minute deadline expired during the last Week Transition; it is still WAIT.
+The separate two-round hybrid browser passed a same-head retry after one
+ECONNRESET (its server log contained no exception). No failed result is hidden.
+
+This follow-up avoids another full read after confirmed Save in a deliberately
+narrow native v13/v5 case. The normal independently verified context exports
+only its private captured payload values after successful replay. The view may
+carry the fingerprint of that COMPLETE payload. After every original Save
+before/staged/installed/commit gate succeeds, its receipt may carry the actual
+Saved payload fingerprint, exact source/revision IDs, clean draft version and
+checkpoint/Tour fingerprints. A match permits a one-use UI handoff to the new
+HEAD. No client token authorizes a server action, and no source proof is copied.
+
+Forks, prospect sources, any live prospective/disciplinary/correction inputs,
+completed seasons, closures and differing Run/Tour calendars do NOT use this
+optimization. Missing or changed full values use the original GET. The UI still
+validates receipt/Run/Branch/old/new HEAD/draft/owner fingerprints and its scope
+and epoch fences. A handoff cannot be applied to another Run/Branch/HEAD.
+The stored payload, its original hash, all math/source gates and manual consent
+remain unchanged. There is no new cache, copier, schema/GC policy or timeout.
+
+Local final checks: five real HTTP/SQLite cases pass (including before/after
+write gates, rollback/retry, complete Saved DTO equality with independent GET,
+changed Run metadata despite unchanged Tour/CP fingerprints, and conservative
+external-source/calendar/fork/season/closure eligibility). Forty-six frontend
+component/value tests and TypeScript/Vite build pass. The genuine 1,000-player
+failed CI database completes actual manual Saves, result confirmation and W6
+with 560 points; all THREE retained Saved DTOs equal full independent GETs.
+Those Saved GETs cost 11.11/10.56/12.08 seconds in the diagnostic; they are omitted
+only by the eligible UI. The diagnostic includes extra verification GETs and
+concurrent local build load; it is not a whole-browser performance pass.
+
+The browser observer records whether a Save used full-payload continuity or an
+independent GET, verifies the actual receipt and Saved UI, and retains the real
+cold SQLite restart, exact final replays, player details, Viewer/public points,
+all original sporting assertions, 1,000 players and unchanged deadlines.
+Final-head hosted acceptance must execute successfully before owner merge.
+
+---
+
 # Post-command inspection response — 26 October 2026 candidate
 
 The preceding 0f0f6eca head completed eight workflows successfully, including

@@ -141,7 +141,7 @@ def _fault_injection_point(name):
 class CalendarTourService:
     repository: object
 
-    def _context(self, session, run_id, branch_id, *, _fingerprints=None):
+    def _context(self, session, run_id, branch_id, *, _fingerprints=None, _save_values=None):
         from beta_engine.application.calendar_standalone_match_service import (
             CalendarStandaloneMatchService,
         )
@@ -164,6 +164,7 @@ class CalendarTourService:
         with global_replay_projection_scope():
             result = self._context_from_saved(
                 session, run_id, branch_id, proofs, clock, revision, world,
+                _save_values=_save_values,
             )
             if _fingerprints is not None:
                 # Carry only this operation's already computed canonical hashes
@@ -176,7 +177,7 @@ class CalendarTourService:
             retain_origin_projection_values(self.repository, proofs)
             return result
 
-    def _context_from_saved(self, session, run_id, branch_id, proofs, clock, revision, world):
+    def _context_from_saved(self, session, run_id, branch_id, proofs, clock, revision, world, *, _save_values=None):
         from beta_engine.application.calendar_knockout_health import saved_knockout_health
         from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
             load_checkpoint, verify_checkpoint,
@@ -241,6 +242,7 @@ class CalendarTourService:
                 signed=signed,
                 evidence=evidence,
                 repository=self.repository,
+                _verified_payload_out=_save_values,
             )
         else:
             health = saved_knockout_health(
@@ -399,10 +401,11 @@ class CalendarTourService:
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
             fingerprints = {}
-            loaded = self._context(session, run_id, branch_id, _fingerprints=fingerprints)
-            return self._project_inspection(session, run_id, branch_id, loaded, fingerprints)
+            save_values = {}
+            loaded = self._context(session, run_id, branch_id, _fingerprints=fingerprints, _save_values=save_values)
+            return self._project_inspection(session, run_id, branch_id, loaded, fingerprints, save_values)
 
-    def _project_inspection(self, session, run_id, branch_id, loaded, fingerprints):
+    def _project_inspection(self, session, run_id, branch_id, loaded, fingerprints, save_values=None):
         from beta_engine.domain.tournaments.calendar_global_slots import (
             _prime_private_fingerprint,
             global_replay_projection_scope,
@@ -414,16 +417,25 @@ class CalendarTourService:
         with global_replay_projection_scope():
             for value, fingerprint in fingerprints.values():
                 _prime_private_fingerprint(value, fingerprint)
-            return self._inspection_from_context(
+            result = self._inspection_from_context(
                 session, run_id, branch_id, *loaded, fingerprints,
             )
+            if save_values and "payload" in save_values:
+                from beta_engine.application.calendar_tour_save_projection import (
+                    saved_inspection_value_fingerprint,
+                )
 
-    def _execution_inspection(self, session, run_id, branch_id, result, loaded, fingerprints):
+                result["save_projection_fingerprint"] = saved_inspection_value_fingerprint(
+                    session, save_values["payload"], expected_head=result["saved_head_revision_id"],
+                )
+            return result
+
+    def _execution_inspection(self, session, run_id, branch_id, result, loaded, fingerprints, save_values=None):
         return {
             "schema_version": "calendar_tour_execution_inspection.v1",
             "result": result,
             "inspection": self._project_inspection(
-                session, run_id, branch_id, loaded, fingerprints,
+                session, run_id, branch_id, loaded, fingerprints, save_values,
             ),
         }
 
@@ -868,7 +880,8 @@ class CalendarTourService:
             session.execute(text("BEGIN IMMEDIATE"))
             # Authenticate the live/signed owners even on exact retries.
             fingerprints = {}
-            loaded = self._context(session, run_id, branch_id, _fingerprints=fingerprints)
+            save_values = {} if include_inspection else None
+            loaded = self._context(session, run_id, branch_id, _fingerprints=fingerprints, _save_values=save_values)
             _, current, _ = loaded
             if current:
                 for receipt in current.receipts:
@@ -879,7 +892,7 @@ class CalendarTourService:
                             )
                         if include_inspection:
                             return self._execution_inspection(
-                                session, run_id, branch_id, receipt.result, loaded, fingerprints,
+                                session, run_id, branch_id, receipt.result, loaded, fingerprints, save_values,
                             )
                         return receipt.result
             from beta_engine.domain.tournaments.calendar_global_slots import global_replay_projection_scope, _prime_private_fingerprint
@@ -916,6 +929,8 @@ class CalendarTourService:
                 put_tour(session, successor)
                 _fault_injection_point("after_tour_write")
             post_fingerprints = {} if include_inspection else None
+            if save_values is not None:
+                save_values.clear()
             post_context = None
             if successor.schema_version in {
                 "calendar_tour_authority.v3",
@@ -923,16 +938,16 @@ class CalendarTourService:
             }:
                 # Reject any coupled-write discrepancy before this transaction
                 # commits, not on the next inspection or eventual manual Save.
-                post_context = self._context(session, run_id, branch_id, _fingerprints=post_fingerprints)
+                post_context = self._context(session, run_id, branch_id, _fingerprints=post_fingerprints, _save_values=save_values)
                 _fault_injection_point("after_native_replay")
             if include_inspection:
                 if post_context is None:
-                    post_context = self._context(session, run_id, branch_id, _fingerprints=post_fingerprints)
+                    post_context = self._context(session, run_id, branch_id, _fingerprints=post_fingerprints, _save_values=save_values)
                 # Returning exits the transaction context first: a failed
                 # projection/commit cannot deliver a successful inspection.
                 # The receipt stored above remains the original small result.
                 return self._execution_inspection(
-                    session, run_id, branch_id, result, post_context, post_fingerprints,
+                    session, run_id, branch_id, result, post_context, post_fingerprints, save_values,
                 )
             return result
 

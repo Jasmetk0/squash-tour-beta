@@ -464,4 +464,60 @@ describe('ViewerRunHistoryFinalsPage', () => {
     expect(screen.getByText('Finals source links become available after the event identity is published.')).toBeInTheDocument()
   })
 
+
+  it.each([
+    ['another Product Run', {product_run_id:'other-run'}],
+    ['another Viewer Branch', {viewer_branch_id:'foreign-branch'}],
+    ['another Finals event', {event_id:'WRONG-FINALS'}],
+  ])('rejects Finals results belonging to %s', async (_label, changes) => {
+    const existing = await api.getViewerTournamentResult('viewer-run-2e','WTF-2031')
+    api.getViewerTournamentResult.mockResolvedValue({...existing, ...changes})
+    renderViewerRoute('/viewer/runs/viewer-run-2e/finals/result')
+    expect(await screen.findByText(/Finals Tournament Result does not match the published event and Viewer Branch/i)).toBeInTheDocument()
+    expect(screen.queryByRole('list', {name:'Canonical Finals match results'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name:'WRONG-FINALS'})).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('does not fetch or expose an unannounced Finals event even if its ID is present in the payload', async () => {
+    const history = await api.getViewerFinalsRace('viewer-run-2e')
+    api.getViewerFinalsRace.mockResolvedValue({
+      ...history, publications: history.publications.map((p: {selection_published:boolean}) =>
+        ({...p, selection_published:false})),
+    })
+    renderViewerRoute('/viewer/runs/viewer-run-2e/finals/result')
+    expect(await screen.findByText('The canonical Finals event identity is not published yet.')).toBeInTheDocument()
+    expect(api.getViewerTournamentResult).not.toHaveBeenCalled()
+    expect(screen.queryByRole('list',{name:'Finals source event links'})).not.toBeInTheDocument()
+    expect(screen.queryByText('WTF-2031')).not.toBeInTheDocument()
+  })
+
+  it('rejects a foreign Finals publication scope before issuing Tournament Result reads', async () => {
+    const history = await api.getViewerFinalsRace('viewer-run-2e')
+    api.getViewerFinalsRace.mockResolvedValue({...history,product_run_id:'other-run'})
+    renderViewerRoute('/viewer/runs/viewer-run-2e/finals/result')
+    expect(await screen.findByText(/Finals publication scope does not match the selected Viewer Run/)).toBeInTheDocument()
+    expect(api.getViewerTournamentResult).not.toHaveBeenCalled()
+    expect(screen.queryByText('WTF-2031')).not.toBeInTheDocument()
+  })
+
+  it('rejects a nested Finals publication from another Viewer Branch', async () => {
+    const history = await api.getViewerFinalsRace('viewer-run-2e')
+    api.getViewerFinalsRace.mockResolvedValue({
+      ...history,publications:history.publications.map((p:{viewer_branch_id:string})=>
+        ({...p,viewer_branch_id:'foreign-branch'})),
+    })
+    renderViewerRoute('/viewer/runs/viewer-run-2e/finals/result')
+    expect(await screen.findByText(/Finals publication scope does not match the selected Viewer Run/)).toBeInTheDocument()
+    expect(api.getViewerTournamentResult).not.toHaveBeenCalled()
+  })
+
+  it('treats a malformed result body as unavailable instead of inventing a published match', async () => {
+    const result = await api.getViewerTournamentResult('viewer-run-2e','WTF-2031')
+    api.getViewerTournamentResult.mockResolvedValue({...result,matches:null})
+    renderViewerRoute('/viewer/runs/viewer-run-2e/finals/result')
+    expect(await screen.findByText(/Finals Tournament Result does not match the published event and Viewer Branch/)).toBeInTheDocument()
+    expect(screen.queryByRole('list',{name:'Canonical Finals player results'})).not.toBeInTheDocument()
+  })
+
 })

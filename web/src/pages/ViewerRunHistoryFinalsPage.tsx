@@ -197,7 +197,7 @@ export function ViewerRunFinalsPage(): JSX.Element {
   const { productRunId: runId } = useViewerProductRunRouteContext()
   const raceQuery = useQuery({
     queryKey: ['viewer-finals-race', runId],
-    queryFn: () => getViewerFinalsRace(runId),
+    queryFn: () => getScopedFinalsRace(runId),
     enabled: Boolean(runId),
     retry: false
   })
@@ -227,7 +227,7 @@ export function ViewerRunFinalsPage(): JSX.Element {
           <MetadataList
             items={[
               { label: 'Viewer Branch', value: publication.viewer_branch_id },
-              { label: 'Finals event ID', value: publication.finals_event_id ?? 'Not selected yet' },
+              { label: 'Finals event ID', value: publication.selection_published ? (publication.finals_event_id ?? 'Not selected yet') : 'Not selected yet' },
               { label: 'Race cutoff', value: `season ${publication.cutoff_season_index}, W${publication.cutoff_week}` },
               { label: 'Best-N', value: publication.best_n },
               { label: 'Selection published', value: publication.selection_published ? 'Yes' : 'No' },
@@ -269,7 +269,7 @@ export function ViewerRunFinalsQualificationPage(): JSX.Element {
   const { productRunId: runId } = useViewerProductRunRouteContext()
   const raceQuery = useQuery({
     queryKey: ['viewer-finals-race', runId],
-    queryFn: () => getViewerFinalsRace(runId),
+    queryFn: () => getScopedFinalsRace(runId),
     enabled: Boolean(runId),
     retry: false
   })
@@ -299,7 +299,7 @@ export function ViewerRunFinalsQualificationPage(): JSX.Element {
           <MetadataList
             items={[
               { label: 'Viewer Branch', value: publication.viewer_branch_id },
-              { label: 'Finals event ID', value: publication.finals_event_id ?? 'Not selected yet' },
+              { label: 'Finals event ID', value: publication.selection_published ? (publication.finals_event_id ?? 'Not selected yet') : 'Not selected yet' },
               { label: 'Target season index', value: publication.target_season_index },
               { label: 'Cutoff season index', value: publication.cutoff_season_index },
               { label: 'Cutoff week', value: `W${publication.cutoff_week}` },
@@ -326,6 +326,14 @@ export function ViewerRunFinalsQualificationPage(): JSX.Element {
       </SectionCard>
     </section>
   )
+}
+
+async function getScopedFinalsRace(runId: string): Promise<ViewerFinalsRaceHistory> {
+  const history = await getViewerFinalsRace(runId)
+  if (!validFinalsResultHistory(history, runId)) {
+    throw new Error('Finals publication scope does not match the selected Viewer Run.')
+  }
+  return history
 }
 
 function validFinalsResultHistory(history: ViewerFinalsRaceHistory, runId: string): boolean {
@@ -357,13 +365,7 @@ export function ViewerRunFinalsResultPage(): JSX.Element {
   const { productRunId: runId } = useViewerProductRunRouteContext()
   const raceQuery = useQuery({
     queryKey: ['viewer-finals-race', runId],
-    queryFn: async () => {
-      const history = await getViewerFinalsRace(runId)
-      if (!validFinalsResultHistory(history, runId)) {
-        throw new Error('Finals publication scope does not match the selected Viewer Run.')
-      }
-      return history
-    },
+    queryFn: () => getScopedFinalsRace(runId),
     enabled: Boolean(runId),
     retry: false
   })

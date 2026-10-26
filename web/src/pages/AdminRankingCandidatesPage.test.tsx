@@ -343,7 +343,7 @@ it('separates zero, null and missing tie values, including numeric zero result s
   })
   show('/0/2')
   await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
-  expect(await screen.findByText(/0 points/)).toHaveTextContent('Previous Official position 0: 0 versus None')
+  expect(await screen.findByText((_, element) => element?.tagName === 'LI' && element.textContent?.includes('Previous Official position 0: 0 versus None') === true)).toBeVisible()
 })
 
 it('does not perform prepare, save or publish when viewing, translating, opening details or refreshing', async () => {
@@ -377,7 +377,7 @@ it('does not attach a delayed source response to a refreshed different candidate
   await userEvent.click(await screen.findByRole('button',{name:'Load source results'}))
   expect(screen.getByRole('status')).toHaveTextContent('Loading source results')
   await userEvent.click(screen.getByRole('button',{name:'Refresh candidates'}))
-  await screen.findByText('next-fingerprint')
+  await screen.findByText(/Fingerprint: next-fingerprint/)
   await act(async () => resolveOld({
     run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',publication_status:'candidate_only',sources:[],
   }))

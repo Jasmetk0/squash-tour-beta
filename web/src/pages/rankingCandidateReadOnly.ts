@@ -1,5 +1,6 @@
 import type { Language } from '../i18n/LanguageContext'
 import type { CandidateWeek, RankingCandidateHistory, RankingCandidateInputs, RankingCandidateSources } from '../api/rankingCandidates'
+import { formatApiError } from '../utils/apiErrors'
 
 // Deliberately page-local; never translate persisted identifiers, fingerprints or server values.
 const cs: Record<string, string> = {
@@ -105,6 +106,18 @@ export function tr(english: string, language: Language): string {
   return language === 'cs' ? cs[english] ?? english : english
 }
 
+// Scope mismatches are UI-generated errors, so re-render their copy in the
+// current language. Unrecognized/server errors retain the existing formatter.
+const identityErrors = [
+  'Ranking history does not match this candidate.',
+  'Source history does not match this candidate.',
+  'Stored inputs do not match this candidate.',
+]
+export function rankingReadError(error: unknown, language: Language): string {
+  if (error instanceof Error && identityErrors.includes(error.message)) return tr(error.message, language)
+  return formatApiError(error)
+}
+
 export function weekLabel(w: CandidateWeek, language: Language): string {
   return String(2000 + w.season_index) + '/' + String(2001 + w.season_index).slice(-2) +
     ' · ' + tr('Week', language) + ' ' + w.week
@@ -120,6 +133,11 @@ function validLegacyWeek(week: CandidateWeek | null | undefined): boolean {
     Number.isInteger(week.week) && week.week >= 1 && week.week <= 61)
 }
 
+function notAfter(actual: CandidateWeek | null | undefined, boundary: CandidateWeek): boolean {
+  return validLegacyWeek(actual) &&
+    actual!.season_index * 61 + actual!.week <= boundary.season_index * 61 + boundary.week
+}
+
 type DisplayAward = {
   edition_id: string
   qualification_points: number
@@ -132,7 +150,7 @@ function validAward(award: DisplayAward | null | undefined): boolean {
   return Boolean(award && typeof award.edition_id === 'string' &&
     Number.isFinite(award.qualification_points) && Number.isFinite(award.main_points) &&
     validLegacyWeek(award.completed_week) && validLegacyWeek(award.first_publication_week) &&
-    Number.isInteger(award.validity_weeks))
+    Number.isInteger(award.validity_weeks) && award.validity_weeks > 0)
 }
 
 // These guards are for displaying API responses only, not a replacement for
@@ -150,7 +168,7 @@ export function validCandidateHistory(data: RankingCandidateHistory, runId: stri
         !snapshot || snapshot.run_id !== runId || snapshot.branch_id !== branchId ||
         !validLegacyWeek(week) ||
         typeof candidate.fingerprint !== 'string' || !candidate.fingerprint ||
-        !Array.isArray(candidate.command_ids) ||
+        !Array.isArray(candidate.command_ids) || !candidate.command_ids.every(id => typeof id === 'string') ||
         !snapshot.policy || !Number.isInteger(snapshot.policy.best_n) || snapshot.policy.best_n < 1 ||
         !Array.isArray(snapshot.rows)) return false
 
@@ -163,10 +181,12 @@ export function validCandidateHistory(data: RankingCandidateHistory, runId: stri
     return snapshot.rows.every(row =>
       row !== null && typeof row.player_id === 'string' &&
       Number.isInteger(row.rank) && Number.isFinite(row.points) &&
-      Array.isArray(row.counted_results) && row.counted_results.every(validAward) &&
+      Array.isArray(row.counted_results) && row.counted_results.every(award =>
+        validAward(award) && notAfter(award.completed_week, week) && notAfter(award.first_publication_week, week)) &&
       (row.disciplinary_zeros === undefined ||
         (Array.isArray(row.disciplinary_zeros) && row.disciplinary_zeros.every(z =>
-          z?.run_id === runId && z.branch_id === branchId))))
+          z?.run_id === runId && z.branch_id === branchId && z.player_id === row.player_id &&
+          notAfter(z.effective_week, week)))))
   })
 }
 
@@ -183,20 +203,24 @@ export function validCandidateResponse(
       source !== null &&
       typeof source.fingerprint === 'string' && Boolean(source.fingerprint) &&
       source.version?.run_id === runId && source.version.branch_id === branchId &&
-      validLegacyWeek(source.version.effective_week) && validAward(source.version.result))
+      notAfter(source.version.effective_week, week) && validAward(source.version.result) &&
+      notAfter(source.version.result.completed_week, week) &&
+      notAfter(source.version.result.first_publication_week, week))
   }
 
   if (data.verification_status === 'legacy_without_manifest') return data.manifest === null
   if (data.verification_status !== 'complete_manifest' || !data.manifest ||
       !Array.isArray(data.manifest.players) || !Array.isArray(data.manifest.results) ||
       !data.manifest.players.every(player => player && typeof player.player_id === 'string' && validLegacyWeek(player.tour_entry_week)) ||
-      !data.manifest.results.every(validAward)) return false
+      !data.manifest.results.every(result => validAward(result) &&
+        notAfter(result.completed_week, week) && notAfter(result.first_publication_week, week))) return false
   if (data.manifest.disciplinary_zeros !== undefined &&
       (!Array.isArray(data.manifest.disciplinary_zeros) ||
-        data.manifest.disciplinary_zeros.some(z => !z || z.run_id !== runId || z.branch_id !== branchId))) return false
+        data.manifest.disciplinary_zeros.some(z => !z || z.run_id !== runId || z.branch_id !== branchId || !notAfter(z.effective_week, week)))) return false
   if (data.zero_sources !== undefined &&
       (!Array.isArray(data.zero_sources) || data.zero_sources.some(s =>
-        !s?.version?.zero || s.version.zero.run_id !== runId || s.version.zero.branch_id !== branchId))) return false
+        !s?.version?.zero || s.version.zero.run_id !== runId || s.version.zero.branch_id !== branchId ||
+        !notAfter(s.version.effective_week, week) || !notAfter(s.version.zero.effective_week, week)))) return false
 
   // A claimed verified decision history without its historical versions
   // cannot be represented as a verified source history in this view.

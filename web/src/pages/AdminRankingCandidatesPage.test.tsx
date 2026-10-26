@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { RankingCandidateHistory } from '../api/rankingCandidates'
+import type { RankingCandidateHistory, RankingCandidateSources, RankingCandidateInputs } from '../api/rankingCandidates'
+import { storedValue } from './rankingCandidateReadOnly'
 import { MemoryRouter, Route, Routes, Link } from 'react-router-dom'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { getRankingCandidates, getRankingCandidateSources, getRankingCandidateInputs } from '../api/client'
@@ -442,4 +443,79 @@ it('does not verify source versions owned by a different Branch', async () => {
   await userEvent.click(await screen.findByRole('button',{name:'Load source results'}))
   expect(await screen.findByRole('alert')).toHaveTextContent('Source history does not match this candidate.')
   expect(screen.queryByText('edition')).not.toBeInTheDocument()
+})
+
+
+it('fails closed when a response has two conflicting candidates at one URL week', async () => {
+  const duplicate = structuredClone(populated)
+  duplicate.candidates.push({
+    ...structuredClone(duplicate.candidates[0]),
+    fingerprint: 'competing-candidate',
+    snapshot: {...duplicate.candidates[0].snapshot, rows: []},
+  })
+  fetchHistory.mockResolvedValue(duplicate)
+  show('/0/2')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Ranking history does not match this candidate.')
+  expect(screen.queryByText('player-a')).not.toBeInTheDocument()
+})
+
+it('fails closed on malformed history that cannot be safely read as candidate evidence', async () => {
+  const malformed = structuredClone(populated)
+  malformed.candidates[0].snapshot.rows[0].counted_results = null as unknown as typeof malformed.candidates[0]['snapshot']['rows'][0]['counted_results']
+  fetchHistory.mockResolvedValue(malformed)
+  show('/0/2')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Ranking history does not match this candidate.')
+  expect(screen.queryByText('player-a')).not.toBeInTheDocument()
+})
+
+it('rejects source versions with missing owners or result payloads before rendering', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  const source = {
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},
+    candidate_fingerprint:'hash',publication_status:'candidate_only',sources:[{
+      fingerprint:'version',counted:false,version:{run_id:'run',branch_id:'branch',result:null},
+    }],
+  } as unknown as RankingCandidateSources
+  fetchSources.mockResolvedValue(source)
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Load source results'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Source history does not match this candidate.')
+  expect(screen.queryByText('No source results at this boundary.')).not.toBeInTheDocument()
+})
+
+it('does not verify a claimed stored zero decision history lacking its evidence', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},
+    candidate_fingerprint:'hash',publication_status:'candidate_only',
+    verification_status:'complete_manifest',manifest:{players:[],results:[]},
+    zero_history_status:'verified_stored_history',
+  } as RankingCandidateInputs)
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Stored inputs do not match this candidate.')
+  expect(screen.queryByText(/Verified: stored inputs reproduce/)).not.toBeInTheDocument()
+})
+
+it('rejects unsupported tie explanation reasons rather than silently treating them as verified', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},
+    candidate_fingerprint:'hash',publication_status:'candidate_only',
+    verification_status:'complete_manifest',manifest:{players:[],results:[]},
+    tie_explanations:[{higher_rank:1,lower_rank:2,points:0,higher_player_id:'a',lower_player_id:'b',
+      reason:'unsupported_reason',result_slot:0,higher_value:0,lower_value:null}],
+  } as unknown as RankingCandidateInputs)
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Stored inputs do not match this candidate.')
+})
+
+it('retains distinct missing, null and numeric-zero tie values in both languages', () => {
+  expect(storedValue(0,'cs')).toBe('0')
+  expect(storedValue(null,'cs')).toBe('Žádná hodnota')
+  expect(storedValue(undefined,'cs')).toBe('Chybí')
+  expect(storedValue(0,'en')).toBe('0')
+  expect(storedValue(null,'en')).toBe('None')
+  expect(storedValue(undefined,'en')).toBe('Missing')
 })

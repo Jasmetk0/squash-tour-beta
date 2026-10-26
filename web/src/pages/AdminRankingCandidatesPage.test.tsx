@@ -228,7 +228,7 @@ it('switches CS/EN for candidate, sources and inputs without changing stored ide
   await userEvent.click(screen.getByRole('button', {name:'Čeština'}))
   expect(screen.getByText('Kandidáti žebříčku')).toBeVisible()
   expect(screen.getByRole('link', {name:'2000/01 · Týden 2'})).toBeVisible()
-  expect(screen.getByText(/Nepublikovaný kandidát/)).toBeVisible()
+  expect(screen.getAllByText(/Nepublikovaný kandidát/)[0]).toBeVisible()
   await userEvent.click(screen.getByRole('button',{name:'Načíst zdrojové výsledky'}))
   expect(await screen.findByText('K tomuto okamžiku nejsou žádné zdrojové výsledky.')).toBeVisible()
   await userEvent.click(screen.getByRole('button',{name:'Prohlédnout uložené vstupy'}))
@@ -362,4 +362,25 @@ it('does not perform prepare, save or publish when viewing, translating, opening
   expect(vi.mocked((await import('../api/client')).previewRankingCommand)).not.toHaveBeenCalled()
   expect(vi.mocked((await import('../api/client')).confirmRankingCommand)).not.toHaveBeenCalled()
   expect(vi.mocked((await import('../api/client')).saveRankingPreparation)).not.toHaveBeenCalled()
+})
+
+
+it('does not attach a delayed source response to a refreshed different candidate fingerprint', async () => {
+  const changed=structuredClone(populated)
+  changed.candidates[0].fingerprint='next-fingerprint'
+  fetchHistory.mockResolvedValueOnce(populated).mockResolvedValue(changed)
+  let resolveOld!: (value: Awaited<ReturnType<typeof getRankingCandidateSources>>) => void
+  vi.mocked(getRankingCandidateSources).mockImplementationOnce(() => new Promise(resolve => { resolveOld=resolve }))
+    .mockResolvedValue({run_id:'run',branch_id:'branch',week:{season_index:0,week:2},
+      candidate_fingerprint:'next-fingerprint',publication_status:'candidate_only',sources:[]})
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Load source results'}))
+  expect(screen.getByRole('status')).toHaveTextContent('Loading source results')
+  await userEvent.click(screen.getByRole('button',{name:'Refresh candidates'}))
+  await screen.findByText('next-fingerprint')
+  await act(async () => resolveOld({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',publication_status:'candidate_only',sources:[],
+  }))
+  expect(screen.queryByText('No source results at this boundary.')).not.toBeInTheDocument()
+  expect(screen.getByRole('button',{name:'Load source results'})).toBeVisible()
 })

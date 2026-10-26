@@ -44,7 +44,11 @@ result_slot is printed rather than suppressed.
   publication status. Source version and disciplinary input owner identities
   are also checked. Malformed source entries, unverifiable claimed stored
   disciplinary history, incomplete award numeric values and unknown tie-reason
-  codes are rejected rather than being shown as verified or summed as NaN. An untrusted response is an error, not verified evidence.
+  codes are rejected rather than being shown as verified or summed as NaN.
+  Missing source counted/ranked flags, retirement status, predecessor markers,
+  provenance identifiers or incomplete operator audits are likewise rejected;
+  absent values must never silently mean false, unranked, an initial version,
+  or a recorded audit. An untrusted response is an error, not verified evidence.
 - complete_manifest requires stored roster/results; a
   legacy_without_manifest response must have manifest: null. Legacy,
   empty-but-verified, loading, error and non-empty verified states remain separate.
@@ -63,11 +67,11 @@ result_slot is printed rather than suppressed.
 
 The component tests cover legacy/no candidate, exact week selection, CS/EN,
 source and input lazy loading, provenance, historic ties and disciplinary zeros,
-foreign identities, duplicate weeks, malformed source/row responses, unsupported
-  tie reasons, missing decision evidence, delayed previous-Branch delivery, zero/null display,
-manual refresh and error recovery, language switching after an identity failure,
-  and absence of automatic preparation / save
-calls. Mocked API responses establish **component contracts only**, not real
+foreign identities, duplicate weeks, malformed source/row responses, missing
+status flags and provenance, unsupported tie reasons, incomplete audits and missing
+decision evidence, delayed previous-Branch delivery, zero/null display, manual
+refresh and error recovery, language switching after an identity failure, and
+absence of automatic preparation / save calls. Mocked API responses establish **component contracts only**, not real
 production HTTP/SQLite/browser acceptance.
 
 Before the owner merges, verify the **final commit** with frontend Vitest,

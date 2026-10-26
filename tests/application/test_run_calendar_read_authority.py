@@ -73,6 +73,60 @@ def _signed_test_calendar(factory, calendar: RunCalendar | None) -> None:
 
 
 @pytest.mark.pr_critical
+@pytest.mark.parametrize('change', ['whitespace', 'payload', 'change-summary', 'declared-hash', 'rehash-clock', 'rehash-identity'])
+def test_verified_calendar_projection_still_binds_all_actual_saved_bytes(tmp_path, monkeypatch, change):
+    from beta_engine.application import run_calendar_read_authority as authority
+
+    engine, factory, repo = _setup(tmp_path)
+    try:
+        repo.get_branch_revision_state(branch_id='branch-1')
+        with factory() as session:
+            expected = resolve_saved_run_calendar(session, run_id='run-1', branch_id='branch-1')
+        original_hash = authority.saved_revision_content_hash
+        calls = []
+
+        def counted(**fields):
+            calls.append(fields)
+            return original_hash(**fields)
+
+        monkeypatch.setattr(authority, 'saved_revision_content_hash', counted)
+        with factory() as session:
+            assert resolve_saved_run_calendar(session, run_id='run-1', branch_id='branch-1', _repository=repo) == expected
+            assert calls == []
+        with factory.begin() as session:
+            row = session.get(BranchSavedRevisionModel, 'revision-1')
+            if change == 'whitespace':
+                row.payload_json += ' '
+            elif change == 'declared-hash':
+                row.content_hash = '0' * 64
+            elif change == 'change-summary':
+                row.change_summary_json = json.dumps({'changed': True})
+            else:
+                payload = json.loads(row.payload_json)
+                if change == 'payload':
+                    payload['content']['unexpected'] = {'actual': 1}
+                elif change == 'rehash-clock':
+                    payload['run']['run_calendar']['season_count'] += 1
+                else:
+                    payload['run']['run_id'] = 'foreign'
+                row.payload_json = json.dumps(payload)
+                if change.startswith('rehash-'):
+                    row.content_hash = original_hash(**{
+                        name: getattr(row, name) for name in ('revision_id', 'run_id', 'branch_id', 'sequence',
+                            'parent_revision_id', 'kind', 'payload_schema_version')
+                    }, payload=payload, change_summary=json.loads(row.change_summary_json))
+        with factory() as session:
+            if change == 'whitespace':
+                assert resolve_saved_run_calendar(session, run_id='run-1', branch_id='branch-1', _repository=repo) == expected
+            else:
+                with pytest.raises(ValueError):
+                    resolve_saved_run_calendar(session, run_id='run-1', branch_id='branch-1', _repository=repo)
+        assert len(calls) == 1, 'Changed actual bytes must take the original full content-hash gate'
+    finally:
+        engine.dispose()
+
+
+@pytest.mark.pr_critical
 def test_saved_run_calendar_is_read_with_verified_hash_and_no_writes(tmp_path):
     engine, factory, repo = _setup(tmp_path)
     try:

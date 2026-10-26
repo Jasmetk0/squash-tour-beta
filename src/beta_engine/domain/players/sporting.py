@@ -16,6 +16,28 @@ from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 
 DevelopmentTiming = Literal["Early Bloomer", "Standard", "Late Bloomer"]
 
+_SPORTING_ATTRIBUTE_COPY_MEMO_KEY = object()
+
+
+def _immutable_copy_attributes(attributes, memo):
+    """A tuple proven to contain only exact immutable scalars stays immutable.
+
+    Retain the tuple itself with its identity: object-ID reuse cannot certify
+    another value. This is solely a defensive-copy optimization, never sporting
+    or source authority. Replaced/bypassed mutable inputs still take deepcopy.
+    """
+    if type(attributes) is not tuple:
+        return False
+    known = memo.get(_SPORTING_ATTRIBUTE_COPY_MEMO_KEY, {}) if memo is not None else {}
+    if known.get(id(attributes)) is attributes:
+        return True
+    if not all(type(pair) is tuple and len(pair) == 2
+        and type(pair[0]) is str and type(pair[1]) is int for pair in attributes):
+        return False
+    if memo is not None:
+        memo.setdefault(_SPORTING_ATTRIBUTE_COPY_MEMO_KEY, {})[id(attributes)] = attributes
+    return True
+
 
 class PlayerSportingBootstrapPolicy(FrozenInput):
     policy_id: str = "legacy-7x99-to-canonical-57x200.v1"
@@ -132,9 +154,7 @@ class PlayerSportingRecord(FrozenInput):
             and self.__pydantic_extra__ is None
             and getattr(self, '__pydantic_private__', None) is None
             and all(type(value) in (str, int) for key, value in self.__dict__.items() if key != 'attributes')
-            and type(attributes) is tuple
-            and all(type(pair) is tuple and len(pair) == 2
-                and type(pair[0]) is str and type(pair[1]) is int for pair in attributes)
+            and _immutable_copy_attributes(attributes, memo)
         ):
             result = self.__copy__()
             if memo is not None:

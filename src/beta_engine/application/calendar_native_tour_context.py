@@ -27,6 +27,18 @@ from beta_engine.infrastructure.db.run_prospect_source_state import (
 )
 
 
+def _verified_health_head(payload):
+    """Copy the current value only AFTER this entire payload passed replay.
+
+    This is not a verifier: callers must first authenticate the full Saved owner
+    or finish the independent complete live-history proof below. Strict parsing
+    creates a fresh isolated head without replaying that same history again.
+    """
+    return _parse_health_json(
+        json.dumps(payload['content'][PLAYER_HEALTH_COMPONENT_KEY]['states'][-1])
+    )
+
+
 def native_working_context(
     session, *, revision, checkpoint, saved, state, signed, evidence, repository=None
 ):
@@ -71,9 +83,7 @@ def native_working_context(
         and same_tour
         and payload == revision.saved_revision.payload
     ):
-        return _parse_health_json(
-            json.dumps(payload["content"][PLAYER_HEALTH_COMPONENT_KEY]["states"][-1])
-        )
+        return _verified_health_head(payload)
     # The caller just authenticated the Saved lineage against physical rows.
     # Reuse only a completed proof of these exact captured live bytes in this
     # repository; this is never a source-hash-only authorization shortcut.
@@ -87,7 +97,10 @@ def native_working_context(
                 cache = repository._global_working_proofs = {}
             verified_before = signature in cache
         if verified_before:
-            return load_saved_health(payload, run_id=run_id, branch_id=branch_id)[-1]
+            # The exact FULL actual payload, including every Health/lifecycle
+            # state, already completed independent replay. The fresh Saved
+            # physical/source gate above still runs on every request.
+            return _verified_health_head(payload)
     verified = saved_checkpoint(
         payload,
         evidence,
@@ -116,4 +129,8 @@ def native_working_context(
             cache[signature] = True
             while len(cache) > 8:
                 cache.pop(next(iter(cache)))
+    if checkpoint.schema_version == 'calendar_sporting_checkpoint.v13':
+        # saved_checkpoint just independently verified all actual Health and
+        # lifecycle histories plus the coupled checkpoint/Tour successor.
+        return _verified_health_head(payload)
     return load_saved_health(payload, run_id=run_id, branch_id=branch_id)[-1]

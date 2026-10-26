@@ -217,7 +217,9 @@ def test_routing_hint_and_origin_projection_follow_actual_bytes_and_detect_mutat
     from beta_engine.infrastructure.db.calendar_global_slot_origins import (
         is_global_slot_row,
     )
-    from beta_engine.infrastructure.db.calendar_tour import _origin_inputs
+    from beta_engine.infrastructure.db.calendar_tour import (
+        _origin_inputs, borrow_origin_projection_values, retain_origin_projection_values,
+    )
 
     repository = SimpleNamespace(_revision_validation_lock=Lock())
     row = SimpleNamespace(run_id='run', branch_id='branch', revision_id='source',
@@ -238,6 +240,21 @@ def test_routing_hint_and_origin_projection_follow_actual_bytes_and_detect_mutat
     assert repaired['content']['calendar_player_sporting_checkpoint']['fingerprint'] == 'actual'
     health, _ = _origin_inputs(row, cache, with_health=True)
     assert all(key in health['content'] for key in ('initial_world', 'player_lifecycle', 'player_health_state'))
+    retain_origin_projection_values(repository, {'_global_origin_inputs': cache, '_prefixes': {'math': 'never share'}})
+    borrowed = {}
+    borrow_origin_projection_values(repository, borrowed)
+    assert set(borrowed) == {'_global_origin_inputs'}
+    assert borrowed['_global_origin_inputs'] is not cache
+    again, _ = _origin_inputs(row, borrowed['_global_origin_inputs'])
+    again['content']['calendar_player_sporting_checkpoint']['fingerprint'] = 'mutated returned value'
+    assert _origin_inputs(row, borrowed['_global_origin_inputs'])[0] == repaired
+    body = json.loads(row.payload_json)
+    body['content']['calendar_player_sporting_checkpoint']['fingerprint'] = 'changed actual bytes'
+    row.payload_json = json.dumps(body)
+    assert _origin_inputs(row, borrowed['_global_origin_inputs'])[0]['content']['calendar_player_sporting_checkpoint']['fingerprint'] == 'changed actual bytes'
+    other = {}
+    borrow_origin_projection_values(SimpleNamespace(_revision_validation_lock=Lock()), other)
+    assert other == {'_global_origin_inputs': {}}
 
 
 def test_authenticated_tour_decoding_returns_isolated_values_and_follows_actual_input():

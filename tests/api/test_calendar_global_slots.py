@@ -231,6 +231,56 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
         assert len(replayed) == 1
 
 
+def test_verified_working_health_reuses_only_the_complete_unchanged_history(tmp_path, prepared_slots, monkeypatch):
+    from sqlalchemy import select
+    from beta_engine.application import calendar_native_tour_context
+    from beta_engine.infrastructure.db.models import PlayerHealthWeekStateModel
+    from beta_engine.infrastructure.db.player_health_state import _parse_health_json
+
+    path = tmp_path / 'verified-working-health.db'
+    copy_database(prepared_slots, path)
+    database = f'sqlite:///{path}'
+    with ApiServer(database_url=database) as server:
+        repository = server.app.state.runtime.repository
+        before = inspect(server)
+
+        def unexpected_duplicate_fold(*_args, **_kwargs):
+            raise AssertionError('The complete working payload already passed independent Health replay')
+
+        with monkeypatch.context() as patch:
+            patch.setattr(calendar_native_tour_context, 'load_saved_health', unexpected_duplicate_fold)
+            # Exercise both the new full proof and an exact subsequent proof hit.
+            result, request = execute(server, command(before, 'next-match', name='verified-health-match'))
+            assert result['completed'] == 1
+            expected = inspect(server)
+            assert inspect(server) == expected
+            assert _request('POST', tour_url(server) + '/execute', request) == (201, result)
+        with repository._session_factory() as session:
+            ordinals = list(session.scalars(select(PlayerHealthWeekStateModel.week_ordinal)
+                .where(PlayerHealthWeekStateModel.run_id == 'run', PlayerHealthWeekStateModel.branch_id == 'branch')
+                .order_by(PlayerHealthWeekStateModel.week_ordinal)))
+        assert len(ordinals) > 1
+        # A self-consistent change to either an older or the latest actual Health
+        # state must invalidate the COMPLETE captured-payload proof and reject.
+        for ordinal in (ordinals[0], ordinals[-1]):
+            with repository._session_factory.begin() as session:
+                row = session.get(PlayerHealthWeekStateModel, ('run', 'branch', ordinal))
+                original = row.payload_json, row.fingerprint
+                body = json.loads(row.payload_json)
+                body['source_initial_world_fingerprint'] = '0' * 64
+                row.payload_json = json.dumps(body)
+                row.fingerprint = _parse_health_json(row.payload_json).fingerprint
+            try:
+                assert _request('GET', tour_url(server))[0] == 409
+            finally:
+                with repository._session_factory.begin() as session:
+                    row = session.get(PlayerHealthWeekStateModel, ('run', 'branch', ordinal))
+                    row.payload_json, row.fingerprint = original
+            assert inspect(server) == expected
+    with ApiServer(database_url=database) as reopened:
+        assert inspect(reopened) == expected
+
+
 def test_incremental_checkpoint_hash_is_the_original_full_canonical_hash(tmp_path, prepared_slots):
     import hashlib
     from pydantic_core import to_json

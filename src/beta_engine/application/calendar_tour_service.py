@@ -146,8 +146,10 @@ class CalendarTourService:
             CalendarStandaloneMatchService,
         )
         from beta_engine.domain.tournaments.calendar_global_slots import global_replay_projection_scope
+        from beta_engine.infrastructure.db.calendar_tour import borrow_origin_projection_values, retain_origin_projection_values
 
         proofs = {}
+        borrow_origin_projection_values(self.repository, proofs)
         clock, revision, world = CalendarStandaloneMatchService(
             self.repository
         )._context(
@@ -171,6 +173,7 @@ class CalendarTourService:
                         'calendar_sporting_checkpoint.v13', 'calendar_tour_authority.v5',
                     }:
                         _fingerprints[id(value)] = (value, value.fingerprint)
+            retain_origin_projection_values(self.repository, proofs)
             return result
 
     def _context_from_saved(self, session, run_id, branch_id, proofs, clock, revision, world):

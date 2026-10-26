@@ -1,3 +1,46 @@
+# Global-slot whole-browser follow-up — 26 October 2026 candidate
+
+On `add6b6ee`, eight hosted workflows passed, including every W52/W61/W80
+actual week, real Season Transition, correct points/summary and final cold restart.
+All native Full Simulation jobs, global API/fork/worker and both global Chromium
+scenarios also passed. W80/1,000 Tour Chromium still exceeded its unchanged
+18-minute whole-flow limit during the second tournament. Its restart improved
+to about 88 seconds. This remaining failure blocks the owner merge handoff.
+
+The follow-up keeps immutable origin JSON projections in a repository-local,
+32 MiB/128-entry decode-value cache. Each lookup still hashes complete current
+source bytes and binds Run/Branch/revision; independent physical, ownership,
+reachability and math gates remain. Borrowed operation dictionaries are separate,
+and no source/math proofs enter this cache. A newly decoded actual Saved head
+seeds the projection only after its complete physical gate.
+
+Calendar reads reuse at most 128 small immutable Run projections (32 KiB each)
+only when every actual Saved byte and metadata field matches a completed content
+hash check. Changed payload, summary, declared hash, identity or rehashed clock
+takes the original full gate. The sporting context validates the complete
+Saved lineage before this reuse. Every current Run/calendar consistency check
+remains. Native Working Health returns a fresh strictly parsed head only after
+the complete actual history already passed replay or its exact full-payload proof.
+
+Defensive DTO copies retain new models, dictionaries and field sets. Only actual
+runtime-proven immutable (str,int) attribute tuples can reuse their copy-safety
+check; the tuple itself binds object identity and lives only with the bounded
+owning cache entry. Mutable replacements, subclasses and incomplete models keep
+ordinary deepcopy. No persisted schema/hash/seed/result, population, sporting
+rule, timeout or acceptance assertion changes.
+
+Local evidence: four real HTTP cases pass Save/ancestor rollback, rehashed-source
+and retry guards, partial results/restart/points, and older/latest rehashed Health
+rejection with recovery. 43 focused contracts and 12 calendar/concurrency checks
+pass. Actual large DTO copy measured about 0.59–0.65 s with retained immutable
+attribute hints versus 0.73–0.81 s without; a general copier had no reliable
+benefit and is excluded. A complete actual 1,000-player two-tournament HTTP probe
+is running; it is not Chromium acceptance. Require all relevant final-head hosted
+workflows to execute successfully before the owner merge recommendation.
+Only the owner merges; #1641 remains separate.
+
+---
+
 # Finish global-slot acceptance — 26 October 2026
 
 Continue #1643 through the remaining W80/1,000 whole-browser deadline and

@@ -17,6 +17,14 @@ MAX_GLOBAL_TOUR_BYTES = 64 * 1024 * 1024
 MAX_LIVE_COMPONENT_BYTES = 64 * 1024 * 1024
 
 
+def _copy_decoded_value(value, attribute_hints=None):
+    from beta_engine.domain.players.sporting import _SPORTING_ATTRIBUTE_COPY_MEMO_KEY
+
+    memo = {_SPORTING_ATTRIBUTE_COPY_MEMO_KEY: dict(attribute_hints or {})}
+    result = deepcopy(value, memo)
+    return result, memo[_SPORTING_ATTRIBUTE_COPY_MEMO_KEY]
+
+
 def known_live_value_fingerprint(repository, *, run_id, branch_id, kind, raw):
     """Decode result for these complete actual bytes, never source authority."""
     if repository is None:
@@ -90,7 +98,7 @@ def decoded_live_calendar_component(repository, *, run_id, branch_id, kind, raw,
         if known is not None:
             cache[key] = known
     if known is not None:
-        value = deepcopy(known[1])
+        value, _ = _copy_decoded_value(known[1], known[3] if len(known) > 3 else None)
         fingerprint = known[2] if len(known) > 2 else None
         if _with_fingerprint:
             fingerprint = fingerprint or value.fingerprint
@@ -103,9 +111,9 @@ def decoded_live_calendar_component(repository, *, run_id, branch_id, kind, raw,
     if fingerprint is not None:
         remember_live_value_fingerprint(repository, run_id=run_id, branch_id=branch_id,
             kind=kind, raw=raw, fingerprint=fingerprint)
-    retained = deepcopy(value)
+    retained, attribute_hints = _copy_decoded_value(value)
     with repository._revision_validation_lock:
-        cache[key] = (size, retained, fingerprint)
+        cache[key] = (size, retained, fingerprint, attribute_hints)
         while len(cache) > 4 or sum(item[0] for item in cache.values()) > MAX_LIVE_COMPONENT_BYTES:
             cache.pop(next(iter(cache)))
     return (value, fingerprint) if _with_fingerprint else value
@@ -128,11 +136,11 @@ def _decoded_value(repository, source, decode, *, cache_name, byte_limit, entry_
         if entry is not None:
             cache[key] = entry
     if entry is not None:
-        return deepcopy(entry[1])
+        return _copy_decoded_value(entry[1], entry[2] if len(entry) > 2 else None)[0]
     result = decode(source)
-    retained = deepcopy(result)
+    retained, attribute_hints = _copy_decoded_value(result)
     with repository._revision_validation_lock:
-        cache[key] = (size, retained)
+        cache[key] = (size, retained, attribute_hints)
         while (
             len(cache) > entry_limit
             or sum(item[0] for item in cache.values()) > byte_limit

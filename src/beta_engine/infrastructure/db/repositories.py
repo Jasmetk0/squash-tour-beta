@@ -1491,6 +1491,7 @@ class SimulationPersistenceRepository:
         # Every lookup rehashes the exact stored bytes and metadata; tampering,
         # including a rewritten content hash, invalidates the proof.
         self._revision_validation_cache: dict[tuple, BranchSavedRevisionRecord] = {}
+        self._revision_run_projection_cache: dict[tuple, str] = {}
         self._revision_validation_no_closure: set[tuple] = set()
         self._revision_validation_lock = Lock()
         # Bounded single-flight locks prevent concurrent cold Admin reads from
@@ -2590,6 +2591,13 @@ class SimulationPersistenceRepository:
                         _decoded_payload=decoded_value.get('value'))
                     from beta_engine.application.native_full_simulation_closure import verify_saved_native_closure
                     verify_saved_native_closure(self, session, revision)
+                    if global_slots and sporting_component_proofs is not None:
+                        # This exact current row was just decoded after its full
+                        # actual dependency proof. Seed the same isolated value
+                        # projection used by subsequent live command-source checks.
+                        from beta_engine.infrastructure.db.calendar_tour import remember_verified_origin_projection
+                        remember_verified_origin_projection(model, revision.payload,
+                            sporting_component_proofs.setdefault('_global_origin_inputs', {}))
                     if not materialize_payload:
                         revision = replace(revision, payload={}, change_summary={})
                     memo[proof_key] = revision
@@ -2733,8 +2741,16 @@ class SimulationPersistenceRepository:
         metadata = replace(revision, payload={}, change_summary={})
         if load_native_fork_saved_root(revision) is not None:
             return metadata
+        # A small immutable value projection of this hash-verified actual row.
+        # It certifies only the existing calendar reader's content-hash gate;
+        # physical source/lineage gates remain independently mandatory.
+        run_projection = _to_json(revision.payload.get('run'))
         with self._revision_validation_lock:
             self._revision_validation_cache[signature] = metadata
+            if len(run_projection.encode('utf-8')) <= 32 * 1024:
+                self._revision_run_projection_cache[signature] = run_projection
+                while len(self._revision_run_projection_cache) > 128:
+                    self._revision_run_projection_cache.pop(next(iter(self._revision_run_projection_cache)))
             if 'native_branch_closures' not in revision.payload.get('run', {}):
                 self._revision_validation_no_closure.add(signature)
             else:
@@ -2743,7 +2759,16 @@ class SimulationPersistenceRepository:
                 oldest = next(iter(self._revision_validation_cache))
                 self._revision_validation_cache.pop(oldest)
                 self._revision_validation_no_closure.discard(oldest)
+                self._revision_run_projection_cache.pop(oldest, None)
         return metadata
+
+    def _known_saved_run_projection(self, model):
+        """Pure Run value only when EVERY current raw byte/metadata still matches."""
+        signature = _saved_revision_validation_signature(model)
+        with self._revision_validation_lock:
+            if signature not in self._revision_validation_cache:
+                return None
+            return self._revision_run_projection_cache.get(signature)
 
     def _validated_branch_revision_lineage_in_session(self, **kwargs):
         from beta_engine.infrastructure.db.native_fork_runtime_state import native_read_proof_scope

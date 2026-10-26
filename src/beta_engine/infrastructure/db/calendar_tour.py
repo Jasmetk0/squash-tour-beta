@@ -461,6 +461,29 @@ def restore_tour(
         put_tour(session, target)
 
 
+def borrow_origin_projection_values(repository, proofs):
+    """Borrow immutable decode values only; never copy physical/math proofs."""
+    if repository is not None:
+        with repository._revision_validation_lock:
+            proofs['_global_origin_inputs'] = dict(getattr(repository, '_origin_projection_values', {}))
+
+
+def retain_origin_projection_values(repository, proofs):
+    """Keep bounded JSON after context success; every lookup hashes actual bytes."""
+    values = proofs.get('_global_origin_inputs')
+    if repository is None or not values:
+        return
+    with repository._revision_validation_lock:
+        cache = getattr(repository, '_origin_projection_values', None)
+        if cache is None:
+            cache = repository._origin_projection_values = {}
+        for key, value in values.items():
+            cache.pop(key, None)
+            cache[key] = value
+        while len(cache) > 128 or sum(value[0] for value in cache.values()) > 32 * 1024 * 1024:
+            cache.pop(next(iter(cache)))
+
+
 def _origin_projection(payload, *, with_health=False):
     content = payload.get('content', {})
     return {

@@ -33,8 +33,12 @@ result_slot is printed rather than suppressed.
   in the URL. Manual refresh does not navigate.
 - The response and nested candidate Run/Branch, candidate_only publication
   status and usable fingerprints are checked before rendering. Ambiguous duplicate
-  URL weeks/fingerprints, out-of-range legacy week coordinates and malformed rows
-  are rejected before displaying a candidate. The UI also rejects counted awards,
+  URL weeks/fingerprints, descending history chronology, out-of-range legacy
+  week coordinates and malformed rows are rejected before displaying a candidate.
+  The last listed candidate is used as the preparation head only after verifying
+  chronological order. Ranking tables must have unique players, contiguous
+  ranks, descending point order and totals consistent with counted award sums;
+  duplicate Editions and Best N overflow are rejected. The UI also rejects counted awards,
   source versions, stored result publication and zero-decision versions effective
   after the requested candidate week; no future-only inputs may masquerade as
   historically available. This is UI fail-closed validation,
@@ -67,7 +71,8 @@ result_slot is printed rather than suppressed.
 
 The component tests cover legacy/no candidate, exact week selection, CS/EN,
 source and input lazy loading, provenance, historic ties and disciplinary zeros,
-foreign identities, duplicate weeks, malformed source/row responses, missing
+foreign identities, duplicate weeks, reversed chronology, invalid ranks and
+point totals, malformed source/row responses, missing
 status flags and provenance, unsupported tie reasons, incomplete audits and missing
 decision evidence, delayed previous-Branch delivery, zero/null display, manual
 refresh and error recovery, language switching after an identity failure, and

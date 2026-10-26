@@ -519,3 +519,56 @@ it('retains distinct missing, null and numeric-zero tie values in both languages
   expect(storedValue(null,'en')).toBe('None')
   expect(storedValue(undefined,'en')).toBe('Missing')
 })
+
+
+it('rejects incomplete source awards instead of displaying a computed NaN', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchSources.mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},
+    candidate_fingerprint:'hash',publication_status:'candidate_only',sources:[{
+      fingerprint:'source-1',counted:true,version:{
+        run_id:'run',branch_id:'branch',effective_week:{season_index:0,week:2},
+        previous_fingerprint:null,
+        result:{edition_id:'edition-1',player_id:'player-a',source_fingerprint:'source-hash',
+          qualification_points:0,main_points:undefined,
+          completed_week:{season_index:0,week:1},first_publication_week:{season_index:0,week:2},
+          validity_weeks:61,ranked:true,terminal_status:'completed'},
+      },
+    }],
+  } as unknown as RankingCandidateSources)
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Load source results'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Source history does not match this candidate.')
+  expect(screen.queryByText(/NaN/)).not.toBeInTheDocument()
+})
+
+it('rejects incomplete stored awards rather than displaying a false verified sum', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},
+    candidate_fingerprint:'hash',publication_status:'candidate_only',
+    verification_status:'complete_manifest',
+    manifest:{players:[],results:[{edition_id:'edition-1',qualification_points:0,main_points:undefined,
+      completed_week:{season_index:0,week:1},first_publication_week:{season_index:0,week:2},
+      validity_weeks:61}]},
+  } as unknown as RankingCandidateInputs)
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Stored inputs do not match this candidate.')
+  expect(screen.queryByText(/Verified: stored inputs reproduce/)).not.toBeInTheDocument()
+})
+
+it('renders an omitted tie value as missing, not null or numeric zero', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},
+    candidate_fingerprint:'hash',publication_status:'candidate_only',
+    verification_status:'complete_manifest',manifest:{players:[],results:[]},
+    tie_explanations:[{higher_rank:1,lower_rank:2,points:0,higher_player_id:'a',lower_player_id:'b',
+      reason:'previous_position',result_slot:0,higher_value:0,lower_value:undefined}],
+  } as RankingCandidateInputs)
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText((_, el) => el?.tagName === 'LI' &&
+    el.textContent?.includes('Previous Official position 0: 0 versus Missing') === true)).toBeVisible()
+})

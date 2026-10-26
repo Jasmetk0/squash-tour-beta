@@ -765,5 +765,5 @@ it.each([
   fetchHistory.mockResolvedValue(candidate)
   show('/0/2')
   expect(await screen.findByRole('alert')).toHaveTextContent('Ranking history does not match this candidate.')
-  expect(screen.queryByText('Candidate ranking table')).not.toBeInTheDocument()
+  expect(screen.queryByRole('region', {name:'Candidate ranking table'})).not.toBeInTheDocument()
 })

@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getRankingCandidateInputs } from '../api/client'
 import type { CandidateWeek } from '../api/rankingCandidates'
 import { useLanguage } from '../i18n/LanguageContext'
-import { formatApiError } from '../utils/apiErrors'
-import { storedValue, tr, validCandidateResponse, weekLabel } from './rankingCandidateReadOnly'
+import { rankingReadError, storedValue, tr, validCandidateResponse, weekLabel } from './rankingCandidateReadOnly'
 
 export function RankingCandidateInputsPanel({ runId, branchId, week, fingerprint }: {
   runId: string; branchId: string; week: CandidateWeek; fingerprint: string
@@ -17,7 +16,7 @@ export function RankingCandidateInputsPanel({ runId, branchId, week, fingerprint
     queryFn: async () => {
       const response = await getRankingCandidateInputs(runId, branchId, week.season_index, week.week)
       if (!validCandidateResponse(response, runId, branchId, week, fingerprint)) {
-        throw new Error(t('Stored inputs do not match this candidate.'))
+        throw new Error('Stored inputs do not match this candidate.')
       }
       return response
     },
@@ -34,7 +33,7 @@ export function RankingCandidateInputsPanel({ runId, branchId, week, fingerprint
       : <>
         <button type="button" disabled={query.isFetching} onClick={() => void query.refetch()}>{t('Refresh stored inputs')}</button>
         {query.isPending || query.isFetching ? <p role="status">{t('Loading stored inputs…')}</p> : null}
-        {query.isError && <div role="alert"><p>{formatApiError(query.error)}</p>
+        {query.isError && <div role="alert"><p>{rankingReadError(query.error, language)}</p>
           <button type="button" disabled={query.isFetching} onClick={() => void query.refetch()}>{t('Retry stored inputs')}</button></div>}
         {data && <div hidden={query.isFetching || !query.isSuccess}>
           {data.verification_status === 'legacy_without_manifest' ? <p>{t('Legacy candidate: complete calculation inputs were not stored. They cannot be reconstructed from current data.')}</p>

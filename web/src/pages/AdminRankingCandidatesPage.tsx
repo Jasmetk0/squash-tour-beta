@@ -37,7 +37,7 @@ export function AdminRankingCandidatesPage(): JSX.Element {
   return <main>
     <PageIntro title={t('Ranking candidates')}
       subtitle={t('Unpublished preparation history. Viewing does not publish rankings or advance time.')}
-      meta={'Run: ' + runId + ' · Branch: ' + branchId} />
+      meta={'Run: ' + runId + ' · ' + t('Branch') + ': ' + branchId} />
     <Link to={'/admin/runs/' + encodeURIComponent(runId) + '/branches'}>{t('Back to Branches')}</Link>
     {!valid ? <p role="alert">{t('Invalid season or week.')}</p>
       : query.isPending || query.isFetching ? <p role="status">{t('Loading ranking history…')}</p> : null}
@@ -76,7 +76,7 @@ export function AdminRankingCandidatesPage(): JSX.Element {
                   <td>{row.counted_results.length === 0 ? t('No counted results')
                     : <details><summary>{row.counted_results.length} {t('counted results for')} {row.player_id}</summary>
                       <ul>{row.counted_results.map(result =>
-                        <li key={result.edition_id}><strong>{result.edition_id}</strong>: {result.qualification_points + result.main_points} {t('Points').toLowerCase()}
+                        <li key={result.edition_id}><strong>{result.edition_id}</strong>: {result.qualification_points + result.main_points} {t('points')}
                           {' ('}{result.qualification_points} {t('qualification')} + {result.main_points} {t('main')}{'). '}
                           {t('Completed')} {weekLabel(result.completed_week, language)}; {t('first publication')} {weekLabel(result.first_publication_week, language)};
                           {' '}{t('validity')} {result.validity_weeks} {t('weeks')}.</li>)}</ul>
@@ -86,10 +86,10 @@ export function AdminRankingCandidatesPage(): JSX.Element {
               </table>
             </div>}
           <RankingCandidateInputsPanel
-            key={'inputs/' + runId + '/' + branchId + '/' + selected.fingerprint}
+            key={'inputs/' + runId + '/' + branchId + '/' + selected.snapshot.week.season_index + '/' + selected.snapshot.week.week + '/' + selected.fingerprint}
             runId={runId} branchId={branchId} week={selected.snapshot.week} fingerprint={selected.fingerprint} />
           <RankingSources
-            key={'sources/' + runId + '/' + branchId + '/' + selected.fingerprint}
+            key={'sources/' + runId + '/' + branchId + '/' + selected.snapshot.week.season_index + '/' + selected.snapshot.week.week + '/' + selected.fingerprint}
             runId={runId} branchId={branchId} week={selected.snapshot.week} fingerprint={selected.fingerprint} />
           <details><summary>{t('Technical provenance')}</summary>
             <p>{t('Policy')}: {selected.snapshot.policy.policy_id}</p>
@@ -133,7 +133,7 @@ function RankingSources({ runId, branchId, week, fingerprint }: {
             : <ul>{query.data.sources.map(source => {
               const v = source.version
               return <li key={source.fingerprint}>
-                <strong>{v.result.player_id} · {v.result.edition_id}</strong>: {v.result.qualification_points + v.result.main_points} {t('Points').toLowerCase()}
+                <strong>{v.result.player_id} · {v.result.edition_id}</strong>: {v.result.qualification_points + v.result.main_points} {t('points')}
                 {' · '}{source.counted ? t('Counted') : t('Not counted in this candidate')}
                 <p>{t('Effective')} {weekLabel(v.effective_week, language)} · {t('First publication')} {weekLabel(v.result.first_publication_week, language)}
                   {' · '}{t('Validity')} {v.result.validity_weeks} {t('weeks')}</p>

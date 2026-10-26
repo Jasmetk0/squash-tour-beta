@@ -1,18 +1,21 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { RankingCandidateHistory } from '../api/rankingCandidates'
 import { MemoryRouter, Route, Routes, Link } from 'react-router-dom'
 import { beforeEach, expect, it, vi } from 'vitest'
 import { getRankingCandidates, getRankingCandidateSources, getRankingCandidateInputs } from '../api/client'
 import { AdminRankingCandidatesPage } from './AdminRankingCandidatesPage'
-vi.mock('../api/client', async (importOriginal) => ({ ...await importOriginal<typeof import('../api/client')>(), getRankingCandidates: vi.fn(), getRankingCandidateSources: vi.fn(), getRankingCandidateInputs: vi.fn() }))
+import { LanguageProvider, useLanguage } from '../i18n/LanguageContext'
+vi.mock('../api/client', async (importOriginal) => ({ ...await importOriginal<typeof import('../api/client')>(), getRankingCandidates: vi.fn(), getRankingCandidateSources: vi.fn(), getRankingCandidateInputs: vi.fn(), previewRankingCommand: vi.fn(), confirmRankingCommand: vi.fn(), saveRankingPreparation: vi.fn() }))
 const fetchHistory = vi.mocked(getRankingCandidates)
+function LanguageSwitch() { const { setLanguage } = useLanguage(); return <><button onClick={() => setLanguage('cs')}>Čeština</button><button onClick={() => setLanguage('en')}>English</button></> }
 function show(suffix = '') {
-  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><MemoryRouter initialEntries={['/admin/runs/run/branches/branch/ranking-candidates' + suffix]}><Link to="/admin/runs/run/branches/other/ranking-candidates/0/2">Other Branch</Link><Routes><Route path="/admin/runs/:runId/branches/:branchId/ranking-candidates" element={<AdminRankingCandidatesPage />} /><Route path="/admin/runs/:runId/branches/:branchId/ranking-candidates/:seasonIndex/:week" element={<AdminRankingCandidatesPage />} /></Routes></MemoryRouter></QueryClientProvider>)
+  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><LanguageProvider><LanguageSwitch /><MemoryRouter initialEntries={['/admin/runs/run/branches/branch/ranking-candidates' + suffix]}><Link to="/admin/runs/run/branches/other/ranking-candidates/0/2">Other Branch</Link><Routes><Route path="/admin/runs/:runId/branches/:branchId/ranking-candidates" element={<AdminRankingCandidatesPage />} /><Route path="/admin/runs/:runId/branches/:branchId/ranking-candidates/:seasonIndex/:week" element={<AdminRankingCandidatesPage />} /></Routes></MemoryRouter></LanguageProvider></QueryClientProvider>)
 }
 beforeEach(() => {
   vi.resetAllMocks()
+  localStorage.setItem('squash-engine-language-v1', 'en')
   fetchHistory.mockResolvedValue({ run_id: 'run', branch_id: 'branch', publication_status: 'candidate_only', candidates: [] })
 })
 it('shows an empty scoped history', async () => {
@@ -208,4 +211,155 @@ it('shows the recorded preparation operator and reason', async () => {
   expect(screen.getByText(/Reviewed correction/)).toBeVisible()
   await userEvent.click(screen.getByText('Preparation command'))
   expect(screen.getByText('reviewed-command')).toBeVisible()
+})
+
+
+it('switches CS/EN for candidate, sources and inputs without changing stored identifiers', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  vi.mocked(getRankingCandidateSources).mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',publication_status:'candidate_only',sources:[],
+  })
+  vi.mocked(getRankingCandidateInputs).mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',publication_status:'candidate_only',
+    verification_status:'complete_manifest',manifest:{players:[],results:[]},
+  })
+  show('/0/2')
+  expect(await screen.findByText('Ranking candidates')).toBeVisible()
+  await userEvent.click(screen.getByRole('button', {name:'Čeština'}))
+  expect(screen.getByText('Kandidáti žebříčku')).toBeVisible()
+  expect(screen.getByRole('link', {name:'2000/01 · Týden 2'})).toBeVisible()
+  expect(screen.getByText(/Nepublikovaný kandidát/)).toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'Načíst zdrojové výsledky'}))
+  expect(await screen.findByText('K tomuto okamžiku nejsou žádné zdrojové výsledky.')).toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'Prohlédnout uložené vstupy'}))
+  expect(await screen.findByText(/Ověřeno: uložené vstupy reprodukují tohoto kandidáta/)).toBeVisible()
+  expect(screen.getByText('player-a')).toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'English'}))
+  expect(screen.getByText('Ranking candidates')).toBeVisible()
+  expect(screen.getByText('No source results at this boundary.')).toBeVisible()
+  expect(screen.getByText(/Verified: stored inputs reproduce this candidate/)).toBeVisible()
+})
+
+it.each([
+  ['foreign Run', { run_id:'foreign' }],
+  ['foreign Branch', { branch_id:'foreign' }],
+  ['published response', { publication_status:'official' }],
+])('rejects %s rather than showing candidates', async (_reason, delta) => {
+  fetchHistory.mockResolvedValue({...populated, ...delta} as RankingCandidateHistory)
+  show('/0/2')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Ranking history does not match this candidate.')
+  expect(screen.queryByText('player-a')).not.toBeInTheDocument()
+})
+
+it('rejects a foreign nested candidate and a non-candidate publication status', async () => {
+  const bad=structuredClone(populated)
+  bad.candidates[0].snapshot.branch_id='elsewhere'
+  fetchHistory.mockResolvedValue(bad)
+  show('/0/2')
+  expect(await screen.findByRole('alert')).toHaveTextContent('Ranking history does not match this candidate.')
+})
+
+it('does not render a delayed prior-Branch response under the new URL context', async () => {
+  let finish!: (data: RankingCandidateHistory) => void
+  fetchHistory.mockImplementationOnce(() => new Promise(resolve => { finish=resolve }))
+    .mockResolvedValue({run_id:'run',branch_id:'other',publication_status:'candidate_only',candidates:[]})
+  show('/0/2')
+  expect(screen.getByRole('status')).toHaveTextContent('Loading ranking history')
+  await userEvent.click(screen.getByRole('link',{name:'Other Branch'}))
+  expect(await screen.findByText('No candidate is stored for this week.')).toBeVisible()
+  await act(async () => { finish(populated) })
+  expect(screen.queryByText('player-a')).not.toBeInTheDocument()
+})
+
+it('preserves the URL and expanded provenance across a successful manual history refresh', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  show('/0/2')
+  await userEvent.click(await screen.findByText('Technical provenance'))
+  expect(screen.getByText('Commands: command-1')).toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'Refresh candidates'}))
+  await waitFor(() => expect(fetchHistory).toHaveBeenCalledTimes(2))
+  expect(screen.getByRole('link',{name:'2000/01 · Week 2'})).toHaveAttribute('aria-current','page')
+  expect(screen.getByText('Commands: command-1')).toBeVisible()
+})
+
+it('recovers from a failed history refresh without showing the stale candidate as verified', async () => {
+  fetchHistory.mockResolvedValueOnce(populated).mockRejectedValueOnce(new Error('Failed refresh')).mockResolvedValue(populated)
+  show('/0/2')
+  expect(await screen.findByText('player-a')).toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'Refresh candidates'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Failed refresh')
+  expect(screen.getByText('player-a')).not.toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'Retry loading'}))
+  expect(await screen.findByText('player-a')).toBeVisible()
+})
+
+it('rejects foreign source identity even if the fingerprint matches', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  vi.mocked(getRankingCandidateSources).mockResolvedValue({
+    run_id:'different-run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',
+    publication_status:'candidate_only',sources:[],
+  })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Load source results'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Source history does not match this candidate.')
+})
+
+it('rejects foreign input scope or non-candidate publication even with the same fingerprint', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  vi.mocked(getRankingCandidateInputs).mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:3},candidate_fingerprint:'hash',
+    publication_status:'candidate_only',verification_status:'complete_manifest',manifest:{players:[],results:[]},
+  })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Stored inputs do not match this candidate.')
+})
+
+it('hides stale source content on refresh failure and recovers on retry', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  const response = {
+    run_id:'run', branch_id:'branch', week:{season_index:0,week:2}, candidate_fingerprint:'hash',
+    publication_status:'candidate_only' as const, sources:[],
+  }
+  vi.mocked(getRankingCandidateSources).mockResolvedValueOnce(response)
+    .mockRejectedValueOnce(new Error('Source refresh failed')).mockResolvedValue(response)
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Load source results'}))
+  expect(await screen.findByText('No source results at this boundary.')).toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'Refresh source results'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Source refresh failed')
+  expect(screen.getByText('No source results at this boundary.')).not.toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'Retry source results'}))
+  expect(await screen.findByText('No source results at this boundary.')).toBeVisible()
+})
+
+it('separates zero, null and missing tie values, including numeric zero result slots', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  vi.mocked(getRankingCandidateInputs).mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',
+    publication_status:'candidate_only',verification_status:'complete_manifest',manifest:{players:[],results:[]},
+    tie_explanations:[{higher_player_id:'a',lower_player_id:'b',higher_rank:1,lower_rank:2,points:0,
+      reason:'previous_position',result_slot:0,higher_value:0,lower_value:null}],
+  })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText(/0 points/)).toHaveTextContent('Previous Official position 0: 0 versus None')
+})
+
+it('does not perform prepare, save or publish when viewing, translating, opening details or refreshing', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  vi.mocked(getRankingCandidateInputs).mockResolvedValue({
+    run_id:'run',branch_id:'branch',week:{season_index:0,week:2},candidate_fingerprint:'hash',
+    publication_status:'candidate_only',verification_status:'legacy_without_manifest',manifest:null,
+  })
+  show('/0/2')
+  await userEvent.click(await screen.findByText('Technical provenance'))
+  await userEvent.click(screen.getByRole('button',{name:'Inspect stored inputs'}))
+  expect(await screen.findByText(/Legacy candidate: complete calculation inputs were not stored/)).toBeVisible()
+  await userEvent.click(screen.getByRole('button',{name:'Čeština'}))
+  await userEvent.click(screen.getByRole('button',{name:'Obnovit kandidáty'}))
+  await waitFor(() => expect(fetchHistory).toHaveBeenCalledTimes(2))
+  expect(vi.mocked((await import('../api/client')).previewRankingCommand)).not.toHaveBeenCalled()
+  expect(vi.mocked((await import('../api/client')).confirmRankingCommand)).not.toHaveBeenCalled()
+  expect(vi.mocked((await import('../api/client')).saveRankingPreparation)).not.toHaveBeenCalled()
 })

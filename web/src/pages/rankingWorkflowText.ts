@@ -1,4 +1,5 @@
 import type { CandidateWeek } from '../api/rankingCandidates'
+import { useLanguage } from '../i18n/LanguageContext'
 import type { Language } from '../i18n/LanguageContext'
 
 /** Display-only vocabulary. Request enums, IDs, audit and fingerprints are never translated. */
@@ -117,4 +118,15 @@ export function rankingWorkflowText(english: string, language: Language): string
 /** Keeps the existing 61-week / 50-season legacy coordinate convention. */
 export function rankingWorkflowWeekLabel(week: CandidateWeek, language: Language): string {
   return `${2000 + week.season_index}/${String(2001 + week.season_index).slice(-2)} · ${rankingWorkflowText('Week', language)} ${week.week}`
+}
+
+/** Supports legacy isolated component mounts without a Provider; normal Admin
+ * navigation always gets the live language from LanguageContext. */
+export function useRankingWorkflowLanguage(): Language {
+  try {
+    return useLanguage().language
+  } catch (error) {
+    if (error instanceof Error && error.message === 'useLanguage requires LanguageProvider') return 'en'
+    throw error
+  }
 }

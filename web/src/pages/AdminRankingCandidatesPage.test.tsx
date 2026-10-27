@@ -137,6 +137,31 @@ it('inspects frozen inputs on demand including players outside the ranking', asy
   await userEvent.click(screen.getByRole('link', { name: 'Other Branch' }))
   expect(screen.queryByText('frozen-token')).not.toBeInTheDocument()
 })
+it('accepts a future Tour entrant in a verified manifest without inventing a ranked row', async () => {
+  fetchHistory.mockResolvedValue(populated)
+  fetchInputs.mockResolvedValue({
+    run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 },
+    candidate_fingerprint: 'hash', publication_status: 'candidate_only',
+    verification_status: 'complete_manifest', manifest: {
+      players: [{ player_id: 'future-player', tie_break_token: 'unique-future-token', retired: false,
+        tour_entry_week: { season_index: 0, week: 10 } }],
+      results: [], zeros_from_history: true,
+    },
+  })
+  show('/0/2')
+  await userEvent.click(await screen.findByRole('button', { name: 'Inspect stored inputs' }))
+  expect(await screen.findByText('future-player')).toBeVisible()
+  expect(screen.getByText('player-a')).toBeVisible()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  expect(screen.queryByRole('cell', { name: 'future-player' })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByText('Stored tie-break token'))
+  expect(screen.getByText('unique-future-token')).toBeVisible()
+  await userEvent.click(screen.getByRole('button', { name: 'Čeština' }))
+  expect(screen.getByText('future-player')).toBeVisible()
+  expect(screen.getByText('unique-future-token')).toBeVisible()
+  expect(vi.mocked(getRankingCandidateInputs)).toHaveBeenCalledTimes(1)
+})
+
 it('distinguishes legacy missing inputs from a verified empty manifest', async () => {
   fetchHistory.mockResolvedValue(populated)
   fetchInputs.mockResolvedValue({ run_id: 'run', branch_id: 'branch', week: { season_index: 0, week: 2 }, candidate_fingerprint: 'hash', publication_status: 'candidate_only', verification_status: 'legacy_without_manifest', manifest: null })

@@ -5,9 +5,10 @@ from types import SimpleNamespace
 from beta_engine.domain.tournaments.calendar_global_slots import (
     GlobalCompetitionCheckpoint,
     accept_slot,
-    slot_match_id,
     freeze_slot,
+    is_group_edition,
     next_schedule,
+    slot_match_id,
 )
 
 
@@ -54,6 +55,10 @@ def slot_inspection(state, checkpoint):
         if len(mids) > 1
     ]
     return {
+        "blockers": sorted({
+            "group_tie_resolution_required:" + a.edition.edition_id
+            for a, _, ids in due if is_group_edition(a) and a.draw and not ids
+        }),
         "conflicts": conflicts,
         "schema_version": "calendar_global_slot_inspection.v1",
         "number": number,

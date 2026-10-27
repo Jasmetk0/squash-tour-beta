@@ -672,6 +672,12 @@ def next_schedule(state, checkpoint):
         try:
             plan = edition_plan(a, accepted, history)
         except TournamentGroupStandingsUnresolvedTie:
+            # Reserve the dependent playoff slot: never advance past it and
+            # then resume from a later sporting snapshot after Admin resolves it.
+            if a.edition.group_configuration.format_kind == "groups_knockout":
+                schedule = a.draw.schedule
+                due.append((a.edition.start_slot + 3 + schedule.match_day_count,
+                            a, len(schedule.matches), ()))
             continue
         missing = [(i, item) for i, item in enumerate(plan) if item[0] not in accepted]
         if not missing:
@@ -692,6 +698,12 @@ def freeze_slot(state, checkpoint, *, world, lifecycle, health, source, head):
         raise ValueError("No unresolved global match slot in the current week")
     if opened is not None:
         return opened
+    history = getattr(checkpoint, "history_global_slots", getattr(checkpoint, "events", ()))
+    for authority, _, player_ids in due:
+        if is_group_edition(authority) and authority.draw and not player_ids:
+            matches = {m.match_id: m for s in history if isinstance(s, GlobalSlot)
+                       for m in s.accepted}
+            edition_plan(authority, matches, history)
     ids = [
         a.edition.edition_id
         for a in state.editions

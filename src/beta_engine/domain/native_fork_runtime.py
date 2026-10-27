@@ -281,3 +281,18 @@ class ForkCompetitionView:
         players = terminal_players(self.runtime.players, tuple(m for m in slot.accepted if m.match_id not in old_ids))
         runtime = self.runtime.model_copy(update={"schema_version": "native_fork_runtime.v2", "global_slots": (*previous[:-1], slot) if replacing else (*previous, slot), "players": players})
         return ForkCompetitionView(runtime, self.original)
+
+    def with_group_tie_decision(self, index, slot):
+        """Update owned administrative evidence without reaccepting old matches."""
+        previous = self.runtime.global_slots
+        if not 0 <= index < len(previous):
+            raise ValueError("Group tie slot is not owned by this fork")
+        old = previous[index]
+        if (slot.model_copy(update={"group_tie_decisions": old.group_tie_decisions}) != old
+            or slot.group_tie_decisions[:-1] != old.group_tie_decisions
+            or len(slot.group_tie_decisions) != len(old.group_tie_decisions) + 1):
+            raise ValueError("Group tie update must only append one administrative decision")
+        runtime = self.runtime.model_copy(update={
+            "global_slots": (*previous[:index], slot, *previous[index + 1:]),
+        })
+        return ForkCompetitionView(runtime, self.original)

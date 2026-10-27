@@ -117,4 +117,20 @@ owned earlier slot updates that slot in place and preserves player state,
 accepted matches, subsequent slots and the source branch. The adapter rejects
 changes to any other slot field, removed matches, duplicate appended decisions
 and invalid indices. Thirty-one focused backend contracts pass. The genuine
-nested-fork HTTP/SQLite scenario has been restarted; no result is claimed yet.
+nested-fork HTTP/SQLite scenario passed (321.62 seconds including setup).
+
+## Additional genuine acceptance — 27 October 2026
+
+The mixed group/knockout scenario passes (211.14 seconds): twelve real players,
+six simultaneous actual MatchEngine matches, full-slot execution versus reverse
+individual execution, manual partial Save and complete application/SQLite reopen.
+The two resulting complete sporting checkpoints compare equal, including all
+accepted matches, rally evidence, frozen inputs and physical player state.
+This is one W52 mixed-slot acceptance, not the full W52/W61/W80 matrix.
+
+The nested-fork case independently passes with actual two-level branching,
+fifteen-match completion, result confirmation, Official points, unchanged source
+and partial-source restoration. Thirty-nine mocked frontend tests pass, including
+CS/EN disabled simulation controls while a group tie awaits explicit review.
+Native production-seeded exact ties, withdrawal/W/O and the remaining full
+calendar/browser/worker acceptance are still outstanding. Draft remains Draft.

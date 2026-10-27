@@ -36,7 +36,8 @@ function SavedPlayerMatchReplay(): JSX.Element {
   const savedHead = selectedBranch?.saved_head_revision_id
   const [index, setIndex] = useState(0)
   const pageOffset = Math.floor(index / PAGE) * PAGE
-  const ready = time.mode === 'present' && !isLoading && !error &&
+  const ready = time.mode === 'present' && !time.isLoading && !time.error &&
+    !isLoading && !error &&
     Boolean(branchId && savedHead && playerId && eventId && matchId)
   const q = useQuery({
     queryKey: ['saved-match-detail', runId, branchId, savedHead, playerId, eventId, matchId, pageOffset],
@@ -82,8 +83,11 @@ function SavedPlayerMatchReplay(): JSX.Element {
     {time.mode !== 'present' ? <p className="status">{cs
       ? 'Zvolený historický checkpoint nemá zatím svůj detail zápasu. Současná revize se nezobrazuje jako historie.'
       : 'Historical checkpoint match detail is not supported. Current revision is not shown as history.'}</p> : <>
-      {(isLoading || (ready && (q.isPending||q.isFetching))) && <p role="status">{cs ? 'Načítání…' : 'Loading…'}</p>}
-      {error && <p role="alert" className="error">{error}</p>}
+      {(isLoading || time.isLoading || (ready && (q.isPending||q.isFetching))) && <p role="status">{cs ? 'Načítání…' : 'Loading…'}</p>}
+      {(error||time.error) && <p role="alert" className="error">{error||time.error}</p>}
+      {!ready&&!isLoading&&!time.isLoading&&!error&&!time.error&&<p role="alert">{cs?
+        'Chybí vybraná Branch, Saved HEAD nebo ID hráče/zápasu.':
+        'Selected Branch, Saved HEAD or player/match ID is missing.'}</p>}
       {ready && q.error && <p role="alert" className="error">{formatApiError(q.error)}</p>}
       {ready && q.isSuccess && !q.isFetching && !scoped && <p role="alert" className="error">{cs
         ? 'Detail neodpovídá vybrané uložené revizi.' : 'Match detail does not match selected Saved Revision.'}</p>}

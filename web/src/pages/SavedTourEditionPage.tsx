@@ -54,6 +54,8 @@ export function SavedTourEditionPage():JSX.Element {
   const presentEntry=(value:string)=>value==='wild_card'?(cs?'divoká karta':'wild card'):
     value==='lucky_loser'?(cs?'šťastný poražený':'lucky loser'):
     value==='direct'?(cs?'přímý vstup':'direct entry'):
+    value==='champion'?(cs?'vítěz':'champion'):
+    value==='finalist'||value==='runner_up'?(cs?'finalista':'finalist'):
     value==='bye'?(cs?'volný los':'bye'):value
   const back=new URLSearchParams(params);back.delete('tab')
   const returnTo='/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar?'+back.toString()
@@ -90,7 +92,7 @@ export function SavedTourEditionPage():JSX.Element {
     </tr></thead><tbody>{group.map(matchRow)}</tbody></table></div>:
     <p>{cs?'Nejsou dostupné doložené zápasy.':'No evidenced matches available.'}</p>
   const scheduledTable=(slots:SavedTourScheduledMatch[])=>slots.length?
-    <div className="table-responsive"><table aria-label="Saved Match Day order">
+    <div className="table-responsive"><table aria-label={cs?"Pořadí zápasového dne":"Saved Match Day order"}>
       <thead><tr><th>{cs?'Den':'Match Day'}</th><th>{cs?'Pořadí':'Order'}</th>
         <th>{cs?'Globální slot':'Global slot'}</th><th>{cs?'Fáze':'Phase'}</th>
         <th>{cs?'Kolo':'Round'}</th><th>{cs?'Zápas':'Match ID'}</th>
@@ -108,7 +110,7 @@ export function SavedTourEditionPage():JSX.Element {
       })}</tbody></table></div>:
     <p>{cs?'Pro tuto část nejsou uložené zápasové sloty.':
       'No saved Match Day slots for this phase.'}</p>
-  const groupStandingsTables=groupStandings&&<section aria-label="Saved group standings">
+  const groupStandingsTables=groupStandings&&<section aria-label={cs?"Uložené pořadí skupin":"Saved group standings"}>
     <h4>{cs?'Konečné tabulky skupin':'Final group standings'}</h4>
     <p role="status">{cs?'Uložené výsledkové tabulky — pořadí a statistiky z kanonické autority.':
       'Saved final tables — ranks and statistics from canonical authority.'}
@@ -131,7 +133,7 @@ export function SavedTourEditionPage():JSX.Element {
         </table></div>
       </section>)}
     </div>
-    {groupStandings.tie_decisions.length>0&&<section aria-label="Saved group tie decisions">
+    {groupStandings.tie_decisions.length>0&&<section aria-label={cs?"Uložená rozhodnutí o shodách":"Saved group tie decisions"}>
       <h5>{cs?'Auditovaná rozhodnutí při rovnosti':'Audited tie decisions'}</h5>
       {groupStandings.tie_decisions.map(d=><p key={d.case_fingerprint}>
         {cs?'Skupina':'Group'} {d.group_index}: {d.ordered_player_ids.join(' → ')}
@@ -141,7 +143,7 @@ export function SavedTourEditionPage():JSX.Element {
     </section>}
   </section>
   const pendingTiePanel=!groupStandings&&pendingTieDecisions.length>0&&
-    <section aria-label="Saved pending group tie decisions">
+    <section aria-label={cs?"Čekající rozhodnutí o shodách":"Saved pending group tie decisions"}>
       <h4>{cs?'Uložená rozhodnutí shod — čeká na konečnou tabulku':
         'Saved tie decisions — final standings pending'}</h4>
       <p role="status">{cs?'Tato historická revize obsahuje auditované rozhodnutí pořadí, ale konečné skupinové tabulky dosud nebyly vytvořeny. Pořadí níže není publikovaná výsledková tabulka.':
@@ -152,7 +154,7 @@ export function SavedTourEditionPage():JSX.Element {
         {' · '}<code>{d.case_fingerprint.slice(0,12)}</code>
       </li>)}</ol>
     </section>
-  const groupScheduleTable=groupSchedule&&<section aria-label="Saved group Match Day schedule">
+  const groupScheduleTable=groupSchedule&&<section aria-label={cs?"Uložený skupinový rozpis":"Saved group Match Day schedule"}>
     <h5>{cs?'Autentický skupinový rozpis':'Authentic group Match Day schedule'}</h5>
     <p role="status">{cs?'Uložené skupiny':'Saved groups'}: {groupSchedule.group_count}
       {' · '}{cs?'Velikost skupiny':'Group size'}: {groupSchedule.group_size}
@@ -160,7 +162,7 @@ export function SavedTourEditionPage():JSX.Element {
       {' · '}{cs?'Toto jsou pořadová čísla, nikoliv kalendářní datum nebo hodina.':
         'Days are ordinal, not calendar dates or clock times.'}</p>
     <div className="table-responsive">
-      <table aria-label="Saved group matches">
+      <table aria-label={cs?"Zápasy skupin":"Saved group matches"}>
         <thead><tr><th>{cs?'Skupina':'Group'}</th><th>Match Day</th>
           <th>{cs?'Pořadí':'Order'}</th><th>{cs?'Hráči':'Players'}</th>
           <th>{cs?'Formát':'Format'}</th><th>{cs?'Výsledek / detail':'Result / detail'}</th>

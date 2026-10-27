@@ -20,7 +20,8 @@ export function SavedPlayerIdentityPage(): JSX.Element {
   const time = useAdminTime()
   const branchId = selectedBranch?.run_id === runId ? selectedBranch.branch_id : null
   const savedHead = selectedBranch?.saved_head_revision_id
-  const ready = time.mode === 'present' && !isLoading && !error && Boolean(branchId && savedHead && playerId)
+  const ready = time.mode === 'present' && !time.isLoading && !time.error &&
+    !isLoading && !error && Boolean(branchId && savedHead && playerId)
   const q = useQuery({
     queryKey: ['saved-player-profile', runId, branchId, savedHead, playerId],
     queryFn: () => getSavedPlayerProfile(runId, branchId!, playerId),
@@ -43,8 +44,10 @@ export function SavedPlayerIdentityPage(): JSX.Element {
       ? 'Historický profil pro tento checkpoint zatím není podporovaný. Současná data nevydáváme za historii.'
       : 'Historical player profile for this checkpoint is not supported. Current data is not presented as history.'}</p> :
       <>
-        {(isLoading || (ready && (q.isPending || q.isFetching))) && <p role="status">{cs ? 'Načítání…' : 'Loading…'}</p>}
-        {error && <p className="error" role="alert">{error}</p>}
+        {(isLoading || time.isLoading || (ready && (q.isPending || q.isFetching))) && <p role="status">{cs ? 'Načítání…' : 'Loading…'}</p>}
+        {(error||time.error) && <p className="error" role="alert">{error||time.error}</p>}
+        {!ready&&!isLoading&&!time.isLoading&&!error&&!time.error&&<p role="alert">{cs?
+          'Chybí vybraná Branch, Saved HEAD nebo ID hráče.':'Selected Branch, Saved HEAD or player ID is missing.'}</p>}
         {ready && q.error && <p className="error" role="alert">{formatApiError(q.error)}</p>}
         {ready && q.isSuccess && !q.isFetching && !scoped && <p className="error" role="alert">{cs ? 'Profil neodpovídá vybrané revizi.' : 'Profile does not match selected Saved Revision.'}</p>}
         <button type="button" disabled={!ready||q.isFetching}

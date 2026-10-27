@@ -177,3 +177,107 @@ it('keeps a failed result source request read-only and retries only on explicit 
   expect(previewRankingCommand).not.toHaveBeenCalled()
   expect(confirmRankingCommand).not.toHaveBeenCalled()
 })
+
+it.each([
+  ['unchanged', { has_unsaved_changes: false, can_save: false }, 'Příprava žebříčku je již uložená.'],
+  ['blocked', { has_unsaved_changes: true, can_save: false }, 'Uložení je zablokováno. Zkontrolujte oprávnění větve a nevyřízené změny konceptu.'],
+] as const)('keeps %s save review read-only when switching language', async (_name, state, message) => {
+  vi.mocked(previewRankingSave).mockResolvedValue({
+    run_id: 'run', branch_id: 'branch', ranking_fingerprint: 'd'.repeat(64),
+    saved_head_revision_id: 'saved-1', draft_version: 0, ...state,
+  })
+  show(undefined, true)
+  await userEvent.click(screen.getByRole('button', { name: 'Review ranking changes' }))
+  await screen.findByRole('button', { name: 'Save ranking preparation' })
+  expect(screen.getByRole('button', { name: 'Save ranking preparation' })).toBeDisabled()
+  await userEvent.click(screen.getByRole('button', { name: 'Čeština' }))
+  expect(screen.getByText(message)).toBeVisible()
+  expect(screen.getByRole('button', { name: 'Uložit přípravu žebříčku' })).toBeDisabled()
+  expect(previewRankingSave).toHaveBeenCalledTimes(1)
+  expect(saveRankingPreparation).not.toHaveBeenCalled()
+  expect(previewRankingCommand).not.toHaveBeenCalled()
+  expect(confirmRankingCommand).not.toHaveBeenCalled()
+})
+
+it('requires fresh explicit Save after an error; language switch never retries the failed write', async () => {
+  const payload = {
+    run_id: 'run', branch_id: 'branch', ranking_fingerprint: 'd'.repeat(64),
+    saved_head_revision_id: 'saved-1', draft_version: 2,
+    has_unsaved_changes: true, can_save: true,
+  }
+  vi.mocked(previewRankingSave).mockResolvedValue(payload)
+  vi.mocked(saveRankingPreparation).mockRejectedValueOnce(new Error('Save connection lost'))
+    .mockResolvedValue({})
+  show(undefined, true)
+  await userEvent.click(screen.getByRole('button', { name: 'Review ranking changes' }))
+  await userEvent.click(await screen.findByRole('button', { name: 'Save ranking preparation' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Save connection lost')
+  await waitFor(() => expect(previewRankingSave).toHaveBeenCalledTimes(2))
+  expect(saveRankingPreparation).toHaveBeenCalledTimes(1)
+  await userEvent.click(screen.getByRole('button', { name: 'Čeština' }))
+  expect(screen.getByRole('alert')).toHaveTextContent('Uložení selhalo')
+  expect(previewRankingSave).toHaveBeenCalledTimes(2)
+  expect(saveRankingPreparation).toHaveBeenCalledTimes(1)
+  await userEvent.click(screen.getByRole('button', { name: 'Obnovit kontrolu žebříčku' }))
+  await waitFor(() => expect(previewRankingSave).toHaveBeenCalledTimes(3))
+  expect(saveRankingPreparation).toHaveBeenCalledTimes(1)
+  await userEvent.click(await screen.findByRole('button', { name: 'Uložit přípravu žebříčku' }))
+  expect(await screen.findByText('Příprava žebříčku byla uložena.')).toBeVisible()
+  expect(vi.mocked(saveRankingPreparation).mock.calls).toEqual([
+    ['run', 'branch', payload], ['run', 'branch', payload],
+  ])
+})
+
+it('preserves revised zero duration, original start, new zero and player token across language changes', async () => {
+  const originalZero = {
+    zero_id: 'old-zero', run_id: 'run', branch_id: 'branch', player_id: 'player-1',
+    effective_week: { season_index: 0, week: 1 }, duration_weeks: 4,
+    source_fingerprint: 'original-decision',
+  }
+  vi.mocked(getRankingCandidateInputs).mockResolvedValue({
+    run_id: 'run', branch_id: 'branch', week: latest.snapshot.week,
+    candidate_fingerprint: latest.fingerprint, publication_status: 'candidate_only',
+    verification_status: 'complete_manifest',
+    manifest: { players: [player], results: [], zeros_from_history: true, disciplinary_zeros: [originalZero] },
+    zero_sources: [{ fingerprint: 'old-version', impact: 'reserves_slot',
+      version: { effective_week: originalZero.effective_week, previous_fingerprint: null, zero: originalZero } }],
+  })
+  show(latest)
+  await userEvent.click(screen.getByRole('button', { name: 'Prepare next ranking' }))
+  expect(await screen.findByLabelText('Player ID')).toHaveValue('player-1')
+  await userEvent.click(screen.getByLabelText('Change this duration'))
+  await userEvent.clear(screen.getByLabelText('New duration in weeks'))
+  await userEvent.type(screen.getByLabelText('New duration in weeks'), '2')
+  await userEvent.type(screen.getByLabelText('Correction reference'), 'appeal-123')
+  await userEvent.click(screen.getByRole('button', { name: 'Add disciplinary zero' }))
+  await userEvent.selectOptions(screen.getByLabelText('Zero player'), 'player-1')
+  await userEvent.type(screen.getByLabelText('Duration in weeks'), '3')
+  await userEvent.type(screen.getByLabelText('Decision reference'), 'new-decision')
+  await userEvent.type(screen.getByLabelText('Operator label'), 'Operator stays raw')
+  await userEvent.type(screen.getByLabelText('Reason'), 'Reason stays raw')
+  await userEvent.click(screen.getByRole('button', { name: 'Čeština' }))
+  expect(screen.getByText(/Původní začátek 2000\/01 · Týden 1/)).toBeVisible()
+  expect(screen.getByLabelText('Nová doba trvání v týdnech')).toHaveValue(2)
+  expect(screen.getByLabelText('Reference opravy')).toHaveValue('appeal-123')
+  expect(screen.getByLabelText('Hráč s nulou')).toHaveValue('player-1')
+  expect(screen.getByLabelText('Doba trvání v týdnech')).toHaveValue(3)
+  expect(screen.getByLabelText('Reference rozhodnutí')).toHaveValue('new-decision')
+  expect(screen.getByLabelText('Stabilní token pro rozhodnutí shody')).toHaveValue('raw-token')
+  expect(screen.getByLabelText('Označení operátora')).toHaveValue('Operator stays raw')
+  await userEvent.click(screen.getByLabelText('Zkontroloval(a) jsem soupisku, cílová pravidla a rozhodnutí pro tento týden.'))
+  await userEvent.click(screen.getByRole('button', { name: 'Vypočítat náhled' }))
+  expect(await screen.findByRole('region', { name: 'Náhled žebříčku' })).toBeVisible()
+  const command = vi.mocked(previewRankingCommand).mock.calls[0][2]
+  expect(command.zero_versions).toEqual([
+    { effective_week: { season_index: 0, week: 3 }, previous_fingerprint: null,
+      zero: expect.objectContaining({ player_id: 'player-1', duration_weeks: 3, source_fingerprint: 'new-decision' }) },
+    { effective_week: { season_index: 0, week: 3 }, previous_fingerprint: 'old-version',
+      zero: { ...originalZero, duration_weeks: 2, source_fingerprint: 'appeal-123' } },
+  ])
+  expect(command.audit).toEqual({ actor_label: 'Operator stays raw', reason: 'Reason stays raw' })
+  await userEvent.click(screen.getByRole('button', { name: 'English' }))
+  expect(screen.getByRole('region', { name: 'Ranking preview' })).toBeVisible()
+  expect(previewRankingCommand).toHaveBeenCalledTimes(1)
+  expect(confirmRankingCommand).not.toHaveBeenCalled()
+  expect(saveRankingPreparation).not.toHaveBeenCalled()
+})

@@ -1,0 +1,296 @@
+import type { Language } from '../i18n/LanguageContext'
+import type { CandidateWeek, RankingCandidateHistory, RankingCandidateInputs, RankingCandidateSources } from '../api/rankingCandidates'
+import { formatApiError } from '../utils/apiErrors'
+
+// Deliberately page-local; never translate persisted identifiers, fingerprints or server values.
+const cs: Record<string, string> = {
+  'Week': 'Týden',
+  'Ranking candidates': 'Kandidáti žebříčku',
+  'Unpublished preparation history. Viewing does not publish rankings or advance time.': 'Historie nepublikovaných příprav. Prohlížení nepublikuje žebříčky ani neposouvá čas.',
+  'Back to Branches': 'Zpět na větve',
+  'Invalid season or week.': 'Neplatná sezona nebo týden.',
+  'Loading ranking history…': 'Načítání historie kandidátů…',
+  'Retry loading': 'Zkusit načíst znovu',
+  'Refresh candidates': 'Obnovit kandidáty',
+  'Candidate weeks': 'Týdny kandidátů',
+  'No ranking candidates have been prepared for this Branch.': 'Pro tuto větev zatím nebyli připraveni žádní kandidáti žebříčku.',
+  'No candidate is stored for this week.': 'Pro tento týden není uložen žádný kandidát.',
+  'Select a week to inspect its ranking.': 'Vyber týden pro zobrazení kandidáta.',
+  'players': 'hráčů', 'points': 'bodů', 'Branch': 'Větev',
+  'Best': 'Nejlepších',
+  'Unpublished candidate': 'Nepublikovaný kandidát',
+  'Not Official Ranking': 'Nikoli Official Ranking',
+  'This candidate contains no ranked players.': 'Tento kandidát neobsahuje žádné klasifikované hráče.',
+  'Candidate ranking table': 'Tabulka kandidáta žebříčku',
+  'Rank': 'Pořadí', 'Player ID': 'ID hráče', 'Points': 'Body',
+  'Counted results': 'Započítané výsledky',
+  'active disciplinary zeros': 'aktivních disciplinárních nul',
+  'tournament result slots available.': 'dostupných slotů pro turnajové výsledky.',
+  'effective': 'účinné od', 'for': 'po dobu', 'weeks': 'týdnů',
+  'No counted results': 'Žádné započítané výsledky',
+  'counted results for': 'započítaných výsledků hráče',
+  'qualification': 'kvalifikace', 'main': 'hlavní soutěž',
+  'Completed': 'Dokončeno', 'first publication': 'první zveřejnění',
+  'validity': 'platnost',
+  'Technical provenance': 'Technický původ dat',
+  'Policy': 'Pravidla', 'Fingerprint': 'Fingerprint',
+  'Commands': 'Příkazy', 'No command receipt': 'Žádný záznam příkazu',
+  'Historical ranking sources': 'Historické zdroje žebříčku',
+  'Source results': 'Zdrojové výsledky',
+  'Results effective for this candidate week, including results outside Best N. Later corrections are excluded.': 'Výsledky účinné pro tento týden, včetně výsledků mimo Best N. Pozdější opravy nejsou zahrnuty.',
+  'Load source results': 'Načíst zdrojové výsledky',
+  'Loading source results…': 'Načítání zdrojových výsledků…',
+  'Refresh source results': 'Obnovit zdrojové výsledky',
+  'Retry source results': 'Zkusit znovu načíst zdroje',
+  'No source results at this boundary.': 'K tomuto okamžiku nejsou žádné zdrojové výsledky.',
+  'Counted': 'Započítáno',
+  'Not counted in this candidate': 'Do tohoto kandidáta nezapočítáno',
+  'Effective': 'Účinné od', 'First publication': 'První zveřejnění',
+  'Validity': 'Platnost',
+  'Source provenance': 'Původ zdroje',
+  'Source': 'Zdroj', 'Version': 'Verze', 'Previous version': 'Předchozí verze',
+  'Initial result': 'První výsledek',
+  'Ranking history does not match this candidate.': 'Historie žebříčku neodpovídá tomuto kandidátovi.',
+  'Source history does not match this candidate.': 'Historie zdrojů neodpovídá tomuto kandidátovi.',
+  'Stored inputs do not match this candidate.': 'Uložené vstupy neodpovídají tomuto kandidátovi.',
+  'Stored calculation inputs': 'Uložené vstupy výpočtu',
+  'Frozen roster and results supplied to this calculation, including players and results absent from the ranking.': 'Neměnná soupiska a výsledky předané výpočtu, včetně hráčů a výsledků mimo žebříček.',
+  'Inspect stored inputs': 'Prohlédnout uložené vstupy',
+  'Loading stored inputs…': 'Načítání uložených vstupů…',
+  'Refresh stored inputs': 'Obnovit uložené vstupy',
+  'Retry stored inputs': 'Zkusit znovu načíst vstupy',
+  'Legacy candidate: complete calculation inputs were not stored. They cannot be reconstructed from current data.': 'Starší kandidát: úplné vstupy výpočtu nebyly uloženy. Z aktuálních dat je nelze rekonstruovat.',
+  'Verified: stored inputs reproduce this candidate. This does not verify completeness against the entire world.': 'Ověřeno: uložené vstupy reprodukují tohoto kandidáta. Neznamená to ověření úplnosti celého světa.',
+  'Stored inputs have no verified manifest.': 'Uložené vstupy nemají ověřený manifest.',
+  'Preparation audit': 'Audit přípravy',
+  'No preparation audit was recorded for this candidate.': 'Pro tohoto kandidáta nebyl zaznamenán audit přípravy.',
+  'Preparation command': 'Příkaz přípravy',
+  'Why equal-point players are ordered this way': 'Proč jsou hráči se stejnými body v tomto pořadí',
+  'Tie explanations are unavailable from this server.': 'Vysvětlení rovnosti bodů server neposkytuje.',
+  'No adjacent players have equal points.': 'Žádní sousední hráči nemají stejný počet bodů.',
+  'precedes': 'je před', 'at': 's', 'versus': 'oproti',
+  'Counted points at result slot': 'Započítané body na výsledkovém slotu',
+  'Newer completion at result slot': 'Novější dokončení na výsledkovém slotu',
+  'Previous Official position': 'Předchozí pořadí v Official Ranking',
+  'Stored tie-break token': 'Uložený rozřazovací token',
+  'None': 'Žádná hodnota', 'Missing': 'Chybí',
+  'Stored roster': 'Uložená soupiska',
+  'The stored roster is empty.': 'Uložená soupiska je prázdná.',
+  'Entry': 'Vstup',
+  'Retired at this boundary': 'K tomuto okamžiku ukončil kariéru',
+  'Not retired at this boundary': 'K tomuto okamžiku neukončil kariéru',
+  'Resolved disciplinary zero inputs': 'Vyhodnocené vstupy disciplinárních nul',
+  'Each active zero reserves one Best N slot. These are stored inputs, not an automatic sanction decision.': 'Každá aktivní nula zabírá jeden slot Best N. Jde o uložené vstupy, nikoli automatické rozhodnutí o trestu.',
+  'Disciplinary source': 'Zdroj disciplinárního rozhodnutí',
+  'Disciplinary decision history': 'Historie disciplinárních rozhodnutí',
+  'Verified against the stored decisions effective by this ranking week. Later changes are excluded.': 'Ověřeno vůči uloženým rozhodnutím účinným do tohoto týdne. Pozdější změny nejsou zahrnuty.',
+  'No zero decisions were effective by this week.': 'Do tohoto týdne nebyla účinná žádná rozhodnutí o nulách.',
+  'Zeros were supplied by the caller. This candidate does not verify their provenance against stored decision history.': 'Nuly předal volající. Kandidát neověřuje jejich původ vůči uložené historii rozhodnutí.',
+  'Decision history verification is unavailable from this server.': 'Ověření historie rozhodnutí není na tomto serveru dostupné.',
+  'Version effective': 'Verze účinná od',
+  'Original start': 'Původní počátek', 'Duration': 'Doba trvání',
+  'Replaced by a later version at this boundary.': 'K tomuto okamžiku nahrazeno novější verzí.',
+  'Expired at this boundary.': 'K tomuto okamžiku skončila platnost.',
+  'Active: reserves one Best N slot.': 'Aktivní: zabírá jeden slot Best N.',
+  'Active decision; player is outside this ranking.': 'Aktivní rozhodnutí; hráč není v tomto žebříčku.',
+  'Decision provenance': 'Původ rozhodnutí',
+  'Initial decision': 'První rozhodnutí',
+  'Stored result inputs': 'Uložené vstupy výsledků',
+  'No result inputs were supplied.': 'Nebyly předány žádné výsledkové vstupy.',
+  'Award': 'Přiděleno', 'Ranked result': 'Klasifikovaný výsledek',
+  'Unranked result': 'Neklasifikovaný výsledek',
+  'Stored source fingerprint': 'Uložený fingerprint zdroje',
+}
+
+export function tr(english: string, language: Language): string {
+  return language === 'cs' ? cs[english] ?? english : english
+}
+
+// Scope mismatches are UI-generated errors, so re-render their copy in the
+// current language. Unrecognized/server errors retain the existing formatter.
+const identityErrors = [
+  'Ranking history does not match this candidate.',
+  'Source history does not match this candidate.',
+  'Stored inputs do not match this candidate.',
+]
+export function rankingReadError(error: unknown, language: Language): string {
+  if (error instanceof Error && identityErrors.includes(error.message)) return tr(error.message, language)
+  return formatApiError(error)
+}
+
+export function weekLabel(w: CandidateWeek, language: Language): string {
+  return String(2000 + w.season_index) + '/' + String(2001 + w.season_index).slice(-2) +
+    ' · ' + tr('Week', language) + ' ' + w.week
+}
+
+export function sameWeek(actual: CandidateWeek | null | undefined, expected: CandidateWeek): boolean {
+  return actual?.season_index === expected.season_index && actual?.week === expected.week
+}
+
+function validLegacyWeek(week: CandidateWeek | null | undefined): boolean {
+  return Boolean(week &&
+    Number.isInteger(week.season_index) && week.season_index >= 0 && week.season_index < 50 &&
+    Number.isInteger(week.week) && week.week >= 1 && week.week <= 61)
+}
+
+function notAfter(actual: CandidateWeek | null | undefined, boundary: CandidateWeek): boolean {
+  return validLegacyWeek(actual) &&
+    actual!.season_index * 61 + actual!.week <= boundary.season_index * 61 + boundary.week
+}
+
+type DisplayAward = {
+  edition_id: string
+  qualification_points: number
+  main_points: number
+  completed_week: CandidateWeek
+  first_publication_week: CandidateWeek
+  validity_weeks: number
+}
+function nonempty(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0
+}
+
+function provenanceLink(value: unknown): boolean {
+  return value === null || nonempty(value)
+}
+
+function storedResultFields(value: unknown): boolean {
+  if (value === null || typeof value !== 'object') return false
+  const result = value as { player_id?: unknown; source_fingerprint?: unknown; ranked?: unknown; terminal_status?: unknown }
+  return nonempty(result.player_id) && nonempty(result.source_fingerprint) &&
+    typeof result.ranked === 'boolean' &&
+    (result.terminal_status === 'completed' || result.terminal_status === 'abandoned')
+}
+
+function validZero(value: unknown, runId: string, branchId: string, boundary: CandidateWeek, playerId?: string): boolean {
+  if (value === null || typeof value !== 'object') return false
+  const zero = value as { run_id?: unknown; branch_id?: unknown; player_id?: unknown;
+    zero_id?: unknown; source_fingerprint?: unknown; effective_week?: CandidateWeek; duration_weeks?: unknown }
+  return zero.run_id === runId && zero.branch_id === branchId &&
+    nonempty(zero.player_id) && (playerId === undefined || zero.player_id === playerId) &&
+    nonempty(zero.zero_id) && nonempty(zero.source_fingerprint) &&
+    notAfter(zero.effective_week, boundary) &&
+    typeof zero.duration_weeks === 'number' && Number.isInteger(zero.duration_weeks) && zero.duration_weeks > 0
+}
+
+function validAward(award: DisplayAward | null | undefined): boolean {
+  return Boolean(award && nonempty(award.edition_id) &&
+    Number.isFinite(award.qualification_points) && Number.isFinite(award.main_points) &&
+    validLegacyWeek(award.completed_week) && validLegacyWeek(award.first_publication_week) &&
+    Number.isInteger(award.validity_weeks) && award.validity_weeks > 0)
+}
+
+// These guards are for displaying API responses only, not a replacement for
+// authoritative server-side lineage, fingerprint and stored-manifest verification.
+export function validCandidateHistory(data: RankingCandidateHistory, runId: string, branchId: string): boolean {
+  if (!data || data.run_id !== runId || data.branch_id !== branchId ||
+      data.publication_status !== 'candidate_only' || !Array.isArray(data.candidates)) return false
+
+  const weeks = new Set<string>()
+  const fingerprints = new Set<string>()
+  let previousOrdinal = -1
+  return data.candidates.every(candidate => {
+    const snapshot = candidate?.snapshot
+    const week = snapshot?.week
+    if (candidate?.publication_status !== 'candidate_only' ||
+        !snapshot || snapshot.run_id !== runId || snapshot.branch_id !== branchId ||
+        !validLegacyWeek(week) ||
+        typeof candidate.fingerprint !== 'string' || !candidate.fingerprint ||
+        !Array.isArray(candidate.command_ids) || !candidate.command_ids.every(nonempty) ||
+        !snapshot.policy || !nonempty(snapshot.policy.policy_id) ||
+        !Number.isInteger(snapshot.policy.best_n) || snapshot.policy.best_n < 1 ||
+        !Array.isArray(snapshot.rows)) return false
+
+    // A weekly candidate cannot have two competing versions on the same URL.
+    const weekKey = week.season_index + '/' + week.week
+    const ordinal = week.season_index * 61 + week.week
+    if (weeks.has(weekKey) || fingerprints.has(candidate.fingerprint) ||
+        ordinal <= previousOrdinal) return false
+    previousOrdinal = ordinal
+    weeks.add(weekKey)
+    fingerprints.add(candidate.fingerprint)
+
+    // The last candidate drives the existing Preparation panel. Reject a
+    // misordered history or ranking table instead of using an incorrect head.
+    const playerIds = new Set<string>()
+    return snapshot.rows.every((row, index) => {
+      if (!row || !nonempty(row.player_id) || playerIds.has(row.player_id) ||
+          row.rank !== index + 1 || !Number.isInteger(row.points) || row.points < 0 ||
+          (index > 0 && snapshot.rows[index - 1].points < row.points) ||
+          !Array.isArray(row.counted_results)) return false
+      playerIds.add(row.player_id)
+      const zeroes = row.disciplinary_zeros ?? []
+      if (!Array.isArray(zeroes) || zeroes.length > snapshot.policy.best_n ||
+          new Set(zeroes.map(z => z?.zero_id)).size !== zeroes.length ||
+          !zeroes.every(z => validZero(z, runId, branchId, week, row.player_id)) ||
+          row.counted_results.length > snapshot.policy.best_n - zeroes.length ||
+          new Set(row.counted_results.map(award => award?.edition_id)).size !== row.counted_results.length ||
+          !row.counted_results.every(award =>
+            validAward(award) && notAfter(award.completed_week, week) &&
+            notAfter(award.first_publication_week, week))) return false
+      return row.points === row.counted_results.reduce(
+        (total, award) => total + award.qualification_points + award.main_points, 0)
+    })
+  })
+}
+
+export function validCandidateResponse(
+  data: RankingCandidateSources | RankingCandidateInputs,
+  runId: string, branchId: string, week: CandidateWeek, fingerprint: string,
+): boolean {
+  if (!data || data.run_id !== runId || data.branch_id !== branchId ||
+      !sameWeek(data.week, week) || data.publication_status !== 'candidate_only' ||
+      data.candidate_fingerprint !== fingerprint) return false
+
+  if ('sources' in data) {
+    return Array.isArray(data.sources) && data.sources.every(source =>
+      source !== null &&
+      nonempty(source.fingerprint) && typeof source.counted === 'boolean' &&
+      source.version?.run_id === runId && source.version.branch_id === branchId &&
+      provenanceLink(source.version.previous_fingerprint) &&
+      notAfter(source.version.effective_week, week) && validAward(source.version.result) &&
+      storedResultFields(source.version.result) &&
+      notAfter(source.version.result.completed_week, week) &&
+      notAfter(source.version.result.first_publication_week, week))
+  }
+
+  if (data.verification_status === 'legacy_without_manifest') return data.manifest === null
+  if (data.verification_status !== 'complete_manifest' || !data.manifest ||
+      !Array.isArray(data.manifest.players) || !Array.isArray(data.manifest.results) ||
+      !data.manifest.players.every(player => player && nonempty(player.player_id) &&
+        nonempty(player.tie_break_token) && typeof player.retired === 'boolean' &&
+        validLegacyWeek(player.tour_entry_week)) ||
+      !data.manifest.results.every(result => validAward(result) && storedResultFields(result) &&
+        notAfter(result.completed_week, week) && notAfter(result.first_publication_week, week))) return false
+  if (data.manifest.disciplinary_zeros !== undefined &&
+      (!Array.isArray(data.manifest.disciplinary_zeros) ||
+        data.manifest.disciplinary_zeros.some(z => !validZero(z, runId, branchId, week)))) return false
+  if (data.zero_sources !== undefined &&
+      (!Array.isArray(data.zero_sources) || data.zero_sources.some(s =>
+        !s || !nonempty(s.fingerprint) || ![
+          'superseded', 'expired', 'reserves_slot', 'player_not_classified',
+        ].includes(s.impact) || !provenanceLink(s.version?.previous_fingerprint) ||
+        !notAfter(s.version?.effective_week, week) || !validZero(s.version?.zero, runId, branchId, week)))) return false
+
+  // A claimed verified decision history without its historical versions
+  // cannot be represented as a verified source history in this view.
+  if (data.zero_history_status === 'verified_stored_history' && !Array.isArray(data.zero_sources)) return false
+  if (data.command_audits !== undefined &&
+      (!Array.isArray(data.command_audits) || data.command_audits.some(entry =>
+        !entry || !nonempty(entry.command_id) ||
+        !nonempty(entry.audit?.actor_label) || !nonempty(entry.audit?.reason)))) return false
+  if (data.zero_history_status !== undefined && ![
+    'verified_stored_history', 'caller_resolved', 'legacy_without_manifest',
+  ].includes(data.zero_history_status)) return false
+  if (data.tie_explanations !== undefined &&
+      (!Array.isArray(data.tie_explanations) ||
+        data.tie_explanations.some(tie => !tie || ![
+          'result_profile', 'completion_age', 'previous_position', 'stored_token',
+        ].includes(tie.reason)))) return false
+  return true
+}
+
+// Numeric zero, null and an absent field must remain distinguishable.
+export function storedValue(value: number | string | null | undefined, language: Language): string {
+  return value === null ? tr('None', language) : value === undefined ? tr('Missing', language) : String(value)
+}

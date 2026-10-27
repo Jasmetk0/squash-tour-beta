@@ -2,11 +2,10 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { previewRankingSave, saveRankingPreparation } from '../api/client'
 import { formatApiError } from '../utils/apiErrors'
-import { useLanguage } from '../i18n/LanguageContext'
-import { rankingWorkflowText } from './rankingWorkflowText'
+import { useRankingWorkflowLanguage, rankingWorkflowText } from './rankingWorkflowText'
 
 export function RankingSavePanel({ runId, branchId }: { runId: string; branchId: string }): JSX.Element {
-  const { language } = useLanguage()
+  const language = useRankingWorkflowLanguage()
   const t = (value: string) => rankingWorkflowText(value, language)
   const [opened, setOpened] = useState(false)
   const client = useQueryClient()

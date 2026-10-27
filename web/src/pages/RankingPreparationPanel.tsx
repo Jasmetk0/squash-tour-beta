@@ -37,7 +37,7 @@ export function RankingPreparationPanel({runId, branchId, latest}: {runId:string
     {!target ? <p>{t('The final Run week is already prepared. No season 51 ranking can be created.')}</p>
       : !opened ? <button type="button" onClick={() => {setSaved(false);setOpened(true)}}>{t(latest ? 'Prepare next ranking' : 'Prepare initial ranking')}</button>
       : latest && inputs.isPending ? <p role="status">{t('Loading the previous roster and decisions…')}</p>
-      : latest && inputs.isError ? <div role="alert"><p>{t(formatApiError(inputs.error))}</p><button type="button" onClick={() => void inputs.refetch()}>{t('Retry preparation inputs')}</button></div>
+      : latest && inputs.isError ? <div role="alert"><p>{t('Unable to load preparation inputs.')} {t(formatApiError(inputs.error))}</p><button type="button" onClick={() => void inputs.refetch()}>{t('Retry preparation inputs')}</button></div>
       : <PreparationForm key={`${runId}/${branchId}/${latest?.fingerprint ?? 'initial'}`} runId={runId} branchId={branchId} latest={latest} inputs={inputs.data} target={target} onDone={() => {
           setOpened(false);setSaved(true)
           void cache.invalidateQueries({queryKey:['ranking-candidates',runId,branchId]})
@@ -127,7 +127,7 @@ function PreparationForm({runId,branchId,latest,inputs,target,onDone}: {runId:st
       </fieldset>
     </form>
     {preview.isPending && <p role="status">{t('Calculating preview…')}</p>}
-    {preview.isError && <p role="alert">{t(formatApiError(preview.error))}</p>}
+    {preview.isError && <p role="alert">{t('Unable to calculate ranking preview.')} {t(formatApiError(preview.error))}</p>}
     {review && <section aria-label={t('Ranking preview')}>
       <h3>{t('Review')} {rankingWorkflowWeekLabel(review.preview.candidate.snapshot.week, language)}</h3>
       <p>{t('Preview only')} · {t('Best')} {review.preview.candidate.snapshot.policy.best_n} · {review.preview.candidate.snapshot.rows.length} {t('ranked players')} · {review.command.zero_versions.length} {t('zero changes')} · {'context' in review.command ? review.command.corrections?.length ?? 0 : 0} {t('result corrections')}</p>
@@ -135,7 +135,7 @@ function PreparationForm({runId,branchId,latest,inputs,target,onDone}: {runId:st
       <button type="button" disabled={busy} onClick={() => confirm.mutate()}>{t(confirm.isError ? 'Retry this exact preparation' : 'Confirm candidate preparation')}</button>
       <button type="button" disabled={busy} onClick={() => {setReview(null);preview.reset();confirm.reset();setReviewed(false)}}>{t('Edit inputs and recalculate')}</button>
       {confirm.isPending && <p role="status">{t('Preparing candidate…')}</p>}
-      {confirm.isError && <p role="alert">{t(formatApiError(confirm.error))} {t('The request is retained for an exact retry. If inputs changed, edit and recalculate.')}</p>}
+      {confirm.isError && <p role="alert">{t('Unable to confirm candidate preparation.')} {t(formatApiError(confirm.error))} {t('The request is retained for an exact retry. If inputs changed, edit and recalculate.')}</p>}
     </section>}
   </div>
 }

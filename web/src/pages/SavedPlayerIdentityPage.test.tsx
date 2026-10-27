@@ -76,7 +76,7 @@ describe('Saved player three-tab profile',()=>{
   })
   it('preserves true zero ranking points rather than replacing it with missing data',async()=>{
     api.getSavedPlayerProfile.mockResolvedValue({
-      ...profile,ranking_status:'ranked',rank:0,points:0
+      ...profile,ranking_status:'ranked',ranking_week_ordinal:0,rank:1,points:0
     })
     mount()
     expect(await screen.findByText(/0.*points/)).toBeInTheDocument()

@@ -130,6 +130,15 @@ describe('exact historical Edition match replay',()=>{
     expect(screen.getByRole('alert')).toHaveTextContent('Checkpoint is not bound')
     expect(api.getSavedTourMatchDetail).not.toHaveBeenCalled()
   })
+  it('returns to the originating Draw tab with the exact encoded URL state',async()=>{
+    mount('/admin/runs/run-a/tour/calendar/event-x/matches/final?branch=branch-a&revision=old-rev&season=2&tab=draw&view=list&country=CZE')
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    const back=screen.getByRole('link',{name:'Back to Edition draw'})
+    expect(back).toHaveAttribute('href',expect.stringContaining('tab=draw'))
+    expect(back).toHaveAttribute('href',expect.stringContaining('revision=old-rev'))
+    expect(back).toHaveAttribute('href',expect.stringContaining('view=list'))
+    expect(back).toHaveAttribute('href',expect.stringContaining('country=CZE'))
+  })
   it('allows a failed rally page to recover without changing the saved source',async()=>{
     api.getSavedTourMatchDetail.mockRejectedValueOnce(new Error('offline'))
     mount()

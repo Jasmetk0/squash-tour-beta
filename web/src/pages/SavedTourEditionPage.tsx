@@ -73,7 +73,7 @@ export function SavedTourEditionPage():JSX.Element {
   const matches=result?.matches??[]
   const main=matches.filter(m=>m.draw_type!=='qualification')
   const qualification=matches.filter(m=>m.draw_type==='qualification')
-  const matchHref=(matchId:string,sourceTab:'schedule'|'results')=>{
+  const matchHref=(matchId:string,sourceTab:Tab)=>{
     const q=new URLSearchParams(params)
     q.set('tab',sourceTab)
     return '/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'
@@ -82,7 +82,7 @@ export function SavedTourEditionPage():JSX.Element {
   const matchRow=(m:typeof matches[number])=><tr key={m.match_id}><td>{m.round_number}</td>
     <td>{m.winner_player_id}</td><td>{m.loser_player_id??'—'}</td>
     <td><span>{m.scoreline}</span>{m.loser_player_id&&<>
-      {' · '}<Link to={matchHref(m.match_id,tab==='schedule'?'schedule':'results')}>
+      {' · '}<Link to={matchHref(m.match_id,tab)}>
         {cs?'Detail zápasu':'Match detail'}</Link>
     </>}</td></tr>
   const matchTable=(group:typeof matches)=>group.length?

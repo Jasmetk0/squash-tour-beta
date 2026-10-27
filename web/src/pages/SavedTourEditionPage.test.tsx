@@ -303,6 +303,18 @@ describe('Saved Edition detail',()=>{
     expect(api.getSavedTourEdition).toHaveBeenCalledTimes(before)
   })
 
+  it('keeps original Draw tab on the published match detail link',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(fixture(true))
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&view=list&country=CZE')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Draw / groups'}))
+    const detail=screen.getByRole('link',{name:'Match detail'})
+    expect(detail).toHaveAttribute('href',expect.stringContaining('/matches/final?'))
+    expect(detail).toHaveAttribute('href',expect.stringContaining('tab=draw'))
+    expect(detail).toHaveAttribute('href',expect.stringContaining('revision=rev-old'))
+    expect(detail).toHaveAttribute('href',expect.stringContaining('country=CZE'))
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
   it('keeps the active Edition tab and exact revision across CS/EN with no refetch',async()=>{
     const view=mount()
     expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()

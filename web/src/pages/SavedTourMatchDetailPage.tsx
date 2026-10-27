@@ -50,13 +50,19 @@ function HistoricalMatchReplay():JSX.Element{
   const invalid=Boolean(ready&&q.isSuccess&&!q.isFetching&&q.data&&!data)
   const frame=data?.rallies.find(r=>r.rally_index===index+1)
   const parentParams=new URLSearchParams(params)
-  const tab=parentParams.get('tab')==='schedule'?'schedule':'results'
+  // Preserve the actual originating Edition section, including Draw / groups.
+  // Results is only the safe fallback for an absent/invalid section marker.
+  const requestedTab=parentParams.get('tab')
+  const tab=['overview','entries','draw','schedule','results','settings'].includes(requestedTab??'')
+    ?requestedTab!:'results'
   parentParams.set('tab',tab)
   const back='/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'
     +encodeURIComponent(eventId)+'?'+parentParams.toString()
   return <section className="panel">
-    <Link to={back} aria-label={cs?'Zpět na výsledky edice':'Back to Edition results'}>
-      ← {cs?'Zpět na výsledky edice':'Back to Edition results'}</Link>
+    <Link to={back} aria-label={tab==='draw'?(cs?'Zpět na pavouk edice':'Back to Edition draw'):
+      cs?'Zpět na výsledky edice':'Back to Edition results'}>
+      ← {tab==='draw'?(cs?'Zpět na pavouk edice':'Back to Edition draw'):
+        cs?'Zpět na výsledky edice':'Back to Edition results'}</Link>
     <div className="page-intro"><p className="eyebrow">RUN → TOUR → EDITION → MATCH</p>
       <h2>{cs?'Historický detail zápasu':'Historical match detail'}</h2>
       <p>{cs?'Pouze výsledek a případný archiv výměn z přesné Saved Revision.':

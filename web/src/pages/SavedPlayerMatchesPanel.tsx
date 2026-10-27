@@ -34,7 +34,9 @@ function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, loca
     q.data?.run_id === runId && q.data?.branch_id === branchId &&
     q.data?.saved_revision_id === savedHead && q.data?.player_id === playerId &&
     q.data?.season_index === seasonIndex && q.data?.offset === page * PAGE_SIZE &&
-    q.data?.limit === PAGE_SIZE
+    q.data?.limit === PAGE_SIZE && Array.isArray(q.data?.matches) &&
+    Number.isInteger(q.data?.total_results) && q.data!.total_results >= 0 &&
+    typeof q.data?.has_more === 'boolean'
   const data = scoped ? q.data : null
   const opponentIds = data?.status === 'ready' ? [...new Set(data.matches.map(match => match.opponent_player_id))] : []
   const opponents = useQuery({
@@ -46,7 +48,8 @@ function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, loca
   const names = opponents.isSuccess && !opponents.isFetching &&
     opponents.data?.saved_revision_id === savedHead &&
     opponents.data?.run_id === runId && opponents.data?.branch_id === branchId &&
-    opponents.data?.requested_ids.join('|') === opponentIds.join('|') ?
+    opponents.data?.requested_ids?.join('|') === opponentIds.join('|') &&
+    Array.isArray(opponents.data.players) ?
     Object.fromEntries(opponents.data.players.map(value => [value.player_id, value.display_name])) : {}
   return <section aria-label={cs?"Uložená zápasová kariéra hráče":"Saved player tournament matches"}>
     <h3>{cs ? 'Zápasová kariéra' : 'Match career'}</h3>

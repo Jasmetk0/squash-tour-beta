@@ -19,9 +19,10 @@ const PAGE = 25
 export function SavedPlayerMatchDetailPage(): JSX.Element {
   const { runId = '', playerId = '', eventId = '', matchId = '' } = useParams()
   const { selectedBranch } = useAdminBranch()
+  const time = useAdminTime()
   const branchId = selectedBranch?.run_id === runId ? selectedBranch.branch_id : null
   const savedHead = branchId ? selectedBranch?.saved_head_revision_id ?? null : null
-  const replayIdentity = JSON.stringify([runId, branchId, savedHead, playerId, eventId, matchId])
+  const replayIdentity = JSON.stringify([runId, branchId, savedHead, playerId, eventId, matchId, time.mode])
   return <SavedPlayerMatchReplay key={replayIdentity} />
 }
 
@@ -46,8 +47,15 @@ function SavedPlayerMatchReplay(): JSX.Element {
     q.data?.source === 'selected_branch_saved_revision' &&
     q.data?.run_id === runId && q.data?.branch_id === branchId &&
     q.data?.saved_revision_id === savedHead && q.data?.player_id === playerId &&
-    q.data?.match.event_id === eventId && q.data?.match.match_id === matchId &&
-    q.data?.offset === pageOffset && q.data?.limit === PAGE
+    q.data?.match?.event_id === eventId && q.data?.match?.match_id === matchId &&
+    q.data?.offset === pageOffset && q.data?.limit === PAGE &&
+    Number.isInteger(q.data?.total_rallies) && q.data!.total_rallies >= 0 &&
+    Array.isArray(q.data?.rallies) && typeof q.data?.has_more === 'boolean' &&
+    (q.data?.replay_status === 'unavailable'
+      ? q.data.total_rallies === 0 && q.data.rallies.length === 0 && !q.data.has_more
+      : q.data?.replay_status === 'available' && q.data.total_rallies > 0 &&
+        q.data.rallies.length === Math.max(0,Math.min(PAGE,q.data.total_rallies-pageOffset)) &&
+        q.data.has_more === (pageOffset+PAGE<q.data.total_rallies))
   const data = scoped ? q.data : null
   const ids = data ? [data.player_a_id || data.player_id, data.player_b_id || data.match.opponent_player_id] : []
   const namesQuery = useQuery({
@@ -59,7 +67,7 @@ function SavedPlayerMatchReplay(): JSX.Element {
   const names = namesQuery.isSuccess && !namesQuery.isFetching && namesData && savedHead &&
     namesData.saved_revision_id === savedHead &&
     namesData.run_id === runId && namesData.branch_id === branchId &&
-    namesData.requested_ids.join('|') === ids.join('|')
+    namesData.requested_ids?.join('|') === ids.join('|') && Array.isArray(namesData.players)
     ? Object.fromEntries(namesData.players.map(p => [p.player_id, p.display_name]))
     : {}
   const frame = data?.rallies.find(r => r.rally_index === index + 1)

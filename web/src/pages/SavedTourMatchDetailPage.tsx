@@ -14,10 +14,11 @@ export function SavedTourMatchDetailPage():JSX.Element{
   const {runId='',eventId='',matchId=''}=useParams()
   const [params]=useSearchParams()
   const {selectedBranch}=useAdminBranch()
+  const time=useAdminTime()
   // Key by full immutable scope. A link to another revision cannot reuse a
   // prior match's nonzero rally cursor during its first render.
   const key=JSON.stringify([runId,selectedBranch?.branch_id,params.get('branch'),
-    params.get('revision'),params.get('season'),eventId,matchId])
+    params.get('revision'),params.get('season'),eventId,matchId,time.mode])
   return <HistoricalMatchReplay key={key}/>
 }
 

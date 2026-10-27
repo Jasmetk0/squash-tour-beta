@@ -75,14 +75,16 @@ function SavedPlayerMatchReplay(): JSX.Element {
   const frame = data?.rallies.find(r => r.rally_index === index + 1)
   const playerName = (id: string | null | undefined): string => id ? (names[id] || id) : '—'
   const backParams = new URLSearchParams()
-  backParams.set('tab', 'career')
+  const fromCareer = searchParams.get('tab') === 'career'
+  if (fromCareer) backParams.set('tab', 'career')
   const careerSeason = searchParams.get('careerSeason')
   const careerPage = searchParams.get('careerPage')
-  if (careerSeason !== null && /^(0|[1-9]\d*)$/.test(careerSeason) && Number(careerSeason) < 50)
+  if (fromCareer && careerSeason !== null && /^(0|[1-9]\d*)$/.test(careerSeason) && Number(careerSeason) < 50)
     backParams.set('careerSeason', careerSeason)
-  if (careerPage !== null && /^(0|[1-9]\d*)$/.test(careerPage) && Number(careerPage) <= 10000)
+  if (fromCareer && careerPage !== null && /^(0|[1-9]\d*)$/.test(careerPage) && Number(careerPage) <= 10000)
     backParams.set('careerPage', careerPage)
-  const back = '/admin/runs/' + encodeURIComponent(runId) + '/people/' + encodeURIComponent(playerId) + '?' + backParams.toString()
+  const back = '/admin/runs/' + encodeURIComponent(runId) + '/people/' + encodeURIComponent(playerId) +
+    (backParams.size ? '?' + backParams.toString() : '')
   return <section className="panel run-home">
     <div className="page-intro">
       <p className="eyebrow">PRODUCT RUN · SAVED MATCH</p>

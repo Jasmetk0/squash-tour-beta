@@ -86,13 +86,13 @@ describe('Saved player match history', () => {
     fireEvent.change(screen.getByRole('combobox', {name: 'Sezóna zápasů'}), {target: {value: '2'}})
     await waitFor(() => expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith(
       'run', 'branch', 'A', 2, 0, 20))
-    expect(screen.getByRole('link', {name: 'Detail zápasu →'})).toHaveAttribute('href',
-      '/admin/runs/run/people/A/matches/event/first?tab=career&careerSeason=2')
+    await waitFor(() => expect(screen.getByRole('link', {name: 'Detail zápasu →'})).toHaveAttribute('href',
+      '/admin/runs/run/people/A/matches/event/first?tab=career&careerSeason=2'))
     fireEvent.click(screen.getByRole('button', {name: 'Další →'}))
     await waitFor(() => expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith(
       'run', 'branch', 'A', 2, 20, 20))
-    expect(await screen.findByRole('link', {name: 'Detail zápasu →'})).toHaveAttribute('href',
-      '/admin/runs/run/people/A/matches/event/second?tab=career&careerSeason=2&careerPage=1')
+    await waitFor(() => expect(screen.getByRole('link', {name: 'Detail zápasu →'})).toHaveAttribute('href',
+      '/admin/runs/run/people/A/matches/event/second?tab=career&careerSeason=2&careerPage=1'))
   })
   it('does not render foreign saved HEAD data', async () => {
     api.getSavedPlayerMatchHistory.mockResolvedValueOnce({

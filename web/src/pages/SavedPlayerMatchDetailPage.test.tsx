@@ -73,6 +73,8 @@ describe('canonical saved match detail', () => {
   it('steps through archived score frames without simulating', async () => {
     mount()
     expect(await screen.findByText('Championship')).toBeInTheDocument()
+    expect(screen.getByRole('link', {name: /Zpět na profil hráče/})).toHaveAttribute('href',
+      '/admin/runs/run/people/A')
     expect(await screen.findByText('Alpha')).toBeInTheDocument()
     expect(screen.getByText(/1\/2/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Další výměna →' }))

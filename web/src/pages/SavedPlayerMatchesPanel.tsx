@@ -38,8 +38,11 @@ function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, loca
     else copy.set('careerPage', String(nextPage))
     setSearchParams(copy)
   }
-  const matchQuery = new URLSearchParams(searchParams)
+  // Do not carry unrelated URL tokens to another page/replay authority.
+  const matchQuery = new URLSearchParams()
   matchQuery.set('tab', 'career')
+  if (season !== 'all') matchQuery.set('careerSeason', season)
+  if (page > 0) matchQuery.set('careerPage', String(page))
   const q = useQuery({
     queryKey: ['saved-player-matches', runId, branchId, savedHead, playerId, seasonIndex, page],
     queryFn: () => getSavedPlayerMatchHistory(runId, branchId, playerId, seasonIndex, page * PAGE_SIZE, PAGE_SIZE),

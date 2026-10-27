@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getRankingCandidateSources } from '../api/client'
 import type { CandidateWeek, RankingCandidateDetail, RankingCandidateSources, RankingResultCorrection } from '../api/rankingCandidates'
 import { formatApiError } from '../utils/apiErrors'
-import { useLanguage } from '../i18n/LanguageContext'
-import { rankingWorkflowText } from './rankingWorkflowText'
+import { useRankingWorkflowLanguage, rankingWorkflowText } from './rankingWorkflowText'
 
 type Source = RankingCandidateSources['sources'][number]
 type Change = { source: Source; result: RankingResultCorrection['result'] }
@@ -14,7 +13,7 @@ export function RankingResultCorrections({runId, branchId, latest, target, onCha
   runId: string; branchId: string; latest: RankingCandidateDetail; target: CandidateWeek
   onChange: (corrections: RankingResultCorrection[]) => void
 }): JSX.Element {
-  const { language } = useLanguage()
+  const language = useRankingWorkflowLanguage()
   const t = (value: string) => rankingWorkflowText(value, language)
   const [opened, setOpened] = useState(false)
   const [changes, setChanges] = useState<Change[]>([])

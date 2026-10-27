@@ -143,6 +143,23 @@ describe('replay identity cursor isolation', () => {
     useLongMatchFixture()
   })
 
+  it('ignores an old pending match response delivered after navigating',async()=>{
+    let resolveOld:((value:ReturnType<typeof result>)=>void)|undefined
+    api.getSavedPlayerMatchDetail.mockImplementation((
+      _run:string,_branch:string,_player:string,_event:string,matchId:string
+    )=>matchId==='final'
+      ?new Promise(resolve=>{resolveOld=resolve})
+      :Promise.resolve(result({
+        match:{...result().match,match_id:'short',scoreline:'3-0'}
+      })))
+    mount()
+    await waitFor(()=>expect(api.getSavedPlayerMatchDetail).toHaveBeenCalledTimes(1))
+    fireEvent.click(screen.getByRole('link',{name:'Switch match'}))
+    expect(await screen.findByText(/3-0/)).toBeInTheDocument()
+    await act(async()=>{resolveOld?.(result())})
+    expect(screen.getByText(/3-0/)).toBeInTheDocument()
+    expect(screen.queryByText(/3-2/)).not.toBeInTheDocument()
+  })
   it.each([
     ['Switch match', 'run', 'branch', 'A', 'event', 'short'],
     ['Switch event', 'run', 'branch', 'A', 'second', 'final'],

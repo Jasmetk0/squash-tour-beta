@@ -65,6 +65,18 @@ describe('Saved player three-tab profile',()=>{
     expect(await screen.findByRole('alert')).toHaveTextContent('Profile does not match')
     expect(screen.queryByRole('tab',{name:'Career & results'})).not.toBeInTheDocument()
   })
+  it('hides a formerly verified profile when a later Retry fails',async()=>{
+    api.getSavedPlayerProfile.mockResolvedValueOnce(profile)
+    api.getSavedPlayerProfile.mockRejectedValueOnce(new Error('offline'))
+    mount()
+    expect(await screen.findByRole('heading',{name:'Sample Player'})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Retry profile read'}))
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByRole('heading',{name:'Sample Player'})).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Retry profile read'}))
+    expect(await screen.findByRole('heading',{name:'Sample Player'})).toBeInTheDocument()
+    expect(api.getSavedPlayerProfile).toHaveBeenCalledTimes(3)
+  })
   it('recovers an unavailable Saved profile via explicit read-only Retry',async()=>{
     api.getSavedPlayerProfile.mockRejectedValueOnce(new Error('offline'))
     mount()

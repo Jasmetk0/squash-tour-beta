@@ -318,6 +318,24 @@ describe('Saved Edition detail',()=>{
     expect(api.getSavedTourEdition).toHaveBeenCalledTimes(before)
   })
 
+  it('translates saved entry mode only for presentation without changing DTO values',async()=>{
+    context.language='cs'
+    const data=fixture()
+    data.entry_field={
+      schema_version:'viewer_tournament_entry_field.v1',product_run_id:'run-a',
+      viewer_branch_id:'ancestor',event_id:'event-x',field_sequence:2,
+      mode:'pre_draw_repair',main_draw_capacity:4,active_main_entrant_count:2,
+      effective_main_bye_count:2,direct_main_player_ids:['P1','P2'],
+      qualification_player_ids:[],alternate_player_ids:[],withdrawn_player_ids:[]
+    }
+    api.getSavedTourEdition.mockResolvedValue(data)
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Přihlášky a účastníci'}))
+    expect(screen.getByText(/úprava přihlášek před losem/)).toBeInTheDocument()
+    expect(data.entry_field.mode).toBe('pre_draw_repair')
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
   it('keeps original Draw tab on the published match detail link',async()=>{
     api.getSavedTourEdition.mockResolvedValue(fixture(true))
     mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&view=list&country=CZE')

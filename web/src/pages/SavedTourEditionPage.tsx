@@ -51,7 +51,12 @@ export function SavedTourEditionPage():JSX.Element {
   const presentPhase=(value:string)=>value==='main'?(cs?'hlavní část':'main'):
     value==='qualification'?(cs?'kvalifikace':'qualification'):
     value==='group'?(cs?'skupina':'group'):value
-  const presentEntry=(value:string)=>value==='wild_card'?(cs?'divoká karta':'wild card'):
+  const presentEntry=(value:string)=>value==='initial'?(cs?'prvotní přihlášky':'initial entries'):
+    value==='pre_draw_repair'?(cs?'úprava přihlášek před losem':'pre-draw entry repair'):
+    value==='qualifier_placeholder'?(cs?'místo kvalifikanta':'qualifier slot'):
+    value==='lucky_loser_placeholder'?(cs?'místo lucky losera':'lucky-loser slot'):
+    value==='knockout'?(cs?'vyřazovací část':'knockout'):
+    value==='wild_card'?(cs?'divoká karta':'wild card'):
     value==='lucky_loser'?(cs?'šťastný poražený':'lucky loser'):
     value==='direct'?(cs?'přímý vstup':'direct entry'):
     value==='champion'?(cs?'vítěz':'champion'):
@@ -158,12 +163,12 @@ export function SavedTourEditionPage():JSX.Element {
     <h5>{cs?'Autentický skupinový rozpis':'Authentic group Match Day schedule'}</h5>
     <p role="status">{cs?'Uložené skupiny':'Saved groups'}: {groupSchedule.group_count}
       {' · '}{cs?'Velikost skupiny':'Group size'}: {groupSchedule.group_size}
-      {' · '}Match Days: {groupSchedule.match_day_count}
+      {' · '}{cs?'Zápasové dny':'Match Days'}: {groupSchedule.match_day_count}
       {' · '}{cs?'Toto jsou pořadová čísla, nikoliv kalendářní datum nebo hodina.':
         'Days are ordinal, not calendar dates or clock times.'}</p>
     <div className="table-responsive">
       <table aria-label={cs?"Zápasy skupin":"Saved group matches"}>
-        <thead><tr><th>{cs?'Skupina':'Group'}</th><th>Match Day</th>
+        <thead><tr><th>{cs?'Skupina':'Group'}</th><th>{cs?'Zápasový den':'Match Day'}</th>
           <th>{cs?'Pořadí':'Order'}</th><th>{cs?'Hráči':'Players'}</th>
           <th>{cs?'Formát':'Format'}</th><th>{cs?'Výsledek / detail':'Result / detail'}</th>
         </tr></thead>
@@ -240,7 +245,7 @@ export function SavedTourEditionPage():JSX.Element {
       </section>}
       {tab==='entries'&&<section><h3>{labels[1]}</h3>
         {entry?<><p role="status">{cs?'Skutečné uložené Entry Field, pořadí / revize:':
-          'Authentic saved Entry Field, version:'} {entry.field_sequence} · {entry.mode}
+          'Authentic saved Entry Field, version:'} {entry.field_sequence} · {presentEntry(entry.mode)}
           {' · '}{cs?'Kapacita hlavního pavouku':'Main capacity'}: {entry.main_draw_capacity}
           {' · '}BYE: {entry.effective_main_bye_count}</p>
           <div className="grid">

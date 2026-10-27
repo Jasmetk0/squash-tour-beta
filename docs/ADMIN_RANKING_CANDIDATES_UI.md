@@ -53,6 +53,7 @@ result_slot is printed rather than suppressed.
   provenance identifiers or incomplete operator audits are likewise rejected;
   absent values must never silently mean false, unranked, an initial version,
   or a recorded audit. An untrusted response is an error, not verified evidence.
+- The full persisted roster includes future Tour entrants who are not yet classified. Player `tour_entry_week` must remain a valid legacy week, but need not precede the candidate week; roster membership alone never adds the player to the ranking. Temporal cutoffs still apply to counted tournament awards, stored result publications and historical zero/source versions.
 - complete_manifest requires stored roster/results; a
   legacy_without_manifest response must have manifest: null. Legacy,
   empty-but-verified, loading, error and non-empty verified states remain separate.

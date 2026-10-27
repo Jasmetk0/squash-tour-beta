@@ -77,3 +77,37 @@ def test_http_json_order_is_accepted_without_coercing_invalid_players(monkeypatc
     with pytest.raises(ValueError):
         commands.apply_group_tie(None, (None, None, None, None, Checkpoint()), State(), group,
                                  command, persist=False)
+
+
+def test_delayed_fork_decision_preserves_slot_order_matches_and_players():
+    from beta_engine.domain.native_fork_runtime import (
+        ForkCompetitionView,
+        NativeForkRuntime,
+    )
+    from beta_engine.domain.tournaments.calendar_groups import NativeGroupTieDecision
+    from beta_engine.domain.tournaments.group_standings_authority import (
+        TournamentGroupTieResolutionDecision,
+    )
+    record = NativeGroupTieDecision(edition_id='groups', command_id='review', operator_label='Admin',
+        decision=TournamentGroupTieResolutionDecision(case=case(), ordered_player_ids=('C', 'B', 'A'),
+                                                      admin_reason='Explicit review'))
+    # Adapter-only synthetic fixtures, not persisted production matches.
+    match = SimpleNamespace(match_id='accepted')
+    old = slots.GlobalSlot.model_construct(number=6, accepted=(match,), group_tie_decisions=())
+    later = slots.GlobalSlot.model_construct(number=8, accepted=(), group_tie_decisions=())
+    runtime = NativeForkRuntime.model_construct(global_slots=(old, later), players=())
+    cp = ForkCompetitionView(runtime, SimpleNamespace())
+    updated = old.model_copy(update={'group_tie_decisions': (record,)})
+    successor = cp.with_group_tie_decision(0, updated)
+    assert successor.runtime.players is runtime.players
+    assert len(successor.global_slots) == 2
+    assert successor.global_slots[0].accepted == old.accepted
+    assert successor.global_slots[1] is later
+    assert cp.global_slots[0].group_tie_decisions == ()
+    for forged in (updated.model_copy(update={'number': 9}),
+                   updated.model_copy(update={'accepted': ()}),
+                   updated.model_copy(update={'group_tie_decisions': (record, record)})):
+        with pytest.raises(ValueError, match='only append one'):
+            cp.with_group_tie_decision(0, forged)
+    with pytest.raises(ValueError, match='not owned'):
+        cp.with_group_tie_decision(-1, updated)

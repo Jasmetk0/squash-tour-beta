@@ -27,7 +27,9 @@ export function SavedPlayerIdentityPage(): JSX.Element {
     enabled: ready,
     retry: false,
   })
-  const scoped = q.data?.run_id === runId && q.data.branch_id === branchId &&
+  const scoped = ready && q.isSuccess && !q.isFetching &&
+    q.data?.source === 'selected_branch_saved_revision' &&
+    q.data?.run_id === runId && q.data.branch_id === branchId &&
     q.data.saved_revision_id === savedHead && q.data.player_id === playerId
   const profile = scoped ? q.data : null
   const player = profile?.identity
@@ -41,15 +43,30 @@ export function SavedPlayerIdentityPage(): JSX.Element {
       ? 'Historický profil pro tento checkpoint zatím není podporovaný. Současná data nevydáváme za historii.'
       : 'Historical player profile for this checkpoint is not supported. Current data is not presented as history.'}</p> :
       <>
-        {(isLoading || q.isPending && ready) && <p role="status">{cs ? 'Načítání…' : 'Loading…'}</p>}
+        {(isLoading || (ready && (q.isPending || q.isFetching))) && <p role="status">{cs ? 'Načítání…' : 'Loading…'}</p>}
         {error && <p className="error" role="alert">{error}</p>}
-        {q.error && <p className="error" role="alert">{formatApiError(q.error)}</p>}
-        {q.isSuccess && !scoped && <p className="error" role="alert">{cs ? 'Profil neodpovídá vybrané revizi.' : 'Profile does not match selected Saved Revision.'}</p>}
+        {ready && q.error && <p className="error" role="alert">{formatApiError(q.error)}</p>}
+        {ready && q.isSuccess && !q.isFetching && !scoped && <p className="error" role="alert">{cs ? 'Profil neodpovídá vybrané revizi.' : 'Profile does not match selected Saved Revision.'}</p>}
+        <button type="button" disabled={!ready||q.isFetching}
+          onClick={()=>{void q.refetch()}}>{cs?'Obnovit profil':'Retry profile read'}</button>
         {profile && !player && <p className="status">{cs
           ? 'Ověřená identita není v této uložené revizi dostupná. Sportovní údaje nezobrazujeme.'
           : 'No verified player identity in this Saved Revision. No sporting information is shown.'}</p>}
         {profile && player && <>
-          <div className="actions" role="tablist" aria-label={cs ? 'Záložky profilu hráče' : 'Player profile tabs'}>
+          <div className="actions" role="tablist" aria-label={cs ? 'Záložky profilu hráče' : 'Player profile tabs'}
+            onKeyDown={event=>{
+              const order=['overview','attributes','career','health'] as const
+              const at=order.indexOf(tab)
+              const next=event.key==='ArrowRight'?order[(at+1)%order.length]:
+                event.key==='ArrowLeft'?order[(at+order.length-1)%order.length]:
+                event.key==='Home'?order[0]:event.key==='End'?order[order.length-1]:null
+              if(next){
+                event.preventDefault()
+                setTab(next)
+                const buttons=event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                buttons[order.indexOf(next)]?.focus()
+              }
+            }}>
             <button type="button" role="tab" aria-selected={tab==='overview'}
               onClick={()=>setTab('overview')}>{cs ? 'Přehled' : 'Overview'}</button>
             <button type="button" role="tab" aria-selected={tab==='attributes'}
@@ -79,7 +96,7 @@ export function SavedPlayerIdentityPage(): JSX.Element {
             ? 'Hráč není v posledním publikovaném žebříčku zařazen.'
             : 'Player is not ranked in the latest published ranking.'}</p>}
           {profile.ranking_status === 'ranked' && <p>
-            <strong>#{profile.rank}</strong> · {profile.points} {cs ? 'bodů' : 'points'}
+            <strong>#{profile.rank ?? '—'}</strong> · {profile.points ?? '—'} {cs ? 'bodů' : 'points'}
           </p>}
           {profile.ranking_week_ordinal != null && <p className="status">
             {cs ? 'Poslední publikace · index týdne: ' : 'Latest publication · week index: '}

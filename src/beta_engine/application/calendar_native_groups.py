@@ -42,14 +42,18 @@ def apply_group_tie(session, ctx, state, authority, command, *, persist, _succes
         command_id=command.command_id, operator_label=command.operator_label, decision=decision)
     if getattr(cp, 'schema_version', None) == 'native_fork_competition.v1':
         owned = cp.global_slots
-        if owned and any(s.edition_id == authority.edition.edition_id for s in owned[-1].scheduled):
-            slot = owned[-1]
+        index = next((i for i in reversed(range(len(owned))) if any(
+            s.edition_id == authority.edition.edition_id for s in owned[i].scheduled)), None)
+        if index is not None:
+            slot = owned[index]
+            updated = slot.model_copy(update={'group_tie_decisions': (*slot.group_tie_decisions, record)})
+            successor = cp.with_group_tie_decision(index, updated)
         else:
             source = next(s for s in reversed(group_slots(cp)) if any(
                 item.edition_id == authority.edition.edition_id for item in s.scheduled))
             slot = inherit_open_slot(source, branch_id=state.branch_id).model_copy(update={'group_tie_decisions': ()})
-        updated = slot.model_copy(update={'group_tie_decisions': (*slot.group_tie_decisions, record)})
-        successor = cp.with_global_slot(updated)
+            updated = slot.model_copy(update={'group_tie_decisions': (record,)})
+            successor = cp.with_global_slot(updated)
     else:
         slots = cp.events
         index = next(i for i in reversed(range(len(slots))) if isinstance(slots[i], GlobalSlot)

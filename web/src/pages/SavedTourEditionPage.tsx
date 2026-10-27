@@ -1,5 +1,6 @@
 import {useQuery} from '@tanstack/react-query'
 import {useState} from 'react'
+import type {KeyboardEvent} from 'react'
 import {Link,useParams,useSearchParams} from 'react-router-dom'
 import {getSavedTourEdition} from '../api/client'
 import {validSavedTourEdition} from '../api/savedTour'
@@ -35,7 +36,7 @@ export function SavedTourEditionPage():JSX.Element {
   const changeTab=(next:Tab)=>{
     const p=new URLSearchParams(params);p.set('tab',next);setParams(p)
   }
-  const onTabKeyDown=(event:React.KeyboardEvent<HTMLButtonElement>,current:Tab)=>{
+  const onTabKeyDown=(event:KeyboardEvent<HTMLButtonElement>,current:Tab)=>{
     const at=tabs.indexOf(current)
     const next=event.key==='ArrowRight'?tabs[(at+1)%tabs.length]:
       event.key==='ArrowLeft'?tabs[(at+tabs.length-1)%tabs.length]:
@@ -183,7 +184,7 @@ export function SavedTourEditionPage():JSX.Element {
     'A complete historical authority for this section is unavailable in this source.'
   const fieldList=(label:string,ids:string[])=><section key={label} className="section-subtle">
     <h4>{label} ({ids.length})</h4>
-    {ids.length?<ol>{ids.map(id=><li key={id}>{id}</li>)}</ol>:<p role="status">{cs?'Žádní uložené účastníci v této části.':'No saved participants in this section.'}</p>}
+    {ids.length?<ol>{ids.map(id=><li key={id}>{id}</li>)}</ol>:<p role="status">{cs?'Žádní uložení účastníci v této části.':'No saved participants in this section.'}</p>}
   </section>
   const bracketView=(bracket:SavedTourDrawBracket)=><section key={bracket.section_id??bracket.draw_type}>
     <h4>{bracket.section_id??(cs?'Hlavní pavouk':'Main draw')} · {bracket.bracket_size}

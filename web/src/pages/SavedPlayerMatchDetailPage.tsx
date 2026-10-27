@@ -42,7 +42,9 @@ function SavedPlayerMatchReplay(): JSX.Element {
     queryFn: () => getSavedPlayerMatchDetail(runId, branchId!, playerId, eventId, matchId, pageOffset, PAGE),
     enabled: ready, retry: false,
   })
-  const scoped = q.data?.run_id === runId && q.data?.branch_id === branchId &&
+  const scoped = ready && q.isSuccess && !q.isFetching &&
+    q.data?.source === 'selected_branch_saved_revision' &&
+    q.data?.run_id === runId && q.data?.branch_id === branchId &&
     q.data?.saved_revision_id === savedHead && q.data?.player_id === playerId &&
     q.data?.match.event_id === eventId && q.data?.match.match_id === matchId &&
     q.data?.offset === pageOffset && q.data?.limit === PAGE
@@ -54,7 +56,7 @@ function SavedPlayerMatchReplay(): JSX.Element {
     enabled: ready && ids.length === 2 && ids[0] !== ids[1], retry: false,
   })
   const namesData = namesQuery.data
-  const names = namesData && savedHead &&
+  const names = namesQuery.isSuccess && !namesQuery.isFetching && namesData && savedHead &&
     namesData.saved_revision_id === savedHead &&
     namesData.run_id === runId && namesData.branch_id === branchId &&
     namesData.requested_ids.join('|') === ids.join('|')
@@ -72,15 +74,17 @@ function SavedPlayerMatchReplay(): JSX.Element {
     {time.mode !== 'present' ? <p className="status">{cs
       ? 'Zvolený historický checkpoint nemá zatím svůj detail zápasu. Současná revize se nezobrazuje jako historie.'
       : 'Historical checkpoint match detail is not supported. Current revision is not shown as history.'}</p> : <>
-      {(isLoading || (ready && q.isPending)) && <p role="status">{cs ? 'Načítání…' : 'Loading…'}</p>}
+      {(isLoading || (ready && (q.isPending||q.isFetching))) && <p role="status">{cs ? 'Načítání…' : 'Loading…'}</p>}
       {error && <p role="alert" className="error">{error}</p>}
-      {q.error && <p role="alert" className="error">{formatApiError(q.error)}</p>}
-      {q.isSuccess && !scoped && <p role="alert" className="error">{cs
+      {ready && q.error && <p role="alert" className="error">{formatApiError(q.error)}</p>}
+      {ready && q.isSuccess && !q.isFetching && !scoped && <p role="alert" className="error">{cs
         ? 'Detail neodpovídá vybrané uložené revizi.' : 'Match detail does not match selected Saved Revision.'}</p>}
+      <button type="button" disabled={!ready||q.isFetching}
+        onClick={()=>{void q.refetch()}}>{cs?'Obnovit zápas / archiv':'Retry match / archive read'}</button>
       {data && <>
         <div className="run-home-status-block">
           <h3>{data.match.event_name}</h3>
-          <p>{data.match.season} · W{data.match.week} · {data.match.draw_type} ·
+          <p>{data.match.season} · W{data.match.week} · {data.match.draw_type==='main'?(cs?'hlavní část':'main'):data.match.draw_type==='qualification'?(cs?'kvalifikace':'qualification'):data.match.draw_type==='group'?(cs?'skupina':'group'):data.match.draw_type} ·
             {' '}{cs ? 'kolo' : 'round'} {data.match.round_number}</p>
           <p><strong>{playerName(data.winner_player_id)}</strong> {cs ? 'porazil' : 'defeated'}
             {' '}{playerName(data.loser_player_id)} · <strong>{data.match.scoreline}</strong></p>
@@ -106,11 +110,11 @@ function SavedPlayerMatchReplay(): JSX.Element {
             {frame.match_complete && <p className="status">{cs ? 'Konec zápasu' : 'Match completed'}</p>}
           </div> : <p className="status">{cs ? 'V tomto úseku není výměna.' : 'No rally at this cursor.'}</p>}
           <div className="run-home-status-block">
-            <button type="button" disabled={index === 0} onClick={() => setIndex(v => Math.max(0, v - 1))}>
+            <button type="button" disabled={q.isFetching || !frame || index === 0} onClick={() => setIndex(v => Math.max(0, v - 1))}>
               {cs ? '← Předchozí výměna' : '← Previous rally'}
             </button>
             {' '}
-            <button type="button" disabled={index + 1 >= data.total_rallies}
+            <button type="button" disabled={q.isFetching || !frame || index + 1 >= data.total_rallies}
               onClick={() => setIndex(v => Math.min(data.total_rallies - 1, v + 1))}>
               {cs ? 'Další výměna →' : 'Next rally →'}
             </button>

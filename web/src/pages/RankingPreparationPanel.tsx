@@ -5,8 +5,7 @@ import type { CandidateWeek, RankingCandidateDetail, RankingCandidateInputs, Ran
 import { RankingResultCorrections } from './RankingResultCorrections'
 import type { RankingResultCorrection } from '../api/rankingCandidates'
 import { formatApiError } from '../utils/apiErrors'
-import { useLanguage } from '../i18n/LanguageContext'
-import { rankingWorkflowText, rankingWorkflowWeekLabel } from './rankingWorkflowText'
+import { useRankingWorkflowLanguage, rankingWorkflowText, rankingWorkflowWeekLabel } from './rankingWorkflowText'
 
 export function nextRankingWeek(latest?: CandidateWeek): CandidateWeek | null {
   if (!latest) return {season_index:0,week:1}
@@ -15,7 +14,7 @@ export function nextRankingWeek(latest?: CandidateWeek): CandidateWeek | null {
 }
 
 export function RankingPreparationPanel({runId, branchId, latest}: {runId:string;branchId:string;latest?:RankingCandidateDetail}): JSX.Element {
-  const { language } = useLanguage()
+  const language = useRankingWorkflowLanguage()
   const t = (value: string) => rankingWorkflowText(value, language)
   const [opened,setOpened] = useState(false)
   const [saved,setSaved] = useState(false)
@@ -49,7 +48,7 @@ export function RankingPreparationPanel({runId, branchId, latest}: {runId:string
 
 type ZeroChange = {version:NonNullable<RankingCandidateInputs['zero_sources']>[number];enabled:boolean;duration:number;source:string}
 function PreparationForm({runId,branchId,latest,inputs,target,onDone}: {runId:string;branchId:string;latest?:RankingCandidateDetail;inputs?:RankingCandidateInputs;target:CandidateWeek;onDone:()=>void}): JSX.Element {
-  const { language } = useLanguage()
+  const language = useRankingWorkflowLanguage()
   const t = (value: string) => rankingWorkflowText(value, language)
   const [corrections,setCorrections] = useState<RankingResultCorrection[]>([])
   const [players,setPlayers] = useState<RankingPreparationPlayer[]>(() => structuredClone(inputs?.manifest?.players ?? []))

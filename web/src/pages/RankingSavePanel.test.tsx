@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { LanguageProvider } from '../i18n/LanguageContext'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, expect, it, vi } from 'vitest'
@@ -6,8 +7,8 @@ import { previewRankingSave, saveRankingPreparation } from '../api/client'
 import { RankingSavePanel } from './RankingSavePanel'
 vi.mock('../api/client', async (importOriginal) => ({ ...await importOriginal<typeof import('../api/client')>(), previewRankingSave: vi.fn(), saveRankingPreparation: vi.fn() }))
 const preview = { run_id: 'run', branch_id: 'branch', ranking_fingerprint: 'a'.repeat(64), saved_head_revision_id: 'revision', draft_version: 3, has_unsaved_changes: true, can_save: true }
-function show() { render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><RankingSavePanel runId="run" branchId="branch" /></QueryClientProvider>) }
-beforeEach(() => { vi.resetAllMocks(); vi.mocked(previewRankingSave).mockResolvedValue(preview); vi.mocked(saveRankingPreparation).mockResolvedValue({}) })
+function show() { render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><LanguageProvider><RankingSavePanel runId="run" branchId="branch" /></LanguageProvider></QueryClientProvider>) }
+beforeEach(() => { localStorage.setItem('squash-engine-language-v1', 'en'); vi.resetAllMocks(); vi.mocked(previewRankingSave).mockResolvedValue(preview); vi.mocked(saveRankingPreparation).mockResolvedValue({}) })
 it('requires review then explicit save of the reviewed fingerprint', async () => {
   show()
   expect(previewRankingSave).not.toHaveBeenCalled()

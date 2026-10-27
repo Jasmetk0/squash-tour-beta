@@ -41,11 +41,13 @@ function fixture(published=false):SavedTourEdition{
 }
 function mount(path='/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&country=CZE&view=list'){
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
-  return render(<QueryClientProvider client={client}>
+  const ui=()=> <QueryClientProvider client={client}>
     <MemoryRouter initialEntries={[path]}><Routes>
       <Route path="/admin/runs/:runId/tour/calendar/:eventId" element={<SavedTourEditionPage/>}/>
     </Routes></MemoryRouter>
-  </QueryClientProvider>)
+  </QueryClientProvider>
+  const view=render(ui())
+  return {...view,refresh:()=>view.rerender(ui())}
 }
 describe('Saved Edition detail',()=>{
   it('shows saved pending tie audit without inventing final group standings',async()=>{
@@ -301,4 +303,16 @@ describe('Saved Edition detail',()=>{
     expect(api.getSavedTourEdition).toHaveBeenCalledTimes(before)
   })
 
+  it('keeps the active Edition tab and exact revision across CS/EN with no refetch',async()=>{
+    const view=mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Results'}))
+    const reads=api.getSavedTourEdition.mock.calls.length
+    context.language='cs'
+    view.refresh()
+    expect(screen.getByRole('button',{name:'Výsledky'})).toHaveAttribute('aria-current','page')
+    expect(screen.getByRole('link',{name:/Zpět na kalendář/})).toHaveAttribute(
+      'href',expect.stringContaining('revision=rev-old'))
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(reads)
+  })
 })

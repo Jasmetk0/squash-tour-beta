@@ -5,21 +5,24 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SavedPlayerIdentityPage } from './SavedPlayerIdentityPage'
 
 const api=vi.hoisted(()=>({getSavedPlayerProfile:vi.fn()}))
-const context=vi.hoisted(()=>({time:{mode:'present',viewCheckpointId:null}}))
+const context=vi.hoisted(()=>({time:{mode:'present',viewCheckpointId:null},language:'en'}))
 vi.mock('../api/client',()=>({...api,ApiError:class ApiError extends Error{}}))
 vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
   selectedBranch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a'},
   isLoading:false,error:null
 })}))
 vi.mock('../admin/AdminTimeContext',()=>({useAdminTime:()=>context.time}))
-vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:'en'})}))
+vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:context.language})}))
 vi.mock('./SavedPlayerMatchesPanel',()=>({SavedPlayerMatchesPanel:()=> <div data-testid="saved-matches">Real saved matches panel</div>}))
-function mount():void {
-  render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}>
+function mount(){
+  const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
+  const ui=()=> <QueryClientProvider client={client}>
     <MemoryRouter initialEntries={['/admin/runs/run-a/people/p1']}><Routes>
       <Route path="/admin/runs/:runId/people/:playerId" element={<SavedPlayerIdentityPage/>}/>
     </Routes></MemoryRouter>
-  </QueryClientProvider>)
+  </QueryClientProvider>
+  const view=render(ui())
+  return {...view,refresh:()=>view.rerender(ui())}
 }
 const profile={
   schema_version:'saved_player_profile.v1',run_id:'run-a',branch_id:'branch-a',
@@ -29,7 +32,7 @@ const profile={
   titles:0,final_appearances:0,total_tournament_results:0,tournament_results:[]
 }
 describe('Saved player three-tab profile',()=>{
-  beforeEach(()=>{vi.clearAllMocks();context.time.mode='present';api.getSavedPlayerProfile.mockResolvedValue(profile)})
+  beforeEach(()=>{vi.clearAllMocks();context.time.mode='present';context.language='en';api.getSavedPlayerProfile.mockResolvedValue(profile)})
   it('starts read-only with overview; career/matches open on explicit tab',async()=>{
     mount()
     expect(await screen.findByRole('heading',{name:'Sample Player'})).toBeInTheDocument()
@@ -79,4 +82,14 @@ describe('Saved player three-tab profile',()=>{
     expect(await screen.findByText(/0.*points/)).toBeInTheDocument()
   })
 
+  it('does not refetch Saved player history merely for a language change',async()=>{
+    const view=mount()
+    expect(await screen.findByRole('heading',{name:'Sample Player'})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab',{name:'Career & results'}))
+    const reads=api.getSavedPlayerProfile.mock.calls.length
+    context.language='cs'
+    view.refresh()
+    expect(screen.getByRole('tab',{name:'Kariéra a výsledky'})).toHaveAttribute('aria-selected','true')
+    expect(api.getSavedPlayerProfile).toHaveBeenCalledTimes(reads)
+  })
 })

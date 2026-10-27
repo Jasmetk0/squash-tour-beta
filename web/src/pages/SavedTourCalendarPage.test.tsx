@@ -37,11 +37,13 @@ function fixture():SavedTourCalendar {
 }
 function mount(path:string){
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
-  return render(<QueryClientProvider client={client}>
+  const ui=()=> <QueryClientProvider client={client}>
     <MemoryRouter initialEntries={[path]}><Routes>
       <Route path="/admin/runs/:runId/tour/calendar" element={<SavedTourCalendarPage/>}/>
     </Routes></MemoryRouter>
-  </QueryClientProvider>)
+  </QueryClientProvider>
+  const view=render(ui())
+  return {...view,refresh:()=>view.rerender(ui())}
 }
 describe('Run Saved Tour 61-week calendar',()=>{
   beforeEach(()=>{
@@ -127,4 +129,14 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(screen.queryByText('No saved editions match the selected filters.')).not.toBeInTheDocument()
   })
 
+  it('switches language without refetching or resetting the list/filter view',async()=>{
+    const view=mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&country=CZE')
+    expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()
+    const reads=api.getSavedTourCalendar.mock.calls.length
+    context.language='cs'
+    view.refresh()
+    expect(screen.getByRole('combobox',{name:'Pohled na uložený kalendář'})).toHaveValue('list')
+    expect(screen.getByRole('combobox',{name:'Filtr země'})).toHaveValue('CZE')
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(reads)
+  })
 })

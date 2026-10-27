@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { LanguageProvider } from '../i18n/LanguageContext'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, expect, it, vi } from 'vitest'
@@ -14,7 +15,7 @@ function result(command:RankingPreparationCommand):RankingPreparationPreview {
   return {preview_only:true,request_fingerprint:'b'.repeat(64),candidate:{...latest,fingerprint:'c'.repeat(64),command_ids:[command.command_id],snapshot:{...latest.snapshot,week:context.target_week,policy:context.policy}}}
 }
 function show(head?:RankingCandidateDetail, save=false) {
-  return render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><RankingPreparationPanel runId="run" branchId="branch" latest={head}/>{save && <RankingSavePanel runId="run" branchId="branch"/>}</QueryClientProvider>)
+  return render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><LanguageProvider><RankingPreparationPanel runId="run" branchId="branch" latest={head}/>{save && <RankingSavePanel runId="run" branchId="branch"/>}</LanguageProvider></QueryClientProvider>)
 }
 async function audit() {
   await userEvent.type(screen.getByLabelText('Operator label'),'Operator')
@@ -22,6 +23,7 @@ async function audit() {
   await userEvent.click(screen.getByLabelText('I reviewed the roster, target policy and decisions for this week.'))
 }
 beforeEach(() => {
+  localStorage.setItem('squash-engine-language-v1', 'en')
   vi.resetAllMocks()
   vi.mocked(previewRankingCommand).mockImplementation(async (_r,_b,c) => result(c))
   vi.mocked(confirmRankingCommand).mockImplementation(async (_r,_b,_c,p) => p.candidate)

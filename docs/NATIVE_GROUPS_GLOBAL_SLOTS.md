@@ -95,3 +95,19 @@ under native production seeding still needs HTTP/worker/browser evidence; older
 real MatchEngine cyclic-tie authority tests do not certify that native scenario.
 
 Only the owner merges. Never enable auto-merge.
+
+## Recovery checkpoint — 27 October 2026
+
+The local workspace was pruned before the previous continuation was pushed.
+This continuation reconstructs and tests the hybrid tie scheduling barrier and
+strict JSON order decoding. An unresolved hybrid tie reserves its first playoff
+slot, preventing execution of a later slot with future sporting input. Earlier
+independent slots remain available; pure groups reserve no nonexistent playoff.
+Admin displays the blocker and disables slot execution until explicit resolution.
+
+Fresh focused backend validation: 30 tests passed, including seven new boundary
+contracts. These use synthetic/mocked dependencies and are not native seeded tie
+HTTP acceptance. Prior local fork/worker logs and unpushed delayed-fork metadata
+and mixed-format recovery tests were lost; they are not claimed as final-head
+passes. Reconstruct the delayed-fork metadata update and genuine mixed-format
+restart/order acceptance next. All outstanding acceptance above still applies.

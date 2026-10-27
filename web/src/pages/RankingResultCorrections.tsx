@@ -40,7 +40,7 @@ export function RankingResultCorrections({runId, branchId, latest, target, onCha
     <p>{t('Corrections affect the next candidate. Earlier rankings and the result’s original expiry remain unchanged.')}</p>
     {!opened ? <button type="button" onClick={() => setOpened(true)}>{t('Load stored results to correct')}</button>
       : sources.isPending ? <p role="status">{t('Loading stored results…')}</p>
-      : sources.isError ? <div role="alert">{t(formatApiError(sources.error))} <button type="button" onClick={() => void sources.refetch()}>{t('Retry result sources')}</button></div>
+      : sources.isError ? <div role="alert">{t('Unable to load stored result sources.')} {t(formatApiError(sources.error))} <button type="button" onClick={() => void sources.refetch()}>{t('Retry result sources')}</button></div>
       : <>
         {!sources.data?.length && <p>{t('No stored results are available to correct.')}</p>}
         {sources.data?.map(source => {

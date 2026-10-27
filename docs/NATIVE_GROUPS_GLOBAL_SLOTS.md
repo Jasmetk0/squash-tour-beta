@@ -111,3 +111,10 @@ HTTP acceptance. Prior local fork/worker logs and unpushed delayed-fork metadata
 and mixed-format recovery tests were lost; they are not claimed as final-head
 passes. Reconstruct the delayed-fork metadata update and genuine mixed-format
 restart/order acceptance next. All outstanding acceptance above still applies.
+
+The delayed-fork metadata update is now reconstructed. Resolving a tie for an
+owned earlier slot updates that slot in place and preserves player state,
+accepted matches, subsequent slots and the source branch. The adapter rejects
+changes to any other slot field, removed matches, duplicate appended decisions
+and invalid indices. Thirty-one focused backend contracts pass. The genuine
+nested-fork HTTP/SQLite scenario has been restarted; no result is claimed yet.

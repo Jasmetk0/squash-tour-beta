@@ -269,3 +269,40 @@ def test_native_groups_reject_stale_foreign_sources_rollback_and_rehashed_slot(t
             tour = session.get(CalendarTourAuthorityModel, ('run', 'branch'))
             cp.payload_json, cp.fingerprint, tour.payload_json, tour.fingerprint = original_rows
         assert inspect(server)['checkpoint_fingerprint'] == clean['checkpoint_fingerprint']
+
+
+def test_mixed_formats_reverse_order_and_cold_restart(tmp_path):
+    from tests.api.test_calendar_global_slots import copy_database, sporting
+    source = tmp_path / 'mixed-source.db'
+    with ApiServer(database_url=f'sqlite:///{source}') as server:
+        ready_groups(server, parallel=True)
+        view = inspect(server)['next_slot']
+        assert view['remaining'] == 6 and not view['conflicts']
+        mids = [m['match_id'] for m in view['matches']]
+        assert {m['edition_id'] for m in view['matches']} == {'native-groups', 'parallel-knockout'}
+    outcomes = []
+    for mode in ('batch', 'reverse'):
+        path = tmp_path / f'{mode}.db'
+        copy_database(source, path)
+        with ApiServer(database_url=f'sqlite:///{path}') as server:
+            if mode == 'batch':
+                execute(server, command(inspect(server), 'next-slot', name='batch'))
+            else:
+                for i, mid in enumerate(reversed(mids[3:])):
+                    execute(server, command(inspect(server), 'next-match', name=f'first-{i}', data={'match_id': mid}))
+                frozen = inspect(server)['next_slot']['snapshot_fingerprint']
+            save_tour(server)
+        with ApiServer(database_url=f'sqlite:///{path}') as server:
+            if mode == 'reverse':
+                assert inspect(server)['next_slot']['snapshot_fingerprint'] == frozen
+                assert inspect(server)['next_slot']['remaining'] == 3
+                for i, mid in enumerate(reversed(mids[:3])):
+                    execute(server, command(inspect(server), 'next-match', name=f'rest-{i}', data={'match_id': mid}))
+                save_tour(server)
+            assert inspect(server)['next_slot']['number'] == 5
+            cp = sporting(server)
+            slot = cp.events[-1]
+            assert len(slot.accepted) == 6
+            assert all(m.result.rally_log.events for m in slot.accepted)
+            outcomes.append(cp)
+    assert outcomes[0] == outcomes[1], 'all sporting evidence must survive ordering and restart unchanged'

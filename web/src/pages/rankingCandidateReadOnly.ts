@@ -259,7 +259,7 @@ export function validCandidateResponse(
       !Array.isArray(data.manifest.players) || !Array.isArray(data.manifest.results) ||
       !data.manifest.players.every(player => player && nonempty(player.player_id) &&
         nonempty(player.tie_break_token) && typeof player.retired === 'boolean' &&
-        validLegacyWeek(player.tour_entry_week) && notAfter(player.tour_entry_week, week)) ||
+        validLegacyWeek(player.tour_entry_week)) ||
       !data.manifest.results.every(result => validAward(result) && storedResultFields(result) &&
         notAfter(result.completed_week, week) && notAfter(result.first_publication_week, week))) return false
   if (data.manifest.disciplinary_zeros !== undefined &&

@@ -66,4 +66,24 @@ describe('Saved player match history', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Data patří jiné uložené revizi.')
     expect(screen.queryByText('Championship')).not.toBeInTheDocument()
   })
+  it('recovers an error without accepting cached career results',async()=>{
+    api.getSavedPlayerMatchHistory.mockRejectedValueOnce(new Error('offline'))
+    mount()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByText('Championship')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Obnovit kariéru'}))
+    expect(await screen.findByText('Championship')).toBeInTheDocument()
+    expect(api.getSavedPlayerMatchHistory).toHaveBeenCalledTimes(2)
+  })
+  it('falls back to verified raw opponent ID when name lookup belongs to another revision',async()=>{
+    api.getSavedHomePlayerIdentities.mockImplementation(async (_r:string,_b:string,ids:string[])=>({
+      run_id:'run',branch_id:'branch',saved_revision_id:'foreign',requested_ids:ids,
+      players:ids.map(id=>({player_id:id,display_name:'WRONG'}))
+    }))
+    mount()
+    expect(await screen.findByText('Championship')).toBeInTheDocument()
+    expect(await screen.findByText(/B · 3-2/)).toBeInTheDocument()
+    expect(screen.queryByText('WRONG')).not.toBeInTheDocument()
+  })
+
 })

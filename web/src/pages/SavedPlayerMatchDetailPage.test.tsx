@@ -201,4 +201,15 @@ describe('replay identity cursor isolation', () => {
     ])
     expect(screen.getByRole('button', { name: '← Předchozí výměna' })).toBeDisabled()
   })
+  it('retries an interrupted archived match read without altering its cursor or Saved HEAD',async()=>{
+    api.getSavedPlayerMatchDetail.mockRejectedValueOnce(new Error('offline'))
+    mount()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByText('Championship')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Obnovit zápas / archiv'}))
+    expect(await screen.findByText('Championship')).toBeInTheDocument()
+    expect(api.getSavedPlayerMatchDetail).toHaveBeenLastCalledWith(
+      'run','branch','A','event','final',0,25)
+  })
+
 })

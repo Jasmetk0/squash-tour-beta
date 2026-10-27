@@ -130,4 +130,16 @@ describe('exact historical Edition match replay',()=>{
     expect(screen.getByRole('alert')).toHaveTextContent('Checkpoint is not bound')
     expect(api.getSavedTourMatchDetail).not.toHaveBeenCalled()
   })
+  it('allows a failed rally page to recover without changing the saved source',async()=>{
+    api.getSavedTourMatchDetail.mockRejectedValueOnce(new Error('offline'))
+    mount()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByText('3-2')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Retry match / archive read'}))
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)
+    expect(api.getSavedTourMatchDetail).toHaveBeenLastCalledWith(
+      'run-a','branch-a','old-rev',2,'event-x','final',0,25)
+  })
+
 })

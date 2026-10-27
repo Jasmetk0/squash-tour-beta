@@ -278,4 +278,27 @@ describe('Saved Edition detail',()=>{
     await userEvent.click(screen.getByRole('button',{name:'Schedule & matches'}))
     expect(screen.getByText(/Match start times are never inferred/)).toBeInTheDocument()
   })
+  it('fails closed on a failed refresh and re-reads the exact Edition via Retry',async()=>{
+    api.getSavedTourEdition.mockRejectedValueOnce(new Error('offline'))
+    mount()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByRole('heading',{name:'Brno Open'})).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Retry Edition read'}))
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(2)
+  })
+  it('supports keyboard tab selection and preserves the Saved revision',async()=>{
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    const before=api.getSavedTourEdition.mock.calls.length
+    const nav=screen.getByRole('navigation',{name:'Edition sections'})
+    const overview=within(nav).getByRole('button',{name:'Overview'})
+    overview.focus()
+    overview.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}))
+    expect(within(nav).getByRole('button',{name:'Entries & participants'})).toHaveAttribute('aria-current','page')
+    expect(screen.getByRole('link',{name:/Back to calendar/})).toHaveAttribute(
+      'href',expect.stringContaining('revision=rev-old'))
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(before)
+  })
+
 })

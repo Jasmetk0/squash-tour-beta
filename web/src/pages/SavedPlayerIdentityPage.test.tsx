@@ -62,4 +62,21 @@ describe('Saved player three-tab profile',()=>{
     expect(await screen.findByRole('alert')).toHaveTextContent('Profile does not match')
     expect(screen.queryByRole('tab',{name:'Career & results'})).not.toBeInTheDocument()
   })
+  it('recovers an unavailable Saved profile via explicit read-only Retry',async()=>{
+    api.getSavedPlayerProfile.mockRejectedValueOnce(new Error('offline'))
+    mount()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByText('Sample Player')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Retry profile read'}))
+    expect(await screen.findByRole('heading',{name:'Sample Player'})).toBeInTheDocument()
+    expect(api.getSavedPlayerProfile).toHaveBeenCalledTimes(2)
+  })
+  it('preserves true zero ranking points rather than replacing it with missing data',async()=>{
+    api.getSavedPlayerProfile.mockResolvedValue({
+      ...profile,ranking_status:'ranked',rank:0,points:0
+    })
+    mount()
+    expect(await screen.findByText(/0.*points/)).toBeInTheDocument()
+  })
+
 })

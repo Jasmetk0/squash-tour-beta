@@ -28,13 +28,32 @@ export function SavedTourEditionPage():JSX.Element {
   const query=useQuery({queryKey:['saved-tour-edition',runId,branch,revision,season,eventId],
     queryFn:()=>getSavedTourEdition(runId,branch!,revision!,season!,eventId),
     enabled:eligible,retry:false})
-  const model=eligible&&query.data&&validSavedTourEdition(query.data,runId,branch!,revision!,season!,eventId)
+  const model=eligible&&query.isSuccess&&!query.isFetching&&query.data&&validSavedTourEdition(query.data,runId,branch!,revision!,season!,eventId)
     ?query.data:null
   const tab=tabs.includes(params.get('tab') as Tab)?params.get('tab') as Tab:'overview'
   const [phase,setPhase]=useState<'main'|'qualification'>('main')
   const changeTab=(next:Tab)=>{
     const p=new URLSearchParams(params);p.set('tab',next);setParams(p)
   }
+  const onTabKeyDown=(event:React.KeyboardEvent<HTMLButtonElement>,current:Tab)=>{
+    const at=tabs.indexOf(current)
+    const next=event.key==='ArrowRight'?tabs[(at+1)%tabs.length]:
+      event.key==='ArrowLeft'?tabs[(at+tabs.length-1)%tabs.length]:
+      event.key==='Home'?tabs[0]:event.key==='End'?tabs[tabs.length-1]:null
+    if(next){
+      event.preventDefault()
+      changeTab(next)
+      const buttons=event.currentTarget.parentElement?.querySelectorAll('button')
+      buttons?.[tabs.indexOf(next)]?.focus()
+    }
+  }
+  const presentPhase=(value:string)=>value==='main'?(cs?'hlavní část':'main'):
+    value==='qualification'?(cs?'kvalifikace':'qualification'):
+    value==='group'?(cs?'skupina':'group'):value
+  const presentEntry=(value:string)=>value==='wild_card'?(cs?'divoká karta':'wild card'):
+    value==='lucky_loser'?(cs?'šťastný poražený':'lucky loser'):
+    value==='direct'?(cs?'přímý vstup':'direct entry'):
+    value==='bye'?(cs?'volný los':'bye'):value
   const back=new URLSearchParams(params);back.delete('tab')
   const returnTo='/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar?'+back.toString()
   const returnCountry=verifiedCountryReturn(params.get('fromCountry'),runId,revision)
@@ -79,7 +98,7 @@ export function SavedTourEditionPage():JSX.Element {
         const published=slot.match_id?matches.find(m=>m.match_id===slot.match_id):undefined
         return <tr key={slot.global_slot_ordinal}>
           <td>{slot.match_day_ordinal}</td><td>{slot.match_order}</td>
-          <td>{slot.global_slot_ordinal}</td><td>{slot.draw_phase}</td><td>{slot.round_number}</td>
+          <td>{slot.global_slot_ordinal}</td><td>{presentPhase(slot.draw_phase)}</td><td>{slot.round_number}</td>
           <td>{slot.match_id&&published?.loser_player_id?
             <Link to={matchHref(slot.match_id,'schedule')}>{slot.match_id}</Link>:
             (slot.match_id??(cs?'Plán zápasu není uložen':'No saved match plan'))}</td>
@@ -164,7 +183,7 @@ export function SavedTourEditionPage():JSX.Element {
     'A complete historical authority for this section is unavailable in this source.'
   const fieldList=(label:string,ids:string[])=><section key={label} className="section-subtle">
     <h4>{label} ({ids.length})</h4>
-    {ids.length?<ol>{ids.map(id=><li key={id}>{id}</li>)}</ol>:<p>—</p>}
+    {ids.length?<ol>{ids.map(id=><li key={id}>{id}</li>)}</ol>:<p role="status">{cs?'Žádní uložené účastníci v této části.':'No saved participants in this section.'}</p>}
   </section>
   const bracketView=(bracket:SavedTourDrawBracket)=><section key={bracket.section_id??bracket.draw_type}>
     <h4>{bracket.section_id??(cs?'Hlavní pavouk':'Main draw')} · {bracket.bracket_size}
@@ -175,7 +194,7 @@ export function SavedTourEditionPage():JSX.Element {
       <tbody>{[...bracket.slots].sort((a,b)=>a.slot_index-b.slot_index).map(slot=><tr key={slot.slot_index}>
         <td>{slot.slot_index}</td><td>{slot.player_id??slot.placeholder_id??(slot.entrant_kind==='bye'?'BYE':'—')}</td>
         <td>{slot.seed_number??'—'}</td>
-        <td>{slot.entry_status??(slot.entrant_kind==='player'?'direct':slot.entrant_kind)}</td>
+        <td>{presentEntry(slot.entry_status??(slot.entrant_kind==='player'?'direct':slot.entrant_kind))}</td>
       </tr>)}</tbody></table></div>
   </section>
   return <section className="panel">
@@ -194,18 +213,21 @@ export function SavedTourEditionPage():JSX.Element {
         'Checkpoint is not mapped to a Saved Revision.'):
         (cs?'Chybí přesná Run/Branch/revize/sezona v odkazu.':
         'The link must name the exact Run/Branch/revision/season.'))}</p>}
-    {query.isPending&&eligible&&<p role="status">{cs?'Načítám uloženou edici…':'Loading saved Edition…'}</p>}
-    {query.error&&<p role="alert">{formatApiError(query.error)}</p>}
-    {eligible&&query.data&&!model&&<p role="alert">{cs?'Neplatná nebo zastaralá identita Edition.':
+    {(query.isPending||query.isFetching)&&eligible&&<p role="status">{cs?'Načítám uloženou edici…':'Loading saved Edition…'}</p>}
+    {eligible&&query.error&&<p role="alert">{formatApiError(query.error)}</p>}
+    <button type="button" disabled={!eligible||query.isFetching}
+      onClick={()=>{void query.refetch()}}>{cs?'Obnovit edici':'Retry Edition read'}</button>
+    {eligible&&query.isSuccess&&!query.isFetching&&query.data&&!model&&<p role="alert">{cs?'Neplatná nebo zastaralá identita Edition.':
       'Invalid or stale Edition identity.'}</p>}
     {e&&<><p className="status">{e.season} · {cs?'Týden':'Week'} {e.season_week} · {e.host_country}
       {' · '}{cs?'Kanonicky publikovaný výsledek':'Canonical published result'}: {e.result_published?'✓':'—'}</p>
-      <nav className="saved-tour-edition-tabs" aria-label="Edition sections">
+      <nav className="saved-tour-edition-tabs" aria-label={cs?"Oddíly edice":"Edition sections"}>
         {tabs.map((name,i)=><button key={name} type="button" aria-current={tab===name?'page':undefined}
-          className={tab===name?'active':''} onClick={()=>changeTab(name)}>{labels[i]}</button>)}
+          className={tab===name?'active':''} onKeyDown={event=>onTabKeyDown(event,name)}
+           onClick={()=>changeTab(name)}>{labels[i]}</button>)}
       </nav>
       {tab==='overview'&&<section><h3>{labels[0]}</h3>
-        <p>{e.category} · {e.tour_level??'—'} · {e.host_city??'—'} ({e.host_country})</p>
+        <p>{presentEntry(e.category)} · {e.tour_level??'—'} · {e.host_city??'—'} ({e.host_country})</p>
         <p>{cs?'Stav autoritativního lifecycle: není dostupný. Stav kalendáře není důkaz výsledku.':
           'Authoritative lifecycle status: unavailable. A calendar label is not proof of results.'}</p>
         {result&&<p>{cs?'Vítěz':'Champion'}: {result.champion_player_id}
@@ -228,7 +250,7 @@ export function SavedTourEditionPage():JSX.Element {
         {result&&<><h4>{cs?'Doložení hráči z výsledkové autority':'Players evidenced by published results'}</h4>
           <p>{cs?'Výsledková evidence není náhradou za seznam přihlášek.':
             'Published result evidence does not substitute for the Entry Field.'}</p>
-          <ul>{result.players.map(p=><li key={p.player_id}>{p.player_id} · {p.reached_stage}</li>)}</ul></>}
+          <ul>{result.players.map(p=><li key={p.player_id}>{p.player_id} · {presentEntry(p.reached_stage)}</li>)}</ul></>}
       </section>}
       {tab==='draw'&&<section><h3>{labels[2]}</h3>
         <p>{cs?'První kolo je z uložené Draw authority. Výsledky zápasů jsou oddělená evidence.':

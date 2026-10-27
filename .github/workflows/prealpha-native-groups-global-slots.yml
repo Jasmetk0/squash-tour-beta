@@ -18,6 +18,7 @@ on:
       - 'src/beta_engine/infrastructure/db/repositories.py'
       - 'tests/api/test_calendar_native_groups.py'
       - 'tests/domain/test_calendar_native_groups_contract.py'
+      - 'tests/domain/test_native_group_slot_dependencies.py'
       - 'scripts/native_groups_global_slots_browser.py'
       - 'web/src/pages/CalendarTourPanel*'
       - 'web/src/pages/nativeGroupConfiguration*'

@@ -31,6 +31,21 @@ Existing `LanguageContext` selects English/Czech. Changing the language changes 
 | 19 | Save | Explicit review entry, loading, unchanged/ready/blocked states, API error and refresh |
 | 20 | Save | Explicit Save button, pending status, success and error recovery guidance |
 
+## Failure messages and recovery (CS/EN)
+
+All ranking workflow error surfaces now add a locally translated, static description
+of the failed **operation**: loading prior preparation inputs, computing the preview,
+confirming the prepared candidate, loading stored result sources, reviewing Save,
+and performing an explicit Save. The existing `formatApiError` diagnostic remains
+visible unchanged and is never rewritten or treated as a translated request value.
+Changing CS/EN neither refetches failed reads nor retries a failed mutation.
+
+The original buttons and gates remain: previous-input/source read retries require
+an explicit click, confirm retries the **same** frozen command and preview,
+and a failed Save refetches its review under the existing error callback. A
+further write still requires explicit Save. Tests assert the raw diagnostic,
+localized static context and zero implicit writes across language switches.
+
 ## Preserved behavior and gates
 
 - **Never automatic:** preparing, confirming and saving remain explicit independent commands. A preparation candidate is not a saved revision or a publication. Neither browsing nor switching locale calls an API write.

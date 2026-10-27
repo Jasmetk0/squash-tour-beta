@@ -1,3 +1,18 @@
+# Native groups/global-slot integration candidate — 27 October 2026
+
+Refreshed `buuk`: `af0e906ce374c3406fb43c29fe65b007546b9303`; #1643,
+#1645 and #1644 are merged, #1646 stays separate. Native group/hybrid Editions
+now have explicit v3 configuration, shared topology/schedule/standings/crossing
+and phase-point composition over actual global slots. Old schemas retain their
+original shapes and sources. The real two-group 15-match HTTP/SQLite Save/restart
+and Official-point flow and the rehashed-slot/rollback/retry checks passed.
+Four-group/pure-group, fork/worker and actual Chromium acceptance are still in
+progress; this is not a merge-ready handoff or full pre-alpha certification.
+See `docs/NATIVE_GROUPS_GLOBAL_SLOTS.md` for exact evidence and outstanding gates.
+Only the owner merges; no auto-merge.
+
+---
+
 # Confirmed Save value continuity — 26 October 2026 candidate
 
 Preceding 37f627a4 passed fourteen hosted workflows; the complete global

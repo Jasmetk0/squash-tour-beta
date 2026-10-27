@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from beta_engine.domain.tournaments.calendar_global_slots import (
     GlobalCompetitionCheckpoint,
     accept_slot,
-    bracket,
+    slot_match_id,
     freeze_slot,
     next_schedule,
 )
@@ -23,7 +23,7 @@ def slot_inspection(state, checkpoint):
     rows = [
         {
             "edition_id": a.edition.edition_id,
-            "match_id": f"{a.edition.edition_id}:{bracket(a)[i]}",
+            "match_id": slot_match_id(a, i),
             "player_a_id": ids[0] if ids else None,
             "player_b_id": ids[1] if ids else None,
             "completed": False,
@@ -224,7 +224,7 @@ def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=No
     completed_editions = {
         eid: {
             "fingerprint": event.fingerprint,
-            "winner_player_id": event.matches[-1].result.winner_player_id,
+            "winner_player_id": event.winner_player_id if hasattr(event, "winner_player_id") else event.matches[-1].result.winner_player_id,
             "prepared_awards": [
                 a.model_dump(mode="json") for a in event.prepared_awards
             ],

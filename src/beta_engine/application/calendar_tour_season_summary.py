@@ -113,9 +113,13 @@ def native_tour_season_summary(state, world, season_index, *, closure=None):
         if len(awards) != item.main_entrant_count:
             raise ValueError("Season Edition player awards differ from recorded field")
         placements = {a["reached_stage"]: a["player_id"] for a in awards if a["reached_stage"] in {"champion", "finalist"}}
-        if set(placements) != {"champion", "finalist"}:
+        multiple_groups = item.schema_version == 'calendar_tournament_edition.v3' and item.group_configuration.format_kind == 'groups' and item.group_configuration.groups.group_count > 1
+        if multiple_groups:
+            if placements or played['winner_player_id'] is not None:
+                raise ValueError('Independent groups cannot claim one Edition champion')
+        elif set(placements) != {"champion", "finalist"}:
             raise ValueError("Season Edition has no authentic final placements")
-        if placements["champion"] != played["winner_player_id"]:
+        if placements.get("champion") != played["winner_player_id"]:
             raise ValueError("Season Edition champion differs from signed MatchEngine")
         for award in awards:
             player_id = award["player_id"]
@@ -141,18 +145,18 @@ def native_tour_season_summary(state, world, season_index, *, closure=None):
                 row["semifinals"] += 1
             elif stage == "quarterfinal":
                 row["quarterfinals"] += 1
-        champion_id = placements["champion"]
-        finalist_id = placements["finalist"]
+        champion_id = placements.get("champion")
+        finalist_id = placements.get("finalist")
         editions.append({
             "edition_id": item.edition_id,
             "name": item.name,
             "week": item.week.week,
             "champion_player_id": champion_id,
-            "champion_name": players[champion_id].name,
-            "champion_country": players[champion_id].country_code,
+            "champion_name": players[champion_id].name if champion_id else None,
+            "champion_country": players[champion_id].country_code if champion_id else None,
             "finalist_player_id": finalist_id,
-            "finalist_name": players[finalist_id].name,
-            "finalist_country": players[finalist_id].country_code,
+            "finalist_name": players[finalist_id].name if finalist_id else None,
+            "finalist_country": players[finalist_id].country_code if finalist_id else None,
             "source_tournament_fingerprint": authority.tournament_fingerprint,
         })
     countries = [{
@@ -179,7 +183,7 @@ def native_tour_season_summary(state, world, season_index, *, closure=None):
     if final_ranking is None:
         raise ValueError("Completed Season lacks its published Week W ranking")
     return {
-        "schema_version": "native_tour_signed_season_summary.v1",
+        "schema_version": "native_tour_signed_season_summary.v2" if any(e["champion_player_id"] is None for e in editions) else "native_tour_signed_season_summary.v1",
         "run_id": state.run_id,
         "branch_id": state.branch_id,
         "source_tour_fingerprint": state.fingerprint,

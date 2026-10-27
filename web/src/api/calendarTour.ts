@@ -11,12 +11,13 @@ export type TourEdition = {
   edition:{schema_version?:string;simulation_seed?:number;edition_id:string;name:string;week:TourWeek;announcement_week:TourWeek;start_slot:number;main_entrant_count:number;point_table:Record<string,number>;validity_weeks:number}
   submissions:{application_id:string;player_id:string}[]
   field:{direct_main_player_ids:string[];below_qualification_cut_player_ids:string[]}|null
-  draw:{main:{slots:{slot_index:number;player_id:string}[]}}|null
+  draw:{main?:{slots:{slot_index:number;player_id:string}[]};topology?:{group_slots:{group_index:number;slot_index:number;player_id:string}[]}}|null
   tournament_fingerprint:string|null;result_confirmed:boolean
 }
 export type GlobalSlotView = {conflicts?:{player_id:string;match_ids:string[]}[];schema_version:'calendar_global_slot_inspection.v1';number:number;snapshot_fingerprint:string|null;completed:number;remaining:number;matches:{edition_id:string;match_id:string;player_a_id:string|null;player_b_id:string|null;winner_player_id?:string;completed:boolean}[]}
-export type TourView = {save_projection_fingerprint?:string|null;next_slot?:GlobalSlotView|null;schema_version:'calendar_tour_inspection.v1';run_id:string;branch_id:string;saved_head_revision_id:string;draft_version:number;run_calendar?:TourWeek['calendar'];checkpoint_fingerprint:string|null;tour_fingerprint:string|null;saved:boolean;sporting_saved?:boolean;can_initialize:boolean;post_birth_competition_supported?:boolean;players:{player_id:string;name:string;status?:string}[];transition_blockers:string[];season_transition_blockers:string[];saved_completed_seasons:number[];contributions?:Record<string,TourContribution[]>;edition_evidence:Record<string,{results:(TourResult&{stage:string})[];matches:{match_id:string;slot:number;player_a_id:string;player_b_id:string;winner_player_id:string;rally_count:number}[]}>;state:null|{week:TourWeek;editions:TourEdition[];rankings:TourRanking[];transitions:{public_event:Record<string,unknown>}[]}}
-export type TourAction = 'next-slot'|'next-match'|'initialize'|'create-edition'|'submit'|'approve'|'draw'|'play'|'confirm-result'|'policy'|'transition'|'season-transition'
+export type GroupProgress = {standings:null|{groups:{group_index:number;rows:{position:number;player_id:string;wins:number;group_points:number;games_won:number;games_lost:number;points_won:number;points_lost:number}[]}[]};tie_case:null|{group_index:number;player_ids:string[];reason:string;source_match_results:[string,string][]};bracket:null|{matches:{match_id:string;round_number:number;participant_sources:[string,string]}[]}}
+export type TourView = {groups?:Record<string,GroupProgress>;save_projection_fingerprint?:string|null;next_slot?:GlobalSlotView|null;schema_version:'calendar_tour_inspection.v1';run_id:string;branch_id:string;saved_head_revision_id:string;draft_version:number;run_calendar?:TourWeek['calendar'];checkpoint_fingerprint:string|null;tour_fingerprint:string|null;saved:boolean;sporting_saved?:boolean;can_initialize:boolean;post_birth_competition_supported?:boolean;players:{player_id:string;name:string;status?:string}[];transition_blockers:string[];season_transition_blockers:string[];saved_completed_seasons:number[];contributions?:Record<string,TourContribution[]>;edition_evidence:Record<string,{results:(TourResult&{stage:string})[];matches:{match_id:string;slot:number;player_a_id:string;player_b_id:string;winner_player_id:string;rally_count:number}[]}>;state:null|{week:TourWeek;editions:TourEdition[];rankings:TourRanking[];transitions:{public_event:Record<string,unknown>}[]}}
+export type TourAction = 'resolve-group-tie'|'next-slot'|'next-match'|'initialize'|'create-edition'|'submit'|'approve'|'draw'|'play'|'confirm-result'|'policy'|'transition'|'season-transition'
 export type TourCommand = {action:TourAction;command_id:string;expected_saved_head:string;expected_checkpoint_fingerprint:string;expected_tour_fingerprint:string|null;edition_id:string|null;seed:number;operator_label:string;audit_reason:string;data:Record<string,unknown>}
 export type TourPreview = {schema_version:'calendar_tour_command_preview.v1';run_id:string;branch_id:string;command:TourCommand;preview_fingerprint:string;impact:{slot?:number;selected_match_ids?:string[];completed?:number;remaining?:number;ranking?:TourRanking;sporting?:{changed_player_count:number;attribute_change_count:number;changes?:{player_id:string;changed_attributes:number;form_before:number;form_after:number;sharpness_before:number;sharpness_after:number;fatigue_before:number;fatigue_after:number}[]};target_week?:TourWeek;approved_field?:TourEdition['field'];draw?:TourEdition['draw'];results?:TourResult[];entrant_ids?:string[];point_table?:Record<string,number>}}
 
@@ -59,11 +60,11 @@ export function validateTourPreview(v:TourPreview,c:TourCommand,run:string,branc
 
 export type SignedSeasonCountry={country_code:string;titles:number;finals:number;semifinals:number;quarterfinals:number;awarded_points:number;distinct_players:number;edition_appearances:number}
 export type SignedSeasonSummary={
-  schema_version:'native_tour_signed_season_summary.v1';run_id:string;branch_id:string
+  schema_version:'native_tour_signed_season_summary.v1'|'native_tour_signed_season_summary.v2';run_id:string;branch_id:string
   source_tour_fingerprint:string;season_index:number;season_label:string
   weeks_per_season:number;boundary_command_id:string;next_season_index:number|null;closing_ranking?:{rows:{rank:number;player_id:string;points:number}[]};closure_marker_fingerprint?:string
   completed_edition_count:number;countries:SignedSeasonCountry[]
-  editions:{edition_id:string;name:string;week:number;champion_player_id:string;champion_name:string;champion_country:string;finalist_player_id:string;finalist_name:string;finalist_country:string;source_tournament_fingerprint:string}[]
+  editions:{edition_id:string;name:string;week:number;champion_player_id:string|null;champion_name:string|null;champion_country:string|null;finalist_player_id:string|null;finalist_name:string|null;finalist_country:string|null;source_tournament_fingerprint:string}[]
   players:{player_id:string;name:string;country_code:string;titles:number;finals:number;awarded_points:number;edition_appearances:number}[]
   last_week_published_ranking:{week:number;source_fingerprint:string;top_players:{player_id:string;rank:number;points:number}[]}
 }
@@ -200,3 +201,5 @@ export function validateNativeSportingBirthPreflight(
     throw Error('Signed native sporting birth proposal differs from saved input or Run clock')
   return value
 }
+
+export function tourDrawSlots(draw:TourEdition['draw']) { return draw?.topology?.group_slots ?? draw?.main?.slots ?? [] }

@@ -25,13 +25,13 @@ from beta_engine.domain.tournaments.hybrid_knockout_bracket_authority import (
 )
 from beta_engine.domain.tournaments.hybrid_ranking_policy_authority import (
     TournamentHybridRankingPolicyAuthority,
+    hybrid_phase_point_components,
 )
 from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.tournaments.prize_money_award_authority import (
     build_tournament_prize_money_award_authority,
 )
 from beta_engine.domain.tournaments.point_award_authority import (
-    TournamentPhasePointComponent,
     TournamentPlayerPointAwardAuthority,
     TournamentPointAwardAuthority,
 )
@@ -516,28 +516,10 @@ def build_hybrid_tournament_point_award_authority(
     for player in sorted(result.players, key=lambda item: item.player_id):
         if player.played_group_wins is None:
             raise ValueError("Hybrid result lacks played group-win provenance")
-        components = [
-            TournamentPhasePointComponent(
-                component_id="group_played_wins",
-                distribution_key="group:played_win",
-                units=player.played_group_wins,
-                points_per_unit=policy.played_group_win_points,
-                points_awarded=player.played_group_wins
-                * policy.played_group_win_points,
-            )
-        ]
-        if player.knockout_reached_stage is not None:
-            key = f"knockout:{player.knockout_reached_stage}"
-            value = knockout_distribution[player.knockout_reached_stage]
-            components.append(
-                TournamentPhasePointComponent(
-                    component_id="knockout_finish",
-                    distribution_key=key,
-                    units=1,
-                    points_per_unit=value,
-                    points_awarded=value,
-                )
-            )
+        components = hybrid_phase_point_components(
+            policy=policy, played_group_wins=player.played_group_wins,
+            knockout_reached_stage=player.knockout_reached_stage,
+        )
         total = sum(component.points_awarded for component in components)
         player_fp = _hash(player.model_dump(mode="json"))
         award_payload = {

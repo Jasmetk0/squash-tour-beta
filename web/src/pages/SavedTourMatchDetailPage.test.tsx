@@ -130,6 +130,15 @@ describe('exact historical Edition match replay',()=>{
     expect(screen.getByRole('alert')).toHaveTextContent('Checkpoint is not bound')
     expect(api.getSavedTourMatchDetail).not.toHaveBeenCalled()
   })
+  it('translates replay UI without requesting the same Saved page again',async()=>{
+    const view=mount()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    const calls=api.getSavedTourMatchDetail.mock.calls.length
+    state.language='cs'
+    view.refresh()
+    expect(screen.getByText('Výměna 1/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(calls)
+  })
   it('returns to the originating Draw tab with the exact encoded URL state',async()=>{
     mount('/admin/runs/run-a/tour/calendar/event-x/matches/final?branch=branch-a&revision=old-rev&season=2&tab=draw&view=list&country=CZE')
     expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()

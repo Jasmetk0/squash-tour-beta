@@ -11,12 +11,14 @@ const api = vi.hoisted(() => ({
 vi.mock('../api/client', () => api)
 
 function mount() {
-  return render(<QueryClientProvider client={new QueryClient({ defaultOptions: {
-    queries: { retry: false, gcTime: 0 }
-  } })}><MemoryRouter><SavedPlayerMatchesPanel
+  let locale:'cs'|'en'='cs'
+  const client=new QueryClient({ defaultOptions: {queries:{retry:false,gcTime:0}} })
+  const ui=()=> <QueryClientProvider client={client}><MemoryRouter><SavedPlayerMatchesPanel
     runId="run" branchId="branch" playerId="A" savedHead="revision"
-    locale="cs"
-  /></MemoryRouter></QueryClientProvider>)
+    locale={locale}
+  /></MemoryRouter></QueryClientProvider>
+  const view=render(ui())
+  return {...view,changeLocale:(next:'cs'|'en')=>{locale=next;view.rerender(ui())}}
 }
 
 describe('Saved player match history', () => {
@@ -52,6 +54,17 @@ describe('Saved player match history', () => {
     await waitFor(() => expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith(
       'run', 'branch', 'A', 2, 0, 20,
     ))
+  })
+  it('preserves the season selection and does not refetch on CS/EN change',async()=>{
+    const view=mount()
+    expect(await screen.findByText('Championship')).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('combobox',{name:'Sezóna zápasů'}),{target:{value:'2'}})
+    await waitFor(()=>expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith(
+      'run','branch','A',2,0,20))
+    const calls=api.getSavedPlayerMatchHistory.mock.calls.length
+    view.changeLocale('en')
+    expect(screen.getByRole('combobox',{name:'Match season'})).toHaveValue('2')
+    expect(api.getSavedPlayerMatchHistory).toHaveBeenCalledTimes(calls)
   })
   it('does not render foreign saved HEAD data', async () => {
     api.getSavedPlayerMatchHistory.mockResolvedValueOnce({

@@ -1,7 +1,7 @@
 /** Canonical read-only match detail, replayed from stored rally frames only. */
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { getSavedPlayerMatchDetail, getSavedHomePlayerIdentities } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
@@ -28,6 +28,7 @@ export function SavedPlayerMatchDetailPage(): JSX.Element {
 
 function SavedPlayerMatchReplay(): JSX.Element {
   const { runId = '', playerId = '', eventId = '', matchId = '' } = useParams()
+  const [searchParams] = useSearchParams()
   const { language } = useLanguage()
   const cs = language === 'cs'
   const { selectedBranch, isLoading, error } = useAdminBranch()
@@ -73,7 +74,15 @@ function SavedPlayerMatchReplay(): JSX.Element {
     : {}
   const frame = data?.rallies.find(r => r.rally_index === index + 1)
   const playerName = (id: string | null | undefined): string => id ? (names[id] || id) : '—'
-  const back = '/admin/runs/' + encodeURIComponent(runId) + '/people/' + encodeURIComponent(playerId)
+  const backParams = new URLSearchParams()
+  backParams.set('tab', 'career')
+  const careerSeason = searchParams.get('careerSeason')
+  const careerPage = searchParams.get('careerPage')
+  if (careerSeason !== null && /^(0|[1-9]\d*)$/.test(careerSeason) && Number(careerSeason) < 50)
+    backParams.set('careerSeason', careerSeason)
+  if (careerPage !== null && /^(0|[1-9]\d*)$/.test(careerPage) && Number(careerPage) <= 10000)
+    backParams.set('careerPage', careerPage)
+  const back = '/admin/runs/' + encodeURIComponent(runId) + '/people/' + encodeURIComponent(playerId) + '?' + backParams.toString()
   return <section className="panel run-home">
     <div className="page-intro">
       <p className="eyebrow">PRODUCT RUN · SAVED MATCH</p>

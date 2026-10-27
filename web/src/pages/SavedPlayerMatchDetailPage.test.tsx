@@ -17,10 +17,10 @@ vi.mock('../admin/AdminBranchContext', () => ({
 }))
 vi.mock('../admin/AdminTimeContext', () => ({ useAdminTime: () => ({ mode: 'present' }) }))
 
-function mount() {
+function mount(entry = '/admin/runs/run/people/A/matches/event/final') {
   const cache = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
   const tree = () => <QueryClientProvider client={cache}><LanguageProvider><MemoryRouter
-    initialEntries={['/admin/runs/run/people/A/matches/event/final']}>
+    initialEntries={[entry]}>
     <nav aria-label="Replay scope test navigation">
       <Link to="/admin/runs/run/people/A/matches/event/short">Switch match</Link>
       <Link to="/admin/runs/run/people/A/matches/second/final">Switch event</Link>
@@ -63,6 +63,12 @@ describe('canonical saved match detail', () => {
       run_id: 'run', branch_id: 'branch', saved_revision_id: 'rev',
       requested_ids: ids, players: ids.map(id => ({ player_id: id, display_name: id === 'A' ? 'Alpha' : 'Bravo' })),
     }))
+  })
+  it('returns to the original career tab, season and page', async () => {
+    mount('/admin/runs/run/people/A/matches/event/final?tab=career&careerSeason=2&careerPage=1')
+    expect(await screen.findByText('Championship')).toBeInTheDocument()
+    expect(screen.getByRole('link', {name: /Zpět na profil hráče/})).toHaveAttribute('href',
+      '/admin/runs/run/people/A?tab=career&careerSeason=2&careerPage=1')
   })
   it('steps through archived score frames without simulating', async () => {
     mount()

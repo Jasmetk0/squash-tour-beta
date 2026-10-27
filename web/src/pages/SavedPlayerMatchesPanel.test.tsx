@@ -66,6 +66,34 @@ describe('Saved player match history', () => {
     expect(screen.getByRole('combobox',{name:'Match season'})).toHaveValue('2')
     expect(api.getSavedPlayerMatchHistory).toHaveBeenCalledTimes(calls)
   })
+  it('keeps career season and page in the match URL for an exact profile return', async () => {
+    api.getSavedPlayerMatchHistory.mockImplementation(async (_r: string, _b: string, _id: string,
+      season: number | null, offset: number, limit: number) => ({
+      schema_version: 'saved_player_match_history.v1',
+      run_id: 'run', branch_id: 'branch', saved_revision_id: 'revision', player_id: 'A',
+      source: 'selected_branch_saved_revision', status: 'ready',
+      season_index: season, offset, limit, available_seasons: [2], total_results: 21,
+      played_wins: 21, played_losses: 0, walkovers: 0,
+      career_played_wins: 21, career_played_losses: 0, career_walkovers: 0,
+      has_more: offset === 0,
+      matches: [{ event_id: 'event', event_name: 'Championship',
+        match_id: offset === 0 ? 'first' : 'second', season_index: 2, season: '2002/03',
+        week: 17, draw_type: 'main', round_number: 2, opponent_player_id: 'B',
+        outcome: 'win', completion: 'played', scoreline: '3-2' }],
+    }))
+    mount()
+    expect(await screen.findByText('Championship')).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('combobox', {name: 'Sezóna zápasů'}), {target: {value: '2'}})
+    await waitFor(() => expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith(
+      'run', 'branch', 'A', 2, 0, 20))
+    expect(screen.getByRole('link', {name: 'Detail zápasu →'})).toHaveAttribute('href',
+      '/admin/runs/run/people/A/matches/event/first?tab=career&careerSeason=2')
+    fireEvent.click(screen.getByRole('button', {name: 'Další →'}))
+    await waitFor(() => expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith(
+      'run', 'branch', 'A', 2, 20, 20))
+    expect(await screen.findByRole('link', {name: 'Detail zápasu →'})).toHaveAttribute('href',
+      '/admin/runs/run/people/A/matches/event/second?tab=career&careerSeason=2&careerPage=1')
+  })
   it('does not render foreign saved HEAD data', async () => {
     api.getSavedPlayerMatchHistory.mockResolvedValueOnce({
       schema_version: 'saved_player_match_history.v1', run_id: 'run', branch_id: 'branch',

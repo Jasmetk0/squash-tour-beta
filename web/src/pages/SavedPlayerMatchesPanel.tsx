@@ -1,7 +1,6 @@
 /** Read-only career match timeline; every page belongs to the current Saved HEAD. */
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getSavedHomePlayerIdentities, getSavedPlayerMatchHistory } from '../api/client'
 
 type Props = {
@@ -22,9 +21,25 @@ export function SavedPlayerMatchesPanel(props: Props): JSX.Element {
 
 function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, locale }: Props): JSX.Element {
   const cs = locale === 'cs'
-  const [season, setSeason] = useState<string>('all')
-  const [page, setPage] = useState(0)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const rawSeason = searchParams.get('careerSeason')
+  const season = rawSeason !== null && /^(0|[1-9]\d*)$/.test(rawSeason) && Number(rawSeason) < 50
+    ? rawSeason : 'all'
+  const rawPage = searchParams.get('careerPage')
+  const page = rawPage !== null && /^(0|[1-9]\d*)$/.test(rawPage) && Number(rawPage) <= 10000
+    ? Number(rawPage) : 0
   const seasonIndex = season === 'all' ? null : Number(season)
+  const navigateCareer = (nextSeason: string, nextPage: number) => {
+    const copy = new URLSearchParams(searchParams)
+    copy.set('tab', 'career')
+    if (nextSeason === 'all') copy.delete('careerSeason')
+    else copy.set('careerSeason', nextSeason)
+    if (nextPage === 0) copy.delete('careerPage')
+    else copy.set('careerPage', String(nextPage))
+    setSearchParams(copy)
+  }
+  const matchQuery = new URLSearchParams(searchParams)
+  matchQuery.set('tab', 'career')
   const q = useQuery({
     queryKey: ['saved-player-matches', runId, branchId, savedHead, playerId, seasonIndex, page],
     queryFn: () => getSavedPlayerMatchHistory(runId, branchId, playerId, seasonIndex, page * PAGE_SIZE, PAGE_SIZE),
@@ -67,7 +82,7 @@ function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, loca
         {' · '}{data.career_walkovers} {cs ? 'kontumací' : 'walkovers'}</p>
       <label htmlFor="saved-player-season">{cs ? 'Sezóna' : 'Season'}{' '}</label>
       <select data-run-navigation-readonly id="saved-player-season" aria-label={cs ? 'Sezóna zápasů' : 'Match season'}
-        value={season} onChange={event => { setSeason(event.target.value); setPage(0) }}>
+        value={season} onChange={event => navigateCareer(event.target.value, 0)}>
         <option value="all">{cs ? 'Všechny sezóny' : 'All seasons'}</option>
         {data.available_seasons.map(index => <option key={index} value={String(index)}>{seasonText(index)}</option>)}
       </select>
@@ -82,7 +97,7 @@ function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, loca
           <span><strong>{match.event_name}</strong>
             {' '}<Link to={'/admin/runs/' + encodeURIComponent(runId) + '/people/' +
               encodeURIComponent(playerId) + '/matches/' + encodeURIComponent(match.event_id) +
-              '/' + encodeURIComponent(match.match_id)}>
+              '/' + encodeURIComponent(match.match_id) + '?' + matchQuery.toString()}>
               {cs ? 'Detail zápasu →' : 'Match detail →'}
             </Link>
             <small>{match.season} · W{match.week} · {match.draw_type==='main'?(cs?'hlavní část':'main'):match.draw_type==='qualification'?(cs?'kvalifikace':'qualification'):match.draw_type==='group'?(cs?'skupina':'group'):match.draw_type} ·
@@ -96,11 +111,11 @@ function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, loca
         </li>)}
       </ul>}
       {(page>0||data.has_more) && <div className="run-home-status-block">
-        <button type="button" disabled={page === 0 || q.isFetching} onClick={() => setPage(value => Math.max(0, value - 1))}>
+        <button type="button" disabled={page === 0 || q.isFetching} onClick={() => navigateCareer(season, Math.max(0, page - 1))}>
           {cs ? '← Předchozí' : '← Previous'}
         </button>
         {' '}{cs ? 'Strana' : 'Page'} {page + 1} / {Math.ceil(data.total_results / PAGE_SIZE)}{' '}
-        <button type="button" disabled={!data.has_more || q.isFetching} onClick={() => setPage(value => value + 1)}>
+        <button type="button" disabled={!data.has_more || q.isFetching} onClick={() => navigateCareer(season, page + 1)}>
           {cs ? 'Další →' : 'Next →'}
         </button>
       </div>}

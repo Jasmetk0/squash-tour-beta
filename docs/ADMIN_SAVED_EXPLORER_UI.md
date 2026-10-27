@@ -8,6 +8,8 @@ This viewer uses read-only GETs; filters, navigation, replay cursor, locale chan
 
 Tour calendar and Edition use the existing legacy Run Saved Tour `50 seasons × 61 weeks` contract. Tour URL explicitly retains `runId`, `branch`, `revision`, `season`, and local `tour/category/country/view` filters. Edition also retains `tab`; match-detail return retains the same URL params. Only the actual `reachable_saved_revision` DTO can show a historical result. Historical checkpoint selection is **not** equivalent to an authenticated Saved Revision.
 
+Player career navigation retains `tab=career`, bounded `careerSeason` (0–49) and `careerPage` (0–10000) URL state when opening an archived match and returning to the profile; URL navigation changes season/page but locale rerenders do not. These params are presentation-only, not Saved Revision authority.
+
 Player identity, career history, and player match replay use the **selected Branch Saved HEAD only**. Their API has no arbitrary revision selector; `savedHead` is a query/response identity fence, not an API payload argument. Never infer historical checkpoint support. A query error, stale/cross-revision response or in-flight Retry hides sporting authority until a newly scoped read succeeds. Auxiliary opponent-name queries fall back to verified raw IDs.
 
 No language code is included in data query keys or API parameters. Translating presentation does not alter category/draw/status enums, fingerprint/ID/score data or schedule semantics. The Match Day number is not a date or start time. Unsupported draw/entry/attribute/lifecycle information is left unavailable, not synthesized.
@@ -35,7 +37,7 @@ No language code is included in data query keys or API parameters. Translating p
 | 17 | Nově + existovalo | Profile vyžaduje skutečný Saved source a necheckpointový present režim; bez historického fallbacku. |
 | 18 | Nově + existovalo | Null/missing na žebříčku je '—', skutečná nula zůstává 0; unpublished/unranked/ranked rozlišeno. |
 | 19 | Nově | Retry profile a career, úspěšný scoped response vyžadován; staré/cizí výsledky se po chybě nepoužijí. |
-| 20 | Nově + existovalo | Season/page state neobsahuje locale; změna Season resetuje page, změna Run/Branch/HEAD/player vynutí nový keyed timeline. |
+| 20 | Nově + existovalo | Season/page URL state neobsahuje locale; změna Season resetuje page, návrat z detailu obnoví záložku kariéry, sezonu i stránku; změna Run/Branch/HEAD/player vynutí nový keyed timeline. |
 | 21 | Nově + existovalo | Loading/error/empty season/career a explicitní Retry; Next pouze při has_more, Previous při page>0. |
 | 22 | Nově + existovalo | Doplňková jména jen při totožné Saved revision, branch, Run a seznamu ID; jinak raw ID. |
 | 23 | Nově + existovalo | Player replay CS/EN, Retry a kontrola offset, limit, total_rallies, has_more; na fetch skryta stará data. |

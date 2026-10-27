@@ -14,10 +14,10 @@ vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
 vi.mock('../admin/AdminTimeContext',()=>({useAdminTime:()=>context.time}))
 vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:context.language})}))
 vi.mock('./SavedPlayerMatchesPanel',()=>({SavedPlayerMatchesPanel:()=> <div data-testid="saved-matches">Real saved matches panel</div>}))
-function mount(){
+function mount(entry='/admin/runs/run-a/people/p1'){
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
   const ui=()=> <QueryClientProvider client={client}>
-    <MemoryRouter initialEntries={['/admin/runs/run-a/people/p1']}><Routes>
+    <MemoryRouter initialEntries={[entry]}><Routes>
       <Route path="/admin/runs/:runId/people/:playerId" element={<SavedPlayerIdentityPage/>}/>
     </Routes></MemoryRouter>
   </QueryClientProvider>
@@ -43,6 +43,14 @@ describe('Saved player three-tab profile',()=>{
     expect(screen.queryByText('0–200', {exact:true})).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab',{name:'Career & results'}))
     expect(screen.getByTestId('saved-matches')).toBeInTheDocument()
+  })
+  it('restores the career tab from a match-detail return URL', async () => {
+    mount('/admin/runs/run-a/people/p1?tab=career&careerSeason=2&careerPage=1')
+    expect(await screen.findByRole('heading', {name: 'Sample Player'})).toBeInTheDocument()
+    expect(screen.getByRole('tab', {name: 'Career & results'})).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByTestId('saved-matches')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('tab', {name: 'Overview'}))
+    expect(screen.getByRole('tab', {name: 'Overview'})).toHaveAttribute('aria-selected', 'true')
   })
   it('refuses historical mode instead of querying the current profile',()=>{
     context.time.mode='checkpoint'

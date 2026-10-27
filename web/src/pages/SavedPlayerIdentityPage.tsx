@@ -1,7 +1,6 @@
 /** Branch-owned present-time profile from a single verified Saved Revision. */
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getSavedPlayerProfile } from '../api/client'
 import { PlayerHealthAdminPanel } from './PlayerHealthAdminPanel'
@@ -13,9 +12,20 @@ import { formatApiError } from '../utils/apiErrors'
 
 export function SavedPlayerIdentityPage(): JSX.Element {
   const { runId = '', playerId = '' } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { language } = useLanguage()
   const cs = language === 'cs'
-  const [tab, setTab] = useState<'overview' | 'attributes' | 'career' | 'health'>('overview')
+  // Profile tabs are URL state so the match-detail Back link can restore the career view.
+  const requestedTab = searchParams.get('tab')
+  const tab: 'overview' | 'attributes' | 'career' | 'health' =
+    requestedTab === 'attributes' || requestedTab === 'career' || requestedTab === 'health'
+      ? requestedTab : 'overview'
+  const setTab = (next: typeof tab) => {
+    const copy = new URLSearchParams(searchParams)
+    if (next === 'overview') copy.delete('tab')
+    else copy.set('tab', next)
+    setSearchParams(copy)
+  }
   const { selectedBranch, isLoading, error } = useAdminBranch()
   const time = useAdminTime()
   const branchId = selectedBranch?.run_id === runId ? selectedBranch.branch_id : null

@@ -281,3 +281,76 @@ it('preserves revised zero duration, original start, new zero and player token a
   expect(confirmRankingCommand).not.toHaveBeenCalled()
   expect(saveRankingPreparation).not.toHaveBeenCalled()
 })
+
+it('shows rollover target and season warning in both languages without changing the target payload', async () => {
+  const lastWeek = { ...latest, snapshot: { ...latest.snapshot, week: { season_index: 0, week: 61 } } }
+  vi.mocked(getRankingCandidateInputs).mockResolvedValue({
+    run_id: 'run', branch_id: 'branch', week: lastWeek.snapshot.week,
+    candidate_fingerprint: latest.fingerprint, publication_status: 'candidate_only',
+    verification_status: 'complete_manifest',
+    manifest: { players: [player], results: [], zeros_from_history: true },
+    zero_sources: [],
+  })
+  show(lastWeek)
+  await userEvent.click(screen.getByRole('button', { name: 'Prepare next ranking' }))
+  expect(await screen.findByText(/Season boundary: explicitly review/)).toBeVisible()
+  expect(screen.getByText(/Prepare 2001\/02 · Week 1/)).toBeVisible()
+  await userEvent.click(screen.getByRole('button', { name: 'Čeština' }))
+  expect(screen.getByText(/Hranice sezony: před výpočtem/)).toBeVisible()
+  expect(screen.getByText(/Připravit 2001\/02 · Týden 1/)).toBeVisible()
+  expect(screen.getByLabelText('ID hráče')).toHaveValue('player-1')
+  await userEvent.type(screen.getByLabelText('Označení operátora'), 'Operator')
+  await userEvent.type(screen.getByLabelText('Důvod změny'), 'Rollover checked')
+  await userEvent.click(screen.getByLabelText('Zkontroloval(a) jsem soupisku, cílová pravidla a rozhodnutí pro tento týden.'))
+  await userEvent.click(screen.getByRole('button', { name: 'Vypočítat náhled' }))
+  expect(await screen.findByRole('region', { name: 'Náhled žebříčku' })).toBeVisible()
+  const cmd = vi.mocked(previewRankingCommand).mock.calls[0][2]
+  expect('context' in cmd && cmd.context.target_week).toEqual({ season_index: 1, week: 1 })
+  expect(confirmRankingCommand).not.toHaveBeenCalled()
+  expect(saveRankingPreparation).not.toHaveBeenCalled()
+})
+
+it('keeps loading and retry of prior candidate inputs read-only after a language switch', async () => {
+  const response = {
+    run_id: 'run', branch_id: 'branch', week: latest.snapshot.week,
+    candidate_fingerprint: latest.fingerprint, publication_status: 'candidate_only' as const,
+    verification_status: 'complete_manifest' as const,
+    manifest: { players: [player], results: [], zeros_from_history: true },
+    zero_sources: [],
+  }
+  vi.mocked(getRankingCandidateInputs).mockRejectedValueOnce(new Error('Input network unavailable'))
+    .mockResolvedValue(response)
+  show(latest)
+  await userEvent.click(screen.getByRole('button', { name: 'Prepare next ranking' }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Input network unavailable')
+  await userEvent.click(screen.getByRole('button', { name: 'Čeština' }))
+  expect(getRankingCandidateInputs).toHaveBeenCalledTimes(1)
+  await userEvent.click(screen.getByRole('button', { name: 'Znovu načíst vstupy přípravy' }))
+  expect(await screen.findByLabelText('ID hráče')).toHaveValue('player-1')
+  expect(screen.getByLabelText('Stabilní token pro rozhodnutí shody')).toHaveValue('raw-token')
+  expect(getRankingCandidateInputs).toHaveBeenCalledTimes(2)
+  expect(previewRankingCommand).not.toHaveBeenCalled()
+  expect(confirmRankingCommand).not.toHaveBeenCalled()
+  expect(saveRankingPreparation).not.toHaveBeenCalled()
+})
+
+it('keeps unique numbered player-removal controls and unchanged tokens across locale changes', async () => {
+  show()
+  await userEvent.click(screen.getByRole('button', { name: 'Prepare initial ranking' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Add player' }))
+  await userEvent.click(screen.getByRole('button', { name: 'Add player' }))
+  const rawTokens = screen.getAllByLabelText('Stable tie-break token').map(input => (input as HTMLInputElement).value)
+  expect(rawTokens).toHaveLength(2)
+  expect(rawTokens[0]).not.toBe(rawTokens[1])
+  expect(screen.getByRole('button', { name: 'Remove player 1' })).toBeVisible()
+  expect(screen.getByRole('button', { name: 'Remove player 2' })).toBeVisible()
+  await userEvent.click(screen.getByRole('button', { name: 'Čeština' }))
+  expect(screen.getAllByLabelText('Stabilní token pro rozhodnutí shody').map(input => (input as HTMLInputElement).value)).toEqual(rawTokens)
+  await userEvent.click(screen.getByRole('button', { name: 'Odebrat hráče 1' }))
+  expect(screen.getByRole('button', { name: 'Odebrat hráče 1' })).toBeVisible()
+  expect(screen.queryByRole('button', { name: 'Odebrat hráče 2' })).not.toBeInTheDocument()
+  expect(screen.getByLabelText('Stabilní token pro rozhodnutí shody')).toHaveValue(rawTokens[1])
+  expect(previewRankingCommand).not.toHaveBeenCalled()
+  expect(confirmRankingCommand).not.toHaveBeenCalled()
+  expect(saveRankingPreparation).not.toHaveBeenCalled()
+})

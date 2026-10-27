@@ -12,7 +12,7 @@ const context=vi.hoisted(()=>({
   time:{mode:'present',isLoading:false,error:null},
   language:'en'
 }))
-vi.mock('../api/client',()=>api)
+vi.mock('../api/client',()=>({...api,ApiError:class ApiError extends Error{}}))
 vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
   selectedBranch:context.branch,isLoading:false,error:null
 })}))
@@ -294,7 +294,7 @@ describe('Saved Edition detail',()=>{
     const nav=screen.getByRole('navigation',{name:'Edition sections'})
     const overview=within(nav).getByRole('button',{name:'Overview'})
     overview.focus()
-    overview.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}))
+    await userEvent.keyboard('{ArrowRight}')
     expect(within(nav).getByRole('button',{name:'Entries & participants'})).toHaveAttribute('aria-current','page')
     expect(screen.getByRole('link',{name:/Back to calendar/})).toHaveAttribute(
       'href',expect.stringContaining('revision=rev-old'))

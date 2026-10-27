@@ -12,7 +12,7 @@ const context=vi.hoisted(()=>({
   time:{mode:'present',presentSeason:2,isLoading:false,error:null},
   language:'en'
 }))
-vi.mock('../api/client',()=>api)
+vi.mock('../api/client',()=>({...api,ApiError:class ApiError extends Error{}}))
 vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
   selectedBranch:context.branch,isLoading:false,error:null
 })}))

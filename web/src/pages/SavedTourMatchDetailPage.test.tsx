@@ -12,7 +12,7 @@ const state=vi.hoisted(()=>({
   mode:'present',timeLoading:false,timeError:null as string|null,
   branchLoading:false,branchError:null as string|null,language:'en'
 }))
-vi.mock('../api/client',()=>api)
+vi.mock('../api/client',()=>({...api,ApiError:class ApiError extends Error{}}))
 vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
   selectedBranch:state.branch,isLoading:state.branchLoading,error:state.branchError
 })}))

@@ -6,7 +6,7 @@ import { SavedPlayerIdentityPage } from './SavedPlayerIdentityPage'
 
 const api=vi.hoisted(()=>({getSavedPlayerProfile:vi.fn()}))
 const context=vi.hoisted(()=>({time:{mode:'present',viewCheckpointId:null}}))
-vi.mock('../api/client',()=>api)
+vi.mock('../api/client',()=>({...api,ApiError:class ApiError extends Error{}}))
 vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
   selectedBranch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a'},
   isLoading:false,error:null

@@ -8,7 +8,7 @@ import { LanguageProvider } from '../i18n/LanguageContext'
 const api = vi.hoisted(() => ({
   getSavedPlayerMatchDetail: vi.fn(), getSavedHomePlayerIdentities: vi.fn(),
 }))
-vi.mock('../api/client', () => api)
+vi.mock('../api/client',()=>({...api,ApiError:class ApiError extends Error{}}))
 const branchContext = vi.hoisted(() => ({
   current: { run_id: 'run', branch_id: 'branch', saved_head_revision_id: 'rev' }
 }))

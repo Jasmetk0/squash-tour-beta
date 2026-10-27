@@ -1,4 +1,6 @@
 """Audited group tie command over the existing global-slot ledger."""
+import json
+
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.calendar_global_slots import (
     GlobalSlot,
@@ -32,10 +34,10 @@ def apply_group_tie(session, ctx, state, authority, command, *, persist, _succes
     progress = group_progress(authority, group_slots(cp))
     if not progress['tie_case'] or command.data['case'] != progress['tie_case']:
         raise ValueError('Tie case is stale, foreign, already resolved or absent')
-    decision = TournamentGroupTieResolutionDecision.model_validate({
+    decision = TournamentGroupTieResolutionDecision.model_validate_json(json.dumps({
         'case': command.data['case'], 'ordered_player_ids': command.data['ordered_player_ids'],
         'admin_reason': command.audit_reason,
-    })
+    }))
     record = NativeGroupTieDecision(edition_id=authority.edition.edition_id,
         command_id=command.command_id, operator_label=command.operator_label, decision=decision)
     if getattr(cp, 'schema_version', None) == 'native_fork_competition.v1':

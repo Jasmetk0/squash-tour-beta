@@ -157,7 +157,8 @@ it('switching language never opens Save, refreshes preview or writes an unconfir
   await userEvent.click(screen.getByRole('button', { name: 'Čeština' }))
   expect(screen.getByText('Příprava žebříčku byla uložena.')).toBeVisible()
   expect(saveRankingPreparation).toHaveBeenCalledTimes(1)
-  await waitFor(() => expect(previewRankingSave).toHaveBeenCalledTimes(1))
+  // An explicit successful Save intentionally invalidates queries once; language changes do not.
+  await waitFor(() => expect(previewRankingSave).toHaveBeenCalledTimes(2))
 })
 
 it('keeps a failed result source request read-only and retries only on explicit click after a switch', async () => {

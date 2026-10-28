@@ -145,6 +145,9 @@ describe('canonical Product Run creation', () => {
     await screen.findByText(/Sporting simulation is not available/)
     await userEvent.click(screen.getByRole('button', {name:'Create isolated Run'}))
     expect(await screen.findByRole('alert')).toHaveTextContent('does not match the reviewed request')
+    expect(screen.getByRole('link', { name: 'Open the created Run' }))
+      .toHaveAttribute('href', '/admin/runs/new-run-1')
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
     expect(navigate).not.toHaveBeenCalled()
   })
 
@@ -200,7 +203,7 @@ describe('canonical Product Run creation', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('The Run was created')
     expect(screen.getByRole('alert')).toHaveTextContent('do not create it again')
-    expect(screen.getByRole('alert')).not.toHaveTextContent('Could not create Run:')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Run creation was not confirmed')
     expect(screen.getByRole('link', { name: 'Open the created Run' }))
       .toHaveAttribute('href', '/admin/runs/new-run-1')
     expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
@@ -221,5 +224,28 @@ describe('canonical Product Run creation', () => {
     } finally {
       storage.mockRestore()
     }
+  })
+
+  it('allows retry only when a create request was not confirmed', async () => {
+    api.createEmptyRunContainer.mockRejectedValueOnce(new Error('connection interrupted'))
+    renderPage()
+    await userEvent.type(screen.getByLabelText('Unique Run name'), 'My test Run')
+    await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Check the Run inventory before retrying')
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeEnabled()
+    await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/admin/runs/new-run-1'))
+    expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(2)
+  })
+
+  it('encodes a server-confirmed Run ID in the navigation path without altering its identity', async () => {
+    api.createEmptyRunContainer.mockResolvedValueOnce({
+      run_id: 'run/č 1', display_name: 'My test Run', storage_kind: 'custom_local', read_only: false
+    })
+    renderPage()
+    await userEvent.type(screen.getByLabelText('Unique Run name'), 'My test Run')
+    await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/admin/runs/run%2F%C4%8D%201'))
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run/č 1')
   })
 })

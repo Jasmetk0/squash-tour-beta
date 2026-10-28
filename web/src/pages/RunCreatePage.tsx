@@ -76,7 +76,9 @@ export function RunCreatePage(): JSX.Element {
     try {
       const created = reviewed ? await createEmptyRunContainer(displayName, reviewed.input)
         : await createEmptyRunContainer(displayName)
-      if (!created.run_id || created.display_name !== displayName || created.read_only || created.storage_kind !== 'custom_local') {
+      if (typeof created.run_id !== 'string' || !created.run_id.trim()
+        || created.run_id.trim() !== created.run_id
+        || created.display_name !== displayName || created.read_only || created.storage_kind !== 'custom_local') {
         throw new Error(t.identity)
       }
       // The validated identity exists even if its returned calendar does not
@@ -124,9 +126,13 @@ export function RunCreatePage(): JSX.Element {
       // Read the actual server inventory; browser-local history and cached
       // React Query data are never proof that an uncertain POST did not commit.
       const inventory = await listRunContainers()
-      if (!Array.isArray(inventory?.run_containers)) throw new Error('Invalid Run inventory')
-      const matches = inventory.run_containers.filter(run => run?.display_name === requestedName)
-      if (matches.length > 1 || matches.some(run => typeof run.run_id !== 'string' || !run.run_id.trim())) {
+      if (!Array.isArray(inventory?.run_containers) || inventory.run_containers.some(run =>
+        !run || typeof run.run_id !== 'string' || !run.run_id.trim()
+        || run.run_id.trim() !== run.run_id
+        || (run.display_name !== null && typeof run.display_name !== 'string')
+      )) throw new Error('Invalid Run inventory')
+      const matches = inventory.run_containers.filter(run => run.display_name === requestedName)
+      if (matches.length > 1) {
         throw new Error('Ambiguous Run inventory')
       }
       if (matches.length === 1) {

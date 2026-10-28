@@ -317,7 +317,7 @@ export function SavedTourEditionPage():JSX.Element {
           <button type="button" disabled={!matchSearch} onClick={()=>setMatchSearch('')}>
             {cs?'Vymazat hledání zápasů':'Clear match search'}</button>
           <p className="status">{cs?'Zobrazeno publikovaných zápasů':'Published matches shown'}:
-            {' '}{filteredResults.length}/{matches.length}</p>
+            {' '}<strong>{filteredResults.length}/{matches.length}</strong></p>
           {matches.length>0&&filteredResults.length===0&&<p role="status">{cs?
             'Žádný publikovaný zápas neodpovídá hledání.':'No published matches match the search.'}</p>}
           <a href="#saved-results-main">{cs?'Hlavní část':'Main'}</a>

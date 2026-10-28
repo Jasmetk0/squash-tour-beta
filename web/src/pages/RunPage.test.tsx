@@ -53,14 +53,11 @@ function savedReadiness(draftVersion = 1) {
       season_start_year_week: 37, start_year: 2000, season_count: 50,
     },
     phase: 'preparation',
-    items: [
-      { code: 'world', status: 'missing', evidence_count: 0 },
-      { code: 'calendar_package', status: 'missing', evidence_count: 0 },
-      { code: 'population', status: 'missing', evidence_count: 0 },
-      { code: 'health', status: 'optional', evidence_count: 0 },
-      { code: 'official_ranking', status: 'missing', evidence_count: 0 },
-      { code: 'working_draft', status: 'saved', evidence_count: 0 },
-    ],
+    items: (['world', 'calendar_package', 'population', 'health',
+      'official_ranking', 'working_draft'] as const).map(code => ({
+      code, status: code === 'health' ? 'optional' : code === 'working_draft' ? 'saved' : 'missing',
+      evidence_count: 0
+    })),
     saved_transition_count: 0, saved_published_ranking_count: 0,
     active_full_simulation_task_count: 0, historical_full_simulation_task_count: 0,
     sporting_calendar_supported_by_legacy_writers: true,

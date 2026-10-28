@@ -9,7 +9,8 @@ import {useAdminTime} from '../admin/AdminTimeContext'
 import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
 import {calendarSeasonIndex} from './runWorldCountryTournaments'
-import {calendarWeeksWithEditions,filterSavedTourEvents,savedCalendarPublication} from './savedTourCalendarDiscovery'
+import {calendarWeeksWithEditions,filterSavedTourEvents,neighboringMatchingWeeks,
+  savedCalendarPublication,savedCalendarWeek} from './savedTourCalendarDiscovery'
 
 const choices=Array.from({length:50},(_,i)=>i)
 export function SavedTourCalendarPage():JSX.Element{
@@ -44,10 +45,19 @@ export function SavedTourCalendarPage():JSX.Element{
   const editions=useMemo(()=>model?.editions??[],[model])
   const options=(field:'tour_level'|'category'|'host_country')=>[...new Set(editions.map(e=>e[field]).filter((v):v is string=>Boolean(v)))].sort()
   const shown=filterSavedTourEvents(editions,filters)
-  const weeks=calendarWeeksWithEditions(shown,model?.week_count??61,compactWeeks)
+  const weekCount=model?.week_count??61
+  const selectedWeek=savedCalendarWeek(params.get('week'),weekCount)
+  const occupiedWeeks=calendarWeeksWithEditions(shown,weekCount,true)
+  const adjacent=neighboringMatchingWeeks(occupiedWeeks,typeof selectedWeek==='number'?selectedWeek:null)
+  const weeks=calendarWeeksWithEditions(shown,weekCount,compactWeeks)
+    .filter(week=>selectedWeek===null||week===selectedWeek)
+  const weekEditions=selectedWeek==='invalid'?[]:selectedWeek===null?shown:
+    shown.filter(e=>e.season_week===selectedWeek)
   const set=(key:string,value:string)=>{
     const copy=new URLSearchParams(params)
     if(value)copy.set(key,value);else copy.delete(key)
+    // A chosen week belongs to its current season, not the next season.
+    if(key==='season')copy.delete('week')
     // Pin a new navigation to the exact immutable source it displayed.
     if(branch)copy.set('branch',branch)
     if(revision)copy.set('revision',revision)
@@ -117,6 +127,26 @@ export function SavedTourCalendarPage():JSX.Element{
     {view==='weeks'&&<label><input type="checkbox" checked={compactWeeks}
       onChange={e=>set('compactWeeks',e.target.checked?'1':'')}/>
       {cs?' Jen týdny s odpovídajícími edicemi':' Only weeks with matching editions'}</label>}
+    <div className="grid">
+      <label>{cs?'Přejít na týden':'Jump to week'} <select
+        aria-label={cs?'Zaměření na týden uložené sezony':'Saved Tour focused week'}
+        value={selectedWeek===null?'':selectedWeek==='invalid'?'invalid':String(selectedWeek)}
+        onChange={e=>set('week',e.target.value)}>
+        <option value="">{cs?'Všechny týdny':'All weeks'}</option>
+        {selectedWeek==='invalid'&&<option value="invalid" disabled>{cs?'Neplatný týden':'Invalid week'}</option>}
+        {Array.from({length:weekCount},(_,i)=>i+1).map(n=><option key={n} value={n}>
+          {cs?'Týden':'Week'} {n}{occupiedWeeks.includes(n)?' •':''}
+        </option>)}
+      </select></label>
+    </div>
+    <div className="actions">
+      <button type="button" onClick={()=>set('week',String(adjacent.previous))}
+        disabled={adjacent.previous===null}>{cs?'Předchozí týden s edicí':'Previous matching week'}</button>
+      <button type="button" onClick={()=>set('week',String(adjacent.next))}
+        disabled={adjacent.next===null}>{cs?'Další týden s edicí':'Next matching week'}</button>
+      <button type="button" onClick={()=>set('week','')} disabled={selectedWeek===null}>
+        {cs?'Zobrazit všechny týdny':'Show all weeks'}</button>
+    </div>
     <div className="actions">
       <button type="button" disabled={!filters.tour&&!filters.category&&!filters.country&&!filters.search&&filters.publication==='all'}
         onClick={resetFilters}>{cs?'Vymazat filtry':'Clear filters'}</button>
@@ -130,9 +160,12 @@ export function SavedTourCalendarPage():JSX.Element{
     {scopeValid&&query.error&&<p role="alert">{formatApiError(query.error)}</p>}
     {invalid&&<p role="alert">{cs?'Odpověď kalendáře neodpovídá vybrané Run/Branch/revizi/sezoně.':
       'Calendar response does not match the selected Run/Branch/revision/season.'}</p>}
-    {model&&<>
+    {selectedWeek==='invalid'&&<p role="alert">{cs?'Neplatný týden uložené sezony.':
+      'Invalid saved season week.'}</p>}
+    {model&&selectedWeek!=='invalid'&&<>
       <p className="status">{label} · {model.edition_count} {cs?'uložených edic':'saved editions'}
         {' · '}{shown.length} {cs?'po filtrování':'after filtering'}
+        {typeof selectedWeek==='number'&&<> · {weekEditions.length} {cs?'ve vybraném týdnu':'in focused week'}</>}
         {' · '}{cs?'Zdrojová Branch':'Source Branch'}: <code>{model.revision_branch_id}</code></p>
       {model.calendar_status==='empty'&&<p role="status">{cs?'Tato revize nemá uložený Calendar Package.':
         'This revision has no saved Calendar Package.'}</p>}
@@ -140,11 +173,13 @@ export function SavedTourCalendarPage():JSX.Element{
         'Sezona neobsahuje žádné uložené edice.':'This season has no saved editions.'}</p>}
       {model.calendar_status==='ready'&&editions.length>0&&shown.length===0&&<p role="status">{cs?
         'Žádné edice neodpovídají zvoleným filtrům.':'No saved editions match the selected filters.'}</p>}
+      {model.calendar_status==='ready'&&shown.length>0&&weekEditions.length===0&&<p role="status">{cs?
+        'Ve vybraném týdnu není žádná odpovídající edice.':'No matching editions in the focused week.'}</p>}
       {model.calendar_status==='ready'&&(view==='weeks'?<div className="saved-tour-week-grid" aria-label={compactWeeks
         ?(cs?'Týdny s odpovídajícími edicemi':'Saved Tour weeks with matching editions')
         :(cs?'61 týdnů uložené sezony':'Saved Tour 61 season weeks')}>
         {weeks.map(week=>{
-          const events=shown.filter(e=>e.season_week===week)
+          const events=weekEditions.filter(e=>e.season_week===week)
           return <section key={week} className="section-subtle">
             <h4>{cs?'Týden':'Week'} {week}</h4>
             {events.map(e=><p key={e.event_id}>{name(e)} <small>· {e.category} · {e.host_country}
@@ -155,7 +190,7 @@ export function SavedTourCalendarPage():JSX.Element{
           <thead><tr><th>{cs?'Týden':'Week'}</th><th>{cs?'Edice':'Edition'}</th>
             <th>Tour</th><th>{cs?'Kategorie':'Category'}</th><th>{cs?'Země':'Country'}</th>
             <th>{cs?'Výsledek':'Result'}</th></tr></thead>
-          <tbody>{shown.map(e=><tr key={e.event_id}>
+          <tbody>{weekEditions.map(e=><tr key={e.event_id}>
             <td>{e.season_week}</td><td>{name(e)}</td><td>{e.tour_level??'—'}</td>
             <td>{e.category}</td><td>{e.host_country}</td>
             <td>{e.result_published?(cs?'Publikován':'Published'):'—'}</td>

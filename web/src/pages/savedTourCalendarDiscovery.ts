@@ -28,6 +28,21 @@ export function filterSavedTourEvents(
       .some(value=>normalize(value).includes(query))))
 }
 
+/** Invalid deep links never silently fall back to the whole historical season. */
+export function savedCalendarWeek(raw:string|null,weekCount:number):number|null|'invalid'{
+  if(raw===null)return null
+  if(!/^[1-9]\d*$/.test(raw)||!Number.isSafeInteger(weekCount)||weekCount<1)return 'invalid'
+  const week=Number(raw)
+  return Number.isSafeInteger(week)&&week<=weekCount?week:'invalid'
+}
+export function neighboringMatchingWeeks(
+  occupiedWeeks:readonly number[],selectedWeek:number|null
+):{previous:number|null;next:number|null}{
+  if(selectedWeek===null)return {previous:null,next:null}
+  return {previous:occupiedWeeks.filter(week=>week<selectedWeek).slice(-1)[0]??null,
+    next:occupiedWeeks.find(week=>week>selectedWeek)??null}
+}
+
 /** Preserve canonical week order, including simultaneous Editions within one week. */
 export function calendarWeeksWithEditions(
   editions:readonly SavedTourEvent[],weekCount:number,onlyOccupied:boolean

@@ -1,6 +1,7 @@
 import {describe,expect,it} from 'vitest'
 import type {SavedTourEvent} from '../api/savedTour'
-import {calendarWeeksWithEditions,filterSavedTourEvents,savedCalendarPublication} from './savedTourCalendarDiscovery'
+import {calendarWeeksWithEditions,filterSavedTourEvents,neighboringMatchingWeeks,
+  savedCalendarPublication,savedCalendarWeek} from './savedTourCalendarDiscovery'
 
 function event(id:string,week:number,overrides:Partial<SavedTourEvent>={}):SavedTourEvent{
   return {event_id:id,event_name:id,season:'2002/2003',season_week:week,template_id:'tpl',
@@ -53,6 +54,24 @@ describe('Saved Tour discovery is a pure read-only projection',()=>{
     expect(calendarWeeksWithEditions(entries,1.5,false)).toEqual([])
   })
 
+  it('validates strict 1-based week links, including boundaries',()=>{
+    expect(savedCalendarWeek(null,61)).toBeNull()
+    expect(savedCalendarWeek('1',61)).toBe(1)
+    expect(savedCalendarWeek('61',61)).toBe(61)
+    for(const raw of ['','0','01','-1','62','1.0','1e1','NaN','99999999999999999999']){
+      expect(savedCalendarWeek(raw,61)).toBe('invalid')
+    }
+    expect(savedCalendarWeek('1',0)).toBe('invalid')
+  })
+  it('moves to the nearest matching week while preserving empty intervals',()=>{
+    const occupied=[2,9,21,61]
+    expect(neighboringMatchingWeeks(occupied,null)).toEqual({previous:null,next:null})
+    expect(neighboringMatchingWeeks(occupied,1)).toEqual({previous:null,next:2})
+    expect(neighboringMatchingWeeks(occupied,9)).toEqual({previous:2,next:21})
+    expect(neighboringMatchingWeeks(occupied,16)).toEqual({previous:9,next:21})
+    expect(neighboringMatchingWeeks(occupied,61)).toEqual({previous:21,next:null})
+    expect(occupied).toEqual([2,9,21,61])
+  })
   it('handles absent optional search fields without crashing or inventing entries',()=>{
     const entries=[event('safe-id',4,{event_name:null as unknown as string,host_city:null})]
     expect(filterSavedTourEvents(entries,{...base,search:'safe-id'})).toEqual(entries)

@@ -99,6 +99,14 @@ not add a generator, a second readiness authority or a hidden Save.
     support merely from matching clock numbers, because historic read-time
     calendar versions may still be unsupported. These checks cannot authorize
     simulation or publication on their own.
+16. Real HTTP/SQLite acceptance now exercises the read boundary, not just
+    mocked frontend results: an empty FAX Run remains a valid, optional-Health
+    preparation state across restart. A separate custom-calendar Run is forked
+    through the actual API, stages a Working Draft change without changing
+    Saved HEAD, rejects a stale Save version, then explicitly Saves. The
+    assertions compare immutable Saved evidence and Working Draft versions on
+    both Branches, including a fresh HTTP process/SQLite reopen. No test
+    generates sporting results or pretends a candidate is published.
 
 ## Validation boundary
 
@@ -110,8 +118,10 @@ CS/EN evidence labels, candidate versus published ranking, clean Working
 Draft and encoded Run-scoped repair paths. An uncertain create can be retried **only after** a successful, matching-name
 inventory reconciliation with no matching Run. A server-confirmed create cannot
 be retried on the same form. The negative inventory result is point-in-time
-evidence, not a guarantee about a concurrently completing request. They mock the
-API boundary and are **not** production HTTP/SQLite or real-browser acceptance.
+evidence, not a guarantee about a concurrently completing request. The frontend scenarios mock the
+API boundary, while the scoped backend tests in
+`tests/api/test_run_home_readiness_api.py` exercise production HTTP/SQLite.
+Neither is real-browser acceptance.
 
 The relevant frontend test/build and final-head hosted checks must complete
 successfully before the owner considers merging. Draft skips do not count as

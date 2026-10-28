@@ -120,6 +120,7 @@ describe('saved Run readiness panel', () => {
           : item.code === 'calendar_package' ? 'missing' as const : 'saved' as const
       }))
     })
+    expect(screen.getByText('Show saved-foundation checks (6) · 1 item needing attention')).toBeVisible()
     expect(screen.getAllByRole('link', { name: 'Add a Calendar Package →' })[0])
       .toHaveAttribute('href', '/admin/runs/run-a/manage')
     expect(screen.queryByText('Unsaved changes are not counted in this overview.')).toBeNull()
@@ -128,5 +129,17 @@ describe('saved Run readiness panel', () => {
   it('keeps the optional global Test Lab shortcut limited to preparation', () => {
     mount('en', { ...data, phase: 'sporting_history' })
     expect(screen.queryByRole('link', { name: 'Open global Test Lab' })).toBeNull()
+  })
+
+  it('uses the Czech plural for five missing saved foundations', () => {
+    mount('cs', {
+      ...data,
+      items: data.items.map(item => ({
+        ...item,
+        status: item.code === 'working_draft' ? 'saved' as const : 'missing' as const
+      }))
+    })
+    expect(screen.getByText('Zobrazit kontrolu uložených podkladů (6) · 5 položek k prověření'))
+      .toBeVisible()
   })
 })

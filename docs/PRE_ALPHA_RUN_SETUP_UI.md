@@ -86,6 +86,13 @@ not add a generator, a second readiness authority or a hidden Save.
     identity mismatch; missing Saved HEAD is stated explicitly rather than
     leaving a disabled readiness query showing "loading" indefinitely.
     Retries never Save, publish, advance time or run simulation.
+14. Readiness now additionally requires an independently verified Run container,
+    a valid canonical Run calendar and a matching current Working Draft before
+    presenting a Saved-foundations card. Previously a missing draft or malformed
+    Run clock could silently skip the cross-feed comparison. All three
+    read-only sources are re-fetched on manual recovery; a failed or foreign
+    component keeps the guide hidden rather than providing false authority.
+    Focused regressions cover offline draft, foreign draft and bad Run metadata.
 
 ## Validation boundary
 

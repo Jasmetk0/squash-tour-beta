@@ -439,8 +439,10 @@ export function RunPage(): JSX.Element {
         : 'Planning, package copies and calendar-aware player previews are available with explicit Save. The initial-ranking and first-tournament shortcuts below belong to the legacy 61-week workflow. Native operations for other calendars require their own preflights in Run Management and Simulation.'}</p>}
       {homeClock && <p><Link to={base + '/players/generate'}>{language === 'cs' ? 'Generovat hráče →' : 'Generate players →'}</Link></p>}
       {sportingClockSupported && <>
-      <RunInitialRankingSetupPanel run={run!} branch={selectedBranch} />
-      <RunInitialRankingPublicationPanel run={run!} branch={selectedBranch} />
+      <div id="run-initial-ranking">
+        <RunInitialRankingSetupPanel run={run!} branch={selectedBranch} />
+        <RunInitialRankingPublicationPanel run={run!} branch={selectedBranch} />
+      </div>
       <RunFirstTournamentPanel run={run!} branch={selectedBranch} />
       </>}
     </section>}

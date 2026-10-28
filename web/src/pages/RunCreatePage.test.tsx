@@ -1,4 +1,5 @@
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { QueryClient } from '@tanstack/react-query'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -20,11 +21,22 @@ const api = vi.hoisted(() => {
       this.status = status
     }
   }
-  return { ApiError, createEmptyRunContainer: vi.fn(), previewRunCalendarCreation: vi.fn() }
+  return { ApiError, createEmptyRunContainer: vi.fn(), previewRunCalendarCreation: vi.fn(), listRunContainers: vi.fn() }
 })
 vi.mock('../api/client', () => api)
 
 const renderPage = () => renderWithRoute(<LanguageProvider><RunCreatePage /></LanguageProvider>, '/admin/runs/new')
+async function openNamedRunForm(): Promise<void> {
+  renderPage()
+  await userEvent.type(screen.getByLabelText('Unique Run name'), 'My test Run')
+}
+async function submitNamedRun(): Promise<void> {
+  await openNamedRunForm()
+  await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
+}
+async function inspectSavedName(): Promise<void> {
+  await userEvent.click(await screen.findByRole('button', { name: 'Check saved Runs for this name' }))
+}
 const preview = (input: RunCalendarCreationInput) => {
   const count = input.season_count ?? input.last_season_start_year! - input.start_year + 1
   const clock = {schema_version: 'run_calendar.v1', weeks_per_year: input.weeks_per_year,
@@ -52,6 +64,7 @@ describe('canonical Product Run creation', () => {
       official_branch_id: 'timeline-1', status: 'active'
     })
     api.previewRunCalendarCreation.mockImplementation(async input => preview(input))
+    api.listRunContainers.mockResolvedValue({ run_containers: [] })
   })
 
   it('creates an isolated empty Product Run using only its display name and opens the saved identity', async () => {
@@ -144,6 +157,9 @@ describe('canonical Product Run creation', () => {
     await screen.findByText(/Sporting simulation is not available/)
     await userEvent.click(screen.getByRole('button', {name:'Create isolated Run'}))
     expect(await screen.findByRole('alert')).toHaveTextContent('does not match the reviewed request')
+    expect(screen.getByRole('link', { name: 'Open the created Run' }))
+      .toHaveAttribute('href', '/admin/runs/new-run-1')
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
     expect(navigate).not.toHaveBeenCalled()
   })
 
@@ -161,5 +177,216 @@ describe('canonical Product Run creation', () => {
       weeks_per_year:52, season_start_year_week:1, start_year:2000, last_season_start_year:2002
     })
     expect(screen.getByText('2002', {selector:'strong'})).toBeVisible()
+  })
+
+  it('sends only one authoritative create command for two submissions in the same render turn', async () => {
+    let resolveCreate!: (value: unknown) => void
+    api.createEmptyRunContainer.mockImplementationOnce(() => new Promise(done => { resolveCreate = done }))
+    await openNamedRunForm()
+    const form = screen.getByRole('button', { name: 'Create isolated Run' }).closest('form')!
+    fireEvent.submit(form)
+    fireEvent.submit(form)
+    expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
+    resolveCreate({ run_id: 'new-run-1', display_name: 'My test Run',
+      storage_kind: 'custom_local', read_only: false })
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/admin/runs/new-run-1'))
+  })
+
+  it('navigates after a validated create even when the inventory cache refresh fails', async () => {
+    const refresh = vi.spyOn(QueryClient.prototype, 'invalidateQueries')
+      .mockRejectedValueOnce(new Error('inventory refresh failed'))
+    try {
+      renderPage()
+      await userEvent.type(screen.getByLabelText('Unique Run name'), 'My test Run')
+      await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith('/admin/runs/new-run-1'))
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+      expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
+    } finally {
+      refresh.mockRestore()
+    }
+  })
+
+  it('explains that a validated Run exists if navigating to it fails, avoiding duplicate retries', async () => {
+    navigate.mockImplementationOnce(() => { throw new Error('router unavailable') })
+    await submitNamedRun()
+    expect(await screen.findByRole('alert')).toHaveTextContent('The Run was created')
+    expect(screen.getByRole('alert')).toHaveTextContent('do not create it again')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Run creation was not confirmed')
+    expect(screen.getByRole('link', { name: 'Open the created Run' }))
+      .toHaveAttribute('href', '/admin/runs/new-run-1')
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
+    // Even an explicit second submit on the still-mounted form cannot create a duplicate.
+    fireEvent.submit(screen.getByRole('button', { name: 'Create isolated Run' }).closest('form')!)
+    expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
+  })
+
+  it('creates a Run even if the browser denies localStorage writes', async () => {
+    await openNamedRunForm()
+    const storage = vi.spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => { throw new Error('storage unavailable') })
+    try {
+      await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith('/admin/runs/new-run-1'))
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    } finally {
+      storage.mockRestore()
+    }
+  })
+
+  it('allows retry only when a create request was not confirmed', async () => {
+    api.createEmptyRunContainer.mockRejectedValueOnce(new Error('connection interrupted'))
+    await submitNamedRun()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Check the Run inventory before retrying')
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
+    await userEvent.click(screen.getByRole('button', { name: 'Check saved Runs for this name' }))
+    expect(api.listRunContainers).toHaveBeenCalledTimes(1)
+    expect(screen.getByText(/No Run with this name is in the current inventory/)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeEnabled()
+    expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/admin/runs/new-run-1'))
+    expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(2)
+  })
+
+  it('freezes both custom-calendar inputs and creation while an uncertain POST is reconciled', async () => {
+    api.createEmptyRunContainer.mockRejectedValueOnce(new Error('response lost after submit'))
+    await openNamedRunForm()
+    const calendarToggle = screen.getByLabelText('Choose calendar and range')
+    await userEvent.click(calendarToggle)
+    await userEvent.selectOptions(screen.getByLabelText('Calendar preset'), 'earth')
+    await userEvent.click(screen.getByRole('button', { name: 'Review calendar' }))
+    expect(await screen.findByText(/Sporting simulation is not available/)).toBeVisible()
+    await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('response lost after submit')
+    expect(screen.getByLabelText('Unique Run name')).toBeDisabled()
+    expect(calendarToggle).toBeDisabled()
+    expect(screen.getByLabelText('Calendar preset')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
+    await inspectSavedName()
+    expect(await screen.findByText(/No Run with this name is in the current inventory/)).toBeVisible()
+    expect(calendarToggle).toBeEnabled()
+    expect(screen.getByLabelText('Calendar preset')).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeEnabled()
+    expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
+  })
+
+  it('encodes a server-confirmed Run ID in the navigation path without altering its identity', async () => {
+    api.createEmptyRunContainer.mockResolvedValueOnce({
+      run_id: 'run/č 1', display_name: 'My test Run', storage_kind: 'custom_local', read_only: false
+    })
+    await submitNamedRun()
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/admin/runs/run%2F%C4%8D%201'))
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run/č 1')
+  })
+
+  it('resolves a lost create reply to a matching saved Run without repeating POST', async () => {
+    api.createEmptyRunContainer.mockRejectedValueOnce(new Error('connection lost after commit'))
+    api.listRunContainers.mockResolvedValueOnce({ run_containers: [{
+      run_id: 'saved/č', display_name: 'My test Run', read_only: false,
+      storage_kind: 'custom_local'
+    }] })
+    await submitNamedRun()
+    expect(await screen.findByRole('button', { name: 'Check saved Runs for this name' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
+    await userEvent.click(screen.getByRole('button', { name: 'Check saved Runs for this name' }))
+    expect(await screen.findByRole('link', { name: 'Open Run with this name' }))
+      .toHaveAttribute('href', '/admin/runs/saved%2F%C4%8D')
+    expect(screen.getByText(/A Run with this exact name exists/)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
+    fireEvent.submit(screen.getByRole('button', { name: 'Create isolated Run' }).closest('form')!)
+    expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
+    expect(navigate).not.toHaveBeenCalled()
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBeNull()
+  })
+
+  it('fails closed if the fresh inventory is unavailable and permits an explicit recheck', async () => {
+    api.createEmptyRunContainer.mockRejectedValueOnce(new Error('network interrupted'))
+    api.listRunContainers.mockRejectedValueOnce(new Error('offline'))
+    await submitNamedRun()
+    await inspectSavedName()
+    expect(await screen.findByText(/Could not verify the Run inventory/)).toHaveTextContent('offline')
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
+    expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('button', { name: 'Check saved Runs for this name' }))
+    expect(await screen.findByText(/No Run with this name is in the current inventory/)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeEnabled()
+  })
+
+  it('rejects malformed or ambiguous inventory data instead of authorizing an unsafe retry', async () => {
+    api.createEmptyRunContainer.mockRejectedValueOnce(new Error('unknown outcome'))
+    api.listRunContainers.mockResolvedValueOnce({ run_containers: [{
+      display_name: 'My test Run', run_id: ' '
+    }] })
+    await submitNamedRun()
+    await inspectSavedName()
+    expect(await screen.findByText(/Invalid Run inventory/)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
+    expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores unrelated inventory rows and does not infer ownership of their Run IDs', async () => {
+    api.createEmptyRunContainer.mockRejectedValueOnce(new Error('timeout'))
+    api.listRunContainers.mockResolvedValueOnce({ run_containers: [{
+      run_id: 'other', display_name: 'Other name', storage_kind: 'custom_local', read_only: false
+    }] })
+    await submitNamedRun()
+    await inspectSavedName()
+    expect(await screen.findByText(/No Run with this name is in the current inventory/)).toBeVisible()
+    expect(screen.queryByRole('link', { name: 'Open Run with this name' })).toBeNull()
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBeNull()
+  })
+
+  it('does not issue duplicate inventory checks when its check is already in flight', async () => {
+    let resolve!: (value: unknown) => void
+    api.createEmptyRunContainer.mockRejectedValueOnce(new Error('timeout'))
+    api.listRunContainers.mockImplementationOnce(() => new Promise(done => { resolve = done }))
+    await submitNamedRun()
+    const check = await screen.findByRole('button', { name: 'Check saved Runs for this name' })
+    fireEvent.click(check)
+    fireEvent.click(check)
+    expect(api.listRunContainers).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
+    resolve({ run_containers: [] })
+    expect(await screen.findByText(/No Run with this name is in the current inventory/)).toBeVisible()
+  })
+
+  it('does not trust an invalid server-confirmed ID or save it in local navigation hints', async () => {
+    api.createEmptyRunContainer.mockResolvedValueOnce({
+      run_id: ' ', display_name: 'My test Run', read_only: false,
+      storage_kind: 'custom_local'
+    })
+    await submitNamedRun()
+    expect(await screen.findByRole('alert')).toHaveTextContent('unexpected Run identity')
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Check saved Runs for this name' })).toBeVisible()
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBeNull()
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it('rejects a malformed unrelated inventory row instead of falsely concluding no matching Run exists', async () => {
+    api.createEmptyRunContainer.mockRejectedValueOnce(new Error('timeout'))
+    api.listRunContainers.mockResolvedValueOnce({ run_containers: [
+      null,
+      { run_id: 'other', display_name: 'Different Run' }
+    ] })
+    await submitNamedRun()
+    expect(screen.getByLabelText('Unique Run name')).toBeDisabled()
+    await inspectSavedName()
+    expect(await screen.findByText(/Invalid Run inventory/)).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
+  })
+
+  it('rejects multiple exact-name Run matches as ambiguous without guessing which was created', async () => {
+    api.createEmptyRunContainer.mockRejectedValueOnce(new Error('request timed out'))
+    api.listRunContainers.mockResolvedValueOnce({ run_containers: [
+      { run_id: 'one', display_name: 'My test Run' },
+      { run_id: 'two', display_name: 'My test Run' }
+    ] })
+    await submitNamedRun()
+    await inspectSavedName()
+    expect(await screen.findByText(/Ambiguous Run inventory/)).toBeVisible()
+    expect(screen.queryByRole('link', { name: 'Open Run with this name' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
   })
 })

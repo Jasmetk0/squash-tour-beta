@@ -95,6 +95,30 @@ const NEXT = {
   }
 }
 
+// Pair new recovery copy by meaning rather than duplicating locale object blocks.
+const readinessText = {
+  checking: {
+    cs: 'Ověřuji aktuální uložené podklady vybrané branche…',
+    en: 'Verifying current Saved foundations of the selected Branch…'
+  },
+  unavailable: {
+    cs: 'Kontrolu připravenosti nelze ověřit. Žádný uložený podklad nebyl tímto krokem potvrzen.',
+    en: 'Saved readiness cannot be verified. No saved foundation was confirmed by this inspection.'
+  },
+  retry: {
+    cs: 'Znovu ověřit uložené podklady',
+    en: 'Recheck Saved foundations'
+  },
+  emptyHead: {
+    cs: 'Vybraná Branch nemá ověřenou Saved Revision HEAD. Kontrola podkladů zatím není dostupná.',
+    en: 'The selected Branch has no verified Saved Revision HEAD. The foundation inspection is unavailable.'
+  },
+  retryNote: {
+    cs: 'Opakování pouze načte aktuální uložený stav. Nic neukládá, nepublikuje ani nespouští simulaci.',
+    en: 'Retry only reads the current Saved state. It neither Saves, publishes nor starts simulation.'
+  }
+} as const
+
 function Unavailable({ message }: { message: string }): JSX.Element {
   return <p className="error" role="alert">{message}</p>
 }
@@ -122,25 +146,25 @@ export function RunPage(): JSX.Element {
     retry: false
   })
   const packageQuery = useQuery({
-    queryKey: ['run-package-state', runId, branchId],
+    queryKey: ['run-package-state', runId, branchId, selectedBranch?.saved_head_revision_id],
     queryFn: () => getRunPackageState(runId, branchId!),
     enabled: ready,
     retry: false
   })
   const positionQuery = useQuery({
-    queryKey: ['authoritative-simulation-position', runId, branchId],
+    queryKey: ['authoritative-simulation-position', runId, branchId, selectedBranch?.saved_head_revision_id],
     queryFn: () => getAuthoritativeSimulationPosition(runId, branchId!),
     enabled: ready,
     retry: false
   })
   const pendingQuery = useQuery({
-    queryKey: ['authoritative-pending-full-simulations', runId, branchId],
+    queryKey: ['authoritative-pending-full-simulations', runId, branchId, selectedBranch?.saved_head_revision_id],
     queryFn: () => getPendingAuthoritativeFullSimulations(runId, branchId!),
     enabled: ready,
     retry: false
   })
   const simulationHistoryQuery = useQuery({
-    queryKey: ['authoritative-full-simulation-history', runId, branchId],
+    queryKey: ['authoritative-full-simulation-history', runId, branchId, selectedBranch?.saved_head_revision_id],
     queryFn: () => getAuthoritativeFullSimulationHistory(runId, branchId!),
     enabled: ready,
     retry: false
@@ -163,13 +187,21 @@ export function RunPage(): JSX.Element {
     enabled: ready && Boolean(selectedBranch?.saved_head_revision_id),
     retry: false
   })
+  // An old successful response may survive while React Query refreshes or
+  // after the refresh fails. Do not let those cached data feed the current
+  // sporting timeline or a follow-on player-name lookup.
+  const activityVerified = homeActivityQuery.isSuccess && !homeActivityQuery.isFetching
+    && homeActivityQuery.data?.run_id === runId
+    && homeActivityQuery.data.branch_id === branchId
+    && homeActivityQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
+  const rankingVerified = rankingChangesQuery.isSuccess && !rankingChangesQuery.isFetching
+    && rankingChangesQuery.data?.run_id === runId
+    && rankingChangesQuery.data.branch_id === branchId
+    && rankingChangesQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
   const identityIds = Array.from(new Set([
-    ...(homeActivityQuery.data?.run_id === runId && homeActivityQuery.data?.branch_id === branchId &&
-      homeActivityQuery.data?.saved_revision_id === selectedBranch?.saved_head_revision_id
-      ? homeActivityQuery.data.recent_results.flatMap(result => [result.champion_player_id, result.finalist_player_id]) : []),
-    ...(rankingChangesQuery.data?.run_id === runId && rankingChangesQuery.data?.branch_id === branchId &&
-      rankingChangesQuery.data?.saved_revision_id === selectedBranch?.saved_head_revision_id
-      ? rankingChangesQuery.data.changes.map(change => change.player_id) : [])
+    ...(activityVerified ? homeActivityQuery.data!.recent_results.flatMap(
+      result => [result.champion_player_id, result.finalist_player_id]) : []),
+    ...(rankingVerified ? rankingChangesQuery.data!.changes.map(change => change.player_id) : [])
   ])).sort()
   const identitiesQuery = useQuery({
     queryKey: ['run-home-player-identities', runId, branchId, selectedBranch?.saved_head_revision_id, identityIds.join('|')],
@@ -178,53 +210,111 @@ export function RunPage(): JSX.Element {
     retry: false
   })
   const revisionsQuery = useQuery({
-    queryKey: ['run-home-revisions', runId, branchId],
+    queryKey: ['run-home-revisions', runId, branchId, selectedBranch?.saved_head_revision_id],
     queryFn: () => listSavedRevisionHistory(runId, branchId!, { limit: 4 }),
-    enabled: ready,
+    enabled: ready && Boolean(selectedBranch?.saved_head_revision_id),
     retry: false
   })
 
-  const homeActivity = homeActivityQuery.data?.run_id === runId
-    && homeActivityQuery.data.branch_id === branchId
-    && homeActivityQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
-    ? homeActivityQuery.data : null
-  const homeActivityMismatch = homeActivityQuery.isSuccess && !homeActivity
-  const rankingChanges = rankingChangesQuery.data?.run_id === runId
-    && rankingChangesQuery.data.branch_id === branchId
-    && rankingChangesQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
-    ? rankingChangesQuery.data : null
-  const rankingChangesMismatch = rankingChangesQuery.isSuccess && !rankingChanges
-  const identitiesValid = identitiesQuery.data?.run_id === runId &&
-    identitiesQuery.data?.branch_id === branchId &&
-    identitiesQuery.data?.saved_revision_id === selectedBranch?.saved_head_revision_id &&
-    identitiesQuery.data?.requested_ids.join('|') === identityIds.join('|')
+  const homeActivity = activityVerified ? homeActivityQuery.data! : null
+  const homeActivityMismatch = homeActivityQuery.isSuccess
+    && !homeActivityQuery.isFetching && !activityVerified
+  const rankingChanges = rankingVerified ? rankingChangesQuery.data! : null
+  const rankingChangesMismatch = rankingChangesQuery.isSuccess
+    && !rankingChangesQuery.isFetching && !rankingVerified
+  const identitiesValid = identitiesQuery.isSuccess && !identitiesQuery.isFetching
+    && identitiesQuery.data?.run_id === runId
+    && identitiesQuery.data.branch_id === branchId
+    && identitiesQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
+    && identitiesQuery.data.requested_ids.join('|') === identityIds.join('|')
   const playerIdentities = identitiesValid
     ? Object.fromEntries(identitiesQuery.data!.players.map(player => [player.player_id, player])) : {}
-  const identitiesMismatch = identitiesQuery.isSuccess && !identitiesValid
-  const run = containerQuery.data?.run_id === runId ? containerQuery.data : null
+  const identitiesMismatch = identitiesQuery.isSuccess && !identitiesQuery.isFetching && !identitiesValid
+  // A successful cached Run may become obsolete while another tab changes
+  // its calendar or while a refresh fails. Do not expose legacy-only setup
+  // from stale metadata; only the settled current Run can authorize links.
+  const run = containerQuery.isSuccess && !containerQuery.isFetching
+    && containerQuery.data?.run_id === runId ? containerQuery.data : null
   const homeClock = run ? runHomeClock(run.metadata_json) : null
   const sportingClockSupported = homeClock !== null && homeClock.weeks_per_year === 61
     && homeClock.season_start_year_week === 37 && homeClock.start_year === 2000 && homeClock.season_count === 50
-  const draft = draftQuery.data?.run_id === runId && draftQuery.data.branch_id === branchId ? draftQuery.data : null
-  const readiness = readinessQuery.data?.run_id === runId
+  // React Query retains previous success through refresh and some errors.
+  // A prior clean draft must not be shown as current while rechecking it.
+  const draft = draftQuery.isSuccess && !draftQuery.isFetching
+    && draftQuery.data?.run_id === runId && draftQuery.data.branch_id === branchId
+    ? draftQuery.data : null
+  // A failed refresh may retain previously successful React Query data. Never
+  // display that stale snapshot as current Saved readiness while rechecking or
+  // after a failed read, even when its Run/HEAD identifiers still match.
+  const readinessDependenciesLoading = containerQuery.isPending || containerQuery.isFetching
+    || draftQuery.isPending || draftQuery.isFetching
+  const readiness = !readinessDependenciesLoading
+    && containerQuery.isSuccess && draftQuery.isSuccess
+    && run && homeClock && draft
+    && !readinessQuery.isFetching && readinessQuery.isSuccess
+    && readinessQuery.data?.run_id === runId
     && readinessQuery.data.branch_id === branchId
     && readinessQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
-    && (!draft || readinessQuery.data.draft_version === draft.draft_version)
-    && (!homeClock || (
-      readinessQuery.data.current_calendar.weeks_per_year === homeClock.weeks_per_year
-      && readinessQuery.data.current_calendar.season_count === homeClock.season_count
-      && readinessQuery.data.current_calendar.start_year === homeClock.start_year
-      && readinessQuery.data.current_calendar.season_start_year_week === homeClock.season_start_year_week
-    )) ? readinessQuery.data : null
-  const readinessMismatch = readinessQuery.isSuccess && !readiness
-  const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
-  const pending = pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId ? pendingQuery.data : null
-  const simulationHistory = simulationHistoryQuery.data?.run_id === runId && simulationHistoryQuery.data.branch_id === branchId
-    ? simulationHistoryQuery.data.items : null
-  const revisions = revisionsQuery.data?.run_id === runId && revisionsQuery.data.branch_id === branchId
-    ? revisionsQuery.data.saved_revisions : null
-  const ownedPackages = packageQuery.data?.state ?? null
-  const emptyRun = ready && packageQuery.isSuccess && ownedPackages === null && positionQuery.isError && isApiNotFound(positionQuery.error)
+    && readinessQuery.data.draft_version === draft.draft_version
+    && readinessQuery.data.current_calendar.weeks_per_year === homeClock.weeks_per_year
+    && readinessQuery.data.current_calendar.season_count === homeClock.season_count
+    && readinessQuery.data.current_calendar.start_year === homeClock.start_year
+    && readinessQuery.data.current_calendar.season_start_year_week === homeClock.season_start_year_week
+    ? readinessQuery.data : null
+  const readinessMismatch = readinessQuery.isSuccess && !readinessQuery.isFetching
+    && !readinessDependenciesLoading && !readiness
+  // Every manual inspection re-reads the same three independent sources.
+  // Re-reading only readiness may falsely compare it with a cached old clock
+  // or Working Draft after another editor has changed the underlying state.
+  const refreshReadinessEvidence = (): void => {
+    void Promise.all([
+      containerQuery.refetch(),
+      draftQuery.refetch(),
+      readinessQuery.refetch()
+    ])
+  }
+  const readinessRefreshing = readinessQuery.isFetching || readinessDependenciesLoading
+  // Position, pending operations and simulation history change independently of
+  // Run Home readiness. A failed background refresh may retain a successful
+  // old snapshot; only a settled, matching response can be presented.
+  const positionValid = positionQuery.isSuccess && !positionQuery.isFetching
+    && positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId
+  const pendingValid = pendingQuery.isSuccess && !pendingQuery.isFetching
+    && pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId
+  const simulationHistoryValid = simulationHistoryQuery.isSuccess && !simulationHistoryQuery.isFetching
+    && simulationHistoryQuery.data?.run_id === runId && simulationHistoryQuery.data.branch_id === branchId
+  const position = positionValid ? positionQuery.data! : null
+  const pending = pendingValid ? pendingQuery.data! : null
+  const simulationHistory = simulationHistoryValid ? simulationHistoryQuery.data!.items : null
+  const pendingMismatch = pendingQuery.isSuccess && !pendingQuery.isFetching && !pendingValid
+  const simulationHistoryMismatch = simulationHistoryQuery.isSuccess
+    && !simulationHistoryQuery.isFetching && !simulationHistoryValid
+  // A saved-history response is authoritative for one HEAD only. Never
+  // show cached older-HEAD entries when the selected Branch has advanced.
+  const revisionsValid = revisionsQuery.isSuccess && !revisionsQuery.isFetching
+    && revisionsQuery.data?.run_id === runId
+    && revisionsQuery.data.branch_id === branchId
+    && revisionsQuery.data.saved_head_revision_id === selectedBranch?.saved_head_revision_id
+  const revisions = revisionsValid ? revisionsQuery.data!.saved_revisions : null
+  const revisionsMismatch = revisionsQuery.isSuccess && !revisionsQuery.isFetching && !revisionsValid
+  const revisionsMismatchMessage = language === 'cs'
+    ? 'Historie uložených revizí neodpovídá vybranému Runu, Branchi nebo Saved HEAD.'
+    : 'Saved revision history does not match the selected Run, Branch or Saved HEAD.'
+  // Package state is a Branch-owned Saved projection, not a Run-global cache.
+  // A missing envelope or foreign Run/Branch must never be interpreted as an
+  // empty Run; an in-flight HEAD refresh must not reuse old package evidence.
+  const packageMismatch = packageQuery.isSuccess && !packageQuery.isFetching
+    && (packageQuery.data?.state === undefined || (
+      packageQuery.data.state !== null && (
+        packageQuery.data.state.run_id !== runId || packageQuery.data.state.branch_id !== branchId
+      )))
+  const packageMismatchMessage = language === 'cs'
+    ? 'Uložené balíčky neodpovídají vybranému Runu a Branchi.'
+    : 'Saved package state does not match the selected Run and Branch.'
+  const packageVerified = packageQuery.isSuccess && !packageQuery.isFetching && !packageMismatch
+  const ownedPackages = packageVerified ? packageQuery.data!.state : null
+  const emptyRun = ready && packageVerified && ownedPackages === null
+    && positionQuery.isError && isApiNotFound(positionQuery.error)
   const base = '/admin/runs/' + encodeURIComponent(runId)
   const statusErrors = [
     branchError,
@@ -232,9 +322,12 @@ export function RunPage(): JSX.Element {
     containerQuery.error ? formatApiError(containerQuery.error) : null,
     draftQuery.error ? formatApiError(draftQuery.error) : null,
     packageQuery.error ? formatApiError(packageQuery.error) : null,
+    packageMismatch ? packageMismatchMessage : null,
     positionQuery.error && !isApiNotFound(positionQuery.error) ? formatApiError(positionQuery.error) : null,
     pendingQuery.error && !isApiNotFound(pendingQuery.error) ? formatApiError(pendingQuery.error) : null,
+    pendingMismatch ? 'Pending Full Simulation identity mismatch' : null,
     revisionsQuery.error ? formatApiError(revisionsQuery.error) : null,
+    revisionsMismatch ? revisionsMismatchMessage : null,
     homeActivityQuery.error ? formatApiError(homeActivityQuery.error) : null,
     readinessQuery.error ? formatApiError(readinessQuery.error) : null,
     readinessMismatch ? 'Saved readiness identity/HEAD/draft/calendar differs from selected Run.' : null,
@@ -244,10 +337,11 @@ export function RunPage(): JSX.Element {
     identitiesQuery.error ? formatApiError(identitiesQuery.error) : null,
     identitiesMismatch ? 'Saved player identities do not match selected Branch HEAD.' : null,
     simulationHistoryQuery.error && !isApiNotFound(simulationHistoryQuery.error) ? formatApiError(simulationHistoryQuery.error) : null,
+    simulationHistoryMismatch ? 'Full Simulation history identity mismatch' : null,
   ].filter((value): value is string => Boolean(value))
   const blockers = position?.transition_blockers ?? []
   const pendingCount = pending?.operations.length ?? 0
-  const draftStatus = !ready || draftQuery.isPending ? l.loading
+  const draftStatus = !ready || draftQuery.isPending || draftQuery.isFetching ? l.loading
     : draftQuery.isError || !draft ? l.draftUnknown
       : draft.status === 'dirty' ? l.draftDirty + ' (' + draft.change_count + ')' : l.draftClean
 
@@ -298,22 +392,39 @@ export function RunPage(): JSX.Element {
     {branchError && <Unavailable message={branchError} />}
     {time.error && <Unavailable message={time.error} />}
     <RunHomeProgress season={time.presentSeason} week={time.presentWeek}
-      loading={branchLoading || time.isLoading || containerQuery.isPending}
+      loading={branchLoading || time.isLoading || containerQuery.isPending || containerQuery.isFetching}
       unavailable={!verified} historical={false} locale={language} clock={homeClock}/>
 
-    {ready && readinessQuery.isPending && <p role="status">{l.loading}</p>}
+    {ready && !selectedBranch?.saved_head_revision_id &&
+      <p role="status" className="status">{readinessText.emptyHead[language]}</p>}
+    {ready && Boolean(selectedBranch?.saved_head_revision_id) &&
+      (readinessQuery.isFetching || (readinessQuery.isSuccess && readinessDependenciesLoading)) &&
+      <p role="status" className="status">{readinessText.checking[language]}</p>}
+    {ready && Boolean(selectedBranch?.saved_head_revision_id) &&
+      !readinessRefreshing && (readinessQuery.isError || draftQuery.isError
+        || containerQuery.isError || readinessMismatch) &&
+      <section className="run-home-status-block" aria-label={language === 'cs'
+        ? 'Obnova kontroly podkladů Runu' : 'Run foundation inspection recovery'}>
+        <p role="alert" className="error">{readinessText.unavailable[language]}</p>
+        <p className="status">{readinessText.retryNote[language]}</p>
+        <button type="button" onClick={refreshReadinessEvidence}>{readinessText.retry[language]}</button>
+      </section>}
     {ready && readiness && <RunHomeReadinessPanel
       data={readiness} runId={runId} language={language}
-      refreshing={readinessQuery.isFetching} refresh={() => { void readinessQuery.refetch() }} />}
+      rankingSetupAvailable={setupAllowed && sportingClockSupported &&
+        selectedBranch?.status === 'active' && !selectedBranch.read_only &&
+        Boolean(selectedBranch.saved_head_revision_id)}
+      refreshing={readinessRefreshing} refresh={refreshReadinessEvidence} />}
     <div className="run-home-columns">
       <SectionCard title={l.next}>
         {!verified && <p className="status">{branchLoading || containerQuery.isPending || time.isLoading ? l.loading : l.missing}</p>}
         {verified && <>
-          {packageQuery.isPending && <p role="status">{l.loading}</p>}
+          {(packageQuery.isPending || packageQuery.isFetching) && <p role="status">{l.loading}</p>}
           {packageQuery.isError && <Unavailable message={formatApiError(packageQuery.error)} />}
-          {packageQuery.isSuccess && ownedPackages === null && <p>{l.initial}</p>}
+          {packageMismatch && <Unavailable message={packageMismatchMessage} />}
+          {packageVerified && ownedPackages === null && <p>{l.initial}</p>}
           {noConfirmedPosition && ownedPackages !== null && <p>{l.notPositioned}</p>}
-          {positionQuery.isPending && <p role="status">{l.loading}</p>}
+          {(positionQuery.isPending || positionQuery.isFetching) && <p role="status">{l.loading}</p>}
           {homeActivity && homeActivity.calendar_status === 'ready' && homeActivity.upcoming.length > 0 && <div>
             <h4>{l.upcomingEvents}</h4>
             <ul className="run-home-feed" aria-label={language === 'cs' ? 'Nadcházející uložené turnaje' : 'Upcoming saved tournaments'}>
@@ -338,10 +449,12 @@ export function RunPage(): JSX.Element {
             {position.week_ready_for_transition && <p>{language === 'cs' ? 'Týden je připravený k přechodu.' : 'Week is ready for transition.'}</p>}
           </div>}
           {positionQuery.isError && !isApiNotFound(positionQuery.error) && <Unavailable message={formatApiError(positionQuery.error)} />}
-          {positionQuery.isSuccess && !position && <Unavailable message="Simulation position identity mismatch" />}
+          {positionQuery.isSuccess && !positionQuery.isFetching && !position &&
+            <Unavailable message="Simulation position identity mismatch" />}
           {pending && pendingCount > 0 && <p>{l.waiting}: <strong>{pendingCount}</strong></p>}
-          {pendingQuery.isPending && <p role="status">{l.loading}</p>}
+          {(pendingQuery.isPending || pendingQuery.isFetching) && <p role="status">{l.loading}</p>}
           {pendingQuery.isError && !isApiNotFound(pendingQuery.error) && <Unavailable message={formatApiError(pendingQuery.error)} />}
+          {pendingMismatch && <Unavailable message="Pending Full Simulation identity mismatch" />}
           {positionQuery.isError && isApiNotFound(positionQuery.error) && !packageQuery.isSuccess && <p className="status">{l.noSport}</p>}
         </>}
         <div className="actions"><Link className="button-link" to={base + '/simulate'}>{l.continue} →</Link>
@@ -354,7 +467,7 @@ export function RunPage(): JSX.Element {
         {blockers.map((blocker, i) => <p key={i} className="error">{blocker} · <Link to={base + '/simulate'}>{l.continue} →</Link></p>)}
         {position && position.blocked_match_ids.length > 0 && <p className="error">{language === 'cs' ? 'Blokované zápasy' : 'Blocked matches'}: {position.blocked_match_ids.length} · <Link to={base + '/simulate'}>{l.continue} →</Link></p>}
         {pending && pendingCount > 0 && <p>{l.waiting}: {pendingCount} · <Link to={base + '/simulate'}>{l.continue} →</Link></p>}
-        {ready && statusErrors.length === 0 && blockers.length === 0 && position?.blocked_match_ids.length === 0 && !draftQuery.isPending && draft?.status !== 'dirty' && pendingQuery.isSuccess && pendingCount === 0
+        {verified && statusErrors.length === 0 && blockers.length === 0 && position?.blocked_match_ids.length === 0 && draftQuery.isSuccess && !draftQuery.isFetching && draft?.status === 'clean' && pendingValid && pendingCount === 0
           ? <p className="status">{l.noIssues}</p>
           : statusErrors.length === 0 && ready && !position && !emptyRun ? <p className="status">{l.noAttention}</p> : null}
         <Link to={base + '/diagnostics'}>{language === 'cs' ? 'Otevřít diagnostiku' : 'Open diagnostics'} →</Link>
@@ -381,23 +494,25 @@ export function RunPage(): JSX.Element {
       </section>}
       {rankingChanges && <RunHomeRankingPanel data={rankingChanges} locale={language} runId={runId}
         identities={playerIdentities} clock={homeClock}/>}
-      {identitiesQuery.isPending && identityIds.length > 0 && ready && <p role="status">{language === 'cs' ? 'Načítám uložená jména hráčů…' : 'Loading saved player names…'}</p>}
+      {(identitiesQuery.isPending || identitiesQuery.isFetching) && identityIds.length > 0 && ready && <p role="status">{language === 'cs' ? 'Načítám uložená jména hráčů…' : 'Loading saved player names…'}</p>}
       {identitiesQuery.isError && <Unavailable message={formatApiError(identitiesQuery.error)}/>}
       {identitiesMismatch && <Unavailable message="Saved player identities do not match selected Branch HEAD"/>}
       {identitiesQuery.isSuccess && identitiesValid && identitiesQuery.data!.unresolved_ids.length > 0 &&
         <p className="status">{language === 'cs' ? 'Některá jména nejsou v uložených zdrojích dostupná; zůstávají zobrazena ID.' : 'Some player names are unavailable in Saved Revision; IDs are retained.'}</p>}
-      {rankingChangesQuery.isPending && ready && selectedBranch?.saved_head_revision_id && <p role="status">{l.loading}</p>}
+      {(rankingChangesQuery.isPending || rankingChangesQuery.isFetching) && ready && selectedBranch?.saved_head_revision_id && <p role="status">{l.loading}</p>}
       {rankingChangesQuery.isError && <Unavailable message={formatApiError(rankingChangesQuery.error)}/>}
       {rankingChangesMismatch && <Unavailable message="Saved ranking changes identity mismatch"/>}
-      {homeActivityQuery.isPending && ready && <p role="status">{l.loading}</p>}
+      {(homeActivityQuery.isPending || homeActivityQuery.isFetching) && ready && <p role="status">{l.loading}</p>}
       {homeActivityQuery.isError && <Unavailable message={formatApiError(homeActivityQuery.error)}/>}
       {homeActivityMismatch && <Unavailable message="Saved Home activity identity mismatch"/>}
       {!ready && <p className="status">{l.missing}</p>}
-      {ready && revisionsQuery.isPending && <p role="status">{l.loading}</p>}
+      {ready && (revisionsQuery.isPending || revisionsQuery.isFetching) && <p role="status">{l.loading}</p>}
       {ready && revisionsQuery.isError && <Unavailable message={formatApiError(revisionsQuery.error)} />}
-      {ready && simulationHistoryQuery.isPending && <p role="status">{l.loading}</p>}
+      {ready && revisionsMismatch && <Unavailable message={revisionsMismatchMessage} />}
+      {ready && (simulationHistoryQuery.isPending || simulationHistoryQuery.isFetching) && <p role="status">{l.loading}</p>}
       {ready && simulationHistoryQuery.isError && !isApiNotFound(simulationHistoryQuery.error) &&
         <Unavailable message={formatApiError(simulationHistoryQuery.error)} />}
+      {ready && simulationHistoryMismatch && <Unavailable message="Full Simulation history identity mismatch" />}
       {ready && simulationHistory && simulationHistory.length > 0 && <div className="run-home-status-block">
         <h4>{language === 'cs' ? 'Poslední plná simulace' : 'Latest full simulation'}</h4>
         {(() => {
@@ -439,8 +554,10 @@ export function RunPage(): JSX.Element {
         : 'Planning, package copies and calendar-aware player previews are available with explicit Save. The initial-ranking and first-tournament shortcuts below belong to the legacy 61-week workflow. Native operations for other calendars require their own preflights in Run Management and Simulation.'}</p>}
       {homeClock && <p><Link to={base + '/players/generate'}>{language === 'cs' ? 'Generovat hráče →' : 'Generate players →'}</Link></p>}
       {sportingClockSupported && <>
-      <RunInitialRankingSetupPanel run={run!} branch={selectedBranch} />
-      <RunInitialRankingPublicationPanel run={run!} branch={selectedBranch} />
+      <div id="run-initial-ranking">
+        <RunInitialRankingSetupPanel run={run!} branch={selectedBranch} />
+        <RunInitialRankingPublicationPanel run={run!} branch={selectedBranch} />
+      </div>
       <RunFirstTournamentPanel run={run!} branch={selectedBranch} />
       </>}
     </section>}

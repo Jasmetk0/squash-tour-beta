@@ -2206,6 +2206,13 @@ textarea:focus-visible {
 .run-home-feed { list-style: none; margin: .35rem 0 1rem; padding: 0; display: flex; flex-direction: column; gap: .45rem; }
 .run-home-feed li { display: flex; justify-content: space-between; align-items: baseline; gap: .8rem; padding: .5rem .65rem; background: #1c2a42; border-radius: 8px; }
 .run-home-feed li small { font-size: .77rem; color: #a4bad7; overflow-wrap: anywhere; }
+/* Saved readiness explanations belong to each foundation, not to its action link. */
+.run-home-readiness-checklist .run-home-feed li { align-items: flex-start; flex-wrap: wrap; }
+.run-home-readiness-checklist .run-home-feed li > span {
+  display: flex; flex-direction: column; gap: .22rem; flex: 1 1 18rem; min-width: 0;
+}
+.run-home-readiness-checklist .run-home-feed li > a { flex-shrink: 0; align-self: flex-start; }
+.run-home-readiness-checklist .run-home-feed li .status { line-height: 1.35; }
 .run-home-setup { margin-top: 1.6rem; border-top: 1px solid #2b405d; padding-top: 1rem; }
 .run-home-setup > h3 { font-size: 1.18rem; margin-bottom: .35rem; }
 @media (max-width: 850px) {

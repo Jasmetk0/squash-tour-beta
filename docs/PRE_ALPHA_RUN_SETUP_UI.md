@@ -68,10 +68,11 @@ not add a generator, a second readiness authority or a hidden Save.
 12. Repaired two misleading Run Home navigation actions against actual Admin
     routes. FAX-compatible initial ranking preparation/publication now targets
     the existing Run Home preparation panels through a stable
-    `#run-initial-ranking` anchor, **not** the Simulation route. For other
-    calendars, the link opens the selected Branch's ranking candidates for
-    inspection, with explicit notice that the legacy publication flow is
-    unsupported there; it never claims candidate inspection is publication.
+    `#run-initial-ranking` anchor, **not** the Simulation route — only when
+    the Run and selected Branch actually expose the writable initial-ranking
+    panels. Other calendars, protected Runs or non-editable Branches use the
+    selected Branch's ranking candidates for read-only inspection, with an
+    explicit warning that this is **not** permission to publish.
     A dirty Working Draft links to Branch/Saved history as **inspection only**,
     explaining that explicit Save belongs to the editor owning those changes.
     Existing Save, publication, candidate and simulation commands are unchanged.

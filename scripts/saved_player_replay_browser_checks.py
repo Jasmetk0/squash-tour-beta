@@ -137,6 +137,16 @@ def verify_saved_player_replay(page, run_url, artifacts, port, prefix="", expect
     expect(page.get_by_role("searchbox", name="Search loaded page")).to_have_value(match_id)
     expect(page.get_by_role("combobox", name="Filter wins and losses")).to_have_value("win")
     expect(page.get_by_role("combobox", name="Filter played and walkovers")).to_have_value("played")
+    # Actual current-HEAD HTTP page beyond the available career: recover
+    # without displaying 'Page 1/0' or stale rows from the previous filter.
+    page.goto(base + player_route + "?tab=career&careerPage=5")
+    expect(page.get_by_text("Requested career page does not exist.", exact=False)).to_be_visible()
+    page.get_by_role("button", name="First valid page").click()
+    expect(page.get_by_role("heading", name="Match career")).to_be_visible()
+    page.goto(base + player_route + "?tab=career&careerSeason=50")
+    expect(page.get_by_text("Invalid career season, page or filter in the link.", exact=False)).to_be_visible()
+    page.get_by_role("button", name="Reset to a valid selection").click()
+    expect(page.get_by_role("heading", name="Match career")).to_be_visible()
     return dict(run_id=run_id, branch_id=branch_id,
                 saved_revision_id=first["saved_revision_id"], event_id=event_id,
                 player_id=player_id, match_id=match_id, scoreline=final["scoreline"],

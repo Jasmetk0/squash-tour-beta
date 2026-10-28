@@ -45,6 +45,9 @@ describe('saved Run readiness panel', () => {
     expect(screen.getByText('This Branch readiness')).toBeInTheDocument()
     expect(screen.getByText(/This calendar is not supported by the legacy FAX simulation path/)).toHaveClass('status')
     expect(screen.getByText('Unsaved changes are not counted in this overview.')).toBeInTheDocument()
+    // Only Saved evidence is inspected: direct the user to review pending work first.
+    expect(screen.getByRole('link', { name: 'Inspect and Save changes →' }))
+      .toHaveAttribute('href', '/admin/runs/run-a/branches')
     const checklist = screen.getByText('Show saved-foundation checks (6) · 3 items needing attention')
     expect(checklist).toBeVisible()
     expect(checklist.closest('details')).not.toHaveAttribute('open')
@@ -52,7 +55,7 @@ describe('saved Run readiness panel', () => {
     expect(checklist.closest('details')).toHaveAttribute('open')
     expect(screen.getAllByRole('link', { name: 'Add a Calendar Package →' })[0])
       .toHaveAttribute('href', '/admin/runs/run-a/manage')
-    expect(screen.getByRole('link', { name: 'Inspect and Save changes →' }))
+    expect(screen.getAllByRole('link', { name: 'Inspect and Save changes →' })[0])
       .toHaveAttribute('href', '/admin/runs/run-a/branches')
     expect(screen.getByText('Saved transitions:', { exact: false })).not.toBeVisible()
     fireEvent.click(screen.getByText('Technical provenance and limits'))
@@ -84,7 +87,7 @@ describe('saved Run readiness panel', () => {
       items: data.items.map(item => ({ ...item, status: 'saved' as const }))
     })
     expect(screen.getByText('Show saved-foundation checks (6)')).toBeVisible()
-    expect(screen.getByText('The selected foundations are saved. Sporting operations still require a separate preflight.')).toBeVisible()
+    expect(screen.getByText('This saved-foundation inspection has no further action. It does not certify all operations; each requires its own preflight.')).toBeVisible()
   })
 
   it('rejects alien and reordered readiness evidence', () => {
@@ -92,5 +95,29 @@ describe('saved Run readiness panel', () => {
     expect(() => validateRunHomeReadiness(data, 'run-a', 'branch-b')).toThrow()
     expect(() => validateRunHomeReadiness({ ...data, items: [...data.items].reverse() }, 'run-a', 'branch-a')).toThrow()
     expect(() => validateRunHomeReadiness({ ...data, simulation_started: true }, 'run-a', 'branch-a')).toThrow()
+  })
+
+  it('does not mistake optional foundations for completed saved content', () => {
+    mount('en', {
+      ...data,
+      items: data.items.map(item => ({ ...item, status: 'optional' as const }))
+    })
+    expect(screen.getByText('Show saved-foundation checks (6)')).toBeVisible()
+    expect(screen.getByText(/does not certify all operations/)).toBeVisible()
+    expect(screen.queryByRole('link', { name: /Add a World Package|Inspect and Save changes/ })).toBeNull()
+  })
+
+  it('prioritizes a genuinely missing Saved foundation after a clean draft, and skips optional entries', () => {
+    mount('en', {
+      ...data,
+      items: data.items.map(item => ({
+        ...item,
+        status: item.code === 'world' ? 'optional' as const
+          : item.code === 'calendar_package' ? 'missing' as const : 'saved' as const
+      }))
+    })
+    expect(screen.getByRole('link', { name: 'Add a Calendar Package →' }))
+      .toHaveAttribute('href', '/admin/runs/run-a/manage')
+    expect(screen.queryByText('Unsaved changes are not counted in this overview.')).toBeNull()
   })
 })

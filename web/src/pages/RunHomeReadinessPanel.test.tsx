@@ -48,7 +48,7 @@ describe('saved Run readiness panel', () => {
     expect(screen.getByText(/This calendar is not supported by the legacy FAX simulation path/)).toHaveClass('status')
     expect(screen.getByText('Unsaved changes are not counted in this overview.')).toBeInTheDocument()
     // Only Saved evidence is inspected: direct the user to review pending work first.
-    expect(screen.getByRole('link', { name: 'Inspect and Save changes →' }))
+    expect(screen.getAllByRole('link', { name: 'Inspect and Save changes →' })[0])
       .toHaveAttribute('href', '/admin/runs/run-a/branches')
     const checklist = screen.getByText('Show saved-foundation checks (6) · 3 items needing attention')
     expect(checklist).toBeVisible()
@@ -120,7 +120,7 @@ describe('saved Run readiness panel', () => {
           : item.code === 'calendar_package' ? 'missing' as const : 'saved' as const
       }))
     })
-    expect(screen.getByRole('link', { name: 'Add a Calendar Package →' }))
+    expect(screen.getAllByRole('link', { name: 'Add a Calendar Package →' })[0])
       .toHaveAttribute('href', '/admin/runs/run-a/manage')
     expect(screen.queryByText('Unsaved changes are not counted in this overview.')).toBeNull()
   })

@@ -17,7 +17,14 @@ not add a generator, a second readiness authority or a hidden Save.
 3. If the server confirms a Run identity but returns a mismatched reviewed
    calendar, the form blocks a duplicate create and offers a link to inspect
    the existing Run. Uncertain transport errors explicitly advise checking
-   the Run inventory before retrying.
+   the Run inventory before retrying. If the POST response is lost, the
+   creation form now blocks another POST and offers an explicit fresh
+   `listRunContainers` read for the exact requested name, without using local
+   storage or cached listings as authority. A single exact match yields an
+   inspection link (not an assertion of who created it). No match unlocks only
+   an explicit manual retry, never an automatic retry; an unreadable, malformed
+   or ambiguous inventory fails closed. The name remains fixed until that
+   reconciliation has succeeded, so editing cannot accidentally bypass it.
 4. A best-effort inventory cache invalidation is not allowed to turn a
    server-confirmed Run creation into a false failure and a duplicate retry.
 5. If routing itself fails after server-confirmed creation, the form says the
@@ -41,8 +48,10 @@ not add a generator, a second readiness authority or a hidden Save.
 Focused React component regressions exercise rapid double-submit, rejected
 inventory refresh, navigation failure/repeated submission after success, unavailable localStorage,
 dirty-draft priority, all-optional Saved-inspection wording, and
-URL encoding of returned Run identifiers and preparation-only Lab navigation. A failed or unconfirmed create can
-be retried; a server-confirmed create cannot. They mock the
+URL encoding of returned Run identifiers and preparation-only Lab navigation. An uncertain create can be retried **only after** a successful, matching-name
+inventory reconciliation with no matching Run. A server-confirmed create cannot
+be retried on the same form. The negative inventory result is point-in-time
+evidence, not a guarantee about a concurrently completing request. They mock the
 API boundary and are **not** production HTTP/SQLite or real-browser acceptance.
 
 The relevant frontend test/build and final-head hosted checks must complete

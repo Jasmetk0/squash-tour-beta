@@ -35,7 +35,8 @@ const content = {
     },
     allSaved: 'Kontrola uložených podkladů zde nevyžaduje další krok. Neznamená to připravenost všech operací; každá má vlastní kontrolu.',
     checklist: 'Zobrazit kontrolu uložených podkladů',
-    attentionCount: 'položky k prověření',
+    attentionCount: (count: number) => count === 1 ? 'položka k prověření'
+      : count >= 2 && count <= 4 ? 'položky k prověření' : 'položek k prověření',
     details: 'Technický původ a hranice',
     branch: 'Vybraná Branch',
     calendar: 'Kalendář Runu',
@@ -77,7 +78,7 @@ const content = {
     },
     allSaved: 'This saved-foundation inspection has no further action. It does not certify all operations; each requires its own preflight.',
     checklist: 'Show saved-foundation checks',
-    attentionCount: 'items needing attention',
+    attentionCount: (count: number) => count === 1 ? 'item needing attention' : 'items needing attention',
     details: 'Technical provenance and limits',
     branch: 'Selected Branch',
     calendar: 'Run calendar',
@@ -131,7 +132,7 @@ export function RunHomeReadinessPanel({
     </div>
     <p className="status">{l.explanation} · {l.phase[data.phase]}</p>
     <details className="run-home-readiness-checklist">
-      <summary>{l.checklist} ({data.items.length}){attentionCount > 0 ? ` · ${attentionCount} ${l.attentionCount}` : ''}</summary>
+      <summary>{l.checklist} ({data.items.length}){attentionCount > 0 ? ` · ${attentionCount} ${l.attentionCount(attentionCount)}` : ''}</summary>
       <ul className="run-home-feed" aria-label={language === 'cs' ? 'Kontrola uložených podkladů' : 'Saved preparation checks'}>
         {data.items.map(item => <li key={item.code}>
           <span><strong>{l.item[item.code]}</strong>

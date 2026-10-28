@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { Link, useParams } from 'react-router-dom'
 
 import { RunPage } from './RunPage'
 import { renderWithRoute as renderRoute } from '../test/testUtils'
@@ -448,6 +449,58 @@ describe('Run Home V1 canonical projections', () => {
     })
     await waitFor(() => expect(api.getRunHomeReadiness).toHaveBeenCalledWith(runId, second))
     expect(screen.getByText(/Entity World Package: 7/)).toBeInTheDocument()
+    expect(screen.queryByText(/Entity World Package: 13/)).toBeNull()
+    expect(screen.queryByText('Saved readiness identity/HEAD/draft/calendar differs from selected Run.')).toBeNull()
+  })
+
+  it('does not let a delayed old Run readiness response overwrite the newly opened Run', async () => {
+    const otherRun = 'second-run'
+    const otherBranch = 'branch-of-second-run'
+    api.getRunContainer.mockImplementation(async (requestedRun: string) => ({
+      run_id: requestedRun, display_name: requestedRun === otherRun ? 'Second Run' : 'First Run',
+      storage_kind: 'custom_local', read_only: false, status: 'working',
+      official_branch_id: requestedRun === otherRun ? otherBranch : branchId
+    }))
+    api.listRunBranches.mockImplementation(async (requestedRun: string) => ({
+      run_branches: [{
+        run_id: requestedRun, branch_id: requestedRun === otherRun ? otherBranch : branchId,
+        display_name: 'Timeline 1', status: 'active', read_only: false,
+        saved_head_revision_id: requestedRun === otherRun ? 'second-head' : 'saved-1',
+        head_checkpoint_id: null, is_official: true
+      }]
+    }))
+    api.getBranchWorkingDraft.mockImplementation(async (requestedRun: string, requestedBranch: string) => ({
+      run_id: requestedRun, branch_id: requestedBranch, status: 'clean',
+      change_count: 0, draft_version: 1
+    }))
+    let resolveFirst!: (value: unknown) => void
+    api.getRunHomeReadiness.mockImplementation((requestedRun: string) =>
+      requestedRun === otherRun ? Promise.resolve({
+        ...savedReadiness(), run_id: otherRun, branch_id: otherBranch,
+        saved_revision_id: 'second-head',
+        items: savedReadiness().items.map(item => item.code === 'world'
+          ? { ...item, status: 'saved' as const, evidence_count: 9 } : item)
+      }) : new Promise(done => { resolveFirst = done }))
+    function RoutedHome(): JSX.Element {
+      const { runId: activeRun = '' } = useParams()
+      return <AdminBranchProvider key={activeRun} runId={activeRun}><AdminTimeProvider>
+        <Link to={'/admin/runs/' + otherRun}>Open Second Run</Link>
+        <RunPage />
+      </AdminTimeProvider></AdminBranchProvider>
+    }
+    renderRoute(<LanguageProvider><RoutedHome /></LanguageProvider>, '/admin/runs/' + runId)
+    await waitFor(() => expect(api.getRunHomeReadiness).toHaveBeenCalledWith(runId, branchId))
+    fireEvent.click(screen.getByRole('link', { name: 'Open Second Run' }))
+    expect(await screen.findByText('Second Run')).toBeVisible()
+    expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
+    expect(screen.getByText(/Entity World Package: 9/)).toBeInTheDocument()
+    resolveFirst({
+      ...savedReadiness(),
+      items: savedReadiness().items.map(item => item.code === 'world'
+        ? { ...item, status: 'saved' as const, evidence_count: 13 } : item)
+    })
+    await waitFor(() => expect(api.getRunHomeReadiness).toHaveBeenCalledWith(otherRun, otherBranch))
+    expect(screen.getByText(/Entity World Package: 9/)).toBeInTheDocument()
     expect(screen.queryByText(/Entity World Package: 13/)).toBeNull()
     expect(screen.queryByText('Saved readiness identity/HEAD/draft/calendar differs from selected Run.')).toBeNull()
   })

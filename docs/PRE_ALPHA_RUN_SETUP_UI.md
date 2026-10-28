@@ -58,8 +58,10 @@ not add a generator, a second readiness authority or a hidden Save.
     DTO/authority and operation preflights are unchanged.
 11. The frontend contract also rejects an invalid Run calendar (nonpositive W,
     impossible season offset, negative year, zero horizon or wrong schema),
-    blank Saved Revision identity, or contradictory positive-count Saved
-    foundation badges. These are fail-closed checks on received evidence, not
+    blank Saved Revision identity, contradictory positive-count Saved
+    foundation badges or impossible per-foundation statuses (e.g. World as
+    "candidate only" or Working Draft as "missing"). These are fail-closed
+    checks on received evidence, not
     new sporting prerequisites or alternate counts.
 
 ## Validation boundary

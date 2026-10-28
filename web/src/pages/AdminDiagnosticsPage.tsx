@@ -100,11 +100,8 @@ export function AdminDiagnosticsPage(): JSX.Element {
 
       <SectionCard title={text('What Diagnostics should explain')}>
         <ul className="dashboard-help-list">
-          <li>{text('what happened')}</li>
-          <li>{text('why it matters')}</li>
-          <li>{text('what is affected')}</li>
-          <li>{text('what to do next')}</li>
-          <li>{text('where to click')}</li>
+          {['what happened', 'why it matters', 'what is affected', 'what to do next', 'where to click']
+            .map(question => <li key={question}>{text(question)}</li>)}
         </ul>
       </SectionCard>
 

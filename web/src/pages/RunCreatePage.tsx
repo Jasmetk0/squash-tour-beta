@@ -168,10 +168,10 @@ export function RunCreatePage(): JSX.Element {
             setError(null)
             setInventoryMessage(null)
           }} />
-        <label className="checkbox-label"><input type="checkbox" checked={custom} disabled={pending || checkingInventory || Boolean(createdRunId) || Boolean(foundExistingRunId)} onChange={event => {
+        <label className="checkbox-label"><input type="checkbox" checked={custom} disabled={pending || checkingInventory || Boolean(unverifiedName) || Boolean(createdRunId) || Boolean(foundExistingRunId)} onChange={event => {
           setCustom(event.target.checked); setReview(null); setError(null)
         }} />{t.custom}</label>
-        {custom ? <RunCalendarCreationForm disabled={pending || checkingInventory || Boolean(createdRunId) || Boolean(foundExistingRunId)} onReview={setReview} />
+        {custom ? <RunCalendarCreationForm disabled={pending || checkingInventory || Boolean(unverifiedName) || Boolean(createdRunId) || Boolean(foundExistingRunId)} onReview={setReview} />
           : <p className="status">{t.defaultNote}</p>}
         {error && <p role="alert" className="error">{error}</p>}
         {createdRunId && <p role="status"><Link to={`/admin/runs/${encodeURIComponent(createdRunId)}`}>{t.openCreated}</Link></p>}

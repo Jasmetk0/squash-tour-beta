@@ -95,3 +95,19 @@ def test_new_retirement_receipt_preserves_legacy_rejection_and_excludes_ratio_da
     body['schema_version'] = 'tournament_group_standings_authority.v2'
     with pytest.raises(ValueError, match='Historical group standings'):
         TournamentGroupStandingsAuthority.model_validate_json(json.dumps(body))
+
+
+def test_browser_database_paths_reject_connection_url_input(tmp_path):
+    from scripts.native_groups_global_slots_browser import local_database_path
+
+    assert local_database_path(tmp_path / 'normal directory') == tmp_path / 'normal directory'
+    for name in ('database?mode=memory', 'database#fragment', 'database\nextra', 'database\rextra'):
+        with pytest.raises(ValueError, match='URL delimiters'):
+            local_database_path(tmp_path / name)
+    with pytest.raises(FileNotFoundError):
+        local_database_path(tmp_path / 'missing.sqlite', must_exist=True)
+    with pytest.raises(ValueError, match='existing local file'):
+        local_database_path(tmp_path, must_exist=True)
+    source = tmp_path / 'source.sqlite'
+    source.touch()
+    assert local_database_path(source, must_exist=True) == source

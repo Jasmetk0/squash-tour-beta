@@ -77,6 +77,12 @@ export function SavedTourEditionPage():JSX.Element {
   const plannedMain=schedule?.slots.filter(slot=>slot.draw_phase!=='qualification')??[]
   const plannedQualification=schedule?.slots.filter(slot=>slot.draw_phase==='qualification')??[]
   const matches=result?.matches??[]
+  // Historical Saved Editions must not link to a *current* player profile.
+  const sameHead=Boolean(revision&&selectedBranch?.saved_head_revision_id===revision
+    &&selectedBranch?.run_id===runId)
+  const playerRef=(id:string)=>sameHead?
+    <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/people/'+
+      encodeURIComponent(id)+'?tab=career'}>{id}</Link>:id
   const main=matches.filter(m=>m.draw_type!=='qualification')
   const qualification=matches.filter(m=>m.draw_type==='qualification')
   const matchSearch=params.get('matchSearch')??''
@@ -96,7 +102,7 @@ export function SavedTourEditionPage():JSX.Element {
       +encodeURIComponent(eventId)+'/matches/'+encodeURIComponent(matchId)+'?'+q.toString()
   }
   const matchRow=(m:typeof matches[number])=><tr key={m.match_id}><td>{m.round_number}</td>
-    <td>{m.winner_player_id}</td><td>{m.loser_player_id??'—'}</td>
+    <td>{playerRef(m.winner_player_id)}</td><td>{m.loser_player_id?playerRef(m.loser_player_id):'—'}</td>
     <td><span>{m.scoreline}</span>{m.loser_player_id&&<>
       {' · '}<Link to={matchHref(m.match_id,tab)}>
         {cs?'Detail zápasu':'Match detail'}</Link>
@@ -249,8 +255,8 @@ export function SavedTourEditionPage():JSX.Element {
         <p>{presentEntry(e.category)} · {e.tour_level??'—'} · {e.host_city??'—'} ({e.host_country})</p>
         <p>{cs?'Stav autoritativního lifecycle: není dostupný. Stav kalendáře není důkaz výsledku.':
           'Authoritative lifecycle status: unavailable. A calendar label is not proof of results.'}</p>
-        {result&&<p>{cs?'Vítěz':'Champion'}: {result.champion_player_id}
-          {' · '}{cs?'Finalista':'Finalist'}: {result.finalist_player_id}</p>}
+        {result&&<p>{cs?'Vítěz':'Champion'}: {playerRef(result.champion_player_id)}
+          {' · '}{cs?'Finalista':'Finalist'}: {playerRef(result.finalist_player_id)}</p>}
         {!result&&<p>{cs?'V této revizi není publikován kanonický výsledek.':
           'No canonical result was published in this revision.'}</p>}
       </section>}

@@ -155,6 +155,7 @@ describe('Saved Edition detail',()=>{
   beforeEach(()=>{
     vi.clearAllMocks();context.time.mode='present';context.language='en'
     context.branch.run_id='run-a';context.branch.branch_id='branch-a'
+    context.branch.saved_head_revision_id='head-a'
     api.getSavedTourEdition.mockResolvedValue(fixture())
   })
   it('reads exact old revision, has six tabs and preserves filters in return link',async()=>{
@@ -382,6 +383,27 @@ describe('Saved Edition detail',()=>{
     expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
     expect(screen.queryByRole('searchbox',{name:'Search published matches'})).not.toBeInTheDocument()
     expect(screen.getByText(/Canonical results are not published/)).toBeInTheDocument()
+  })
+  it('links current saved players to their career only at exactly the selected HEAD',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(fixture(true))
+    context.branch.saved_head_revision_id='rev-old'
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&tab=results')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    const main=document.getElementById('saved-results-main')!
+    expect(within(main).getByRole('link',{name:'P1'})).toHaveAttribute('href',
+      '/admin/runs/run-a/people/P1?tab=career')
+    expect(within(main).getByRole('link',{name:'P2'})).toHaveAttribute('href',
+      '/admin/runs/run-a/people/P2?tab=career')
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
+  it('never relabels historical player IDs as links to current player profiles',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(fixture(true))
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&tab=results')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'P1'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'P2'})).not.toBeInTheDocument()
+    expect(screen.getByRole('link',{name:'Match detail'})).toHaveAttribute('href',
+      expect.stringContaining('revision=rev-old'))
   })
   it('keeps the active Edition tab and exact revision across CS/EN with no refetch',async()=>{
     const view=mount()

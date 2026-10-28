@@ -10,6 +10,7 @@ import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
 import type {SavedTourDrawBracket,SavedTourScheduledMatch} from '../api/savedTour'
 import {verifiedCountryReturn} from './runWorldCountryTournaments'
+import {filterSavedEditionMatches} from './savedEditionResultDiscovery'
 
 type Tab='overview'|'entries'|'draw'|'schedule'|'results'|'settings'
 const tabs:Tab[]=['overview','entries','draw','schedule','results','settings']
@@ -78,6 +79,16 @@ export function SavedTourEditionPage():JSX.Element {
   const matches=result?.matches??[]
   const main=matches.filter(m=>m.draw_type!=='qualification')
   const qualification=matches.filter(m=>m.draw_type==='qualification')
+  const matchSearch=params.get('matchSearch')??''
+  const filteredResults=filterSavedEditionMatches(matches,matchSearch)
+  const resultMain=filteredResults.filter(m=>m.draw_type!=='qualification')
+  const resultQualification=filteredResults.filter(m=>m.draw_type==='qualification')
+  const setMatchSearch=(value:string)=>{
+    const copy=new URLSearchParams(params)
+    if(value)copy.set('matchSearch',value)
+    else copy.delete('matchSearch')
+    setParams(copy)
+  }
   const matchHref=(matchId:string,sourceTab:Tab)=>{
     const q=new URLSearchParams(params)
     q.set('tab',sourceTab)
@@ -299,10 +310,20 @@ export function SavedTourEditionPage():JSX.Element {
         {pendingTiePanel}
         {!result?<p>{cs?'Kanonické výsledky nejsou v této revizi publikovány.':
           'Canonical results are not published in this revision.'}</p>:<>
+          <label>{cs?'Vyhledat publikovaný zápas':'Find published match'}{' '}
+            <input type="search" aria-label={cs?'Hledat publikované zápasy':'Search published matches'}
+              placeholder={cs?'ID zápasu, hráče nebo skóre':'Match ID, player ID or score'}
+              value={matchSearch} onChange={event=>setMatchSearch(event.target.value)}/></label>
+          <button type="button" disabled={!matchSearch} onClick={()=>setMatchSearch('')}>
+            {cs?'Vymazat hledání zápasů':'Clear match search'}</button>
+          <p className="status">{cs?'Zobrazeno publikovaných zápasů':'Published matches shown'}:
+            {' '}{filteredResults.length}/{matches.length}</p>
+          {matches.length>0&&filteredResults.length===0&&<p role="status">{cs?
+            'Žádný publikovaný zápas neodpovídá hledání.':'No published matches match the search.'}</p>}
           <a href="#saved-results-main">{cs?'Hlavní část':'Main'}</a>
           {' · '}<a href="#saved-results-qualification">{cs?'Kvalifikace':'Qualification'}</a>
-          <section id="saved-results-main"><h4>{cs?'Hlavní část':'Main'}</h4>{matchTable(main)}</section>
-          <section id="saved-results-qualification"><h4>{cs?'Kvalifikace':'Qualification'}</h4>{matchTable(qualification)}</section>
+          <section id="saved-results-main"><h4>{cs?'Hlavní část':'Main'}</h4>{matchTable(resultMain)}</section>
+          <section id="saved-results-qualification"><h4>{cs?'Kvalifikace':'Qualification'}</h4>{matchTable(resultQualification)}</section>
         </>}
       </section>}
       {tab==='settings'&&<section><h3>{labels[5]}</h3>

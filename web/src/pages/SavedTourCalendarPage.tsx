@@ -70,9 +70,10 @@ export function SavedTourCalendarPage():JSX.Element{
     if(revision)copy.set('revision',revision)
     setParams(copy)
   }
-  const editionHref=(e:SavedTourEvent)=>{
+  const editionHref=(e:SavedTourEvent,openResults=false)=>{
     const copy=new URLSearchParams(params)
     copy.set('branch',branch!);copy.set('revision',revision!);copy.set('season',String(seasonIndex))
+    if(openResults)copy.set('tab','results')
     return '/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'+encodeURIComponent(e.event_id)+'?'+copy.toString()
   }
   const weekHref=(week:number)=>{
@@ -190,8 +191,9 @@ export function SavedTourCalendarPage():JSX.Element{
           const events=weekEditions.filter(e=>e.season_week===week)
           return <section key={week} className="section-subtle">
             <h4>{cs?'Týden':'Week'} {week}</h4>
-            {events.map(e=><p key={e.event_id}>{name(e)} <small>· {e.category} · {e.host_country}
-              {e.result_published?' · '+(cs?'publikovaný výsledek':'published result'):''}</small></p>)}
+            {events.map(e=><p key={e.event_id}>{name(e)} <small>· {e.category} · {e.host_country}</small>
+              {e.result_published&&<> · <Link to={editionHref(e,true)}>
+                {cs?'Zobrazit výsledky':'View results'}</Link></>}</p>)}
             {events.length===0&&<small>—</small>}
           </section>
         })}</div>:<div className="table-responsive"><table aria-label={cs?"Seznam uložených edic":"Saved Tour edition list"}>
@@ -202,7 +204,8 @@ export function SavedTourCalendarPage():JSX.Element{
             <td><Link to={weekHref(e.season_week)}>{cs?'Týden':'Week'} {e.season_week}</Link></td>
             <td>{name(e)}</td><td>{e.tour_level??'—'}</td>
             <td>{e.category}</td><td>{e.host_country}</td>
-            <td>{e.result_published?(cs?'Publikován':'Published'):'—'}</td>
+            <td>{e.result_published?<Link to={editionHref(e,true)}>
+              {cs?'Zobrazit výsledky':'View results'}</Link>:'—'}</td>
           </tr>)}</tbody></table></div>)}
       <p className="status">{cs?
         'Plánované budoucí edice nejsou důkazem uskutečněného turnaje.':'A saved future plan does not prove a tournament was played.'}</p>

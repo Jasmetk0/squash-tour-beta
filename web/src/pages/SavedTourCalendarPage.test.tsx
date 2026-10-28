@@ -223,6 +223,19 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(screen.getByRole('link',{name:'Egypt Open'})).toHaveAttribute('href',expect.stringContaining('week=5'))
     expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
   })
+  it('links only actually published saved Editions directly to Results while preserving scoped filters',async()=>{
+    const data=fixture()
+    data.editions[0].result_published=true
+    api.getSavedTourCalendar.mockResolvedValue(data)
+    mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&week=5&country=CZE&q=keep')
+    expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()
+    const result=screen.getByRole('link',{name:'View results'})
+    expect(result).toHaveAttribute('href',expect.stringContaining('/tour/calendar/Brno%20Open?'))
+    for(const value of ['branch=branch-a','revision=rev-old','season=2','tab=results','week=5','country=CZE','q=keep'])
+      expect(result).toHaveAttribute('href',expect.stringContaining(value))
+    expect(screen.queryByRole('link',{name:'View results'})).toBe(result)
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
+  })
   it('switches language without refetching or resetting the list/filter view',async()=>{
     const view=mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&country=CZE')
     expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()

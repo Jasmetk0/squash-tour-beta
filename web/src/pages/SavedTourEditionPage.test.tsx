@@ -12,7 +12,7 @@ const context=vi.hoisted(()=>({
   time:{mode:'present',isLoading:false,error:null},
   language:'en'
 }))
-vi.mock('../api/client',()=>api)
+vi.mock('../api/client',()=>({...api,ApiError:class ApiError extends Error{}}))
 vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
   selectedBranch:context.branch,isLoading:false,error:null
 })}))
@@ -41,11 +41,13 @@ function fixture(published=false):SavedTourEdition{
 }
 function mount(path='/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&country=CZE&view=list'){
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
-  return render(<QueryClientProvider client={client}>
+  const ui=()=> <QueryClientProvider client={client}>
     <MemoryRouter initialEntries={[path]}><Routes>
       <Route path="/admin/runs/:runId/tour/calendar/:eventId" element={<SavedTourEditionPage/>}/>
     </Routes></MemoryRouter>
-  </QueryClientProvider>)
+  </QueryClientProvider>
+  const view=render(ui())
+  return {...view,refresh:()=>view.rerender(ui())}
 }
 describe('Saved Edition detail',()=>{
   it('shows saved pending tie audit without inventing final group standings',async()=>{
@@ -277,5 +279,85 @@ describe('Saved Edition detail',()=>{
     expect(screen.getByText('No saved qualification bracket is available.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button',{name:'Schedule & matches'}))
     expect(screen.getByText(/Match start times are never inferred/)).toBeInTheDocument()
+  })
+  it('does not keep stale published results after an unsuccessful Edition refresh',async()=>{
+    api.getSavedTourEdition.mockResolvedValueOnce(fixture(true))
+    api.getSavedTourEdition.mockRejectedValueOnce(new Error('temporary offline'))
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Results'}))
+    expect(screen.getByText('3-0')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Retry Edition read'}))
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByText('3-0')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading',{name:'Brno Open'})).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Retry Edition read'}))
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(3)
+  })
+  it('fails closed on a failed refresh and re-reads the exact Edition via Retry',async()=>{
+    api.getSavedTourEdition.mockRejectedValueOnce(new Error('offline'))
+    mount()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByRole('heading',{name:'Brno Open'})).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Retry Edition read'}))
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(2)
+  })
+  it('supports keyboard tab selection and preserves the Saved revision',async()=>{
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    const before=api.getSavedTourEdition.mock.calls.length
+    const nav=screen.getByRole('navigation',{name:'Edition sections'})
+    const overview=within(nav).getByRole('button',{name:'Overview'})
+    overview.focus()
+    await userEvent.keyboard('{ArrowRight}')
+    expect(within(nav).getByRole('button',{name:'Entries & participants'})).toHaveAttribute('aria-current','page')
+    expect(screen.getByRole('link',{name:/Back to calendar/})).toHaveAttribute(
+      'href',expect.stringContaining('revision=rev-old'))
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(before)
+  })
+
+  it('translates saved entry mode only for presentation without changing DTO values',async()=>{
+    context.language='cs'
+    const data=fixture()
+    data.entry_field={
+      schema_version:'viewer_tournament_entry_field.v1',product_run_id:'run-a',
+      viewer_branch_id:'ancestor',event_id:'event-x',field_sequence:2,
+      mode:'pre_draw_repair',main_draw_capacity:4,active_main_entrant_count:2,
+      effective_main_bye_count:2,direct_main_player_ids:['P1','P2'],
+      qualification_player_ids:[],alternate_player_ids:[],withdrawn_player_ids:[]
+    }
+    api.getSavedTourEdition.mockResolvedValue(data)
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Přihlášky a účastníci'}))
+    expect(screen.getByText(/úprava přihlášek před losem/)).toBeInTheDocument()
+    expect(data.entry_field.mode).toBe('pre_draw_repair')
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
+  it('keeps original Draw tab on the published match detail link',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(fixture(true))
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&view=list&country=CZE')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Draw / groups'}))
+    const detail=screen.getByRole('link',{name:'Match detail'})
+    expect(detail).toHaveAttribute('href',expect.stringContaining('/matches/final?'))
+    expect(detail).toHaveAttribute('href',expect.stringContaining('tab=draw'))
+    expect(detail).toHaveAttribute('href',expect.stringContaining('revision=rev-old'))
+    expect(detail).toHaveAttribute('href',expect.stringContaining('country=CZE'))
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
+  it('keeps the active Edition tab and exact revision across CS/EN with no refetch',async()=>{
+    const view=mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Results'}))
+    const reads=api.getSavedTourEdition.mock.calls.length
+    context.language='cs'
+    view.refresh()
+    expect(screen.getByRole('button',{name:'Výsledky'})).toHaveAttribute('aria-current','page')
+    expect(screen.getByRole('link',{name:/Zpět na kalendář/})).toHaveAttribute(
+      'href',expect.stringContaining('revision=rev-old'))
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(reads)
   })
 })

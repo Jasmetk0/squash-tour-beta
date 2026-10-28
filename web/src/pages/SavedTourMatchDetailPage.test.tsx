@@ -12,7 +12,7 @@ const state=vi.hoisted(()=>({
   mode:'present',timeLoading:false,timeError:null as string|null,
   branchLoading:false,branchError:null as string|null,language:'en'
 }))
-vi.mock('../api/client',()=>api)
+vi.mock('../api/client',()=>({...api,ApiError:class ApiError extends Error{}}))
 vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
   selectedBranch:state.branch,isLoading:state.branchLoading,error:state.branchError
 })}))
@@ -130,4 +130,34 @@ describe('exact historical Edition match replay',()=>{
     expect(screen.getByRole('alert')).toHaveTextContent('Checkpoint is not bound')
     expect(api.getSavedTourMatchDetail).not.toHaveBeenCalled()
   })
+  it('translates replay UI without requesting the same Saved page again',async()=>{
+    const view=mount()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    const calls=api.getSavedTourMatchDetail.mock.calls.length
+    state.language='cs'
+    view.refresh()
+    expect(screen.getByText('Výměna 1/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(calls)
+  })
+  it('returns to the originating Draw tab with the exact encoded URL state',async()=>{
+    mount('/admin/runs/run-a/tour/calendar/event-x/matches/final?branch=branch-a&revision=old-rev&season=2&tab=draw&view=list&country=CZE')
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    const back=screen.getByRole('link',{name:'Back to Edition draw'})
+    expect(back).toHaveAttribute('href',expect.stringContaining('tab=draw'))
+    expect(back).toHaveAttribute('href',expect.stringContaining('revision=old-rev'))
+    expect(back).toHaveAttribute('href',expect.stringContaining('view=list'))
+    expect(back).toHaveAttribute('href',expect.stringContaining('country=CZE'))
+  })
+  it('allows a failed rally page to recover without changing the saved source',async()=>{
+    api.getSavedTourMatchDetail.mockRejectedValueOnce(new Error('offline'))
+    mount()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByText('3-2')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Retry match / archive read'}))
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)
+    expect(api.getSavedTourMatchDetail).toHaveBeenLastCalledWith(
+      'run-a','branch-a','old-rev',2,'event-x','final',0,25)
+  })
+
 })

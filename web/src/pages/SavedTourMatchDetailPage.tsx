@@ -14,10 +14,11 @@ export function SavedTourMatchDetailPage():JSX.Element{
   const {runId='',eventId='',matchId=''}=useParams()
   const [params]=useSearchParams()
   const {selectedBranch}=useAdminBranch()
+  const time=useAdminTime()
   // Key by full immutable scope. A link to another revision cannot reuse a
   // prior match's nonzero rally cursor during its first render.
   const key=JSON.stringify([runId,selectedBranch?.branch_id,params.get('branch'),
-    params.get('revision'),params.get('season'),eventId,matchId])
+    params.get('revision'),params.get('season'),eventId,matchId,time.mode])
   return <HistoricalMatchReplay key={key}/>
 }
 
@@ -43,19 +44,25 @@ function HistoricalMatchReplay():JSX.Element{
   // Disabling a query does not clear React Query's previous cached data.
   // Never render historical sporting authority outside its verified time/context,
   // nor accept a response belonging to a different immutable revision or page.
-  const data=ready&&!q.isPending&&!q.error&&q.data&&validSavedTourMatchDetail(
+  const data=ready&&q.isSuccess&&!q.isFetching&&q.data&&validSavedTourMatchDetail(
     q.data,runId,branch!,revision!,season!,eventId,matchId,offset,PAGE
   )?q.data:null
-  const invalid=Boolean(ready&&!q.isPending&&!q.error&&q.data&&!data)
+  const invalid=Boolean(ready&&q.isSuccess&&!q.isFetching&&q.data&&!data)
   const frame=data?.rallies.find(r=>r.rally_index===index+1)
   const parentParams=new URLSearchParams(params)
-  const tab=parentParams.get('tab')==='schedule'?'schedule':'results'
+  // Preserve the actual originating Edition section, including Draw / groups.
+  // Results is only the safe fallback for an absent/invalid section marker.
+  const requestedTab=parentParams.get('tab')
+  const tab=['overview','entries','draw','schedule','results','settings'].includes(requestedTab??'')
+    ?requestedTab!:'results'
   parentParams.set('tab',tab)
   const back='/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'
     +encodeURIComponent(eventId)+'?'+parentParams.toString()
   return <section className="panel">
-    <Link to={back} aria-label={cs?'Zpět na výsledky edice':'Back to Edition results'}>
-      ← {cs?'Zpět na výsledky edice':'Back to Edition results'}</Link>
+    <Link to={back} aria-label={tab==='draw'?(cs?'Zpět na pavouk edice':'Back to Edition draw'):
+      cs?'Zpět na výsledky edice':'Back to Edition results'}>
+      ← {tab==='draw'?(cs?'Zpět na pavouk edice':'Back to Edition draw'):
+        cs?'Zpět na výsledky edice':'Back to Edition results'}</Link>
     <div className="page-intro"><p className="eyebrow">RUN → TOUR → EDITION → MATCH</p>
       <h2>{cs?'Historický detail zápasu':'Historical match detail'}</h2>
       <p>{cs?'Pouze výsledek a případný archiv výměn z přesné Saved Revision.':
@@ -69,15 +76,17 @@ function HistoricalMatchReplay():JSX.Element{
         'Checkpoint is not bound to a proven Saved Revision.'):
         (cs?'Chybí přesný Run, Branch, Saved Revision nebo sezona.':
           'Exact Run, Branch, Saved Revision or season is missing.'))}</p>}
-    {ready&&q.isPending&&<p role="status">{cs?'Načítám ověřený zápas…':'Loading canonical match…'}</p>}
+    {ready&&(q.isPending||q.isFetching)&&<p role="status">{cs?'Načítám ověřený zápas…':'Loading canonical match…'}</p>}
     {ready&&q.error&&<p role="alert">{formatApiError(q.error)}</p>}
+    <button type="button" disabled={!ready||q.isFetching}
+      onClick={()=>{void q.refetch()}}>{cs?'Obnovit zápas / archiv':'Retry match / archive read'}</button>
     {invalid&&<p role="alert">{cs?
       'Archivovaný zápas neodpovídá vybrané Run/Branch/revizi nebo stránce výměn.':
       'Archived match does not match the selected Run/Branch/revision or rally page.'}</p>}
     {data&&<><div className="run-home-status-block">
       <p>{cs?'Turnaj':'Edition'}: <code>{eventId}</code> · {cs?'Zápas':'Match'}: <code>{matchId}</code></p>
       <h3>{data.match.winner_player_id} – {data.match.loser_player_id}</h3>
-      <p>{data.match.draw_type} · {cs?'Kolo':'Round'} {data.match.round_number}
+      <p>{data.match.draw_type==='main'?(cs?'Hlavní část':'Main'):data.match.draw_type==='qualification'?(cs?'Kvalifikace':'Qualification'):data.match.draw_type==='group'?(cs?'Skupina':'Group'):data.match.draw_type} · {cs?'Kolo':'Round'} {data.match.round_number}
         {' · '}{cs?'Pozice':'Position'} {data.match.bracket_position}
         {' · '}{cs?'Výsledek':'Result'}: <strong>{data.match.scoreline}</strong></p>
       <p>{cs?'Vítěz':'Winner'}: <strong>{data.match.winner_player_id}</strong>
@@ -103,10 +112,10 @@ function HistoricalMatchReplay():JSX.Element{
       </div>:<p role="status">{cs?'Tato výměna není v načtené stránce.':
         'This rally is absent from the loaded archive page.'}</p>}
       <div className="grid">
-        <button type="button" disabled={index===0}
+        <button type="button" disabled={q.isFetching||!frame||index===0}
           onClick={()=>setIndex(v=>Math.max(0,v-1))}>
           {cs?'← Předchozí výměna':'← Previous rally'}</button>
-        <button type="button" disabled={index+1>=data.total_rallies}
+        <button type="button" disabled={q.isFetching||!frame||index+1>=data.total_rallies}
           onClick={()=>setIndex(v=>Math.min(data.total_rallies-1,v+1))}>
           {cs?'Další výměna →':'Next rally →'}</button>
       </div>

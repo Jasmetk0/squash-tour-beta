@@ -1,7 +1,7 @@
 /** Canonical read-only match detail, replayed from stored rally frames only. */
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { getSavedPlayerMatchDetail, getSavedHomePlayerIdentities } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
@@ -19,14 +19,16 @@ const PAGE = 25
 export function SavedPlayerMatchDetailPage(): JSX.Element {
   const { runId = '', playerId = '', eventId = '', matchId = '' } = useParams()
   const { selectedBranch } = useAdminBranch()
+  const time = useAdminTime()
   const branchId = selectedBranch?.run_id === runId ? selectedBranch.branch_id : null
   const savedHead = branchId ? selectedBranch?.saved_head_revision_id ?? null : null
-  const replayIdentity = JSON.stringify([runId, branchId, savedHead, playerId, eventId, matchId])
+  const replayIdentity = JSON.stringify([runId, branchId, savedHead, playerId, eventId, matchId, time.mode])
   return <SavedPlayerMatchReplay key={replayIdentity} />
 }
 
 function SavedPlayerMatchReplay(): JSX.Element {
   const { runId = '', playerId = '', eventId = '', matchId = '' } = useParams()
+  const [searchParams] = useSearchParams()
   const { language } = useLanguage()
   const cs = language === 'cs'
   const { selectedBranch, isLoading, error } = useAdminBranch()
@@ -35,17 +37,27 @@ function SavedPlayerMatchReplay(): JSX.Element {
   const savedHead = selectedBranch?.saved_head_revision_id
   const [index, setIndex] = useState(0)
   const pageOffset = Math.floor(index / PAGE) * PAGE
-  const ready = time.mode === 'present' && !isLoading && !error &&
+  const ready = time.mode === 'present' && !time.isLoading && !time.error &&
+    !isLoading && !error &&
     Boolean(branchId && savedHead && playerId && eventId && matchId)
   const q = useQuery({
     queryKey: ['saved-match-detail', runId, branchId, savedHead, playerId, eventId, matchId, pageOffset],
     queryFn: () => getSavedPlayerMatchDetail(runId, branchId!, playerId, eventId, matchId, pageOffset, PAGE),
     enabled: ready, retry: false,
   })
-  const scoped = q.data?.run_id === runId && q.data?.branch_id === branchId &&
+  const scoped = ready && q.isSuccess && !q.isFetching &&
+    q.data?.source === 'selected_branch_saved_revision' &&
+    q.data?.run_id === runId && q.data?.branch_id === branchId &&
     q.data?.saved_revision_id === savedHead && q.data?.player_id === playerId &&
-    q.data?.match.event_id === eventId && q.data?.match.match_id === matchId &&
-    q.data?.offset === pageOffset && q.data?.limit === PAGE
+    q.data?.match?.event_id === eventId && q.data?.match?.match_id === matchId &&
+    q.data?.offset === pageOffset && q.data?.limit === PAGE &&
+    Number.isInteger(q.data?.total_rallies) && q.data!.total_rallies >= 0 &&
+    Array.isArray(q.data?.rallies) && typeof q.data?.has_more === 'boolean' &&
+    (q.data?.replay_status === 'unavailable'
+      ? q.data.total_rallies === 0 && q.data.rallies.length === 0 && !q.data.has_more
+      : q.data?.replay_status === 'available' && q.data.total_rallies > 0 &&
+        q.data.rallies.length === Math.max(0,Math.min(PAGE,q.data.total_rallies-pageOffset)) &&
+        q.data.has_more === (pageOffset+PAGE<q.data.total_rallies))
   const data = scoped ? q.data : null
   const ids = data ? [data.player_a_id || data.player_id, data.player_b_id || data.match.opponent_player_id] : []
   const namesQuery = useQuery({
@@ -54,15 +66,25 @@ function SavedPlayerMatchReplay(): JSX.Element {
     enabled: ready && ids.length === 2 && ids[0] !== ids[1], retry: false,
   })
   const namesData = namesQuery.data
-  const names = namesData && savedHead &&
+  const names = namesQuery.isSuccess && !namesQuery.isFetching && namesData && savedHead &&
     namesData.saved_revision_id === savedHead &&
     namesData.run_id === runId && namesData.branch_id === branchId &&
-    namesData.requested_ids.join('|') === ids.join('|')
+    namesData.requested_ids?.join('|') === ids.join('|') && Array.isArray(namesData.players)
     ? Object.fromEntries(namesData.players.map(p => [p.player_id, p.display_name]))
     : {}
   const frame = data?.rallies.find(r => r.rally_index === index + 1)
   const playerName = (id: string | null | undefined): string => id ? (names[id] || id) : '—'
-  const back = '/admin/runs/' + encodeURIComponent(runId) + '/people/' + encodeURIComponent(playerId)
+  const backParams = new URLSearchParams()
+  const fromCareer = searchParams.get('tab') === 'career'
+  if (fromCareer) backParams.set('tab', 'career')
+  const careerSeason = searchParams.get('careerSeason')
+  const careerPage = searchParams.get('careerPage')
+  if (fromCareer && careerSeason !== null && /^(0|[1-9]\d*)$/.test(careerSeason) && Number(careerSeason) < 50)
+    backParams.set('careerSeason', careerSeason)
+  if (fromCareer && careerPage !== null && /^(0|[1-9]\d*)$/.test(careerPage) && Number(careerPage) <= 10000)
+    backParams.set('careerPage', careerPage)
+  const back = '/admin/runs/' + encodeURIComponent(runId) + '/people/' + encodeURIComponent(playerId) +
+    (backParams.size ? '?' + backParams.toString() : '')
   return <section className="panel run-home">
     <div className="page-intro">
       <p className="eyebrow">PRODUCT RUN · SAVED MATCH</p>
@@ -72,15 +94,20 @@ function SavedPlayerMatchReplay(): JSX.Element {
     {time.mode !== 'present' ? <p className="status">{cs
       ? 'Zvolený historický checkpoint nemá zatím svůj detail zápasu. Současná revize se nezobrazuje jako historie.'
       : 'Historical checkpoint match detail is not supported. Current revision is not shown as history.'}</p> : <>
-      {(isLoading || (ready && q.isPending)) && <p role="status">{cs ? 'Načítání…' : 'Loading…'}</p>}
-      {error && <p role="alert" className="error">{error}</p>}
-      {q.error && <p role="alert" className="error">{formatApiError(q.error)}</p>}
-      {q.isSuccess && !scoped && <p role="alert" className="error">{cs
+      {(isLoading || time.isLoading || (ready && (q.isPending||q.isFetching))) && <p role="status">{cs ? 'Načítání…' : 'Loading…'}</p>}
+      {(error||time.error) && <p role="alert" className="error">{error||time.error}</p>}
+      {!ready&&!isLoading&&!time.isLoading&&!error&&!time.error&&<p role="alert">{cs?
+        'Chybí vybraná Branch, Saved HEAD nebo ID hráče/zápasu.':
+        'Selected Branch, Saved HEAD or player/match ID is missing.'}</p>}
+      {ready && q.error && <p role="alert" className="error">{formatApiError(q.error)}</p>}
+      {ready && q.isSuccess && !q.isFetching && !scoped && <p role="alert" className="error">{cs
         ? 'Detail neodpovídá vybrané uložené revizi.' : 'Match detail does not match selected Saved Revision.'}</p>}
+      <button type="button" disabled={!ready||q.isFetching}
+        onClick={()=>{void q.refetch()}}>{cs?'Obnovit zápas / archiv':'Retry match / archive read'}</button>
       {data && <>
         <div className="run-home-status-block">
           <h3>{data.match.event_name}</h3>
-          <p>{data.match.season} · W{data.match.week} · {data.match.draw_type} ·
+          <p>{data.match.season} · W{data.match.week} · {data.match.draw_type==='main'?(cs?'hlavní část':'main'):data.match.draw_type==='qualification'?(cs?'kvalifikace':'qualification'):data.match.draw_type==='group'?(cs?'skupina':'group'):data.match.draw_type} ·
             {' '}{cs ? 'kolo' : 'round'} {data.match.round_number}</p>
           <p><strong>{playerName(data.winner_player_id)}</strong> {cs ? 'porazil' : 'defeated'}
             {' '}{playerName(data.loser_player_id)} · <strong>{data.match.scoreline}</strong></p>
@@ -106,11 +133,11 @@ function SavedPlayerMatchReplay(): JSX.Element {
             {frame.match_complete && <p className="status">{cs ? 'Konec zápasu' : 'Match completed'}</p>}
           </div> : <p className="status">{cs ? 'V tomto úseku není výměna.' : 'No rally at this cursor.'}</p>}
           <div className="run-home-status-block">
-            <button type="button" disabled={index === 0} onClick={() => setIndex(v => Math.max(0, v - 1))}>
+            <button type="button" disabled={q.isFetching || !frame || index === 0} onClick={() => setIndex(v => Math.max(0, v - 1))}>
               {cs ? '← Předchozí výměna' : '← Previous rally'}
             </button>
             {' '}
-            <button type="button" disabled={index + 1 >= data.total_rallies}
+            <button type="button" disabled={q.isFetching || !frame || index + 1 >= data.total_rallies}
               onClick={() => setIndex(v => Math.min(data.total_rallies - 1, v + 1))}>
               {cs ? 'Další výměna →' : 'Next rally →'}
             </button>

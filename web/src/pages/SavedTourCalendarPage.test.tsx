@@ -12,7 +12,7 @@ const context=vi.hoisted(()=>({
   time:{mode:'present',presentSeason:2,isLoading:false,error:null},
   language:'en'
 }))
-vi.mock('../api/client',()=>api)
+vi.mock('../api/client',()=>({...api,ApiError:class ApiError extends Error{}}))
 vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
   selectedBranch:context.branch,isLoading:false,error:null
 })}))
@@ -37,11 +37,13 @@ function fixture():SavedTourCalendar {
 }
 function mount(path:string){
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
-  return render(<QueryClientProvider client={client}>
+  const ui=()=> <QueryClientProvider client={client}>
     <MemoryRouter initialEntries={[path]}><Routes>
       <Route path="/admin/runs/:runId/tour/calendar" element={<SavedTourCalendarPage/>}/>
     </Routes></MemoryRouter>
-  </QueryClientProvider>)
+  </QueryClientProvider>
+  const view=render(ui())
+  return {...view,refresh:()=>view.rerender(ui())}
 }
 describe('Run Saved Tour 61-week calendar',()=>{
   beforeEach(()=>{
@@ -105,5 +107,36 @@ describe('Run Saved Tour 61-week calendar',()=>{
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Saved Tour view'}),'list')
     await waitFor(()=>expect(screen.getByRole('link',{name:'Brno Open'})).toHaveAttribute(
       'href',expect.stringContaining('revision=head-a')))
+  })
+  it('recovers a failed calendar read explicitly and resets only local filters',async()=>{
+    api.getSavedTourCalendar.mockRejectedValueOnce(new Error('offline'))
+    mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&country=CZE&view=list&q=keep')
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'Brno Open'})).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Retry calendar read'}))
+    expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Clear filters'}))
+    expect(screen.getByRole('link',{name:'Egypt Open'})).toHaveAttribute(
+      'href',expect.stringContaining('revision=rev-old'))
+    expect(screen.getByRole('link',{name:'Egypt Open'})).toHaveAttribute(
+      'href',expect.stringContaining('q=keep'))
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(2)
+  })
+  it('distinguishes an empty saved season from zero matches after filters',async()=>{
+    api.getSavedTourCalendar.mockResolvedValue({...fixture(),editions:[],edition_count:0})
+    mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2')
+    expect(await screen.findByText('This season has no saved editions.')).toBeInTheDocument()
+    expect(screen.queryByText('No saved editions match the selected filters.')).not.toBeInTheDocument()
+  })
+
+  it('switches language without refetching or resetting the list/filter view',async()=>{
+    const view=mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&country=CZE')
+    expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()
+    const reads=api.getSavedTourCalendar.mock.calls.length
+    context.language='cs'
+    view.refresh()
+    expect(screen.getByRole('combobox',{name:'Pohled na uložený kalendář'})).toHaveValue('list')
+    expect(screen.getByRole('combobox',{name:'Filtr země'})).toHaveValue('CZE')
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(reads)
   })
 })

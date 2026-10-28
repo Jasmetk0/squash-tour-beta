@@ -1,7 +1,6 @@
 /** Branch-owned present-time profile from a single verified Saved Revision. */
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getSavedPlayerProfile } from '../api/client'
 import { PlayerHealthAdminPanel } from './PlayerHealthAdminPanel'
@@ -13,21 +12,35 @@ import { formatApiError } from '../utils/apiErrors'
 
 export function SavedPlayerIdentityPage(): JSX.Element {
   const { runId = '', playerId = '' } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { language } = useLanguage()
   const cs = language === 'cs'
-  const [tab, setTab] = useState<'overview' | 'attributes' | 'career' | 'health'>('overview')
+  // Profile tabs are URL state so the match-detail Back link can restore the career view.
+  const requestedTab = searchParams.get('tab')
+  const tab: 'overview' | 'attributes' | 'career' | 'health' =
+    requestedTab === 'attributes' || requestedTab === 'career' || requestedTab === 'health'
+      ? requestedTab : 'overview'
+  const setTab = (next: typeof tab) => {
+    const copy = new URLSearchParams(searchParams)
+    if (next === 'overview') copy.delete('tab')
+    else copy.set('tab', next)
+    setSearchParams(copy)
+  }
   const { selectedBranch, isLoading, error } = useAdminBranch()
   const time = useAdminTime()
   const branchId = selectedBranch?.run_id === runId ? selectedBranch.branch_id : null
   const savedHead = selectedBranch?.saved_head_revision_id
-  const ready = time.mode === 'present' && !isLoading && !error && Boolean(branchId && savedHead && playerId)
+  const ready = time.mode === 'present' && !time.isLoading && !time.error &&
+    !isLoading && !error && Boolean(branchId && savedHead && playerId)
   const q = useQuery({
     queryKey: ['saved-player-profile', runId, branchId, savedHead, playerId],
     queryFn: () => getSavedPlayerProfile(runId, branchId!, playerId),
     enabled: ready,
     retry: false,
   })
-  const scoped = q.data?.run_id === runId && q.data.branch_id === branchId &&
+  const scoped = ready && q.isSuccess && !q.isFetching &&
+    q.data?.source === 'selected_branch_saved_revision' &&
+    q.data?.run_id === runId && q.data.branch_id === branchId &&
     q.data.saved_revision_id === savedHead && q.data.player_id === playerId
   const profile = scoped ? q.data : null
   const player = profile?.identity
@@ -41,15 +54,32 @@ export function SavedPlayerIdentityPage(): JSX.Element {
       ? 'Historický profil pro tento checkpoint zatím není podporovaný. Současná data nevydáváme za historii.'
       : 'Historical player profile for this checkpoint is not supported. Current data is not presented as history.'}</p> :
       <>
-        {(isLoading || q.isPending && ready) && <p role="status">{cs ? 'Načítání…' : 'Loading…'}</p>}
-        {error && <p className="error" role="alert">{error}</p>}
-        {q.error && <p className="error" role="alert">{formatApiError(q.error)}</p>}
-        {q.isSuccess && !scoped && <p className="error" role="alert">{cs ? 'Profil neodpovídá vybrané revizi.' : 'Profile does not match selected Saved Revision.'}</p>}
+        {(isLoading || time.isLoading || (ready && (q.isPending || q.isFetching))) && <p role="status">{cs ? 'Načítání…' : 'Loading…'}</p>}
+        {(error||time.error) && <p className="error" role="alert">{error||time.error}</p>}
+        {!ready&&!isLoading&&!time.isLoading&&!error&&!time.error&&<p role="alert">{cs?
+          'Chybí vybraná Branch, Saved HEAD nebo ID hráče.':'Selected Branch, Saved HEAD or player ID is missing.'}</p>}
+        {ready && q.error && <p className="error" role="alert">{formatApiError(q.error)}</p>}
+        {ready && q.isSuccess && !q.isFetching && !scoped && <p className="error" role="alert">{cs ? 'Profil neodpovídá vybrané revizi.' : 'Profile does not match selected Saved Revision.'}</p>}
+        <button type="button" disabled={!ready||q.isFetching}
+          onClick={()=>{void q.refetch()}}>{cs?'Obnovit profil':'Retry profile read'}</button>
         {profile && !player && <p className="status">{cs
           ? 'Ověřená identita není v této uložené revizi dostupná. Sportovní údaje nezobrazujeme.'
           : 'No verified player identity in this Saved Revision. No sporting information is shown.'}</p>}
         {profile && player && <>
-          <div className="actions" role="tablist" aria-label={cs ? 'Záložky profilu hráče' : 'Player profile tabs'}>
+          <div className="actions" role="tablist" aria-label={cs ? 'Záložky profilu hráče' : 'Player profile tabs'}
+            onKeyDown={event=>{
+              const order=['overview','attributes','career','health'] as const
+              const at=order.indexOf(tab)
+              const next=event.key==='ArrowRight'?order[(at+1)%order.length]:
+                event.key==='ArrowLeft'?order[(at+order.length-1)%order.length]:
+                event.key==='Home'?order[0]:event.key==='End'?order[order.length-1]:null
+              if(next){
+                event.preventDefault()
+                setTab(next)
+                const buttons=event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                buttons[order.indexOf(next)]?.focus()
+              }
+            }}>
             <button type="button" role="tab" aria-selected={tab==='overview'}
               onClick={()=>setTab('overview')}>{cs ? 'Přehled' : 'Overview'}</button>
             <button type="button" role="tab" aria-selected={tab==='attributes'}
@@ -79,7 +109,7 @@ export function SavedPlayerIdentityPage(): JSX.Element {
             ? 'Hráč není v posledním publikovaném žebříčku zařazen.'
             : 'Player is not ranked in the latest published ranking.'}</p>}
           {profile.ranking_status === 'ranked' && <p>
-            <strong>#{profile.rank}</strong> · {profile.points} {cs ? 'bodů' : 'points'}
+            <strong>#{profile.rank ?? '—'}</strong> · {profile.points ?? '—'} {cs ? 'bodů' : 'points'}
           </p>}
           {profile.ranking_week_ordinal != null && <p className="status">
             {cs ? 'Poslední publikace · index týdne: ' : 'Latest publication · week index: '}

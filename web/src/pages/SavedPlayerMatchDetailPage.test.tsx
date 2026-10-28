@@ -8,7 +8,7 @@ import { LanguageProvider } from '../i18n/LanguageContext'
 const api = vi.hoisted(() => ({
   getSavedPlayerMatchDetail: vi.fn(), getSavedHomePlayerIdentities: vi.fn(),
 }))
-vi.mock('../api/client', () => api)
+vi.mock('../api/client',()=>({...api,ApiError:class ApiError extends Error{}}))
 const branchContext = vi.hoisted(() => ({
   current: { run_id: 'run', branch_id: 'branch', saved_head_revision_id: 'rev' }
 }))
@@ -17,10 +17,10 @@ vi.mock('../admin/AdminBranchContext', () => ({
 }))
 vi.mock('../admin/AdminTimeContext', () => ({ useAdminTime: () => ({ mode: 'present' }) }))
 
-function mount() {
+function mount(entry = '/admin/runs/run/people/A/matches/event/final') {
   const cache = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
   const tree = () => <QueryClientProvider client={cache}><LanguageProvider><MemoryRouter
-    initialEntries={['/admin/runs/run/people/A/matches/event/final']}>
+    initialEntries={[entry]}>
     <nav aria-label="Replay scope test navigation">
       <Link to="/admin/runs/run/people/A/matches/event/short">Switch match</Link>
       <Link to="/admin/runs/run/people/A/matches/second/final">Switch event</Link>
@@ -64,9 +64,17 @@ describe('canonical saved match detail', () => {
       requested_ids: ids, players: ids.map(id => ({ player_id: id, display_name: id === 'A' ? 'Alpha' : 'Bravo' })),
     }))
   })
+  it('returns to the original career tab, season and page', async () => {
+    mount('/admin/runs/run/people/A/matches/event/final?tab=career&careerSeason=2&careerPage=1')
+    expect(await screen.findByText('Championship')).toBeInTheDocument()
+    expect(screen.getByRole('link', {name: /Zpět na profil hráče/})).toHaveAttribute('href',
+      '/admin/runs/run/people/A?tab=career&careerSeason=2&careerPage=1')
+  })
   it('steps through archived score frames without simulating', async () => {
     mount()
     expect(await screen.findByText('Championship')).toBeInTheDocument()
+    expect(screen.getByRole('link', {name: /Zpět na profil hráče/})).toHaveAttribute('href',
+      '/admin/runs/run/people/A')
     expect(await screen.findByText('Alpha')).toBeInTheDocument()
     expect(screen.getByText(/1\/2/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Další výměna →' }))
@@ -143,6 +151,23 @@ describe('replay identity cursor isolation', () => {
     useLongMatchFixture()
   })
 
+  it('ignores an old pending match response delivered after navigating',async()=>{
+    let resolveOld:((value:ReturnType<typeof result>)=>void)|undefined
+    api.getSavedPlayerMatchDetail.mockImplementation((
+      _run:string,_branch:string,_player:string,_event:string,matchId:string
+    )=>matchId==='final'
+      ?new Promise(resolve=>{resolveOld=resolve})
+      :Promise.resolve(result({
+        match:{...result().match,match_id:'short',scoreline:'3-0'}
+      })))
+    mount()
+    await waitFor(()=>expect(api.getSavedPlayerMatchDetail).toHaveBeenCalledTimes(1))
+    fireEvent.click(screen.getByRole('link',{name:'Switch match'}))
+    expect(await screen.findByText(/3-0/)).toBeInTheDocument()
+    await act(async()=>{resolveOld?.(result())})
+    expect(screen.getByText(/3-0/)).toBeInTheDocument()
+    expect(screen.queryByText(/3-2/)).not.toBeInTheDocument()
+  })
   it.each([
     ['Switch match', 'run', 'branch', 'A', 'event', 'short'],
     ['Switch event', 'run', 'branch', 'A', 'second', 'final'],
@@ -201,4 +226,15 @@ describe('replay identity cursor isolation', () => {
     ])
     expect(screen.getByRole('button', { name: '← Předchozí výměna' })).toBeDisabled()
   })
+  it('retries an interrupted archived match read without altering its cursor or Saved HEAD',async()=>{
+    api.getSavedPlayerMatchDetail.mockRejectedValueOnce(new Error('offline'))
+    mount()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByText('Championship')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Obnovit zápas / archiv'}))
+    expect(await screen.findByText('Championship')).toBeInTheDocument()
+    expect(api.getSavedPlayerMatchDetail).toHaveBeenLastCalledWith(
+      'run','branch','A','event','final',0,25)
+  })
+
 })

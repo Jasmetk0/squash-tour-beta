@@ -60,12 +60,7 @@ const NEXT = {
     noPosition: 'Kalendář existuje, ale branch zatím nemá určený týden.',
     noUpcoming: 'V uloženém kalendáři nejsou žádné další neodehrané turnaje od aktuálního týdne.',
     noResults: 'V uložené revizi zatím nejsou publikované výsledky turnajů.',
-    rankingUnsupported: 'Změny žebříčku zatím nemají ověřenou projekci pro tuto branch.',
-    readinessChecking: 'Ověřuji aktuální uložené podklady vybrané branche…',
-    readinessUnavailable: 'Kontrolu připravenosti nelze ověřit. Žádný uložený podklad nebyl tímto krokem potvrzen.',
-    readinessRetry: 'Znovu ověřit uložené podklady',
-    readinessEmptyHead: 'Vybraná Branch nemá ověřenou Saved Revision HEAD. Kontrola podkladů zatím není dostupná.',
-    readinessRetryNote: 'Opakování pouze načte aktuální uložený stav. Nic neukládá, nepublikuje ani nespouští simulaci.'
+    rankingUnsupported: 'Změny žebříčku zatím nemají ověřenou projekci pro tuto branch.'
   },
   en: {
     subtitle: 'Selected Branch overview from canonical saved and simulation data.',
@@ -96,14 +91,33 @@ const NEXT = {
     noPosition: 'The calendar exists but this Branch has no positioned week.',
     noUpcoming: 'No further unplayed tournaments from the current week are in the saved calendar.',
     noResults: 'No published tournament results are present in the saved revision.',
-    rankingUnsupported: 'Ranking changes have no verified Branch-scoped projection yet.',
-    readinessChecking: 'Verifying current Saved foundations of the selected Branch…',
-    readinessUnavailable: 'Saved readiness cannot be verified. No saved foundation was confirmed by this inspection.',
-    readinessRetry: 'Recheck Saved foundations',
-    readinessEmptyHead: 'The selected Branch has no verified Saved Revision HEAD. The foundation inspection is unavailable.',
-    readinessRetryNote: 'Retry only reads the current Saved state. It neither Saves, publishes nor starts simulation.'
+    rankingUnsupported: 'Ranking changes have no verified Branch-scoped projection yet.'
   }
 }
+
+// Pair new recovery copy by meaning rather than duplicating locale object blocks.
+const readinessText = {
+  checking: {
+    cs: 'Ověřuji aktuální uložené podklady vybrané branche…',
+    en: 'Verifying current Saved foundations of the selected Branch…'
+  },
+  unavailable: {
+    cs: 'Kontrolu připravenosti nelze ověřit. Žádný uložený podklad nebyl tímto krokem potvrzen.',
+    en: 'Saved readiness cannot be verified. No saved foundation was confirmed by this inspection.'
+  },
+  retry: {
+    cs: 'Znovu ověřit uložené podklady',
+    en: 'Recheck Saved foundations'
+  },
+  emptyHead: {
+    cs: 'Vybraná Branch nemá ověřenou Saved Revision HEAD. Kontrola podkladů zatím není dostupná.',
+    en: 'The selected Branch has no verified Saved Revision HEAD. The foundation inspection is unavailable.'
+  },
+  retryNote: {
+    cs: 'Opakování pouze načte aktuální uložený stav. Nic neukládá, nepublikuje ani nespouští simulaci.',
+    en: 'Retry only reads the current Saved state. It neither Saves, publishes nor starts simulation.'
+  }
+} as const
 
 function Unavailable({ message }: { message: string }): JSX.Element {
   return <p className="error" role="alert">{message}</p>
@@ -316,16 +330,16 @@ export function RunPage(): JSX.Element {
       unavailable={!verified} historical={false} locale={language} clock={homeClock}/>
 
     {ready && !selectedBranch?.saved_head_revision_id &&
-      <p role="status" className="status">{l.readinessEmptyHead}</p>}
+      <p role="status" className="status">{readinessText.emptyHead[language]}</p>}
     {ready && Boolean(selectedBranch?.saved_head_revision_id) && readinessQuery.isFetching &&
-      <p role="status" className="status">{l.readinessChecking}</p>}
+      <p role="status" className="status">{readinessText.checking[language]}</p>}
     {ready && Boolean(selectedBranch?.saved_head_revision_id) &&
       !readinessQuery.isFetching && (readinessQuery.isError || readinessMismatch) &&
       <section className="run-home-status-block" aria-label={language === 'cs'
         ? 'Obnova kontroly podkladů Runu' : 'Run foundation inspection recovery'}>
-        <p role="alert" className="error">{l.readinessUnavailable}</p>
-        <p className="status">{l.readinessRetryNote}</p>
-        <button type="button" onClick={() => { void readinessQuery.refetch() }}>{l.readinessRetry}</button>
+        <p role="alert" className="error">{readinessText.unavailable[language]}</p>
+        <p className="status">{readinessText.retryNote[language]}</p>
+        <button type="button" onClick={() => { void readinessQuery.refetch() }}>{readinessText.retry[language]}</button>
       </section>}
     {ready && readiness && <RunHomeReadinessPanel
       data={readiness} runId={runId} language={language}

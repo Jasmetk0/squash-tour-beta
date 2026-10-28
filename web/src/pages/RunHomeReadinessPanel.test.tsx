@@ -297,7 +297,7 @@ describe('saved Run readiness panel', () => {
     fireEvent.click(screen.getByText('Show saved-foundation checks (6) · 2 items needing attention'))
     const rankingLink = screen.getByRole('link', { name: 'Open ranking preparation and publication →' })
     expect(rankingLink).toHaveAttribute('href', '/admin/runs/run-a#run-initial-ranking')
-    expect(screen.queryByText(/legacy initial-ranking publication workflow is not available/)).toBeNull()
+    expect(screen.queryByText(/not available for this selected Run, Branch or calendar/)).toBeNull()
   })
 
   it('routes unsupported calendars to read-only candidate inspection without promising publication', () => {
@@ -312,7 +312,7 @@ describe('saved Run readiness panel', () => {
     fireEvent.click(screen.getByText('Show saved-foundation checks (6) · 2 items needing attention'))
     expect(screen.getByRole('link', { name: 'Inspect ranking candidates →' }))
       .toHaveAttribute('href', '/admin/runs/run-a/branches/branch-a/ranking-candidates')
-    expect(screen.getByText(/legacy initial-ranking publication workflow is not available/)).toBeVisible()
+    expect(screen.getByText(/not available for this selected Run, Branch or calendar/)).toBeVisible()
   })
 
   it('keeps the next action for an unsaved Working Draft honest about where Save happens', () => {

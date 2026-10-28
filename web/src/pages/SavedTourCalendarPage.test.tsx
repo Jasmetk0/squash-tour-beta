@@ -129,6 +129,50 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(screen.queryByText('No saved editions match the selected filters.')).not.toBeInTheDocument()
   })
 
+
+  it('searches by accent-insensitive title and filters published results without another Saved read',async()=>{
+    const f=fixture()
+    f.editions[0].event_name='Brněnský Open'
+    f.editions[0].host_city='Brno'
+    f.editions[0].result_published=true
+    api.getSavedTourCalendar.mockResolvedValue(f)
+    mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&eventSearch=BRNENSKY&publication=published&q=keep')
+    expect(await screen.findByRole('link',{name:'Brněnský Open'})).toBeInTheDocument()
+    const table=screen.getByRole('table',{name:'Saved Tour edition list'})
+    expect(within(table).getAllByRole('row')).toHaveLength(2)
+    expect(within(table).queryByText('Egypt Open')).not.toBeInTheDocument()
+    expect(screen.getByRole('link',{name:'Brněnský Open'})).toHaveAttribute('href',expect.stringContaining('revision=rev-old'))
+    await userEvent.clear(screen.getByRole('searchbox',{name:'Search saved editions'}))
+    await userEvent.type(screen.getByRole('searchbox',{name:'Search saved editions'}),'Egypt')
+    expect(screen.getByText('No saved editions match the selected filters.')).toBeInTheDocument()
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('button',{name:'Clear filters'}))
+    expect(within(table).getAllByRole('row')).toHaveLength(4)
+    expect(screen.getByRole('searchbox',{name:'Search saved editions'})).toHaveValue('')
+    expect(screen.getByRole('combobox',{name:'Saved Tour result publication'})).toHaveValue('all')
+    expect(screen.getByRole('link',{name:'Egypt Open'})).toHaveAttribute('href',expect.stringContaining('q=keep'))
+  })
+  it('collapses only unoccupied weeks after filters, retaining the exact Saved revision',async()=>{
+    mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2')
+    expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Saved Tour 61 season weeks')).getAllByRole('heading',{level:4})).toHaveLength(61)
+    await userEvent.click(screen.getByRole('checkbox',{name:'Only weeks with matching editions'}))
+    expect(within(screen.getByLabelText('Saved Tour weeks with matching editions')).getAllByRole('heading',{level:4})).toHaveLength(2)
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Saved Tour filter country'}),'EGY')
+    const weeks=screen.getByLabelText('Saved Tour weeks with matching editions')
+    expect(within(weeks).getAllByRole('heading',{level:4})).toHaveLength(1)
+    expect(within(weeks).getByRole('link',{name:'Egypt Open'})).toHaveAttribute('href',expect.stringContaining('compactWeeks=1'))
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
+  })
+  it('keeps publication/search settings during CS/EN changes without changing Saved source',async()=>{
+    const view=mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&eventSearch=brno&publication=not-published')
+    expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()
+    context.language='cs'
+    view.refresh()
+    expect(screen.getByRole('searchbox',{name:'Hledat v uloženém kalendáři'})).toHaveValue('brno')
+    expect(screen.getByRole('combobox',{name:'Filtr publikace výsledku'})).toHaveValue('not-published')
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
+  })
   it('switches language without refetching or resetting the list/filter view',async()=>{
     const view=mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&country=CZE')
     expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()

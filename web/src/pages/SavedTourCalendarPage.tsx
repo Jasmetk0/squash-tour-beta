@@ -9,6 +9,7 @@ import {useAdminTime} from '../admin/AdminTimeContext'
 import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
 import {calendarSeasonIndex} from './runWorldCountryTournaments'
+import {calendarWeeksWithEditions,filterSavedTourEvents,savedCalendarPublication} from './savedTourCalendarDiscovery'
 
 const choices=Array.from({length:50},(_,i)=>i)
 export function SavedTourCalendarPage():JSX.Element{
@@ -37,12 +38,13 @@ export function SavedTourCalendarPage():JSX.Element{
   const invalid=Boolean(scopeValid&&query.isSuccess&&!query.isFetching&&query.data&&!model)
   const view=params.get('view')==='list'?'list':'weeks'
   const filters={tour:params.get('tour')??'',category:params.get('category')??'',
-    country:params.get('country')??''}
+    country:params.get('country')??'',search:params.get('eventSearch')??'',
+    publication:savedCalendarPublication(params.get('publication'))}
+  const compactWeeks=params.get('compactWeeks')==='1'
   const editions=useMemo(()=>model?.editions??[],[model])
   const options=(field:'tour_level'|'category'|'host_country')=>[...new Set(editions.map(e=>e[field]).filter((v):v is string=>Boolean(v)))].sort()
-  const shown=editions.filter(e=>(!filters.tour||e.tour_level===filters.tour)
-    &&(!filters.category||e.category===filters.category)
-    &&(!filters.country||e.host_country===filters.country))
+  const shown=filterSavedTourEvents(editions,filters)
+  const weeks=calendarWeeksWithEditions(shown,model?.week_count??61,compactWeeks)
   const set=(key:string,value:string)=>{
     const copy=new URLSearchParams(params)
     if(value)copy.set(key,value);else copy.delete(key)
@@ -53,7 +55,7 @@ export function SavedTourCalendarPage():JSX.Element{
   }
   const resetFilters=()=>{
     const copy=new URLSearchParams(params)
-    for(const field of ['tour','category','country'])copy.delete(field)
+    for(const field of ['tour','category','country','eventSearch','publication'])copy.delete(field)
     if(branch)copy.set('branch',branch)
     if(revision)copy.set('revision',revision)
     setParams(copy)
@@ -100,9 +102,23 @@ export function SavedTourCalendarPage():JSX.Element{
         onChange={e=>set('country',e.target.value)}>
         <option value="">{cs?'Všechny':'All'}</option>
         {options('host_country').map(v=><option key={v} value={v}>{v}</option>)}</select></label>
+      <label>{cs?'Hledat edici':'Search editions'} <input type="search"
+        aria-label={cs?'Hledat v uloženém kalendáři':'Search saved editions'}
+        value={filters.search} onChange={e=>set('eventSearch',e.target.value)}
+        placeholder={cs?'Název, ID, město nebo země':'Name, ID, city or country'}/></label>
+      <label>{cs?'Publikace výsledku':'Result publication'} <select
+        aria-label={cs?'Filtr publikace výsledku':'Saved Tour result publication'}
+        value={filters.publication} onChange={e=>set('publication',e.target.value)}>
+        <option value="all">{cs?'Všechny':'All'}</option>
+        <option value="published">{cs?'Publikováno':'Published'}</option>
+        <option value="not-published">{cs?'Nepublikováno':'Not published'}</option>
+      </select></label>
     </div>
+    {view==='weeks'&&<label><input type="checkbox" checked={compactWeeks}
+      onChange={e=>set('compactWeeks',e.target.checked?'1':'')}/>
+      {cs?' Jen týdny s odpovídajícími edicemi':' Only weeks with matching editions'}</label>}
     <div className="actions">
-      <button type="button" disabled={!filters.tour&&!filters.category&&!filters.country}
+      <button type="button" disabled={!filters.tour&&!filters.category&&!filters.country&&!filters.search&&filters.publication==='all'}
         onClick={resetFilters}>{cs?'Vymazat filtry':'Clear filters'}</button>
       <button type="button" disabled={!scopeValid||query.isFetching}
         onClick={()=>{void query.refetch()}}>{cs?'Obnovit kalendář':'Retry calendar read'}</button>
@@ -124,9 +140,11 @@ export function SavedTourCalendarPage():JSX.Element{
         'Sezona neobsahuje žádné uložené edice.':'This season has no saved editions.'}</p>}
       {model.calendar_status==='ready'&&editions.length>0&&shown.length===0&&<p role="status">{cs?
         'Žádné edice neodpovídají zvoleným filtrům.':'No saved editions match the selected filters.'}</p>}
-      {model.calendar_status==='ready'&&(view==='weeks'?<div className="saved-tour-week-grid" aria-label={cs?"61 týdnů uložené sezony":"Saved Tour 61 season weeks"}>
-        {Array.from({length:61},(_,i)=>{
-          const week=i+1,events=shown.filter(e=>e.season_week===week)
+      {model.calendar_status==='ready'&&(view==='weeks'?<div className="saved-tour-week-grid" aria-label={compactWeeks
+        ?(cs?'Týdny s odpovídajícími edicemi':'Saved Tour weeks with matching editions')
+        :(cs?'61 týdnů uložené sezony':'Saved Tour 61 season weeks')}>
+        {weeks.map(week=>{
+          const events=shown.filter(e=>e.season_week===week)
           return <section key={week} className="section-subtle">
             <h4>{cs?'Týden':'Week'} {week}</h4>
             {events.map(e=><p key={e.event_id}>{name(e)} <small>· {e.category} · {e.host_country}

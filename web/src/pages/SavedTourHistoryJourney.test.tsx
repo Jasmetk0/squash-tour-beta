@@ -148,7 +148,7 @@ describe('Saved Tour historical navigation across mounted pages',()=>{
     mount()
     expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()
     await userEvent.click(screen.getByRole('link',{name:'View results'}))
-    expect(await screen.findByRole('alert')).toHaveTextContent(/does not match|not available|unavailable/i)
+    expect(await screen.findByRole('alert')).toHaveTextContent('Invalid or stale Edition identity.')
     expect(screen.queryByRole('link',{name:'Match detail'})).not.toBeInTheDocument()
     expect(api.getSavedTourMatchDetail).not.toHaveBeenCalled()
     expect(api.getSavedTourEdition).toHaveBeenCalledWith(

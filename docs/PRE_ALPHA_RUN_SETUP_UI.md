@@ -148,6 +148,16 @@ not add a generator, a second readiness authority or a hidden Save.
     revision list. Read-only UI regressions verify wrong-HEAD rejection and
     a real React Query HEAD switch with delayed history delivery.
 
+21. The saved event feed, weekly ranking movement and resolved player identities
+    no longer reuse prior successful React Query data during a refetch or after
+    a failed refetch. Only a successful, non-fetching response with the selected
+    Run, Branch, Saved HEAD (and exact player-ID request for names) can appear.
+    Player-ID follow-on reads are derived only from verified event/ranking
+    feeds. Three frontend regressions exercise delayed failed refresh and a
+    later successful recovery separately for events, rankings and identity
+    names; player IDs remain as neutral fallbacks when names are unverified.
+    No new sporting writes or background polling are introduced.
+
 ## Validation boundary
 
 Focused React component regressions exercise rapid double-submit, rejected

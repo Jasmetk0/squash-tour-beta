@@ -79,7 +79,9 @@ export function RunCreatePage(): JSX.Element {
       setError(confirmedRunId ? `${t.afterCreate} (${formatApiError(cause)})`
         : `${t.failure}: ${formatApiError(cause)}`)
     } finally {
-      submissionInFlight.current = false
+      // Keep the synchronous fence permanently closed after confirmed creation,
+      // including before React commits the recovery-link state.
+      submissionInFlight.current = confirmedRunId !== null
       setPending(false)
     }
   }

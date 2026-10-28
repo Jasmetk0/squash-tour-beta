@@ -146,7 +146,7 @@ export function RunPage(): JSX.Element {
     retry: false
   })
   const packageQuery = useQuery({
-    queryKey: ['run-package-state', runId, branchId],
+    queryKey: ['run-package-state', runId, branchId, selectedBranch?.saved_head_revision_id],
     queryFn: () => getRunPackageState(runId, branchId!),
     enabled: ready,
     retry: false
@@ -267,8 +267,18 @@ export function RunPage(): JSX.Element {
     ? simulationHistoryQuery.data.items : null
   const revisions = revisionsQuery.data?.run_id === runId && revisionsQuery.data.branch_id === branchId
     ? revisionsQuery.data.saved_revisions : null
-  const ownedPackages = packageQuery.data?.state ?? null
-  const emptyRun = ready && packageQuery.isSuccess && ownedPackages === null && positionQuery.isError && isApiNotFound(positionQuery.error)
+  // Package state is a Branch-owned Saved projection, not a Run-global cache.
+  // A missing envelope or foreign Run/Branch must never be interpreted as an
+  // empty Run; an in-flight HEAD refresh must not reuse old package evidence.
+  const packageMismatch = packageQuery.isSuccess && !packageQuery.isFetching
+    && (packageQuery.data?.state === undefined || (
+      packageQuery.data.state !== null && (
+        packageQuery.data.state.run_id !== runId || packageQuery.data.state.branch_id !== branchId
+      )))
+  const packageVerified = packageQuery.isSuccess && !packageQuery.isFetching && !packageMismatch
+  const ownedPackages = packageVerified ? packageQuery.data!.state : null
+  const emptyRun = ready && packageVerified && ownedPackages === null
+    && positionQuery.isError && isApiNotFound(positionQuery.error)
   const base = '/admin/runs/' + encodeURIComponent(runId)
   const statusErrors = [
     branchError,
@@ -276,6 +286,9 @@ export function RunPage(): JSX.Element {
     containerQuery.error ? formatApiError(containerQuery.error) : null,
     draftQuery.error ? formatApiError(draftQuery.error) : null,
     packageQuery.error ? formatApiError(packageQuery.error) : null,
+    packageMismatch ? language === 'cs'
+      ? 'Uložené balíčky neodpovídají vybranému Runu a Branchi.'
+      : 'Saved package state does not match the selected Run and Branch.' : null,
     positionQuery.error && !isApiNotFound(positionQuery.error) ? formatApiError(positionQuery.error) : null,
     pendingQuery.error && !isApiNotFound(pendingQuery.error) ? formatApiError(pendingQuery.error) : null,
     revisionsQuery.error ? formatApiError(revisionsQuery.error) : null,
@@ -369,9 +382,12 @@ export function RunPage(): JSX.Element {
       <SectionCard title={l.next}>
         {!verified && <p className="status">{branchLoading || containerQuery.isPending || time.isLoading ? l.loading : l.missing}</p>}
         {verified && <>
-          {packageQuery.isPending && <p role="status">{l.loading}</p>}
+          {(packageQuery.isPending || packageQuery.isFetching) && <p role="status">{l.loading}</p>}
           {packageQuery.isError && <Unavailable message={formatApiError(packageQuery.error)} />}
-          {packageQuery.isSuccess && ownedPackages === null && <p>{l.initial}</p>}
+          {packageMismatch && <Unavailable message={language === 'cs'
+            ? 'Uložené balíčky neodpovídají vybranému Runu a Branchi.'
+            : 'Saved package state does not match the selected Run and Branch.'} />}
+          {packageVerified && ownedPackages === null && <p>{l.initial}</p>}
           {noConfirmedPosition && ownedPackages !== null && <p>{l.notPositioned}</p>}
           {positionQuery.isPending && <p role="status">{l.loading}</p>}
           {homeActivity && homeActivity.calendar_status === 'ready' && homeActivity.upcoming.length > 0 && <div>

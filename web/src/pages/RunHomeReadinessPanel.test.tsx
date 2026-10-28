@@ -91,6 +91,8 @@ describe('saved Run readiness panel', () => {
       items: data.items.map(item => ({ ...item, status: 'saved' as const }))
     })
     expect(screen.getByText('Show saved-foundation checks (6)')).toBeVisible()
+    fireEvent.click(screen.getByText('Show saved-foundation checks (6)'))
+    expect(screen.getByText('Clean Working Draft · Pending changes: 1')).toBeVisible()
     expect(screen.getByText('This saved-foundation inspection has no further action. It does not certify all operations; each requires its own preflight.')).toBeVisible()
   })
 
@@ -174,7 +176,8 @@ describe('saved Run readiness panel', () => {
     expect(screen.getByText(/This check does not require this foundation here; another operation may/)).toBeVisible()
     expect(screen.getAllByText(/No matching evidence in this Saved Revision/)).toHaveLength(4)
     expect(screen.getByText(/Counts Saved Health records, not match-specific medical clearance/)).toBeVisible()
-    expect(screen.getByText(/This evidence exists, but it does not certify readiness/)).toBeVisible()
+    expect(screen.getByText('Clean Working Draft · Pending changes: 0')).toBeVisible()
+    expect(screen.getByText(/This Working Draft has no pending changes/)).toBeVisible()
   })
 
   it('provides Czech interpretation without claiming that a ranking candidate is published', () => {
@@ -200,5 +203,19 @@ describe('saved Run readiness panel', () => {
       .toHaveAttribute('href', '/admin/runs/run%2F%C4%8D%201/manage')
     expect(screen.getByRole('link', { name: 'Open global Test Lab' }))
       .toHaveAttribute('href', '/admin/labs')
+  })
+
+  it('distinguishes a clean Czech Working Draft from saved sporting data', () => {
+    mount('cs', {
+      ...data,
+      items: data.items.map(item => ({
+        ...item,
+        status: item.code === 'working_draft' ? 'saved' as const : item.status,
+        evidence_count: item.code === 'working_draft' ? 0 : item.evidence_count
+      }))
+    })
+    fireEvent.click(screen.getByText('Zobrazit kontrolu uložených podkladů (6) · 2 položky k prověření'))
+    expect(screen.getByText('Čistý Working Draft · Nevyřízené změny: 0')).toBeVisible()
+    expect(screen.getByText(/Tento Working Draft nemá čekající změny/)).toBeVisible()
   })
 })

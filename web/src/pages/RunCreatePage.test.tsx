@@ -1,4 +1,5 @@
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { QueryClient } from '@tanstack/react-query'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -161,5 +162,59 @@ describe('canonical Product Run creation', () => {
       weeks_per_year:52, season_start_year_week:1, start_year:2000, last_season_start_year:2002
     })
     expect(screen.getByText('2002', {selector:'strong'})).toBeVisible()
+  })
+
+  it('sends only one authoritative create command for two submissions in the same render turn', async () => {
+    let resolveCreate!: (value: unknown) => void
+    api.createEmptyRunContainer.mockImplementationOnce(() => new Promise(done => { resolveCreate = done }))
+    renderPage()
+    await userEvent.type(screen.getByLabelText('Unique Run name'), 'My test Run')
+    const form = screen.getByRole('button', { name: 'Create isolated Run' }).closest('form')!
+    fireEvent.submit(form)
+    fireEvent.submit(form)
+    expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
+    resolveCreate({ run_id: 'new-run-1', display_name: 'My test Run',
+      storage_kind: 'custom_local', read_only: false })
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/admin/runs/new-run-1'))
+  })
+
+  it('navigates after a validated create even when the inventory cache refresh fails', async () => {
+    const refresh = vi.spyOn(QueryClient.prototype, 'invalidateQueries')
+      .mockRejectedValueOnce(new Error('inventory refresh failed'))
+    try {
+      renderPage()
+      await userEvent.type(screen.getByLabelText('Unique Run name'), 'My test Run')
+      await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith('/admin/runs/new-run-1'))
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+      expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
+    } finally {
+      refresh.mockRestore()
+    }
+  })
+
+  it('explains that a validated Run exists if navigating to it fails, avoiding duplicate retries', async () => {
+    navigate.mockImplementationOnce(() => { throw new Error('router unavailable') })
+    renderPage()
+    await userEvent.type(screen.getByLabelText('Unique Run name'), 'My test Run')
+    await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('The Run was created')
+    expect(screen.getByRole('alert')).toHaveTextContent('do not create it again')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Could not create Run:')
+    expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
+  })
+
+  it('creates a Run even if the browser denies localStorage writes', async () => {
+    renderPage()
+    await userEvent.type(screen.getByLabelText('Unique Run name'), 'My test Run')
+    const storage = vi.spyOn(Storage.prototype, 'setItem')
+      .mockImplementation(() => { throw new Error('storage unavailable') })
+    try {
+      await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith('/admin/runs/new-run-1'))
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    } finally {
+      storage.mockRestore()
+    }
   })
 })

@@ -20,28 +20,6 @@ const content = {
       working_draft: 'Working Draft',
     },
     status: { saved: 'Uloženo', missing: 'Chybí', candidate_only: 'Pouze návrh', unsaved: 'Neuloženo', optional: 'Zde není vyžadováno' },
-    cleanDraft: 'Čistý Working Draft',
-    cleanDraftMeaning: 'Tento Working Draft nemá čekající změny; ostatní editory se posuzují samostatně.',
-    unit: {
-      world: 'Entity World Package', calendar_package: 'Entity Calendar Package',
-      population: 'Hráči počáteční populace', health: 'Health záznamy',
-      official_ranking: 'Publikace rankingu', working_draft: 'Nevyřízené změny',
-    },
-    evidence: {
-      world: 'Jde o entity World Package vlastněné Runem v uložené revizi.',
-      calendar_package: 'Jde o entity Calendar Package v uložené revizi, nikoliv nastavení počtu týdnů Runu.',
-      population: 'Jde jen o uloženou počáteční populaci, nikoliv všechny hráče z pozdější historie.',
-      health: 'Jde o uložené Health záznamy, nikoliv o kontrolu zdravotní způsobilosti k zápasu.',
-      official_ranking: 'Počítají se skutečné uložené publikace; kandidátní pořadí není publikované.',
-      working_draft: 'Počítají se změny tohoto Working Draftu; jiné rozpracované editory nejsou zahrnuté.',
-    },
-    explanationByStatus: {
-      saved: 'Tato evidence existuje, ale neznamená připravenost všech operací.',
-      missing: 'V této uložené revizi se podklad nenašel. Potřebu určí kontrola konkrétní operace.',
-      candidate_only: 'Kandidátní data nejsou publikovanou autoritou; případné použití vyžaduje zvláštní potvrzení.',
-      unsaved: 'Tyto změny dosud nejsou součástí Saved Revision; uložení vyžaduje výslovný krok.',
-      optional: 'Tato kontrola podklad zde nevyžaduje; jiná operace jej vyžadovat může.',
-    },
     task: 'Rozpracované úlohy',
     history: 'Uložené přechody',
     help: 'Co dál?',
@@ -85,28 +63,6 @@ const content = {
       working_draft: 'Working Draft',
     },
     status: { saved: 'Saved', missing: 'Missing', candidate_only: 'Candidate only', unsaved: 'Unsaved', optional: 'Not required here' },
-    cleanDraft: 'Clean Working Draft',
-    cleanDraftMeaning: 'This Working Draft has no pending changes; other editors remain separate.',
-    unit: {
-      world: 'World entities', calendar_package: 'Calendar entities',
-      population: 'Initial-population players', health: 'Health records',
-      official_ranking: 'Ranking publications', working_draft: 'Pending changes',
-    },
-    evidence: {
-      world: 'Counts Run-owned World Package entities in this Saved Revision.',
-      calendar_package: 'Counts Calendar Package entities in this Saved Revision, not the Run week-count configuration.',
-      population: 'Counts only saved initial-population players, not every player from later history.',
-      health: 'Counts Saved Health records, not match-specific medical clearance.',
-      official_ranking: 'Counts actually saved ranking publications; candidate rankings are not publications.',
-      working_draft: 'Counts this Branch Working Draft changes; other unfinished editors are outside this check.',
-    },
-    explanationByStatus: {
-      saved: 'This evidence exists, but it does not certify readiness for every operation.',
-      missing: 'No matching evidence in this Saved Revision. Each operation checks its own prerequisites.',
-      candidate_only: 'Candidate data is not published authority; any adoption needs separate confirmation.',
-      unsaved: 'These changes are not in the Saved Revision yet; an explicit Save is required.',
-      optional: 'This check does not require this foundation here; another operation may.',
-    },
     task: 'Nonterminal tasks',
     history: 'Saved transitions',
     help: 'Next action',
@@ -131,6 +87,75 @@ const content = {
     revision: 'Saved Revision HEAD',
     draftVersion: 'Working Draft version',
   }
+} as const
+
+// Store evidence labels by foundation/status, pairing languages at the leaf.
+// This avoids two duplicated blocks whose drift could misstate Saved authority.
+const detailText = {
+  cleanDraft: {
+    cs: 'Čistý Working Draft',
+    en: 'Clean Working Draft',
+  },
+  cleanDraftMeaning: {
+    cs: 'Tento Working Draft nemá čekající změny; ostatní editory se posuzují samostatně.',
+    en: 'This Working Draft has no pending changes; other editors remain separate.',
+  },
+  unit: {
+    world: { cs: 'Entity World Package', en: 'World entities' },
+    calendar_package: { cs: 'Entity Calendar Package', en: 'Calendar entities' },
+    population: { cs: 'Hráči počáteční populace', en: 'Initial-population players' },
+    health: { cs: 'Health záznamy', en: 'Health records' },
+    official_ranking: { cs: 'Publikace rankingu', en: 'Ranking publications' },
+    working_draft: { cs: 'Nevyřízené změny', en: 'Pending changes' },
+  },
+  evidence: {
+    world: {
+      cs: 'Jde o entity World Package vlastněné Runem v uložené revizi.',
+      en: 'Counts Run-owned World Package entities in this Saved Revision.',
+    },
+    calendar_package: {
+      cs: 'Jde o entity Calendar Package v uložené revizi, nikoliv nastavení počtu týdnů Runu.',
+      en: 'Counts Calendar Package entities in this Saved Revision, not the Run week-count configuration.',
+    },
+    population: {
+      cs: 'Jde jen o uloženou počáteční populaci, nikoliv všechny hráče z pozdější historie.',
+      en: 'Counts only saved initial-population players, not every player from later history.',
+    },
+    health: {
+      cs: 'Jde o uložené Health záznamy, nikoliv o kontrolu zdravotní způsobilosti k zápasu.',
+      en: 'Counts Saved Health records, not match-specific medical clearance.',
+    },
+    official_ranking: {
+      cs: 'Počítají se skutečné uložené publikace; kandidátní pořadí není publikované.',
+      en: 'Counts actually saved ranking publications; candidate rankings are not publications.',
+    },
+    working_draft: {
+      cs: 'Počítají se změny tohoto Working Draftu; jiné rozpracované editory nejsou zahrnuté.',
+      en: 'Counts this Branch Working Draft changes; other unfinished editors are outside this check.',
+    },
+  },
+  explanationByStatus: {
+    saved: {
+      cs: 'Tato evidence existuje, ale neznamená připravenost všech operací.',
+      en: 'This evidence exists, but it does not certify readiness for every operation.',
+    },
+    missing: {
+      cs: 'V této uložené revizi se podklad nenašel. Potřebu určí kontrola konkrétní operace.',
+      en: 'No matching evidence in this Saved Revision. Each operation checks its own prerequisites.',
+    },
+    candidate_only: {
+      cs: 'Kandidátní data nejsou publikovanou autoritou; případné použití vyžaduje zvláštní potvrzení.',
+      en: 'Candidate data is not published authority; any adoption needs separate confirmation.',
+    },
+    unsaved: {
+      cs: 'Tyto změny dosud nejsou součástí Saved Revision; uložení vyžaduje výslovný krok.',
+      en: 'These changes are not in the Saved Revision yet; an explicit Save is required.',
+    },
+    optional: {
+      cs: 'Tato kontrola podklad zde nevyžaduje; jiná operace jej vyžadovat může.',
+      en: 'This check does not require this foundation here; another operation may.',
+    },
+  },
 } as const
 
 const href: Record<RunReadinessCode, string> = {
@@ -181,9 +206,9 @@ export function RunHomeReadinessPanel({
         {data.items.map(item => <li key={item.code}>
           <span><strong>{l.item[item.code]}</strong>
             <small>{item.code === 'working_draft' && item.status === 'saved'
-              ? l.cleanDraft : l.status[item.status]} · {l.unit[item.code]}: {item.evidence_count}</small>
-            <small className="status">{l.evidence[item.code]} {item.code === 'working_draft' && item.status === 'saved'
-              ? l.cleanDraftMeaning : l.explanationByStatus[item.status]}</small>
+              ? detailText.cleanDraft[language] : l.status[item.status]} · {detailText.unit[item.code][language]}: {item.evidence_count}</small>
+            <small className="status">{detailText.evidence[item.code][language]} {item.code === 'working_draft' && item.status === 'saved'
+              ? detailText.cleanDraftMeaning[language] : detailText.explanationByStatus[item.status][language]}</small>
           </span>
           {needsAttention(item) &&
             <Link to={base + href[item.code]}>{l.action[item.code]} →</Link>}

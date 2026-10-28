@@ -141,6 +141,13 @@ not add a generator, a second readiness authority or a hidden Save.
     payloads, malformed payloads and a Saved HEAD transition with a delayed
     new package response. This is read-only; no implicit Save is added.
 
+20. The recent Saved revision-history card is also tied to the selected
+    Saved Revision HEAD. Its query cache includes that HEAD, and the returned
+    history must identify the exact Run, Branch and HEAD. Any stale/foreign
+    history is hidden with a CS/EN warning rather than shown as the current
+    revision list. Read-only UI regressions verify wrong-HEAD rejection and
+    a real React Query HEAD switch with delayed history delivery.
+
 ## Validation boundary
 
 Focused React component regressions exercise rapid double-submit, rejected

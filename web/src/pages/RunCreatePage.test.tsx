@@ -201,6 +201,11 @@ describe('canonical Product Run creation', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('The Run was created')
     expect(screen.getByRole('alert')).toHaveTextContent('do not create it again')
     expect(screen.getByRole('alert')).not.toHaveTextContent('Could not create Run:')
+    expect(screen.getByRole('link', { name: 'Open the created Run' }))
+      .toHaveAttribute('href', '/admin/runs/new-run-1')
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
+    // Even an explicit second submit on the still-mounted form cannot create a duplicate.
+    fireEvent.submit(screen.getByRole('button', { name: 'Create isolated Run' }).closest('form')!)
     expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
   })
 

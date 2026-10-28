@@ -28,10 +28,11 @@ export function filterSavedTourEvents(
   const query=normalize(filters.search)
   const playerQuery=normalize(filters.playerId)
   return editions.filter(event=>
+    // An ID is an exact identity, never a partial player-name search.
     // Champion/finalist fields describe published results only, not all participants.
     (!playerQuery||(event.result_published&&
-      ((filters.playerOutcome!=='finalist'&&normalize(event.champion_player_id).includes(playerQuery))
-      ||(filters.playerOutcome!=='champion'&&normalize(event.finalist_player_id).includes(playerQuery)))))
+      ((filters.playerOutcome!=='finalist'&&normalize(event.champion_player_id)===playerQuery)
+      ||(filters.playerOutcome!=='champion'&&normalize(event.finalist_player_id)===playerQuery))))
     &&(!filters.tour||event.tour_level===filters.tour)
     &&(!filters.category||event.category===filters.category)
     &&(!filters.country||event.host_country===filters.country)

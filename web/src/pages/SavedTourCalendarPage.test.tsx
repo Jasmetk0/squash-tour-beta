@@ -282,6 +282,59 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(screen.getByRole('combobox',{name:'Filtr role hráče ve finále'})).toHaveValue('champion')
     expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
   })
+  it('opens exact published player outcomes from calendar rows with original URL scope intact',async()=>{
+    const data=fixture()
+    data.editions[0].result_published=true
+    data.editions[0].champion_player_id='P-1'
+    data.editions[0].finalist_player_id='P-10'
+    data.editions[1].result_published=true
+    data.editions[1].champion_player_id='P-10'
+    data.editions[1].finalist_player_id='P-2'
+    api.getSavedTourCalendar.mockResolvedValue(data)
+    mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&q=keep')
+    expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()
+    const table=screen.getByRole('table',{name:'Saved Tour edition list'})
+    const champion=within(table).getByRole('link',{name:'Filter published results for player P-1'})
+    for(const query of ['branch=branch-a','revision=rev-old','season=2','playerId=P-1','playerOutcome=champion','q=keep']){
+      expect(champion).toHaveAttribute('href',expect.stringContaining(query))
+    }
+    await userEvent.click(champion)
+    expect(screen.getByRole('searchbox',{name:'Search champion or finalist player ID'})).toHaveValue('P-1')
+    expect(screen.getByRole('combobox',{name:'Player outcome role'})).toHaveValue('champion')
+    expect(screen.getByRole('link',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'Egypt Open'})).not.toBeInTheDocument()
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('button',{name:'Clear filters'}))
+    const finalist=within(table).getByRole('link',{name:'Filter published results for player P-10'})
+    await userEvent.click(finalist)
+    expect(screen.getByRole('combobox',{name:'Player outcome role'})).toHaveValue('finalist')
+    expect(screen.getByRole('link',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'Egypt Open'})).not.toBeInTheDocument()
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
+  })
+  it('opens a published final-finishes ID as both roles, retaining exact Saved revision',async()=>{
+    const data=fixture()
+    data.editions[0].result_published=true
+    data.editions[0].champion_player_id='PLAYER-A'
+    data.editions[0].finalist_player_id='PLAYER-B'
+    data.editions[1].result_published=true
+    data.editions[1].champion_player_id='PLAYER-B'
+    data.editions[1].finalist_player_id='PLAYER-A'
+    api.getSavedTourCalendar.mockResolvedValue(data)
+    mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&q=keep')
+    expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByText('Published final finishes in displayed editions'))
+    const tally=screen.getByRole('table',{name:'Published final outcome tally'})
+    const player=within(tally).getByRole('link',{name:'Filter published results for player PLAYER-A'})
+    expect(player).toHaveAttribute('href',expect.stringContaining('revision=rev-old'))
+    expect(player).toHaveAttribute('href',expect.stringContaining('q=keep'))
+    await userEvent.click(player)
+    expect(screen.getByRole('searchbox',{name:'Search champion or finalist player ID'})).toHaveValue('PLAYER-A')
+    expect(screen.getByRole('combobox',{name:'Player outcome role'})).toHaveValue('any')
+    expect(screen.getByRole('link',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.getByRole('link',{name:'Egypt Open'})).toBeInTheDocument()
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
+  })
   it('counts only visible published results, without inventing official player records',async()=>{
     const data=fixture()
     data.editions[0].result_published=true

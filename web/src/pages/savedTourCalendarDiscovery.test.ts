@@ -71,6 +71,22 @@ describe('Saved Tour discovery is a pure read-only projection',()=>{
     expect(savedCalendarPlayerOutcome('finalist')).toBe('finalist')
   })
 
+  it('requires exact player identity so similar IDs never leak unrelated outcomes',()=>{
+    const entries=[
+      event('a',4,{result_published:true,champion_player_id:'P-1',finalist_player_id:'P-10'}),
+      event('b',5,{result_published:true,champion_player_id:'P-10',finalist_player_id:'P-2'}),
+      event('unpublished',6,{champion_player_id:'P-1',finalist_player_id:'P-2'})
+    ]
+    expect(filterSavedTourEvents(entries,{...base,playerId:' p-1 ',playerOutcome:'champion'})
+      .map(e=>e.event_id)).toEqual(['a'])
+    expect(filterSavedTourEvents(entries,{...base,playerId:'P-1',playerOutcome:'finalist'})).toEqual([])
+    expect(filterSavedTourEvents(entries,{...base,playerId:'P-10'})
+      .map(e=>e.event_id)).toEqual(['a','b'])
+    expect(filterSavedTourEvents(entries,{...base,playerId:'P-'})).toEqual([])
+    expect(filterSavedTourEvents(entries,{...base,playerId:'P-2'})
+      .map(e=>e.event_id)).toEqual(['b'])
+  })
+
   it('counts only documented published wins and runner-ups in supplied Editions',()=>{
     const entries=[
       event('first',5,{result_published:true,champion_player_id:'A',finalist_player_id:'B'}),

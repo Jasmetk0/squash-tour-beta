@@ -80,6 +80,20 @@ export function SavedTourCalendarPage():JSX.Element{
     if(openResults)copy.set('tab','results')
     return '/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'+encodeURIComponent(e.event_id)+'?'+copy.toString()
   }
+  const playerOutcomeHref=(playerId:string,role:'champion'|'finalist'|'any')=>{
+    const copy=new URLSearchParams(params)
+    copy.set('branch',branch!)
+    copy.set('revision',revision!)
+    copy.set('season',String(seasonIndex))
+    copy.set('playerId',playerId)
+    if(role==='any')copy.delete('playerOutcome')
+    else copy.set('playerOutcome',role)
+    return '/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar?'+copy.toString()
+  }
+  const playerOutcomeLink=(playerId:string|null,role:'champion'|'finalist'|'any')=>
+    playerId?<Link to={playerOutcomeHref(playerId,role)}
+      aria-label={(cs?'Filtrovat doložené výsledky hráče ':'Filter published results for player ')+playerId}>
+      {playerId}</Link>:'—'
   const weekHref=(week:number)=>{
     const copy=new URLSearchParams(params)
     copy.set('view','weeks');copy.set('week',String(week))
@@ -224,8 +238,8 @@ export function SavedTourCalendarPage():JSX.Element{
             <td><Link to={weekHref(e.season_week)}>{cs?'Týden':'Week'} {e.season_week}</Link></td>
             <td>{name(e)}</td><td>{e.tour_level??'—'}</td>
             <td>{e.category}</td><td>{e.host_country}</td>
-            <td>{e.result_published?e.champion_player_id??'—':'—'}</td>
-            <td>{e.result_published?e.finalist_player_id??'—':'—'}</td>
+            <td>{e.result_published?playerOutcomeLink(e.champion_player_id,'champion'):'—'}</td>
+            <td>{e.result_published?playerOutcomeLink(e.finalist_player_id,'finalist'):'—'}</td>
             <td>{e.result_published?<Link to={editionHref(e,true)}>
               {cs?'Zobrazit výsledky':'View results'}</Link>:'—'}</td>
           </tr>)}</tbody></table></div>)}
@@ -242,7 +256,8 @@ export function SavedTourCalendarPage():JSX.Element{
           <thead><tr><th>{cs?'ID hráče':'Player ID'}</th>
             <th>{cs?'Vítězství':'Titles'}</th><th>{cs?'Druhá místa':'Runner-up finishes'}</th></tr></thead>
           <tbody>{finalFinishes.map(row=><tr key={row.playerId}>
-            <td>{row.playerId}</td><td>{row.championFinishes}</td><td>{row.runnerUpFinishes}</td>
+            <td>{playerOutcomeLink(row.playerId,'any')}</td>
+            <td>{row.championFinishes}</td><td>{row.runnerUpFinishes}</td>
           </tr>)}</tbody>
         </table></div>}
       </details>}

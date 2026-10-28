@@ -93,6 +93,12 @@ not add a generator, a second readiness authority or a hidden Save.
     read-only sources are re-fetched on manual recovery; a failed or foreign
     component keeps the guide hidden rather than providing false authority.
     Focused regressions cover offline draft, foreign draft and bad Run metadata.
+15. The read-only DTO validator checks publication totals against the
+    official-ranking evidence row, and rejects a claimed legacy FAX writer
+    for non-FAX clock values. It deliberately does **not** infer legacy
+    support merely from matching clock numbers, because historic read-time
+    calendar versions may still be unsupported. These checks cannot authorize
+    simulation or publication on their own.
 
 ## Validation boundary
 

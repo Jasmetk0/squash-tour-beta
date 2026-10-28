@@ -275,6 +275,9 @@ export function RunPage(): JSX.Element {
       packageQuery.data.state !== null && (
         packageQuery.data.state.run_id !== runId || packageQuery.data.state.branch_id !== branchId
       )))
+  const packageMismatchMessage = language === 'cs'
+    ? 'Uložené balíčky neodpovídají vybranému Runu a Branchi.'
+    : 'Saved package state does not match the selected Run and Branch.'
   const packageVerified = packageQuery.isSuccess && !packageQuery.isFetching && !packageMismatch
   const ownedPackages = packageVerified ? packageQuery.data!.state : null
   const emptyRun = ready && packageVerified && ownedPackages === null
@@ -286,9 +289,7 @@ export function RunPage(): JSX.Element {
     containerQuery.error ? formatApiError(containerQuery.error) : null,
     draftQuery.error ? formatApiError(draftQuery.error) : null,
     packageQuery.error ? formatApiError(packageQuery.error) : null,
-    packageMismatch ? language === 'cs'
-      ? 'Uložené balíčky neodpovídají vybranému Runu a Branchi.'
-      : 'Saved package state does not match the selected Run and Branch.' : null,
+    packageMismatch ? packageMismatchMessage : null,
     positionQuery.error && !isApiNotFound(positionQuery.error) ? formatApiError(positionQuery.error) : null,
     pendingQuery.error && !isApiNotFound(pendingQuery.error) ? formatApiError(pendingQuery.error) : null,
     revisionsQuery.error ? formatApiError(revisionsQuery.error) : null,
@@ -384,9 +385,7 @@ export function RunPage(): JSX.Element {
         {verified && <>
           {(packageQuery.isPending || packageQuery.isFetching) && <p role="status">{l.loading}</p>}
           {packageQuery.isError && <Unavailable message={formatApiError(packageQuery.error)} />}
-          {packageMismatch && <Unavailable message={language === 'cs'
-            ? 'Uložené balíčky neodpovídají vybranému Runu a Branchi.'
-            : 'Saved package state does not match the selected Run and Branch.'} />}
+          {packageMismatch && <Unavailable message={packageMismatchMessage} />}
           {packageVerified && ownedPackages === null && <p>{l.initial}</p>}
           {noConfirmedPosition && ownedPackages !== null && <p>{l.notPositioned}</p>}
           {positionQuery.isPending && <p role="status">{l.loading}</p>}

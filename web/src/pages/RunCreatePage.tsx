@@ -22,7 +22,8 @@ export function RunCreatePage(): JSX.Element {
     create: 'Vytvořit samostatný Run', creating: 'Vytvářím Run…', back: 'Zpět na Runy',
     failure: 'Run se nepodařilo vytvořit', identity: 'Server vrátil neočekávanou identitu nebo vlastnictví Runu.',
     mismatch: 'Uložený kalendář neodpovídá prověřenému zadání. Zkontroluj přehled Runů před dalším pokusem.',
-    afterCreate: 'Run byl vytvořen, ale nepodařilo se otevřít jeho stránku. Najdi jej v přehledu Runů; nezakládej ho znovu.'
+    afterCreate: 'Run byl vytvořen, ale nepodařilo se otevřít jeho stránku. Najdi jej v přehledu Runů; nezakládej ho znovu.',
+    openCreated: 'Otevřít již vytvořený Run'
   } : {
     title: 'Create Run', subtitle: 'Start a separate world and add independent package copies later.',
     section: 'New Run', name: 'Unique Run name', custom: 'Choose calendar and range',
@@ -30,12 +31,14 @@ export function RunCreatePage(): JSX.Element {
     create: 'Create isolated Run', creating: 'Creating Run…', back: 'Back to Runs',
     failure: 'Could not create Run', identity: 'The server returned an unexpected Run identity or ownership.',
     mismatch: 'The saved calendar does not match the reviewed request. Check the Run inventory before trying again.',
-    afterCreate: 'The Run was created, but its page could not be opened. Find it in the Run inventory; do not create it again.'
+    afterCreate: 'The Run was created, but its page could not be opened. Find it in the Run inventory; do not create it again.',
+    openCreated: 'Open the created Run'
   }
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [name, setName] = useState('')
   const [pending, setPending] = useState(false)
+  const [createdRunId, setCreatedRunId] = useState<string | null>(null)
   // React state alone cannot fence two submit events in the same render turn.
   const submissionInFlight = useRef(false)
   const [error, setError] = useState<string | null>(null)
@@ -45,12 +48,12 @@ export function RunCreatePage(): JSX.Element {
   async function submit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
     const displayName = name.trim()
-    if (!displayName || submissionInFlight.current || (custom && !review)) return
+    if (!displayName || createdRunId || submissionInFlight.current || (custom && !review)) return
     const reviewed = custom ? review : null
     submissionInFlight.current = true
     setPending(true)
     setError(null)
-    let createdRunId: string | null = null
+    let confirmedRunId: string | null = null
     try {
       const created = reviewed ? await createEmptyRunContainer(displayName, reviewed.input)
         : await createEmptyRunContainer(displayName)
@@ -60,7 +63,8 @@ export function RunCreatePage(): JSX.Element {
       if (reviewed && !sameCreationCalendar(created.metadata_json?.run_calendar, expectedCreationCalendar(reviewed.input))) {
         throw new Error(t.mismatch)
       }
-      createdRunId = created.run_id
+      confirmedRunId = created.run_id
+      setCreatedRunId(created.run_id)
       // Only the server create response is authoritative. Browser hints/cache refresh
       // must not turn a successful create into an apparent failure and a duplicate retry.
       writeLastRunId(created.run_id)
@@ -72,7 +76,7 @@ export function RunCreatePage(): JSX.Element {
       }
       navigate(`/admin/runs/${encodeURIComponent(created.run_id)}`)
     } catch (cause) {
-      setError(createdRunId ? `${t.afterCreate} (${formatApiError(cause)})`
+      setError(confirmedRunId ? `${t.afterCreate} (${formatApiError(cause)})`
         : `${t.failure}: ${formatApiError(cause)}`)
     } finally {
       submissionInFlight.current = false
@@ -85,15 +89,16 @@ export function RunCreatePage(): JSX.Element {
     <SectionCard title={t.section}>
       <form onSubmit={event => { void submit(event) }}>
         <label htmlFor="new-run-name">{t.name}</label>
-        <input id="new-run-name" value={name} maxLength={256} required disabled={pending}
+        <input id="new-run-name" value={name} maxLength={256} required disabled={pending || Boolean(createdRunId)}
           autoComplete="off" onChange={event => setName(event.target.value)} />
-        <label className="checkbox-label"><input type="checkbox" checked={custom} disabled={pending} onChange={event => {
+        <label className="checkbox-label"><input type="checkbox" checked={custom} disabled={pending || Boolean(createdRunId)} onChange={event => {
           setCustom(event.target.checked); setReview(null); setError(null)
         }} />{t.custom}</label>
-        {custom ? <RunCalendarCreationForm disabled={pending} onReview={setReview} />
+        {custom ? <RunCalendarCreationForm disabled={pending || Boolean(createdRunId)} onReview={setReview} />
           : <p className="status">{t.defaultNote}</p>}
         {error && <p role="alert" className="error">{error}</p>}
-        <button type="submit" disabled={pending || !name.trim() || (custom && !review)}>{pending ? t.creating : t.create}</button>
+        {createdRunId && <p role="status"><Link to={`/admin/runs/${encodeURIComponent(createdRunId)}`}>{t.openCreated}</Link></p>}
+        <button type="submit" disabled={pending || Boolean(createdRunId) || !name.trim() || (custom && !review)}>{pending ? t.creating : t.create}</button>
         {' '}<Link to="/admin/runs">{t.back}</Link>
       </form>
     </SectionCard>

@@ -20,6 +20,26 @@ const content = {
       working_draft: 'Working Draft',
     },
     status: { saved: 'Uloženo', missing: 'Chybí', candidate_only: 'Pouze návrh', unsaved: 'Neuloženo', optional: 'Zde není vyžadováno' },
+    unit: {
+      world: 'World entit', calendar_package: 'Calendar entit',
+      population: 'hráčů počáteční populace', health: 'Health záznamů',
+      official_ranking: 'publikací rankingu', working_draft: 'čekajících změn',
+    },
+    evidence: {
+      world: 'Jde o entity World Package vlastněné Runem v uložené revizi.',
+      calendar_package: 'Jde o entity Calendar Package v uložené revizi, nikoliv nastavení počtu týdnů Runu.',
+      population: 'Jde jen o uloženou počáteční populaci, nikoliv všechny hráče z pozdější historie.',
+      health: 'Jde o uložené Health záznamy, nikoliv o kontrolu zdravotní způsobilosti k zápasu.',
+      official_ranking: 'Počítají se skutečné uložené publikace; kandidátní pořadí není publikované.',
+      working_draft: 'Počítají se změny tohoto Working Draftu; jiné rozpracované editory nejsou zahrnuté.',
+    },
+    explanationByStatus: {
+      saved: 'Tato evidence existuje, ale neznamená připravenost všech operací.',
+      missing: 'V této uložené revizi se podklad nenašel. Potřebu určí kontrola konkrétní operace.',
+      candidate_only: 'Kandidátní data nejsou publikovanou autoritou; případné použití vyžaduje zvláštní potvrzení.',
+      unsaved: 'Tyto změny dosud nejsou součástí Saved Revision; uložení vyžaduje výslovný krok.',
+      optional: 'Tato kontrola podklad zde nevyžaduje; jiná operace jej vyžadovat může.',
+    },
     task: 'Rozpracované úlohy',
     history: 'Uložené přechody',
     help: 'Co dál?',
@@ -63,6 +83,26 @@ const content = {
       working_draft: 'Working Draft',
     },
     status: { saved: 'Saved', missing: 'Missing', candidate_only: 'Candidate only', unsaved: 'Unsaved', optional: 'Not required here' },
+    unit: {
+      world: 'World entities', calendar_package: 'Calendar entities',
+      population: 'initial-population players', health: 'Health records',
+      official_ranking: 'ranking publications', working_draft: 'pending changes',
+    },
+    evidence: {
+      world: 'Counts Run-owned World Package entities in this Saved Revision.',
+      calendar_package: 'Counts Calendar Package entities in this Saved Revision, not the Run week-count configuration.',
+      population: 'Counts only saved initial-population players, not every player from later history.',
+      health: 'Counts Saved Health records, not match-specific medical clearance.',
+      official_ranking: 'Counts actually saved ranking publications; candidate rankings are not publications.',
+      working_draft: 'Counts this Branch Working Draft changes; other unfinished editors are outside this check.',
+    },
+    explanationByStatus: {
+      saved: 'This evidence exists, but it does not certify readiness for every operation.',
+      missing: 'No matching evidence in this Saved Revision. Each operation checks its own prerequisites.',
+      candidate_only: 'Candidate data is not published authority; any adoption needs separate confirmation.',
+      unsaved: 'These changes are not in the Saved Revision yet; an explicit Save is required.',
+      optional: 'This check does not require this foundation here; another operation may.',
+    },
     task: 'Nonterminal tasks',
     history: 'Saved transitions',
     help: 'Next action',
@@ -136,7 +176,8 @@ export function RunHomeReadinessPanel({
       <ul className="run-home-feed" aria-label={language === 'cs' ? 'Kontrola uložených podkladů' : 'Saved preparation checks'}>
         {data.items.map(item => <li key={item.code}>
           <span><strong>{l.item[item.code]}</strong>
-            <small>{l.status[item.status]} · {item.evidence_count}</small>
+            <small>{l.status[item.status]} · {item.evidence_count} {l.unit[item.code]}</small>
+            <small className="status">{l.evidence[item.code]} {l.explanationByStatus[item.status]}</small>
           </span>
           {needsAttention(item) &&
             <Link to={base + href[item.code]}>{l.action[item.code]} →</Link>}

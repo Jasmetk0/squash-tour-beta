@@ -20,6 +20,8 @@ const content = {
       working_draft: 'Working Draft',
     },
     status: { saved: 'Uloženo', missing: 'Chybí', candidate_only: 'Pouze návrh', unsaved: 'Neuloženo', optional: 'Zde není vyžadováno' },
+    cleanDraft: 'Čistý Working Draft',
+    cleanDraftMeaning: 'Tento Working Draft nemá čekající změny; ostatní editory se posuzují samostatně.',
     unit: {
       world: 'Entity World Package', calendar_package: 'Entity Calendar Package',
       population: 'Hráči počáteční populace', health: 'Health záznamy',
@@ -83,6 +85,8 @@ const content = {
       working_draft: 'Working Draft',
     },
     status: { saved: 'Saved', missing: 'Missing', candidate_only: 'Candidate only', unsaved: 'Unsaved', optional: 'Not required here' },
+    cleanDraft: 'Clean Working Draft',
+    cleanDraftMeaning: 'This Working Draft has no pending changes; other editors remain separate.',
     unit: {
       world: 'World entities', calendar_package: 'Calendar entities',
       population: 'Initial-population players', health: 'Health records',
@@ -176,8 +180,10 @@ export function RunHomeReadinessPanel({
       <ul className="run-home-feed" aria-label={language === 'cs' ? 'Kontrola uložených podkladů' : 'Saved preparation checks'}>
         {data.items.map(item => <li key={item.code}>
           <span><strong>{l.item[item.code]}</strong>
-            <small>{l.status[item.status]} · {l.unit[item.code]}: {item.evidence_count}</small>
-            <small className="status">{l.evidence[item.code]} {l.explanationByStatus[item.status]}</small>
+            <small>{item.code === 'working_draft' && item.status === 'saved'
+              ? l.cleanDraft : l.status[item.status]} · {l.unit[item.code]}: {item.evidence_count}</small>
+            <small className="status">{l.evidence[item.code]} {item.code === 'working_draft' && item.status === 'saved'
+              ? l.cleanDraftMeaning : l.explanationByStatus[item.status]}</small>
           </span>
           {needsAttention(item) &&
             <Link to={base + href[item.code]}>{l.action[item.code]} →</Link>}

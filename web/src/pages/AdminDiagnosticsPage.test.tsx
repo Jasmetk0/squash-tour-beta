@@ -2,7 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { LanguageProvider, useLanguage } from '../i18n/LanguageContext'
+import { LanguageProvider } from '../i18n/LanguageContext'
+import { AppShellHeader } from '../components/AppShellHeader'
 import { AdminDiagnosticsPage } from './AdminDiagnosticsPage'
 
 const storage = vi.hoisted(() => ({ lastRunId: null as string | null }))
@@ -10,21 +11,11 @@ vi.mock('../viewer/activeRun', () => ({
   readLastRunId: () => storage.lastRunId,
 }))
 
-function LanguageSwitch(): JSX.Element {
-  const { setLanguage } = useLanguage()
-  return (
-    <>
-      <button type="button" onClick={() => setLanguage('cs')}>CS</button>
-      <button type="button" onClick={() => setLanguage('en')}>EN</button>
-    </>
-  )
-}
-
 function mount() {
   render(
     <MemoryRouter>
       <LanguageProvider>
-        <LanguageSwitch />
+        <AppShellHeader mode="admin" pathname="/admin/diagnostics" adminScope={{ kind: 'global' }} />
         <AdminDiagnosticsPage />
       </LanguageProvider>
     </MemoryRouter>,
@@ -78,7 +69,7 @@ describe('AdminDiagnosticsPage launcher', () => {
     const filter = screen.getByRole('combobox', { name: 'Zobrazit sekce diagnostiky' })
     fireEvent.change(filter, { target: { value: 'planned' } })
 
-    fireEvent.click(screen.getByRole('button', { name: 'EN' }))
+    fireEvent.change(screen.getByRole('combobox', { name: 'Language / Jazyk' }), { target: { value: 'en' } })
     expect(screen.getByRole('combobox', { name: 'Show diagnostics sections' })).toHaveValue('planned')
     expect(screen.getByText('Showing 3 of 6 diagnostic areas')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Invalidated Data' })).toBeInTheDocument()
@@ -100,7 +91,7 @@ describe('AdminDiagnosticsPage launcher', () => {
     expect(screen.getByRole('link', { name: 'Otevřít diagnostiku posledního runu (saved A/B?x)' })).toHaveAttribute('href', path)
     expect(screen.getByRole('link', { name: 'Diagnostika posledního runu' })).toHaveAttribute('href', path)
 
-    fireEvent.click(screen.getByRole('button', { name: 'EN' }))
+    fireEvent.change(screen.getByRole('combobox', { name: 'Language / Jazyk' }), { target: { value: 'en' } })
     expect(screen.getByRole('link', { name: 'Open last run diagnostics (saved A/B?x)' })).toHaveAttribute('href', path)
     expect(screen.getByRole('link', { name: 'Last run diagnostics' })).toHaveAttribute('href', path)
   })

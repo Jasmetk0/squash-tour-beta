@@ -155,6 +155,7 @@ describe('Saved Edition detail',()=>{
   beforeEach(()=>{
     vi.clearAllMocks();context.time.mode='present';context.language='en'
     context.branch.run_id='run-a';context.branch.branch_id='branch-a'
+    context.branch.saved_head_revision_id='head-a'
     api.getSavedTourEdition.mockResolvedValue(fixture())
   })
   it('reads exact old revision, has six tabs and preserves filters in return link',async()=>{
@@ -189,6 +190,21 @@ describe('Saved Edition detail',()=>{
     expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
     expect(screen.queryByRole('link',{name:/Back to country tournaments/})).not.toBeInTheDocument()
     expect(screen.getByRole('link',{name:/Back to calendar/})).toBeInTheDocument()
+  })
+  it('offers historical champion/finalist lookup without using current-HEAD careers',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(fixture(true))
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&tab=overview&country=CZE&week=5&eventSearch=other&q=keep')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'P1'})).not.toBeInTheDocument()
+    for(const id of ['P1','P2']){
+      const link=screen.getByRole('link',{name:'Find published finals for '+id})
+      const href=link.getAttribute('href')!
+      for(const x of ['revision=rev-old','branch=branch-a','season=2','publication=published','q=keep','playerId='+id])
+        expect(href).toContain(x)
+      expect(href).not.toContain('week=5')
+      expect(href).not.toContain('country=CZE')
+    }
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
   })
   it('shows real saved results in Main then Qualification; draw-only phase switch',async()=>{
     api.getSavedTourEdition.mockResolvedValue(fixture(true))
@@ -347,6 +363,62 @@ describe('Saved Edition detail',()=>{
     expect(detail).toHaveAttribute('href',expect.stringContaining('revision=rev-old'))
     expect(detail).toHaveAttribute('href',expect.stringContaining('country=CZE'))
     expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
+  it('opens published results from a calendar link and searches exact saved matches locally',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(fixture(true))
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&tab=results&view=list&week=5&country=CZE')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Results'})).toHaveAttribute('aria-current','page')
+    expect(screen.getByText('2/2')).toBeInTheDocument()
+    await userEvent.type(screen.getByRole('searchbox',{name:'Search published matches'}),'Q2')
+    expect(screen.getByText('1/2')).toBeInTheDocument()
+    expect(screen.queryByText('3-0')).not.toBeInTheDocument()
+    expect(screen.getByText('3-1')).toBeInTheDocument()
+    const detail=screen.getByRole('link',{name:'Match detail'})
+    for(const value of ['revision=rev-old','week=5','matchSearch=Q2','tab=results'])
+      expect(detail).toHaveAttribute('href',expect.stringContaining(value))
+    await userEvent.click(screen.getByRole('button',{name:'Clear match search'}))
+    expect(screen.getByText('2/2')).toBeInTheDocument()
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
+  it('shows an honest unmatched result filter and preserves data through CS/EN switch',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(fixture(true))
+    const view=mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&tab=results&matchSearch=unknown')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.getByText('No published matches match the search.')).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'Match detail'})).not.toBeInTheDocument()
+    context.language='cs'
+    view.refresh()
+    expect(screen.getByRole('searchbox',{name:'Hledat publikované zápasy'})).toHaveValue('unknown')
+    expect(screen.getByText('Žádný publikovaný zápas neodpovídá hledání.')).toBeInTheDocument()
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
+  it('never shows a match search or manufactured results for an unpublished Edition',async()=>{
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&tab=results&matchSearch=P1')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.queryByRole('searchbox',{name:'Search published matches'})).not.toBeInTheDocument()
+    expect(screen.getByText(/Canonical results are not published/)).toBeInTheDocument()
+  })
+  it('links current saved players to their career only at exactly the selected HEAD',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(fixture(true))
+    context.branch.saved_head_revision_id='rev-old'
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&tab=results')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    const main=document.getElementById('saved-results-main')!
+    expect(within(main).getByRole('link',{name:'P1'})).toHaveAttribute('href',
+      '/admin/runs/run-a/people/P1?tab=career')
+    expect(within(main).getByRole('link',{name:'P2'})).toHaveAttribute('href',
+      '/admin/runs/run-a/people/P2?tab=career')
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
+  it('never relabels historical player IDs as links to current player profiles',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(fixture(true))
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&tab=results')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'P1'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'P2'})).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link',{name:'Match detail'})[0]).toHaveAttribute('href',
+      expect.stringContaining('revision=rev-old'))
   })
   it('keeps the active Edition tab and exact revision across CS/EN with no refetch',async()=>{
     const view=mount()

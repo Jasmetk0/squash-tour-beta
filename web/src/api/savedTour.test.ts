@@ -1,5 +1,6 @@
 import {describe,it,expect} from 'vitest'
-import {matchesSavedTourContext,validSavedTourCalendar,validSavedTourEdition,validSavedTourMatchDetail} from './savedTour'
+import {matchesSavedTourContext,validSavedTourCalendar,validSavedTourEdition,validSavedTourMatchDetail,
+  validSavedTourRallyTransition,validSavedTourRallyPagePair} from './savedTour'
 import type {SavedTourCalendar,SavedTourEdition,SavedTourEvent,SavedTourMatchDetail} from './savedTour'
 const event:SavedTourEvent={event_id:'open',season:'2002/2003',season_week:12,
   event_name:'Open',template_id:'tpl',category:'DIAMOND',tour_level:'WORLD',
@@ -108,6 +109,51 @@ describe('strict Saved Tour response identity',()=>{
       {...source.matches[0],group_index:2}]}},'r','b','rev',2,'open')).toBe(false)
   })
 
+  it('verifies only adjacent real Saved frames across a 25-rally page boundary',()=>{
+    const prev={rally_index:25,set_number:1,server_player_id:'A',winner_player_id:'A',
+      score_a_before:24,score_b_before:0,score_a_after:25,score_b_after:0,
+      sets_a_after:0,sets_b_after:0,set_complete:false,match_complete:false}
+    const next={...prev,rally_index:26,score_a_before:25,score_a_after:26}
+    expect(validSavedTourRallyTransition(prev,next)).toBe(true)
+    expect(validSavedTourRallyTransition(prev,{...next,score_a_before:125})).toBe(false)
+    expect(validSavedTourRallyTransition(prev,{...next,rally_index:27})).toBe(false)
+    expect(validSavedTourRallyTransition(prev,{...next,sets_a_after:1})).toBe(false)
+    expect(validSavedTourRallyTransition(prev,{...next,sets_a_after:-1})).toBe(false)
+    expect(validSavedTourRallyTransition({...prev,match_complete:true},next)).toBe(false)
+    const won={...prev,set_complete:true,sets_a_after:1}
+    const newGame={...next,set_number:2,score_a_before:0,score_a_after:1,sets_a_after:1}
+    expect(validSavedTourRallyTransition(won,newGame)).toBe(true)
+    expect(validSavedTourRallyTransition(won,{...newGame,score_a_before:1})).toBe(false)
+    expect(validSavedTourRallyTransition(won,{...newGame,set_number:3})).toBe(false)
+    expect(validSavedTourRallyTransition(won,{...newGame,sets_a_after:2})).toBe(false)
+    expect(validSavedTourRallyTransition(won,{...newGame,set_complete:true,sets_a_after:2})).toBe(true)
+    expect(validSavedTourRallyTransition(won,next)).toBe(false)
+  })
+  it('requires stable canonical match authority for adjacent Saved pages',()=>{
+    const base:SavedTourMatchDetail={
+      schema_version:'run_saved_tour_match_detail.v1',source:'reachable_saved_revision',
+      run_id:'r',branch_id:'b',revision_branch_id:'ancestor',
+      saved_revision_id:'rev',season_index:2,event_id:'open',match_id:'final',
+      match:{match_id:'final',draw_type:'main',round_number:1,bracket_position:1,
+        winner_player_id:'A',loser_player_id:'B',scoreline:'3-0'},
+      replay_status:'available',player_a_id:'A',player_b_id:'B',
+      offset:0,limit:25,total_rallies:27,has_more:true,
+      rallies:[{rally_index:25,set_number:1,server_player_id:'A',winner_player_id:'A',
+        score_a_before:24,score_b_before:0,score_a_after:25,score_b_after:0,
+        sets_a_after:0,sets_b_after:0,set_complete:false,match_complete:false}]
+    }
+    const following:SavedTourMatchDetail={...base,offset:25,has_more:false,
+      rallies:[{...base.rallies[0],rally_index:26,score_a_before:25,score_a_after:26}]}
+    expect(validSavedTourRallyPagePair(base,following)).toBe(true)
+    expect(validSavedTourRallyPagePair(following,base)).toBe(false)
+    expect(validSavedTourRallyPagePair(base,{...following,total_rallies:28})).toBe(false)
+    expect(validSavedTourRallyPagePair(base,{...following,revision_branch_id:'foreign'})).toBe(false)
+    expect(validSavedTourRallyPagePair(base,{...following,
+      match:{...following.match,scoreline:'3-2'}})).toBe(false)
+    expect(validSavedTourRallyPagePair(base,{...following,player_a_id:'B'})).toBe(false)
+    expect(validSavedTourRallyPagePair(base,{...following,offset:50})).toBe(false)
+    expect(validSavedTourRallyPagePair(base,{...following,rallies:[]})).toBe(false)
+  })
   it('rejects stale, foreign and forged archived match pages',()=>{
     const data:SavedTourMatchDetail={
       schema_version:'run_saved_tour_match_detail.v1',
@@ -121,7 +167,7 @@ describe('strict Saved Tour response identity',()=>{
       rallies:[{rally_index:1,set_number:1,server_player_id:'A',
         winner_player_id:'A',score_a_before:0,score_b_before:0,score_a_after:1,
         score_b_after:0,sets_a_after:0,sets_b_after:0,
-        set_complete:false,match_complete:true}]
+        set_complete:true,match_complete:true}]
     }
     const valid=(v:SavedTourMatchDetail)=>validSavedTourMatchDetail(v,'r','b','rev',2,'open','final',0,25)
     expect(valid(data)).toBe(true)
@@ -134,6 +180,51 @@ describe('strict Saved Tour response identity',()=>{
     expect(valid({...data,has_more:true})).toBe(false)
     expect(valid({...data,player_a_id:'unknown'})).toBe(false)
     expect(valid({...data,offset:25})).toBe(false)
+    for(const bad of [
+      {...data.rallies[0],score_a_after:'1' as unknown as number},
+      {...data.rallies[0],score_b_before:-1},
+      {...data.rallies[0],sets_a_after:1.5},
+      {...data.rallies[0],set_complete:'false' as unknown as boolean},
+      {...data.rallies[0],match_complete:null as unknown as boolean},
+      {...data.rallies[0],set_number:0}
+    ])expect(valid({...data,rallies:[bad]})).toBe(false)
+    expect(valid({...data,match:{...data.match,round_number:0}})).toBe(false)
+    expect(valid({...data,match:{...data.match,scoreline:''}})).toBe(false)
+    // Page-local score continuity is an invariant of the real MatchEngine log.
+    const two={...data,total_rallies:2,has_more:false,rallies:[
+      {...data.rallies[0],set_complete:false,match_complete:false},
+      {...data.rallies[0],rally_index:2,score_a_before:1,score_a_after:2,
+        sets_a_after:1,set_complete:true,match_complete:true}
+    ]}
+    const validTwo=(m:SavedTourMatchDetail)=>validSavedTourMatchDetail(
+      m,'r','b','rev',2,'open','final',0,25)
+    expect(validTwo(two)).toBe(true)
+    expect(validTwo({...two,rallies:[two.rallies[0],{
+      ...two.rallies[1],score_a_before:0
+    }]})).toBe(false)
+    expect(validTwo({...two,rallies:[two.rallies[0],{
+      ...two.rallies[1],match_complete:true,set_complete:false
+    }]})).toBe(false)
+    expect(validTwo({...two,rallies:[{
+      ...two.rallies[0],match_complete:true,set_complete:true
+    },two.rallies[1]]})).toBe(false)
+    expect(validTwo({...two,rallies:[two.rallies[0],{
+      ...two.rallies[1],score_a_after:0
+    }]})).toBe(false)
+    expect(validTwo({...two,rallies:[two.rallies[0],{
+      ...two.rallies[1],set_number:2
+    }]})).toBe(false)
+    expect(validTwo({...two,rallies:[two.rallies[0],{
+      ...two.rallies[1],sets_a_after:2
+    }]})).toBe(false)
+    const endOfGame={...two.rallies[0],set_complete:true,match_complete:false,sets_a_after:1}
+    const nextGame={...two.rallies[1],set_number:2,score_a_before:0,score_a_after:1,
+      sets_a_after:1,set_complete:false,match_complete:false}
+    expect(validTwo({...two,rallies:[endOfGame,nextGame]})).toBe(true)
+    expect(validTwo({...two,rallies:[endOfGame,{...nextGame,score_a_before:1}]})).toBe(false)
+    expect(validTwo({...two,rallies:[{
+      ...two.rallies[0],winner_player_id:null,score_a_after:1
+    },two.rallies[1]]})).toBe(false)
   })
 
   it('validates explicit Run/selected Branch/revision/season and original ancestry owner',()=>{
@@ -144,6 +235,62 @@ describe('strict Saved Tour response identity',()=>{
     expect(validSavedTourCalendar(calendar,'r','b','stale',2)).toBe(false)
     expect(validSavedTourCalendar(calendar,'r','b','rev',0)).toBe(false)
     expect(validSavedTourCalendar({...calendar,revision_branch_id:''},'r','b','rev',2)).toBe(false)
+  })
+  it('rejects forged publication flags and malformed published final IDs at the API boundary',()=>{
+    const valid=(entry:SavedTourEvent)=>
+      validSavedTourCalendar({...calendar,editions:[entry]},'r','b','rev',2)
+    const wire=(overrides:Record<string,unknown>)=>
+      ({...event,...overrides} as SavedTourEvent)
+    expect(valid(event)).toBe(true)
+    expect(valid(wire({result_published:'false'}))).toBe(false)
+    expect(valid(wire({result_published:1}))).toBe(false)
+    expect(valid(wire({result_published:null}))).toBe(false)
+    expect(valid(wire({result_published:true,champion_player_id:23}))).toBe(false)
+    expect(valid(wire({result_published:true,finalist_player_id:''}))).toBe(false)
+    expect(valid(wire({result_published:true,champion_player_id:'A',finalist_player_id:'A'}))).toBe(false)
+    expect(valid(wire({result_published:true,champion_player_id:'A',finalist_player_id:'B'}))).toBe(true)
+    expect(valid(wire({result_published:false,champion_player_id:'stale'}))).toBe(true)
+    expect(validSavedTourCalendar({...calendar,calendar_status:'absent' as 'ready'},'r','b','rev',2)).toBe(false)
+    expect(validSavedTourCalendar({...calendar,calendar_status:'empty'},'r','b','rev',2)).toBe(false)
+    expect(validSavedTourCalendar({...calendar,editions:[null as unknown as SavedTourEvent]},'r','b','rev',2)).toBe(false)
+  })
+  it('refuses inconsistent published winners between Edition label and canonical result',()=>{
+    const winner={...event,result_published:true,champion_player_id:'P1',finalist_player_id:'P2'}
+    const result={
+      schema_version:'viewer_tournament_result.v1' as const,
+      product_run_id:'r',viewer_branch_id:'original',event_id:'open',
+      completed_season_index:2,completed_week:12,champion_player_id:'P1',
+      finalist_player_id:'P2',qualification_winner_ids:[],players:[],matches:[]
+    }
+    const valid=(e:SavedTourEdition)=>
+      validSavedTourEdition(e,'r','b','rev',2,'open')
+    expect(valid({...edition,edition:winner,published_result:result})).toBe(true)
+    expect(valid({...edition,edition:winner,published_result:{...result,champion_player_id:'P3'}})).toBe(false)
+    expect(valid({...edition,edition:winner,published_result:{...result,finalist_player_id:'P3'}})).toBe(false)
+    expect(valid({...edition,edition:winner,published_result:{
+      ...result,schema_version:'wrong' as 'viewer_tournament_result.v1'
+    }})).toBe(false)
+    expect(valid({...edition,edition:{...winner,result_published:'false' as unknown as boolean},published_result:result})).toBe(false)
+    expect(valid({...edition,edition:{...winner,finalist_player_id:'P1'},published_result:result})).toBe(false)
+    expect(valid({...edition,edition:winner,published_result:{
+      ...result,matches:undefined as unknown as typeof result.matches
+    }})).toBe(false)
+    const match={match_id:'final',draw_type:'main',round_number:2,
+      bracket_position:1,winner_player_id:'P1',loser_player_id:'P2',scoreline:'3-1'}
+    const published=(matches:typeof match[])=>
+      valid({...edition,edition:winner,published_result:{...result,matches}})
+    expect(published([match])).toBe(true)
+    expect(published([match,match])).toBe(false)
+    expect(published([{...match,round_number:0}])).toBe(false)
+    expect(published([{...match,bracket_position:0}])).toBe(false)
+    expect(published([{...match,scoreline:''}])).toBe(false)
+    expect(published([{...match,winner_player_id:'',loser_player_id:'P2'}])).toBe(false)
+    expect(published([{...match,loser_player_id:'P1'}])).toBe(false)
+    expect(published([{...match,loser_player_id:null as unknown as string}])).toBe(true)
+    expect(valid({...edition,edition:winner,published_result:{
+      ...result,players:[{player_id:'P1',draw_type:'main',reached_stage:'champion',
+        wins:-1,losses:0}]
+    }})).toBe(false)
   })
   it('rejects duplicates, invalid weeks and cross-season source rows',()=>{
     expect(validSavedTourCalendar({...calendar,editions:[event,event],edition_count:2},'r','b','rev',2)).toBe(false)

@@ -10,6 +10,8 @@ import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
 import type {SavedTourDrawBracket,SavedTourScheduledMatch} from '../api/savedTour'
 import {verifiedCountryReturn} from './runWorldCountryTournaments'
+import {filterSavedEditionMatches} from './savedEditionResultDiscovery'
+import {SavedFinalLookupLink,SavedPlayerProfileLink} from './savedTourPlayerLinks'
 
 type Tab='overview'|'entries'|'draw'|'schedule'|'results'|'settings'
 const tabs:Tab[]=['overview','entries','draw','schedule','results','settings']
@@ -76,8 +78,23 @@ export function SavedTourEditionPage():JSX.Element {
   const plannedMain=schedule?.slots.filter(slot=>slot.draw_phase!=='qualification')??[]
   const plannedQualification=schedule?.slots.filter(slot=>slot.draw_phase==='qualification')??[]
   const matches=result?.matches??[]
+  // Historical Saved Editions must not link to a *current* player profile.
+  const sameHead=Boolean(revision&&selectedBranch?.saved_head_revision_id===revision
+    &&selectedBranch?.run_id===runId)
+  const playerRef=(id:string)=><SavedPlayerProfileLink runId={runId} playerId={id}
+    showCurrent={sameHead}/>
   const main=matches.filter(m=>m.draw_type!=='qualification')
   const qualification=matches.filter(m=>m.draw_type==='qualification')
+  const matchSearch=params.get('matchSearch')??''
+  const filteredResults=filterSavedEditionMatches(matches,matchSearch)
+  const resultMain=filteredResults.filter(m=>m.draw_type!=='qualification')
+  const resultQualification=filteredResults.filter(m=>m.draw_type==='qualification')
+  const setMatchSearch=(value:string)=>{
+    const copy=new URLSearchParams(params)
+    if(value)copy.set('matchSearch',value)
+    else copy.delete('matchSearch')
+    setParams(copy)
+  }
   const matchHref=(matchId:string,sourceTab:Tab)=>{
     const q=new URLSearchParams(params)
     q.set('tab',sourceTab)
@@ -85,7 +102,7 @@ export function SavedTourEditionPage():JSX.Element {
       +encodeURIComponent(eventId)+'/matches/'+encodeURIComponent(matchId)+'?'+q.toString()
   }
   const matchRow=(m:typeof matches[number])=><tr key={m.match_id}><td>{m.round_number}</td>
-    <td>{m.winner_player_id}</td><td>{m.loser_player_id??'—'}</td>
+    <td>{playerRef(m.winner_player_id)}</td><td>{m.loser_player_id?playerRef(m.loser_player_id):'—'}</td>
     <td><span>{m.scoreline}</span>{m.loser_player_id&&<>
       {' · '}<Link to={matchHref(m.match_id,tab)}>
         {cs?'Detail zápasu':'Match detail'}</Link>
@@ -238,8 +255,13 @@ export function SavedTourEditionPage():JSX.Element {
         <p>{presentEntry(e.category)} · {e.tour_level??'—'} · {e.host_city??'—'} ({e.host_country})</p>
         <p>{cs?'Stav autoritativního lifecycle: není dostupný. Stav kalendáře není důkaz výsledku.':
           'Authoritative lifecycle status: unavailable. A calendar label is not proof of results.'}</p>
-        {result&&<p>{cs?'Vítěz':'Champion'}: {result.champion_player_id}
-          {' · '}{cs?'Finalista':'Finalist'}: {result.finalist_player_id}</p>}
+        {result&&<p>{cs?'Vítěz':'Champion'}: {playerRef(result.champion_player_id)}
+          {' · '}{cs?'Finalista':'Finalist'}: {playerRef(result.finalist_player_id)}</p>}
+        {result&&<p>{cs?'Finálová umístění v této Saved sezoně':'Final finishes in this Saved season'}:
+          {' '}<SavedFinalLookupLink runId={runId} branch={branch!} revision={revision!}
+            season={season!} playerId={result.champion_player_id} params={params} cs={cs}/>
+          {' · '}<SavedFinalLookupLink runId={runId} branch={branch!} revision={revision!}
+            season={season!} playerId={result.finalist_player_id} params={params} cs={cs}/></p>}
         {!result&&<p>{cs?'V této revizi není publikován kanonický výsledek.':
           'No canonical result was published in this revision.'}</p>}
       </section>}
@@ -299,10 +321,20 @@ export function SavedTourEditionPage():JSX.Element {
         {pendingTiePanel}
         {!result?<p>{cs?'Kanonické výsledky nejsou v této revizi publikovány.':
           'Canonical results are not published in this revision.'}</p>:<>
+          <label>{cs?'Vyhledat publikovaný zápas':'Find published match'}{' '}
+            <input type="search" aria-label={cs?'Hledat publikované zápasy':'Search published matches'}
+              placeholder={cs?'ID zápasu, hráče nebo skóre':'Match ID, player ID or score'}
+              value={matchSearch} onChange={event=>setMatchSearch(event.target.value)}/></label>
+          <button type="button" disabled={!matchSearch} onClick={()=>setMatchSearch('')}>
+            {cs?'Vymazat hledání zápasů':'Clear match search'}</button>
+          <p className="status">{cs?'Zobrazeno publikovaných zápasů':'Published matches shown'}:
+            {' '}<strong>{filteredResults.length}/{matches.length}</strong></p>
+          {matches.length>0&&filteredResults.length===0&&<p role="status">{cs?
+            'Žádný publikovaný zápas neodpovídá hledání.':'No published matches match the search.'}</p>}
           <a href="#saved-results-main">{cs?'Hlavní část':'Main'}</a>
           {' · '}<a href="#saved-results-qualification">{cs?'Kvalifikace':'Qualification'}</a>
-          <section id="saved-results-main"><h4>{cs?'Hlavní část':'Main'}</h4>{matchTable(main)}</section>
-          <section id="saved-results-qualification"><h4>{cs?'Kvalifikace':'Qualification'}</h4>{matchTable(qualification)}</section>
+          <section id="saved-results-main"><h4>{cs?'Hlavní část':'Main'}</h4>{matchTable(resultMain)}</section>
+          <section id="saved-results-qualification"><h4>{cs?'Kvalifikace':'Qualification'}</h4>{matchTable(resultQualification)}</section>
         </>}
       </section>}
       {tab==='settings'&&<section><h3>{labels[5]}</h3>

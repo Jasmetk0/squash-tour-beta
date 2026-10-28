@@ -166,6 +166,109 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
     assert "country=" + enc(edition["host_country"]) in page.url
     assert "revision=" + enc(revision_id) in page.url
 
+    # Read-only result discovery and rally navigation use the very same genuine
+    # SQLite-backed tournament, match and persisted rally pages. No route mocks.
+    # The published-only list link must preserve this immutable historical scope.
+    direct_result = page.get_by_role("link", name="View results").first
+    expect(direct_result).to_be_visible()
+    direct_href = direct_result.get_attribute("href") or ""
+    assert "/tour/calendar/" + enc(event_id) in direct_href, direct_href
+    assert all(token in direct_href for token in (
+        "branch=" + enc(branch_id), "revision=" + enc(revision_id),
+        "season=0", "tab=results", "country=" + enc(edition["host_country"])
+    )), direct_href
+    direct_result.click()
+    expect(page.get_by_role("heading", name=edition["event_name"])).to_be_visible()
+    expect(page.get_by_role("button", name="Results")).to_have_attribute(
+        "aria-current", "page"
+    )
+    assert source["scoreline"] in page.locator("#saved-results-main").inner_text()
+    direct_match = page.locator(
+        'a[href*="/matches/' + enc(source["match_id"]) + '"]'
+    ).first
+    expect(direct_match).to_be_visible()
+    direct_match.click()
+    expect(page.get_by_role("heading", name="Historical match detail")).to_be_visible()
+    expect(page.get_by_text("Rally 1/", exact=False)).to_be_visible()
+    # First/last and a typed jump are genuine archive reads, never simulation.
+    page.get_by_role("button", name="Last rally").click()
+    expect(page.get_by_text(
+        "Rally " + str(archived["total_rallies"]) + "/", exact=False
+    )).to_be_visible()
+    assert "revision=" + enc(revision_id) in page.url
+    assert "rally=" + str(archived["total_rallies"]) in page.url, page.url
+    # Refresh the actual browser URL: the same historical rally must survive.
+    page.reload()
+    expect(page.get_by_text(
+        "Rally " + str(archived["total_rallies"]) + "/", exact=False
+    )).to_be_visible()
+    rally_input = page.get_by_role("spinbutton", name="Archived rally number")
+    rally_input.fill(str(archived["total_rallies"] + 1))
+    expect(page.get_by_role("button", name="Jump to rally")).to_be_disabled()
+    rally_input.fill("26")
+    page.get_by_role("button", name="Jump to rally").click()
+    expect(page.get_by_text("Rally 26/", exact=False)).to_be_visible()
+    assert "rally=26" in page.url, page.url
+    # Real read-only frame list is sourced from the same Saved archive page.
+    page.get_by_text("Browse archived rallies", exact=False).click()
+    table = page.get_by_role("table", name="Verified archived rally page")
+    expect(table.get_by_role("row")).to_have_count(
+        min(25, archived["total_rallies"] - 25) + 1
+    )
+    expect(table.get_by_role("button", name="Rally 26")).to_be_disabled()
+    if archived["total_rallies"] > 26:
+        table.get_by_role("button", name="Rally 27").click()
+        expect(page.get_by_text("Rally 27/", exact=False)).to_be_visible()
+        assert "rally=27" in page.url, page.url
+    page.get_by_role("button", name="First rally").click()
+    expect(page.get_by_text("Rally 1/", exact=False)).to_be_visible()
+    assert "rally=" not in page.url, page.url
+    # A valid empty page beyond the archive must not poison the cached neighbor
+    # check after recovery to the first page and navigation to the real last page.
+    missing_rally = ((archived["total_rallies"] + 24) // 25) * 25 + 1
+    page.goto(page.url + "&rally=" + str(missing_rally))
+    expect(page.get_by_role("alert")).to_contain_text(
+        "Requested rally is outside this Saved archive."
+    )
+    page.get_by_role("button", name="Return to first rally").click()
+    expect(page.get_by_text("Rally 1/", exact=False)).to_be_visible()
+    page.get_by_role("button", name="Last rally").click()
+    expect(page.get_by_text(
+        "Rally " + str(archived["total_rallies"]) + "/", exact=False
+    )).to_be_visible()
+    page.get_by_role("button", name="First rally").click()
+    expect(page.get_by_text("Rally 1/", exact=False)).to_be_visible()
+    # Lookup goes to published final placements in the same Saved Revision.
+    # It must not silently constrain history to this event's host country/week.
+    final_evidence = page.get_by_role(
+        "link", name="Find published finals for " + source["player_id"]
+    )
+    expect(final_evidence).to_be_visible()
+    final_evidence.click()
+    expect(page.get_by_role("table", name="Saved Tour edition list")).to_be_visible()
+    expect(page.get_by_role("link", name=edition["event_name"])).to_be_visible()
+    expect(page.get_by_role(
+        "searchbox", name="Search champion or finalist player ID"
+    )).to_have_value(source["player_id"])
+    for token in ("branch=" + enc(branch_id), "revision=" + enc(revision_id),
+                  "season=0", "view=list", "publication=published",
+                  "playerId=" + enc(source["player_id"])):
+        assert token in page.url, (token, page.url)
+    assert "country=" not in page.url and "week=" not in page.url, page.url
+    page.get_by_text("Published final finishes in displayed editions").click()
+    tally = page.get_by_role("table", name="Published final outcome tally")
+    expect(tally.get_by_role(
+        "link", name="Filter published results for player " + source["player_id"]
+    )).to_be_visible()
+    # A role filter can narrow to documented winners without a new sporting run.
+    page.get_by_role("combobox", name="Player outcome role").select_option("champion")
+    expect(page.get_by_role("link", name=edition["event_name"])).to_be_visible()
+    page.screenshot(
+        path=str(artifacts / f"{prefix}saved-tour-published-final-lookup.png"),
+        full_page=True,
+    )
+    page.goto(base + route)
+
     # New production Country -> immutable Edition -> real archived Match -> Country
     # navigation, using the SAME SQLite-backed Run, not a mocked browser API.
     # This disposable test Cup has a host in its copied FAX World (GER).
@@ -214,6 +317,18 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
         old = get(scope + "/tour/calendar?revision_id=" + enc(oldest) + "&season_index=0")
         assert old["saved_revision_id"] == oldest
         assert not any(e["event_id"] == event_id and e["result_published"] for e in old["editions"])
+        # The older immutable snapshot cannot expose a newer champion through
+        # a calendar's published-finals lookup, even if deep-linked by player ID.
+        prior_route = (f"/admin/runs/{enc(run_id)}/tour/calendar"
+                       f"?branch={enc(branch_id)}&revision={enc(oldest)}&season=0"
+                       f"&view=list&publication=published&playerId={enc(source['player_id'])}")
+        page.goto(base + prior_route)
+        expect(page.get_by_role("heading", name="Saved season calendar")).to_be_visible()
+        assert "revision=" + enc(oldest) in page.url
+        expect(page.get_by_role(
+            "link", name=edition["event_name"]
+        )).to_have_count(0)
+        page.goto(base + route)
     page.screenshot(path=str(artifacts / f"{prefix}saved-tour-calendar.png"), full_page=True)
     proof = {
         "run_id": run_id, "branch_id": branch_id, "saved_revision_id": revision_id,

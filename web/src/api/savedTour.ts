@@ -111,21 +111,66 @@ export type SavedTourMatchDetail = {
   offset:number;limit:number;total_rallies:number;has_more:boolean
   rallies:SavedTourRallyFrame[]
 }
+/** Confirm two successive, already independently validated archive events form
+ * one sporting timeline. Also usable at the 25/26 page boundary, but only
+ * when both real Saved pages have already been read: no guessed neighbors. */
+export function validSavedTourRallyTransition(
+  previous:SavedTourRallyFrame,next:SavedTourRallyFrame
+):boolean{
+  if(previous.match_complete||next.rally_index!==previous.rally_index+1)return false
+  // The new rally's post-score may award exactly one Game/set on completion.
+  // A later rally can never erase an earned set, even across page boundaries.
+  const gamesA=next.sets_a_after-previous.sets_a_after
+  const gamesB=next.sets_b_after-previous.sets_b_after
+  if(gamesA<0||gamesB<0||gamesA+gamesB!==Number(next.set_complete))return false
+  if(next.set_number===previous.set_number)
+    return !previous.set_complete
+      &&next.score_a_before===previous.score_a_after
+      &&next.score_b_before===previous.score_b_after
+  return previous.set_complete&&next.set_number===previous.set_number+1
+    &&next.score_a_before===0&&next.score_b_before===0
+}
+
+/** Compare independently validated adjacent Saved archive pages. A matching
+ * URL scope alone is not proof: revision-owner, match summary and archive
+ * length must also agree before reading their connecting rally events. */
+export function validSavedTourRallyPagePair(
+  previous:SavedTourMatchDetail,next:SavedTourMatchDetail
+):boolean{
+  const same=['run_id','branch_id','revision_branch_id','saved_revision_id',
+    'season_index','event_id','match_id','replay_status','player_a_id',
+    'player_b_id','total_rallies','limit'] as const
+  const sameMatch=['match_id','draw_type','round_number','bracket_position',
+    'winner_player_id','loser_player_id','scoreline'] as const
+  return previous.replay_status==='available'&&next.replay_status==='available'
+    &&previous.offset+previous.limit===next.offset
+    &&same.every(key=>previous[key]===next[key])
+    &&sameMatch.every(key=>previous.match[key]===next.match[key])
+    &&previous.rallies.length>0&&next.rallies.length>0
+    &&validSavedTourRallyTransition(
+      previous.rallies[previous.rallies.length-1],next.rallies[0])
+}
+
 /** Exact selected branch and original revision-owner validation for historical match pages. */
 export function validSavedTourMatchDetail(
   data:SavedTourMatchDetail,runId:string,branchId:string,revisionId:string,
   seasonIndex:number,eventId:string,matchId:string,offset:number,limit:number
 ):boolean{
-  if(data.schema_version!=='run_saved_tour_match_detail.v1'
+  if(!data||data.schema_version!=='run_saved_tour_match_detail.v1'
     ||data.source!=='reachable_saved_revision'
     ||data.run_id!==runId||data.branch_id!==branchId
     ||!data.revision_branch_id||data.saved_revision_id!==revisionId
     ||data.season_index!==seasonIndex||data.event_id!==eventId
     ||data.match_id!==matchId||data.match?.match_id!==matchId
-    ||!data.match.winner_player_id||!data.match.loser_player_id
+    ||!['main','qualification','group','knockout'].includes(data.match.draw_type)
+    ||!Number.isSafeInteger(data.match.round_number)||data.match.round_number<1
+    ||!Number.isSafeInteger(data.match.bracket_position)||data.match.bracket_position<1
+    ||typeof data.match.scoreline!=='string'||!data.match.scoreline.trim()
+    ||typeof data.match.winner_player_id!=='string'||!data.match.winner_player_id.trim()
+    ||typeof data.match.loser_player_id!=='string'||!data.match.loser_player_id.trim()
     ||data.match.winner_player_id===data.match.loser_player_id
     ||data.offset!==offset||data.limit!==limit
-    ||!Number.isInteger(data.total_rallies)||data.total_rallies<0
+    ||!Number.isSafeInteger(data.total_rallies)||data.total_rallies<0
     ||!Array.isArray(data.rallies)||data.rallies.length>limit
     ||!['available','unavailable'].includes(data.replay_status)
     ||data.has_more!==(data.replay_status==='available'&&offset+limit<data.total_rallies))
@@ -138,10 +183,35 @@ export function validSavedTourMatchDetail(
     ||data.rallies.length!==Math.max(0,Math.min(limit,data.total_rallies-offset)))
     return false
   return data.rallies.every((frame,i)=>
-    frame.rally_index===offset+i+1&&frame.set_number>=1&&
-    [data.player_a_id,data.player_b_id].includes(frame.server_player_id)&&
-    (frame.winner_player_id===null||[data.player_a_id,data.player_b_id].includes(frame.winner_player_id))
+    frame!=null&&frame.rally_index===offset+i+1
+    &&Number.isSafeInteger(frame.set_number)&&frame.set_number>=1
+    &&(['score_a_before','score_b_before','score_a_after','score_b_after',
+      'sets_a_after','sets_b_after'] as const).every(key=>
+      Number.isSafeInteger(frame[key])&&frame[key]>=0)
+    &&typeof frame.set_complete==='boolean'&&typeof frame.match_complete==='boolean'
+    // The archived MatchEngine may end by retirement after a rally, but a
+    // documented "match complete" can only occur on its final scoring event.
+    &&(!frame.match_complete||(frame.set_complete&&frame.rally_index===data.total_rallies))
+    &&frame.score_a_after>=frame.score_a_before&&frame.score_b_after>=frame.score_b_before
+    &&(frame.winner_player_id!==null
+      ||(frame.score_a_before===frame.score_a_after
+        &&frame.score_b_before===frame.score_b_after))
+    &&(i===0||validSavedTourRallyTransition(data.rallies[i-1],frame))
+    &&typeof frame.server_player_id==='string'
+    &&[data.player_a_id,data.player_b_id].includes(frame.server_player_id)
+    &&(frame.winner_player_id===null||typeof frame.winner_player_id==='string'
+      &&[data.player_a_id,data.player_b_id].includes(frame.winner_player_id))
   )
+}
+
+/** The Calendar publication flag is authority, not a truthy display hint.
+ * Validate raw JSON at the read boundary before granting result/player links. */
+function validSavedTourOutcomeFields(event:SavedTourEvent):boolean{
+  if(!event||typeof event.result_published!=='boolean')return false
+  const winner=event.champion_player_id,runnerUp=event.finalist_player_id
+  if(winner!==null&&(typeof winner!=='string'||!winner.trim()))return false
+  if(runnerUp!==null&&(typeof runnerUp!=='string'||!runnerUp.trim()))return false
+  return !event.result_published||!winner||!runnerUp||winner!==runnerUp
 }
 
 /** Fail closed before displaying data from stale caches or cross-Branch responses. */
@@ -173,10 +243,12 @@ export function validSavedTourCalendar(
     ||payload.schema_version!=='run_saved_tour_calendar.v1'
     ||!isSavedTourSeason(payload.season,seasonIndex)
     ||payload.week_count!==61||!Array.isArray(payload.editions)
-    ||payload.edition_count!==payload.editions.length)return false
+    ||payload.edition_count!==payload.editions.length
+    ||!['ready','empty'].includes(payload.calendar_status)
+    ||(payload.calendar_status==='empty'&&payload.editions.length>0))return false
   const seen=new Set<string>()
   return payload.editions.every(e=>{
-    if(!e.event_id||seen.has(e.event_id)
+    if(!validSavedTourOutcomeFields(e)||!e.event_id||seen.has(e.event_id)
       ||!Number.isInteger(e.season_week)||e.season_week<1||e.season_week>61
       ||!isSavedTourSeason(e.season,seasonIndex))return false
     seen.add(e.event_id)
@@ -188,15 +260,38 @@ export function validSavedTourEdition(
 ):boolean{
   if(!matchesSavedTourContext(payload,runId,branchId,revisionId,seasonIndex)
     ||payload.schema_version!=='run_saved_tour_edition.v1'
+    ||!validSavedTourOutcomeFields(payload.edition)
     ||payload.edition.event_id!==eventId
     ||payload.lifecycle_status!=='unavailable')return false
   const result=payload.published_result
   const published=result===null?!payload.edition.result_published:
     payload.edition.result_published &&
-    result.event_id===eventId&&result.product_run_id===runId
+    result.schema_version==='viewer_tournament_result.v1'
+    &&result.event_id===eventId&&result.product_run_id===runId
     &&result.viewer_branch_id===payload.revision_branch_id
     &&result.completed_season_index===seasonIndex
     &&result.completed_week===payload.edition.season_week
+    &&result.champion_player_id===payload.edition.champion_player_id
+    &&result.finalist_player_id===payload.edition.finalist_player_id
+    &&result.champion_player_id!==result.finalist_player_id
+    &&Array.isArray(result.players)&&Array.isArray(result.matches)
+    &&Array.isArray(result.qualification_winner_ids)
+    &&result.qualification_winner_ids.every(id=>typeof id==='string'&&!!id.trim())
+    &&result.players.every(player=>player!=null
+      &&typeof player.player_id==='string'&&!!player.player_id.trim()
+      &&typeof player.reached_stage==='string'&&!!player.reached_stage.trim()
+      &&Number.isSafeInteger(player.wins)&&player.wins>=0
+      &&Number.isSafeInteger(player.losses)&&player.losses>=0)
+    &&new Set(result.matches.map(match=>match?.match_id)).size===result.matches.length
+    &&result.matches.every(match=>match!=null
+      &&typeof match.match_id==='string'&&!!match.match_id.trim()
+      &&['main','qualification','group','knockout'].includes(match.draw_type)
+      &&Number.isSafeInteger(match.round_number)&&match.round_number>=1
+      &&Number.isSafeInteger(match.bracket_position)&&match.bracket_position>=1
+      &&typeof match.winner_player_id==='string'&&!!match.winner_player_id.trim()
+      &&(match.loser_player_id===null||typeof match.loser_player_id==='string'
+        &&!!match.loser_player_id.trim()&&match.loser_player_id!==match.winner_player_id)
+      &&typeof match.scoreline==='string'&&!!match.scoreline.trim())
   if(!published)return false
   const entry=payload.entry_field,draw=payload.draw
   const owned=(value:{product_run_id:string;viewer_branch_id:string;event_id:string})=>

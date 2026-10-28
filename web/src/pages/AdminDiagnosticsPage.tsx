@@ -14,6 +14,54 @@ export function AdminDiagnosticsPage(): JSX.Element {
   const [sectionFilter, setSectionFilter] = useState<'all' | 'available' | 'planned'>('all')
   const displayedSectionCount = sectionFilter === 'all' ? 6 : 3
 
+  const areas = [
+    { kind: 'available', title: 'World Balance', content: <>
+          <p>
+            {text('Use linked World tools to inspect country inputs and Talent Preview. Broader balance diagnostics, population dominance and small-country risk checks are planned; links here do not imply that all such checks are implemented.')}
+          </p>
+          <p>
+            {text('Current action:')} <Link to="/admin/world/talent-preview">{text('Talent Preview')}</Link> ·{' '}
+            <Link to="/admin/world/library/official_fax_world/countries">{text('Official FAX World countries')}</Link>
+          </p>
+        </> },
+    { kind: 'available', title: 'Calendar Validation', content: <>
+          <p>
+            {text("Calendar checks should use each Run's configured season-week range rather than assuming W01–W61. Existing validation tools also cover event timing, qualifiers, categories, hosts and schedule conflicts within their supported scope.")}
+          </p>
+          <p>
+            {text('Current action:')} <Link to="/admin/tour-seasons/validation">{text('Calendar Validation')}</Link> · <Link to="/admin/seasons">{text('Seasons')}</Link>
+          </p>
+        </> },
+    { kind: 'available', title: 'Run Health', content: <>
+          <p>{text('Open the Run Diagnostics page for currently supported operational checks. Broader health, snapshot and stale-artifact coverage is not implied by this navigation card.')}</p>
+          <p>
+            {text('Current action:')} <Link to="/admin/runs">{text('Runs')}</Link>
+            {lastRunDiagnosticsPath ? (
+              <>
+                {' '}
+                · <Link to={lastRunDiagnosticsPath}>{text('Last run diagnostics')}</Link>
+              </>
+            ) : null}
+          </p>
+        </> },
+    { kind: 'planned', title: 'Invalidated Data', content: <>
+          <p>
+            {text('Planned downstream invalidation tracking after calendar, entry, draw, result, points, or ranking edits.')}
+          </p>
+          <p className="status">{text('Current action: Planned / run-scoped diagnostics later.')}</p>
+        </> },
+    { kind: 'planned', title: 'Narrative Locks', content: <>
+          <p>{text('Planned conflict/plausibility checks for Soft/Hard/Winner/Round/Exact Match/Path locks.')}</p>
+          <p className="status">{text('Current action: Planned.')}</p>
+        </> },
+    { kind: 'planned', title: 'Audit / Warnings', content: <>
+          <p>
+            {text('Future consolidated feed for manual edits, lock changes, regeneration skips, invalidation events, and warning history.')}
+          </p>
+          <p className="status">{text('Current action: Audit remains embedded in specific operational pages.')}</p>
+        </> }
+  ]
+
   return (
     <section className="panel">
       <div className="page-intro">
@@ -45,68 +93,9 @@ export function AdminDiagnosticsPage(): JSX.Element {
       <p role="status">{adminDiagnosticsCountLabel(displayedSectionCount, language)}</p>
 
       <div className="dashboard-stack">
-        {sectionFilter !== 'planned' && (
-        <SectionCard title={text('World Balance')}>
-          <p>
-            {text('Use linked World tools to inspect country inputs and Talent Preview. Broader balance diagnostics, population dominance and small-country risk checks are planned; links here do not imply that all such checks are implemented.')}
-          </p>
-          <p>
-            {text('Current action:')} <Link to="/admin/world/talent-preview">{text('Talent Preview')}</Link> ·{' '}
-            <Link to="/admin/world/library/official_fax_world/countries">{text('Official FAX World countries')}</Link>
-          </p>
-        </SectionCard>
-        )}
-
-        {sectionFilter !== 'planned' && (
-        <SectionCard title={text('Calendar Validation')}>
-          <p>
-            {text("Calendar checks should use each Run's configured season-week range rather than assuming W01–W61. Existing validation tools also cover event timing, qualifiers, categories, hosts and schedule conflicts within their supported scope.")}
-          </p>
-          <p>
-            {text('Current action:')} <Link to="/admin/tour-seasons/validation">{text('Calendar Validation')}</Link> · <Link to="/admin/seasons">{text('Seasons')}</Link>
-          </p>
-        </SectionCard>
-        )}
-
-        {sectionFilter !== 'planned' && (
-        <SectionCard title={text('Run Health')}>
-          <p>{text('Open the Run Diagnostics page for currently supported operational checks. Broader health, snapshot and stale-artifact coverage is not implied by this navigation card.')}</p>
-          <p>
-            {text('Current action:')} <Link to="/admin/runs">{text('Runs')}</Link>
-            {lastRunDiagnosticsPath ? (
-              <>
-                {' '}
-                · <Link to={lastRunDiagnosticsPath}>{text('Last run diagnostics')}</Link>
-              </>
-            ) : null}
-          </p>
-        </SectionCard>
-        )}
-
-        {sectionFilter !== 'available' && (
-        <SectionCard title={text('Invalidated Data')}>
-          <p>
-            {text('Planned downstream invalidation tracking after calendar, entry, draw, result, points, or ranking edits.')}
-          </p>
-          <p className="status">{text('Current action: Planned / run-scoped diagnostics later.')}</p>
-        </SectionCard>
-        )}
-
-        {sectionFilter !== 'available' && (
-        <SectionCard title={text('Narrative Locks')}>
-          <p>{text('Planned conflict/plausibility checks for Soft/Hard/Winner/Round/Exact Match/Path locks.')}</p>
-          <p className="status">{text('Current action: Planned.')}</p>
-        </SectionCard>
-        )}
-
-        {sectionFilter !== 'available' && (
-        <SectionCard title={text('Audit / Warnings')}>
-          <p>
-            {text('Future consolidated feed for manual edits, lock changes, regeneration skips, invalidation events, and warning history.')}
-          </p>
-          <p className="status">{text('Current action: Audit remains embedded in specific operational pages.')}</p>
-        </SectionCard>
-        )}
+        {areas.filter(area => sectionFilter === 'all' || area.kind === sectionFilter).map(area => (
+          <SectionCard key={area.title} title={text(area.title)}>{area.content}</SectionCard>
+        ))}
       </div>
 
       <SectionCard title={text('What Diagnostics should explain')}>

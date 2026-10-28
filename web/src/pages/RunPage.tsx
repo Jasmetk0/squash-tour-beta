@@ -250,6 +250,18 @@ export function RunPage(): JSX.Element {
     ? readinessQuery.data : null
   const readinessMismatch = readinessQuery.isSuccess && !readinessQuery.isFetching
     && !readinessDependenciesLoading && !readiness
+  // Every manual inspection re-reads the same three independent sources.
+  // Re-reading only readiness may falsely compare it with a cached old clock
+  // or Working Draft after another editor has changed the underlying state.
+  const refreshReadinessEvidence = (): void => {
+    void Promise.all([
+      containerQuery.refetch(),
+      draftQuery.refetch(),
+      readinessQuery.refetch()
+    ])
+  }
+  const readinessRefreshing = readinessQuery.isFetching || readinessDependenciesLoading
+  const position = positionQuery.data?.run_id
   const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
   const pending = pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId ? pendingQuery.data : null
   const simulationHistory = simulationHistoryQuery.data?.run_id === runId && simulationHistoryQuery.data.branch_id === branchId
@@ -340,23 +352,20 @@ export function RunPage(): JSX.Element {
       (readinessQuery.isFetching || (readinessQuery.isSuccess && readinessDependenciesLoading)) &&
       <p role="status" className="status">{readinessText.checking[language]}</p>}
     {ready && Boolean(selectedBranch?.saved_head_revision_id) &&
-      !readinessQuery.isFetching && (readinessQuery.isError || readinessMismatch) &&
+      !readinessRefreshing && (readinessQuery.isError || draftQuery.isError
+        || containerQuery.isError || readinessMismatch) &&
       <section className="run-home-status-block" aria-label={language === 'cs'
         ? 'Obnova kontroly podkladů Runu' : 'Run foundation inspection recovery'}>
         <p role="alert" className="error">{readinessText.unavailable[language]}</p>
         <p className="status">{readinessText.retryNote[language]}</p>
-        <button type="button" onClick={() => {
-          // Recover all independent read-only evidence, not just the cached
-          // readiness DTO that may be valid while Run/Working Draft is stale.
-          void Promise.all([containerQuery.refetch(), draftQuery.refetch(), readinessQuery.refetch()])
-        }}>{readinessText.retry[language]}</button>
+        <button type="button" onClick={refreshReadinessEvidence}>{readinessText.retry[language]}</button>
       </section>}
     {ready && readiness && <RunHomeReadinessPanel
       data={readiness} runId={runId} language={language}
       rankingSetupAvailable={setupAllowed && sportingClockSupported &&
         selectedBranch?.status === 'active' && !selectedBranch.read_only &&
         Boolean(selectedBranch.saved_head_revision_id)}
-      refreshing={readinessQuery.isFetching} refresh={() => { void readinessQuery.refetch() }} />}
+      refreshing={readinessRefreshing} refresh={refreshReadinessEvidence} />}
     <div className="run-home-columns">
       <SectionCard title={l.next}>
         {!verified && <p className="status">{branchLoading || containerQuery.isPending || time.isLoading ? l.loading : l.missing}</p>}

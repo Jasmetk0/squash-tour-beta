@@ -304,7 +304,9 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(screen.getByText('No published champion or finalist IDs in displayed Editions.')).toBeInTheDocument()
     expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Saved Tour focused week'}),'5')
-    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    // The empty week removes the table; inspect the newly rendered table after returning.
+    expect(within(screen.getByRole('table',{name:'Published final outcome tally'}))
+      .getAllByRole('row')).toHaveLength(3)
     expect(screen.queryByText('No published champion or finalist IDs in displayed Editions.')).not.toBeInTheDocument()
     expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
   })

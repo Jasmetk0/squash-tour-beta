@@ -110,12 +110,15 @@ export function RunHomeReadinessPanel({
 }): JSX.Element {
   const l = content[language]
   const base = '/admin/runs/' + encodeURIComponent(runId)
-  const next = ordered.find(code => data.items.some(
-    item => item.code === code && needsAttention(item)
-  ))
   const draftDirty = data.items.some(
     item => item.code === 'working_draft' && item.status === 'unsaved'
   )
+  // The inventory describes only Saved foundations. Prioritize reviewing a
+  // dirty Working Draft before recommending another import/generation: its
+  // pending changes are not yet part of the verified Saved evidence.
+  const next = draftDirty ? 'working_draft' : ordered.find(code => data.items.some(
+    item => item.code === code && needsAttention(item)
+  ))
   const attentionCount = data.items.filter(needsAttention).length
   return <section aria-label={language === 'cs' ? 'Připravenost Runu' : 'Run saved readiness'} className="run-home-status-block">
     <div className="actions">

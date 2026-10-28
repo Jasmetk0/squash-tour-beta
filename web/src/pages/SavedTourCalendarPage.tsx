@@ -10,7 +10,8 @@ import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
 import {calendarSeasonIndex} from './runWorldCountryTournaments'
 import {calendarWeeksWithEditions,filterSavedTourEvents,neighboringMatchingWeeks,
-  savedCalendarPublication,savedCalendarPlayerOutcome,savedCalendarWeek} from './savedTourCalendarDiscovery'
+  savedCalendarPublication,savedCalendarPlayerOutcome,savedCalendarWeek,
+  publishedFinalFinishes} from './savedTourCalendarDiscovery'
 
 const choices=Array.from({length:50},(_,i)=>i)
 export function SavedTourCalendarPage():JSX.Element{
@@ -54,6 +55,7 @@ export function SavedTourCalendarPage():JSX.Element{
     .filter(week=>selectedWeek===null||week===selectedWeek)
   const weekEditions=selectedWeek==='invalid'?[]:selectedWeek===null?shown:
     shown.filter(e=>e.season_week===selectedWeek)
+  const finalFinishes=publishedFinalFinishes(weekEditions)
   const set=(key:string,value:string)=>{
     const copy=new URLSearchParams(params)
     if(value)copy.set(key,value);else copy.delete(key)
@@ -227,6 +229,23 @@ export function SavedTourCalendarPage():JSX.Element{
             <td>{e.result_published?<Link to={editionHref(e,true)}>
               {cs?'Zobrazit výsledky':'View results'}</Link>:'—'}</td>
           </tr>)}</tbody></table></div>)}
+      {model.calendar_status==='ready'&&<details>
+        <summary>{cs?'Doložená vítězství a druhá místa v zobrazených edicích':
+          'Published final finishes in displayed editions'}</summary>
+        <p className="status">{cs?
+          'Součty se týkají pouze právě zobrazených publikovaných edic. Nejde o kompletní kariéru, oficiální rekordy ani dopočtené zápasy.':
+          'Counts cover only currently displayed published Editions: not full careers, official records or inferred matches.'}</p>
+        {finalFinishes.length===0?<p role="status">{cs?
+          'Zobrazené edice neobsahují doložená ID vítězů ani finalistů.':
+          'No published champion or finalist IDs in displayed Editions.'}</p>:
+        <div className="table-responsive"><table aria-label={cs?'Doložená finálová umístění':'Published final outcome tally'}>
+          <thead><tr><th>{cs?'ID hráče':'Player ID'}</th>
+            <th>{cs?'Vítězství':'Titles'}</th><th>{cs?'Druhá místa':'Runner-up finishes'}</th></tr></thead>
+          <tbody>{finalFinishes.map(row=><tr key={row.playerId}>
+            <td>{row.playerId}</td><td>{row.championFinishes}</td><td>{row.runnerUpFinishes}</td>
+          </tr>)}</tbody>
+        </table></div>}
+      </details>}
       <p className="status">{cs?
         'Plánované budoucí edice nejsou důkazem uskutečněného turnaje.':'A saved future plan does not prove a tournament was played.'}</p>
     </>}

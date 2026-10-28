@@ -1,7 +1,8 @@
 import {describe,expect,it} from 'vitest'
 import type {SavedTourEvent} from '../api/savedTour'
 import {calendarWeeksWithEditions,filterSavedTourEvents,neighboringMatchingWeeks,
-  savedCalendarPublication,savedCalendarPlayerOutcome,savedCalendarWeek} from './savedTourCalendarDiscovery'
+  savedCalendarPublication,savedCalendarPlayerOutcome,savedCalendarWeek,
+  publishedFinalFinishes} from './savedTourCalendarDiscovery'
 
 function event(id:string,week:number,overrides:Partial<SavedTourEvent>={}):SavedTourEvent{
   return {event_id:id,event_name:id,season:'2002/2003',season_week:week,template_id:'tpl',
@@ -68,6 +69,29 @@ describe('Saved Tour discovery is a pure read-only projection',()=>{
     expect(savedCalendarPlayerOutcome('bogus')).toBe('any')
     expect(savedCalendarPlayerOutcome(null)).toBe('any')
     expect(savedCalendarPlayerOutcome('finalist')).toBe('finalist')
+  })
+
+  it('counts only documented published wins and runner-ups in supplied Editions',()=>{
+    const entries=[
+      event('first',5,{result_published:true,champion_player_id:'A',finalist_player_id:'B'}),
+      event('second',9,{result_published:true,champion_player_id:'B',finalist_player_id:'A'}),
+      event('third',9,{result_published:true,champion_player_id:'A',finalist_player_id:'C'}),
+      event('unpublished',11,{result_published:false,champion_player_id:'A',finalist_player_id:'B'}),
+      event('malformed',12,{result_published:true,champion_player_id:'D',finalist_player_id:'D'}),
+      event('partial',13,{result_published:true,champion_player_id:null,finalist_player_id:'C'})
+    ]
+    const original=JSON.stringify(entries)
+    expect(publishedFinalFinishes(entries)).toEqual([
+      {playerId:'A',championFinishes:2,runnerUpFinishes:1},
+      {playerId:'B',championFinishes:1,runnerUpFinishes:1},
+      {playerId:'C',championFinishes:0,runnerUpFinishes:2}
+    ])
+    expect(publishedFinalFinishes(entries.slice(0,1))).toEqual([
+      {playerId:'A',championFinishes:1,runnerUpFinishes:0},
+      {playerId:'B',championFinishes:0,runnerUpFinishes:1}
+    ])
+    expect(publishedFinalFinishes(entries.slice(3,5))).toEqual([])
+    expect(JSON.stringify(entries)).toBe(original)
   })
 
   it('preserves original week order and simultaneous editions when hiding empty weeks',()=>{

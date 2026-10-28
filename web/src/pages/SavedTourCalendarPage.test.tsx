@@ -282,6 +282,32 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(screen.getByRole('combobox',{name:'Filtr role hráče ve finále'})).toHaveValue('champion')
     expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
   })
+  it('counts only visible published results, without inventing official player records',async()=>{
+    const data=fixture()
+    data.editions[0].result_published=true
+    data.editions[0].champion_player_id='PLAYER-A'
+    data.editions[0].finalist_player_id='PLAYER-B'
+    data.editions[1].result_published=true
+    data.editions[1].champion_player_id='PLAYER-B'
+    data.editions[1].finalist_player_id='PLAYER-A'
+    data.editions[2].champion_player_id='PLAYER-FAKE'
+    api.getSavedTourCalendar.mockResolvedValue(data)
+    mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list')
+    expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByText('Published final finishes in displayed editions'))
+    const table=screen.getByRole('table',{name:'Published final outcome tally'})
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    expect(within(table).getByText('PLAYER-A')).toBeInTheDocument()
+    expect(within(table).queryByText('PLAYER-FAKE')).not.toBeInTheDocument()
+    expect(screen.getByText(/not full careers, official records or inferred matches/)).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Saved Tour focused week'}),'9')
+    expect(screen.getByText('No published champion or finalist IDs in displayed Editions.')).toBeInTheDocument()
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Saved Tour focused week'}),'5')
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    expect(screen.queryByText('No published champion or finalist IDs in displayed Editions.')).not.toBeInTheDocument()
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
+  })
   it('switches language without refetching or resetting the list/filter view',async()=>{
     const view=mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&country=CZE')
     expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()

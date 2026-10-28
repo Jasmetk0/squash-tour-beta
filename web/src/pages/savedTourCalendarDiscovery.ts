@@ -40,6 +40,30 @@ export function filterSavedTourEvents(
       .some(value=>normalize(value).includes(query))))
 }
 
+/** Compact display-only count of published final outcomes from the visible Saved Editions.
+ * Not an official player career, trophy record, or cross-season leaderboard. */
+export type PublishedFinalFinish={
+  playerId:string;championFinishes:number;runnerUpFinishes:number
+}
+export function publishedFinalFinishes(editions:readonly SavedTourEvent[]):PublishedFinalFinish[]{
+  const result=new Map<string,PublishedFinalFinish>()
+  const add=(id:string,role:'championFinishes'|'runnerUpFinishes')=>{
+    if(!result.has(id))result.set(id,{playerId:id,championFinishes:0,runnerUpFinishes:0})
+    result.get(id)![role]++
+  }
+  for(const event of editions){
+    if(!event.result_published)continue
+    const winner=typeof event.champion_player_id==='string'?event.champion_player_id.trim():''
+    const runnerUp=typeof event.finalist_player_id==='string'?event.finalist_player_id.trim():''
+    // Never award both final positions to a single ID in a malformed historical DTO.
+    if(winner&&runnerUp&&winner===runnerUp)continue
+    if(winner)add(winner,'championFinishes')
+    if(runnerUp)add(runnerUp,'runnerUpFinishes')
+  }
+  return [...result.values()].sort((a,b)=>b.championFinishes-a.championFinishes
+    ||b.runnerUpFinishes-a.runnerUpFinishes||a.playerId.localeCompare(b.playerId))
+}
+
 /** Invalid deep links never silently fall back to the whole historical season. */
 export function savedCalendarWeek(raw:string|null,weekCount:number):number|null|'invalid'{
   if(raw===null)return null

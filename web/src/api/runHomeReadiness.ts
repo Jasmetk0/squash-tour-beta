@@ -80,6 +80,16 @@ export function validateRunHomeReadiness(raw: unknown, runId: string, branchId: 
       r.active_full_simulation_task_count, r.historical_full_simulation_task_count]
       .every(x => Number.isSafeInteger(x) && x >= 0)
     || r.active_full_simulation_task_count > r.historical_full_simulation_task_count
+    // The backend derives both ranking counters from the same Saved
+    // publication list. Divergence must never produce a false published badge.
+    || r.saved_published_ranking_count !== r.items[4].evidence_count
+    // The reference FAX writer is explicitly scoped to this exact clock.
+    // The converse is intentionally not assumed for legacy read-time clocks.
+    || (r.sporting_calendar_supported_by_legacy_writers && (
+      r.current_calendar.weeks_per_year !== 61
+      || r.current_calendar.season_start_year_week !== 37
+      || r.current_calendar.start_year !== 2000
+      || r.current_calendar.season_count !== 50))
   ) throw Error('Invalid Run Home readiness evidence')
   return r
 }

@@ -1,7 +1,7 @@
 import {describe,expect,it} from 'vitest'
 import type {SavedTourEvent} from '../api/savedTour'
 import {calendarWeeksWithEditions,filterSavedTourEvents,neighboringMatchingWeeks,
-  savedCalendarPublication,savedCalendarWeek} from './savedTourCalendarDiscovery'
+  savedCalendarPublication,savedCalendarPlayerOutcome,savedCalendarWeek} from './savedTourCalendarDiscovery'
 
 function event(id:string,week:number,overrides:Partial<SavedTourEvent>={}):SavedTourEvent{
   return {event_id:id,event_name:id,season:'2002/2003',season_week:week,template_id:'tpl',
@@ -10,7 +10,8 @@ function event(id:string,week:number,overrides:Partial<SavedTourEvent>={}):Saved
     wild_cards:0,byes:0,ranking_status:'ranked',result_published:false,
     champion_player_id:null,finalist_player_id:null,...overrides}
 }
-const base={tour:'',category:'',country:'',search:'',publication:'all' as const}
+const base={tour:'',category:'',country:'',search:'',publication:'all' as const,
+  playerId:'',playerOutcome:'any' as const}
 
 describe('Saved Tour discovery is a pure read-only projection',()=>{
   it('searches event names, IDs, cities and codes without altering original order',()=>{
@@ -43,6 +44,30 @@ describe('Saved Tour discovery is a pure read-only projection',()=>{
     expect(savedCalendarPublication('invalid')).toBe('all')
     expect(savedCalendarPublication(null)).toBe('all')
     expect(savedCalendarPublication('published')).toBe('published')
+  })
+
+  it('finds published champion and finalist evidence by ID, without claiming complete careers',()=>{
+    const entries=[
+      event('first',5,{result_published:true,champion_player_id:'player-ALPHA',finalist_player_id:'player-beta'}),
+      event('second',5,{result_published:true,champion_player_id:'player-beta',finalist_player_id:'player-GAMMA'}),
+      event('stale-unpublished',7,{result_published:false,champion_player_id:'player-beta',finalist_player_id:'player-ALPHA'}),
+      event('no-outcome',8,{result_published:true,champion_player_id:null,finalist_player_id:null})
+    ]
+    const original=JSON.stringify(entries)
+    expect(filterSavedTourEvents(entries,{...base,playerId:'PLAYER-beta'}).map(e=>e.event_id))
+      .toEqual(['first','second'])
+    expect(filterSavedTourEvents(entries,{...base,playerId:'player-BETA',playerOutcome:'champion'})
+      .map(e=>e.event_id)).toEqual(['second'])
+    expect(filterSavedTourEvents(entries,{...base,playerId:'player-BETA',playerOutcome:'finalist'})
+      .map(e=>e.event_id)).toEqual(['first'])
+    expect(filterSavedTourEvents(entries,{...base,playerId:'player-GAMMA',playerOutcome:'champion'}))
+      .toEqual([])
+    expect(filterSavedTourEvents(entries,{...base,playerId:' ',playerOutcome:'champion'}))
+      .toEqual(entries)
+    expect(JSON.stringify(entries)).toBe(original)
+    expect(savedCalendarPlayerOutcome('bogus')).toBe('any')
+    expect(savedCalendarPlayerOutcome(null)).toBe('any')
+    expect(savedCalendarPlayerOutcome('finalist')).toBe('finalist')
   })
 
   it('preserves original week order and simultaneous editions when hiding empty weeks',()=>{

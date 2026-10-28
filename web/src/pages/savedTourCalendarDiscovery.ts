@@ -2,13 +2,20 @@
 import type {SavedTourEvent} from '../api/savedTour'
 
 export type PublicationFilter='all'|'published'|'not-published'
+export type PlayerOutcomeFilter='any'|'champion'|'finalist'
 export type SavedCalendarDiscoveryFilters={
   tour:string;category:string;country:string;search:string;publication:PublicationFilter
+  playerId:string;playerOutcome:PlayerOutcomeFilter
 }
 
 /** Unknown URL values never accidentally filter out an entire historical season. */
 export function savedCalendarPublication(raw:string|null):PublicationFilter{
   return raw==='published'||raw==='not-published'?raw:'all'
+}
+
+/** An unknown result-role link must never be interpreted as a hidden exclusion. */
+export function savedCalendarPlayerOutcome(raw:string|null):PlayerOutcomeFilter{
+  return raw==='champion'||raw==='finalist'?raw:'any'
 }
 
 const normalize=(text:unknown):string=>(typeof text==='string'?text:'').normalize('NFD')
@@ -19,8 +26,13 @@ export function filterSavedTourEvents(
   editions:readonly SavedTourEvent[],filters:SavedCalendarDiscoveryFilters
 ):SavedTourEvent[]{
   const query=normalize(filters.search)
+  const playerQuery=normalize(filters.playerId)
   return editions.filter(event=>
-    (!filters.tour||event.tour_level===filters.tour)
+    // Champion/finalist fields describe published results only, not all participants.
+    (!playerQuery||(event.result_published&&
+      ((filters.playerOutcome!=='finalist'&&normalize(event.champion_player_id).includes(playerQuery))
+      ||(filters.playerOutcome!=='champion'&&normalize(event.finalist_player_id).includes(playerQuery)))))
+    &&(!filters.tour||event.tour_level===filters.tour)
     &&(!filters.category||event.category===filters.category)
     &&(!filters.country||event.host_country===filters.country)
     &&(filters.publication==='all'||event.result_published===(filters.publication==='published'))

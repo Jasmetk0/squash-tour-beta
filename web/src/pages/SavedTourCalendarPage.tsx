@@ -10,7 +10,7 @@ import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
 import {calendarSeasonIndex} from './runWorldCountryTournaments'
 import {calendarWeeksWithEditions,filterSavedTourEvents,neighboringMatchingWeeks,
-  savedCalendarPublication,savedCalendarWeek} from './savedTourCalendarDiscovery'
+  savedCalendarPublication,savedCalendarPlayerOutcome,savedCalendarWeek} from './savedTourCalendarDiscovery'
 
 const choices=Array.from({length:50},(_,i)=>i)
 export function SavedTourCalendarPage():JSX.Element{
@@ -40,7 +40,8 @@ export function SavedTourCalendarPage():JSX.Element{
   const view=params.get('view')==='list'?'list':'weeks'
   const filters={tour:params.get('tour')??'',category:params.get('category')??'',
     country:params.get('country')??'',search:params.get('eventSearch')??'',
-    publication:savedCalendarPublication(params.get('publication'))}
+    publication:savedCalendarPublication(params.get('publication')),
+    playerId:params.get('playerId')??'',playerOutcome:savedCalendarPlayerOutcome(params.get('playerOutcome'))}
   const compactWeeks=params.get('compactWeeks')==='1'
   const editions=useMemo(()=>model?.editions??[],[model])
   const options=(field:'tour_level'|'category'|'host_country')=>[...new Set(editions.map(e=>e[field]).filter((v):v is string=>Boolean(v)))].sort()
@@ -65,7 +66,8 @@ export function SavedTourCalendarPage():JSX.Element{
   }
   const resetFilters=()=>{
     const copy=new URLSearchParams(params)
-    for(const field of ['tour','category','country','eventSearch','publication'])copy.delete(field)
+    for(const field of ['tour','category','country','eventSearch','publication','playerId','playerOutcome'])
+      copy.delete(field)
     if(branch)copy.set('branch',branch)
     if(revision)copy.set('revision',revision)
     setParams(copy)
@@ -132,6 +134,18 @@ export function SavedTourCalendarPage():JSX.Element{
         <option value="published">{cs?'Publikováno':'Published'}</option>
         <option value="not-published">{cs?'Nepublikováno':'Not published'}</option>
       </select></label>
+      <label>{cs?'Hráč z publikovaného finále':'Player in published final'} <input type="search"
+        aria-label={cs?'Hledat ID vítěze nebo finalisty':'Search champion or finalist player ID'}
+        value={filters.playerId} onChange={e=>set('playerId',e.target.value)}
+        placeholder={cs?'ID vítěze nebo finalisty':'Champion or finalist ID'}/></label>
+      <label>{cs?'Role hledaného hráče':'Searched player outcome'} <select
+        aria-label={cs?'Filtr role hráče ve finále':'Player outcome role'}
+        disabled={!filters.playerId.trim()}
+        value={filters.playerOutcome} onChange={e=>set('playerOutcome',e.target.value)}>
+        <option value="any">{cs?'Vítěz nebo finalista':'Champion or finalist'}</option>
+        <option value="champion">{cs?'Vítěz':'Champion'}</option>
+        <option value="finalist">{cs?'Finalista':'Finalist'}</option>
+      </select></label>
     </div>
     {view==='weeks'&&<label><input type="checkbox" checked={compactWeeks}
       onChange={e=>set('compactWeeks',e.target.checked?'1':'')}/>
@@ -157,7 +171,7 @@ export function SavedTourCalendarPage():JSX.Element{
         {cs?'Zobrazit všechny týdny':'Show all weeks'}</button>
     </div>
     <div className="actions">
-      <button type="button" disabled={!filters.tour&&!filters.category&&!filters.country&&!filters.search&&filters.publication==='all'}
+      <button type="button" disabled={!filters.tour&&!filters.category&&!filters.country&&!filters.search&&filters.publication==='all'&&!filters.playerId&&filters.playerOutcome==='any'}
         onClick={resetFilters}>{cs?'Vymazat filtry':'Clear filters'}</button>
       <button type="button" disabled={!scopeValid||query.isFetching}
         onClick={()=>{void query.refetch()}}>{cs?'Obnovit kalendář':'Retry calendar read'}</button>
@@ -184,6 +198,9 @@ export function SavedTourCalendarPage():JSX.Element{
         'Žádné edice neodpovídají zvoleným filtrům.':'No saved editions match the selected filters.'}</p>}
       {model.calendar_status==='ready'&&shown.length>0&&weekEditions.length===0&&<p role="status">{cs?
         'Ve vybraném týdnu není žádná odpovídající edice.':'No matching editions in the focused week.'}</p>}
+      {filters.playerId.trim()&&<p className="status">{cs?
+        'Vyhledávání hráčů zahrnuje jen publikované vítěze a finalisty, nikoli kompletní kariéru.':
+        'Player lookup covers published champions and finalists only, not complete match careers.'}</p>}
       {model.calendar_status==='ready'&&(view==='weeks'?<div className="saved-tour-week-grid" aria-label={compactWeeks
         ?(cs?'Týdny s odpovídajícími edicemi':'Saved Tour weeks with matching editions')
         :(cs?'61 týdnů uložené sezony':'Saved Tour 61 season weeks')}>
@@ -199,11 +216,14 @@ export function SavedTourCalendarPage():JSX.Element{
         })}</div>:<div className="table-responsive"><table aria-label={cs?"Seznam uložených edic":"Saved Tour edition list"}>
           <thead><tr><th>{cs?'Týden':'Week'}</th><th>{cs?'Edice':'Edition'}</th>
             <th>Tour</th><th>{cs?'Kategorie':'Category'}</th><th>{cs?'Země':'Country'}</th>
+            <th>{cs?'Vítěz (ID)':'Champion (ID)'}</th><th>{cs?'Finalista (ID)':'Finalist (ID)'}</th>
             <th>{cs?'Výsledek':'Result'}</th></tr></thead>
           <tbody>{weekEditions.map(e=><tr key={e.event_id}>
             <td><Link to={weekHref(e.season_week)}>{cs?'Týden':'Week'} {e.season_week}</Link></td>
             <td>{name(e)}</td><td>{e.tour_level??'—'}</td>
             <td>{e.category}</td><td>{e.host_country}</td>
+            <td>{e.result_published?e.champion_player_id??'—':'—'}</td>
+            <td>{e.result_published?e.finalist_player_id??'—':'—'}</td>
             <td>{e.result_published?<Link to={editionHref(e,true)}>
               {cs?'Zobrazit výsledky':'View results'}</Link>:'—'}</td>
           </tr>)}</tbody></table></div>)}

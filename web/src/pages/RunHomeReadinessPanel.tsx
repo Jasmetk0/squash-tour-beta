@@ -164,7 +164,7 @@ const detailText = {
   },
 } as const
 
-const href: Record<RunReadinessCode, string> = {
+const href: Record<Exclude<RunReadinessCode, 'official_ranking'>, string> = {
   world: '/manage',
   calendar_package: '/manage',
   population: '/players/generate',

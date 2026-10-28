@@ -46,9 +46,9 @@ describe('saved Run readiness panel', () => {
     expect(screen.getByRole('link', { name: 'Open global Test Lab' }))
       .toHaveAttribute('href', '/admin/labs')
     expect(screen.getByText(/This calendar is not supported by the legacy FAX simulation path/)).toHaveClass('status')
-    expect(screen.getByText('Unsaved changes are not counted in this overview.')).toBeInTheDocument()
+    expect(screen.getByText(/Unsaved changes are not counted in this overview/)).toBeInTheDocument()
     // Only Saved evidence is inspected: direct the user to review pending work first.
-    expect(screen.getAllByRole('link', { name: 'Inspect and Save changes →' })[0])
+    expect(screen.getAllByRole('link', { name: 'Inspect Branch and revision history →' })[0])
       .toHaveAttribute('href', '/admin/runs/run-a/branches')
     const checklist = screen.getByText('Show saved-foundation checks (6) · 3 items needing attention')
     expect(checklist).toBeVisible()
@@ -57,7 +57,7 @@ describe('saved Run readiness panel', () => {
     expect(checklist.closest('details')).toHaveAttribute('open')
     expect(screen.getAllByRole('link', { name: 'Add a Calendar Package →' })[0])
       .toHaveAttribute('href', '/admin/runs/run-a/manage')
-    expect(screen.getAllByRole('link', { name: 'Inspect and Save changes →' })[0])
+    expect(screen.getAllByRole('link', { name: 'Inspect Branch and revision history →' })[0])
       .toHaveAttribute('href', '/admin/runs/run-a/branches')
     expect(screen.getByText('Saved transitions:', { exact: false })).not.toBeVisible()
     fireEvent.click(screen.getByText('Technical provenance and limits'))
@@ -118,7 +118,7 @@ describe('saved Run readiness panel', () => {
     expect(screen.getByText(/does not certify all operations/)).toBeVisible()
     fireEvent.click(screen.getByText('Show saved-foundation checks (6)'))
     expect(screen.getByText('Not required here · Health records: 0')).toBeVisible()
-    expect(screen.queryByRole('link', { name: /Add a World Package|Inspect and Save changes/ })).toBeNull()
+    expect(screen.queryByRole('link', { name: /Add a World Package|Inspect Branch and revision history/ })).toBeNull()
   })
 
   it('prioritizes a genuinely missing Saved foundation after a clean draft, and skips optional entries', () => {
@@ -135,7 +135,7 @@ describe('saved Run readiness panel', () => {
     expect(screen.getByText('Show saved-foundation checks (6) · 1 item needing attention')).toBeVisible()
     expect(screen.getAllByRole('link', { name: 'Add a Calendar Package →' })[0])
       .toHaveAttribute('href', '/admin/runs/run-a/manage')
-    expect(screen.queryByText('Unsaved changes are not counted in this overview.')).toBeNull()
+    expect(screen.queryByText(/Unsaved changes are not counted in this overview/)).toBeNull()
   })
 
   it('keeps the optional global Test Lab shortcut limited to preparation', () => {
@@ -210,7 +210,7 @@ describe('saved Run readiness panel', () => {
         refreshing={false} refresh={vi.fn()} />
     </MemoryRouter>)
     fireEvent.click(screen.getByText('Show saved-foundation checks (6) · 3 items needing attention'))
-    expect(screen.getAllByRole('link', { name: 'Inspect and Save changes →' })[0])
+    expect(screen.getAllByRole('link', { name: 'Inspect Branch and revision history →' })[0])
       .toHaveAttribute('href', '/admin/runs/run%2F%C4%8D%201/branches')
     expect(screen.getAllByRole('link', { name: 'Add a Calendar Package →' })[0])
       .toHaveAttribute('href', '/admin/runs/run%2F%C4%8D%201/manage')
@@ -278,5 +278,62 @@ describe('saved Run readiness panel', () => {
       expect(() => validateRunHomeReadiness({ ...data, items }, 'run-a', 'branch-a'))
         .toThrow('Invalid Run Home readiness evidence')
     }
+  })
+
+  it('routes FAX initial ranking setup to the actual Run Home preparation section', () => {
+    mount('en', {
+      ...data,
+      sporting_calendar_supported_by_legacy_writers: true,
+      current_calendar: {
+        schema_version: 'run_calendar.v1', weeks_per_year: 61,
+        season_start_year_week: 37, start_year: 2000, season_count: 50
+      },
+      items: data.items.map(item => ({
+        ...item,
+        status: item.code === 'working_draft' ? 'saved' as const : item.status,
+        evidence_count: item.code === 'working_draft' ? 0 : item.evidence_count
+      }))
+    })
+    fireEvent.click(screen.getByText('Show saved-foundation checks (6) · 2 items needing attention'))
+    const rankingLink = screen.getByRole('link', { name: 'Open ranking preparation and publication →' })
+    expect(rankingLink).toHaveAttribute('href', '/admin/runs/run-a#run-initial-ranking')
+    expect(screen.queryByText(/legacy initial-ranking publication workflow is not available/)).toBeNull()
+  })
+
+  it('routes unsupported calendars to read-only candidate inspection without promising publication', () => {
+    mount('en', {
+      ...data,
+      items: data.items.map(item => ({
+        ...item,
+        status: item.code === 'working_draft' ? 'saved' as const : item.status,
+        evidence_count: item.code === 'working_draft' ? 0 : item.evidence_count
+      }))
+    })
+    fireEvent.click(screen.getByText('Show saved-foundation checks (6) · 2 items needing attention'))
+    expect(screen.getByRole('link', { name: 'Inspect ranking candidates →' }))
+      .toHaveAttribute('href', '/admin/runs/run-a/branches/branch-a/ranking-candidates')
+    expect(screen.getByText(/legacy initial-ranking publication workflow is not available/)).toBeVisible()
+  })
+
+  it('keeps the next action for an unsaved Working Draft honest about where Save happens', () => {
+    mount('cs')
+    expect(screen.getByText(/Historie větví sama neukládá Working Draft/)).toBeVisible()
+    const branchLinks = screen.getAllByRole('link', { name: 'Prověřit Branch a historii revizí →' })
+    expect(branchLinks[0]).toHaveAttribute('href', '/admin/runs/run-a/branches')
+    expect(screen.queryByRole('link', { name: 'Zkontrolovat a uložit změny →' })).toBeNull()
+  })
+
+  it('encodes Run and Branch identities in unsupported ranking candidate inspection links', () => {
+    render(<MemoryRouter>
+      <RunHomeReadinessPanel data={{ ...data, branch_id: 'br/č 2',
+        items: data.items.map(item => ({ ...item,
+          status: item.code === 'working_draft' ? 'saved' as const : item.status,
+          evidence_count: item.code === 'working_draft' ? 0 : item.evidence_count
+        })) }}
+        runId="run/č 1" language="cs" refreshing={false} refresh={vi.fn()} />
+    </MemoryRouter>)
+    fireEvent.click(screen.getByText('Zobrazit kontrolu uložených podkladů (6) · 2 položky k prověření'))
+    expect(screen.getByRole('link', { name: 'Prohlédnout kandidáty rankingu →' }))
+      .toHaveAttribute('href', '/admin/runs/run%2F%C4%8D%201/branches/br%2F%C4%8D%202/ranking-candidates')
   })
 })

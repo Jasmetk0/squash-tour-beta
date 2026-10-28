@@ -165,10 +165,12 @@ not add a generator, a second readiness authority or a hidden Save.
     correctly scoped response is required to render the counters and summaries.
     Foreign pending/history responses are explicitly rejected, and the
     no-blockers message requires verified position, clean Working Draft and
-    zero verified pending operations. Four focused frontend tests cover
-    delayed failed refresh and later recovery for each stream, plus rejection
-    of a foreign Branch/Run. These are read-only projections; no full
-    simulation is launched or authorized by this UI.
+    zero verified pending operations. Five focused frontend tests cover
+    delayed failed refresh and later recovery for each stream, rejection
+    of a foreign Branch/Run, and a Saved HEAD change that re-fetches all
+    three streams without displaying the previous position. These are
+    read-only projections; no full simulation is launched or authorized by
+    this UI.
 
 ## Validation boundary
 

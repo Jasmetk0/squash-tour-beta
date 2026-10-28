@@ -64,6 +64,18 @@ not add a generator, a second readiness authority or a hidden Save.
     checks on received evidence, not
     new sporting prerequisites or alternate counts.
 
+
+12. Repaired two misleading Run Home navigation actions against actual Admin
+    routes. FAX-compatible initial ranking preparation/publication now targets
+    the existing Run Home preparation panels through a stable
+    `#run-initial-ranking` anchor, **not** the Simulation route. For other
+    calendars, the link opens the selected Branch's ranking candidates for
+    inspection, with explicit notice that the legacy publication flow is
+    unsupported there; it never claims candidate inspection is publication.
+    A dirty Working Draft links to Branch/Saved history as **inspection only**,
+    explaining that explicit Save belongs to the editor owning those changes.
+    Existing Save, publication, candidate and simulation commands are unchanged.
+
 ## Validation boundary
 
 Focused React component regressions exercise rapid double-submit, rejected

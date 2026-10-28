@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { useQueryClient } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Link, useParams } from 'react-router-dom'
 
@@ -309,6 +310,66 @@ describe('Run Home V1 canonical projections', () => {
     mount()
     expect(await screen.findByText('Simulation position identity mismatch')).toBeInTheDocument()
     expect(screen.queryByText('Hratelné zápasy: 2')).not.toBeInTheDocument()
+  })
+
+
+  it('rejects foreign Run package state without calling it a legitimately empty Run', async () => {
+    api.getRunPackageState.mockResolvedValue({
+      state: { run_id: 'foreign-run', branch_id: branchId, players: ['LEAK'] },
+      fingerprint: 'foreign'
+    })
+    api.getAuthoritativeSimulationPosition.mockRejectedValue(new api.ApiError('Not positioned', 404))
+    mount()
+    expect((await screen.findAllByText('Uložené balíčky neodpovídají vybranému Runu a Branchi.')).length)
+      .toBeGreaterThan(0)
+    expect(screen.queryByText(/Prázdný Run je platný/)).toBeNull()
+    expect(screen.queryByText(/Načtená data nehlásí žádný aktuální blokátor/)).toBeNull()
+  })
+
+  it('rejects a response missing its package-state envelope instead of treating it as empty', async () => {
+    api.getRunPackageState.mockResolvedValue({ fingerprint: 'unverified' })
+    api.getAuthoritativeSimulationPosition.mockRejectedValue(new api.ApiError('Not positioned', 404))
+    mount()
+    expect((await screen.findAllByText('Uložené balíčky neodpovídají vybranému Runu a Branchi.')).length)
+      .toBeGreaterThan(0)
+    expect(screen.queryByText(/Prázdný Run je platný/)).toBeNull()
+  })
+
+  it('re-fetches Branch package evidence when the selected Saved Revision HEAD changes', async () => {
+    api.getAuthoritativeSimulationPosition.mockRejectedValue(new api.ApiError('Not positioned', 404))
+    const initialBranch = {
+      run_id: runId, branch_id: branchId, display_name: 'Timeline 1', status: 'active',
+      saved_head_revision_id: 'saved-1', head_checkpoint_id: 'cp-current',
+      read_only: false, is_official: true
+    }
+    api.listRunBranches.mockResolvedValueOnce({ run_branches: [initialBranch] })
+      .mockResolvedValue({ run_branches: [{ ...initialBranch, saved_head_revision_id: 'saved-2' }] })
+    let finishNewHead!: (value: unknown) => void
+    api.getRunPackageState.mockResolvedValueOnce({ state: null, fingerprint: null })
+      .mockImplementationOnce(() => new Promise(done => { finishNewHead = done }))
+    function ReloadSavedHead(): JSX.Element {
+      const client = useQueryClient()
+      return <button type="button" onClick={() => {
+        void client.invalidateQueries({ queryKey: ['admin-run-branches', runId] })
+      }}>Reload saved HEAD</button>
+    }
+    renderRoute(
+      <LanguageProvider><AdminBranchProvider runId={runId}><AdminTimeProvider>
+        <ReloadSavedHead /><RunPage />
+      </AdminTimeProvider></AdminBranchProvider></LanguageProvider>,
+      '/admin/runs/' + runId
+    )
+    expect(await screen.findByText(/Prázdný Run je platný/)).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Reload saved HEAD' }))
+    await waitFor(() => expect(api.getRunPackageState).toHaveBeenCalledTimes(2))
+    expect(screen.queryByText(/Prázdný Run je platný/)).toBeNull()
+    finishNewHead({
+      state: { run_id: runId, branch_id: branchId, world_package: { count: 1 } },
+      fingerprint: 'saved-2-fingerprint'
+    })
+    await waitFor(() => expect(screen.queryByText(/Načítání…/)).not.toBeInTheDocument())
+    expect(screen.queryByText(/Prázdný Run je platný/)).toBeNull()
+    expect(screen.queryByText(/Uložené balíčky neodpovídají vybranému Runu a Branchi/)).toBeNull()
   })
 
   it('describes a Branch without a Saved HEAD instead of endlessly loading readiness', async () => {

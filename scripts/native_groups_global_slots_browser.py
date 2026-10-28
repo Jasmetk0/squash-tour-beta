@@ -11,6 +11,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
+def local_database_path(path: Path, *, must_exist: bool = False) -> Path:
+    """Accept local filenames only, including when embedded in a SQLAlchemy URL."""
+    resolved = path.resolve(strict=must_exist)
+    if any(char in str(resolved) for char in ('?', '#', '\x00', '\n', '\r')):
+        raise ValueError('Database paths must not contain URL delimiters or control characters')
+    if must_exist and not resolved.is_file():
+        raise ValueError('Source database must be an existing local file')
+    return resolved
+
+
 def main():
     from playwright.sync_api import expect, sync_playwright
 
@@ -24,13 +34,14 @@ def main():
     parser.add_argument('--source', type=Path)
     parser.add_argument('--chromium', default=os.environ.get('CHROME_BIN', '/usr/bin/chromium'))
     args = parser.parse_args()
-    root = args.root.resolve()
+    root = local_database_path(args.root)
+    source = local_database_path(args.source, must_exist=True) if args.source else None
     root.mkdir(parents=True, exist_ok=True)
     database = root / 'groups.sqlite'
     if database.exists():
         raise ValueError('Use a fresh isolated browser evidence directory')
-    if args.source:
-        with sqlite3.connect(args.source) as src, sqlite3.connect(database) as target:
+    if source:
+        with sqlite3.connect(str(source), uri=False) as src, sqlite3.connect(str(database), uri=False) as target:
             src.backup(target)
     errors = []
     expect.set_options(timeout=90000)

@@ -82,6 +82,7 @@ function RouteLocation():JSX.Element{
     const q=new URLSearchParams(location.search)
     q.set('revision',revision)
     q.set('branch',branch)
+    q.delete('rally')
     navigate(location.pathname+'?'+q.toString())
   }
   return <>

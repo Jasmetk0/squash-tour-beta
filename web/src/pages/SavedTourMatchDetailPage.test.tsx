@@ -190,6 +190,41 @@ describe('exact historical Edition match replay',()=>{
     expect(screen.getByRole('link',{name:'Back to Edition results'})).toHaveAttribute('href',
       expect.stringContaining('revision=old-rev'))
   })
+  it('resolves a shared rally deep link at its true archive offset and clears it on Edition return',async()=>{
+    const urlWithRally=url+'&rally=26&q=keep'
+    mount(urlWithRally)
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledWith(
+      'run-a','branch-a','old-rev',2,'event-x','final',25,25)
+    const back=screen.getByRole('link',{name:'Back to Edition results'})
+    const href=back.getAttribute('href')!
+    expect(href).toContain('revision=old-rev')
+    expect(href).toContain('q=keep')
+    expect(href).not.toContain('rally=')
+    for(const id of ['A','B']){
+      expect(screen.getByRole('link',{name:'Find published finals for '+id}))
+        .not.toHaveAttribute('href',expect.stringContaining('rally='))
+    }
+    await userEvent.click(screen.getByRole('button',{name:'First rally'}))
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+  })
+  it.each(['0','01','-1','1e3','99999999999999999999999','100001'])(
+    'rejects an invalid rally URL %s before making any API call',async raw=>{
+      mount(url+'&rally='+raw)
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Invalid archived rally number in link.')
+      expect(api.getSavedTourMatchDetail).not.toHaveBeenCalled()
+      expect(screen.queryByRole('button',{name:'Next rally →'})).not.toBeInTheDocument()
+    }
+  )
+  it('shows an honest absent-rally error for a valid but out-of-range bookmark',async()=>{
+    mount(url+'&rally=90')
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Requested rally is outside this Saved archive.')
+    expect(screen.queryByText('Rally 90/30')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'First rally'}))
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+  })
   it('jumps from first to last rally and back across archived pages without fabricating frames',async()=>{
     mount()
     expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()

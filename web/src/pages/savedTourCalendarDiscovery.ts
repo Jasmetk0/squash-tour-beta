@@ -72,7 +72,7 @@ export function savedSeasonFinalLookupHref(
 ):string{
   const copy=new URLSearchParams(params)
   for(const key of ['tab','matchSearch','week','tour','category','country','eventSearch',
-    'playerOutcome','fromCountry'])copy.delete(key)
+    'playerOutcome','fromCountry','rally'])copy.delete(key)
   copy.set('branch',branch)
   copy.set('revision',revision)
   copy.set('season',String(season))

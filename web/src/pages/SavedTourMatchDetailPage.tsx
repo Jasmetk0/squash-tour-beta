@@ -12,6 +12,8 @@ import {parseSavedReplayRally} from './savedReplayNavigation'
 import {SavedFinalLookupLink,SavedPlayerProfileLink} from './savedTourPlayerLinks'
 
 const PAGE=25
+// Guard against absurd unbounded URL offsets before the first archived read.
+const MAX_LINKED_RALLY=100_000
 export function SavedTourMatchDetailPage():JSX.Element{
   const {runId='',eventId='',matchId=''}=useParams()
   const [params]=useSearchParams()
@@ -26,18 +28,29 @@ export function SavedTourMatchDetailPage():JSX.Element{
 
 function HistoricalMatchReplay():JSX.Element{
   const {runId='',eventId='',matchId=''}=useParams()
-  const [params]=useSearchParams()
+  const [params,setParams]=useSearchParams()
   const {selectedBranch,isLoading,error}=useAdminBranch()
   const time=useAdminTime(),{language}=useLanguage(),cs=language==='cs'
   const branch=selectedBranch?.run_id===runId?selectedBranch.branch_id:null
   const revision=params.get('revision'),explicitBranch=params.get('branch')
   const raw=params.get('season')
   const season=raw!==null&&/^(0|[1-9]\d*)$/.test(raw)?Number(raw):null
-  const [index,setIndex]=useState(0)
+  // The URL is the sole replay cursor authority: refresh and copied links land
+  // on the same archived rally; browser history never reuses a stale state cursor.
+  const requestedRally=params.get('rally')
+  const linkedRally=requestedRally===null?1:parseSavedReplayRally(requestedRally,MAX_LINKED_RALLY)
+  const index=(linkedRally??1)-1
   const [rallyInput,setRallyInput]=useState('')
+  const moveToRally=(oneBased:number)=>{
+    const next=new URLSearchParams(params)
+    if(oneBased===1)next.delete('rally')
+    else next.set('rally',String(oneBased))
+    setRallyInput('')
+    setParams(next,{replace:true})
+  }
   const offset=Math.floor(index/PAGE)*PAGE
   const ready=Boolean(branch&&explicitBranch===branch&&revision&&revision.trim()===revision
-    &&season!==null&&season<=49&&eventId&&matchId&&time.mode==='present'
+    &&season!==null&&season<=49&&linkedRally!==null&&eventId&&matchId&&time.mode==='present'
     &&!time.error&&!time.isLoading&&!isLoading&&!error)
   const q=useQuery({
     queryKey:['saved-tour-match-detail',runId,branch,revision,season,eventId,matchId,offset],
@@ -65,6 +78,8 @@ function HistoricalMatchReplay():JSX.Element{
   const tab=['overview','entries','draw','schedule','results','settings'].includes(requestedTab??'')
     ?requestedTab!:'results'
   parentParams.set('tab',tab)
+  // A Match replay cursor does not belong in Edition or calendar navigation.
+  parentParams.delete('rally')
   const back='/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'
     +encodeURIComponent(eventId)+'?'+parentParams.toString()
   return <section className="panel">
@@ -80,7 +95,9 @@ function HistoricalMatchReplay():JSX.Element{
     <p className="status">Run: <code>{runId}</code> · Branch: <code>{branch??'—'}</code>
       {' · '}Saved Revision: <code>{revision??'—'}</code>
       {' · '}{cs?'Sezona':'Season'}: {season??'—'}</p>
-    {!ready&&!isLoading&&!time.isLoading&&<p role="alert">{error||time.error||
+    {linkedRally===null&&<p role="alert">{cs?
+      'Neplatné číslo výměny v odkazu.':'Invalid archived rally number in link.'}</p>}
+    {!ready&&linkedRally!==null&&!isLoading&&!time.isLoading&&<p role="alert">{error||time.error||
       (time.mode==='checkpoint'?(cs?'Checkpoint není bezpečně mapovaný na Saved Revision.':
         'Checkpoint is not bound to a proven Saved Revision.'):
         (cs?'Chybí přesný Run, Branch, Saved Revision nebo sezona.':
@@ -92,6 +109,11 @@ function HistoricalMatchReplay():JSX.Element{
     {invalid&&<p role="alert">{cs?
       'Archivovaný zápas neodpovídá vybrané Run/Branch/revizi nebo stránce výměn.':
       'Archived match does not match the selected Run/Branch/revision or rally page.'}</p>}
+    {data&&data.replay_status==='available'&&index>=data.total_rallies&&
+      <p role="alert">{cs?'Výměna v této revizi neexistuje.':
+        'Requested rally is outside this Saved archive.'}
+        {' '}<button type="button" onClick={()=>moveToRally(1)}>
+          {cs?'První výměna':'First rally'}</button></p>}
     {data&&<><div className="run-home-status-block">
       <p>{cs?'Turnaj':'Edition'}: <code>{eventId}</code> · {cs?'Zápas':'Match'}: <code>{matchId}</code></p>
       <h3>{participant(data.match.winner_player_id)} – {participant(data.match.loser_player_id!)}</h3>
@@ -128,21 +150,20 @@ function HistoricalMatchReplay():JSX.Element{
         'This rally is absent from the loaded archive page.'}</p>}
       <div className="grid">
         <button type="button" disabled={q.isFetching||!frame||index===0}
-          onClick={()=>setIndex(0)}>{cs?'První výměna':'First rally'}</button>
+          onClick={()=>moveToRally(1)}>{cs?'První výměna':'First rally'}</button>
         <button type="button" disabled={q.isFetching||!frame||index===0}
-          onClick={()=>setIndex(v=>Math.max(0,v-1))}>
+          onClick={()=>moveToRally(index)}>
           {cs?'← Předchozí výměna':'← Previous rally'}</button>
         <button type="button" disabled={q.isFetching||!frame||index+1>=data.total_rallies}
-          onClick={()=>setIndex(v=>Math.min(data.total_rallies-1,v+1))}>
+          onClick={()=>moveToRally(index+2)}>
           {cs?'Další výměna →':'Next rally →'}</button>
         <button type="button" disabled={q.isFetching||!frame||index+1>=data.total_rallies}
-          onClick={()=>setIndex(data.total_rallies-1)}>{cs?'Poslední výměna':'Last rally'}</button>
+          onClick={()=>moveToRally(data.total_rallies)}>{cs?'Poslední výměna':'Last rally'}</button>
       </div>
       <form className="grid" onSubmit={event=>{
         event.preventDefault()
         if(frame&&target!==null){
-          setIndex(target-1)
-          setRallyInput('')
+          moveToRally(target)
         }
       }}>
         <label>{cs?'Přejít na výměnu':'Go to rally'}

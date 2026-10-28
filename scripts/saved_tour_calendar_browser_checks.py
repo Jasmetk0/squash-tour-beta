@@ -196,14 +196,22 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
         "Rally " + str(archived["total_rallies"]) + "/", exact=False
     )).to_be_visible()
     assert "revision=" + enc(revision_id) in page.url
+    assert "rally=" + str(archived["total_rallies"]) in page.url, page.url
+    # Refresh the actual browser URL: the same historical rally must survive.
+    page.reload()
+    expect(page.get_by_text(
+        "Rally " + str(archived["total_rallies"]) + "/", exact=False
+    )).to_be_visible()
     rally_input = page.get_by_role("spinbutton", name="Archived rally number")
     rally_input.fill(str(archived["total_rallies"] + 1))
     expect(page.get_by_role("button", name="Jump to rally")).to_be_disabled()
     rally_input.fill("26")
     page.get_by_role("button", name="Jump to rally").click()
     expect(page.get_by_text("Rally 26/", exact=False)).to_be_visible()
+    assert "rally=26" in page.url, page.url
     page.get_by_role("button", name="First rally").click()
     expect(page.get_by_text("Rally 1/", exact=False)).to_be_visible()
+    assert "rally=" not in page.url, page.url
     # Lookup goes to published final placements in the same Saved Revision.
     # It must not silently constrain history to this event's host country/week.
     final_evidence = page.get_by_role(

@@ -25,13 +25,16 @@ const content = {
     help: 'Co dál?',
     labHint: 'Samostatné experimenty nevyžadují připravený Run.',
     lab: 'Otevřít globální Test Lab',
+    candidateLink: 'Prohlédnout kandidáty rankingu',
+    rankingLimit: 'U tohoto kalendáře není dostupný starší postup publikace prvního rankingu. Kandidáty lze prohlížet samostatně; publikaci musí povolit příslušný postup.',
+    draftSave: 'Historie větví sama neukládá Working Draft. Změny ulož výslovně v editoru, ve kterém vznikly.',
     action: {
       world: 'Doplnit World Package',
       calendar_package: 'Doplnit Calendar Package',
       population: 'Vygenerovat a uložit hráče',
       health: 'Otevřít hráče a jejich Health',
-      official_ranking: 'Otevřít přípravu rankingu',
-      working_draft: 'Zkontrolovat a uložit změny',
+      official_ranking: 'Otevřít přípravu a publikaci rankingu',
+      working_draft: 'Prověřit Branch a historii revizí',
     },
     allSaved: 'Kontrola uložených podkladů zde nevyžaduje další krok. Neznamená to připravenost všech operací; každá má vlastní kontrolu.',
     checklist: 'Zobrazit kontrolu uložených podkladů',
@@ -68,13 +71,16 @@ const content = {
     help: 'Next action',
     labHint: 'Standalone experiments do not require a prepared Run.',
     lab: 'Open global Test Lab',
+    candidateLink: 'Inspect ranking candidates',
+    rankingLimit: 'The legacy initial-ranking publication workflow is not available for this calendar. You can inspect candidates separately; publication needs its own supported operation.',
+    draftSave: 'Branch history does not Save a Working Draft. Explicitly Save changes in the editor that produced them.',
     action: {
       world: 'Add a World Package',
       calendar_package: 'Add a Calendar Package',
       population: 'Generate and Save players',
       health: 'Open players and their Health',
-      official_ranking: 'Open ranking preparation',
-      working_draft: 'Inspect and Save changes',
+      official_ranking: 'Open ranking preparation and publication',
+      working_draft: 'Inspect Branch and revision history',
     },
     allSaved: 'This saved-foundation inspection has no further action. It does not certify all operations; each requires its own preflight.',
     checklist: 'Show saved-foundation checks',
@@ -163,7 +169,6 @@ const href: Record<RunReadinessCode, string> = {
   calendar_package: '/manage',
   population: '/players/generate',
   health: '/players',
-  official_ranking: '/simulate',
   working_draft: '/branches'
 }
 const ordered: RunReadinessCode[] = [
@@ -194,6 +199,13 @@ export function RunHomeReadinessPanel({
     item => item.code === code && needsAttention(item)
   ))
   const attentionCount = data.items.filter(needsAttention).length
+  const target = (code: RunReadinessCode): string => code === 'official_ranking'
+    ? data.sporting_calendar_supported_by_legacy_writers
+      ? base + '#run-initial-ranking'
+      : base + '/branches/' + encodeURIComponent(data.branch_id) + '/ranking-candidates'
+    : base + href[code]
+  const action = (code: RunReadinessCode): string => code === 'official_ranking'
+    && !data.sporting_calendar_supported_by_legacy_writers ? l.candidateLink : l.action[code]
   return <section aria-label={language === 'cs' ? 'Připravenost Runu' : 'Run saved readiness'} className="run-home-status-block">
     <div className="actions">
       <h3>{l.heading}</h3>
@@ -211,17 +223,20 @@ export function RunHomeReadinessPanel({
               ? detailText.cleanDraftMeaning[language] : detailText.explanationByStatus[item.status][language]}</small>
           </span>
           {needsAttention(item) &&
-            <Link to={base + href[item.code]}>{l.action[item.code]} →</Link>}
+            <Link to={target(item.code)}>{action(item.code)} →</Link>}
         </li>)}
       </ul>
     </details>
-    {draftDirty && <p className="error">{l.drafted}</p>}
+    {draftDirty && <p className="error">{l.drafted} {l.draftSave}</p>}
+    {!data.sporting_calendar_supported_by_legacy_writers && data.items.some(item =>
+      item.code === 'official_ranking' && needsAttention(item)) &&
+      <p className="status">{l.rankingLimit}</p>}
     <p className="status">
       {data.sporting_calendar_supported_by_legacy_writers ? l.supported : l.noSupport}
     </p>
     {next
       ? <p><strong>{l.help}: </strong>
-          <Link to={base + href[next]}>{l.action[next]} →</Link>
+          <Link to={target(next)}>{action(next)} →</Link>
         </p>
       : <p className="status">{l.allSaved}</p>}
     {data.phase === 'preparation' &&

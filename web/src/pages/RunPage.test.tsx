@@ -37,6 +37,21 @@ function mount() {
     '/admin/runs/' + runId
   )
 }
+function mountWithFeedRefresh(queryKey: string) {
+  function RefreshSavedFeed(): JSX.Element {
+    const client = useQueryClient()
+    return <button type="button" onClick={() => {
+      void client.invalidateQueries({ queryKey: [queryKey, runId, branchId] })
+    }}>Refetch saved feed</button>
+  }
+  return renderRoute(
+    <LanguageProvider><AdminBranchProvider runId={runId}><AdminTimeProvider>
+      <RefreshSavedFeed/><RunPage/>
+    </AdminTimeProvider></AdminBranchProvider></LanguageProvider>,
+    '/admin/runs/' + runId
+  )
+}
+
 function refPosition(overrides: Record<string, unknown> = {}) {
   return {
     run_id: runId, branch_id: branchId, current_week: { season_index: 2, week: 4 },
@@ -423,6 +438,107 @@ describe('Run Home V1 canonical projections', () => {
     expect(await screen.findByText('new-history-kind')).toBeVisible()
     expect(screen.queryByText('old-history-kind')).toBeNull()
     expect(screen.queryByText(/Historie uložených revizí neodpovídá vybranému Runu, Branchi/)).toBeNull()
+  })
+
+  it('hides prior Saved tournament events during an HTTP refresh and after its failure', async () => {
+    const activity = {
+      schema_version: 'run_home_activity.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      calendar_status: 'empty', result_status: 'ready', ranking_changes_status: 'unsupported',
+      total_calendar_events: 0, published_result_count: 1, upcoming: [],
+      recent_results: [{
+        event_id: 'event-1', event_name: 'Old saved final', season: '2000/01',
+        season_index: 0, week: 2, category: 'GOLD', status: 'completed',
+        champion_player_id: 'P1', finalist_player_id: 'P2'
+      }]
+    }
+    let failRefresh!: (reason: Error) => void
+    api.getRunHomeActivity.mockResolvedValueOnce(activity)
+      .mockImplementationOnce(() => new Promise((_resolve, reject) => { failRefresh = reject }))
+      .mockResolvedValueOnce({ ...activity,
+        recent_results: [{ ...activity.recent_results[0], event_name: 'New saved final' }] })
+    mountWithFeedRefresh('run-home-activity')
+    expect(await screen.findByText('Old saved final')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Refetch saved feed' }))
+    await waitFor(() => expect(api.getRunHomeActivity).toHaveBeenCalledTimes(2))
+    expect(screen.queryByText('Old saved final')).toBeNull()
+    failRefresh(new Error('activity refresh failed'))
+    expect((await screen.findAllByText(/activity refresh failed/)).length).toBeGreaterThan(0)
+    expect(screen.queryByText('Old saved final')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Refetch saved feed' }))
+    expect(await screen.findByText('New saved final')).toBeVisible()
+    expect(screen.queryByText('Old saved final')).toBeNull()
+  })
+
+  it('does not display cached ranking movements while Saved ranking refresh is pending or failed', async () => {
+    const ranking = {
+      schema_version: 'run_home_ranking_changes.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      status: 'ready', previous_week_ordinal: 1, current_week_ordinal: 2,
+      current_row_count: 1, total_change_count: 1, moved_count: 1,
+      entered_count: 0, exited_count: 0, points_only_count: 0,
+      changes: [{
+        player_id: 'OLD-RANKING-PLAYER', movement: 'up',
+        previous_rank: 9, current_rank: 1, previous_points: 5, current_points: 100,
+        points_delta: 95, rank_delta: 8
+      }]
+    }
+    let failRefresh!: (reason: Error) => void
+    api.getRunHomeRankingChanges.mockResolvedValueOnce(ranking)
+      .mockImplementationOnce(() => new Promise((_resolve, reject) => { failRefresh = reject }))
+      .mockResolvedValueOnce({ ...ranking, changes: [{
+        ...ranking.changes[0], player_id: 'NEW-RANKING-PLAYER'
+      }] })
+    mountWithFeedRefresh('run-home-ranking-changes')
+    expect(await screen.findByText('OLD-RANKING-PLAYER')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Refetch saved feed' }))
+    await waitFor(() => expect(api.getRunHomeRankingChanges).toHaveBeenCalledTimes(2))
+    expect(screen.queryByText('OLD-RANKING-PLAYER')).toBeNull()
+    failRefresh(new Error('ranking refresh failed'))
+    expect((await screen.findAllByText(/ranking refresh failed/)).length).toBeGreaterThan(0)
+    expect(screen.queryByText('OLD-RANKING-PLAYER')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Refetch saved feed' }))
+    expect(await screen.findByText('NEW-RANKING-PLAYER')).toBeVisible()
+    expect(screen.queryByText('OLD-RANKING-PLAYER')).toBeNull()
+  })
+
+  it('removes cached saved player names while identity lookup refresh is pending or fails', async () => {
+    api.getRunHomeActivity.mockResolvedValue({
+      schema_version: 'run_home_activity.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      calendar_status: 'empty', result_status: 'ready', ranking_changes_status: 'unsupported',
+      total_calendar_events: 0, published_result_count: 1, upcoming: [],
+      recent_results: [{
+        event_id: 'event-1', event_name: 'Saved player final', season: '2000/01',
+        season_index: 0, week: 2, category: 'GOLD', status: 'completed',
+        champion_player_id: 'P1', finalist_player_id: 'P2'
+      }]
+    })
+    const identity = (displayName: string) => ({
+      schema_version: 'run_home_player_identities.v1', run_id: runId, branch_id: branchId,
+      saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
+      status: 'ready', requested_ids: ['P1', 'P2'],
+      players: [
+        { player_id: 'P1', display_name: displayName, country_code: 'CZE', identity_source: 'initial_world' },
+        { player_id: 'P2', display_name: 'Other verified player', country_code: 'EGY', identity_source: 'initial_world' }
+      ], unresolved_ids: []
+    })
+    let failRefresh!: (reason: Error) => void
+    api.getSavedHomePlayerIdentities.mockResolvedValueOnce(identity('Old verified name'))
+      .mockImplementationOnce(() => new Promise((_resolve, reject) => { failRefresh = reject }))
+      .mockResolvedValueOnce(identity('New verified name'))
+    mountWithFeedRefresh('run-home-player-identities')
+    expect(await screen.findByRole('link', { name: /Old verified name/ })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Refetch saved feed' }))
+    await waitFor(() => expect(api.getSavedHomePlayerIdentities).toHaveBeenCalledTimes(2))
+    expect(screen.queryByText(/Old verified name/)).toBeNull()
+    expect(screen.getByText('P1')).toBeInTheDocument()
+    failRefresh(new Error('identity refresh failed'))
+    expect((await screen.findAllByText(/identity refresh failed/)).length).toBeGreaterThan(0)
+    expect(screen.queryByText(/Old verified name/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Refetch saved feed' }))
+    expect(await screen.findByRole('link', { name: /New verified name/ })).toBeVisible()
+    expect(screen.queryByText(/Old verified name/)).toBeNull()
   })
 
   it('describes a Branch without a Saved HEAD instead of endlessly loading readiness', async () => {

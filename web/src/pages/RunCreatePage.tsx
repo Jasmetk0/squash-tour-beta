@@ -22,7 +22,7 @@ export function RunCreatePage(): JSX.Element {
     create: 'Vytvořit samostatný Run', creating: 'Vytvářím Run…', back: 'Zpět na Runy',
     failure: 'Vytvoření Runu nebylo potvrzeno. Před opakováním zkontroluj přehled Runů', identity: 'Server vrátil neočekávanou identitu nebo vlastnictví Runu. Před dalším pokusem zkontroluj přehled Runů.',
     mismatch: 'Uložený kalendář neodpovídá prověřenému zadání. Zkontroluj přehled Runů před dalším pokusem.',
-    afterCreate: 'Run byl vytvořen, ale nepodařilo se otevřít jeho stránku. Najdi jej v přehledu Runů; nezakládej ho znovu.',
+    afterCreate: 'Run byl vytvořen, ale automatické pokračování selhalo. Zkontroluj již vytvořený Run; nezakládej ho znovu.',
     openCreated: 'Otevřít již vytvořený Run'
   } : {
     title: 'Create Run', subtitle: 'Start a separate world and add independent package copies later.',
@@ -31,7 +31,7 @@ export function RunCreatePage(): JSX.Element {
     create: 'Create isolated Run', creating: 'Creating Run…', back: 'Back to Runs',
     failure: 'Run creation was not confirmed. Check the Run inventory before retrying', identity: 'The server returned an unexpected Run identity or ownership. Check the Run inventory before retrying.',
     mismatch: 'The saved calendar does not match the reviewed request. Check the Run inventory before trying again.',
-    afterCreate: 'The Run was created, but its page could not be opened. Find it in the Run inventory; do not create it again.',
+    afterCreate: 'The Run was created, but automatic continuation failed. Inspect the existing Run; do not create it again.',
     openCreated: 'Open the created Run'
   }
   const navigate = useNavigate()

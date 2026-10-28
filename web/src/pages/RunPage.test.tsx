@@ -310,6 +310,31 @@ describe('Run Home V1 canonical projections', () => {
     expect(screen.queryByText('Hratelné zápasy: 2')).not.toBeInTheDocument()
   })
 
+  it('describes a Branch without a Saved HEAD instead of endlessly loading readiness', async () => {
+    api.listRunBranches.mockResolvedValueOnce({ run_branches: [{
+      run_id: runId, branch_id: branchId, display_name: 'Timeline 1',
+      status: 'active', saved_head_revision_id: null,
+      head_checkpoint_id: 'cp-current', read_only: false, is_official: true
+    }] })
+    mount()
+    expect(await screen.findByText(/nemá ověřenou Saved Revision HEAD/)).toBeVisible()
+    expect(screen.queryByRole('region', { name: 'Připravenost Runu' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Obnova kontroly podkladů Runu' })).toBeNull()
+    expect(api.getRunHomeReadiness).not.toHaveBeenCalled()
+  })
+
+  it('keeps Saved-readiness recovery out of the historical checkpoint view', async () => {
+    api.getRunHomeReadiness.mockRejectedValue(new Error('saved readiness offline'))
+    mount()
+    await screen.findByRole('option', { name: /#1/ })
+    fireEvent.change(screen.getByRole('combobox', { name: 'Admin Time context' }), {
+      target: { value: 'cp-past' }
+    })
+    expect(await screen.findByText(/Historické výsledky a stavy/)).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Znovu ověřit uložené podklady' })).toBeNull()
+    expect(screen.queryByText(/Kontrolu připravenosti nelze ověřit/)).toBeNull()
+  })
+
   it('does not claim readiness during a failed fresh read, and recovers by explicit read-only retry', async () => {
     api.getRunHomeReadiness.mockRejectedValueOnce(new Error('saved readiness offline'))
       .mockResolvedValueOnce(savedReadiness())

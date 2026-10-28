@@ -52,6 +52,26 @@ function mountWithFeedRefresh(queryKey: string) {
   )
 }
 
+function mountWithContextRefresh() {
+  function RefreshRunContext(): JSX.Element {
+    const client = useQueryClient()
+    return <>
+      <button type="button" onClick={() => {
+        void client.invalidateQueries({ queryKey: ['run-container', runId] })
+      }}>Refresh Run metadata</button>
+      <button type="button" onClick={() => {
+        void client.invalidateQueries({ queryKey: ['branch-working-draft', runId, branchId] })
+      }}>Refresh Working Draft</button>
+    </>
+  }
+  return renderRoute(
+    <LanguageProvider><AdminBranchProvider runId={runId}><AdminTimeProvider>
+      <RefreshRunContext/><RunPage/>
+    </AdminTimeProvider></AdminBranchProvider></LanguageProvider>,
+    '/admin/runs/' + runId
+  )
+}
+
 function refPosition(overrides: Record<string, unknown> = {}) {
   return {
     run_id: runId, branch_id: branchId, current_week: { season_index: 2, week: 4 },
@@ -660,6 +680,66 @@ describe('Run Home V1 canonical projections', () => {
     expect((await screen.findAllByText('Full Simulation history identity mismatch')).length).toBeGreaterThan(0)
     expect(screen.queryByText(/5 dokončených sezón/)).toBeNull()
     expect(screen.queryAllByText(/Pozastavené\/čekající plné simulace:/)).toHaveLength(0)
+    expect(screen.queryByText(/Načtená data nehlásí žádný aktuální blokátor/)).toBeNull()
+  })
+
+  it('blocks legacy FAX setup while Run calendar metadata refetch is pending or failed', async () => {
+    const initialRun = {
+      run_id: runId, display_name: 'FAX Run', storage_kind: 'custom_local',
+      read_only: false, status: 'working', official_branch_id: branchId
+    }
+    let rejectRefresh!: (reason: Error) => void
+    api.getRunContainer.mockResolvedValueOnce(initialRun)
+      .mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectRefresh = reject }))
+      .mockResolvedValueOnce({
+        ...initialRun, display_name: 'Earth Run',
+        metadata_json: { run_calendar: {
+          schema_version: 'run_calendar.v1', weeks_per_year: 52,
+          season_start_year_week: 35, start_year: 2030, season_count: 3
+        } }
+      })
+    mountWithContextRefresh()
+    expect(await screen.findByText('Ranking setup')).toBeVisible()
+    expect(screen.getByText('First tournament setup')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh Run metadata' }))
+    await waitFor(() => expect(api.getRunContainer.mock.calls.length).toBeGreaterThanOrEqual(2))
+    expect(screen.queryByText('Ranking setup')).toBeNull()
+    expect(screen.queryByText('First tournament setup')).toBeNull()
+    expect(screen.queryByText('World and Calendar copies')).toBeNull()
+    expect(screen.queryByText(/Načtená data nehlásí žádný aktuální blokátor/)).toBeNull()
+    rejectRefresh(new Error('Run calendar metadata unavailable'))
+    expect((await screen.findAllByText(/Run calendar metadata unavailable/)).length).toBeGreaterThan(0)
+    expect(screen.queryByText('Ranking setup')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh Run metadata' }))
+    expect(await screen.findByText(/Nativní operace u jiných kalendářů se ověřují samostatně/)).toBeVisible()
+    expect(screen.getByText('World and Calendar copies')).toBeVisible()
+    expect(screen.queryByText('Ranking setup')).toBeNull()
+    expect(screen.queryByText('First tournament setup')).toBeNull()
+  })
+
+  it('does not show an old clean Working Draft during failed refresh before new dirty evidence', async () => {
+    let rejectRefresh!: (reason: Error) => void
+    api.getBranchWorkingDraft.mockResolvedValueOnce({
+      run_id: runId, branch_id: branchId, draft_version: 1,
+      status: 'clean', change_count: 0
+    }).mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectRefresh = reject }))
+      .mockResolvedValueOnce({
+        run_id: runId, branch_id: branchId, draft_version: 2,
+        status: 'dirty', change_count: 3
+      })
+    mountWithContextRefresh()
+    expect(await screen.findByText('Čistý draft')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh Working Draft' }))
+    await waitFor(() => expect(api.getBranchWorkingDraft).toHaveBeenCalledTimes(2))
+    expect(screen.queryByText('Čistý draft')).toBeNull()
+    expect(screen.queryByText(/Načtená data nehlásí žádný aktuální blokátor/)).toBeNull()
+    rejectRefresh(new Error('Working Draft recheck unavailable'))
+    expect((await screen.findAllByText(/Working Draft recheck unavailable/)).length).toBeGreaterThan(0)
+    expect(screen.queryByText('Čistý draft')).toBeNull()
+    expect(screen.getByText('Stav draftu nedostupný')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh Working Draft' }))
+    expect(await screen.findByText('Neuložené změny (3)')).toBeVisible()
+    expect(screen.queryByText('Čistý draft')).toBeNull()
     expect(screen.queryByText(/Načtená data nehlásí žádný aktuální blokátor/)).toBeNull()
   })
 

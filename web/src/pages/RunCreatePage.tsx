@@ -155,16 +155,12 @@ export function RunCreatePage(): JSX.Element {
       <form onSubmit={event => { void submit(event) }}>
         <label htmlFor="new-run-name">{t.name}</label>
         <input id="new-run-name" value={name} maxLength={256} required
-          disabled={pending || checkingInventory || Boolean(createdRunId) || Boolean(foundExistingRunId)}
+          disabled={pending || checkingInventory || Boolean(unverifiedName)
+            || Boolean(createdRunId) || Boolean(foundExistingRunId)}
           autoComplete="off" onChange={event => {
-            const nextName = event.target.value
-            setName(nextName)
-            if (unverifiedName && nextName.trim() !== unverifiedName) {
-              retryBlockedName.current = null
-              setUnverifiedName(null)
-              setInventoryMessage(null)
-              setError(null)
-            }
+            setName(event.target.value)
+            setError(null)
+            setInventoryMessage(null)
           }} />
         <label className="checkbox-label"><input type="checkbox" checked={custom} disabled={pending || checkingInventory || Boolean(createdRunId) || Boolean(foundExistingRunId)} onChange={event => {
           setCustom(event.target.checked); setReview(null); setError(null)

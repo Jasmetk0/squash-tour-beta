@@ -17,8 +17,8 @@ not add a generator, a second readiness authority or a hidden Save.
 3. A best-effort inventory cache invalidation is not allowed to turn a
    server-confirmed Run creation into a false failure and a duplicate retry.
 4. If routing itself fails after server-confirmed creation, the form says the
-   Run **already exists** and directs the operator to find it in Runs rather
-   than attempting a second create.
+   Run **already exists**, disables repeated creation and links directly to the
+   created Run rather than allowing another create.
 5. Browser-local recent/last-Run persistence remains optional. The server
    creates the authoritative Run; unavailable storage does not prevent opening it.
 6. The Run Home Saved-readiness card prioritizes review/Save of an unsaved
@@ -32,7 +32,7 @@ not add a generator, a second readiness authority or a hidden Save.
 ## Validation boundary
 
 Focused React component regressions exercise rapid double-submit, rejected
-inventory refresh, navigation failure after success, unavailable localStorage,
+inventory refresh, navigation failure/repeated submission after success, unavailable localStorage,
 dirty-draft priority and all-optional Saved-inspection wording. They mock the
 API boundary and are **not** production HTTP/SQLite or real-browser acceptance.
 

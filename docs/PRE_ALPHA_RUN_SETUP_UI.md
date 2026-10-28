@@ -172,6 +172,16 @@ not add a generator, a second readiness authority or a hidden Save.
     read-only projections; no full simulation is launched or authorized by
     this UI.
 
+23. The canonical Run metadata and selected-Branch Working Draft are also
+    fresh-only evidence on Run Home. A React Query refresh or failed recheck
+    cannot reuse the old Run clock to present legacy-only initial-ranking and
+    first-tournament setup as currently compatible, nor reuse a previously
+    clean Working Draft as current. The next-action panel and all-clear
+    message require a settled, verified Run. Two asynchronous UI regressions
+    verify in-flight/failed metadata and draft reads, then recovery into a
+    new 52-week Run calendar or a dirty draft respectively. This does not
+    change backend operation preflights or add an implicit Save.
+
 ## Validation boundary
 
 Focused React component regressions exercise rapid double-submit, rejected

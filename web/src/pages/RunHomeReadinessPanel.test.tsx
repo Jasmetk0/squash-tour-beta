@@ -333,4 +333,26 @@ describe('saved Run readiness panel', () => {
     expect(screen.getByRole('link', { name: 'Prohlédnout kandidáty rankingu →' }))
       .toHaveAttribute('href', '/admin/runs/run%2F%C4%8D%201/branches/br%2F%C4%8D%202/ranking-candidates')
   })
+
+  it('rejects a publication counter that contradicts the saved ranking item', () => {
+    expect(() => validateRunHomeReadiness({
+      ...data, saved_published_ranking_count: 1
+    }, 'run-a', 'branch-a')).toThrow('Invalid Run Home readiness evidence')
+    expect(validateRunHomeReadiness(data, 'run-a', 'branch-a')).toEqual(data)
+  })
+
+  it('does not permit a custom calendar to claim legacy FAX writer support', () => {
+    expect(() => validateRunHomeReadiness({
+      ...data, sporting_calendar_supported_by_legacy_writers: true
+    }, 'run-a', 'branch-a')).toThrow('Invalid Run Home readiness evidence')
+    const compatible = {
+      ...data,
+      sporting_calendar_supported_by_legacy_writers: true,
+      current_calendar: {
+        schema_version: 'run_calendar.v1', weeks_per_year: 61,
+        season_start_year_week: 37, start_year: 2000, season_count: 50
+      }
+    }
+    expect(validateRunHomeReadiness(compatible, 'run-a', 'branch-a')).toEqual(compatible)
+  })
 })

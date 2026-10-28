@@ -26,7 +26,7 @@ function fixture(offset:number):SavedTourMatchDetail{
   const frames=Array.from({length:30},(_,i)=>({
     rally_index:i+1,set_number:1,server_player_id:'A',
     winner_player_id:'A',score_a_before:i,score_b_before:0,
-    score_a_after:i+1,score_b_after:0,sets_a_after:0,sets_b_after:0,
+    score_a_after:i+1,score_b_after:0,sets_a_after:i===29?1:0,sets_b_after:0,
     set_complete:i===29,match_complete:i===29
   }))
   return {
@@ -99,6 +99,29 @@ describe('exact historical Edition match replay',()=>{
     await userEvent.click(screen.getByRole('button',{name:'Last rally'}))
     expect(await screen.findByRole('alert')).toHaveTextContent('does not match')
     expect(screen.queryByText('Rally 30/30')).not.toBeInTheDocument()
+    expect(screen.queryByRole('table',{name:'Verified archived rally page'}))
+      .not.toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)
+  })
+  it('rejects an inconsistent cached page when navigating BACK from a direct bookmark',async()=>{
+    api.getSavedTourMatchDetail.mockImplementation((
+      _run:string,_branch:string,_rev:string,_season:number,
+      _event:string,_match:string,offset:number
+    )=>{
+      const original=fixture(offset)
+      return Promise.resolve(offset!==25?original:{
+        ...original,rallies:original.rallies.map(frame=>({
+          ...frame,score_a_before:frame.score_a_before+100,
+          score_a_after:frame.score_a_after+100
+        }))
+      })
+    })
+    mount(url+'&rally=26')
+    // The direct link cannot prove unseen earlier evidence, so it reads only page 2.
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'First rally'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('does not match')
+    expect(screen.queryByText('Rally 1/30')).not.toBeInTheDocument()
     expect(screen.queryByRole('table',{name:'Verified archived rally page'}))
       .not.toBeInTheDocument()
     expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)

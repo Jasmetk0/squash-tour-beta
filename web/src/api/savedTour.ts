@@ -118,12 +118,37 @@ export function validSavedTourRallyTransition(
   previous:SavedTourRallyFrame,next:SavedTourRallyFrame
 ):boolean{
   if(previous.match_complete||next.rally_index!==previous.rally_index+1)return false
+  // The new rally's post-score may award exactly one Game/set on completion.
+  // A later rally can never erase an earned set, even across page boundaries.
+  const gamesA=next.sets_a_after-previous.sets_a_after
+  const gamesB=next.sets_b_after-previous.sets_b_after
+  if(gamesA<0||gamesB<0||gamesA+gamesB!==Number(next.set_complete))return false
   if(next.set_number===previous.set_number)
     return !previous.set_complete
       &&next.score_a_before===previous.score_a_after
       &&next.score_b_before===previous.score_b_after
   return previous.set_complete&&next.set_number===previous.set_number+1
     &&next.score_a_before===0&&next.score_b_before===0
+}
+
+/** Compare independently validated adjacent Saved archive pages. A matching
+ * URL scope alone is not proof: revision-owner, match summary and archive
+ * length must also agree before reading their connecting rally events. */
+export function validSavedTourRallyPagePair(
+  previous:SavedTourMatchDetail,next:SavedTourMatchDetail
+):boolean{
+  const same=['run_id','branch_id','revision_branch_id','saved_revision_id',
+    'season_index','event_id','match_id','replay_status','player_a_id',
+    'player_b_id','total_rallies','limit'] as const
+  const sameMatch=['match_id','draw_type','round_number','bracket_position',
+    'winner_player_id','loser_player_id','scoreline'] as const
+  return previous.replay_status==='available'&&next.replay_status==='available'
+    &&previous.offset+previous.limit===next.offset
+    &&same.every(key=>previous[key]===next[key])
+    &&sameMatch.every(key=>previous.match[key]===next.match[key])
+    &&previous.rallies.length>0&&next.rallies.length>0
+    &&validSavedTourRallyTransition(
+      previous.rallies[previous.rallies.length-1],next.rallies[0])
 }
 
 /** Exact selected branch and original revision-owner validation for historical match pages. */

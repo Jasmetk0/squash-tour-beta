@@ -65,7 +65,7 @@ function match(offset:number):SavedTourMatchDetail{
   const frames=Array.from({length:30},(_,i)=>({
     rally_index:i+1,set_number:1,server_player_id:'P1',winner_player_id:'P1',
     score_a_before:i,score_b_before:0,score_a_after:i+1,score_b_after:0,
-    sets_a_after:0,sets_b_after:0,set_complete:i===29,match_complete:i===29
+    sets_a_after:i===29?1:0,sets_b_after:0,set_complete:i===29,match_complete:i===29
   }))
   return {schema_version:'run_saved_tour_match_detail.v1',source:'reachable_saved_revision',
     run_id:'run-a',branch_id:'branch-a',revision_branch_id:'ancestor',

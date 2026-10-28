@@ -3,7 +3,7 @@ import {useState} from 'react'
 import {useQuery,useQueryClient} from '@tanstack/react-query'
 import {Link,useParams,useSearchParams} from 'react-router-dom'
 import {getSavedTourMatchDetail} from '../api/client'
-import {validSavedTourMatchDetail,validSavedTourRallyTransition} from '../api/savedTour'
+import {validSavedTourMatchDetail,validSavedTourRallyPagePair} from '../api/savedTour'
 import type {SavedTourMatchDetail} from '../api/savedTour'
 import {useAdminBranch} from '../admin/AdminBranchContext'
 import {useAdminTime} from '../admin/AdminTimeContext'
@@ -66,18 +66,20 @@ function HistoricalMatchReplay():JSX.Element{
   const verified=ready&&q.isSuccess&&!q.isFetching&&q.data&&validSavedTourMatchDetail(
     q.data,runId,branch!,revision!,season!,eventId,matchId,offset,PAGE
   )?q.data:null
-  // Cross-page continuity can be proved without another request when the previous
-  // page is in this exact immutable source's cache. A direct rally-26 link still
-  // reads only the requested page: never fabricate absent earlier evidence.
+  // Verify cached neighboring pages in BOTH navigation directions. A direct
+  // bookmark still fetches only its requested page, never hidden history.
   const previous=offset>=PAGE?queryClient.getQueryData<SavedTourMatchDetail>(
     [...queryScope,offset-PAGE]):undefined
-  const connected=!previous||(verified?.replay_status==='available'
-    &&previous.replay_status==='available'
+  const following=queryClient.getQueryData<SavedTourMatchDetail>(
+    [...queryScope,offset+PAGE])
+  const connected=(!previous||Boolean(verified
     &&validSavedTourMatchDetail(previous,runId,branch!,revision!,season!,eventId,matchId,
       offset-PAGE,PAGE)
-    &&previous.rallies.length>0&&verified.rallies.length>0
-    &&validSavedTourRallyTransition(
-      previous.rallies[previous.rallies.length-1],verified.rallies[0]))
+    &&validSavedTourRallyPagePair(previous,verified)))
+    &&(!following||Boolean(verified
+      &&validSavedTourMatchDetail(following,runId,branch!,revision!,season!,eventId,matchId,
+        offset+PAGE,PAGE)
+      &&validSavedTourRallyPagePair(verified,following)))
   const data=connected?verified:null
   const invalid=Boolean(ready&&q.isSuccess&&!q.isFetching&&q.data&&!data)
   const frame=data?.rallies.find(r=>r.rally_index===index+1)

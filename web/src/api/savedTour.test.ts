@@ -1,6 +1,6 @@
 import {describe,it,expect} from 'vitest'
 import {matchesSavedTourContext,validSavedTourCalendar,validSavedTourEdition,validSavedTourMatchDetail,
-  validSavedTourRallyTransition} from './savedTour'
+  validSavedTourRallyTransition,validSavedTourRallyPagePair} from './savedTour'
 import type {SavedTourCalendar,SavedTourEdition,SavedTourEvent,SavedTourMatchDetail} from './savedTour'
 const event:SavedTourEvent={event_id:'open',season:'2002/2003',season_week:12,
   event_name:'Open',template_id:'tpl',category:'DIAMOND',tour_level:'WORLD',
@@ -117,13 +117,42 @@ describe('strict Saved Tour response identity',()=>{
     expect(validSavedTourRallyTransition(prev,next)).toBe(true)
     expect(validSavedTourRallyTransition(prev,{...next,score_a_before:125})).toBe(false)
     expect(validSavedTourRallyTransition(prev,{...next,rally_index:27})).toBe(false)
+    expect(validSavedTourRallyTransition(prev,{...next,sets_a_after:1})).toBe(false)
+    expect(validSavedTourRallyTransition(prev,{...next,sets_a_after:-1})).toBe(false)
     expect(validSavedTourRallyTransition({...prev,match_complete:true},next)).toBe(false)
     const won={...prev,set_complete:true,sets_a_after:1}
     const newGame={...next,set_number:2,score_a_before:0,score_a_after:1,sets_a_after:1}
     expect(validSavedTourRallyTransition(won,newGame)).toBe(true)
     expect(validSavedTourRallyTransition(won,{...newGame,score_a_before:1})).toBe(false)
     expect(validSavedTourRallyTransition(won,{...newGame,set_number:3})).toBe(false)
+    expect(validSavedTourRallyTransition(won,{...newGame,sets_a_after:2})).toBe(false)
+    expect(validSavedTourRallyTransition(won,{...newGame,set_complete:true,sets_a_after:2})).toBe(true)
     expect(validSavedTourRallyTransition(won,next)).toBe(false)
+  })
+  it('requires stable canonical match authority for adjacent Saved pages',()=>{
+    const base:SavedTourMatchDetail={
+      schema_version:'run_saved_tour_match_detail.v1',source:'reachable_saved_revision',
+      run_id:'r',branch_id:'b',revision_branch_id:'ancestor',
+      saved_revision_id:'rev',season_index:2,event_id:'open',match_id:'final',
+      match:{match_id:'final',draw_type:'main',round_number:1,bracket_position:1,
+        winner_player_id:'A',loser_player_id:'B',scoreline:'3-0'},
+      replay_status:'available',player_a_id:'A',player_b_id:'B',
+      offset:0,limit:25,total_rallies:27,has_more:true,
+      rallies:[{rally_index:25,set_number:1,server_player_id:'A',winner_player_id:'A',
+        score_a_before:24,score_b_before:0,score_a_after:25,score_b_after:0,
+        sets_a_after:0,sets_b_after:0,set_complete:false,match_complete:false}]
+    }
+    const following:SavedTourMatchDetail={...base,offset:25,has_more:false,
+      rallies:[{...base.rallies[0],rally_index:26,score_a_before:25,score_a_after:26}]}
+    expect(validSavedTourRallyPagePair(base,following)).toBe(true)
+    expect(validSavedTourRallyPagePair(following,base)).toBe(false)
+    expect(validSavedTourRallyPagePair(base,{...following,total_rallies:28})).toBe(false)
+    expect(validSavedTourRallyPagePair(base,{...following,revision_branch_id:'foreign'})).toBe(false)
+    expect(validSavedTourRallyPagePair(base,{...following,
+      match:{...following.match,scoreline:'3-2'}})).toBe(false)
+    expect(validSavedTourRallyPagePair(base,{...following,player_a_id:'B'})).toBe(false)
+    expect(validSavedTourRallyPagePair(base,{...following,offset:50})).toBe(false)
+    expect(validSavedTourRallyPagePair(base,{...following,rallies:[]})).toBe(false)
   })
   it('rejects stale, foreign and forged archived match pages',()=>{
     const data:SavedTourMatchDetail={
@@ -165,7 +194,7 @@ describe('strict Saved Tour response identity',()=>{
     const two={...data,total_rallies:2,has_more:false,rallies:[
       {...data.rallies[0],set_complete:false,match_complete:false},
       {...data.rallies[0],rally_index:2,score_a_before:1,score_a_after:2,
-        set_complete:true,match_complete:true}
+        sets_a_after:1,set_complete:true,match_complete:true}
     ]}
     const validTwo=(m:SavedTourMatchDetail)=>validSavedTourMatchDetail(
       m,'r','b','rev',2,'open','final',0,25)
@@ -184,6 +213,9 @@ describe('strict Saved Tour response identity',()=>{
     }]})).toBe(false)
     expect(validTwo({...two,rallies:[two.rallies[0],{
       ...two.rallies[1],set_number:2
+    }]})).toBe(false)
+    expect(validTwo({...two,rallies:[two.rallies[0],{
+      ...two.rallies[1],sets_a_after:2
     }]})).toBe(false)
     const endOfGame={...two.rallies[0],set_complete:true,match_complete:false,sets_a_after:1}
     const nextGame={...two.rallies[1],set_number:2,score_a_before:0,score_a_after:1,

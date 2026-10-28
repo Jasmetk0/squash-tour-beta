@@ -158,6 +158,18 @@ not add a generator, a second readiness authority or a hidden Save.
     names; player IDs remain as neutral fallbacks when names are unverified.
     No new sporting writes or background polling are introduced.
 
+22. Authoritative simulation position, pending Full Simulation operations and
+    Full Simulation history are now isolated by the selected Run, Branch and
+    latest known Saved HEAD in their query keys. Successful cached responses
+    cannot be reused while refetching or after a failed refetch: a settled,
+    correctly scoped response is required to render the counters and summaries.
+    Foreign pending/history responses are explicitly rejected, and the
+    no-blockers message requires verified position, clean Working Draft and
+    zero verified pending operations. Four focused frontend tests cover
+    delayed failed refresh and later recovery for each stream, plus rejection
+    of a foreign Branch/Run. These are read-only projections; no full
+    simulation is launched or authorized by this UI.
+
 ## Validation boundary
 
 Focused React component regressions exercise rapid double-submit, rejected

@@ -1352,3 +1352,84 @@ def test_save_projection_declines_external_sources_calendar_and_completed_season
                 session.add(row);session.flush()
                 assert saved_inspection_value_fingerprint(session, record.payload, expected_head=record.revision_id) is None
                 session.delete(row)
+
+
+def test_cached_native_final_replay_keeps_actual_sources_engine_and_read_only_boundary(
+    tmp_path, prepared_slots, monkeypatch,
+):
+    from beta_engine.domain.matches.match_engine import MatchEngine
+    from tests.api.test_calendar_continuation_flow import root as replay_root
+    from tests.api.test_player_generation_calendar_gate import _dump
+
+    path = tmp_path / 'cached-final-replay.db'
+    copy_database(prepared_slots, path)
+    database = f'sqlite:///{path}'
+    with ApiServer(database_url=database) as server:
+        for number in (1, 2):
+            execute(server, command(inspect(server), 'next-slot', name=f'replay-slot-{number}'))
+            if number == 1:
+                save_tour(server)
+        url = replay_root(server) + '/parallel-a:final/replay'
+        before = _dump(path)
+        assert _request('GET', url)[0] == 409, 'An unsaved final is not historical replay authority'
+        assert _dump(path) == before
+        save_tour(server)
+        code, expected = _request('GET', url)
+        assert code == 200 and expected['exact_replay'], expected
+        assert expected['historical_owner_scope'] == 'native_competition_checkpoint'
+        original_engine = MatchEngine.simulate
+        replayed = []
+
+        def actual_engine(self, context, *args, **kwargs):
+            replayed.append(context.match_id)
+            return original_engine(self, context, *args, **kwargs)
+
+        monkeypatch.setattr(MatchEngine, 'simulate', actual_engine)
+        before = _dump(path)
+        for _ in range(2):
+            assert _request('GET', url) == (200, expected)
+        assert replayed.count('parallel-a:final') >= 2, 'Decode reuse must not replace actual replay'
+        assert _dump(path) == before
+        # Equivalent noncanonical bytes still receive ordinary strict decoding.
+        with sqlite3.connect(path) as db:
+            raw, fingerprint = db.execute(
+                'SELECT payload_json,fingerprint FROM calendar_player_sporting_checkpoints'
+            ).fetchone()
+            db.execute('UPDATE calendar_player_sporting_checkpoints SET payload_json=?', (raw + ' ',))
+        before = _dump(path)
+        assert _request('GET', url) == (200, expected)
+        assert _dump(path) == before
+        with sqlite3.connect(path) as db:
+            db.execute('UPDATE calendar_player_sporting_checkpoints SET payload_json=?', (raw,))
+        # Warming both DTO caches never authorizes changed live physical data.
+        changed = json.loads(raw)
+        changed['branch_id'] = 'foreign'
+        for actual_raw, actual_fingerprint in ((json.dumps(changed), fingerprint), (raw, '0' * 64)):
+            with sqlite3.connect(path) as db:
+                db.execute('UPDATE calendar_player_sporting_checkpoints SET payload_json=?,fingerprint=?',
+                    (actual_raw, actual_fingerprint))
+            before = _dump(path)
+            assert _request('GET', url)[0] == 409
+            assert _dump(path) == before
+        with sqlite3.connect(path) as db:
+            db.execute('UPDATE calendar_player_sporting_checkpoints SET payload_json=?,fingerprint=?',
+                (raw, fingerprint))
+            parent, summary = db.execute(
+                'SELECT revision_id,change_summary_json FROM branch_saved_revisions WHERE revision_id='
+                '(SELECT parent_revision_id FROM branch_saved_revisions WHERE revision_id='
+                '(SELECT saved_head_revision_id FROM run_branches WHERE branch_id=?))', ('branch',),
+            ).fetchone()
+            db.execute('UPDATE branch_saved_revisions SET change_summary_json=? WHERE revision_id=?',
+                ('{"forged":true}', parent))
+        # The unchanged current HEAD/cache cannot hide a changed physical ancestor.
+        before = _dump(path)
+        assert _request('GET', url)[0] == 409
+        assert _dump(path) == before
+        with sqlite3.connect(path) as db:
+            db.execute('UPDATE branch_saved_revisions SET change_summary_json=? WHERE revision_id=?',
+                (summary, parent))
+        assert _request('GET', url) == (200, expected)
+    with ApiServer(database_url=database) as restarted:
+        before = _dump(path)
+        assert _request('GET', replay_root(restarted) + '/parallel-a:final/replay') == (200, expected)
+        assert _dump(path) == before

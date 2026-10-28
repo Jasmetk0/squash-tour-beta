@@ -110,7 +110,7 @@ describe('Run Home V1 canonical projections', () => {
       calendar_status: 'empty', result_status: 'empty', ranking_changes_status: 'unsupported',
       total_calendar_events: 0, published_result_count: 0, upcoming: [], recent_results: []
     })
-    api.listSavedRevisionHistory.mockResolvedValue({ run_id: runId, branch_id: branchId, saved_revisions: [{
+    api.listSavedRevisionHistory.mockResolvedValue({ run_id: runId, branch_id: branchId, saved_head_revision_id: 'saved-1', saved_revisions: [{
       revision_id: 'saved-1', kind: 'initial', sequence: 1, created_at: '2026-10-10'
     }] })
   })
@@ -370,6 +370,59 @@ describe('Run Home V1 canonical projections', () => {
     expect(await screen.findByText('Branch zatím nemá uloženou pozici simulace.')).toBeVisible()
     expect(screen.queryByText(/Prázdný Run je platný/)).toBeNull()
     expect(screen.queryByText(/Uložené balíčky neodpovídají vybranému Runu a Branchi/)).toBeNull()
+  })
+
+  it('rejects a stale Saved history HEAD instead of exposing its revisions as current', async () => {
+    api.listSavedRevisionHistory.mockResolvedValue({
+      run_id: runId, branch_id: branchId, saved_head_revision_id: 'old-head',
+      saved_revisions: [{ revision_id: 'old-revision', kind: 'LEAKED OLD REVISION',
+        sequence: 2, created_at: '2026-10-01' }]
+    })
+    mount()
+    expect((await screen.findAllByText('Historie uložených revizí neodpovídá vybranému Runu, Branchi nebo Saved HEAD.')).length)
+      .toBeGreaterThan(0)
+    expect(screen.queryByText('LEAKED OLD REVISION')).toBeNull()
+    expect(screen.queryByText(/Načtená data nehlásí žádný aktuální blokátor/)).toBeNull()
+  })
+
+  it('reads a fresh Saved history when Branch HEAD changes rather than showing the old list', async () => {
+    const initialBranch = {
+      run_id: runId, branch_id: branchId, display_name: 'Timeline 1', status: 'active',
+      saved_head_revision_id: 'saved-1', head_checkpoint_id: 'cp-current',
+      read_only: false, is_official: true
+    }
+    api.listRunBranches.mockResolvedValueOnce({ run_branches: [initialBranch] })
+      .mockResolvedValue({ run_branches: [{ ...initialBranch, saved_head_revision_id: 'saved-2' }] })
+    let finishHistory!: (value: unknown) => void
+    api.listSavedRevisionHistory.mockResolvedValueOnce({
+      run_id: runId, branch_id: branchId, saved_head_revision_id: 'saved-1',
+      saved_revisions: [{ revision_id: 'r-old', kind: 'old-history-kind',
+        sequence: 1, created_at: '2026-10-01' }]
+    }).mockImplementationOnce(() => new Promise(done => { finishHistory = done }))
+    function ReloadHead(): JSX.Element {
+      const client = useQueryClient()
+      return <button type="button" onClick={() => {
+        void client.invalidateQueries({ queryKey: ['admin-run-branches', runId] })
+      }}>Reload saved history HEAD</button>
+    }
+    renderRoute(
+      <LanguageProvider><AdminBranchProvider runId={runId}><AdminTimeProvider>
+        <ReloadHead /><RunPage />
+      </AdminTimeProvider></AdminBranchProvider></LanguageProvider>,
+      '/admin/runs/' + runId
+    )
+    expect(await screen.findByText('old-history-kind')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Reload saved history HEAD' }))
+    await waitFor(() => expect(api.listSavedRevisionHistory).toHaveBeenCalledTimes(2))
+    expect(screen.queryByText('old-history-kind')).toBeNull()
+    finishHistory({
+      run_id: runId, branch_id: branchId, saved_head_revision_id: 'saved-2',
+      saved_revisions: [{ revision_id: 'r-new', kind: 'new-history-kind',
+        sequence: 2, created_at: '2026-10-28' }]
+    })
+    expect(await screen.findByText('new-history-kind')).toBeVisible()
+    expect(screen.queryByText('old-history-kind')).toBeNull()
+    expect(screen.queryByText(/Historie uložených revizí neodpovídá vybranému Runu, Branchi/)).toBeNull()
   })
 
   it('describes a Branch without a Saved HEAD instead of endlessly loading readiness', async () => {

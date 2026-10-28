@@ -5,7 +5,7 @@ const cs: Record<string, string> = {
   'Control center for world balance, calendar validation, run health, invalidated data, narrative locks, and audit warnings.':
     'Řídicí centrum pro vyváženost světa, validaci kalendáře, zdraví runu, invalidovaná data, narativní zámky a auditní upozornění.',
   'This is a navigation and triage page, not a consolidated diagnostic scan. Existing tools are linked below; planned coverage is explicitly separate. Run-specific diagnostics remain under Run Diagnostics.':
-    'Toto je navigační a třídicí stránka, ne souhrnný diagnostický scan. Existující nástroje jsou odkazované níže; plánované pokrytí je uvedené zvlášť. Diagnostika konkrétního runu zůstává pod Run Diagnostics.',
+    'Toto je navigační a třídicí stránka, ne souhrnné diagnostické prověření. Existující nástroje jsou odkazované níže; plánované pokrytí je uvedené zvlášť. Diagnostika konkrétního runu zůstává pod Run Diagnostics.',
   'Overview': 'Přehled',
   'Open a run first to inspect current operational diagnostics.': 'Nejdřív otevřete run, abyste mohli zkontrolovat aktuální provozní diagnostiku.',
   'Open Runs': 'Otevřít runy',
@@ -33,10 +33,10 @@ const cs: Record<string, string> = {
   'Invalidated Data': 'Invalidovaná data',
   'Planned downstream invalidation tracking after calendar, entry, draw, result, points, or ranking edits.':
     'Plánované navazující sledování invalidací po úpravách kalendáře, přihlášek, losu, výsledků, bodů nebo žebříčku.',
-  'Current action: Planned / run-scoped diagnostics later.': 'Aktuální akce: Plánováno / run-scoped diagnostika později.',
+  'Current action: Planned / run-scoped diagnostics later.': 'Aktuální akce: Plánováno / diagnostika jednotlivých runů bude doplněna později.',
   'Narrative Locks': 'Narativní zámky',
   'Planned conflict/plausibility checks for Soft/Hard/Winner/Round/Exact Match/Path locks.':
-    'Plánované kontroly konfliktů a plausibility pro zámky Soft/Hard/Winner/Round/Exact Match/Path.',
+    'Plánované kontroly konfliktů a věrohodnosti pro zámky Soft/Hard/Winner/Round/Exact Match/Path.',
   'Current action: Planned.': 'Aktuální akce: Plánováno.',
   'Audit / Warnings': 'Audit / upozornění',
   'Future consolidated feed for manual edits, lock changes, regeneration skips, invalidation events, and warning history.':
@@ -52,10 +52,10 @@ const cs: Record<string, string> = {
   'Current vs planned': 'Aktuální vs plánované',
   'Current:': 'Aktuální:',
   'real diagnostics are mostly run-scoped; this top-level page is a launcher/triage shell; existing Run Diagnostics is the operational source today.':
-    'reálná diagnostika je převážně run-scoped; tato top-level stránka je launcher/triage shell; provozním zdrojem je dnes existující Run Diagnostics.',
+    'současné kontroly se týkají především jednotlivých runů. Tato stránka slouží jako rozcestník; provozní diagnostiku najdete v diagnostice konkrétního runu.',
   'Planned:': 'Plánované:',
   'top-level aggregation across World, Calendar, Runs, Invalidated Data, Narrative Locks, and Audit.':
-    'top-level agregace napříč World, Calendar, Runs, Invalidated Data, Narrative Locks a Audit.',
+    'souhrnný přehled světa, kalendáře, runů, invalidovaných dat, narativních zámků a auditu.',
 }
 
 export function adminDiagnosticsText(english: string, language: Language): string {

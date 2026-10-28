@@ -233,18 +233,23 @@ export function RunPage(): JSX.Element {
   // A failed refresh may retain previously successful React Query data. Never
   // display that stale snapshot as current Saved readiness while rechecking or
   // after a failed read, even when its Run/HEAD identifiers still match.
-  const readiness = !readinessQuery.isFetching && readinessQuery.isSuccess
+  const readinessDependenciesLoading = containerQuery.isPending || containerQuery.isFetching
+    || draftQuery.isPending || draftQuery.isFetching
+  const readiness = !readinessDependenciesLoading
+    && containerQuery.isSuccess && draftQuery.isSuccess
+    && run && homeClock && draft
+    && !readinessQuery.isFetching && readinessQuery.isSuccess
     && readinessQuery.data?.run_id === runId
     && readinessQuery.data.branch_id === branchId
     && readinessQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
-    && (!draft || readinessQuery.data.draft_version === draft.draft_version)
-    && (!homeClock || (
-      readinessQuery.data.current_calendar.weeks_per_year === homeClock.weeks_per_year
-      && readinessQuery.data.current_calendar.season_count === homeClock.season_count
-      && readinessQuery.data.current_calendar.start_year === homeClock.start_year
-      && readinessQuery.data.current_calendar.season_start_year_week === homeClock.season_start_year_week
-    )) ? readinessQuery.data : null
-  const readinessMismatch = readinessQuery.isSuccess && !readinessQuery.isFetching && !readiness
+    && readinessQuery.data.draft_version === draft.draft_version
+    && readinessQuery.data.current_calendar.weeks_per_year === homeClock.weeks_per_year
+    && readinessQuery.data.current_calendar.season_count === homeClock.season_count
+    && readinessQuery.data.current_calendar.start_year === homeClock.start_year
+    && readinessQuery.data.current_calendar.season_start_year_week === homeClock.season_start_year_week
+    ? readinessQuery.data : null
+  const readinessMismatch = readinessQuery.isSuccess && !readinessQuery.isFetching
+    && !readinessDependenciesLoading && !readiness
   const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
   const pending = pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId ? pendingQuery.data : null
   const simulationHistory = simulationHistoryQuery.data?.run_id === runId && simulationHistoryQuery.data.branch_id === branchId
@@ -331,7 +336,8 @@ export function RunPage(): JSX.Element {
 
     {ready && !selectedBranch?.saved_head_revision_id &&
       <p role="status" className="status">{readinessText.emptyHead[language]}</p>}
-    {ready && Boolean(selectedBranch?.saved_head_revision_id) && readinessQuery.isFetching &&
+    {ready && Boolean(selectedBranch?.saved_head_revision_id) &&
+      (readinessQuery.isFetching || (readinessQuery.isSuccess && readinessDependenciesLoading)) &&
       <p role="status" className="status">{readinessText.checking[language]}</p>}
     {ready && Boolean(selectedBranch?.saved_head_revision_id) &&
       !readinessQuery.isFetching && (readinessQuery.isError || readinessMismatch) &&
@@ -339,7 +345,11 @@ export function RunPage(): JSX.Element {
         ? 'Obnova kontroly podkladů Runu' : 'Run foundation inspection recovery'}>
         <p role="alert" className="error">{readinessText.unavailable[language]}</p>
         <p className="status">{readinessText.retryNote[language]}</p>
-        <button type="button" onClick={() => { void readinessQuery.refetch() }}>{readinessText.retry[language]}</button>
+        <button type="button" onClick={() => {
+          // Recover all independent read-only evidence, not just the cached
+          // readiness DTO that may be valid while Run/Working Draft is stale.
+          void Promise.all([containerQuery.refetch(), draftQuery.refetch(), readinessQuery.refetch()])
+        }}>{readinessText.retry[language]}</button>
       </section>}
     {ready && readiness && <RunHomeReadinessPanel
       data={readiness} runId={runId} language={language}

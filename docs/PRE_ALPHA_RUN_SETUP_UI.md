@@ -14,18 +14,22 @@ not add a generator, a second readiness authority or a hidden Save.
    `createEmptyRunContainer` command is sent for the same in-flight submission.
 2. The returned Run ID, name, ownership and (when requested) calendar are checked
    before any navigation or local navigation hints are written.
-3. A best-effort inventory cache invalidation is not allowed to turn a
+3. If the server confirms a Run identity but returns a mismatched reviewed
+   calendar, the form blocks a duplicate create and offers a link to inspect
+   the existing Run. Uncertain transport errors explicitly advise checking
+   the Run inventory before retrying.
+4. A best-effort inventory cache invalidation is not allowed to turn a
    server-confirmed Run creation into a false failure and a duplicate retry.
-4. If routing itself fails after server-confirmed creation, the form says the
+5. If routing itself fails after server-confirmed creation, the form says the
    Run **already exists**, disables repeated creation and links directly to the
    created Run rather than allowing another create.
-5. Browser-local recent/last-Run persistence remains optional. The server
+6. Browser-local recent/last-Run persistence remains optional. The server
    creates the authoritative Run; unavailable storage does not prevent opening it.
-6. The Run Home Saved-readiness card prioritizes review/Save of an unsaved
+7. The Run Home Saved-readiness card prioritizes review/Save of an unsaved
    Working Draft over further apparent missing-Saved setup actions. This is a
    navigation recommendation, **not** a Save, an authorization or a claim that
    all world content must exist before unrelated operations.
-7. An all-optional/all-saved inspection no longer claims that every foundation
+8. An all-optional/all-saved inspection no longer claims that every foundation
    has been saved or that all sporting operations are ready. Each operation
    retains its own preflight and unsupported features stay unsupported.
 
@@ -33,7 +37,9 @@ not add a generator, a second readiness authority or a hidden Save.
 
 Focused React component regressions exercise rapid double-submit, rejected
 inventory refresh, navigation failure/repeated submission after success, unavailable localStorage,
-dirty-draft priority and all-optional Saved-inspection wording. They mock the
+dirty-draft priority, all-optional Saved-inspection wording, and
+URL encoding of returned Run identifiers. A failed or unconfirmed create can
+be retried; a server-confirmed create cannot. They mock the
 API boundary and are **not** production HTTP/SQLite or real-browser acceptance.
 
 The relevant frontend test/build and final-head hosted checks must complete

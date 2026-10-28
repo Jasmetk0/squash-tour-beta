@@ -142,4 +142,63 @@ describe('saved Run readiness panel', () => {
     expect(screen.getByText('Zobrazit kontrolu uložených podkladů (6) · 5 položek k prověření'))
       .toBeVisible()
   })
+
+  it('explains distinct Saved entity counts, initial cohort and published ranking in English', () => {
+    mount('en')
+    fireEvent.click(screen.getByText('Show saved-foundation checks (6) · 3 items needing attention'))
+    expect(screen.getByText('Saved · World entities: 250')).toBeVisible()
+    expect(screen.getByText('Missing · Calendar entities: 0')).toBeVisible()
+    expect(screen.getByText('Saved · Initial-population players: 1000')).toBeVisible()
+    expect(screen.getByText('Saved · Health records: 1')).toBeVisible()
+    expect(screen.getByText('Candidate only · Ranking publications: 0')).toBeVisible()
+    expect(screen.getByText('Unsaved · Pending changes: 1')).toBeVisible()
+    expect(screen.getByText(/Counts Calendar Package entities.*not the Run week-count configuration/)).toBeVisible()
+    expect(screen.getByText(/Counts only saved initial-population players, not every player/)).toBeVisible()
+    expect(screen.getByText(/Counts actually saved ranking publications; candidate rankings are not publications/)).toBeVisible()
+    expect(screen.getByText(/Candidate data is not published authority/)).toBeVisible()
+    expect(screen.getByText(/Counts this Branch Working Draft changes; other unfinished editors/)).toBeVisible()
+  })
+
+  it('explains the meaning of missing, optional and saved evidence without claiming global blockers', () => {
+    mount('en', {
+      ...data,
+      items: data.items.map(item => ({
+        ...item,
+        status: item.code === 'health' ? 'optional' as const
+          : item.code === 'working_draft' ? 'saved' as const : 'missing' as const,
+        evidence_count: 0
+      }))
+    })
+    fireEvent.click(screen.getByText('Show saved-foundation checks (6) · 4 items needing attention'))
+    expect(screen.getByText('Not required here · Health records: 0')).toBeVisible()
+    expect(screen.getByText(/This check does not require this foundation here; another operation may/)).toBeVisible()
+    expect(screen.getAllByText(/No matching evidence in this Saved Revision/)).toHaveLength(4)
+    expect(screen.getByText(/Counts Saved Health records, not match-specific medical clearance/)).toBeVisible()
+    expect(screen.getByText(/This evidence exists, but it does not certify readiness/)).toBeVisible()
+  })
+
+  it('provides Czech interpretation without claiming that a ranking candidate is published', () => {
+    mount('cs')
+    fireEvent.click(screen.getByText('Zobrazit kontrolu uložených podkladů (6) · 3 položky k prověření'))
+    expect(screen.getByText('Pouze návrh · Publikace rankingu: 0')).toBeVisible()
+    expect(screen.getByText('Neuloženo · Nevyřízené změny: 1')).toBeVisible()
+    expect(screen.getByText(/kandidátní pořadí není publikované/)).toBeVisible()
+    expect(screen.getByText(/Změny dosud nejsou součástí Saved Revision/)).toBeVisible()
+    expect(screen.getByText(/Jde jen o uloženou počáteční populaci/)).toBeVisible()
+    expect(screen.getByText(/nejde o nastavení počtu týdnů Runu/)).toBeVisible()
+  })
+
+  it('keeps read-only repair links scoped to the encoded selected Run ID', () => {
+    render(<MemoryRouter>
+      <RunHomeReadinessPanel data={data} runId="run/č 1" language="en"
+        refreshing={false} refresh={vi.fn()} />
+    </MemoryRouter>)
+    fireEvent.click(screen.getByText('Show saved-foundation checks (6) · 3 items needing attention'))
+    expect(screen.getAllByRole('link', { name: 'Inspect and Save changes →' })[0])
+      .toHaveAttribute('href', '/admin/runs/run%2F%C4%8D%201/branches')
+    expect(screen.getAllByRole('link', { name: 'Add a Calendar Package →' })[0])
+      .toHaveAttribute('href', '/admin/runs/run%2F%C4%8D%201/manage')
+    expect(screen.getByRole('link', { name: 'Open global Test Lab' }))
+      .toHaveAttribute('href', '/admin/labs')
+  })
 })

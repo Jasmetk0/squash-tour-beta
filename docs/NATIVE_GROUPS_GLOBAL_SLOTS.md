@@ -134,3 +134,12 @@ and partial-source restoration. Thirty-nine mocked frontend tests pass, includin
 CS/EN disabled simulation controls while a group tie awaits explicit review.
 Native production-seeded exact ties, withdrawal/W/O and the remaining full
 calendar/browser/worker acceptance are still outstanding. Draft remains Draft.
+
+## Additional worker acceptance — 28 October 2026
+
+The real native Full Simulation worker case passed (319.94 seconds including
+setup): the same task processes all fifteen actual matches, pauses for each
+manual Save and explicit result review, then reaches the requested target.
+This is the W52 HTTP/SQLite case; it does not certify the other calendar widths
+or the still-outstanding production-seeded exact tie and withdrawal/W/O paths.
+The PR remains Draft and is not approved for merge.

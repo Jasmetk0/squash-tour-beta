@@ -66,10 +66,11 @@ export function validPlayerReplayPagePair(
     previous.rallies.length === 0 || next.rallies.length === 0) return false
   const a = previous.rallies[previous.rallies.length - 1]
   const b = next.rallies[0]
-  if (a.rally_index + 1 !== b.rally_index || a.match_complete ||
-    a.score_a_after !== b.score_a_before || a.score_b_after !== b.score_b_before) return false
-  // On a completed game the next frame enters the next game; the carried set
-  // score must stay compatible. Exact complete match validation belongs to API.
-  return a.set_complete ? b.set_number === a.set_number + 1 :
-    b.set_number === a.set_number
+  if (a.rally_index + 1 !== b.rally_index || a.match_complete) return false
+  // The first rally after a completed game begins at 0:0; within the game
+  // scores must carry over exactly. The API still owns complete replay proof.
+  return a.set_complete
+    ? b.set_number === a.set_number + 1 && b.score_a_before === 0 && b.score_b_before === 0
+    : b.set_number === a.set_number &&
+      a.score_a_after === b.score_a_before && a.score_b_after === b.score_b_before
 }

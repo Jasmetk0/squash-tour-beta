@@ -131,6 +131,16 @@ not add a generator, a second readiness authority or a hidden Save.
     navigating to a different Run with another Saved HEAD. These are read-only
     inspections; no Save or sporting action is implied.
 
+19. Saved package-state inspection is now scoped to the selected HEAD in
+    its React Query cache key. A saved HEAD change must load fresh package
+    evidence rather than inheriting a prior revision's "empty Run" result.
+    The Run Home checks the returned package state's Run/Branch identities
+    and rejects a missing response envelope or foreign owner without claiming
+    that the Run is empty. During refresh or a failed request it also does
+    not reuse cached package evidence. Focused UI tests verify foreign
+    payloads, malformed payloads and a Saved HEAD transition with a delayed
+    new package response. This is read-only; no implicit Save is added.
+
 ## Validation boundary
 
 Focused React component regressions exercise rapid double-submit, rejected

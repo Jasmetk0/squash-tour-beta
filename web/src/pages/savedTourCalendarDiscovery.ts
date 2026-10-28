@@ -11,7 +11,7 @@ export function savedCalendarPublication(raw:string|null):PublicationFilter{
   return raw==='published'||raw==='not-published'?raw:'all'
 }
 
-const normalize=(text:string):string=>text.normalize('NFD')
+const normalize=(text:unknown):string=>(typeof text==='string'?text:'').normalize('NFD')
   .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase().trim()
 
 /** A non-published result is not proof that an edition has yet been played. */

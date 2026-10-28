@@ -235,7 +235,11 @@ def verify_materialized_branch_fork_replay(page, run_url, artifacts, port, sourc
                 quote(source_branch, safe="") + "&replayHead=" +
                 quote(source["saved_revision_id"], safe="") + "&rally=26")
     page.goto(base + old_link)
+    # A full page reload may restore the Run's default active Branch. Select
+    # the intended fork explicitly before asserting an old-source rejection.
+    page.get_by_role("combobox", name="Admin active Branch").select_option(fork_id)
     expect(page.get_by_text("This link belongs to a different Branch or Saved HEAD.", exact=False)).to_be_visible()
+    expect(page.get_by_role("button", name="Open current Saved HEAD")).to_be_visible()
     page.get_by_role("button", name="Open current Saved HEAD").click()
     expect(page.get_by_text(f'Rally 1/{target["total_rallies"]}', exact=False)).to_be_visible()
     return dict(

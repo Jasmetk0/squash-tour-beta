@@ -26,7 +26,7 @@ const content = {
     labHint: 'Samostatné experimenty nevyžadují připravený Run.',
     lab: 'Otevřít globální Test Lab',
     candidateLink: 'Prohlédnout kandidáty rankingu',
-    rankingLimit: 'U tohoto kalendáře není dostupný starší postup publikace prvního rankingu. Kandidáty lze prohlížet samostatně; publikaci musí povolit příslušný postup.',
+    rankingLimit: 'Příprava nebo publikace prvního rankingu zde není dostupná pro vybraný Run, Branch či kalendář. Kandidáty lze prohlížet samostatně; publikaci musí povolit příslušný postup.',
     draftSave: 'Historie větví sama neukládá Working Draft. Změny ulož výslovně v editoru, ve kterém vznikly.',
     action: {
       world: 'Doplnit World Package',
@@ -72,7 +72,7 @@ const content = {
     labHint: 'Standalone experiments do not require a prepared Run.',
     lab: 'Open global Test Lab',
     candidateLink: 'Inspect ranking candidates',
-    rankingLimit: 'The legacy initial-ranking publication workflow is not available for this calendar. You can inspect candidates separately; publication needs its own supported operation.',
+    rankingLimit: 'Initial-ranking preparation or publication is not available for this selected Run, Branch or calendar. You can inspect candidates separately; publication needs its own supported operation.'
     draftSave: 'Branch history does not Save a Working Draft. Explicitly Save changes in the editor that produced them.',
     action: {
       world: 'Add a World Package',
@@ -179,13 +179,14 @@ const needsAttention = (item: RunReadinessItem): boolean =>
   item.status === 'missing' || item.status === 'candidate_only' || item.status === 'unsaved'
 
 export function RunHomeReadinessPanel({
-  data, runId, language, refreshing, refresh,
+  data, runId, language, refreshing, refresh, rankingSetupAvailable,
 }: {
   data: RunHomeReadiness
   runId: string
   language: 'cs' | 'en'
   refreshing: boolean
   refresh: () => void
+  rankingSetupAvailable: boolean
 }): JSX.Element {
   const l = content[language]
   const base = '/admin/runs/' + encodeURIComponent(runId)
@@ -199,13 +200,14 @@ export function RunHomeReadinessPanel({
     item => item.code === code && needsAttention(item)
   ))
   const attentionCount = data.items.filter(needsAttention).length
+  const canUseRankingSetup = data.sporting_calendar_supported_by_legacy_writers && rankingSetupAvailable
   const target = (code: RunReadinessCode): string => code === 'official_ranking'
-    ? data.sporting_calendar_supported_by_legacy_writers
+    ? canUseRankingSetup
       ? base + '#run-initial-ranking'
       : base + '/branches/' + encodeURIComponent(data.branch_id) + '/ranking-candidates'
     : base + href[code]
   const action = (code: RunReadinessCode): string => code === 'official_ranking'
-    && !data.sporting_calendar_supported_by_legacy_writers ? l.candidateLink : l.action[code]
+    && !canUseRankingSetup ? l.candidateLink : l.action[code]
   return <section aria-label={language === 'cs' ? 'Připravenost Runu' : 'Run saved readiness'} className="run-home-status-block">
     <div className="actions">
       <h3>{l.heading}</h3>
@@ -228,7 +230,7 @@ export function RunHomeReadinessPanel({
       </ul>
     </details>
     {draftDirty && <p className="error">{l.drafted} {l.draftSave}</p>}
-    {!data.sporting_calendar_supported_by_legacy_writers && data.items.some(item =>
+    {!canUseRankingSetup && data.items.some(item =>
       item.code === 'official_ranking' && needsAttention(item)) &&
       <p className="status">{l.rankingLimit}</p>}
     <p className="status">

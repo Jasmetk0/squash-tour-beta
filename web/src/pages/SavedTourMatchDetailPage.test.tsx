@@ -57,6 +57,7 @@ describe('exact historical Edition match replay',()=>{
     state.timeLoading=false;state.timeError=null
     state.branchLoading=false;state.branchError=null
     state.branch.branch_id='branch-a';state.branch.run_id='run-a'
+    state.branch.saved_head_revision_id='new-head'
     api.getSavedTourMatchDetail.mockImplementation((
       _run:string,_branch:string,_rev:string,_season:number,
       _event:string,_match:string,offset:number
@@ -147,6 +148,22 @@ describe('exact historical Edition match replay',()=>{
     expect(back).toHaveAttribute('href',expect.stringContaining('revision=old-rev'))
     expect(back).toHaveAttribute('href',expect.stringContaining('view=list'))
     expect(back).toHaveAttribute('href',expect.stringContaining('country=CZE'))
+  })
+  it('opens current player careers only when match is from the selected Saved HEAD',async()=>{
+    state.branch.saved_head_revision_id='old-rev'
+    mount()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    expect(screen.getByRole('link',{name:'A'})).toHaveAttribute('href','/admin/runs/run-a/people/A?tab=career')
+    expect(screen.getByRole('link',{name:'B'})).toHaveAttribute('href','/admin/runs/run-a/people/B?tab=career')
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+  })
+  it('keeps archived match participants as IDs, never as current player profile links',async()=>{
+    mount()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'A'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'B'})).not.toBeInTheDocument()
+    expect(screen.getByRole('link',{name:'Back to Edition results'})).toHaveAttribute('href',
+      expect.stringContaining('revision=old-rev'))
   })
   it('allows a failed rally page to recover without changing the saved source',async()=>{
     api.getSavedTourMatchDetail.mockRejectedValueOnce(new Error('offline'))

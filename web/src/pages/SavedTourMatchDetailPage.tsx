@@ -49,6 +49,12 @@ function HistoricalMatchReplay():JSX.Element{
   )?q.data:null
   const invalid=Boolean(ready&&q.isSuccess&&!q.isFetching&&q.data&&!data)
   const frame=data?.rallies.find(r=>r.rally_index===index+1)
+  // Player profile is current-HEAD-only. Never substitute it for a prior Saved match.
+  const sameHead=Boolean(data&&revision&&selectedBranch?.run_id===runId
+    &&selectedBranch?.saved_head_revision_id===revision)
+  const participant=(id:string)=>sameHead?
+    <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/people/'+
+      encodeURIComponent(id)+'?tab=career'}>{id}</Link>:id
   const parentParams=new URLSearchParams(params)
   // Preserve the actual originating Edition section, including Draw / groups.
   // Results is only the safe fallback for an absent/invalid section marker.
@@ -85,7 +91,7 @@ function HistoricalMatchReplay():JSX.Element{
       'Archived match does not match the selected Run/Branch/revision or rally page.'}</p>}
     {data&&<><div className="run-home-status-block">
       <p>{cs?'Turnaj':'Edition'}: <code>{eventId}</code> · {cs?'Zápas':'Match'}: <code>{matchId}</code></p>
-      <h3>{data.match.winner_player_id} – {data.match.loser_player_id}</h3>
+      <h3>{participant(data.match.winner_player_id)} – {participant(data.match.loser_player_id!)}</h3>
       <p>{data.match.draw_type==='main'?(cs?'Hlavní část':'Main'):data.match.draw_type==='qualification'?(cs?'Kvalifikace':'Qualification'):data.match.draw_type==='group'?(cs?'Skupina':'Group'):data.match.draw_type} · {cs?'Kolo':'Round'} {data.match.round_number}
         {' · '}{cs?'Pozice':'Position'} {data.match.bracket_position}
         {' · '}{cs?'Výsledek':'Result'}: <strong>{data.match.scoreline}</strong></p>

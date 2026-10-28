@@ -8,6 +8,7 @@ import {useAdminBranch} from '../admin/AdminBranchContext'
 import {useAdminTime} from '../admin/AdminTimeContext'
 import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
+import {parseSavedReplayRally} from './savedReplayNavigation'
 
 const PAGE=25
 export function SavedTourMatchDetailPage():JSX.Element{
@@ -32,6 +33,7 @@ function HistoricalMatchReplay():JSX.Element{
   const raw=params.get('season')
   const season=raw!==null&&/^(0|[1-9]\d*)$/.test(raw)?Number(raw):null
   const [index,setIndex]=useState(0)
+  const [rallyInput,setRallyInput]=useState('')
   const offset=Math.floor(index/PAGE)*PAGE
   const ready=Boolean(branch&&explicitBranch===branch&&revision&&revision.trim()===revision
     &&season!==null&&season<=49&&eventId&&matchId&&time.mode==='present'
@@ -49,6 +51,7 @@ function HistoricalMatchReplay():JSX.Element{
   )?q.data:null
   const invalid=Boolean(ready&&q.isSuccess&&!q.isFetching&&q.data&&!data)
   const frame=data?.rallies.find(r=>r.rally_index===index+1)
+  const target=parseSavedReplayRally(rallyInput,data?.total_rallies??0)
   // Player profile is current-HEAD-only. Never substitute it for a prior Saved match.
   const sameHead=Boolean(data&&revision&&selectedBranch?.run_id===runId
     &&selectedBranch?.saved_head_revision_id===revision)
@@ -119,12 +122,30 @@ function HistoricalMatchReplay():JSX.Element{
         'This rally is absent from the loaded archive page.'}</p>}
       <div className="grid">
         <button type="button" disabled={q.isFetching||!frame||index===0}
+          onClick={()=>setIndex(0)}>{cs?'První výměna':'First rally'}</button>
+        <button type="button" disabled={q.isFetching||!frame||index===0}
           onClick={()=>setIndex(v=>Math.max(0,v-1))}>
           {cs?'← Předchozí výměna':'← Previous rally'}</button>
         <button type="button" disabled={q.isFetching||!frame||index+1>=data.total_rallies}
           onClick={()=>setIndex(v=>Math.min(data.total_rallies-1,v+1))}>
           {cs?'Další výměna →':'Next rally →'}</button>
+        <button type="button" disabled={q.isFetching||!frame||index+1>=data.total_rallies}
+          onClick={()=>setIndex(data.total_rallies-1)}>{cs?'Poslední výměna':'Last rally'}</button>
       </div>
+      <form className="grid" onSubmit={event=>{
+        event.preventDefault()
+        if(frame&&target!==null){
+          setIndex(target-1)
+          setRallyInput('')
+        }
+      }}>
+        <label>{cs?'Přejít na výměnu':'Go to rally'}
+          <input type="number" inputMode="numeric" min={1} max={data.total_rallies} step={1}
+            aria-label={cs?'Číslo archivované výměny':'Archived rally number'}
+            value={rallyInput} onChange={event=>setRallyInput(event.target.value)}/></label>
+        <button type="submit" disabled={q.isFetching||!frame||target===null}>
+          {cs?'Přejít':'Jump to rally'}</button>
+      </form>
       <p className="status">{cs?'Přehrání jen čte archiv, simulaci znovu neprovádí.':
         'The replay reads archived events only; it never reruns the simulation.'}</p>
     </>}

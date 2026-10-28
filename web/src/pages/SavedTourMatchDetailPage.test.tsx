@@ -165,6 +165,61 @@ describe('exact historical Edition match replay',()=>{
     expect(screen.getByRole('link',{name:'Back to Edition results'})).toHaveAttribute('href',
       expect.stringContaining('revision=old-rev'))
   })
+  it('jumps from first to last rally and back across archived pages without fabricating frames',async()=>{
+    mount()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'First rally'})).toBeDisabled()
+    await userEvent.click(screen.getByRole('button',{name:'Last rally'}))
+    expect(await screen.findByText('Rally 30/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenLastCalledWith(
+      'run-a','branch-a','old-rev',2,'event-x','final',25,25)
+    expect(screen.getByRole('button',{name:'Last rally'})).toBeDisabled()
+    await userEvent.click(screen.getByRole('button',{name:'First rally'}))
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)
+    expect(screen.getByRole('link',{name:'Back to Edition results'})).toHaveAttribute(
+      'href',expect.stringContaining('revision=old-rev'))
+  })
+  it('accepts typed rally jumps only within verified bounds and retains Saved scope',async()=>{
+    mount()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    const input=screen.getByRole('spinbutton',{name:'Archived rally number'})
+    const jump=screen.getByRole('button',{name:'Jump to rally'})
+    expect(jump).toBeDisabled()
+    await userEvent.type(input,'26')
+    expect(jump).toBeEnabled()
+    await userEvent.click(jump)
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    expect(input).toHaveValue(null)
+    expect(api.getSavedTourMatchDetail).toHaveBeenLastCalledWith(
+      'run-a','branch-a','old-rev',2,'event-x','final',25,25)
+    await userEvent.type(input,'30')
+    await userEvent.keyboard('{Enter}')
+    expect(await screen.findByText('Rally 30/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)
+    await userEvent.type(input,'31')
+    expect(jump).toBeDisabled()
+    expect(screen.getByText('Rally 30/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)
+  })
+  it('shows localized rally jump controls and does not offer navigation without a replay archive',async()=>{
+    const view=mount()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    const count=api.getSavedTourMatchDetail.mock.calls.length
+    state.language='cs';view.refresh()
+    expect(screen.getByRole('spinbutton',{name:'Číslo archivované výměny'})).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Poslední výměna'})).toBeEnabled()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(count)
+    view.unmount()
+    api.getSavedTourMatchDetail.mockResolvedValue({
+      ...fixture(0),replay_status:'unavailable',total_rallies:0,
+      has_more:false,rallies:[],player_a_id:null,player_b_id:null
+    })
+    mount()
+    expect(await screen.findByText(/No verified rally archive exists/)).toBeInTheDocument()
+    expect(screen.queryByRole('spinbutton',{name:'Archived rally number'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Jump to rally'})).not.toBeInTheDocument()
+  })
   it('allows a failed rally page to recover without changing the saved source',async()=>{
     api.getSavedTourMatchDetail.mockRejectedValueOnce(new Error('offline'))
     mount()

@@ -81,7 +81,9 @@ def verify_saved_player_replay(page, run_url, artifacts, port, prefix="", expect
     page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
     page.get_by_role("tab", name="Career & results").click()
     expect(page.get_by_role("heading", name="Match career")).to_be_visible()
-    link = page.locator('a[href="' + match_route + '"]')
+    # The replay link carries the career return context. Keep the exact match
+    # identity check, including the new query, rather than using a broad prefix.
+    link = page.locator('a[href="' + match_route + '?tab=career"]')
     expect(link).to_have_count(1)
     link.click()
     expect(page.get_by_role("heading", name="Match detail")).to_be_visible()
@@ -95,7 +97,8 @@ def verify_saved_player_replay(page, run_url, artifacts, port, prefix="", expect
     expect(page.get_by_role("heading", name="Match detail")).to_be_visible()
     expect(page.get_by_text(f"Rally 1/{total}", exact=False)).to_be_visible()
     page.get_by_role("link", name="← Back to player profile").click()
-    page.get_by_role("tab", name="Career & results").click()
+    expect(page).to_have_url(base + player_route + "?tab=career")
+    expect(page.get_by_role("tab", name="Career & results")).to_have_attribute("aria-selected", "true")
     expect(page.get_by_role("heading", name="Match career")).to_be_visible()
     return dict(run_id=run_id, branch_id=branch_id,
                 saved_revision_id=first["saved_revision_id"], event_id=event_id,
@@ -173,7 +176,7 @@ def verify_materialized_branch_fork_replay(page, run_url, artifacts, port, sourc
     page.get_by_role("tab", name="Career & results").click()
     expect(page.get_by_role("heading", name="Match career")).to_be_visible()
     match_route = profile + "/matches/" + quote(source["event_id"], safe="") + "/" + quote(source["match_id"], safe="")
-    page.locator('a[href="' + match_route + '"]').click()
+    page.locator('a[href="' + match_route + '?tab=career"]').click()
     expect(page.get_by_role("heading", name="Match detail")).to_be_visible()
     expect(page.get_by_text(f'Rally 1/{target["total_rallies"]}', exact=False)).to_be_visible()
     page.screenshot(path=str(artifacts / f"{prefix}08-forked-saved-replay.png"), full_page=True)

@@ -38,6 +38,14 @@ const statuses: RunReadinessStatus[] = ['saved', 'missing', 'candidate_only', 'u
 const countedSavedFoundations: RunReadinessCode[] = [
   'world', 'calendar_package', 'population', 'official_ranking'
 ]
+const allowedStatus: Record<RunReadinessCode, readonly RunReadinessStatus[]> = {
+  world: ['saved', 'missing'],
+  calendar_package: ['saved', 'missing'],
+  population: ['saved', 'missing'],
+  health: ['saved', 'missing', 'optional'],
+  official_ranking: ['saved', 'missing', 'candidate_only'],
+  working_draft: ['saved', 'unsaved'],
+}
 
 /** Reject partial/foreign/ambiguous responses rather than displaying false greens. */
 export function validateRunHomeReadiness(raw: unknown, runId: string, branchId: string): RunHomeReadiness {
@@ -60,7 +68,7 @@ export function validateRunHomeReadiness(raw: unknown, runId: string, branchId: 
     || !Number.isSafeInteger(r.current_calendar.season_count) || r.current_calendar.season_count <= 0
     || !Array.isArray(r.items) || r.items.length !== codes.length
     || r.items.some((item, i) => item?.code !== codes[i]
-      || !statuses.includes(item.status)
+      || !statuses.includes(item.status) || !allowedStatus[item.code].includes(item.status)
       || !Number.isSafeInteger(item.evidence_count) || item.evidence_count < 0
       // The current Saved owner cannot publish or own a counted foundation
       // without a positive count. Reject contradictory 'saved' badges.

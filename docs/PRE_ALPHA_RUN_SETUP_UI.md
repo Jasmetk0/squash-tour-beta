@@ -25,6 +25,8 @@ not add a generator, a second readiness authority or a hidden Save.
    an explicit manual retry, never an automatic retry; an unreadable, malformed
    or ambiguous inventory fails closed. The name remains fixed until that
    reconciliation has succeeded, so editing cannot accidentally bypass it.
+   Invalid server-returned Run IDs and malformed unrelated inventory rows are
+   rejected too: no guessed link, local identity update or false negative.
 4. A best-effort inventory cache invalidation is not allowed to turn a
    server-confirmed Run creation into a false failure and a duplicate retry.
 5. If routing itself fails after server-confirmed creation, the form says the

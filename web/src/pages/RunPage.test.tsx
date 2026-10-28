@@ -541,6 +541,88 @@ describe('Run Home V1 canonical projections', () => {
     expect(screen.queryByText(/Old verified name/)).toBeNull()
   })
 
+  it('hides stale simulation position during and after a failed refresh, then recovers', async () => {
+    let rejectRefresh!: (reason: Error) => void
+    api.getAuthoritativeSimulationPosition.mockResolvedValueOnce(refPosition())
+      .mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectRefresh = reject }))
+      .mockResolvedValueOnce(refPosition({ eligible_match_ids: ['m1'] }))
+    mountWithFeedRefresh('authoritative-simulation-position')
+    expect(await screen.findByText('Hratelné zápasy: 2')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Refetch saved feed' }))
+    await waitFor(() => expect(api.getAuthoritativeSimulationPosition).toHaveBeenCalledTimes(2))
+    expect(screen.queryByText('Hratelné zápasy: 2')).toBeNull()
+    expect(screen.queryByText(/Načtená data nehlásí žádný aktuální blokátor/)).toBeNull()
+    rejectRefresh(new Error('position refresh unavailable'))
+    expect((await screen.findAllByText(/position refresh unavailable/)).length).toBeGreaterThan(0)
+    expect(screen.queryByText('Hratelné zápasy: 2')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Refetch saved feed' }))
+    expect(await screen.findByText('Hratelné zápasy: 1')).toBeVisible()
+    expect(screen.queryByText('Hratelné zápasy: 2')).toBeNull()
+  })
+
+  it('hides stale pending simulation count until a fresh successful Branch response arrives', async () => {
+    let rejectRefresh!: (reason: Error) => void
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValueOnce({
+      run_id: runId, branch_id: branchId, operations: [{ command_id: 'a' }, { command_id: 'b' }]
+    }).mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectRefresh = reject }))
+      .mockResolvedValueOnce({ run_id: runId, branch_id: branchId, operations: [] })
+    mountWithFeedRefresh('authoritative-pending-full-simulations')
+    expect((await screen.findAllByText(/Pozastavené\/čekající plné simulace/)).length).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Refetch saved feed' }))
+    await waitFor(() => expect(api.getPendingAuthoritativeFullSimulations).toHaveBeenCalledTimes(2))
+    expect(screen.queryAllByText(/Pozastavené\/čekající plné simulace:/)).toHaveLength(0)
+    expect(screen.queryByText(/Načtená data nehlásí žádný aktuální blokátor/)).toBeNull()
+    rejectRefresh(new Error('pending operations refresh failed'))
+    expect((await screen.findAllByText(/pending operations refresh failed/)).length).toBeGreaterThan(0)
+    expect(screen.queryAllByText(/Pozastavené\/čekající plné simulace:/)).toHaveLength(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Refetch saved feed' }))
+    await waitFor(() => expect(api.getPendingAuthoritativeFullSimulations).toHaveBeenCalledTimes(3))
+    expect(screen.queryAllByText(/Pozastavené\/čekající plné simulace:/)).toHaveLength(0)
+  })
+
+  it('hides stale latest Full Simulation history during refresh and after error', async () => {
+    const history = (count: number) => ({
+      run_id: runId, branch_id: branchId,
+      items: [{
+        command_id: 'full-sim', status: 'complete',
+        completed_season_count: count, final_completed_week_count: count
+      }]
+    })
+    let rejectRefresh!: (reason: Error) => void
+    api.getAuthoritativeFullSimulationHistory.mockResolvedValueOnce(history(2))
+      .mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectRefresh = reject }))
+      .mockResolvedValueOnce(history(3))
+    mountWithFeedRefresh('authoritative-full-simulation-history')
+    expect(await screen.findByText(/2 dokončených sezón/)).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Refetch saved feed' }))
+    await waitFor(() => expect(api.getAuthoritativeFullSimulationHistory).toHaveBeenCalledTimes(2))
+    expect(screen.queryByText(/2 dokončených sezón/)).toBeNull()
+    rejectRefresh(new Error('full simulation history refresh failed'))
+    expect((await screen.findAllByText(/full simulation history refresh failed/)).length).toBeGreaterThan(0)
+    expect(screen.queryByText(/2 dokončených sezón/)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Refetch saved feed' }))
+    expect(await screen.findByText(/3 dokončených sezón/)).toBeVisible()
+    expect(screen.queryByText(/2 dokončených sezón/)).toBeNull()
+  })
+
+  it('does not count foreign pending operations or foreign Full Simulation history as this Branch', async () => {
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      run_id: runId, branch_id: 'other-branch',
+      operations: [{ command_id: 'foreign-operation' }]
+    })
+    api.getAuthoritativeFullSimulationHistory.mockResolvedValue({
+      run_id: 'other-run', branch_id: branchId,
+      items: [{ command_id: 'foreign-history', status: 'complete',
+        completed_season_count: 5, final_completed_week_count: 5 }]
+    })
+    mount()
+    expect((await screen.findAllByText('Pending Full Simulation identity mismatch')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('Full Simulation history identity mismatch')).length).toBeGreaterThan(0)
+    expect(screen.queryByText(/5 dokončených sezón/)).toBeNull()
+    expect(screen.queryAllByText(/Pozastavené\/čekající plné simulace:/)).toHaveLength(0)
+    expect(screen.queryByText(/Načtená data nehlásí žádný aktuální blokátor/)).toBeNull()
+  })
+
   it('describes a Branch without a Saved HEAD instead of endlessly loading readiness', async () => {
     api.listRunBranches.mockResolvedValueOnce({ run_branches: [{
       run_id: runId, branch_id: branchId, display_name: 'Timeline 1',

@@ -107,7 +107,7 @@ describe('saved Run readiness panel', () => {
   it('does not mistake optional foundations for completed saved content', () => {
     mount('en', {
       ...data,
-      items: data.items.map(item => ({ ...item, status: 'optional' as const }))
+      items: data.items.map(item => ({ ...item, status: 'optional' as const, evidence_count: 0 }))
     })
     expect(screen.getByText('Show saved-foundation checks (6)')).toBeVisible()
     expect(screen.getByText(/does not certify all operations/)).toBeVisible()
@@ -120,7 +120,9 @@ describe('saved Run readiness panel', () => {
       items: data.items.map(item => ({
         ...item,
         status: item.code === 'world' ? 'optional' as const
-          : item.code === 'calendar_package' ? 'missing' as const : 'saved' as const
+          : item.code === 'calendar_package' ? 'missing' as const : 'saved' as const,
+        evidence_count: item.code === 'world' || item.code === 'calendar_package'
+          || item.code === 'working_draft' ? 0 : Math.max(1, item.evidence_count)
       }))
     })
     expect(screen.getByText('Show saved-foundation checks (6) · 1 item needing attention')).toBeVisible()
@@ -218,5 +220,40 @@ describe('saved Run readiness panel', () => {
     fireEvent.click(screen.getByText('Zobrazit kontrolu uložených podkladů (6) · 2 položky k prověření'))
     expect(screen.getByText('Čistý Working Draft · Nevyřízené změny: 0')).toBeVisible()
     expect(screen.getByText(/Tento Working Draft nemá čekající změny/)).toBeVisible()
+  })
+
+  it('rejects invalid Run clocks rather than displaying a misleading Saved-readiness card', () => {
+    const invalidClocks = [
+      { ...data.current_calendar, schema_version: 'unknown' },
+      { ...data.current_calendar, weeks_per_year: 0 },
+      { ...data.current_calendar, season_start_year_week: 0 },
+      { ...data.current_calendar, season_start_year_week: 53 },
+      { ...data.current_calendar, start_year: -1 },
+      { ...data.current_calendar, season_count: 0 },
+      { ...data.current_calendar, weeks_per_year: 52.5 },
+    ]
+    for (const current_calendar of invalidClocks) {
+      expect(() => validateRunHomeReadiness({ ...data, current_calendar }, 'run-a', 'branch-a'))
+        .toThrow('Invalid Run Home readiness evidence')
+    }
+  })
+
+  it('rejects contradictory saved and missing foundation counts while allowing pending draft changes', () => {
+    const wrongSaved = data.items.map(item => item.code === 'world'
+      ? { ...item, evidence_count: 0 } : item)
+    const wrongMissing = data.items.map(item => item.code === 'calendar_package'
+      ? { ...item, evidence_count: 1 } : item)
+    const wrongRanking = data.items.map(item => item.code === 'official_ranking'
+      ? { ...item, evidence_count: 2 } : item)
+    for (const items of [wrongSaved, wrongMissing, wrongRanking]) {
+      expect(() => validateRunHomeReadiness({ ...data, items }, 'run-a', 'branch-a'))
+        .toThrow('Invalid Run Home readiness evidence')
+    }
+    expect(validateRunHomeReadiness(data, 'run-a', 'branch-a')).toEqual(data)
+  })
+
+  it('rejects an empty Saved revision identifier even when its hash is well formed', () => {
+    expect(() => validateRunHomeReadiness({ ...data, saved_revision_id: ' ' }, 'run-a', 'branch-a'))
+      .toThrow('Invalid Run Home readiness evidence')
   })
 })

@@ -207,7 +207,7 @@ describe('saved Run readiness panel', () => {
   it('keeps read-only repair links scoped to the encoded selected Run ID', () => {
     render(<MemoryRouter>
       <RunHomeReadinessPanel data={data} runId="run/č 1" language="en"
-        refreshing={false} refresh={vi.fn()} />
+        rankingSetupAvailable={false} refreshing={false} refresh={vi.fn()} />
     </MemoryRouter>)
     fireEvent.click(screen.getByText('Show saved-foundation checks (6) · 3 items needing attention'))
     expect(screen.getAllByRole('link', { name: 'Inspect Branch and revision history →' })[0])

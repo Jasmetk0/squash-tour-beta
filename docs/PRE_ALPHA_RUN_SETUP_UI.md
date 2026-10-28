@@ -77,6 +77,16 @@ not add a generator, a second readiness authority or a hidden Save.
     explaining that explicit Save belongs to the editor owning those changes.
     Existing Save, publication, candidate and simulation commands are unchanged.
 
+
+13. Run Home now treats a Saved readiness fetch or refresh as unverified until
+    the exact Run/Branch/HEAD/draft/calendar response is validated again.
+    Cached prior successes remain hidden during refresh and after failure,
+    including failed background refreshes that React Query may retain as data.
+    A dedicated CS/EN read-only Retry is available for transport failure or
+    identity mismatch; missing Saved HEAD is stated explicitly rather than
+    leaving a disabled readiness query showing "loading" indefinitely.
+    Retries never Save, publish, advance time or run simulation.
+
 ## Validation boundary
 
 Focused React component regressions exercise rapid double-submit, rejected

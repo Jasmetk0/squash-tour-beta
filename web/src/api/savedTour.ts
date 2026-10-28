@@ -111,6 +111,21 @@ export type SavedTourMatchDetail = {
   offset:number;limit:number;total_rallies:number;has_more:boolean
   rallies:SavedTourRallyFrame[]
 }
+/** Confirm two successive, already independently validated archive events form
+ * one sporting timeline. Also usable at the 25/26 page boundary, but only
+ * when both real Saved pages have already been read: no guessed neighbors. */
+export function validSavedTourRallyTransition(
+  previous:SavedTourRallyFrame,next:SavedTourRallyFrame
+):boolean{
+  if(previous.match_complete||next.rally_index!==previous.rally_index+1)return false
+  if(next.set_number===previous.set_number)
+    return !previous.set_complete
+      &&next.score_a_before===previous.score_a_after
+      &&next.score_b_before===previous.score_b_after
+  return previous.set_complete&&next.set_number===previous.set_number+1
+    &&next.score_a_before===0&&next.score_b_before===0
+}
+
 /** Exact selected branch and original revision-owner validation for historical match pages. */
 export function validSavedTourMatchDetail(
   data:SavedTourMatchDetail,runId:string,branchId:string,revisionId:string,
@@ -156,19 +171,7 @@ export function validSavedTourMatchDetail(
     &&(frame.winner_player_id!==null
       ||(frame.score_a_before===frame.score_a_after
         &&frame.score_b_before===frame.score_b_after))
-    &&(i===0||(()=>{
-      const previous=data.rallies[i-1]
-      if(previous.match_complete)return false
-      if(frame.set_number===previous.set_number){
-        return !previous.set_complete
-          &&frame.score_a_before===previous.score_a_after
-          &&frame.score_b_before===previous.score_b_after
-      }
-      // The first rally in a new game starts at 0:0. We cannot verify
-      // a previous page here; only neighboring frames on this page.
-      return previous.set_complete&&frame.set_number===previous.set_number+1
-        &&frame.score_a_before===0&&frame.score_b_before===0
-    })())
+    &&(i===0||validSavedTourRallyTransition(data.rallies[i-1],frame))
     &&typeof frame.server_player_id==='string'
     &&[data.player_a_id,data.player_b_id].includes(frame.server_player_id)
     &&(frame.winner_player_id===null||typeof frame.winner_player_id==='string'

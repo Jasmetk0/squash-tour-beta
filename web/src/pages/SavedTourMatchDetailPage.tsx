@@ -1,9 +1,10 @@
 /** Exact historical Run Tour Edition match detail and archived rally replay. */
 import {useState} from 'react'
-import {useQuery} from '@tanstack/react-query'
+import {useQuery,useQueryClient} from '@tanstack/react-query'
 import {Link,useParams,useSearchParams} from 'react-router-dom'
 import {getSavedTourMatchDetail} from '../api/client'
-import {validSavedTourMatchDetail} from '../api/savedTour'
+import {validSavedTourMatchDetail,validSavedTourRallyTransition} from '../api/savedTour'
+import type {SavedTourMatchDetail} from '../api/savedTour'
 import {useAdminBranch} from '../admin/AdminBranchContext'
 import {useAdminTime} from '../admin/AdminTimeContext'
 import {useLanguage} from '../i18n/LanguageContext'
@@ -31,6 +32,7 @@ function HistoricalMatchReplay():JSX.Element{
   const [params,setParams]=useSearchParams()
   const {selectedBranch,isLoading,error}=useAdminBranch()
   const time=useAdminTime(),{language}=useLanguage(),cs=language==='cs'
+  const queryClient=useQueryClient()
   const branch=selectedBranch?.run_id===runId?selectedBranch.branch_id:null
   const revision=params.get('revision'),explicitBranch=params.get('branch')
   const raw=params.get('season')
@@ -52,17 +54,31 @@ function HistoricalMatchReplay():JSX.Element{
   const ready=Boolean(branch&&explicitBranch===branch&&revision&&revision.trim()===revision
     &&season!==null&&season<=49&&linkedRally!==null&&eventId&&matchId&&time.mode==='present'
     &&!time.error&&!time.isLoading&&!isLoading&&!error)
+  const queryScope=['saved-tour-match-detail',runId,branch,revision,season,eventId,matchId]
   const q=useQuery({
-    queryKey:['saved-tour-match-detail',runId,branch,revision,season,eventId,matchId,offset],
+    queryKey:[...queryScope,offset],
     queryFn:()=>getSavedTourMatchDetail(runId,branch!,revision!,season!,eventId,matchId,offset,PAGE),
     enabled:ready,retry:false,
   })
   // Disabling a query does not clear React Query's previous cached data.
   // Never render historical sporting authority outside its verified time/context,
   // nor accept a response belonging to a different immutable revision or page.
-  const data=ready&&q.isSuccess&&!q.isFetching&&q.data&&validSavedTourMatchDetail(
+  const verified=ready&&q.isSuccess&&!q.isFetching&&q.data&&validSavedTourMatchDetail(
     q.data,runId,branch!,revision!,season!,eventId,matchId,offset,PAGE
   )?q.data:null
+  // Cross-page continuity can be proved without another request when the previous
+  // page is in this exact immutable source's cache. A direct rally-26 link still
+  // reads only the requested page: never fabricate absent earlier evidence.
+  const previous=offset>=PAGE?queryClient.getQueryData<SavedTourMatchDetail>(
+    [...queryScope,offset-PAGE]):undefined
+  const connected=!previous||(verified?.replay_status==='available'
+    &&previous.replay_status==='available'
+    &&validSavedTourMatchDetail(previous,runId,branch!,revision!,season!,eventId,matchId,
+      offset-PAGE,PAGE)
+    &&previous.rallies.length>0&&verified.rallies.length>0
+    &&validSavedTourRallyTransition(
+      previous.rallies[previous.rallies.length-1],verified.rallies[0]))
+  const data=connected?verified:null
   const invalid=Boolean(ready&&q.isSuccess&&!q.isFetching&&q.data&&!data)
   const frame=data?.rallies.find(r=>r.rally_index===index+1)
   const target=parseSavedReplayRally(rallyInput,data?.total_rallies??0)

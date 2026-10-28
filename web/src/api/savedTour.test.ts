@@ -1,5 +1,6 @@
 import {describe,it,expect} from 'vitest'
-import {matchesSavedTourContext,validSavedTourCalendar,validSavedTourEdition,validSavedTourMatchDetail} from './savedTour'
+import {matchesSavedTourContext,validSavedTourCalendar,validSavedTourEdition,validSavedTourMatchDetail,
+  validSavedTourRallyTransition} from './savedTour'
 import type {SavedTourCalendar,SavedTourEdition,SavedTourEvent,SavedTourMatchDetail} from './savedTour'
 const event:SavedTourEvent={event_id:'open',season:'2002/2003',season_week:12,
   event_name:'Open',template_id:'tpl',category:'DIAMOND',tour_level:'WORLD',
@@ -108,6 +109,22 @@ describe('strict Saved Tour response identity',()=>{
       {...source.matches[0],group_index:2}]}},'r','b','rev',2,'open')).toBe(false)
   })
 
+  it('verifies only adjacent real Saved frames across a 25-rally page boundary',()=>{
+    const prev={rally_index:25,set_number:1,server_player_id:'A',winner_player_id:'A',
+      score_a_before:24,score_b_before:0,score_a_after:25,score_b_after:0,
+      sets_a_after:0,sets_b_after:0,set_complete:false,match_complete:false}
+    const next={...prev,rally_index:26,score_a_before:25,score_a_after:26}
+    expect(validSavedTourRallyTransition(prev,next)).toBe(true)
+    expect(validSavedTourRallyTransition(prev,{...next,score_a_before:125})).toBe(false)
+    expect(validSavedTourRallyTransition(prev,{...next,rally_index:27})).toBe(false)
+    expect(validSavedTourRallyTransition({...prev,match_complete:true},next)).toBe(false)
+    const won={...prev,set_complete:true,sets_a_after:1}
+    const newGame={...next,set_number:2,score_a_before:0,score_a_after:1,sets_a_after:1}
+    expect(validSavedTourRallyTransition(won,newGame)).toBe(true)
+    expect(validSavedTourRallyTransition(won,{...newGame,score_a_before:1})).toBe(false)
+    expect(validSavedTourRallyTransition(won,{...newGame,set_number:3})).toBe(false)
+    expect(validSavedTourRallyTransition(won,next)).toBe(false)
+  })
   it('rejects stale, foreign and forged archived match pages',()=>{
     const data:SavedTourMatchDetail={
       schema_version:'run_saved_tour_match_detail.v1',

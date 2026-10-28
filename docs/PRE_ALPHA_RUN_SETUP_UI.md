@@ -29,7 +29,10 @@ not add a generator, a second readiness authority or a hidden Save.
    Working Draft over further apparent missing-Saved setup actions. This is a
    navigation recommendation, **not** a Save, an authorization or a claim that
    all world content must exist before unrelated operations.
-8. An all-optional/all-saved inspection no longer claims that every foundation
+8. The preparation phase links to the existing global Test Lab, which does not
+   require a Run. This does not create a parallel sporting world or authorize a
+   Run operation.
+9. An all-optional/all-saved inspection no longer claims that every foundation
    has been saved or that all sporting operations are ready. Each operation
    retains its own preflight and unsupported features stay unsupported.
 
@@ -38,7 +41,7 @@ not add a generator, a second readiness authority or a hidden Save.
 Focused React component regressions exercise rapid double-submit, rejected
 inventory refresh, navigation failure/repeated submission after success, unavailable localStorage,
 dirty-draft priority, all-optional Saved-inspection wording, and
-URL encoding of returned Run identifiers. A failed or unconfirmed create can
+URL encoding of returned Run identifiers and preparation-only Lab navigation. A failed or unconfirmed create can
 be retried; a server-confirmed create cannot. They mock the
 API boundary and are **not** production HTTP/SQLite or real-browser acceptance.
 

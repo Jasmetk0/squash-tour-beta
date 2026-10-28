@@ -605,6 +605,46 @@ describe('Run Home V1 canonical projections', () => {
     expect(screen.queryByText(/2 dokončených sezón/)).toBeNull()
   })
 
+  it('re-reads every simulation inspection after Saved HEAD changes, hiding earlier slot evidence', async () => {
+    const initial = {
+      run_id: runId, branch_id: branchId, display_name: 'Timeline 1',
+      status: 'active', saved_head_revision_id: 'saved-1',
+      head_checkpoint_id: 'cp-current', read_only: false, is_official: true
+    }
+    api.listRunBranches.mockResolvedValueOnce({ run_branches: [initial] })
+      .mockResolvedValue({ run_branches: [{ ...initial, saved_head_revision_id: 'saved-2' }] })
+    let resolveNewPosition!: (result: unknown) => void
+    api.getAuthoritativeSimulationPosition.mockResolvedValueOnce(refPosition())
+      .mockImplementationOnce(() => new Promise(done => { resolveNewPosition = done }))
+    function ReloadHead(): JSX.Element {
+      const client = useQueryClient()
+      return <button type="button" onClick={() => {
+        void client.invalidateQueries({ queryKey: ['admin-run-branches', runId] })
+      }}>Reload simulation HEAD</button>
+    }
+    renderRoute(
+      <LanguageProvider><AdminBranchProvider runId={runId}><AdminTimeProvider>
+        <ReloadHead /><RunPage />
+      </AdminTimeProvider></AdminBranchProvider></LanguageProvider>,
+      '/admin/runs/' + runId
+    )
+    expect(await screen.findByText('Hratelné zápasy: 2')).toBeVisible()
+    await waitFor(() => {
+      expect(api.getPendingAuthoritativeFullSimulations).toHaveBeenCalledTimes(1)
+      expect(api.getAuthoritativeFullSimulationHistory).toHaveBeenCalledTimes(1)
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Reload simulation HEAD' }))
+    await waitFor(() => {
+      expect(api.getAuthoritativeSimulationPosition).toHaveBeenCalledTimes(2)
+      expect(api.getPendingAuthoritativeFullSimulations).toHaveBeenCalledTimes(2)
+      expect(api.getAuthoritativeFullSimulationHistory).toHaveBeenCalledTimes(2)
+    })
+    expect(screen.queryByText('Hratelné zápasy: 2')).toBeNull()
+    resolveNewPosition(refPosition({ eligible_match_ids: ['new-match'] }))
+    expect(await screen.findByText('Hratelné zápasy: 1')).toBeVisible()
+    expect(screen.queryByText('Hratelné zápasy: 2')).toBeNull()
+  })
+
   it('does not count foreign pending operations or foreign Full Simulation history as this Branch', async () => {
     api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
       run_id: runId, branch_id: 'other-branch',

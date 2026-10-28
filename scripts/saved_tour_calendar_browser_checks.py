@@ -223,6 +223,21 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
     page.get_by_role("button", name="First rally").click()
     expect(page.get_by_text("Rally 1/", exact=False)).to_be_visible()
     assert "rally=" not in page.url, page.url
+    # A valid empty page beyond the archive must not poison the cached neighbor
+    # check after recovery to the first page and navigation to the real last page.
+    missing_rally = ((archived["total_rallies"] + 24) // 25) * 25 + 1
+    page.goto(page.url + "&rally=" + str(missing_rally))
+    expect(page.get_by_role("alert")).to_contain_text(
+        "Requested rally is outside this Saved archive."
+    )
+    page.get_by_role("button", name="Return to first rally").click()
+    expect(page.get_by_text("Rally 1/", exact=False)).to_be_visible()
+    page.get_by_role("button", name="Last rally").click()
+    expect(page.get_by_text(
+        "Rally " + str(archived["total_rallies"]) + "/", exact=False
+    )).to_be_visible()
+    page.get_by_role("button", name="First rally").click()
+    expect(page.get_by_text("Rally 1/", exact=False)).to_be_visible()
     # Lookup goes to published final placements in the same Saved Revision.
     # It must not silently constrain history to this event's host country/week.
     final_evidence = page.get_by_role(

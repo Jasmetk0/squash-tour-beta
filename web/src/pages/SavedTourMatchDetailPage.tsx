@@ -68,10 +68,13 @@ function HistoricalMatchReplay():JSX.Element{
   )?q.data:null
   // Verify cached neighboring pages in BOTH navigation directions. A direct
   // bookmark still fetches only its requested page, never hidden history.
-  const previous=offset>=PAGE?queryClient.getQueryData<SavedTourMatchDetail>(
+  // Empty out-of-range reads provide recovery UI, not neighboring rally events.
+  const previous=verified&&offset<verified.total_rallies&&offset>=PAGE
+    ?queryClient.getQueryData<SavedTourMatchDetail>(
     [...queryScope,offset-PAGE]):undefined
-  const following=queryClient.getQueryData<SavedTourMatchDetail>(
-    [...queryScope,offset+PAGE])
+  const following=verified&&offset+PAGE<verified.total_rallies
+    ?queryClient.getQueryData<SavedTourMatchDetail>(
+      [...queryScope,offset+PAGE]):undefined
   const connected=(!previous||Boolean(verified
     &&validSavedTourMatchDetail(previous,runId,branch!,revision!,season!,eventId,matchId,
       offset-PAGE,PAGE)

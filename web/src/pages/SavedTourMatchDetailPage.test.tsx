@@ -297,6 +297,17 @@ describe('exact historical Edition match replay',()=>{
       expect(screen.queryByRole('button',{name:'Next rally →'})).not.toBeInTheDocument()
     }
   )
+  it('recovers from a cached out-of-range page to the real final rally',async()=>{
+    mount(url+'&rally=51')
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Requested rally is outside this Saved archive.')
+    await userEvent.click(screen.getByRole('button',{name:'Return to first rally'}))
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Last rally'}))
+    expect(await screen.findByText('Rally 30/30')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail.mock.calls.map(call=>call[6])).toEqual([50,0,25])
+  })
   it('shows an honest absent-rally error for a valid but out-of-range bookmark',async()=>{
     mount(url+'&rally=90')
     expect(await screen.findByRole('alert')).toHaveTextContent(

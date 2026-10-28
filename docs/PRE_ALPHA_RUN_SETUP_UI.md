@@ -121,6 +121,14 @@ not add a generator, a second readiness authority or a hidden Save.
     idempotency guarantee.
 
 
+18. Both Run Home readiness refresh controls now re-fetch Run metadata,
+    selected-Branch Working Draft and the Saved-readiness DTO together. While
+    any dependency refresh remains in flight, the prior Saved card is hidden.
+    The changed frontend tests also exercise a delayed prior-Branch HTTP
+    response arriving after a Branch switch: it must remain in the old query
+    cache without contaminating the newly selected Branch's Saved evidence.
+    These are read-only inspections; no Save or sporting action is implied.
+
 ## Validation boundary
 
 Focused React component regressions exercise rapid double-submit, rejected

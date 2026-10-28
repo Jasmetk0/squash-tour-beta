@@ -134,6 +134,16 @@ describe('strict Saved Tour response identity',()=>{
     expect(valid({...data,has_more:true})).toBe(false)
     expect(valid({...data,player_a_id:'unknown'})).toBe(false)
     expect(valid({...data,offset:25})).toBe(false)
+    for(const bad of [
+      {...data.rallies[0],score_a_after:'1' as unknown as number},
+      {...data.rallies[0],score_b_before:-1},
+      {...data.rallies[0],sets_a_after:1.5},
+      {...data.rallies[0],set_complete:'false' as unknown as boolean},
+      {...data.rallies[0],match_complete:null as unknown as boolean},
+      {...data.rallies[0],set_number:0}
+    ])expect(valid({...data,rallies:[bad]})).toBe(false)
+    expect(valid({...data,match:{...data.match,round_number:0}})).toBe(false)
+    expect(valid({...data,match:{...data.match,scoreline:''}})).toBe(false)
   })
 
   it('validates explicit Run/selected Branch/revision/season and original ancestry owner',()=>{
@@ -183,6 +193,22 @@ describe('strict Saved Tour response identity',()=>{
     expect(valid({...edition,edition:{...winner,finalist_player_id:'P1'},published_result:result})).toBe(false)
     expect(valid({...edition,edition:winner,published_result:{
       ...result,matches:undefined as unknown as typeof result.matches
+    }})).toBe(false)
+    const match={match_id:'final',draw_type:'main',round_number:2,
+      bracket_position:1,winner_player_id:'P1',loser_player_id:'P2',scoreline:'3-1'}
+    const published=(matches:typeof match[])=>
+      valid({...edition,edition:winner,published_result:{...result,matches}})
+    expect(published([match])).toBe(true)
+    expect(published([match,match])).toBe(false)
+    expect(published([{...match,round_number:0}])).toBe(false)
+    expect(published([{...match,bracket_position:0}])).toBe(false)
+    expect(published([{...match,scoreline:''}])).toBe(false)
+    expect(published([{...match,winner_player_id:'',loser_player_id:'P2'}])).toBe(false)
+    expect(published([{...match,loser_player_id:'P1'}])).toBe(false)
+    expect(published([{...match,loser_player_id:null as unknown as string}])).toBe(true)
+    expect(valid({...edition,edition:winner,published_result:{
+      ...result,players:[{player_id:'P1',draw_type:'main',reached_stage:'champion',
+        wins:-1,losses:0}]
     }})).toBe(false)
   })
   it('rejects duplicates, invalid weeks and cross-season source rows',()=>{

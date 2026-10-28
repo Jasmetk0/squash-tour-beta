@@ -116,16 +116,21 @@ export function validSavedTourMatchDetail(
   data:SavedTourMatchDetail,runId:string,branchId:string,revisionId:string,
   seasonIndex:number,eventId:string,matchId:string,offset:number,limit:number
 ):boolean{
-  if(data.schema_version!=='run_saved_tour_match_detail.v1'
+  if(!data||data.schema_version!=='run_saved_tour_match_detail.v1'
     ||data.source!=='reachable_saved_revision'
     ||data.run_id!==runId||data.branch_id!==branchId
     ||!data.revision_branch_id||data.saved_revision_id!==revisionId
     ||data.season_index!==seasonIndex||data.event_id!==eventId
     ||data.match_id!==matchId||data.match?.match_id!==matchId
-    ||!data.match.winner_player_id||!data.match.loser_player_id
+    ||!['main','qualification','group','knockout'].includes(data.match.draw_type)
+    ||!Number.isSafeInteger(data.match.round_number)||data.match.round_number<1
+    ||!Number.isSafeInteger(data.match.bracket_position)||data.match.bracket_position<1
+    ||typeof data.match.scoreline!=='string'||!data.match.scoreline.trim()
+    ||typeof data.match.winner_player_id!=='string'||!data.match.winner_player_id.trim()
+    ||typeof data.match.loser_player_id!=='string'||!data.match.loser_player_id.trim()
     ||data.match.winner_player_id===data.match.loser_player_id
     ||data.offset!==offset||data.limit!==limit
-    ||!Number.isInteger(data.total_rallies)||data.total_rallies<0
+    ||!Number.isSafeInteger(data.total_rallies)||data.total_rallies<0
     ||!Array.isArray(data.rallies)||data.rallies.length>limit
     ||!['available','unavailable'].includes(data.replay_status)
     ||data.has_more!==(data.replay_status==='available'&&offset+limit<data.total_rallies))
@@ -138,9 +143,16 @@ export function validSavedTourMatchDetail(
     ||data.rallies.length!==Math.max(0,Math.min(limit,data.total_rallies-offset)))
     return false
   return data.rallies.every((frame,i)=>
-    frame.rally_index===offset+i+1&&frame.set_number>=1&&
-    [data.player_a_id,data.player_b_id].includes(frame.server_player_id)&&
-    (frame.winner_player_id===null||[data.player_a_id,data.player_b_id].includes(frame.winner_player_id))
+    frame!=null&&frame.rally_index===offset+i+1
+    &&Number.isSafeInteger(frame.set_number)&&frame.set_number>=1
+    &&(['score_a_before','score_b_before','score_a_after','score_b_after',
+      'sets_a_after','sets_b_after'] as const).every(key=>
+      Number.isSafeInteger(frame[key])&&frame[key]>=0)
+    &&typeof frame.set_complete==='boolean'&&typeof frame.match_complete==='boolean'
+    &&typeof frame.server_player_id==='string'
+    &&[data.player_a_id,data.player_b_id].includes(frame.server_player_id)
+    &&(frame.winner_player_id===null||typeof frame.winner_player_id==='string'
+      &&[data.player_a_id,data.player_b_id].includes(frame.winner_player_id))
   )
 }
 
@@ -216,6 +228,22 @@ export function validSavedTourEdition(
     &&result.champion_player_id!==result.finalist_player_id
     &&Array.isArray(result.players)&&Array.isArray(result.matches)
     &&Array.isArray(result.qualification_winner_ids)
+    &&result.qualification_winner_ids.every(id=>typeof id==='string'&&!!id.trim())
+    &&result.players.every(player=>player!=null
+      &&typeof player.player_id==='string'&&!!player.player_id.trim()
+      &&typeof player.reached_stage==='string'&&!!player.reached_stage.trim()
+      &&Number.isSafeInteger(player.wins)&&player.wins>=0
+      &&Number.isSafeInteger(player.losses)&&player.losses>=0)
+    &&new Set(result.matches.map(match=>match?.match_id)).size===result.matches.length
+    &&result.matches.every(match=>match!=null
+      &&typeof match.match_id==='string'&&!!match.match_id.trim()
+      &&['main','qualification','group','knockout'].includes(match.draw_type)
+      &&Number.isSafeInteger(match.round_number)&&match.round_number>=1
+      &&Number.isSafeInteger(match.bracket_position)&&match.bracket_position>=1
+      &&typeof match.winner_player_id==='string'&&!!match.winner_player_id.trim()
+      &&(match.loser_player_id===null||typeof match.loser_player_id==='string'
+        &&!!match.loser_player_id.trim()&&match.loser_player_id!==match.winner_player_id)
+      &&typeof match.scoreline==='string'&&!!match.scoreline.trim())
   if(!published)return false
   const entry=payload.entry_field,draw=payload.draw
   const owned=(value:{product_run_id:string;viewer_branch_id:string;event_id:string})=>

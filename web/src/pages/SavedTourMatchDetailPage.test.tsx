@@ -125,6 +125,18 @@ describe('exact historical Edition match replay',()=>{
     expect(await screen.findByRole('alert')).toHaveTextContent('does not match')
     expect(screen.queryByRole('button',{name:'Next rally →'})).not.toBeInTheDocument()
   })
+  it('refuses nonnumeric archived scores without rendering fabricated rally states',async()=>{
+    api.getSavedTourMatchDetail.mockResolvedValue({
+      ...fixture(0),rallies:[
+        {...fixture(0).rallies[0],score_a_after:'1'},
+        ...fixture(0).rallies.slice(1)
+      ]
+    })
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('does not match')
+    expect(screen.queryByText('Rally 1/30')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Jump to rally'})).not.toBeInTheDocument()
+  })
   it('never requests current saved HEAD for missing revision or checkpoint',()=>{
     state.mode='checkpoint'
     mount()

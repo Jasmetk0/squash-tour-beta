@@ -44,13 +44,25 @@ not add a generator, a second readiness authority or a hidden Save.
 9. An all-optional/all-saved inspection no longer claims that every foundation
    has been saved or that all sporting operations are ready. Each operation
    retains its own preflight and unsupported features stay unsupported.
+10. Expanded CS/EN Saved-readiness evidence: the six counts are identified
+    precisely as Run-owned World entities, Calendar entities (not Run time),
+    Saved initial-population players (not all historical players), Health
+    records (not match clearance), published ranking snapshots (not
+    candidates), and changes in this Branch Working Draft only. The five
+    backend statuses are explained without inventing an operation-wide block.
+    A clean Working Draft is named **clean**, not generally **saved**;
+    optional Health is not treated as universally ready. The checklist
+    remains collapsed by default, with read-only route-scoped repair links.
+    The original backend DTO/authority and operation preflights are unchanged.
 
 ## Validation boundary
 
 Focused React component regressions exercise rapid double-submit, rejected
 inventory refresh, navigation failure/repeated submission after success, unavailable localStorage,
 dirty-draft priority, all-optional Saved-inspection wording, and
-URL encoding of returned Run identifiers and preparation-only Lab navigation. An uncertain create can be retried **only after** a successful, matching-name
+URL encoding of returned Run identifiers, preparation-only Lab navigation,
+CS/EN evidence labels, candidate versus published ranking, clean Working
+Draft and encoded Run-scoped repair paths. An uncertain create can be retried **only after** a successful, matching-name
 inventory reconciliation with no matching Run. A server-confirmed create cannot
 be retried on the same form. The negative inventory result is point-in-time
 evidence, not a guarantee about a concurrently completing request. They mock the

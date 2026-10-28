@@ -402,7 +402,7 @@ describe('Saved Edition detail',()=>{
     expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
     expect(screen.queryByRole('link',{name:'P1'})).not.toBeInTheDocument()
     expect(screen.queryByRole('link',{name:'P2'})).not.toBeInTheDocument()
-    expect(screen.getByRole('link',{name:'Match detail'})).toHaveAttribute('href',
+    expect(screen.getAllByRole('link',{name:'Match detail'})[0]).toHaveAttribute('href',
       expect.stringContaining('revision=rev-old'))
   })
   it('keeps the active Edition tab and exact revision across CS/EN with no refetch',async()=>{

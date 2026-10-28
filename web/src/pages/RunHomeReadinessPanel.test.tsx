@@ -143,7 +143,7 @@ describe('saved Run readiness panel', () => {
     expect(screen.queryByRole('link', { name: 'Open global Test Lab' })).toBeNull()
   })
 
-  it('uses the Czech plural for five missing saved foundations', () => {
+  it('uses the Czech plural for five attention items including an unsaved draft', () => {
     mount('cs', {
       ...data,
       items: data.items.map(item => ({

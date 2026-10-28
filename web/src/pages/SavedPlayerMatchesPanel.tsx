@@ -33,6 +33,7 @@ function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, loca
   const queryText = params.get('careerQ') ?? ''
   const invalidUrl = season === null || page === null || outcome === null || completion === null ||
     queryText.length > 160
+  const missingScope = !runId || !branchId || !savedHead || !playerId
   const [pageInput, setPageInput] = useState('')
   const update = (updates: Record<string, string | null>) => {
     const copy = new URLSearchParams(params)
@@ -67,7 +68,7 @@ function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, loca
     queryKey: ['saved-player-matches', runId, branchId, savedHead, playerId, season, page],
     queryFn: () => getSavedPlayerMatchHistory(runId, branchId, playerId,
       season === 'all' ? null : Number(season), page! * CAREER_PAGE_SIZE, CAREER_PAGE_SIZE),
-    enabled: !invalidUrl && Boolean(runId && branchId && savedHead && playerId),
+    enabled: !invalidUrl && !missingScope,
     retry: false,
   })
   const scoped = !invalidUrl && q.isSuccess && !q.isFetching &&
@@ -107,12 +108,15 @@ function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, loca
       ? 'Neplatná sezona, stránka nebo filtr v odkazu. Žádná stránka nebyla načtena.'
       : 'Invalid career season, page or filter in the link. No page was loaded.'}{' '}
       <button type="button" onClick={resetInvalid}>{cs ? 'Platný výběr' : 'Reset to a valid selection'}</button></p>}
-    {!invalidUrl && (q.isPending || q.isFetching) && <p role="status">{cs ? 'Načítám zápasy…' : 'Loading matches…'}</p>}
+    {!invalidUrl && missingScope && <p role="alert">{cs
+      ? 'Chybí vybraná Branch, Saved HEAD nebo ověřené ID hráče.'
+      : 'Selected Branch, Saved HEAD or verified player ID is missing.'}</p>}
+    {!invalidUrl && !missingScope && (q.isPending || q.isFetching) && <p role="status">{cs ? 'Načítám zápasy…' : 'Loading matches…'}</p>}
     {!invalidUrl && q.error && <p role="alert" className="error">{cs
       ? 'Historie zápasů není dostupná.' : 'Match history is unavailable.'}</p>}
     {!invalidUrl && q.isSuccess && !q.isFetching && !scoped && <p role="alert" className="error">{cs
       ? 'Data patří jiné uložené revizi.' : 'Data does not match the selected Saved Revision.'}</p>}
-    <button type="button" disabled={invalidUrl || q.isFetching}
+    <button type="button" disabled={invalidUrl || missingScope || q.isFetching}
       onClick={() => { void q.refetch() }}>{cs ? 'Obnovit kariéru' : 'Retry career read'}</button>
     {data?.status === 'identity_unavailable' && <p className="status">{cs
       ? 'Bez ověřené identity nelze zobrazit zápasovou kariéru.'

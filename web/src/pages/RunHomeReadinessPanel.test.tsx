@@ -183,9 +183,9 @@ describe('saved Run readiness panel', () => {
     expect(screen.getByText('Pouze návrh · Publikace rankingu: 0')).toBeVisible()
     expect(screen.getByText('Neuloženo · Nevyřízené změny: 1')).toBeVisible()
     expect(screen.getByText(/kandidátní pořadí není publikované/)).toBeVisible()
-    expect(screen.getByText(/Změny dosud nejsou součástí Saved Revision/)).toBeVisible()
+    expect(screen.getByText(/změny dosud nejsou součástí Saved Revision/)).toBeVisible()
     expect(screen.getByText(/Jde jen o uloženou počáteční populaci/)).toBeVisible()
-    expect(screen.getByText(/nejde o nastavení počtu týdnů Runu/)).toBeVisible()
+    expect(screen.getByText(/nikoliv nastavení počtu týdnů Runu/)).toBeVisible()
   })
 
   it('keeps read-only repair links scoped to the encoded selected Run ID', () => {

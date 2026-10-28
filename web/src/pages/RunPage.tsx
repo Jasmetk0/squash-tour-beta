@@ -152,19 +152,19 @@ export function RunPage(): JSX.Element {
     retry: false
   })
   const positionQuery = useQuery({
-    queryKey: ['authoritative-simulation-position', runId, branchId],
+    queryKey: ['authoritative-simulation-position', runId, branchId, selectedBranch?.saved_head_revision_id],
     queryFn: () => getAuthoritativeSimulationPosition(runId, branchId!),
     enabled: ready,
     retry: false
   })
   const pendingQuery = useQuery({
-    queryKey: ['authoritative-pending-full-simulations', runId, branchId],
+    queryKey: ['authoritative-pending-full-simulations', runId, branchId, selectedBranch?.saved_head_revision_id],
     queryFn: () => getPendingAuthoritativeFullSimulations(runId, branchId!),
     enabled: ready,
     retry: false
   })
   const simulationHistoryQuery = useQuery({
-    queryKey: ['authoritative-full-simulation-history', runId, branchId],
+    queryKey: ['authoritative-full-simulation-history', runId, branchId, selectedBranch?.saved_head_revision_id],
     queryFn: () => getAuthoritativeFullSimulationHistory(runId, branchId!),
     enabled: ready,
     retry: false
@@ -266,10 +266,21 @@ export function RunPage(): JSX.Element {
     ])
   }
   const readinessRefreshing = readinessQuery.isFetching || readinessDependenciesLoading
-  const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
-  const pending = pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId ? pendingQuery.data : null
-  const simulationHistory = simulationHistoryQuery.data?.run_id === runId && simulationHistoryQuery.data.branch_id === branchId
-    ? simulationHistoryQuery.data.items : null
+  // Position, pending operations and simulation history change independently of
+  // Run Home readiness. A failed background refresh may retain a successful
+  // old snapshot; only a settled, matching response can be presented.
+  const positionValid = positionQuery.isSuccess && !positionQuery.isFetching
+    && positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId
+  const pendingValid = pendingQuery.isSuccess && !pendingQuery.isFetching
+    && pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId
+  const simulationHistoryValid = simulationHistoryQuery.isSuccess && !simulationHistoryQuery.isFetching
+    && simulationHistoryQuery.data?.run_id === runId && simulationHistoryQuery.data.branch_id === branchId
+  const position = positionValid ? positionQuery.data! : null
+  const pending = pendingValid ? pendingQuery.data! : null
+  const simulationHistory = simulationHistoryValid ? simulationHistoryQuery.data!.items : null
+  const pendingMismatch = pendingQuery.isSuccess && !pendingQuery.isFetching && !pendingValid
+  const simulationHistoryMismatch = simulationHistoryQuery.isSuccess
+    && !simulationHistoryQuery.isFetching && !simulationHistoryValid
   // A saved-history response is authoritative for one HEAD only. Never
   // show cached older-HEAD entries when the selected Branch has advanced.
   const revisionsValid = revisionsQuery.isSuccess && !revisionsQuery.isFetching
@@ -305,7 +316,10 @@ export function RunPage(): JSX.Element {
     packageQuery.error ? formatApiError(packageQuery.error) : null,
     packageMismatch ? packageMismatchMessage : null,
     positionQuery.error && !isApiNotFound(positionQuery.error) ? formatApiError(positionQuery.error) : null,
+    positionQuery.isSuccess && !positionQuery.isFetching && !positionValid
+      ? 'Simulation position identity mismatch' : null,
     pendingQuery.error && !isApiNotFound(pendingQuery.error) ? formatApiError(pendingQuery.error) : null,
+    pendingMismatch ? 'Pending Full Simulation identity mismatch' : null,
     revisionsQuery.error ? formatApiError(revisionsQuery.error) : null,
     revisionsMismatch ? revisionsMismatchMessage : null,
     homeActivityQuery.error ? formatApiError(homeActivityQuery.error) : null,
@@ -317,6 +331,7 @@ export function RunPage(): JSX.Element {
     identitiesQuery.error ? formatApiError(identitiesQuery.error) : null,
     identitiesMismatch ? 'Saved player identities do not match selected Branch HEAD.' : null,
     simulationHistoryQuery.error && !isApiNotFound(simulationHistoryQuery.error) ? formatApiError(simulationHistoryQuery.error) : null,
+    simulationHistoryMismatch ? 'Full Simulation history identity mismatch' : null,
   ].filter((value): value is string => Boolean(value))
   const blockers = position?.transition_blockers ?? []
   const pendingCount = pending?.operations.length ?? 0
@@ -403,7 +418,7 @@ export function RunPage(): JSX.Element {
           {packageMismatch && <Unavailable message={packageMismatchMessage} />}
           {packageVerified && ownedPackages === null && <p>{l.initial}</p>}
           {noConfirmedPosition && ownedPackages !== null && <p>{l.notPositioned}</p>}
-          {positionQuery.isPending && <p role="status">{l.loading}</p>}
+          {(positionQuery.isPending || positionQuery.isFetching) && <p role="status">{l.loading}</p>}
           {homeActivity && homeActivity.calendar_status === 'ready' && homeActivity.upcoming.length > 0 && <div>
             <h4>{l.upcomingEvents}</h4>
             <ul className="run-home-feed" aria-label={language === 'cs' ? 'Nadcházející uložené turnaje' : 'Upcoming saved tournaments'}>
@@ -428,10 +443,12 @@ export function RunPage(): JSX.Element {
             {position.week_ready_for_transition && <p>{language === 'cs' ? 'Týden je připravený k přechodu.' : 'Week is ready for transition.'}</p>}
           </div>}
           {positionQuery.isError && !isApiNotFound(positionQuery.error) && <Unavailable message={formatApiError(positionQuery.error)} />}
-          {positionQuery.isSuccess && !position && <Unavailable message="Simulation position identity mismatch" />}
+          {positionQuery.isSuccess && !positionQuery.isFetching && !position &&
+            <Unavailable message="Simulation position identity mismatch" />}
           {pending && pendingCount > 0 && <p>{l.waiting}: <strong>{pendingCount}</strong></p>}
-          {pendingQuery.isPending && <p role="status">{l.loading}</p>}
+          {(pendingQuery.isPending || pendingQuery.isFetching) && <p role="status">{l.loading}</p>}
           {pendingQuery.isError && !isApiNotFound(pendingQuery.error) && <Unavailable message={formatApiError(pendingQuery.error)} />}
+          {pendingMismatch && <Unavailable message="Pending Full Simulation identity mismatch" />}
           {positionQuery.isError && isApiNotFound(positionQuery.error) && !packageQuery.isSuccess && <p className="status">{l.noSport}</p>}
         </>}
         <div className="actions"><Link className="button-link" to={base + '/simulate'}>{l.continue} →</Link>
@@ -444,7 +461,7 @@ export function RunPage(): JSX.Element {
         {blockers.map((blocker, i) => <p key={i} className="error">{blocker} · <Link to={base + '/simulate'}>{l.continue} →</Link></p>)}
         {position && position.blocked_match_ids.length > 0 && <p className="error">{language === 'cs' ? 'Blokované zápasy' : 'Blocked matches'}: {position.blocked_match_ids.length} · <Link to={base + '/simulate'}>{l.continue} →</Link></p>}
         {pending && pendingCount > 0 && <p>{l.waiting}: {pendingCount} · <Link to={base + '/simulate'}>{l.continue} →</Link></p>}
-        {ready && statusErrors.length === 0 && blockers.length === 0 && position?.blocked_match_ids.length === 0 && !draftQuery.isPending && draft?.status !== 'dirty' && pendingQuery.isSuccess && pendingCount === 0
+        {ready && statusErrors.length === 0 && blockers.length === 0 && position?.blocked_match_ids.length === 0 && draftQuery.isSuccess && !draftQuery.isFetching && draft?.status === 'clean' && pendingValid && pendingCount === 0
           ? <p className="status">{l.noIssues}</p>
           : statusErrors.length === 0 && ready && !position && !emptyRun ? <p className="status">{l.noAttention}</p> : null}
         <Link to={base + '/diagnostics'}>{language === 'cs' ? 'Otevřít diagnostiku' : 'Open diagnostics'} →</Link>
@@ -486,9 +503,10 @@ export function RunPage(): JSX.Element {
       {ready && (revisionsQuery.isPending || revisionsQuery.isFetching) && <p role="status">{l.loading}</p>}
       {ready && revisionsQuery.isError && <Unavailable message={formatApiError(revisionsQuery.error)} />}
       {ready && revisionsMismatch && <Unavailable message={revisionsMismatchMessage} />}
-      {ready && simulationHistoryQuery.isPending && <p role="status">{l.loading}</p>}
+      {ready && (simulationHistoryQuery.isPending || simulationHistoryQuery.isFetching) && <p role="status">{l.loading}</p>}
       {ready && simulationHistoryQuery.isError && !isApiNotFound(simulationHistoryQuery.error) &&
         <Unavailable message={formatApiError(simulationHistoryQuery.error)} />}
+      {ready && simulationHistoryMismatch && <Unavailable message="Full Simulation history identity mismatch" />}
       {ready && simulationHistory && simulationHistory.length > 0 && <div className="run-home-status-block">
         <h4>{language === 'cs' ? 'Poslední plná simulace' : 'Latest full simulation'}</h4>
         {(() => {

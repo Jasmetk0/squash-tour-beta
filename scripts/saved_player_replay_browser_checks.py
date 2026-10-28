@@ -83,7 +83,9 @@ def verify_saved_player_replay(page, run_url, artifacts, port, prefix="", expect
     expect(page.get_by_role("heading", name="Match career")).to_be_visible()
     # The replay link carries the career return context. Keep the exact match
     # identity check, including the new query, rather than using a broad prefix.
-    link = page.locator('a[href="' + match_route + '?tab=career"]')
+    linked_match_route = (match_route + "?tab=career&replayBranch=" + quote(branch_id, safe="") +
+                          "&replayHead=" + quote(first["saved_revision_id"], safe=""))
+    link = page.locator('a[href="' + linked_match_route + '"]')
     expect(link).to_have_count(1)
     link.click()
     expect(page.get_by_role("heading", name="Match detail")).to_be_visible()
@@ -93,13 +95,48 @@ def verify_saved_player_replay(page, run_url, artifacts, port, prefix="", expect
         page.get_by_role("button", name="Next rally →").click()
         expect(page.get_by_text(f"Rally {index+1}/{total}", exact=False)).to_be_visible()
     page.screenshot(path=str(artifacts / f"{prefix}07-player-replay-page2.png"), full_page=True)
+    # Rally 26 survives a real Chromium refresh, at its exact Saved HEAD.
     page.reload()
     expect(page.get_by_role("heading", name="Match detail")).to_be_visible()
+    expect(page.get_by_text(f"Rally 26/{total}", exact=False)).to_be_visible()
+    page.get_by_role("button", name="Last rally").click()
+    expect(page.get_by_text(f"Rally {total}/{total}", exact=False)).to_be_visible()
+    page.get_by_text("Browse archived rallies", exact=False).click()
+    expect(page.get_by_role("button", name=f"Rally {total} ·", exact=False)).to_have_attribute("aria-current", "step")
+    page.get_by_role("spinbutton", name="Archived rally number").fill("2")
+    page.get_by_role("button", name="Jump to rally").click()
+    expect(page.get_by_text(f"Rally 2/{total}", exact=False)).to_be_visible()
+    page.get_by_role("button", name="First rally").click()
     expect(page.get_by_text(f"Rally 1/{total}", exact=False)).to_be_visible()
+    # Test an actual out-of-range HTTP read, then first -> last. Empty data from
+    # beyond the end must not be considered an adjacent archived page (#1651).
+    page.goto(base + linked_match_route + f"&rally={total+50}")
+    expect(page.get_by_text("Requested rally does not exist in this archive.", exact=False)).to_be_visible()
+    page.get_by_role("button", name="First valid rally").click()
+    expect(page.get_by_text(f"Rally 1/{total}", exact=False)).to_be_visible()
+    page.get_by_role("button", name="Last rally").click()
+    expect(page.get_by_text(f"Rally {total}/{total}", exact=False)).to_be_visible()
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("cs")
+    expect(page.get_by_text(f"Výměna {total}/{total}", exact=False)).to_be_visible()
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+    expect(page.get_by_text(f"Rally {total}/{total}", exact=False)).to_be_visible()
     page.get_by_role("link", name="← Back to player profile").click()
     expect(page).to_have_url(base + player_route + "?tab=career")
     expect(page.get_by_role("tab", name="Career & results")).to_have_attribute("aria-selected", "true")
     expect(page.get_by_role("heading", name="Match career")).to_be_visible()
+    # Local career search/filter and source-bound return context, with real
+    # production HTTP/SQLite; no mutation or simulation is dispatched.
+    page.get_by_role("textbox", name="Search loaded page").fill(match_id)
+    page.get_by_role("combobox", name="Filter wins and losses").select_option("win")
+    page.get_by_role("combobox", name="Filter played and walkovers").select_option("played")
+    filtered_link = page.locator('a[href^="' + linked_match_route + '&careerOutcome=win&careerCompletion=played&careerQ="]')
+    expect(filtered_link).to_have_count(1)
+    filtered_link.click()
+    expect(page.get_by_role("heading", name="Match detail")).to_be_visible()
+    page.get_by_role("link", name="← Back to player profile").click()
+    expect(page.get_by_role("textbox", name="Search loaded page")).to_have_value(match_id)
+    expect(page.get_by_role("combobox", name="Filter wins and losses")).to_have_value("win")
+    expect(page.get_by_role("combobox", name="Filter played and walkovers")).to_have_value("played")
     return dict(run_id=run_id, branch_id=branch_id,
                 saved_revision_id=first["saved_revision_id"], event_id=event_id,
                 player_id=player_id, match_id=match_id, scoreline=final["scoreline"],
@@ -176,10 +213,21 @@ def verify_materialized_branch_fork_replay(page, run_url, artifacts, port, sourc
     page.get_by_role("tab", name="Career & results").click()
     expect(page.get_by_role("heading", name="Match career")).to_be_visible()
     match_route = profile + "/matches/" + quote(source["event_id"], safe="") + "/" + quote(source["match_id"], safe="")
-    page.locator('a[href="' + match_route + '?tab=career"]').click()
+    page.locator('a[href="' + match_route + '?tab=career&replayBranch=' +
+                 quote(fork_id, safe="") + '&replayHead=' +
+                 quote(fork["saved_head_revision_id"], safe="") + '"]').click()
     expect(page.get_by_role("heading", name="Match detail")).to_be_visible()
     expect(page.get_by_text(f'Rally 1/{target["total_rallies"]}', exact=False)).to_be_visible()
     page.screenshot(path=str(artifacts / f"{prefix}08-forked-saved-replay.png"), full_page=True)
+    # An original Branch/HEAD bookmark must fail closed after switching to the
+    # fork even though the fork contains an identical stored match.
+    old_link = (match_route + "?tab=career&replayBranch=" +
+                quote(source_branch, safe="") + "&replayHead=" +
+                quote(source["saved_revision_id"], safe="") + "&rally=26")
+    page.goto(base + old_link)
+    expect(page.get_by_text("This link belongs to a different Branch or Saved HEAD.", exact=False)).to_be_visible()
+    page.get_by_role("button", name="Open current Saved HEAD").click()
+    expect(page.get_by_text(f'Rally 1/{target["total_rallies"]}', exact=False)).to_be_visible()
     return dict(
         source_branch_id=source_branch, target_branch_id=fork_id,
         source_revision_id=original["saved_revision_id"],

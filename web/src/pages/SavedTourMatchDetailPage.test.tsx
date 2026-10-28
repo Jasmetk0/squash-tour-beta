@@ -176,7 +176,9 @@ describe('exact historical Edition match replay',()=>{
     expect(screen.getByRole('button',{name:'Last rally'})).toBeDisabled()
     await userEvent.click(screen.getByRole('button',{name:'First rally'}))
     expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
-    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)
+    // A previously visited page may be independently revalidated by React Query.
+    expect(api.getSavedTourMatchDetail).toHaveBeenLastCalledWith(
+      'run-a','branch-a','old-rev',2,'event-x','final',0,25)
     expect(screen.getByRole('link',{name:'Back to Edition results'})).toHaveAttribute(
       'href',expect.stringContaining('revision=old-rev'))
   })

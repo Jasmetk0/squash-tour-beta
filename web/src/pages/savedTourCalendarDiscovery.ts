@@ -65,6 +65,23 @@ export function publishedFinalFinishes(editions:readonly SavedTourEvent[]):Publi
     ||b.runnerUpFinishes-a.runnerUpFinishes||a.playerId.localeCompare(b.playerId))
 }
 
+/** Build a same-Saved-season final-results search, never a current-HEAD career link.
+ * Edition/Match filters from the originating page must not silently hide results. */
+export function savedSeasonFinalLookupHref(
+  runId:string,branch:string,revision:string,season:number,playerId:string,params:URLSearchParams
+):string{
+  const copy=new URLSearchParams(params)
+  for(const key of ['tab','matchSearch','week','tour','category','country','eventSearch',
+    'playerOutcome','fromCountry'])copy.delete(key)
+  copy.set('branch',branch)
+  copy.set('revision',revision)
+  copy.set('season',String(season))
+  copy.set('view','list')
+  copy.set('publication','published')
+  copy.set('playerId',playerId)
+  return '/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar?'+copy.toString()
+}
+
 /** Invalid deep links never silently fall back to the whole historical season. */
 export function savedCalendarWeek(raw:string|null,weekCount:number):number|null|'invalid'{
   if(raw===null)return null

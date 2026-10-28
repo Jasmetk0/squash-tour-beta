@@ -2,7 +2,7 @@ import {describe,expect,it} from 'vitest'
 import type {SavedTourEvent} from '../api/savedTour'
 import {calendarWeeksWithEditions,filterSavedTourEvents,neighboringMatchingWeeks,
   savedCalendarPublication,savedCalendarPlayerOutcome,savedCalendarWeek,
-  publishedFinalFinishes} from './savedTourCalendarDiscovery'
+  publishedFinalFinishes,savedSeasonFinalLookupHref} from './savedTourCalendarDiscovery'
 
 function event(id:string,week:number,overrides:Partial<SavedTourEvent>={}):SavedTourEvent{
   return {event_id:id,event_name:id,season:'2002/2003',season_week:week,template_id:'tpl',
@@ -108,6 +108,19 @@ describe('Saved Tour discovery is a pure read-only projection',()=>{
     ])
     expect(publishedFinalFinishes(entries.slice(3,5))).toEqual([])
     expect(JSON.stringify(entries)).toBe(original)
+  })
+
+  it('pins lookup to the exact historical source, excludes incompatible filters',()=>{
+    const input=new URLSearchParams('branch=foreign&revision=head&season=33&tab=results&matchSearch=old&week=5&country=EGY&eventSearch=other&playerOutcome=champion&fromCountry=unsafe&q=keep')
+    const unchanged=input.toString()
+    const url=savedSeasonFinalLookupHref('run/A','branch-old','rev-old',2,'P&1',input)
+    expect(url).toContain('/admin/runs/run%2FA/tour/calendar?')
+    const query=new URL(url,'https://squash.invalid').searchParams
+    expect(Object.fromEntries(query)).toMatchObject({branch:'branch-old',revision:'rev-old',
+      season:'2',playerId:'P&1',publication:'published',view:'list',q:'keep'})
+    for(const key of ['tab','matchSearch','week','tour','category','country',
+      'eventSearch','playerOutcome','fromCountry'])expect(query.has(key)).toBe(false)
+    expect(input.toString()).toBe(unchanged)
   })
 
   it('preserves original week order and simultaneous editions when hiding empty weeks',()=>{

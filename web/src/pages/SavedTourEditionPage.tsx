@@ -11,6 +11,7 @@ import {formatApiError} from '../utils/apiErrors'
 import type {SavedTourDrawBracket,SavedTourScheduledMatch} from '../api/savedTour'
 import {verifiedCountryReturn} from './runWorldCountryTournaments'
 import {filterSavedEditionMatches} from './savedEditionResultDiscovery'
+import {savedSeasonFinalLookupHref} from './savedTourCalendarDiscovery'
 
 type Tab='overview'|'entries'|'draw'|'schedule'|'results'|'settings'
 const tabs:Tab[]=['overview','entries','draw','schedule','results','settings']
@@ -69,6 +70,7 @@ export function SavedTourEditionPage():JSX.Element {
   const labels=cs?['Přehled','Přihlášky a účastníci','Pavouk / skupiny','Program a zápasy','Výsledky','Nastavení']:
     ['Overview','Entries & participants','Draw / groups','Schedule & matches','Results','Settings']
   const e=model?.edition,result=model?.published_result
+  const finalLookup=(id:string)=>savedSeasonFinalLookupHref(runId,branch!,revision!,season!,id,params)
   const entry=model?.entry_field,draw=model?.draw
   const schedule=model?.match_schedule
   const groupSchedule=model?.group_schedule
@@ -257,6 +259,13 @@ export function SavedTourEditionPage():JSX.Element {
           'Authoritative lifecycle status: unavailable. A calendar label is not proof of results.'}</p>
         {result&&<p>{cs?'Vítěz':'Champion'}: {playerRef(result.champion_player_id)}
           {' · '}{cs?'Finalista':'Finalist'}: {playerRef(result.finalist_player_id)}</p>}
+        {result&&<p>{cs?'Finálová umístění v této Saved sezoně':'Final finishes in this Saved season'}:
+          {' '}<Link to={finalLookup(result.champion_player_id)}
+            aria-label={(cs?'Dohledat publikovaná finále hráče ':'Find published finals for ')+result.champion_player_id}>
+            {result.champion_player_id}</Link>
+          {' · '}<Link to={finalLookup(result.finalist_player_id)}
+            aria-label={(cs?'Dohledat publikovaná finále hráče ':'Find published finals for ')+result.finalist_player_id}>
+            {result.finalist_player_id}</Link></p>}
         {!result&&<p>{cs?'V této revizi není publikován kanonický výsledek.':
           'No canonical result was published in this revision.'}</p>}
       </section>}

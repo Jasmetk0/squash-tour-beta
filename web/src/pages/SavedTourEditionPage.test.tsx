@@ -191,6 +191,21 @@ describe('Saved Edition detail',()=>{
     expect(screen.queryByRole('link',{name:/Back to country tournaments/})).not.toBeInTheDocument()
     expect(screen.getByRole('link',{name:/Back to calendar/})).toBeInTheDocument()
   })
+  it('offers historical champion/finalist lookup without using current-HEAD careers',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(fixture(true))
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&tab=overview&country=CZE&week=5&eventSearch=other&q=keep')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'P1'})).not.toBeInTheDocument()
+    for(const id of ['P1','P2']){
+      const link=screen.getByRole('link',{name:'Find published finals for '+id})
+      const href=link.getAttribute('href')!
+      for(const x of ['revision=rev-old','branch=branch-a','season=2','publication=published','q=keep','playerId='+id])
+        expect(href).toContain(x)
+      expect(href).not.toContain('week=5')
+      expect(href).not.toContain('country=CZE')
+    }
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
   it('shows real saved results in Main then Qualification; draw-only phase switch',async()=>{
     api.getSavedTourEdition.mockResolvedValue(fixture(true))
     mount()

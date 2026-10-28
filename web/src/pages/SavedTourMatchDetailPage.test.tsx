@@ -149,6 +149,19 @@ describe('exact historical Edition match replay',()=>{
     expect(back).toHaveAttribute('href',expect.stringContaining('view=list'))
     expect(back).toHaveAttribute('href',expect.stringContaining('country=CZE'))
   })
+  it('links historical participants to published finals of their exact Saved season',async()=>{
+    mount('/admin/runs/run-a/tour/calendar/event-x/matches/final?branch=branch-a&revision=old-rev&season=2&tab=results&matchSearch=A&week=9&country=CZE&q=keep')
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'A'})).not.toBeInTheDocument()
+    for(const id of ['A','B']){
+      const link=screen.getByRole('link',{name:'Find published finals for '+id})
+      const href=link.getAttribute('href')!
+      for(const x of ['revision=old-rev','branch=branch-a','season=2','publication=published','view=list','q=keep','playerId='+id])
+        expect(href).toContain(x)
+      for(const x of ['week=9','country=CZE','matchSearch'])expect(href).not.toContain(x)
+    }
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+  })
   it('opens current player careers only when match is from the selected Saved HEAD',async()=>{
     state.branch.saved_head_revision_id='old-rev'
     mount()

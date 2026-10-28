@@ -11,7 +11,7 @@ import {formatApiError} from '../utils/apiErrors'
 import type {SavedTourDrawBracket,SavedTourScheduledMatch} from '../api/savedTour'
 import {verifiedCountryReturn} from './runWorldCountryTournaments'
 import {filterSavedEditionMatches} from './savedEditionResultDiscovery'
-import {savedSeasonFinalLookupHref} from './savedTourCalendarDiscovery'
+import {SavedFinalLookupLink,SavedPlayerProfileLink} from './savedTourPlayerLinks'
 
 type Tab='overview'|'entries'|'draw'|'schedule'|'results'|'settings'
 const tabs:Tab[]=['overview','entries','draw','schedule','results','settings']
@@ -70,7 +70,6 @@ export function SavedTourEditionPage():JSX.Element {
   const labels=cs?['Přehled','Přihlášky a účastníci','Pavouk / skupiny','Program a zápasy','Výsledky','Nastavení']:
     ['Overview','Entries & participants','Draw / groups','Schedule & matches','Results','Settings']
   const e=model?.edition,result=model?.published_result
-  const finalLookup=(id:string)=>savedSeasonFinalLookupHref(runId,branch!,revision!,season!,id,params)
   const entry=model?.entry_field,draw=model?.draw
   const schedule=model?.match_schedule
   const groupSchedule=model?.group_schedule
@@ -82,9 +81,8 @@ export function SavedTourEditionPage():JSX.Element {
   // Historical Saved Editions must not link to a *current* player profile.
   const sameHead=Boolean(revision&&selectedBranch?.saved_head_revision_id===revision
     &&selectedBranch?.run_id===runId)
-  const playerRef=(id:string)=>sameHead?
-    <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/people/'+
-      encodeURIComponent(id)+'?tab=career'}>{id}</Link>:id
+  const playerRef=(id:string)=><SavedPlayerProfileLink runId={runId} playerId={id}
+    showCurrent={sameHead}/>
   const main=matches.filter(m=>m.draw_type!=='qualification')
   const qualification=matches.filter(m=>m.draw_type==='qualification')
   const matchSearch=params.get('matchSearch')??''
@@ -260,12 +258,10 @@ export function SavedTourEditionPage():JSX.Element {
         {result&&<p>{cs?'Vítěz':'Champion'}: {playerRef(result.champion_player_id)}
           {' · '}{cs?'Finalista':'Finalist'}: {playerRef(result.finalist_player_id)}</p>}
         {result&&<p>{cs?'Finálová umístění v této Saved sezoně':'Final finishes in this Saved season'}:
-          {' '}<Link to={finalLookup(result.champion_player_id)}
-            aria-label={(cs?'Dohledat publikovaná finále hráče ':'Find published finals for ')+result.champion_player_id}>
-            {result.champion_player_id}</Link>
-          {' · '}<Link to={finalLookup(result.finalist_player_id)}
-            aria-label={(cs?'Dohledat publikovaná finále hráče ':'Find published finals for ')+result.finalist_player_id}>
-            {result.finalist_player_id}</Link></p>}
+          {' '}<SavedFinalLookupLink runId={runId} branch={branch!} revision={revision!}
+            season={season!} playerId={result.champion_player_id} params={params} cs={cs}/>
+          {' · '}<SavedFinalLookupLink runId={runId} branch={branch!} revision={revision!}
+            season={season!} playerId={result.finalist_player_id} params={params} cs={cs}/></p>}
         {!result&&<p>{cs?'V této revizi není publikován kanonický výsledek.':
           'No canonical result was published in this revision.'}</p>}
       </section>}

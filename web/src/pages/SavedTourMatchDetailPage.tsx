@@ -9,7 +9,7 @@ import {useAdminTime} from '../admin/AdminTimeContext'
 import {useLanguage} from '../i18n/LanguageContext'
 import {formatApiError} from '../utils/apiErrors'
 import {parseSavedReplayRally} from './savedReplayNavigation'
-import {savedSeasonFinalLookupHref} from './savedTourCalendarDiscovery'
+import {SavedFinalLookupLink,SavedPlayerProfileLink} from './savedTourPlayerLinks'
 
 const PAGE=25
 export function SavedTourMatchDetailPage():JSX.Element{
@@ -56,10 +56,8 @@ function HistoricalMatchReplay():JSX.Element{
   // Player profile is current-HEAD-only. Never substitute it for a prior Saved match.
   const sameHead=Boolean(data&&revision&&selectedBranch?.run_id===runId
     &&selectedBranch?.saved_head_revision_id===revision)
-  const participant=(id:string)=>sameHead?
-    <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/people/'+
-      encodeURIComponent(id)+'?tab=career'}>{id}</Link>:id
-  const finalLookup=(id:string)=>savedSeasonFinalLookupHref(runId,branch!,revision!,season!,id,params)
+  const participant=(id:string)=><SavedPlayerProfileLink runId={runId} playerId={id}
+    showCurrent={sameHead}/>
   const parentParams=new URLSearchParams(params)
   // Preserve the actual originating Edition section, including Draw / groups.
   // Results is only the safe fallback for an absent/invalid section marker.
@@ -105,12 +103,10 @@ function HistoricalMatchReplay():JSX.Element{
         {' '}<code>{data.revision_branch_id}</code></p>
       <p>{cs?'Doložená finálová umístění v této sezoně, pokud existují':
         'Published final finishes in this season, if any'}:
-        {' '}<Link to={finalLookup(data.match.winner_player_id)}
-          aria-label={(cs?'Dohledat publikovaná finále hráče ':'Find published finals for ')+data.match.winner_player_id}>
-          {data.match.winner_player_id}</Link>
-        {' · '}<Link to={finalLookup(data.match.loser_player_id!)}
-          aria-label={(cs?'Dohledat publikovaná finále hráče ':'Find published finals for ')+data.match.loser_player_id}>
-          {data.match.loser_player_id}</Link></p>
+        {' '}<SavedFinalLookupLink runId={runId} branch={branch!} revision={revision!}
+          season={season!} playerId={data.match.winner_player_id} params={params} cs={cs}/>
+        {' · '}<SavedFinalLookupLink runId={runId} branch={branch!} revision={revision!}
+          season={season!} playerId={data.match.loser_player_id!} params={params} cs={cs}/></p>
     </div>
     <h3>{cs?'Archivovaný průběh výměn':'Archived rally replay'}</h3>
     {data.replay_status==='unavailable'&&<p role="status">{cs?

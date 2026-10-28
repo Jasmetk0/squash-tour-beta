@@ -3,7 +3,7 @@
 import {render,screen,within} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query'
-import {MemoryRouter,Route,Routes,useLocation} from 'react-router-dom'
+import {MemoryRouter,Route,Routes,useLocation,useNavigate} from 'react-router-dom'
 import {beforeEach,describe,expect,it,vi} from 'vitest'
 import type {SavedTourCalendar,SavedTourEdition,SavedTourMatchDetail,SavedTourEvent} from '../api/savedTour'
 import {SavedTourCalendarPage} from './SavedTourCalendarPage'
@@ -77,8 +77,23 @@ function match(offset:number):SavedTourMatchDetail{
     rallies:frames.slice(offset,offset+25)}
 }
 function RouteLocation():JSX.Element{
-  const location=useLocation()
-  return <output data-testid="journey-route">{location.pathname+location.search}</output>
+  const location=useLocation(),navigate=useNavigate()
+  const move=(revision:string,branch:string)=>{
+    const q=new URLSearchParams(location.search)
+    q.set('revision',revision)
+    q.set('branch',branch)
+    navigate(location.pathname+'?'+q.toString())
+  }
+  return <>
+    <output data-testid="journey-route">{location.pathname+location.search}</output>
+    <button type="button" onClick={()=>move('rev-other',context.branch.branch_id)}>
+      Open other Saved Revision
+    </button>
+    <button type="button" onClick={()=>{
+      context.branch.branch_id='branch-b'
+      move('rev-old','branch-b')
+    }}>Switch selected Branch</button>
+  </>
 }
 function mount(path=start){
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
@@ -141,6 +156,49 @@ describe('Saved Tour historical navigation across mounted pages',()=>{
       (args:unknown[])=>JSON.stringify(args)===JSON.stringify(['run-a','branch-a','rev-old',2]))).toBe(true)
     expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
     expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+  })
+
+  it('resets the archived rally cursor when the immutable Saved Revision changes in place',async()=>{
+    // Two proven revisions can have different recorded match summaries. The previous
+    // revision's page 25..29 must never remain visible while the next one loads.
+    api.getSavedTourMatchDetail.mockImplementation(
+      (_run:string,_branch:string,revision:string,_season:number,
+        _event:string,_match:string,offset:number)=>Promise.resolve({
+          ...match(offset),saved_revision_id:revision,
+          match:{...match(offset).match,scoreline:revision==='rev-other'?'3-1':'3-0'}
+        }))
+    mount('/admin/runs/run-a/tour/calendar/event-x/matches/final?'+scope+'&tab=results&q=keep')
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Last rally'}))
+    expect(await screen.findByText('Rally 30/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledWith(
+      'run-a','branch-a','rev-old',2,'event-x','final',25,25)
+    await userEvent.click(screen.getByRole('button',{name:'Open other Saved Revision'}))
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    expect(screen.queryByText('Rally 30/30')).not.toBeInTheDocument()
+    expect(screen.getByTestId('journey-route')).toHaveTextContent('revision=rev-other')
+    expect(screen.getByTestId('journey-route')).toHaveTextContent('q=keep')
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledWith(
+      'run-a','branch-a','rev-other',2,'event-x','final',0,25)
+    expect(screen.getByRole('link',{name:'Find published finals for P1'}))
+      .toHaveAttribute('href',expect.stringContaining('revision=rev-other'))
+    expect(api.getSavedTourMatchDetail.mock.calls.every(
+      (args:unknown[])=>args[6]===0||args[6]===25)).toBe(true)
+  })
+
+  it('rejects a stale Branch result after switching a selected Branch mid-replay',async()=>{
+    mount('/admin/runs/run-a/tour/calendar/event-x/matches/final?'+scope+'&tab=results')
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Last rally'}))
+    expect(await screen.findByText('Rally 30/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Switch selected Branch'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Archived match does not match the selected Run/Branch/revision or rally page.')
+    expect(screen.queryByText('Rally 30/30')).not.toBeInTheDocument()
+    expect(screen.queryByText('Rally 1/30')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'Find published finals for P1'})).not.toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledWith(
+      'run-a','branch-b','rev-old',2,'event-x','final',0,25)
   })
 
   it('fails closed at the Edition boundary for a foreign Saved Revision',async()=>{

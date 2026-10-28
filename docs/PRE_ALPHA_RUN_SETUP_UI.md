@@ -54,6 +54,11 @@ not add a generator, a second readiness authority or a hidden Save.
     optional Health is not treated as universally ready. The checklist
     remains collapsed by default, with read-only route-scoped repair links.
     The original backend DTO/authority and operation preflights are unchanged.
+11. The frontend contract also rejects an invalid Run calendar (nonpositive W,
+    impossible season offset, negative year, zero horizon or wrong schema),
+    blank Saved Revision identity, or contradictory positive-count Saved
+    foundation badges. These are fail-closed checks on received evidence, not
+    new sporting prerequisites or alternate counts.
 
 ## Validation boundary
 

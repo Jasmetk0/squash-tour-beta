@@ -202,7 +202,8 @@ describe('exact historical Edition match replay',()=>{
     expect(await screen.findByText('Rally 30/30')).toBeInTheDocument()
     expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)
     await userEvent.type(nextInput,'31')
-    expect(jump).toBeDisabled()
+    // Check the active query page, not the detached submit button from rally 1.
+    expect(screen.getByRole('button',{name:'Jump to rally'})).toBeDisabled()
     expect(screen.getByText('Rally 30/30')).toBeInTheDocument()
     expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)
   })

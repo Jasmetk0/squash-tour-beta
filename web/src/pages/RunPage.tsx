@@ -187,13 +187,21 @@ export function RunPage(): JSX.Element {
     enabled: ready && Boolean(selectedBranch?.saved_head_revision_id),
     retry: false
   })
+  // An old successful response may survive while React Query refreshes or
+  // after the refresh fails. Do not let those cached data feed the current
+  // sporting timeline or a follow-on player-name lookup.
+  const activityVerified = homeActivityQuery.isSuccess && !homeActivityQuery.isFetching
+    && homeActivityQuery.data?.run_id === runId
+    && homeActivityQuery.data.branch_id === branchId
+    && homeActivityQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
+  const rankingVerified = rankingChangesQuery.isSuccess && !rankingChangesQuery.isFetching
+    && rankingChangesQuery.data?.run_id === runId
+    && rankingChangesQuery.data.branch_id === branchId
+    && rankingChangesQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
   const identityIds = Array.from(new Set([
-    ...(homeActivityQuery.data?.run_id === runId && homeActivityQuery.data?.branch_id === branchId &&
-      homeActivityQuery.data?.saved_revision_id === selectedBranch?.saved_head_revision_id
-      ? homeActivityQuery.data.recent_results.flatMap(result => [result.champion_player_id, result.finalist_player_id]) : []),
-    ...(rankingChangesQuery.data?.run_id === runId && rankingChangesQuery.data?.branch_id === branchId &&
-      rankingChangesQuery.data?.saved_revision_id === selectedBranch?.saved_head_revision_id
-      ? rankingChangesQuery.data.changes.map(change => change.player_id) : [])
+    ...(activityVerified ? homeActivityQuery.data!.recent_results.flatMap(
+      result => [result.champion_player_id, result.finalist_player_id]) : []),
+    ...(rankingVerified ? rankingChangesQuery.data!.changes.map(change => change.player_id) : [])
   ])).sort()
   const identitiesQuery = useQuery({
     queryKey: ['run-home-player-identities', runId, branchId, selectedBranch?.saved_head_revision_id, identityIds.join('|')],
@@ -208,23 +216,20 @@ export function RunPage(): JSX.Element {
     retry: false
   })
 
-  const homeActivity = homeActivityQuery.data?.run_id === runId
-    && homeActivityQuery.data.branch_id === branchId
-    && homeActivityQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
-    ? homeActivityQuery.data : null
-  const homeActivityMismatch = homeActivityQuery.isSuccess && !homeActivity
-  const rankingChanges = rankingChangesQuery.data?.run_id === runId
-    && rankingChangesQuery.data.branch_id === branchId
-    && rankingChangesQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
-    ? rankingChangesQuery.data : null
-  const rankingChangesMismatch = rankingChangesQuery.isSuccess && !rankingChanges
-  const identitiesValid = identitiesQuery.data?.run_id === runId &&
-    identitiesQuery.data?.branch_id === branchId &&
-    identitiesQuery.data?.saved_revision_id === selectedBranch?.saved_head_revision_id &&
-    identitiesQuery.data?.requested_ids.join('|') === identityIds.join('|')
+  const homeActivity = activityVerified ? homeActivityQuery.data! : null
+  const homeActivityMismatch = homeActivityQuery.isSuccess
+    && !homeActivityQuery.isFetching && !activityVerified
+  const rankingChanges = rankingVerified ? rankingChangesQuery.data! : null
+  const rankingChangesMismatch = rankingChangesQuery.isSuccess
+    && !rankingChangesQuery.isFetching && !rankingVerified
+  const identitiesValid = identitiesQuery.isSuccess && !identitiesQuery.isFetching
+    && identitiesQuery.data?.run_id === runId
+    && identitiesQuery.data.branch_id === branchId
+    && identitiesQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
+    && identitiesQuery.data.requested_ids.join('|') === identityIds.join('|')
   const playerIdentities = identitiesValid
     ? Object.fromEntries(identitiesQuery.data!.players.map(player => [player.player_id, player])) : {}
-  const identitiesMismatch = identitiesQuery.isSuccess && !identitiesValid
+  const identitiesMismatch = identitiesQuery.isSuccess && !identitiesQuery.isFetching && !identitiesValid
   const run = containerQuery.data?.run_id === runId ? containerQuery.data : null
   const homeClock = run ? runHomeClock(run.metadata_json) : null
   const sportingClockSupported = homeClock !== null && homeClock.weeks_per_year === 61
@@ -466,15 +471,15 @@ export function RunPage(): JSX.Element {
       </section>}
       {rankingChanges && <RunHomeRankingPanel data={rankingChanges} locale={language} runId={runId}
         identities={playerIdentities} clock={homeClock}/>}
-      {identitiesQuery.isPending && identityIds.length > 0 && ready && <p role="status">{language === 'cs' ? 'Načítám uložená jména hráčů…' : 'Loading saved player names…'}</p>}
+      {(identitiesQuery.isPending || identitiesQuery.isFetching) && identityIds.length > 0 && ready && <p role="status">{language === 'cs' ? 'Načítám uložená jména hráčů…' : 'Loading saved player names…'}</p>}
       {identitiesQuery.isError && <Unavailable message={formatApiError(identitiesQuery.error)}/>}
       {identitiesMismatch && <Unavailable message="Saved player identities do not match selected Branch HEAD"/>}
       {identitiesQuery.isSuccess && identitiesValid && identitiesQuery.data!.unresolved_ids.length > 0 &&
         <p className="status">{language === 'cs' ? 'Některá jména nejsou v uložených zdrojích dostupná; zůstávají zobrazena ID.' : 'Some player names are unavailable in Saved Revision; IDs are retained.'}</p>}
-      {rankingChangesQuery.isPending && ready && selectedBranch?.saved_head_revision_id && <p role="status">{l.loading}</p>}
+      {(rankingChangesQuery.isPending || rankingChangesQuery.isFetching) && ready && selectedBranch?.saved_head_revision_id && <p role="status">{l.loading}</p>}
       {rankingChangesQuery.isError && <Unavailable message={formatApiError(rankingChangesQuery.error)}/>}
       {rankingChangesMismatch && <Unavailable message="Saved ranking changes identity mismatch"/>}
-      {homeActivityQuery.isPending && ready && <p role="status">{l.loading}</p>}
+      {(homeActivityQuery.isPending || homeActivityQuery.isFetching) && ready && <p role="status">{l.loading}</p>}
       {homeActivityQuery.isError && <Unavailable message={formatApiError(homeActivityQuery.error)}/>}
       {homeActivityMismatch && <Unavailable message="Saved Home activity identity mismatch"/>}
       {!ready && <p className="status">{l.missing}</p>}

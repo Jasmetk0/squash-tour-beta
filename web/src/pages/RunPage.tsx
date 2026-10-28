@@ -230,11 +230,19 @@ export function RunPage(): JSX.Element {
   const playerIdentities = identitiesValid
     ? Object.fromEntries(identitiesQuery.data!.players.map(player => [player.player_id, player])) : {}
   const identitiesMismatch = identitiesQuery.isSuccess && !identitiesQuery.isFetching && !identitiesValid
-  const run = containerQuery.data?.run_id === runId ? containerQuery.data : null
+  // A successful cached Run may become obsolete while another tab changes
+  // its calendar or while a refresh fails. Do not expose legacy-only setup
+  // from stale metadata; only the settled current Run can authorize links.
+  const run = containerQuery.isSuccess && !containerQuery.isFetching
+    && containerQuery.data?.run_id === runId ? containerQuery.data : null
   const homeClock = run ? runHomeClock(run.metadata_json) : null
   const sportingClockSupported = homeClock !== null && homeClock.weeks_per_year === 61
     && homeClock.season_start_year_week === 37 && homeClock.start_year === 2000 && homeClock.season_count === 50
-  const draft = draftQuery.data?.run_id === runId && draftQuery.data.branch_id === branchId ? draftQuery.data : null
+  // React Query retains previous success through refresh and some errors.
+  // A prior clean draft must not be shown as current while rechecking it.
+  const draft = draftQuery.isSuccess && !draftQuery.isFetching
+    && draftQuery.data?.run_id === runId && draftQuery.data.branch_id === branchId
+    ? draftQuery.data : null
   // A failed refresh may retain previously successful React Query data. Never
   // display that stale snapshot as current Saved readiness while rechecking or
   // after a failed read, even when its Run/HEAD identifiers still match.
@@ -335,7 +343,7 @@ export function RunPage(): JSX.Element {
   ].filter((value): value is string => Boolean(value))
   const blockers = position?.transition_blockers ?? []
   const pendingCount = pending?.operations.length ?? 0
-  const draftStatus = !ready || draftQuery.isPending ? l.loading
+  const draftStatus = !ready || draftQuery.isPending || draftQuery.isFetching ? l.loading
     : draftQuery.isError || !draft ? l.draftUnknown
       : draft.status === 'dirty' ? l.draftDirty + ' (' + draft.change_count + ')' : l.draftClean
 
@@ -386,7 +394,7 @@ export function RunPage(): JSX.Element {
     {branchError && <Unavailable message={branchError} />}
     {time.error && <Unavailable message={time.error} />}
     <RunHomeProgress season={time.presentSeason} week={time.presentWeek}
-      loading={branchLoading || time.isLoading || containerQuery.isPending}
+      loading={branchLoading || time.isLoading || containerQuery.isPending || containerQuery.isFetching}
       unavailable={!verified} historical={false} locale={language} clock={homeClock}/>
 
     {ready && !selectedBranch?.saved_head_revision_id &&
@@ -461,7 +469,7 @@ export function RunPage(): JSX.Element {
         {blockers.map((blocker, i) => <p key={i} className="error">{blocker} · <Link to={base + '/simulate'}>{l.continue} →</Link></p>)}
         {position && position.blocked_match_ids.length > 0 && <p className="error">{language === 'cs' ? 'Blokované zápasy' : 'Blocked matches'}: {position.blocked_match_ids.length} · <Link to={base + '/simulate'}>{l.continue} →</Link></p>}
         {pending && pendingCount > 0 && <p>{l.waiting}: {pendingCount} · <Link to={base + '/simulate'}>{l.continue} →</Link></p>}
-        {ready && statusErrors.length === 0 && blockers.length === 0 && position?.blocked_match_ids.length === 0 && draftQuery.isSuccess && !draftQuery.isFetching && draft?.status === 'clean' && pendingValid && pendingCount === 0
+        {verified && statusErrors.length === 0 && blockers.length === 0 && position?.blocked_match_ids.length === 0 && draftQuery.isSuccess && !draftQuery.isFetching && draft?.status === 'clean' && pendingValid && pendingCount === 0
           ? <p className="status">{l.noIssues}</p>
           : statusErrors.length === 0 && ready && !position && !emptyRun ? <p className="status">{l.noAttention}</p> : null}
         <Link to={base + '/diagnostics'}>{language === 'cs' ? 'Otevřít diagnostiku' : 'Open diagnostics'} →</Link>

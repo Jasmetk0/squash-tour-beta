@@ -53,8 +53,7 @@ jobs:
       - name: Actual configured group lifecycle, forks, worker and rejection
         env:
           NATIVE_GROUP_CALENDAR: ${{ matrix.width }}
-          GITHUB_EVENT_NAME: native_groups_acceptance
-        run: python -m pytest tests/api/test_calendar_native_groups.py -vv -s --basetemp "${{ runner.temp }}/native-groups-${{ matrix.width }}" --maxfail=1 --durations=10
+        run: GITHUB_EVENT_NAME=native_groups_acceptance python -m pytest tests/api/test_calendar_native_groups.py -vv -s --basetemp "${{ runner.temp }}/native-groups-${{ matrix.width }}" --maxfail=1 --durations=10
       - name: Retain actual SQLite evidence
         if: always()
         uses: actions/upload-artifact@v4

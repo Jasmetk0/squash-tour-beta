@@ -82,3 +82,21 @@ def test_small_shell_does_not_replace_the_required_large_population_gates():
     shell = (ROOT / "web/acceptance/prealpha_shell_browser_smoke.py").read_text()
     assert "choices=(64, 1000)" in shell
     assert "population_size = args.population_size" in shell
+
+
+@pytest.mark.parametrize('filename', [
+    'prealpha-native-global-slots.yml', 'prealpha-native-groups-global-slots.yml',
+])
+def test_native_slot_acceptance_sets_collection_override_inside_shell(filename):
+    workflow = yaml.load((ROOT / '.github/workflows' / filename).read_text(), Loader=yaml.BaseLoader)
+    checked = 0
+    for job in workflow['jobs'].values():
+        for step in job['steps']:
+            command = step.get('run', '')
+            if 'python -m pytest tests/' in command:
+                # GitHub reserves GITHUB_* defaults; a step env entry cannot
+                # override them. The shell must set this for the pytest process.
+                assert 'GITHUB_EVENT_NAME=' in command
+                assert 'GITHUB_EVENT_NAME' not in step.get('env', {})
+                checked += 1
+    assert checked > 0

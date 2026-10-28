@@ -228,7 +228,7 @@ def edition_plan(authority, matches, slots=()):
     ids = tuple(s.player_id for s in authority.draw.main.slots) if authority.draw else ()
     prior = tuple(matches.get(f"{authority.edition.edition_id}:{suffix}") for suffix in bracket(authority))
     return tuple((f"{authority.edition.edition_id}:{suffix}", native_match_slot(authority, i),
-                  participants(ids, prior[:i], i) if ids and (i < len(ids) // 2 or all(m is not None for m in prior[:i])) else (), 5)
+                  participants(ids, prior, i) if ids else (), 5)
                  for i, suffix in enumerate(bracket(authority)))
 
 
@@ -551,7 +551,10 @@ def participants(ids, matches, index):
         if len(ids) == 8
         else 0
     )
-    return tuple(matches[i].result.winner_player_id for i in (offset, offset + 1))
+    feeders = (offset, offset + 1)
+    if any(i >= len(matches) or matches[i] is None for i in feeders):
+        return ()
+    return tuple(matches[i].result.winner_player_id for i in feeders)
 
 
 def completed_tournaments(events, *, owner=None):

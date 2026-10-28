@@ -48,8 +48,7 @@ jobs:
       - name: Actual HTTP SQLite and MatchEngine contracts
         env:
           GLOBAL_SLOT_CALENDAR: ${{ matrix.width }}
-          GITHUB_EVENT_NAME: native_global_slots_acceptance
-        run: python -m pytest tests/api/test_calendar_global_slots.py -vv -s --basetemp "$RUNNER_TEMP/global-core-${{ matrix.width }}" --maxfail=1 --durations=10
+        run: GITHUB_EVENT_NAME=native_global_slots_acceptance python -m pytest tests/api/test_calendar_global_slots.py -vv -s --basetemp "$RUNNER_TEMP/global-core-${{ matrix.width }}" --maxfail=1 --durations=10
       - name: Keep real SQLite evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -78,8 +77,7 @@ jobs:
       - name: Real all-week calendar and signed season summary
         env:
           GLOBAL_SLOT_CALENDAR: ${{ matrix.width }}
-          GITHUB_EVENT_NAME: native_global_slots_acceptance
-        run: python -m pytest tests/api/test_calendar_global_slots_boundaries.py -k all_weeks -vv -s --basetemp "$RUNNER_TEMP/global-calendar-${{ matrix.width }}" --maxfail=1 --durations=10
+        run: GITHUB_EVENT_NAME=native_global_slots_acceptance python -m pytest tests/api/test_calendar_global_slots_boundaries.py -k all_weeks -vv -s --basetemp "$RUNNER_TEMP/global-calendar-${{ matrix.width }}" --maxfail=1 --durations=10
       - name: Keep actual calendar history
         if: always()
         uses: actions/upload-artifact@v4

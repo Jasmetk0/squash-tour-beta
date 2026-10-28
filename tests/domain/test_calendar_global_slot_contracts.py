@@ -159,3 +159,22 @@ def test_inherited_terminal_record_preserves_original_edition_owner_and_extensio
         CalendarInheritedTerminalRankingResult.model_validate_json(
             __import__("json").dumps(body)
         )
+
+
+def test_both_semifinals_use_only_their_own_quarterfinal_feeders():
+    from beta_engine.domain.tournaments.calendar_global_slots import edition_plan
+
+    a = authority('eight')
+    ids = tuple(slot.player_id for slot in a.draw.main.slots)
+    matches = {
+        f'eight:qf{i + 1}': SimpleNamespace(result=SimpleNamespace(winner_player_id=ids[i * 2]))
+        for i in range(4)
+    }
+    plan = edition_plan(a, matches)
+    assert plan[4][2] == (ids[0], ids[2])
+    assert plan[5][2] == (ids[4], ids[6])
+    assert plan[6][2] == ()
+    matches['eight:sf1'] = SimpleNamespace(result=SimpleNamespace(winner_player_id=ids[0]))
+    updated = edition_plan(a, matches)
+    assert updated[5][2] == plan[5][2]
+    assert updated[6][2] == ()

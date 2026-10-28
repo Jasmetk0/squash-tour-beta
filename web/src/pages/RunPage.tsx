@@ -261,7 +261,6 @@ export function RunPage(): JSX.Element {
     ])
   }
   const readinessRefreshing = readinessQuery.isFetching || readinessDependenciesLoading
-  const position = positionQuery.data?.run_id
   const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
   const pending = pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId ? pendingQuery.data : null
   const simulationHistory = simulationHistoryQuery.data?.run_id === runId && simulationHistoryQuery.data.branch_id === branchId

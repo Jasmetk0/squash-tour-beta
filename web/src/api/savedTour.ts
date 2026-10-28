@@ -149,6 +149,26 @@ export function validSavedTourMatchDetail(
       'sets_a_after','sets_b_after'] as const).every(key=>
       Number.isSafeInteger(frame[key])&&frame[key]>=0)
     &&typeof frame.set_complete==='boolean'&&typeof frame.match_complete==='boolean'
+    // The archived MatchEngine may end by retirement after a rally, but a
+    // documented "match complete" can only occur on its final scoring event.
+    &&(!frame.match_complete||(frame.set_complete&&frame.rally_index===data.total_rallies))
+    &&frame.score_a_after>=frame.score_a_before&&frame.score_b_after>=frame.score_b_before
+    &&(frame.winner_player_id!==null
+      ||(frame.score_a_before===frame.score_a_after
+        &&frame.score_b_before===frame.score_b_after))
+    &&(i===0||(()=>{
+      const previous=data.rallies[i-1]
+      if(previous.match_complete)return false
+      if(frame.set_number===previous.set_number){
+        return !previous.set_complete
+          &&frame.score_a_before===previous.score_a_after
+          &&frame.score_b_before===previous.score_b_after
+      }
+      // The first rally in a new game starts at 0:0. We cannot verify
+      // a previous page here; only neighboring frames on this page.
+      return previous.set_complete&&frame.set_number===previous.set_number+1
+        &&frame.score_a_before===0&&frame.score_b_before===0
+    })())
     &&typeof frame.server_player_id==='string'
     &&[data.player_a_id,data.player_b_id].includes(frame.server_player_id)
     &&(frame.winner_player_id===null||typeof frame.winner_player_id==='string'

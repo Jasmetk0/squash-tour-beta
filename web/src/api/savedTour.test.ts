@@ -144,6 +144,38 @@ describe('strict Saved Tour response identity',()=>{
     ])expect(valid({...data,rallies:[bad]})).toBe(false)
     expect(valid({...data,match:{...data.match,round_number:0}})).toBe(false)
     expect(valid({...data,match:{...data.match,scoreline:''}})).toBe(false)
+    // Page-local score continuity is an invariant of the real MatchEngine log.
+    const two={...data,total_rallies:2,has_more:false,rallies:[
+      {...data.rallies[0],match_complete:false},
+      {...data.rallies[0],rally_index:2,score_a_before:1,score_a_after:2,
+        set_complete:true,match_complete:true}
+    ]}
+    const validTwo=(m:SavedTourMatchDetail)=>validSavedTourMatchDetail(
+      m,'r','b','rev',2,'open','final',0,25)
+    expect(validTwo(two)).toBe(true)
+    expect(validTwo({...two,rallies:[two.rallies[0],{
+      ...two.rallies[1],score_a_before:0
+    }]})).toBe(false)
+    expect(validTwo({...two,rallies:[two.rallies[0],{
+      ...two.rallies[1],match_complete:true,set_complete:false
+    }]})).toBe(false)
+    expect(validTwo({...two,rallies:[{
+      ...two.rallies[0],match_complete:true,set_complete:true
+    },two.rallies[1]]})).toBe(false)
+    expect(validTwo({...two,rallies:[two.rallies[0],{
+      ...two.rallies[1],score_a_after:0
+    }]})).toBe(false)
+    expect(validTwo({...two,rallies:[two.rallies[0],{
+      ...two.rallies[1],set_number:2
+    }]})).toBe(false)
+    const endOfGame={...two.rallies[0],set_complete:true,match_complete:false,sets_a_after:1}
+    const nextGame={...two.rallies[1],set_number:2,score_a_before:0,score_a_after:1,
+      sets_a_after:1,set_complete:false,match_complete:false}
+    expect(validTwo({...two,rallies:[endOfGame,nextGame]})).toBe(true)
+    expect(validTwo({...two,rallies:[endOfGame,{...nextGame,score_a_before:1}]})).toBe(false)
+    expect(validTwo({...two,rallies:[{
+      ...two.rallies[0],winner_player_id:null,score_a_after:1
+    },two.rallies[1]]})).toBe(false)
   })
 
   it('validates explicit Run/selected Branch/revision/season and original ancestry owner',()=>{

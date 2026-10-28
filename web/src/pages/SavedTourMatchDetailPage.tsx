@@ -113,7 +113,7 @@ function HistoricalMatchReplay():JSX.Element{
       <p role="alert">{cs?'Výměna v této revizi neexistuje.':
         'Requested rally is outside this Saved archive.'}
         {' '}<button type="button" onClick={()=>moveToRally(1)}>
-          {cs?'První výměna':'First rally'}</button></p>}
+          {cs?'Vrátit na první výměnu':'Return to first rally'}</button></p>}
     {data&&<><div className="run-home-status-block">
       <p>{cs?'Turnaj':'Edition'}: <code>{eventId}</code> · {cs?'Zápas':'Match'}: <code>{matchId}</code></p>
       <h3>{participant(data.match.winner_player_id)} – {participant(data.match.loser_player_id!)}</h3>

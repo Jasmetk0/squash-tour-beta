@@ -222,7 +222,7 @@ describe('exact historical Edition match replay',()=>{
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Requested rally is outside this Saved archive.')
     expect(screen.queryByText('Rally 90/30')).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button',{name:'First rally'}))
+    await userEvent.click(screen.getByRole('button',{name:'Return to first rally'}))
     expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
   })
   it('jumps from first to last rally and back across archived pages without fabricating frames',async()=>{

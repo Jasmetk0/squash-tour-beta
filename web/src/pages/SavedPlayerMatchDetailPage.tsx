@@ -10,7 +10,7 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import {
   parseCareerCompletion, parseCareerOutcome, parseCareerPage, parseCareerSeason,
-  parsePageInput, parsePlayerRally, REPLAY_PAGE_SIZE, validPlayerReplayPagePair,
+  parsePlayerRally, REPLAY_PAGE_SIZE, validPlayerReplayPagePair,
 } from './savedPlayerCareerNavigation'
 
 /** Remount local input and response context before any different source can read. */

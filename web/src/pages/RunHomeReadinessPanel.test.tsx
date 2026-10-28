@@ -104,13 +104,20 @@ describe('saved Run readiness panel', () => {
     expect(() => validateRunHomeReadiness({ ...data, simulation_started: true }, 'run-a', 'branch-a')).toThrow()
   })
 
-  it('does not mistake optional foundations for completed saved content', () => {
+  it('does not mistake optional Health for a global readiness guarantee', () => {
     mount('en', {
       ...data,
-      items: data.items.map(item => ({ ...item, status: 'optional' as const, evidence_count: 0 }))
+      items: data.items.map(item => ({
+        ...item,
+        status: item.code === 'health' ? 'optional' as const : 'saved' as const,
+        evidence_count: item.code === 'health' || item.code === 'working_draft'
+          ? 0 : Math.max(1, item.evidence_count)
+      }))
     })
     expect(screen.getByText('Show saved-foundation checks (6)')).toBeVisible()
     expect(screen.getByText(/does not certify all operations/)).toBeVisible()
+    fireEvent.click(screen.getByText('Show saved-foundation checks (6)'))
+    expect(screen.getByText('Not required here · Health records: 0')).toBeVisible()
     expect(screen.queryByRole('link', { name: /Add a World Package|Inspect and Save changes/ })).toBeNull()
   })
 
@@ -119,9 +126,9 @@ describe('saved Run readiness panel', () => {
       ...data,
       items: data.items.map(item => ({
         ...item,
-        status: item.code === 'world' ? 'optional' as const
+        status: item.code === 'health' ? 'optional' as const
           : item.code === 'calendar_package' ? 'missing' as const : 'saved' as const,
-        evidence_count: item.code === 'world' || item.code === 'calendar_package'
+        evidence_count: item.code === 'health' || item.code === 'calendar_package'
           || item.code === 'working_draft' ? 0 : Math.max(1, item.evidence_count)
       }))
     })
@@ -141,7 +148,10 @@ describe('saved Run readiness panel', () => {
       ...data,
       items: data.items.map(item => ({
         ...item,
-        status: item.code === 'working_draft' ? 'saved' as const : 'missing' as const
+        status: item.code === 'population' ? 'saved' as const
+          : item.code === 'working_draft' ? 'unsaved' as const : 'missing' as const,
+        evidence_count: item.code === 'population' ? 1000
+          : item.code === 'working_draft' ? 1 : 0
       }))
     })
     expect(screen.getByText('Zobrazit kontrolu uložených podkladů (6) · 5 položek k prověření'))
@@ -255,5 +265,18 @@ describe('saved Run readiness panel', () => {
   it('rejects an empty Saved revision identifier even when its hash is well formed', () => {
     expect(() => validateRunHomeReadiness({ ...data, saved_revision_id: ' ' }, 'run-a', 'branch-a'))
       .toThrow('Invalid Run Home readiness evidence')
+  })
+
+  it('rejects status combinations that the Saved readiness authority never emits', () => {
+    for (const [code, status] of [
+      ['world', 'optional'], ['calendar_package', 'candidate_only'],
+      ['population', 'unsaved'], ['health', 'candidate_only'],
+      ['official_ranking', 'optional'], ['working_draft', 'missing']
+    ] as const) {
+      const items = data.items.map(item => item.code === code
+        ? { ...item, status, evidence_count: 0 } : item)
+      expect(() => validateRunHomeReadiness({ ...data, items }, 'run-a', 'branch-a'))
+        .toThrow('Invalid Run Home readiness evidence')
+    }
   })
 })

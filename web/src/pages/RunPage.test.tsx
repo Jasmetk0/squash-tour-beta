@@ -335,6 +335,53 @@ describe('Run Home V1 canonical projections', () => {
     expect(screen.queryByText(/Kontrolu připravenosti nelze ověřit/)).toBeNull()
   })
 
+  it('does not present Saved readiness without a verified matching Working Draft', async () => {
+    api.getBranchWorkingDraft.mockRejectedValueOnce(new Error('draft unavailable'))
+      .mockResolvedValueOnce({
+        run_id: runId, branch_id: branchId, draft_version: 1,
+        status: 'clean', change_count: 0
+      })
+    mount()
+    expect(await screen.findByRole('region', { name: 'Obnova kontroly podkladů Runu' })).toBeVisible()
+    expect(screen.queryByRole('region', { name: 'Připravenost Runu' })).toBeNull()
+    expect(screen.getByText(/draft unavailable/)).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Znovu ověřit uložené podklady' }))
+    expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
+    expect(api.getBranchWorkingDraft).toHaveBeenCalledTimes(2)
+    expect(api.getRunHomeReadiness).toHaveBeenCalledTimes(2)
+  })
+
+  it('rejects a malformed Run calendar even when the Saved-readiness DTO is valid', async () => {
+    api.getRunContainer.mockResolvedValueOnce({
+      run_id: runId, display_name: 'Demo Run', storage_kind: 'custom_local', read_only: false,
+      metadata_json: { run_calendar: { schema_version: 'bad-calendar' } }
+    }).mockResolvedValueOnce({
+      run_id: runId, display_name: 'Demo Run', storage_kind: 'custom_local', read_only: false
+    })
+    mount()
+    expect(await screen.findByRole('region', { name: 'Obnova kontroly podkladů Runu' })).toBeVisible()
+    expect(screen.queryByRole('region', { name: 'Připravenost Runu' })).toBeNull()
+    expect(screen.getByText(/Kalendář Runu není dostupný/)).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Znovu ověřit uložené podklady' }))
+    expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
+    expect(api.getRunContainer).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not bypass a foreign Working Draft identity in a successful HTTP response', async () => {
+    api.getBranchWorkingDraft.mockResolvedValueOnce({
+      run_id: runId, branch_id: 'other-branch', draft_version: 1,
+      status: 'clean', change_count: 0
+    }).mockResolvedValueOnce({
+      run_id: runId, branch_id: branchId, draft_version: 1,
+      status: 'clean', change_count: 0
+    })
+    mount()
+    expect(await screen.findByRole('region', { name: 'Obnova kontroly podkladů Runu' })).toBeVisible()
+    expect(screen.queryByRole('region', { name: 'Připravenost Runu' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Znovu ověřit uložené podklady' }))
+    expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
+  })
+
   it('does not claim readiness during a failed fresh read, and recovers by explicit read-only retry', async () => {
     api.getRunHomeReadiness.mockRejectedValueOnce(new Error('saved readiness offline'))
       .mockResolvedValueOnce(savedReadiness())

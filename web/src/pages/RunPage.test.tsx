@@ -13,7 +13,7 @@ const api = vi.hoisted(() => ({
     status: number
     constructor(message: string, status: number) { super(message); this.status = status }
   },
-  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(), getRunHomeActivity: vi.fn(), getRunHomeRankingChanges: vi.fn(), getSavedHomePlayerIdentities: vi.fn(),
+  getRunContainer: vi.fn(), listRunBranches: vi.fn(), getBranchState: vi.fn(), listBranchCheckpoints: vi.fn(), getRunHomeActivity: vi.fn(), getRunHomeReadiness: vi.fn(), getRunHomeRankingChanges: vi.fn(), getSavedHomePlayerIdentities: vi.fn(),
   getBranchWorkingDraft: vi.fn(), getRunPackageState: vi.fn(), getAuthoritativeSimulationPosition: vi.fn(),
   getPendingAuthoritativeFullSimulations: vi.fn(), getAuthoritativeFullSimulationHistory: vi.fn(), listSavedRevisionHistory: vi.fn()
 }))
@@ -42,6 +42,32 @@ function refPosition(overrides: Record<string, unknown> = {}) {
     ...overrides
   }
 }
+function savedReadiness(draftVersion = 1) {
+  return {
+    schema_version: 'run_home_readiness.v1', run_id: runId, branch_id: branchId,
+    saved_revision_id: 'saved-1', saved_revision_content_hash: 'a'.repeat(64),
+    draft_version: draftVersion, run_status: 'working',
+    source: 'validated_selected_branch_saved_head',
+    current_calendar: {
+      schema_version: 'run_calendar.v1', weeks_per_year: 61,
+      season_start_year_week: 37, start_year: 2000, season_count: 50,
+    },
+    phase: 'preparation',
+    items: [
+      { code: 'world', status: 'missing', evidence_count: 0 },
+      { code: 'calendar_package', status: 'missing', evidence_count: 0 },
+      { code: 'population', status: 'missing', evidence_count: 0 },
+      { code: 'health', status: 'optional', evidence_count: 0 },
+      { code: 'official_ranking', status: 'missing', evidence_count: 0 },
+      { code: 'working_draft', status: 'saved', evidence_count: 0 },
+    ],
+    saved_transition_count: 0, saved_published_ranking_count: 0,
+    active_full_simulation_task_count: 0, historical_full_simulation_task_count: 0,
+    sporting_calendar_supported_by_legacy_writers: true,
+    requires_operation_preflight: true, simulation_started: false
+  }
+}
+
 describe('Run Home V1 canonical projections', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -70,6 +96,7 @@ describe('Run Home V1 canonical projections', () => {
     api.getAuthoritativeSimulationPosition.mockResolvedValue(refPosition())
     api.getPendingAuthoritativeFullSimulations.mockResolvedValue({ run_id: runId, branch_id: branchId, operations: [] })
     api.getAuthoritativeFullSimulationHistory.mockResolvedValue({ run_id: runId, branch_id: branchId, items: [] })
+    api.getRunHomeReadiness.mockResolvedValue(savedReadiness())
     api.getRunHomeRankingChanges.mockResolvedValue({
       schema_version: 'run_home_ranking_changes.v1', run_id: runId, branch_id: branchId,
       saved_revision_id: 'saved-1', source: 'selected_branch_saved_revision',
@@ -289,6 +316,52 @@ describe('Run Home V1 canonical projections', () => {
     expect(await screen.findByText('Simulation position identity mismatch')).toBeInTheDocument()
     expect(screen.queryByText('Hratelné zápasy: 2')).not.toBeInTheDocument()
   })
+
+  it('does not claim readiness during a failed fresh read, and recovers by explicit read-only retry', async () => {
+    api.getRunHomeReadiness.mockRejectedValueOnce(new Error('saved readiness offline'))
+      .mockResolvedValueOnce(savedReadiness())
+    mount()
+    expect(await screen.findByRole('region', { name: 'Obnova kontroly podkladů Runu' }))
+      .toBeInTheDocument()
+    expect(screen.getByText(/Kontrolu připravenosti nelze ověřit/)).toBeVisible()
+    expect(screen.queryByRole('region', { name: 'Připravenost Runu' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Znovu ověřit uložené podklady' }))
+    expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
+    expect(screen.queryByRole('region', { name: 'Obnova kontroly podkladů Runu' })).toBeNull()
+    expect(api.getRunHomeReadiness).toHaveBeenCalledTimes(2)
+  })
+
+  it('rejects a mismatched Saved HEAD readiness response until a matching refetch arrives', async () => {
+    api.getRunHomeReadiness.mockResolvedValueOnce({
+      ...savedReadiness(), saved_revision_id: 'foreign-head'
+    }).mockResolvedValueOnce(savedReadiness())
+    mount()
+    const recovery = await screen.findByRole('region', { name: 'Obnova kontroly podkladů Runu' })
+    expect(recovery).toBeVisible()
+    expect(screen.queryByRole('region', { name: 'Připravenost Runu' })).toBeNull()
+    expect(screen.getByText('Saved readiness identity/HEAD/draft/calendar differs from selected Run.')).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Znovu ověřit uložené podklady' }))
+    expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
+  })
+
+  it('hides formerly verified readiness while refreshing and after a failed refresh', async () => {
+    let rejectRefresh!: (reason: Error) => void
+    api.getRunHomeReadiness.mockResolvedValueOnce(savedReadiness())
+      .mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectRefresh = reject }))
+      .mockResolvedValueOnce(savedReadiness())
+    mount()
+    expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: 'Obnovit kontrolu' }))
+    expect(screen.getByText('Ověřuji aktuální uložené podklady vybrané branche…')).toBeVisible()
+    expect(screen.queryByRole('region', { name: 'Připravenost Runu' })).toBeNull()
+    rejectRefresh(new Error('network lost on refresh'))
+    expect(await screen.findByRole('region', { name: 'Obnova kontroly podkladů Runu' })).toBeVisible()
+    expect(screen.queryByRole('region', { name: 'Připravenost Runu' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Znovu ověřit uložené podklady' }))
+    expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
+    expect(api.getRunHomeReadiness).toHaveBeenCalledTimes(3)
+  })
+
   it('keeps custom calendar planning honest instead of offering legacy year-2000 sporting setup', async () => {
     api.getRunContainer.mockResolvedValueOnce({
       run_id:runId, display_name:'Earth planning', storage_kind:'custom_local', read_only:false,

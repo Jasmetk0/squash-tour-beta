@@ -10,11 +10,11 @@ const api = vi.hoisted(() => ({
 }))
 vi.mock('../api/client', () => api)
 
-function mount(entry = '/') {
+function mount(entry = '/', head = 'revision') {
   let locale:'cs'|'en'='cs'
   const client=new QueryClient({ defaultOptions: {queries:{retry:false,gcTime:0}} })
   const ui=()=> <QueryClientProvider client={client}><MemoryRouter initialEntries={[entry]}><SavedPlayerMatchesPanel
-    runId="run" branchId="branch" playerId="A" savedHead="revision"
+    runId="run" branchId="branch" playerId="A" savedHead={head}
     locale={locale}
   /></MemoryRouter></QueryClientProvider>
   const view=render(ui())
@@ -214,5 +214,16 @@ describe('career navigation and filtering (mocked API, not browser acceptance)',
     mount()
     expect(await screen.findByText(/Hráč nemá žádné uložené/)).toBeInTheDocument()
     expect(screen.queryByText(/Strana 1 \/ 0/)).not.toBeInTheDocument()
+  })
+})
+
+describe('career without a selected Saved HEAD (mocked API)', () => {
+  it('does not spin indefinitely or send a request without a source', () => {
+    vi.clearAllMocks()
+    mount('/', '')
+    expect(screen.getByRole('alert')).toHaveTextContent('Chybí vybraná Branch, Saved HEAD')
+    expect(screen.queryByText('Načítám zápasy…')).not.toBeInTheDocument()
+    expect(api.getSavedPlayerMatchHistory).not.toHaveBeenCalled()
+    expect(screen.getByRole('button',{name:'Obnovit kariéru'})).toBeDisabled()
   })
 })

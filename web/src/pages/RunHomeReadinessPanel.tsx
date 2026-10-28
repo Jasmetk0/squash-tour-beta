@@ -21,9 +21,9 @@ const content = {
     },
     status: { saved: 'Uloženo', missing: 'Chybí', candidate_only: 'Pouze návrh', unsaved: 'Neuloženo', optional: 'Zde není vyžadováno' },
     unit: {
-      world: 'World entit', calendar_package: 'Calendar entit',
-      population: 'hráčů počáteční populace', health: 'Health záznamů',
-      official_ranking: 'publikací rankingu', working_draft: 'čekajících změn',
+      world: 'Entity World Package', calendar_package: 'Entity Calendar Package',
+      population: 'Hráči počáteční populace', health: 'Health záznamy',
+      official_ranking: 'Publikace rankingu', working_draft: 'Nevyřízené změny',
     },
     evidence: {
       world: 'Jde o entity World Package vlastněné Runem v uložené revizi.',
@@ -85,8 +85,8 @@ const content = {
     status: { saved: 'Saved', missing: 'Missing', candidate_only: 'Candidate only', unsaved: 'Unsaved', optional: 'Not required here' },
     unit: {
       world: 'World entities', calendar_package: 'Calendar entities',
-      population: 'initial-population players', health: 'Health records',
-      official_ranking: 'ranking publications', working_draft: 'pending changes',
+      population: 'Initial-population players', health: 'Health records',
+      official_ranking: 'Ranking publications', working_draft: 'Pending changes',
     },
     evidence: {
       world: 'Counts Run-owned World Package entities in this Saved Revision.',
@@ -176,7 +176,7 @@ export function RunHomeReadinessPanel({
       <ul className="run-home-feed" aria-label={language === 'cs' ? 'Kontrola uložených podkladů' : 'Saved preparation checks'}>
         {data.items.map(item => <li key={item.code}>
           <span><strong>{l.item[item.code]}</strong>
-            <small>{l.status[item.status]} · {item.evidence_count} {l.unit[item.code]}</small>
+            <small>{l.status[item.status]} · {l.unit[item.code]}: {item.evidence_count}</small>
             <small className="status">{l.evidence[item.code]} {l.explanationByStatus[item.status]}</small>
           </span>
           {needsAttention(item) &&

@@ -75,6 +75,14 @@ export function SavedTourCalendarPage():JSX.Element{
     copy.set('branch',branch!);copy.set('revision',revision!);copy.set('season',String(seasonIndex))
     return '/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'+encodeURIComponent(e.event_id)+'?'+copy.toString()
   }
+  const weekHref=(week:number)=>{
+    const copy=new URLSearchParams(params)
+    copy.set('view','weeks');copy.set('week',String(week))
+    copy.set('season',String(seasonIndex))
+    if(branch)copy.set('branch',branch)
+    if(revision)copy.set('revision',revision)
+    return '/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar?'+copy.toString()
+  }
   const name=(e:SavedTourEvent)=><Link to={editionHref(e)}>{e.event_name||e.event_id}</Link>
   const label=String(2000+seasonIndex)+'/'+String(2001+seasonIndex)
   const issue=branchError||time.error||
@@ -191,7 +199,8 @@ export function SavedTourCalendarPage():JSX.Element{
             <th>Tour</th><th>{cs?'Kategorie':'Category'}</th><th>{cs?'Země':'Country'}</th>
             <th>{cs?'Výsledek':'Result'}</th></tr></thead>
           <tbody>{weekEditions.map(e=><tr key={e.event_id}>
-            <td>{e.season_week}</td><td>{name(e)}</td><td>{e.tour_level??'—'}</td>
+            <td><Link to={weekHref(e.season_week)}>{cs?'Týden':'Week'} {e.season_week}</Link></td>
+            <td>{name(e)}</td><td>{e.tour_level??'—'}</td>
             <td>{e.category}</td><td>{e.host_country}</td>
             <td>{e.result_published?(cs?'Publikován':'Published'):'—'}</td>
           </tr>)}</tbody></table></div>)}

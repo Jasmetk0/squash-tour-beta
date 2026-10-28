@@ -693,18 +693,15 @@ describe('Run Home V1 canonical projections', () => {
       } }
     }
     let rejectRefresh!: (reason: Error) => void
-    api.getRunContainer.mockResolvedValueOnce(initialRun)
-      .mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectRefresh = reject }))
-      .mockResolvedValueOnce({
-        ...initialRun, display_name: 'Earth Run',
-        metadata_json: { run_calendar: {
-          schema_version: 'run_calendar.v1', weeks_per_year: 52,
-          season_start_year_week: 35, start_year: 2030, season_count: 3
-        } }
-      })
+    // Both AdminBranchProvider and RunPage request the container on initial
+    // mount. Do not consume the delayed refresh mock in either initial read.
+    api.getRunContainer.mockResolvedValue(initialRun)
     mountWithContextRefresh()
     expect(await screen.findByText('Ranking setup')).toBeVisible()
     expect(screen.getByText('First tournament setup')).toBeVisible()
+    api.getRunContainer.mockImplementationOnce(
+      () => new Promise((_resolve, reject) => { rejectRefresh = reject })
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Refresh Run metadata' }))
     await waitFor(() => expect(api.getRunContainer.mock.calls.length).toBeGreaterThanOrEqual(2))
     expect(screen.queryByText('Ranking setup')).toBeNull()
@@ -714,6 +711,13 @@ describe('Run Home V1 canonical projections', () => {
     rejectRefresh(new Error('Run calendar metadata unavailable'))
     expect((await screen.findAllByText(/Run calendar metadata unavailable/)).length).toBeGreaterThan(0)
     expect(screen.queryByText('Ranking setup')).toBeNull()
+    api.getRunContainer.mockResolvedValue({
+      ...initialRun, display_name: 'Earth Run',
+      metadata_json: { run_calendar: {
+        schema_version: 'run_calendar.v1', weeks_per_year: 52,
+        season_start_year_week: 35, start_year: 2030, season_count: 3
+      } }
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Refresh Run metadata' }))
     expect(await screen.findByText(/Nativní operace u jiných kalendářů se ověřují samostatně/)).toBeVisible()
     expect(screen.getByText('World and Calendar copies')).toBeVisible()

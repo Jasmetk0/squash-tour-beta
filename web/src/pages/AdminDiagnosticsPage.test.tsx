@@ -39,7 +39,7 @@ describe('AdminDiagnosticsPage launcher', () => {
 
   it('renders Czech diagnostics copy and keeps available vs planned separation', () => {
     mount()
-    expect(screen.getByText(/ne souhrnný diagnostický scan/)).toBeInTheDocument()
+    expect(screen.getByText(/ne souhrnné diagnostické prověření/)).toBeInTheDocument()
     expect(screen.getByText('Zobrazeno 6 z 6 diagnostických oblastí')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Vyváženost světa' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Validace kalendáře' })).toBeInTheDocument()

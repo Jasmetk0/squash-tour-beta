@@ -126,7 +126,7 @@ def verify_saved_player_replay(page, run_url, artifacts, port, prefix="", expect
     expect(page.get_by_role("heading", name="Match career")).to_be_visible()
     # Local career search/filter and source-bound return context, with real
     # production HTTP/SQLite; no mutation or simulation is dispatched.
-    page.get_by_role("textbox", name="Search loaded page").fill(match_id)
+    page.get_by_role("searchbox", name="Search loaded page").fill(match_id)
     page.get_by_role("combobox", name="Filter wins and losses").select_option("win")
     page.get_by_role("combobox", name="Filter played and walkovers").select_option("played")
     filtered_link = page.locator('a[href^="' + linked_match_route + '&careerOutcome=win&careerCompletion=played&careerQ="]')
@@ -134,7 +134,7 @@ def verify_saved_player_replay(page, run_url, artifacts, port, prefix="", expect
     filtered_link.click()
     expect(page.get_by_role("heading", name="Match detail")).to_be_visible()
     page.get_by_role("link", name="← Back to player profile").click()
-    expect(page.get_by_role("textbox", name="Search loaded page")).to_have_value(match_id)
+    expect(page.get_by_role("searchbox", name="Search loaded page")).to_have_value(match_id)
     expect(page.get_by_role("combobox", name="Filter wins and losses")).to_have_value("win")
     expect(page.get_by_role("combobox", name="Filter played and walkovers")).to_have_value("played")
     return dict(run_id=run_id, branch_id=branch_id,

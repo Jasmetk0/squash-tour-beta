@@ -367,7 +367,7 @@ describe('Run Home V1 canonical projections', () => {
       state: { run_id: runId, branch_id: branchId, world_package: { count: 1 } },
       fingerprint: 'saved-2-fingerprint'
     })
-    await waitFor(() => expect(screen.queryByText(/Načítání…/)).not.toBeInTheDocument())
+    expect(await screen.findByText('Branch zatím nemá uloženou pozici simulace.')).toBeVisible()
     expect(screen.queryByText(/Prázdný Run je platný/)).toBeNull()
     expect(screen.queryByText(/Uložené balíčky neodpovídají vybranému Runu a Branchi/)).toBeNull()
   })

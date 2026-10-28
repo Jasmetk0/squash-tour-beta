@@ -17,6 +17,22 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
   beforeEach(()=>{vi.clearAllMocks();localStorage.setItem('squash-engine-language-v1','en');api.inspectCalendarTour.mockImplementation((r,b)=>Promise.resolve(view(r,b)))})
   const slotView=(run='r',branch='b'):TourView=>({...view(run,branch),saved:true,sporting_saved:true,tour_fingerprint:'c'.repeat(64),next_slot:{schema_version:'calendar_global_slot_inspection.v1',number:14,snapshot_fingerprint:null,completed:0,remaining:2,matches:[{edition_id:'a',match_id:'a:sf1',player_a_id:'p1',player_b_id:'p2',completed:false},{edition_id:'b',match_id:'b:sf1',player_a_id:'p3',player_b_id:'p4',completed:false}]},state:{week:{calendar:{schema_version:'run_calendar.v1',weeks_per_year:80,season_start_year_week:80,start_year:2030,season_count:2},season_index:0,week:4},editions:[],rankings:[],transitions:[]}})
 
+  it.each(['en','cs'])('blocks slot execution while a group tie awaits review in %s',async language=>{
+    localStorage.setItem('squash-engine-language-v1',language)
+    const current=slotView()
+    current.next_slot!.blockers=['group_tie_resolution_required:groups']
+    api.inspectCalendarTour.mockResolvedValue(current)
+    render(panel());await screen.findByLabelText('Global slot match')
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Reviewed slot'}})
+    const nextSlot=screen.getByRole('button',{name:language==='cs'?'Zkontrolovat Next Slot':'Review Next Slot'})
+    const nextMatch=screen.getByRole('button',{name:language==='cs'?'Zkontrolovat Next Match':'Review Next Match'})
+    expect(nextSlot).toBeDisabled();expect(nextMatch).toBeDisabled()
+    expect(screen.getByRole('alert')).toHaveTextContent('group_tie_resolution_required:groups')
+    fireEvent.click(nextSlot);fireEvent.click(nextMatch)
+    expect(api.previewCalendarTour).not.toHaveBeenCalled()
+    expect(api.executeCalendarTour).not.toHaveBeenCalled()
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
   it('uses the verified post-write inspection without another full Tour read or implicit Save',async()=>{
     const current=slotView()
     const next={...current,saved:false,checkpoint_fingerprint:'d'.repeat(64)}

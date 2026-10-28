@@ -139,6 +139,18 @@ class TournamentGroupResultReceipt(FrozenInput):
         return self
 
 
+class TournamentGroupRetirementReceipt(TournamentGroupResultReceipt):
+    schema_version: Literal["tournament_group_retirement_receipt.v1"] = "tournament_group_retirement_receipt.v1"
+    result_kind: Literal["retirement"] = "retirement"
+    termination_reason: Literal["RET"] = "RET"
+
+    @model_validator(mode="after")
+    def validate_receipt(self):
+        if self.winner_player_id == self.loser_player_id or self.games:
+            raise ValueError("Group RET receipt must exclude incomplete-match ratio data")
+        return self
+
+
 class TournamentGroupStandingRow(FrozenInput):
     group_index: int = Field(ge=1, le=64)
     position: int = Field(ge=1, le=128)
@@ -179,6 +191,7 @@ class TournamentGroupStandingsAuthority(FrozenInput):
     schema_version: Literal[
         "tournament_group_standings_authority.v1",
         "tournament_group_standings_authority.v2",
+        "tournament_group_standings_authority.v3",
     ] = "tournament_group_standings_authority.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -195,7 +208,7 @@ class TournamentGroupStandingsAuthority(FrozenInput):
     walkover_policy_id: Literal[
         "group_wo_win_max_points_no_fabricated_ratios.v1"
     ] = "group_wo_win_max_points_no_fabricated_ratios.v1"
-    source_results: tuple[TournamentGroupResultReceipt, ...] = Field(min_length=1)
+    source_results: tuple[TournamentGroupResultReceipt | TournamentGroupRetirementReceipt, ...] = Field(min_length=1)
     admin_tie_resolutions: tuple[TournamentGroupTieResolutionDecision, ...] = ()
     groups: tuple[TournamentGroupStanding, ...] = Field(min_length=1)
 
@@ -205,6 +218,8 @@ class TournamentGroupStandingsAuthority(FrozenInput):
             range(1, len(self.groups) + 1)
         ):
             raise ValueError("Group standings must cover contiguous groups from one")
+        if self.schema_version != "tournament_group_standings_authority.v3" and any(isinstance(r, TournamentGroupRetirementReceipt) for r in self.source_results):
+            raise ValueError("Historical group standings cannot acquire RET semantics")
         result_ids = tuple(receipt.match_id for receipt in self.source_results)
         if len(result_ids) != len(set(result_ids)):
             raise ValueError("Group standings contains duplicate source match identity")
@@ -247,6 +262,7 @@ class TournamentGroupStandingsBuilder:
         scheduled_match: TournamentGroupScheduledMatch,
         result: MatchResult | TournamentWalkoverResult,
         result_fingerprint: str,
+        retirement_policy: bool = False,
     ) -> TournamentGroupResultReceipt:
         expected_players = {
             scheduled_match.top_player_id,
@@ -270,7 +286,14 @@ class TournamentGroupStandingsBuilder:
 
         if result.best_of != best_of:
             raise ValueError("Group result best-of differs from frozen schedule")
+        if retirement_policy and result.termination_reason == MatchTerminationReason.RETIREMENT:
+            return TournamentGroupRetirementReceipt(match_id=result.match_id,
+                group_index=scheduled_match.group_index, result_fingerprint=result_fingerprint,
+                winner_player_id=result.winner_player_id, loser_player_id=result.loser_player_id,
+                best_of=best_of)
         if result.termination_reason != MatchTerminationReason.COMPLETED:
+            if retirement_policy:
+                raise TournamentGroupStandingsUnsupportedResult('Group DQ/ABN/Default table effects are not decided; affected operation is blocked')
             raise TournamentGroupStandingsUnsupportedResult(
                 "group RET table points/tie-break effects remain unresolved in Master"
             )
@@ -304,6 +327,7 @@ class TournamentGroupStandingsBuilder:
         schema_version: Literal[
             "tournament_group_standings_authority.v1",
             "tournament_group_standings_authority.v2",
+        "tournament_group_standings_authority.v3",
         ] = "tournament_group_standings_authority.v2",
     ) -> TournamentGroupStandingsAuthority:
         if not command_id.strip() or len(command_id) > 128:
@@ -442,6 +466,9 @@ class TournamentGroupStandingsBuilder:
 
         winner.played_matches += 1
         loser.played_matches += 1
+        if isinstance(receipt, TournamentGroupRetirementReceipt):
+            winner.group_points += 4 if receipt.best_of == 3 else 6
+            return
         games_won = {winner.player_id: 0, loser.player_id: 0}
         for game in receipt.games:
             if {game.winner_player_id, game.loser_player_id} != {

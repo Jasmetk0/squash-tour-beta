@@ -1,3 +1,5 @@
+import {nativeGroupConfiguration,crossingPreset,pointStages} from './nativeGroupConfiguration'
+import {tourDrawSlots} from '../api/calendarTour'
 import {useEffect,useRef,useState} from 'react'
 import {Link} from 'react-router-dom'
 import {useQueryClient} from '@tanstack/react-query'
@@ -30,7 +32,11 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const [reason,setReason]=useState(''),[seed,setSeed]=useState('231')
   const [name,setName]=useState(''),[editionId,setEditionId]=useState(''),[size,setSize]=useState(8)
   const [season,setSeason]=useState(''),[week,setWeek]=useState(''),[slot,setSlot]=useState('1')
-  const [points,setPoints]=useState({champion:'100',finalist:'60',semifinal:'30',quarterfinal:'15'})
+  const [format,setFormat]=useState<'knockout'|'groups'|'groups_knockout'>('knockout')
+  const [groupCount,setGroupCount]=useState(2),[groupSize,setGroupSize]=useState(4),[advancing,setAdvancing]=useState(2)
+  const [groupBestOf,setGroupBestOf]=useState(3),[knockoutBestOf,setKnockoutBestOf]=useState(5),[winPoints,setWinPoints]=useState('0')
+  const [crossings,setCrossings]=useState(crossingPreset(2)),[tieOrder,setTieOrder]=useState('')
+  const [points,setPoints]=useState<Record<string,string>>({champion:'100',finalist:'60',semifinal:'30',quarterfinal:'15'})
   const [selected,setSelected]=useState<string[]>([]),[contributions,setContributions]=useState<TourContribution[]|null>(null)
   const [selectedSlotMatch,setSelectedSlotMatch]=useState('')
   const [notice,setNotice]=useState<string|null>(null)
@@ -121,17 +127,22 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         invalidate();setView(next);return
       }
       if(!view.checkpoint_fingerprint||!reason.trim()||!Number.isSafeInteger(Number(seed)))return
+      const commandId=newCommandId()
       let data:Record<string,unknown>={}
       if(action==='create-edition'){
         if(!view.state)return
         const current={...view.state.week,calendar:view.run_calendar??view.state.week.calendar}
         const schedule=scheduleTourEdition(current,Number(season)-1,Number(week))
         if(!schedule)throw Error(cs?'Turnaj musí být platně naplánován alespoň dva týdny dopředu v rámci Runu.':'Edition must be scheduled at least two weeks ahead, inside the Run horizon.')
-        const table=Object.fromEntries(Object.entries(points).filter(([k])=>size===8||k!=='quarterfinal').map(([k,v])=>[k,Number(v)]))
-        data={schema_version:'calendar_tournament_edition.v2',simulation_seed:Number(seed),edition_id:editionId,name,week:schedule.week,announcement_week:schedule.announcement_week,start_slot:Number(slot),main_entrant_count:size,ranked:true,point_table:table,validity_weeks:current.calendar.weeks_per_year}
+        const stages=format==='groups'?[]:format==='groups_knockout'?pointStages(groupCount*advancing):pointStages(size)
+        const table=Object.fromEntries(stages.map(k=>[k,Number(points[k])]))
+        const groupConfiguration=format==='knockout'?null:await nativeGroupConfiguration(runId,branchId,commandId,schedule.week.season_index,
+          {format,count:groupCount,size:groupSize,advancing,groupBestOf,knockoutBestOf,winPoints:Number(winPoints),crossings})
+        data={schema_version:groupConfiguration?'calendar_tournament_edition.v3':'calendar_tournament_edition.v2',simulation_seed:Number(seed),edition_id:editionId,name,week:schedule.week,announcement_week:schedule.announcement_week,start_slot:Number(slot),main_entrant_count:groupConfiguration?groupCount*groupSize:size,ranked:true,point_table:table,validity_weeks:current.calendar.weeks_per_year,...(groupConfiguration?{group_configuration:groupConfiguration}:{})}
       } else if(action==='submit') data={player_ids:selected}
+      else if(action==='resolve-group-tie'&&id) data={case:view.groups?.[id]?.tie_case,ordered_player_ids:tieOrder.split(',').map(s=>s.trim())}
       else if(action==='next-match'&&id) data={match_id:id}
-      const command:TourCommand={action,command_id:newCommandId(),edition_id:action==='next-match'?null:id,expected_saved_head:view.saved_head_revision_id,expected_checkpoint_fingerprint:view.checkpoint_fingerprint,expected_tour_fingerprint:view.tour_fingerprint,seed:Number(seed),operator_label:'Admin',audit_reason:reason.trim(),data}
+      const command:TourCommand={action,command_id:commandId,edition_id:action==='next-match'?null:id,expected_saved_head:view.saved_head_revision_id,expected_checkpoint_fingerprint:view.checkpoint_fingerprint,expected_tour_fingerprint:view.tour_fingerprint,seed:Number(seed),operator_label:'Admin',audit_reason:reason.trim(),data}
       const checked=validateTourPreview(await previewCalendarTour(runId,branchId,command),command,runId,branchId)
       if(!valid())return
       setReview(checked);setConsent(false)
@@ -277,18 +288,32 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           <label>{cs?'Týden v sezóně':'Week in season'}<input aria-label="Tour Edition week" type="number" min="1" max={clock?.calendar.weeks_per_year} value={week} onChange={e=>{setWeek(e.target.value);invalidate()}}/></label>
           {plannedEdition?<p>{cs?'Oznámení v':'Announcement at'} S{plannedEdition.announcement_week.season_index+1}/W{plannedEdition.announcement_week.week} · {cs?'Turnaj':'Edition'} S{plannedEdition.week.season_index+1}/W{plannedEdition.week.week}</p>:<p role="status">{cs?'Vyberte termín alespoň dva týdny dopředu a uvnitř horizontu Runu.':'Choose a date at least two weeks ahead within the Run horizon.'}</p>}
           <label>{cs?'První globální slot':'First global slot'}<input aria-label="Tour Edition slot" type="number" value={slot} onChange={e=>{setSlot(e.target.value);invalidate()}}/></label>
-          <label>{cs?'Účastníci':'Participants'}<select aria-label="Tour Edition size" value={size} onChange={e=>{setSize(Number(e.target.value));invalidate()}}><option>8</option><option>4</option></select></label>
-          {Object.entries(points).filter(([k])=>size===8||k!=='quarterfinal').map(([stage,value])=><label key={stage}>{cs?stageLabels[stage]:stage}<input aria-label={`Tour points ${stage}`} type="number" value={value} onChange={e=>{setPoints({...points,[stage]:e.target.value});invalidate()}}/></label>)}
+          <label>{cs?'Formát':'Format'}<select aria-label="Tour Edition format" value={format} onChange={e=>{setFormat(e.target.value as typeof format);invalidate()}}><option value="knockout">{cs?'Pavouk':'Knockout'}</option><option value="groups">{cs?'Skupiny':'Groups'}</option><option value="groups_knockout">{cs?'Skupiny + pavouk':'Groups + knockout'}</option></select></label>
+          {format==='knockout'?<label>{cs?'Účastníci':'Participants'}<select aria-label="Tour Edition size" value={size} onChange={e=>{setSize(Number(e.target.value));invalidate()}}><option>8</option><option>4</option></select></label>:<>
+            <p role="status">{cs?'Neobvyklý turnajový formát: zkontrolujte kapacitu, rozpis a křížení před potvrzením.':'Unusual tournament format: review capacity, schedule and crossings before confirmation.'}</p>
+            <label>{cs?'Počet skupin':'Group count'}<input aria-label="Group count" type="number" min="1" max="64" value={groupCount} onChange={e=>{setGroupCount(Number(e.target.value));setCrossings(crossingPreset(Number(e.target.value)));invalidate()}}/></label>
+            <label>{cs?'Hráčů ve skupině':'Players per group'}<input aria-label="Group size" type="number" min="2" max="128" value={groupSize} onChange={e=>{setGroupSize(Number(e.target.value));invalidate()}}/></label>
+            <label>{cs?'Formát skupin':'Group match format'}<select aria-label="Group best of" value={groupBestOf} onChange={e=>{setGroupBestOf(Number(e.target.value));invalidate()}}><option value="3">BO3</option><option value="5">BO5</option></select></label>
+            <label>{cs?'Rankingové body za odehranou skupinovou výhru':'Ranking points per played group win'}<input aria-label="Group ranking win points" type="number" min="0" value={winPoints} onChange={e=>{setWinPoints(e.target.value);invalidate()}}/></label>
+            <p>{cs?'Skupinové tabulkové body se do Official Ranking nepřičítají.':'Group table points are separate from Official Ranking rewards.'}</p>
+            {format==='groups_knockout'?<>
+              <label>{cs?'Postupujících ze skupiny':'Advancers per group'}<input aria-label="Group advancers" type="number" min="1" value={advancing} onChange={e=>{setAdvancing(Number(e.target.value));invalidate()}}/></label>
+              <label>{cs?'Potvrzené křížení':'Confirmed crossings'}<input aria-label="Group crossings" value={crossings} onChange={e=>{setCrossings(e.target.value);invalidate()}}/></label>
+              <label>{cs?'Formát pavouku':'Knockout match format'}<select aria-label="Knockout best of" value={knockoutBestOf} onChange={e=>{setKnockoutBestOf(Number(e.target.value));invalidate()}}><option value="3">BO3</option><option value="5">BO5</option></select></label>
+            </>:<p>{cs?'Více samostatných skupin má vítěze skupin; neurčuje jediného šampiona Edition.':'Multiple independent groups have group winners; they do not determine one Edition champion.'}</p>}
+          </>}
+          {(format==='groups'?[]:pointStages(format==='knockout'?size:groupCount*advancing)).map(stage=><label key={stage}>{cs?stageLabels[stage]??stage:stage}<input aria-label={`Tour points ${stage}`} type="number" value={points[stage]??''} onChange={e=>{setPoints({...points,[stage]:e.target.value});invalidate()}}/></label>)}
           <p>{cs?'Platnost bodů':'Point validity'}: {view.state.week.calendar.weeks_per_year} {cs?'týdnů od prvního oficiálního rankingu':'weeks from first Official ranking'}</p>
           <button disabled={nativeOnly||!ready||!plannedEdition||!editionId.trim()||!name.trim()} onClick={()=>void perform('create-edition')}>{cs?'Zkontrolovat novou Edition':'Review new Edition'}</button>
         </details>
         {view.next_slot&&<section aria-label="Global Simulation Slot">
           <h3>{cs?'Nejbližší Simulation Slot':'Next Simulation Slot'} {view.next_slot.number}</h3>
           <p>{cs?'Dokončeno':'Completed'}: {view.next_slot.completed} · {cs?'Zbývá':'Remaining'}: {view.next_slot.remaining}</p>
+          {view.next_slot.blockers?.map(blocker=><p role="alert" key={blocker}>{cs?'Nejprve výslovně vyřešte shodu ve skupině. Tento slot čeká na její výsledek.':'Explicitly resolve the group tie first. This slot is waiting for its result.'} · {blocker}</p>)}
           {view.next_slot.conflicts?.map(c=><p role="alert" key={c.player_id}>{cs?'Kolize hráče ve stejném slotu':'Player conflict in the same slot'}: {names.get(c.player_id)??c.player_id} · {c.match_ids.join(' / ')}</p>)}
           <table><thead><tr><th>Edition</th><th>{cs?'Zápas':'Match'}</th><th>{cs?'Stav':'State'}</th></tr></thead><tbody>{view.next_slot.matches.map(m=><tr key={m.match_id}><td>{m.edition_id}</td><td>{names.get(m.player_a_id??'')??m.player_a_id} / {names.get(m.player_b_id??'')??m.player_b_id}</td><td>{m.completed?(cs?'Dokončeno':'Completed'):(cs?'Čeká':'Pending')}</td></tr>)}</tbody></table>
-          <button disabled={busy||!reason.trim()||Boolean(view.next_slot.conflicts?.length)} onClick={()=>void perform('next-slot')}>{cs?'Zkontrolovat Next Slot':'Review Next Slot'}</button>
-          <button disabled={busy||!reason.trim()} onClick={()=>void perform('next-match',selectedSlotMatch||null)}>{cs?'Zkontrolovat Next Match':'Review Next Match'}</button>
+          <button disabled={busy||!reason.trim()||Boolean(view.next_slot.conflicts?.length)||Boolean(view.next_slot.blockers?.length)} onClick={()=>void perform('next-slot')}>{cs?'Zkontrolovat Next Slot':'Review Next Slot'}</button>
+          <button disabled={busy||!reason.trim()||Boolean(view.next_slot.blockers?.length)} onClick={()=>void perform('next-match',selectedSlotMatch||null)}>{cs?'Zkontrolovat Next Match':'Review Next Match'}</button>
           <label>{cs?'Zápas tohoto slotu':'Match in this slot'}<select aria-label="Global slot match" value={selectedSlotMatch} onChange={e=>{setSelectedSlotMatch(e.target.value);invalidate()}}><option value="">{cs?'První zbývající zápas':'First remaining match'}</option>{view.next_slot.matches.filter(m=>!m.completed).map(m=><option key={m.match_id} value={m.match_id}>{m.edition_id}: {names.get(m.player_a_id??'')??m.player_a_id} / {names.get(m.player_b_id??'')??m.player_b_id}</option>)}</select></label>
           <p>{cs?'Všechny zápasy slotu používají stejný zmrazený vstup. Rozpracovaný slot lze ručně uložit a obnovit po restartu.':'Every match uses the same frozen slot input. Manually Save a partial slot to resume after restart.'}</p>
         </section>}
@@ -297,20 +322,32 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           const next: keyof typeof actionLabels=!a.field?'approve':!a.draw?'draw':!a.tournament_fingerprint?'play':'confirm-result'
           return <section key={id} aria-label={`Edition ${id}`}>
             <h3>{a.edition.name} · S{a.edition.week.season_index+1}/W{a.edition.week.week}</h3>
-            {a.edition.schema_version==='calendar_tournament_edition.v2'&&<p>{cs?'Uložený seed turnaje':'Stored tournament seed'}: {a.edition.simulation_seed}</p>}
+            {['calendar_tournament_edition.v2','calendar_tournament_edition.v3'].includes(a.edition.schema_version??'')&&<p>{cs?'Uložený seed turnaje':'Stored tournament seed'}: {a.edition.simulation_seed}</p>}
             <p>{cs?'Přihlášky':'Applications'}: {a.submissions.length} · {cs?'Schválení':'Approved'}: {a.field?.direct_main_player_ids.length??0} · {a.result_confirmed?(cs?'Výsledky potvrzeny':'Results confirmed'):a.tournament_fingerprint?(cs?'Odehráno':'Played'):a.draw?(cs?'Vylosováno':'Drawn'):(cs?'Příprava':'Preparation')}</p>
             <p>{cs?'Bodová tabulka':'Point table'}: {Object.entries(a.edition.point_table).map(([k,v])=>`${cs?stageLabels[k]:k} ${v}`).join(' · ')}</p>
             {!a.field&&active&&<><select multiple aria-label={`Tour applicants ${id}`} value={selected} onChange={e=>{setSelected(Array.from(e.target.selectedOptions,o=>o.value));invalidate()}}>{view.players.filter(p=>p.status!=='retired'&&!a.submissions.some(s=>s.player_id===p.player_id)).map(p=><option key={p.player_id} value={p.player_id}>{p.name}</option>)}</select>
               <button disabled={nativeOnly||!ready||!selected.length} onClick={()=>void perform('submit',id)}>{cs?'Zkontrolovat přihlášky':'Review applications'}</button></>}
             {a.field&&<p>{cs?'Schválený field':'Approved field'}: {a.field.direct_main_player_ids.map(p=>names.get(p)??p).join(', ')}</p>}
-            {a.draw&&<ol>{a.draw.main.slots.map(s=><li key={s.slot_index}>{names.get(s.player_id)??s.player_id}</li>)}</ol>}
+            {a.draw&&<ol>{tourDrawSlots(a.draw).map(s=><li key={s.player_id}>{names.get(s.player_id)??s.player_id}</li>)}</ol>}
+            {view.groups?.[id]&&<section aria-label={`Groups ${id}`}>
+              <h4>{cs?'Skupiny a postup':'Groups and advancement'}</h4>
+              {a.draw?.topology?.group_slots.map(s=><p key={s.player_id}>{cs?'Skupina':'Group'} {s.group_index} · {names.get(s.player_id)??s.player_id}</p>)}
+              {view.groups[id].standings?.groups.map(g=><table key={g.group_index} aria-label={`Group ${g.group_index} standings`}><caption>{cs?'Skupina':'Group'} {g.group_index}</caption><thead><tr><th>#</th><th>{cs?'Hráč':'Player'}</th><th>{cs?'Výhry':'Wins'}</th><th>{cs?'Skupinové body':'Group points'}</th><th>{cs?'Hry':'Games'}</th><th>{cs?'Míčky':'Points'}</th></tr></thead><tbody>{g.rows.map(r=><tr key={r.player_id}><td>{r.position}</td><td>{names.get(r.player_id)??r.player_id}</td><td>{r.wins}</td><td>{r.group_points}</td><td>{r.games_won}/{r.games_lost}</td><td>{r.points_won}/{r.points_lost}</td></tr>)}</tbody></table>)}
+              {view.groups[id].bracket?.matches.map(m=><p key={m.match_id}>{cs?'Kolo':'Round'} {m.round_number}: {m.participant_sources.map(s=>s.startsWith('player:')?names.get(s.slice(7))??s:s).join(' / ')}</p>)}
+              {view.groups[id].tie_case&&<>
+                <p role="alert">{cs?'Nevyřešená shoda: postup čeká na výslovné auditované rozhodnutí Adminu.':'Unresolved tie: advancement awaits an explicit audited Admin decision.'} {view.groups[id].tie_case!.reason}</p>
+                <p>{view.groups[id].tie_case!.player_ids.join(', ')}</p>
+                <label>{cs?'Pořadí ID hráčů oddělené čárkou':'Player IDs in order, separated by commas'}<input aria-label="Group tie order" value={tieOrder} onChange={e=>{setTieOrder(e.target.value);invalidate()}}/></label>
+                <button disabled={busy||!reason.trim()||!tieOrder.trim()} onClick={()=>void perform('resolve-group-tie',id)}>{cs?'Zkontrolovat řešení shody':'Review tie resolution'}</button>
+              </>}
+            </section>}
             {view.edition_evidence[id]&&<>
               <table aria-label={`Played matches ${id}`}><thead><tr><th>Slot</th><th>{cs?'Zápas':'Match'}</th><th>{cs?'Vítěz':'Winner'}</th><th>{cs?'Rally':'Rallies'}</th></tr></thead><tbody>{view.edition_evidence[id].matches.map(m=><tr key={m.match_id}><td>{m.slot}</td><td>{names.get(m.player_a_id)} / {names.get(m.player_b_id)}</td><td>{names.get(m.winner_player_id)}</td><td>{m.rally_count}</td></tr>)}</tbody></table>
               {view.edition_evidence[id].results.some(r=>r.schema_version==='calendar_terminal_edition_result.v1'||r.schema_version==='calendar_terminal_edition_result.v2')&&<p>{cs?'Poslední týden původního Runu: potvrzení a ruční Save uloží výsledek pro Closing Ranking. Žádný další týden ani Official Ranking se neotevře. Závěrečné uzavření vyžaduje samostatné schválení a Save.':'Original Run final week: confirmation and manual Save retain this result for the Closing Ranking. No following week or Official Ranking opens. Final closure requires separate approval and Save.'}</p>}
               <table aria-label={`Edition results ${id}`}><thead><tr><th>{cs?'Hráč':'Player'}</th><th>{cs?'Výsledek':'Result'}</th><th>{cs?'Body':'Points'}</th></tr></thead><tbody>{view.edition_evidence[id].results.map(r=><tr key={r.player_id}><td>{names.get(r.player_id)}</td><td>{cs?stageLabels[r.stage]:r.stage}</td><td>{r.main_points}</td></tr>)}</tbody></table>
             </>}
-            {active&&!a.result_confirmed&&!(next==='play'&&a.edition.schema_version==='calendar_tournament_edition.v2')&&<button disabled={nativeOnly||!ready||(!view.saved&&(next==='play'||next==='confirm-result'))} onClick={()=>void perform(next,id)}>{actionLabels[next][cs?0:1]}</button>}
-            {a.tournament_fingerprint&&<button disabled={busy} onClick={()=>{
+            {active&&!a.result_confirmed&&!(next==='play'&&['calendar_tournament_edition.v2','calendar_tournament_edition.v3'].includes(a.edition.schema_version??''))&&<button disabled={nativeOnly||!ready||(!view.saved&&(next==='play'||next==='confirm-result'))} onClick={()=>void perform(next,id)}>{actionLabels[next][cs?0:1]}</button>}
+            {a.tournament_fingerprint&&a.edition.schema_version!=='calendar_tournament_edition.v3'&&<button disabled={busy} onClick={()=>{
               const stamp=epoch.current;setBusy(true)
               void replayCalendarContinuation(runId,branchId,`${id}:final`).then(r=>{if(epoch.current===stamp)setNotice(`${cs?'Přesný replay':'Exact replay'}: ${r.exact_replay}`)}).catch(e=>{if(epoch.current===stamp)setError(formatApiError(e))}).finally(()=>{if(epoch.current===stamp)setBusy(false)})
             }}>{cs?'Replay finále':'Replay final'}</button>}
@@ -406,7 +443,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         {review.command.action==='create-edition'&&<p>{String(review.command.data.name)} · W{String((review.command.data.week as {week:number}).week)} · {cs?'Účastníci':'Participants'}: {String(review.command.data.main_entrant_count)} · {Object.entries(review.command.data.point_table as Record<string,number>).map(([k,v])=>`${cs?stageLabels[k]:k} ${v}`).join(' · ')}</p>}
         {review.command.action==='submit'&&<p>{cs?'Přihlášky':'Applications'}: {(review.command.data.player_ids as string[]).map(id=>names.get(id)??id).join(', ')}</p>}
         {review.impact.approved_field&&<p>{cs?'Schválený field':'Approved field'}: {review.impact.approved_field.direct_main_player_ids.map(id=>names.get(id)??id).join(', ')}</p>}
-        {review.impact.draw&&<ol>{review.impact.draw.main.slots.map(s=><li key={s.slot_index}>{names.get(s.player_id)??s.player_id}</li>)}</ol>}
+        {review.impact.draw&&<ol>{tourDrawSlots(review.impact.draw).map(s=><li key={s.player_id}>{names.get(s.player_id)??s.player_id}</li>)}</ol>}
         {review.impact.entrant_ids&&<p>{cs?'Účastníci podle uloženého losu':'Participants from Saved draw'}: {review.impact.entrant_ids.map(id=>names.get(id)??id).join(', ')}</p>}
         {review.impact.results&&<p>{cs?'Výsledné body':'Result points'}: {review.impact.results.map(r=>`${names.get(r.player_id)??r.player_id}: ${r.main_points}`).join(' · ')}</p>}
         {review.impact.ranking&&<p>{cs?'Nový týden':'New week'}: {review.impact.target_week?.season_index!==undefined? `${review.impact.target_week.season_index+1}/W${review.impact.target_week.week}`:review.impact.target_week?.week} · {cs?'Klasifikovaní hráči':'Classified players'}: {review.impact.ranking.rows.length} · {cs?'Změnění hráči':'Changed players'}: {review.impact.sporting?.changed_player_count} · {cs?'Změny atributů':'Attribute changes'}: {review.impact.sporting?.attribute_change_count}</p>}

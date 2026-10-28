@@ -68,6 +68,12 @@ from beta_engine.domain.tournaments.calendar_tour import (
     CalendarTourState,
 )
 
+from beta_engine.domain.tournaments.calendar_groups import (
+    NativeGroupTieDecision, completed_group_result, group_plan, group_decisions,
+    TournamentGroupStandingsUnresolvedTie,
+)
+from beta_engine.domain.matches.formats import EffectiveMatchFormatSnapshot, MatchFormat
+
 _replay_projections = ContextVar("global_slot_private_replay_projections", default=None)
 
 
@@ -209,7 +215,42 @@ def _prime_private_fingerprint(value, fingerprint):
 
 
 def is_slot_edition(authority):
-    return authority.edition.schema_version == "calendar_tournament_edition.v2"
+    return authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"}
+
+
+def is_group_edition(authority):
+    return authority.edition.schema_version == "calendar_tournament_edition.v3"
+
+
+def edition_plan(authority, matches, slots=()):
+    if is_group_edition(authority):
+        return group_plan(authority, matches, group_decisions(slots, authority.edition.edition_id))
+    ids = tuple(s.player_id for s in authority.draw.main.slots) if authority.draw else ()
+    prior = tuple(matches.get(f"{authority.edition.edition_id}:{suffix}") for suffix in bracket(authority))
+    return tuple((f"{authority.edition.edition_id}:{suffix}", native_match_slot(authority, i),
+                  participants(ids, prior, i) if ids else (), 5)
+                 for i, suffix in enumerate(bracket(authority)))
+
+
+def slot_match_id(authority, index):
+    if is_group_edition(authority):
+        if authority.draw is None:
+            return authority.edition.edition_id + ":group:pending-draw"
+        schedule = authority.draw.schedule
+        if index < len(schedule.matches):
+            return schedule.matches[index].match_id
+        offset = index - len(schedule.matches)
+        count = authority.edition.group_configuration.groups.group_count * authority.edition.group_configuration.groups.advancing_per_group
+        if offset < 0 or offset >= count - 1:
+            raise ValueError("Group slot match index is outside its configured bracket")
+        round_number = 1
+        while offset >= count // (2 ** round_number):
+            offset -= count // (2 ** round_number)
+            round_number += 1
+        suffix = f"first:M{offset + 1}" if round_number == 1 else f"R{round_number}:M{offset + 1}"
+        return f"{authority.edition.edition_id}:hybrid:knockout:{suffix}"
+    return f"{authority.edition.edition_id}:{bracket(authority)[index]}"
+
 
 
 def match_seed(authority, match_id):
@@ -242,8 +283,14 @@ class FrozenSlotMatch(FrozenInput):
     sequence: int = Field(ge=1)
 
 
+class FrozenGroupSlotMatch(FrozenSlotMatch):
+    schema_version: Literal["frozen_group_slot_match.v1"] = "frozen_group_slot_match.v1"
+    index: int = Field(ge=0, le=8255)
+    effective_match_format: EffectiveMatchFormatSnapshot
+
+
 class GlobalSlot(FrozenInput):
-    schema_version: Literal["calendar_global_slot.v1"] = "calendar_global_slot.v1"
+    schema_version: Literal["calendar_global_slot.v1", "calendar_global_slot.v2"] = "calendar_global_slot.v1"
     run_id: str
     branch_id: str
     week: RunWeekPosition
@@ -252,8 +299,9 @@ class GlobalSlot(FrozenInput):
     source_health_fingerprint: str
     players: tuple[PlayerSportingRecord, ...]
     authorities: tuple[CalendarEditionAuthority, ...]
-    scheduled: tuple[FrozenSlotMatch, ...]
+    scheduled: tuple[FrozenSlotMatch | FrozenGroupSlotMatch, ...]
     accepted: tuple[CalendarContinuationMatch, ...] = ()
+    group_tie_decisions: tuple[NativeGroupTieDecision, ...] = Field(default=(), exclude_if=lambda value: not value)
     # Keep the original empty-field omission in the native serializer. A wrap
     # serializer materializes every player's full attributes and rally log an
     # extra time whenever an enclosing checkpoint is serialized.
@@ -311,6 +359,12 @@ class GlobalSlot(FrozenInput):
 
     @model_validator(mode="after")
     def canonical_evidence(self):
+        if self.schema_version == "calendar_global_slot.v1" and (self.group_tie_decisions or any(isinstance(m, FrozenGroupSlotMatch) for m in self.scheduled) or any(is_group_edition(a) for a in self.authorities)):
+            raise ValueError("Historical slot cannot acquire group authority")
+        if any(r.edition_id not in {a.edition.edition_id for a in self.authorities} for r in self.group_tie_decisions):
+            raise ValueError('Global slot tie decision has a foreign Edition source')
+        if len({r.command_id for r in self.group_tie_decisions}) != len(self.group_tie_decisions):
+            raise ValueError('Global slot contains duplicate tie decision commands')
         ids = tuple(m.match_id for m in self.scheduled)
         done = tuple(m.match_id for m in self.accepted)
         if set(self.inherited_match_ids) & set(done) or not set(
@@ -497,7 +551,10 @@ def participants(ids, matches, index):
         if len(ids) == 8
         else 0
     )
-    return tuple(matches[i].result.winner_player_id for i in (offset, offset + 1))
+    feeders = (offset, offset + 1)
+    if any(i >= len(matches) or matches[i] is None for i in feeders):
+        return ()
+    return tuple(matches[i].result.winner_player_id for i in feeders)
 
 
 def completed_tournaments(events, *, owner=None):
@@ -510,6 +567,11 @@ def completed_tournaments(events, *, owner=None):
     matches = {m.match_id: m for e in slots for m in e.accepted}
     result = []
     for eid, a in sorted(authorities.items()):
+        if is_group_edition(a):
+            event = completed_group_result(a, slots, owner=owner)
+            if event is not None:
+                result.append(event)
+            continue
         ordered = tuple(matches.get(f"{eid}:{suffix}") for suffix in bracket(a))
         if any(m is None for m in ordered):
             continue
@@ -607,26 +669,26 @@ def next_schedule(state, checkpoint):
             or a.tournament_fingerprint
         ):
             continue
-        missing = [
-            i
-            for i, suffix in enumerate(bracket(a))
-            if f"{a.edition.edition_id}:{suffix}" not in accepted
-        ]
-        number = native_match_slot(a, missing[0])
-        for index in missing:
-            if native_match_slot(a, index) != number:
-                continue
-            prior = tuple(
-                accepted.get(f"{a.edition.edition_id}:{s}") for s in bracket(a)[:index]
-            )
-            ids = (
-                participants(
-                    tuple(s.player_id for s in a.draw.main.slots), prior, index
-                )
-                if a.draw
-                else ()
-            )
-            due.append((number, a, index, ids))
+        if not a.draw:
+            due.append((a.edition.start_slot + 3, a, 0, ()))
+            continue
+        try:
+            plan = edition_plan(a, accepted, history)
+        except TournamentGroupStandingsUnresolvedTie:
+            # Reserve the dependent playoff slot: never advance past it and
+            # then resume from a later sporting snapshot after Admin resolves it.
+            if a.edition.group_configuration.format_kind == "groups_knockout":
+                schedule = a.draw.schedule
+                due.append((a.edition.start_slot + 3 + schedule.match_day_count,
+                            a, len(schedule.matches), ()))
+            continue
+        missing = [(i, item) for i, item in enumerate(plan) if item[0] not in accepted]
+        if not missing:
+            continue
+        number = min(item[1] for _, item in missing)
+        for index, (_, n, ids, _) in missing:
+            if n == number:
+                due.append((number, a, index, ids))
     if not due:
         return None, (), None
     number = min(d[0] for d in due)
@@ -639,6 +701,12 @@ def freeze_slot(state, checkpoint, *, world, lifecycle, health, source, head):
         raise ValueError("No unresolved global match slot in the current week")
     if opened is not None:
         return opened
+    history = getattr(checkpoint, "history_global_slots", getattr(checkpoint, "events", ()))
+    for authority, _, player_ids in due:
+        if is_group_edition(authority) and authority.draw and not player_ids:
+            matches = {m.match_id: m for s in history if isinstance(s, GlobalSlot)
+                       for m in s.accepted}
+            edition_plan(authority, matches, history)
     ids = [
         a.edition.edition_id
         for a in state.editions
@@ -663,6 +731,7 @@ def freeze_slot(state, checkpoint, *, world, lifecycle, health, source, head):
         )
     )
     initial = GlobalSlot.model_construct(
+        schema_version="calendar_global_slot.v2" if any(is_group_edition(a) for a in authorities) else "calendar_global_slot.v1",
         run_id=state.run_id,
         branch_id=state.branch_id,
         week=lifecycle.week,
@@ -680,12 +749,17 @@ def freeze_slot(state, checkpoint, *, world, lifecycle, health, source, head):
     profiles = {p.player_id: p for p in health.players}
     scheduled = []
     for a, i, pids in due:
-        mid = f"{a.edition.edition_id}:{bracket(a)[i]}"
+        mid = slot_match_id(a, i)
         medical = EffectiveMatchHealthSnapshot(
             player_profiles=tuple(project_player_health(profiles[pid]) for pid in pids)
         )
         scheduled.append(
-            FrozenSlotMatch(
+            (FrozenGroupSlotMatch if is_group_edition(a) else FrozenSlotMatch)(
+                **({"effective_match_format": (a.draw.schedule.matches[i].effective_match_format
+                    if i < len(a.draw.schedule.matches) else EffectiveMatchFormatSnapshot.create(
+                        format=MatchFormat(best_of=a.edition.group_configuration.knockout_best_of, games_to=11, win_by=2),
+                        source_scope="phase_override", source_key=a.edition.fingerprint + ":knockout",
+                    ))} if is_group_edition(a) else {}),
                 edition_id=a.edition.edition_id,
                 index=i,
                 match_id=mid,
@@ -714,7 +788,7 @@ def calculate_match(slot, item):
         match_id=item.match_id,
         player_a=canonical_participant(item.projections[0]),
         player_b=canonical_participant(item.projections[1]),
-        best_of=5,
+        best_of=item.effective_match_format.format.best_of if isinstance(item, FrozenGroupSlotMatch) else 5,
         games_to=11,
         win_by=2,
     )
@@ -731,7 +805,7 @@ def calculate_match(slot, item):
         "audit_reason": "Actual match from the shared frozen slot snapshot",
     }
     inputs = {
-        "schema_version": "calendar_continuation_match.v2",
+        "schema_version": "calendar_continuation_match.v3" if isinstance(item, FrozenGroupSlotMatch) else "calendar_continuation_match.v2",
         "run_id": slot.run_id,
         "branch_id": slot.branch_id,
         "week": slot.week,

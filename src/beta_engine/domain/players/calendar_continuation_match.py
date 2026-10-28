@@ -29,7 +29,7 @@ from beta_engine.domain.simulation_slots import (
 
 
 class CalendarContinuationMatch(FrozenInput):
-    schema_version: Literal['calendar_continuation_match.v1', 'calendar_continuation_match.v2'] = 'calendar_continuation_match.v1'
+    schema_version: Literal['calendar_continuation_match.v1', 'calendar_continuation_match.v2', 'calendar_continuation_match.v3'] = 'calendar_continuation_match.v1'
     run_id: str
     branch_id: str
     week: RunWeekPosition
@@ -61,7 +61,7 @@ class CalendarContinuationMatch(FrozenInput):
         if (ctx.match_id != self.match_id or result.match_id != self.match_id
                 or (result.player_a_id, result.player_b_id) != ids
                 or {result.winner_player_id, result.loser_player_id} != set(ids)
-                or (ctx.best_of, ctx.games_to, ctx.win_by) != (5, 11, 2)):
+                or (ctx.best_of not in ((3, 5) if self.schema_version == 'calendar_continuation_match.v3' else (5,)) or (ctx.games_to, ctx.win_by) != (11, 2))):
             raise ValueError('Continuation result/context identity or match rules mismatch')
         if (self.projection_policy != CanonicalMatchInputProjectionPolicy()
                 or self.state_policy != CalendarMatchStatePolicy()):

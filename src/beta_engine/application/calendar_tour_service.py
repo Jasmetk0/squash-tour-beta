@@ -111,6 +111,7 @@ class CalendarTourCommand(FrozenInput):
         "play",
         "next-slot",
         "next-match",
+        "resolve-group-tie",
         "confirm-result",
         "policy",
         "transition",
@@ -504,7 +505,7 @@ class CalendarTourService:
                     "matches": [
                         {
                             "match_id": m.match_id,
-                            "slot": native_match_slot(a, i)
+                            "slot": next((slot.number for slot in getattr(cp, "history_global_slots", getattr(cp, "events", ())) if hasattr(slot, "accepted") and any(x.match_id == m.match_id for x in slot.accepted)), None) if a.edition.schema_version == "calendar_tournament_edition.v3" else native_match_slot(a, i)
                             if event.schema_version
                             in {"calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8"}
                             else a.edition.start_slot + 3 + i,
@@ -541,7 +542,9 @@ class CalendarTourService:
         from beta_engine.application.calendar_global_slot_service import (
             slot_inspection,
         )
+        from beta_engine.application.calendar_native_groups import inspect_groups
         return {
+            "groups": inspect_groups(state, cp),
             "schema_version": "calendar_tour_inspection.v1",
             "run_id": run_id,
             "branch_id": branch_id,
@@ -593,7 +596,7 @@ class CalendarTourService:
             ],
             "state": state.model_dump(mode="json") if state else None,
             "edition_evidence": evidence,
-            "next_slot": slot_inspection(state, cp) if state and cp and any(a.edition.schema_version.endswith(".v2") for a in state.editions) else None,
+            "next_slot": slot_inspection(state, cp) if state and cp and any(a.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"} for a in state.editions) else None,
             "contributions": contributions,
             "transition_blockers": self._transition_blockers(
                 state, ctx, session, _checkpoint_fingerprint=checkpoint_fingerprint
@@ -776,7 +779,7 @@ class CalendarTourService:
                     "Operation precedes the current global Simulation Slot"
                 )
         if state and command.action == "play":
-            if authority and authority.edition.schema_version.endswith(".v2"):
+            if authority and authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"}:
                 raise ValueError("Use Next Slot / Next Match for a shared-slot Edition")
             if authority.draw is None or authority.tournament_fingerprint:
                 raise ValueError(
@@ -994,7 +997,7 @@ class CalendarTourService:
             )
         )
         if persist:
-            replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp)
+            replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp, _repository=self.repository)
             _fault_injection_point("after_native_matches_write")
         receipt = CalendarFollowupKnockoutService._receipt(event, successor)
         receipt["participant_identities"] = {
@@ -1235,7 +1238,7 @@ class CalendarTourService:
             and command.action not in {"transition", "season-transition"}
             and not (
                 command.action == "create-edition"
-                and command.data.get("schema_version") == "calendar_tournament_edition.v2"
+                and command.data.get("schema_version") in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"}
             )
         ):
             from beta_engine.domain.tournaments.calendar_native_tour import (
@@ -1250,21 +1253,24 @@ class CalendarTourService:
             previous_cp = cp
             cp = competition_checkpoint(cp)
             if persist:
-                replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp)
+                replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp, _repository=self.repository)
             state = state.model_copy(update={"checkpoint_fingerprint": cp.fingerprint})
             ctx = (*ctx[:4], cp, *ctx[5:])
-        if command.action == "create-edition" and command.data.get("schema_version") == "calendar_tournament_edition.v2" and state.schema_version != "native_fork_tour.v1":
+        if command.action == "create-edition" and command.data.get("schema_version") in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"} and state.schema_version != "native_fork_tour.v1":
             from beta_engine.domain.tournaments.calendar_global_slots import upgrade
             previous_cp = cp
             state, cp = upgrade(state, cp, command.expected_saved_head)
             if persist and cp != previous_cp:
-                replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp)
+                replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp, _repository=self.repository)
             ctx = (*ctx[:4], cp, *ctx[5:])
+        if command.action == "resolve-group-tie":
+            from beta_engine.application.calendar_native_groups import apply_group_tie
+            return apply_group_tie(session, ctx, state, authority, command, persist=persist, _repository=self.repository)
         if command.action in {"next-slot", "next-match"}:
             from beta_engine.application.calendar_global_slot_service import (
                 apply_global_slot,
             )
-            return apply_global_slot(session, ctx, state, command, persist=persist, native_inputs=_native_inputs)
+            return apply_global_slot(session, ctx, state, command, persist=persist, native_inputs=_native_inputs, _repository=self.repository)
         if command.action == "initialize":
             from beta_engine.infrastructure.db.models import RunProspectModel
 
@@ -1320,23 +1326,27 @@ class CalendarTourService:
                 )
             if any(a.edition.edition_id == edition.edition_id for a in state.editions):
                 raise ValueError("Edition identity already exists")
-            if edition.main_entrant_count not in (4, 8) or not edition.ranked:
+            if edition.schema_version != "calendar_tournament_edition.v3" and (edition.main_entrant_count not in (4, 8) or not edition.ranked):
                 raise ValueError(
                     "Current executor supports full Ranked main-only 4/8 fields"
                 )
-            policy_type = (
-                CalendarFollowupEightPointPolicy
-                if edition.main_entrant_count == 8
-                else CalendarFollowupPointPolicy
-            )
-            policy_type(
-                category_label=edition.edition_id,
-                validity_weeks=edition.validity_weeks,
-                **edition.point_table,
-            )
+            if edition.schema_version == "calendar_tournament_edition.v3":
+                if (edition.group_configuration.rules.run_id, edition.group_configuration.rules.branch_id) != (state.run_id, state.branch_id):
+                    raise ValueError("Group rules have a foreign Run/Branch source")
+            else:
+                policy_type = (
+                    CalendarFollowupEightPointPolicy
+                    if edition.main_entrant_count == 8
+                    else CalendarFollowupPointPolicy
+                )
+                policy_type(
+                    category_label=edition.edition_id,
+                    validity_weeks=edition.validity_weeks,
+                    **edition.point_table,
+                )
             if any(
                 a.edition.week.ordinal == edition.week.ordinal
-                and not (edition.schema_version.endswith(".v2") and a.edition.schema_version.endswith(".v2"))
+                and not (edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"} and a.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"})
                 and not (
                     edition.start_slot
                     > a.edition.start_slot + a.edition.main_entrant_count + 2
@@ -1394,7 +1404,7 @@ class CalendarTourService:
         elif command.action in {"transition", "season-transition"}:
             impact, successor = transition_candidate
             if persist:
-                replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp)
+                replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp, _repository=self.repository)
             _fault_injection_point("after_development_write")
             from beta_engine.domain.rankings.calendar_official import (
                 CalendarOfficialRankingSnapshot,
@@ -1601,7 +1611,7 @@ class CalendarTourService:
                     # replace that trigger or treat a later slot as simultaneous.
                     simultaneous = tuple(
                         s for a in state.editions for s in a.submissions
-                        if authority.edition.schema_version.endswith(".v2")
+                        if authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"}
                         and s.decision_position == submissions[0].decision_position
                     )
                     record_valid_application_submission_batch(
@@ -1647,7 +1657,7 @@ class CalendarTourService:
                 accepted = set(field.direct_main_player_ids)
                 if any(
                     a.field
-                    and not (authority.edition.schema_version.endswith(".v2") and a.edition.schema_version.endswith(".v2"))
+                    and not (authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"} and a.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"})
                     and a.edition.edition_id != authority.edition.edition_id
                     and a.edition.week.ordinal == cp.week.ordinal
                     and accepted.intersection(a.field.direct_main_player_ids)
@@ -1787,7 +1797,7 @@ class CalendarTourService:
             }
             state = state.model_copy(
                 update={
-                    "slot_cursor": state.slot_cursor if authority.edition.schema_version.endswith(".v2") else authority.edition.start_slot
+                    "slot_cursor": state.slot_cursor if authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"} else authority.edition.start_slot
                     + offsets[command.action],
                     "editions": tuple(
                         authority

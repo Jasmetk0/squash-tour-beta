@@ -1,0 +1,93 @@
+name: Pre-alpha Native Groups Global Slots
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - '.github/workflows/prealpha-native-groups-global-slots.yml'
+      - 'src/beta_engine/application/calendar_*'
+      - 'src/beta_engine/application/native_*'
+      - 'src/beta_engine/application/hybrid_tournament_closure.py'
+      - 'src/beta_engine/domain/tournaments/calendar_*'
+      - 'src/beta_engine/domain/tournaments/group_*'
+      - 'src/beta_engine/domain/tournaments/hybrid_*'
+      - 'src/beta_engine/domain/players/calendar_*'
+      - 'src/beta_engine/domain/native_fork*'
+      - 'src/beta_engine/infrastructure/db/calendar_*'
+      - 'src/beta_engine/infrastructure/db/native_fork*'
+      - 'src/beta_engine/infrastructure/db/repositories.py'
+      - 'tests/api/test_calendar_native_groups.py'
+      - 'tests/domain/test_calendar_native_groups_contract.py'
+      - 'tests/domain/test_native_group_slot_dependencies.py'
+      - 'scripts/native_groups_global_slots_browser.py'
+      - 'web/src/pages/CalendarTourPanel*'
+      - 'web/src/pages/nativeGroupConfiguration*'
+      - 'web/src/api/calendarTour.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-groups-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  native-groups:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: Native groups W${{ matrix.width }} / actual HTTP SQLite MatchEngine
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        width: [52, 61, 80]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install -e . pytest
+      - name: Actual configured group lifecycle, forks, worker and rejection
+        env:
+          NATIVE_GROUP_CALENDAR: ${{ matrix.width }}
+        run: GITHUB_EVENT_NAME=native_groups_acceptance python -m pytest tests/api/test_calendar_native_groups.py -vv -s --basetemp "${{ runner.temp }}/native-groups-${{ matrix.width }}" --maxfail=1 --durations=10
+      - name: Retain actual SQLite evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-groups-${{ matrix.width }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/native-groups-${{ matrix.width }}
+          retention-days: 7
+
+  native-groups-browser:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: Native groups / real Admin Chromium / manual Save / cold restart
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: python -m pip install -e . pytest playwright
+      - run: python -m playwright install --with-deps chromium
+      - run: npm --prefix web ci
+      - name: Real Chromium creation, groups, playoff, results and restart
+        run: python scripts/native_groups_global_slots_browser.py --root "${{ runner.temp }}/native-groups-browser" --chromium "$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')"
+      - name: Retain browser and SQLite evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-groups-browser-${{ github.run_id }}
+          path: ${{ runner.temp }}/native-groups-browser
+          retention-days: 7

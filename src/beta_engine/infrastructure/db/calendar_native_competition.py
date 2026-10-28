@@ -364,9 +364,15 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
             result
         ) != canonical_hash(receipt.result):
             raise ValueError("Native competition confirmation/result does not rebuild")
+        previous_before_tie = previous
         previous = planned.model_copy(
             update={"receipts": planned.receipts + (receipt,)}
         )
+        if command.action == "resolve-group-tie":
+            from beta_engine.application.calendar_native_groups import apply_group_tie
+            captured = {}
+            apply_group_tie(None, ctx, previous_before_tie, authority, command, persist=False, _successor_out=captured)
+            next_cp = captured['checkpoint']
         cp = next_cp
         if isinstance(cp, GlobalCompetitionCheckpoint):
             verified_states.append((cp, previous))

@@ -5,9 +5,10 @@ from types import SimpleNamespace
 from beta_engine.domain.tournaments.calendar_global_slots import (
     GlobalCompetitionCheckpoint,
     accept_slot,
-    bracket,
     freeze_slot,
+    is_group_edition,
     next_schedule,
+    slot_match_id,
 )
 
 
@@ -23,7 +24,7 @@ def slot_inspection(state, checkpoint):
     rows = [
         {
             "edition_id": a.edition.edition_id,
-            "match_id": f"{a.edition.edition_id}:{bracket(a)[i]}",
+            "match_id": slot_match_id(a, i),
             "player_a_id": ids[0] if ids else None,
             "player_b_id": ids[1] if ids else None,
             "completed": False,
@@ -54,6 +55,10 @@ def slot_inspection(state, checkpoint):
         if len(mids) > 1
     ]
     return {
+        "blockers": sorted({
+            "group_tie_resolution_required:" + a.edition.edition_id
+            for a, _, ids in due if is_group_edition(a) and a.draw and not ids
+        }),
         "conflicts": conflicts,
         "schema_version": "calendar_global_slot_inspection.v1",
         "number": number,
@@ -160,7 +165,7 @@ def prepare_global_slot(
     }
 
 
-def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=None):
+def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=None, _repository=None):
     from beta_engine.application.calendar_tour_service import _fault_injection_point
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
         replace_checkpoint,
@@ -189,7 +194,7 @@ def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=No
         # ctx owns the fully authenticated live checkpoint. The writer still
         # hashes the complete actual SQLite content before accepting equality;
         # changed bytes fall back to ordinary strict decoding and comparison.
-        replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp)
+        replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp, _repository=_repository)
         _fault_injection_point("after_global_slot_matches_write")
     events = {e.tournament_id: e for e in successor.tournaments}
     starts = {
@@ -224,7 +229,7 @@ def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=No
     completed_editions = {
         eid: {
             "fingerprint": event.fingerprint,
-            "winner_player_id": event.matches[-1].result.winner_player_id,
+            "winner_player_id": event.winner_player_id if hasattr(event, "winner_player_id") else event.matches[-1].result.winner_player_id,
             "prepared_awards": [
                 a.model_dump(mode="json") for a in event.prepared_awards
             ],

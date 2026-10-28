@@ -51,8 +51,11 @@ def ranking_week(week):
     return CalendarRankingWeek(season_index=week.season_index, week=week.week)
 
 
+from beta_engine.domain.tournaments.calendar_groups import NativeGroupConfiguration, NativeGroupDraw, build_group_draw, knockout_stages
+
+
 class CalendarTourEdition(FrozenInput):
-    schema_version: Literal["calendar_tournament_edition.v1", "calendar_tournament_edition.v2"] = (
+    schema_version: Literal["calendar_tournament_edition.v1", "calendar_tournament_edition.v2", "calendar_tournament_edition.v3"] = (
         "calendar_tournament_edition.v1"
     )
     edition_id: str = Field(min_length=3, max_length=80)
@@ -66,6 +69,7 @@ class CalendarTourEdition(FrozenInput):
     ranked: bool = True
     point_table: dict[str, int]
     validity_weeks: int = Field(ge=1)
+    group_configuration: NativeGroupConfiguration | None = Field(default=None, exclude_if=lambda v: v is None)
     best_of: Literal[5] = 5
     games_to: Literal[11] = 11
     win_by: Literal[2] = 2
@@ -79,6 +83,8 @@ class CalendarTourEdition(FrozenInput):
 
     @property
     def capacity(self):
+        if self.schema_version == "calendar_tournament_edition.v3":
+            return TournamentEntryFieldCapacity(geometry_kind="fixed_participant_field", main_draw_size=self.main_entrant_count)
         return TournamentEntryFieldCapacity.for_main_entrant_count(
             main_entrant_count=self.main_entrant_count
         )
@@ -92,7 +98,20 @@ class CalendarTourEdition(FrozenInput):
             raise ValueError(
                 "Edition announcement must precede play on the same Run clock"
             )
-        stages = required_stages(self.capacity.main_draw_size)
+        if self.schema_version == "calendar_tournament_edition.v3":
+            config = self.group_configuration
+            if config is None or config.groups.participant_capacity != self.main_entrant_count:
+                raise ValueError("Group Edition requires its exact equal-group capacity")
+            if config.rules.effective_from_season_index > self.week.season_index:
+                raise ValueError("Group rules are not yet effective")
+            count = config.groups.group_count * config.groups.advancing_per_group
+            stages = knockout_stages(count) if config.format_kind == 'groups_knockout' else ()
+            if not self.ranked and config.played_group_win_points:
+                raise ValueError("Unranked group Edition cannot grant ranking rewards")
+        else:
+            if self.group_configuration is not None:
+                raise ValueError("Historical knockout Edition cannot carry group configuration")
+            stages = required_stages(self.capacity.main_draw_size)
         if self.ranked and (
             set(self.point_table) != set(stages)
             or any(type(v) is not int or v < 0 for v in self.point_table.values())
@@ -133,7 +152,7 @@ class CalendarEditionAuthority(FrozenInput):
     submissions: tuple[TournamentApplicationSubmissionAuthority, ...] = ()
     ranking_authority: TournamentRankingSnapshotAuthority | None = None
     field: TournamentEntryField | None = None
-    draw: TournamentDrawAuthority | None = None
+    draw: TournamentDrawAuthority | NativeGroupDraw | None = None
     draw_seed: int | None = None
     draw_command_id: str | None = None
     played_saved_head: str | None = None
@@ -213,6 +232,8 @@ class CalendarEditionAuthority(FrozenInput):
 
 
 def build_draw(authority, command_id, seed):
+    if authority.edition.schema_version == "calendar_tournament_edition.v3":
+        return build_group_draw(authority, command_id, seed)
     inputs = TournamentDrawInputAuthorityBuilder.build(
         authority=authority.ranking_authority,
         field=authority.field,
@@ -418,7 +439,7 @@ def edition_results(authority, event):
     if authority.tournament_fingerprint != played_fingerprint:
         raise ValueError("Edition result is detached from played MatchEngine evidence")
     if (
-        event.schema_version not in {"calendar_followup_knockout.v5", "calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8"}
+        event.schema_version not in {"calendar_followup_knockout.v5", "calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8", "calendar_group_tournament_result.v1"}
         or event.edition_authority_fingerprint != authority.execution_fingerprint
     ):
         raise ValueError(
@@ -447,17 +468,15 @@ def edition_results(authority, event):
             "Played bracket differs from the Edition's approved Saved draw"
         )
     points = authority.edition.point_table
-    if (
-        event.prepared_policy is None
-        or any(
-            getattr(event.prepared_policy, stage) != value
-            for stage, value in points.items()
-        )
-        or event.prepared_policy.validity_weeks != authority.edition.validity_weeks
-    ):
-        raise ValueError(
-            "Played point policy differs from the pre-existing Edition table"
-        )
+    if authority.edition.schema_version == "calendar_tournament_edition.v3":
+        from beta_engine.domain.tournaments.calendar_groups import group_point_policy
+        valid_policy = event.prepared_policy == group_point_policy(authority)
+    else:
+        valid_policy = event.prepared_policy is not None and all(
+            getattr(event.prepared_policy, stage) == value for stage, value in points.items()
+        ) and event.prepared_policy.validity_weeks == authority.edition.validity_weeks
+    if not valid_policy:
+        raise ValueError("Played point policy differs from the pre-existing Edition table")
     completed = ranking_week(event.week)
     terminal = event.week.ordinal + 1 == event.week.calendar.weeks_per_year * event.week.calendar.season_count
     if not terminal:
@@ -470,7 +489,7 @@ def edition_results(authority, event):
         "played": played_fingerprint,
     }
     if terminal:
-        inherited = event.schema_version == "calendar_followup_knockout.v8" and event.branch_id != authority.ranking_authority.branch_id
+        inherited = event.schema_version in {"calendar_followup_knockout.v8", "calendar_group_tournament_result.v1"} and event.branch_id != authority.ranking_authority.branch_id
         if event.run_id != authority.ranking_authority.run_id or event.source_saved_head != authority.played_saved_head or (event.branch_id != authority.ranking_authority.branch_id and not inherited):
             raise ValueError("Terminal Edition has a foreign played owner/source")
         from beta_engine.domain.rankings.calendar_terminal_result import CalendarInheritedTerminalRankingResult

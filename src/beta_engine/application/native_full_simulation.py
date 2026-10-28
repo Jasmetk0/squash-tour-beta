@@ -554,8 +554,16 @@ class NativeFullSimulationDriver:
                         return _progress(command, ctx, "native_entry_review_required", blockers=["entry_draw_required:" + authority.edition.edition_id], detail="Review Entry, approve the field/draw and manually Save in Run Admin.")
                     if authority.tournament_fingerprint:
                         return _progress(command, ctx, "native_result_review_required", blockers=["result_confirmation_required:" + authority.edition.edition_id], detail="Review and explicitly confirm the played results, then manually Save.")
-                    if authority.edition.schema_version == "calendar_tournament_edition.v2":
-                        current_due = [a for a in pending if a.edition.week.ordinal == state.week.ordinal and a.edition.schema_version == "calendar_tournament_edition.v2" and not a.tournament_fingerprint]
+                    if authority.edition.schema_version == "calendar_tournament_edition.v3":
+                        from beta_engine.application.calendar_native_groups import inspect_groups
+                        progress = inspect_groups(state, ctx["competition"])
+                        ties = [eid for eid, p in progress.items() if p['tie_case']]
+                        if ties:
+                            return _progress(command, ctx, "native_entry_review_required",
+                                blockers=["group_tie_resolution_required:" + eid for eid in ties],
+                                detail="Resolve the exact group tie in Run Admin, manually Save, then explicitly Continue this task.")
+                    if authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"}:
+                        current_due = [a for a in pending if a.edition.week.ordinal == state.week.ordinal and a.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"} and not a.tournament_fingerprint]
                         missing = [a.edition.edition_id for a in current_due if not a.draw]
                         if missing:
                             return _progress(command, ctx, "native_entry_review_required", blockers=["entry_draw_required:" + eid for eid in missing])

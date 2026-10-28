@@ -203,7 +203,7 @@ class NativeForkRuntimeService:
                 "matches": [
                     {
                         "match_id": m.match_id,
-                        "slot": native_match_slot(authority, i),
+                        "slot": next((s.number for s in ForkCompetitionView(current, sources.checkpoint).history_global_slots if hasattr(s, "accepted") and any(x.match_id == m.match_id for x in s.accepted)), None) if authority.edition.schema_version == "calendar_tournament_edition.v3" else native_match_slot(authority, i),
                         "player_a_id": m.result.player_a_id,
                         "player_b_id": m.result.player_b_id,
                         "winner_player_id": m.result.winner_player_id,
@@ -231,7 +231,9 @@ class NativeForkRuntimeService:
                     {**result.model_dump(mode="json"), "status": status}
                 )
         from beta_engine.application.calendar_global_slot_service import slot_inspection
+        from beta_engine.application.calendar_native_groups import inspect_groups
         return {
+            "groups": inspect_groups(current.tour, ForkCompetitionView(current, sources.checkpoint)),
             "schema_version": "calendar_tour_inspection.v1",
             "run_id": current.run_id,
             "branch_id": current.branch_id,

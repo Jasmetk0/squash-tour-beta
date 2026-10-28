@@ -37,7 +37,7 @@ class TournamentHybridRankingPolicyAuthority(FrozenInput):
     ] = "single_tournament_sum_group_plus_knockout_no_double_count.v1"
 
     @model_validator(mode="after")
-    def validate_policy(self) -> "TournamentHybridRankingPolicyAuthority":
+    def validate_policy(self) -> TournamentHybridRankingPolicyAuthority:
         stages = dict(self.knockout_stage_points)
         if (
             len(stages) != len(self.knockout_stage_points)
@@ -54,3 +54,26 @@ class TournamentHybridRankingPolicyAuthority(FrozenInput):
     @property
     def fingerprint(self) -> str:
         return _hash(self.model_dump(mode="json"))
+
+
+def hybrid_phase_point_components(*, policy, played_group_wins, knockout_reached_stage):
+    """Shared pure composition for legacy and native single-Edition awards."""
+    from beta_engine.domain.tournaments.point_award_authority import (
+        TournamentPhasePointComponent,
+    )
+
+    components = [TournamentPhasePointComponent(
+        component_id='group_played_wins', distribution_key='group:played_win',
+        units=played_group_wins, points_per_unit=policy.played_group_win_points,
+        points_awarded=played_group_wins * policy.played_group_win_points,
+    )]
+    if knockout_reached_stage is not None:
+        table = dict(policy.knockout_stage_points)
+        if knockout_reached_stage not in table:
+            raise ValueError('Hybrid ranking policy lacks knockout stage values: ' + knockout_reached_stage)
+        value = table[knockout_reached_stage]
+        components.append(TournamentPhasePointComponent(
+            component_id='knockout_finish', distribution_key='knockout:' + knockout_reached_stage,
+            units=1, points_per_unit=value, points_awarded=value,
+        ))
+    return tuple(components)

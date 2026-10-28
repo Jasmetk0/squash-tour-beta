@@ -282,7 +282,7 @@ class CalendarContinuationService:
             from beta_engine.infrastructure.db.initial_world_state import (
                 get_initial_world,
             )
-            state = load_checkpoint(session, run_id=run_id, branch_id=branch_id)
+            state = load_checkpoint(session, run_id=run_id, branch_id=branch_id, _repository=self.repository)
             rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
             world = get_initial_world(session, run_id=run_id, branch_id=branch_id)
             from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
@@ -301,7 +301,18 @@ class CalendarContinuationService:
                     if branch is None or branch.run_id != run_id:
                         raise KeyError('Native replay Run/Branch not found')
                     revision = self.repository._validated_branch_revision_lineage_in_session(session=session,branch=branch,payload_revision_ids=frozenset({branch.saved_head_revision_id}))[0]
-                    _,signed,_ = decode_prevalidated_calendar_sources(revision.payload,run_id=run_id,branch_id=branch_id)
+                    from beta_engine.infrastructure.db.native_fork_source_projection import (
+                        decoded_global_tour_source,
+                    )
+                    # The actual Saved lineage just passed its full physical gate.
+                    # Reuse only isolated decoding of these complete payload bytes;
+                    # equality with the live owner and real MatchEngine replay stay.
+                    _, signed, _ = decoded_global_tour_source(
+                        self.repository, revision,
+                        lambda source: decode_prevalidated_calendar_sources(
+                            source.payload, run_id=run_id, branch_id=branch_id,
+                        ),
+                    )
                     if signed != state:
                         raise ValueError('Save native competition before historical replay')
                     entry = next((e for e in state.played_continuations if e.match_id == match_id),None)

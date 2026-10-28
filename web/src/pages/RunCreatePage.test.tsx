@@ -249,6 +249,28 @@ describe('canonical Product Run creation', () => {
     expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(2)
   })
 
+  it('freezes both custom-calendar inputs and creation while an uncertain POST is reconciled', async () => {
+    api.createEmptyRunContainer.mockRejectedValueOnce(new Error('response lost after submit'))
+    await openNamedRunForm()
+    const calendarToggle = screen.getByLabelText('Choose calendar and range')
+    await userEvent.click(calendarToggle)
+    await userEvent.selectOptions(screen.getByLabelText('Calendar preset'), 'earth')
+    await userEvent.click(screen.getByRole('button', { name: 'Review calendar' }))
+    expect(await screen.findByText(/Sporting simulation is not available/)).toBeVisible()
+    await userEvent.click(screen.getByRole('button', { name: 'Create isolated Run' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('response lost after submit')
+    expect(screen.getByLabelText('Unique Run name')).toBeDisabled()
+    expect(calendarToggle).toBeDisabled()
+    expect(screen.getByLabelText('Calendar preset')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeDisabled()
+    await inspectSavedName()
+    expect(await screen.findByText(/No Run with this name is in the current inventory/)).toBeVisible()
+    expect(calendarToggle).toBeEnabled()
+    expect(screen.getByLabelText('Calendar preset')).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Create isolated Run' })).toBeEnabled()
+    expect(api.createEmptyRunContainer).toHaveBeenCalledTimes(1)
+  })
+
   it('encodes a server-confirmed Run ID in the navigation path without altering its identity', async () => {
     api.createEmptyRunContainer.mockResolvedValueOnce({
       run_id: 'run/č 1', display_name: 'My test Run', storage_kind: 'custom_local', read_only: false

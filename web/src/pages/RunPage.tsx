@@ -324,8 +324,6 @@ export function RunPage(): JSX.Element {
     packageQuery.error ? formatApiError(packageQuery.error) : null,
     packageMismatch ? packageMismatchMessage : null,
     positionQuery.error && !isApiNotFound(positionQuery.error) ? formatApiError(positionQuery.error) : null,
-    positionQuery.isSuccess && !positionQuery.isFetching && !positionValid
-      ? 'Simulation position identity mismatch' : null,
     pendingQuery.error && !isApiNotFound(pendingQuery.error) ? formatApiError(pendingQuery.error) : null,
     pendingMismatch ? 'Pending Full Simulation identity mismatch' : null,
     revisionsQuery.error ? formatApiError(revisionsQuery.error) : null,

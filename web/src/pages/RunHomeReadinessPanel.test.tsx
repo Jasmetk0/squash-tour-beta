@@ -88,11 +88,12 @@ describe('saved Run readiness panel', () => {
   it('does not suggest missing prerequisites when all saved foundations are satisfied', () => {
     mount('en', {
       ...data,
-      items: data.items.map(item => ({ ...item, status: 'saved' as const }))
+      items: data.items.map(item => ({ ...item, status: 'saved' as const,
+        evidence_count: item.code === 'working_draft' ? 0 : Math.max(1, item.evidence_count) }))
     })
     expect(screen.getByText('Show saved-foundation checks (6)')).toBeVisible()
     fireEvent.click(screen.getByText('Show saved-foundation checks (6)'))
-    expect(screen.getByText('Clean Working Draft · Pending changes: 1')).toBeVisible()
+    expect(screen.getByText('Clean Working Draft · Pending changes: 0')).toBeVisible()
     expect(screen.getByText('This saved-foundation inspection has no further action. It does not certify all operations; each requires its own preflight.')).toBeVisible()
   })
 

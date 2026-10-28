@@ -121,7 +121,7 @@ describe('strict Saved Tour response identity',()=>{
       rallies:[{rally_index:1,set_number:1,server_player_id:'A',
         winner_player_id:'A',score_a_before:0,score_b_before:0,score_a_after:1,
         score_b_after:0,sets_a_after:0,sets_b_after:0,
-        set_complete:false,match_complete:true}]
+        set_complete:true,match_complete:true}]
     }
     const valid=(v:SavedTourMatchDetail)=>validSavedTourMatchDetail(v,'r','b','rev',2,'open','final',0,25)
     expect(valid(data)).toBe(true)
@@ -146,7 +146,7 @@ describe('strict Saved Tour response identity',()=>{
     expect(valid({...data,match:{...data.match,scoreline:''}})).toBe(false)
     // Page-local score continuity is an invariant of the real MatchEngine log.
     const two={...data,total_rallies:2,has_more:false,rallies:[
-      {...data.rallies[0],match_complete:false},
+      {...data.rallies[0],set_complete:false,match_complete:false},
       {...data.rallies[0],rally_index:2,score_a_before:1,score_a_after:2,
         set_complete:true,match_complete:true}
     ]}

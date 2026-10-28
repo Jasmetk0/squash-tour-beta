@@ -27,6 +27,10 @@ not add a generator, a second readiness authority or a hidden Save.
    reconciliation has succeeded, so editing cannot accidentally bypass it.
    Invalid server-returned Run IDs and malformed unrelated inventory rows are
    rejected too: no guessed link, local identity update or false negative.
+   During reconciliation the name, calendar toggle and reviewed calendar inputs
+   are frozen together, so an uncertain POST cannot silently change meaning.
+   A successful exact-name inventory read with no match unlocks the inputs,
+   but never automatically sends another create request.
 4. A best-effort inventory cache invalidation is not allowed to turn a
    server-confirmed Run creation into a false failure and a duplicate retry.
 5. If routing itself fails after server-confirmed creation, the form says the
@@ -107,6 +111,15 @@ not add a generator, a second readiness authority or a hidden Save.
     assertions compare immutable Saved evidence and Working Draft versions on
     both Branches, including a fresh HTTP process/SQLite reopen. No test
     generates sporting results or pretends a candidate is published.
+
+17. Real HTTP/SQLite creation reconciliation treats the first successful
+    POST reply as unseen by the hypothetical client, then performs a fresh
+    server inventory read with one exact name match and a similar other name.
+    It verifies the Saved HEAD/clean Working Draft, an atomic 409 for the
+    trimmed duplicate request, and persistence after service/SQLite restart.
+    This is **not** transport-level reply loss or a universal concurrent
+    idempotency guarantee.
+
 
 ## Validation boundary
 

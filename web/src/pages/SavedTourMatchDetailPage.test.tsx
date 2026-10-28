@@ -199,7 +199,7 @@ describe('exact historical Edition match replay',()=>{
     const first=within(table).getByRole('button',{name:'Rally 1'})
     expect(first).toBeDisabled()
     expect(first).toHaveAttribute('aria-current','step')
-    expect(within(table).getByRole('button',{name:'Rally 26'})).not.toBeInTheDocument()
+    expect(within(table).queryByRole('button',{name:'Rally 26'})).not.toBeInTheDocument()
     expect(within(table).getByText('0:0')).toBeInTheDocument()
     await userEvent.click(within(table).getByRole('button',{name:'Rally 20'}))
     expect(await screen.findByText('Rally 20/30')).toBeInTheDocument()

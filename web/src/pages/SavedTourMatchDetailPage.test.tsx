@@ -211,6 +211,7 @@ describe('exact historical Edition match replay',()=>{
     expect(screen.getByRole('button',{name:'Poslední výměna'})).toBeEnabled()
     expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(count)
     view.unmount()
+    state.language='en'
     api.getSavedTourMatchDetail.mockResolvedValue({
       ...fixture(0),replay_status:'unavailable',total_rallies:0,
       has_more:false,rallies:[],player_a_id:null,player_b_id:null

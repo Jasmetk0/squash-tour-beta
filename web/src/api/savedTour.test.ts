@@ -145,6 +145,46 @@ describe('strict Saved Tour response identity',()=>{
     expect(validSavedTourCalendar(calendar,'r','b','rev',0)).toBe(false)
     expect(validSavedTourCalendar({...calendar,revision_branch_id:''},'r','b','rev',2)).toBe(false)
   })
+  it('rejects forged publication flags and malformed published final IDs at the API boundary',()=>{
+    const valid=(entry:SavedTourEvent)=>
+      validSavedTourCalendar({...calendar,editions:[entry]},'r','b','rev',2)
+    const wire=(overrides:Record<string,unknown>)=>
+      ({...event,...overrides} as SavedTourEvent)
+    expect(valid(event)).toBe(true)
+    expect(valid(wire({result_published:'false'}))).toBe(false)
+    expect(valid(wire({result_published:1}))).toBe(false)
+    expect(valid(wire({result_published:null}))).toBe(false)
+    expect(valid(wire({result_published:true,champion_player_id:23}))).toBe(false)
+    expect(valid(wire({result_published:true,finalist_player_id:''}))).toBe(false)
+    expect(valid(wire({result_published:true,champion_player_id:'A',finalist_player_id:'A'}))).toBe(false)
+    expect(valid(wire({result_published:true,champion_player_id:'A',finalist_player_id:'B'}))).toBe(true)
+    expect(valid(wire({result_published:false,champion_player_id:'stale'}))).toBe(true)
+    expect(validSavedTourCalendar({...calendar,calendar_status:'absent' as 'ready'},'r','b','rev',2)).toBe(false)
+    expect(validSavedTourCalendar({...calendar,calendar_status:'empty'},'r','b','rev',2)).toBe(false)
+    expect(validSavedTourCalendar({...calendar,editions:[null as unknown as SavedTourEvent]},'r','b','rev',2)).toBe(false)
+  })
+  it('refuses inconsistent published winners between Edition label and canonical result',()=>{
+    const winner={...event,result_published:true,champion_player_id:'P1',finalist_player_id:'P2'}
+    const result={
+      schema_version:'viewer_tournament_result.v1' as const,
+      product_run_id:'r',viewer_branch_id:'original',event_id:'open',
+      completed_season_index:2,completed_week:12,champion_player_id:'P1',
+      finalist_player_id:'P2',qualification_winner_ids:[],players:[],matches:[]
+    }
+    const valid=(e:SavedTourEdition)=>
+      validSavedTourEdition(e,'r','b','rev',2,'open')
+    expect(valid({...edition,edition:winner,published_result:result})).toBe(true)
+    expect(valid({...edition,edition:winner,published_result:{...result,champion_player_id:'P3'}})).toBe(false)
+    expect(valid({...edition,edition:winner,published_result:{...result,finalist_player_id:'P3'}})).toBe(false)
+    expect(valid({...edition,edition:winner,published_result:{
+      ...result,schema_version:'wrong' as 'viewer_tournament_result.v1'
+    }})).toBe(false)
+    expect(valid({...edition,edition:{...winner,result_published:'false' as unknown as boolean},published_result:result})).toBe(false)
+    expect(valid({...edition,edition:{...winner,finalist_player_id:'P1'},published_result:result})).toBe(false)
+    expect(valid({...edition,edition:winner,published_result:{
+      ...result,matches:undefined as unknown as typeof result.matches
+    }})).toBe(false)
+  })
   it('rejects duplicates, invalid weeks and cross-season source rows',()=>{
     expect(validSavedTourCalendar({...calendar,editions:[event,event],edition_count:2},'r','b','rev',2)).toBe(false)
     expect(validSavedTourCalendar({...calendar,editions:[{...event,season_week:62}]},'r','b','rev',2)).toBe(false)

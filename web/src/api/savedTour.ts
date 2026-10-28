@@ -144,6 +144,16 @@ export function validSavedTourMatchDetail(
   )
 }
 
+/** The Calendar publication flag is authority, not a truthy display hint.
+ * Validate raw JSON at the read boundary before granting result/player links. */
+function validSavedTourOutcomeFields(event:SavedTourEvent):boolean{
+  if(!event||typeof event.result_published!=='boolean')return false
+  const winner=event.champion_player_id,runnerUp=event.finalist_player_id
+  if(winner!==null&&(typeof winner!=='string'||!winner.trim()))return false
+  if(runnerUp!==null&&(typeof runnerUp!=='string'||!runnerUp.trim()))return false
+  return !event.result_published||!winner||!runnerUp||winner!==runnerUp
+}
+
 /** Fail closed before displaying data from stale caches or cross-Branch responses. */
 export function matchesSavedTourContext(
   payload:SavedTourCalendar|SavedTourEdition,
@@ -173,10 +183,12 @@ export function validSavedTourCalendar(
     ||payload.schema_version!=='run_saved_tour_calendar.v1'
     ||!isSavedTourSeason(payload.season,seasonIndex)
     ||payload.week_count!==61||!Array.isArray(payload.editions)
-    ||payload.edition_count!==payload.editions.length)return false
+    ||payload.edition_count!==payload.editions.length
+    ||!['ready','empty'].includes(payload.calendar_status)
+    ||(payload.calendar_status==='empty'&&payload.editions.length>0))return false
   const seen=new Set<string>()
   return payload.editions.every(e=>{
-    if(!e.event_id||seen.has(e.event_id)
+    if(!validSavedTourOutcomeFields(e)||!e.event_id||seen.has(e.event_id)
       ||!Number.isInteger(e.season_week)||e.season_week<1||e.season_week>61
       ||!isSavedTourSeason(e.season,seasonIndex))return false
     seen.add(e.event_id)
@@ -188,15 +200,22 @@ export function validSavedTourEdition(
 ):boolean{
   if(!matchesSavedTourContext(payload,runId,branchId,revisionId,seasonIndex)
     ||payload.schema_version!=='run_saved_tour_edition.v1'
+    ||!validSavedTourOutcomeFields(payload.edition)
     ||payload.edition.event_id!==eventId
     ||payload.lifecycle_status!=='unavailable')return false
   const result=payload.published_result
   const published=result===null?!payload.edition.result_published:
     payload.edition.result_published &&
-    result.event_id===eventId&&result.product_run_id===runId
+    result.schema_version==='viewer_tournament_result.v1'
+    &&result.event_id===eventId&&result.product_run_id===runId
     &&result.viewer_branch_id===payload.revision_branch_id
     &&result.completed_season_index===seasonIndex
     &&result.completed_week===payload.edition.season_week
+    &&result.champion_player_id===payload.edition.champion_player_id
+    &&result.finalist_player_id===payload.edition.finalist_player_id
+    &&result.champion_player_id!==result.finalist_player_id
+    &&Array.isArray(result.players)&&Array.isArray(result.matches)
+    &&Array.isArray(result.qualification_winner_ids)
   if(!published)return false
   const entry=payload.entry_field,draw=payload.draw
   const owned=(value:{product_run_id:string;viewer_branch_id:string;event_id:string})=>

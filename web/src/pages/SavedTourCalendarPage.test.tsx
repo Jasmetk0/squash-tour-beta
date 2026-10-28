@@ -81,6 +81,17 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(screen.getByRole('link',{name:'Brno Open'})).toHaveAttribute(
       'href',expect.stringContaining('country=CZE'))
   })
+  it('never promotes a string publication flag into a published result link',async()=>{
+    const data=fixture()
+    data.editions[0].result_published='false' as unknown as boolean
+    api.getSavedTourCalendar.mockResolvedValue(data)
+    mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list')
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Calendar response does not match the selected Run/Branch/revision/season.')
+    expect(screen.queryByRole('link',{name:'Brno Open'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'View results'})).not.toBeInTheDocument()
+    expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
+  })
   it('rejects stale response revisions without displaying any edition',async()=>{
     const f=fixture();f.saved_revision_id='some-other-revision'
     api.getSavedTourCalendar.mockResolvedValue(f)

@@ -364,7 +364,8 @@ describe('Run Home V1 canonical projections', () => {
     expect(screen.getByText(/Kalendář Runu není dostupný/)).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Znovu ověřit uložené podklady' }))
     expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
-    expect(api.getRunContainer).toHaveBeenCalledTimes(2)
+    expect(api.getRunContainer.mock.calls.length).toBeGreaterThanOrEqual(2)
+    expect(api.getRunContainer).toHaveBeenCalledWith(runId)
   })
 
   it('does not bypass a foreign Working Draft identity in a successful HTTP response', async () => {

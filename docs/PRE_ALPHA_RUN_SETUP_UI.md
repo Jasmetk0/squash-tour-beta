@@ -53,7 +53,9 @@ not add a generator, a second readiness authority or a hidden Save.
     A clean Working Draft is named **clean**, not generally **saved**;
     optional Health is not treated as universally ready. The checklist
     remains collapsed by default, with read-only route-scoped repair links.
-    The original backend DTO/authority and operation preflights are unchanged.
+    A scoped responsive checklist layout wraps explanations beside their
+    repair links without changing other Run Home feeds. The original backend
+    DTO/authority and operation preflights are unchanged.
 11. The frontend contract also rejects an invalid Run calendar (nonpositive W,
     impossible season offset, negative year, zero horizon or wrong schema),
     blank Saved Revision identity, or contradictory positive-count Saved

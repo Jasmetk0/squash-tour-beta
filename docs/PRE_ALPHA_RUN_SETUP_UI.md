@@ -127,7 +127,9 @@ not add a generator, a second readiness authority or a hidden Save.
     The changed frontend tests also exercise a delayed prior-Branch HTTP
     response arriving after a Branch switch: it must remain in the old query
     cache without contaminating the newly selected Branch's Saved evidence.
-    These are read-only inspections; no Save or sporting action is implied.
+    A separate delayed old-Run response test verifies the same isolation after
+    navigating to a different Run with another Saved HEAD. These are read-only
+    inspections; no Save or sporting action is implied.
 
 ## Validation boundary
 

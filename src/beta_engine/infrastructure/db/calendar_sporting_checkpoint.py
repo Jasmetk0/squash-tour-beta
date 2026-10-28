@@ -380,9 +380,12 @@ def restore_checkpoint(session, *, current_payload, target_payload, current, tar
         put_checkpoint(session, replacement)
 
 
-def replace_checkpoint(session, *, previous, successor, _verified_previous=None):
+def replace_checkpoint(session, *, previous, successor, _verified_previous=None, _repository=None):
+    # Reuse only the fingerprint of the complete actual bytes already decoded
+    # by this repository. The current row, owner/hash and expected-value CAS
+    # remain mandatory; different bytes take the original strict decode path.
     live = load_checkpoint(session, run_id=previous.run_id, branch_id=previous.branch_id,
-        _verified_source=_verified_previous)
+        _verified_source=_verified_previous, _repository=_repository)
     if live != previous or (successor.run_id, successor.branch_id) != (previous.run_id, previous.branch_id):
         raise ValueError('Population sporting checkpoint changed before atomic replacement')
     row = session.get(CalendarPlayerSportingCheckpointModel, (previous.run_id, previous.branch_id))

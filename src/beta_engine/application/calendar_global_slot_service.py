@@ -165,7 +165,7 @@ def prepare_global_slot(
     }
 
 
-def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=None):
+def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=None, _repository=None):
     from beta_engine.application.calendar_tour_service import _fault_injection_point
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
         replace_checkpoint,
@@ -194,7 +194,7 @@ def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=No
         # ctx owns the fully authenticated live checkpoint. The writer still
         # hashes the complete actual SQLite content before accepting equality;
         # changed bytes fall back to ordinary strict decoding and comparison.
-        replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp)
+        replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp, _repository=_repository)
         _fault_injection_point("after_global_slot_matches_write")
     events = {e.tournament_id: e for e in successor.tournaments}
     starts = {

@@ -25,7 +25,7 @@ def inspect_groups(state, checkpoint):
             for a in state.editions if is_group_edition(a)} if state and checkpoint else {}
 
 
-def apply_group_tie(session, ctx, state, authority, command, *, persist, _successor_out=None):
+def apply_group_tie(session, ctx, state, authority, command, *, persist, _successor_out=None, _repository=None):
     if authority is None or not is_group_edition(authority) or authority.tournament_fingerprint:
         raise ValueError('Tie resolution requires an unfinished native group Edition')
     if set(command.data) != {'case', 'ordered_player_ids'}:
@@ -67,7 +67,7 @@ def apply_group_tie(session, ctx, state, authority, command, *, persist, _succes
         from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
             replace_checkpoint,
         )
-        replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp)
+        replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp, _repository=_repository)
     events = {t.tournament_id: t for t in successor.tournaments}
     editions = tuple(a.model_copy(update={'tournament_fingerprint': events[a.edition.edition_id].fingerprint})
                      if a.edition.edition_id in events and is_group_edition(a) else a for a in state.editions)

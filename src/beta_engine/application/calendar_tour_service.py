@@ -997,7 +997,7 @@ class CalendarTourService:
             )
         )
         if persist:
-            replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp)
+            replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp, _repository=self.repository)
             _fault_injection_point("after_native_matches_write")
         receipt = CalendarFollowupKnockoutService._receipt(event, successor)
         receipt["participant_identities"] = {
@@ -1253,7 +1253,7 @@ class CalendarTourService:
             previous_cp = cp
             cp = competition_checkpoint(cp)
             if persist:
-                replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp)
+                replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp, _repository=self.repository)
             state = state.model_copy(update={"checkpoint_fingerprint": cp.fingerprint})
             ctx = (*ctx[:4], cp, *ctx[5:])
         if command.action == "create-edition" and command.data.get("schema_version") in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3"} and state.schema_version != "native_fork_tour.v1":
@@ -1261,16 +1261,16 @@ class CalendarTourService:
             previous_cp = cp
             state, cp = upgrade(state, cp, command.expected_saved_head)
             if persist and cp != previous_cp:
-                replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp)
+                replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp, _repository=self.repository)
             ctx = (*ctx[:4], cp, *ctx[5:])
         if command.action == "resolve-group-tie":
             from beta_engine.application.calendar_native_groups import apply_group_tie
-            return apply_group_tie(session, ctx, state, authority, command, persist=persist)
+            return apply_group_tie(session, ctx, state, authority, command, persist=persist, _repository=self.repository)
         if command.action in {"next-slot", "next-match"}:
             from beta_engine.application.calendar_global_slot_service import (
                 apply_global_slot,
             )
-            return apply_global_slot(session, ctx, state, command, persist=persist, native_inputs=_native_inputs)
+            return apply_global_slot(session, ctx, state, command, persist=persist, native_inputs=_native_inputs, _repository=self.repository)
         if command.action == "initialize":
             from beta_engine.infrastructure.db.models import RunProspectModel
 
@@ -1404,7 +1404,7 @@ class CalendarTourService:
         elif command.action in {"transition", "season-transition"}:
             impact, successor = transition_candidate
             if persist:
-                replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp)
+                replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp, _repository=self.repository)
             _fault_injection_point("after_development_write")
             from beta_engine.domain.rankings.calendar_official import (
                 CalendarOfficialRankingSnapshot,

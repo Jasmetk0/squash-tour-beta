@@ -366,3 +366,88 @@ def test_actual_value_fingerprint_reuse_ends_before_nested_mutation_can_escape()
     recovered, fingerprint = decoded_live_calendar_component(repo, **args)
     assert recovered.values == {'a': 1} and recovered.fingerprint == fingerprint == expected
     assert len(calls) == 1
+
+
+@pytest.mark.parametrize('use_repository', [False, True])
+def test_checkpoint_replacement_rechecks_actual_bytes_even_with_warm_decode(use_repository, monkeypatch):
+    """SQLite CAS stays fail-closed when the pre-read fingerprint cache is warm."""
+    import json
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.orm import Session
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
+    from beta_engine.infrastructure.db.native_fork_source_projection import (
+        remember_live_value_fingerprint,
+    )
+
+    class Checkpoint(Part):
+        run_id: str = 'run'
+        branch_id: str = 'branch'
+
+        @property
+        def fingerprint(self):
+            return canonical_hash(self.model_dump(mode='json'))
+
+    engine = create_engine('sqlite://')
+    CalendarPlayerSportingCheckpointModel.__table__.create(engine)
+    repo = SimpleNamespace(_revision_validation_lock=Lock())
+    original = Checkpoint(values={'a': 1})
+    successor = Checkpoint(values={'a': 2})
+    raw = original.model_dump_json()
+    remember_live_value_fingerprint(repo, run_id='run', branch_id='branch',
+        kind=storage.COMPONENT_KEY, raw=raw, fingerprint=original.fingerprint)
+    calls = []
+
+    def parse(value):
+        calls.append(value)
+        return Checkpoint.model_validate_json(value)
+
+    monkeypatch.setattr(storage, 'parse_checkpoint_json', parse)
+    args = dict(previous=original, successor=successor, _verified_previous=original,
+        _repository=repo if use_repository else None)
+    with Session(engine) as session:
+        session.add(CalendarPlayerSportingCheckpointModel(run_id='run', branch_id='branch',
+            fingerprint=original.fingerprint, payload_json=raw))
+        session.commit()
+        decoded = []
+        original_loads = json.loads
+
+        def read_json(value, *positional, **keyword):
+            decoded.append(value)
+            return original_loads(value, *positional, **keyword)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(storage.json, 'loads', read_json)
+            storage.replace_checkpoint(session, **args)
+        assert len(decoded) == (0 if use_repository else 1)
+        row = session.get(CalendarPlayerSportingCheckpointModel, ('run', 'branch'))
+        assert Checkpoint.model_validate_json(row.payload_json) == successor
+        assert row.fingerprint == successor.fingerprint
+        session.rollback()
+        session.execute(text('UPDATE calendar_player_sporting_checkpoints SET fingerprint=:fp'),
+            {'fp': '0' * 64})
+        session.expire_all()
+        with pytest.raises(ValueError, match='identity/hash mismatch'):
+            storage.replace_checkpoint(session, **args)
+        session.rollback()
+        calls.clear()
+        # Change physical bytes without updating the claimed hash. The warmed
+        # original decode/fingerprint can never authorize this replacement.
+        session.execute(text('UPDATE calendar_player_sporting_checkpoints SET payload_json=:raw'),
+            {'raw': json.dumps({**original.model_dump(mode='json'), 'values': {'a': 999}})})
+        with pytest.raises(ValueError, match='identity/hash mismatch'):
+            storage.replace_checkpoint(session, **args)
+        assert len(calls) == 1
+        session.rollback()
+        # Even an internally consistent different row fails the expected-value CAS.
+        changed = Checkpoint(values={'a': 3})
+        session.execute(text('UPDATE calendar_player_sporting_checkpoints SET payload_json=:raw, fingerprint=:fp'),
+            {'raw': changed.model_dump_json(), 'fp': changed.fingerprint})
+        session.expire_all()
+        with pytest.raises(ValueError, match='changed before atomic replacement'):
+            storage.replace_checkpoint(session, **args)
+        session.rollback()
+        # A rollback restores actual bytes and their original CAS eligibility.
+        storage.replace_checkpoint(session, **args)
+        session.rollback()
+    engine.dispose()

@@ -208,3 +208,70 @@ def test_real_http_empty_fax_run_has_truthful_optional_foundations_and_no_side_e
         assert _get(server, rid, "unknown-branch")[0] == 404
     with ApiServer(database_url=database) as server:
         assert _get(server, rid, bid) == (200, first)
+
+
+
+def test_real_http_confirmed_create_is_recoverable_by_inventory_without_duplicate(tmp_path):
+    """A caller may lose a 201 reply: a fresh read finds the durable Run by name.
+
+    This intentionally discards the original response as a client would; it
+    does not simulate a transport fault or claim full idempotency-key semantics.
+    """
+    database = f"sqlite:///{tmp_path / 'create-reconcile.db'}"
+    requested_name = "Uncertain response Run"
+    similar_name = "Uncertain response Run other"
+    with ApiServer(database_url=database) as server:
+        code, committed = _request(
+            "POST", server.base_url + "/run-containers",
+            {"display_name": requested_name},
+        )
+        assert code == 201, committed
+        # The client uses no ID from the first response for reconciliation.
+        code, similar = _request(
+            "POST", server.base_url + "/run-containers",
+            {"display_name": similar_name},
+        )
+        assert code == 201, similar
+
+        code, inventory = _request("GET", server.base_url + "/run-containers")
+        assert code == 200, inventory
+        matches = [
+            run for run in inventory["run_containers"]
+            if run["display_name"] == requested_name
+        ]
+        assert len(matches) == 1
+        resolved = matches[0]
+        assert resolved["run_id"] == committed["run_id"]
+        assert resolved["storage_kind"] == "custom_local"
+        assert resolved["read_only"] is False
+        assert similar["run_id"] != resolved["run_id"]
+        assert len(inventory["run_containers"]) == 2
+
+        rid, bid = resolved["run_id"], resolved["viewer_branch_id"]
+        code, before_readiness = _get(server, rid, bid)
+        assert code == 200, before_readiness
+        assert before_readiness["phase"] == "preparation"
+        assert before_readiness["saved_published_ranking_count"] == 0
+        code, before_draft = _draft(server, rid, bid)
+        assert code == 200 and before_draft["status"] == "clean"
+        code, branches = _request(
+            "GET", server.base_url + "/run-branches?" + urlencode({"run_id": rid}),
+        )
+        assert code == 200 and len(branches["run_branches"]) == 1
+        assert branches["run_branches"][0]["saved_head_revision_id"] == before_readiness["saved_revision_id"]
+
+        # Repeating even a trimmed equivalent name must fail atomically,
+        # without changing the original calendar/HEAD/draft or making a third Run.
+        code, conflict = _request(
+            "POST", server.base_url + "/run-containers",
+            {"display_name": "  " + requested_name + "  "},
+        )
+        assert code == 409, conflict
+        assert conflict["detail"]["code"] == "run_display_name_conflict"
+        assert _request("GET", server.base_url + "/run-containers") == (200, inventory)
+        assert _get(server, rid, bid) == (200, before_readiness)
+        assert _draft(server, rid, bid) == (200, before_draft)
+    with ApiServer(database_url=database) as server:
+        assert _request("GET", server.base_url + "/run-containers") == (200, inventory)
+        assert _get(server, rid, bid) == (200, before_readiness)
+        assert _draft(server, rid, bid) == (200, before_draft)

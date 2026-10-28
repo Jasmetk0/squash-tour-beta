@@ -30,11 +30,11 @@ const data: RunHomeReadiness = {
   requires_operation_preflight: true, simulation_started: false,
 }
 
-function mount(locale: 'cs' | 'en' = 'en', values = data) {
+function mount(locale: 'cs' | 'en' = 'en', values = data, rankingSetupAvailable = false) {
   const refresh = vi.fn()
   render(<MemoryRouter>
     <RunHomeReadinessPanel data={values} runId="run-a" language={locale}
-      refreshing={false} refresh={refresh} />
+      rankingSetupAvailable={rankingSetupAvailable} refreshing={false} refresh={refresh} />
   </MemoryRouter>)
   return refresh
 }
@@ -293,7 +293,7 @@ describe('saved Run readiness panel', () => {
         status: item.code === 'working_draft' ? 'saved' as const : item.status,
         evidence_count: item.code === 'working_draft' ? 0 : item.evidence_count
       }))
-    })
+     }, true)
     fireEvent.click(screen.getByText('Show saved-foundation checks (6) · 2 items needing attention'))
     const rankingLink = screen.getByRole('link', { name: 'Open ranking preparation and publication →' })
     expect(rankingLink).toHaveAttribute('href', '/admin/runs/run-a#run-initial-ranking')
@@ -323,6 +323,23 @@ describe('saved Run readiness panel', () => {
     expect(screen.queryByRole('link', { name: 'Zkontrolovat a uložit změny →' })).toBeNull()
   })
 
+  it('falls back to read-only candidates when the FAX Run or selected Branch is not editable', () => {
+    mount('en', {
+      ...data,
+      sporting_calendar_supported_by_legacy_writers: true,
+      items: data.items.map(item => ({
+        ...item,
+        status: item.code === 'working_draft' ? 'saved' as const : item.status,
+        evidence_count: item.code === 'working_draft' ? 0 : item.evidence_count
+      }))
+    }, false)
+    fireEvent.click(screen.getByText('Show saved-foundation checks (6) · 2 items needing attention'))
+    expect(screen.getByRole('link', { name: 'Inspect ranking candidates →' }))
+      .toHaveAttribute('href', '/admin/runs/run-a/branches/branch-a/ranking-candidates')
+    expect(screen.queryByRole('link', { name: 'Open ranking preparation and publication →' })).toBeNull()
+    expect(screen.getByText(/not available for this selected Run, Branch or calendar/)).toBeVisible()
+  })
+
   it('encodes Run and Branch identities in unsupported ranking candidate inspection links', () => {
     render(<MemoryRouter>
       <RunHomeReadinessPanel data={{ ...data, branch_id: 'br/č 2',
@@ -330,7 +347,8 @@ describe('saved Run readiness panel', () => {
           status: item.code === 'working_draft' ? 'saved' as const : item.status,
           evidence_count: item.code === 'working_draft' ? 0 : item.evidence_count
         })) }}
-        runId="run/č 1" language="cs" refreshing={false} refresh={vi.fn()} />
+        runId="run/č 1" language="cs" rankingSetupAvailable={false}
+        refreshing={false} refresh={vi.fn()} />
     </MemoryRouter>)
     fireEvent.click(screen.getByText('Zobrazit kontrolu uložených podkladů (6) · 2 položky k prověření'))
     expect(screen.getByRole('link', { name: 'Prohlédnout kandidáty rankingu →' }))

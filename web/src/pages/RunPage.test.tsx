@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RunPage } from './RunPage'
 import { renderWithRoute as renderRoute } from '../test/testUtils'
-import { AdminBranchProvider } from '../admin/AdminBranchContext'
+import { AdminBranchProvider, useAdminBranch } from '../admin/AdminBranchContext'
 import { AdminTimeProvider } from '../admin/AdminTimeContext'
 import { AdminTimeControl } from '../components/AdminTimeControl'
 import { LanguageProvider } from '../i18n/LanguageContext'
@@ -381,6 +381,75 @@ describe('Run Home V1 canonical projections', () => {
     expect(screen.queryByRole('region', { name: 'Připravenost Runu' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Znovu ověřit uložené podklady' }))
     expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
+  })
+
+  it('refreshes Run clock, Working Draft and Saved evidence together from the checklist button', async () => {
+    mount()
+    expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
+    const beforeRun = api.getRunContainer.mock.calls.length
+    const beforeDraft = api.getBranchWorkingDraft.mock.calls.length
+    const beforeReadiness = api.getRunHomeReadiness.mock.calls.length
+    let resumeDraft!: (value: unknown) => void
+    api.getBranchWorkingDraft.mockImplementationOnce(() => new Promise(done => { resumeDraft = done }))
+    fireEvent.click(screen.getByRole('button', { name: 'Obnovit kontrolu' }))
+    await waitFor(() => expect(api.getBranchWorkingDraft).toHaveBeenCalledTimes(beforeDraft + 1))
+    expect(api.getRunContainer.mock.calls.length).toBeGreaterThan(beforeRun)
+    expect(api.getRunHomeReadiness).toHaveBeenCalledTimes(beforeReadiness + 1)
+    expect(screen.queryByRole('region', { name: 'Připravenost Runu' })).toBeNull()
+    expect(screen.getByText('Ověřuji aktuální uložené podklady vybrané branche…')).toBeVisible()
+    resumeDraft({ run_id: runId, branch_id: branchId, draft_version: 1,
+      status: 'clean', change_count: 0 })
+    expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
+  })
+
+  it('never renders delayed Saved evidence from the previous Branch after switching', async () => {
+    const second = 'branch-second'
+    api.listRunBranches.mockResolvedValue({ run_branches: [
+      { run_id: runId, branch_id: branchId, display_name: 'Timeline A',
+        status: 'active', saved_head_revision_id: 'saved-1',
+        head_checkpoint_id: 'cp-current', read_only: false, is_official: true },
+      { run_id: runId, branch_id: second, display_name: 'Timeline B',
+        status: 'active', saved_head_revision_id: 'saved-2',
+        head_checkpoint_id: null, read_only: false, is_official: false }
+    ] })
+    api.getBranchWorkingDraft.mockImplementation(async (_run: string, branch: string) => ({
+      run_id: runId, branch_id: branch, draft_version: 1, status: 'clean', change_count: 0
+    }))
+    let completeFirst!: (value: unknown) => void
+    const secondEvidence = {
+      ...savedReadiness(), branch_id: second, saved_revision_id: 'saved-2',
+      items: savedReadiness().items.map(item => item.code === 'world'
+        ? { ...item, status: 'saved' as const, evidence_count: 7 } : item)
+    }
+    api.getRunHomeReadiness.mockImplementation((_run: string, branch: string) =>
+      branch === second ? Promise.resolve(secondEvidence)
+        : new Promise(done => { completeFirst = done }))
+    function BranchSwitch(): JSX.Element {
+      const { selectBranch } = useAdminBranch()
+      return <button type="button" onClick={() => { selectBranch(second) }}>
+        Select Timeline B
+      </button>
+    }
+    renderRoute(
+      <LanguageProvider><AdminBranchProvider runId={runId}><AdminTimeProvider>
+        <BranchSwitch /><RunPage />
+      </AdminTimeProvider></AdminBranchProvider></LanguageProvider>,
+      '/admin/runs/' + runId
+    )
+    await waitFor(() => expect(api.getRunHomeReadiness).toHaveBeenCalledWith(runId, branchId))
+    fireEvent.click(screen.getByRole('button', { name: 'Select Timeline B' }))
+    expect(await screen.findByText('Timeline B')).toBeVisible()
+    expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
+    expect(screen.getByText(/Entity World Package: 7/)).toBeInTheDocument()
+    completeFirst({
+      ...savedReadiness(),
+      items: savedReadiness().items.map(item => item.code === 'world'
+        ? { ...item, status: 'saved' as const, evidence_count: 13 } : item)
+    })
+    await waitFor(() => expect(api.getRunHomeReadiness).toHaveBeenCalledWith(runId, second))
+    expect(screen.getByText(/Entity World Package: 7/)).toBeInTheDocument()
+    expect(screen.queryByText(/Entity World Package: 13/)).toBeNull()
+    expect(screen.queryByText('Saved readiness identity/HEAD/draft/calendar differs from selected Run.')).toBeNull()
   })
 
   it('does not claim readiness during a failed fresh read, and recovers by explicit read-only retry', async () => {

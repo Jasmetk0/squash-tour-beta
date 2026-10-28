@@ -60,7 +60,12 @@ const NEXT = {
     noPosition: 'Kalendář existuje, ale branch zatím nemá určený týden.',
     noUpcoming: 'V uloženém kalendáři nejsou žádné další neodehrané turnaje od aktuálního týdne.',
     noResults: 'V uložené revizi zatím nejsou publikované výsledky turnajů.',
-    rankingUnsupported: 'Změny žebříčku zatím nemají ověřenou projekci pro tuto branch.'
+    rankingUnsupported: 'Změny žebříčku zatím nemají ověřenou projekci pro tuto branch.',
+    readinessChecking: 'Ověřuji aktuální uložené podklady vybrané branche…',
+    readinessUnavailable: 'Kontrolu připravenosti nelze ověřit. Žádný uložený podklad nebyl tímto krokem potvrzen.',
+    readinessRetry: 'Znovu ověřit uložené podklady',
+    readinessEmptyHead: 'Vybraná Branch nemá ověřenou Saved Revision HEAD. Kontrola podkladů zatím není dostupná.',
+    readinessRetryNote: 'Opakování pouze načte aktuální uložený stav. Nic neukládá, nepublikuje ani nespouští simulaci.'
   },
   en: {
     subtitle: 'Selected Branch overview from canonical saved and simulation data.',
@@ -91,7 +96,12 @@ const NEXT = {
     noPosition: 'The calendar exists but this Branch has no positioned week.',
     noUpcoming: 'No further unplayed tournaments from the current week are in the saved calendar.',
     noResults: 'No published tournament results are present in the saved revision.',
-    rankingUnsupported: 'Ranking changes have no verified Branch-scoped projection yet.'
+    rankingUnsupported: 'Ranking changes have no verified Branch-scoped projection yet.',
+    readinessChecking: 'Verifying current Saved foundations of the selected Branch…',
+    readinessUnavailable: 'Saved readiness cannot be verified. No saved foundation was confirmed by this inspection.',
+    readinessRetry: 'Recheck Saved foundations',
+    readinessEmptyHead: 'The selected Branch has no verified Saved Revision HEAD. The foundation inspection is unavailable.',
+    readinessRetryNote: 'Retry only reads the current Saved state. It neither Saves, publishes nor starts simulation.'
   }
 }
 
@@ -206,7 +216,11 @@ export function RunPage(): JSX.Element {
   const sportingClockSupported = homeClock !== null && homeClock.weeks_per_year === 61
     && homeClock.season_start_year_week === 37 && homeClock.start_year === 2000 && homeClock.season_count === 50
   const draft = draftQuery.data?.run_id === runId && draftQuery.data.branch_id === branchId ? draftQuery.data : null
-  const readiness = readinessQuery.data?.run_id === runId
+  // A failed refresh may retain previously successful React Query data. Never
+  // display that stale snapshot as current Saved readiness while rechecking or
+  // after a failed read, even when its Run/HEAD identifiers still match.
+  const readiness = !readinessQuery.isFetching && readinessQuery.isSuccess
+    && readinessQuery.data?.run_id === runId
     && readinessQuery.data.branch_id === branchId
     && readinessQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
     && (!draft || readinessQuery.data.draft_version === draft.draft_version)
@@ -216,7 +230,7 @@ export function RunPage(): JSX.Element {
       && readinessQuery.data.current_calendar.start_year === homeClock.start_year
       && readinessQuery.data.current_calendar.season_start_year_week === homeClock.season_start_year_week
     )) ? readinessQuery.data : null
-  const readinessMismatch = readinessQuery.isSuccess && !readiness
+  const readinessMismatch = readinessQuery.isSuccess && !readinessQuery.isFetching && !readiness
   const position = positionQuery.data?.run_id === runId && positionQuery.data.branch_id === branchId ? positionQuery.data : null
   const pending = pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId ? pendingQuery.data : null
   const simulationHistory = simulationHistoryQuery.data?.run_id === runId && simulationHistoryQuery.data.branch_id === branchId
@@ -301,7 +315,18 @@ export function RunPage(): JSX.Element {
       loading={branchLoading || time.isLoading || containerQuery.isPending}
       unavailable={!verified} historical={false} locale={language} clock={homeClock}/>
 
-    {ready && readinessQuery.isPending && <p role="status">{l.loading}</p>}
+    {ready && !selectedBranch?.saved_head_revision_id &&
+      <p role="status" className="status">{l.readinessEmptyHead}</p>}
+    {ready && Boolean(selectedBranch?.saved_head_revision_id) && readinessQuery.isFetching &&
+      <p role="status" className="status">{l.readinessChecking}</p>}
+    {ready && Boolean(selectedBranch?.saved_head_revision_id) &&
+      !readinessQuery.isFetching && (readinessQuery.isError || readinessMismatch) &&
+      <section className="run-home-status-block" aria-label={language === 'cs'
+        ? 'Obnova kontroly podkladů Runu' : 'Run foundation inspection recovery'}>
+        <p role="alert" className="error">{l.readinessUnavailable}</p>
+        <p className="status">{l.readinessRetryNote}</p>
+        <button type="button" onClick={() => { void readinessQuery.refetch() }}>{l.readinessRetry}</button>
+      </section>}
     {ready && readiness && <RunHomeReadinessPanel
       data={readiness} runId={runId} language={language}
       rankingSetupAvailable={setupAllowed && sportingClockSupported &&

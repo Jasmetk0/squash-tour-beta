@@ -18,7 +18,7 @@ vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
 })}))
 vi.mock('../admin/AdminTimeContext',()=>({useAdminTime:()=>context.time}))
 vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:context.language})}))
-function fixture():SavedTourCalendar {
+function fixture(finals:readonly (readonly [number,string,string])[]=[]):SavedTourCalendar {
   const event=(id:string,week:number,country:string,category:string,tour:string)=>({
     event_id:id,season:'2002/2003',season_week:week,event_name:id,
     template_id:'tpl',category,tour_level:tour,host_country:country,host_city:null,region:'EUROPE',
@@ -26,7 +26,7 @@ function fixture():SavedTourCalendar {
     wild_cards:2,byes:0,ranking_status:'ranked',result_published:false,
     champion_player_id:null,finalist_player_id:null
   })
-  return {schema_version:'run_saved_tour_calendar.v1',source:'reachable_saved_revision',
+  const saved:SavedTourCalendar={schema_version:'run_saved_tour_calendar.v1',source:'reachable_saved_revision',
     run_id:'run-a',branch_id:'branch-a',revision_branch_id:'ancestor',
     saved_revision_id:'rev-old',season_index:2,season:'2002/2003',week_count:61,
     calendar_status:'ready',edition_count:3,editions:[
@@ -34,6 +34,14 @@ function fixture():SavedTourCalendar {
       event('Egypt Open',5,'EGY','GOLD','WORLD'),
       event('Future Open',9,'CZE','DIAMOND','REGIONAL')
     ]}
+  for(const [index,champion,finalist] of finals){
+    const edition=saved.editions[index]
+    if(!edition)throw new Error('Invalid test fixture final '+index)
+    edition.result_published=true
+    edition.champion_player_id=champion
+    edition.finalist_player_id=finalist
+  }
+  return saved
 }
 function mount(path:string){
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
@@ -237,13 +245,7 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
   })
   it('finds a player only through published champion/finalist evidence without a new Saved request',async()=>{
-    const data=fixture()
-    data.editions[0].result_published=true
-    data.editions[0].champion_player_id='P-ALPHA'
-    data.editions[0].finalist_player_id='P-BETA'
-    data.editions[1].result_published=true
-    data.editions[1].champion_player_id='P-BETA'
-    data.editions[1].finalist_player_id='P-GAMMA'
+    const data=fixture([[0,'P-ALPHA','P-BETA'],[1,'P-BETA','P-GAMMA']])
     // An unpublished Edition's stored labels are never accepted as results.
     data.editions[2].champion_player_id='P-BETA'
     api.getSavedTourCalendar.mockResolvedValue(data)
@@ -268,10 +270,7 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(screen.getByRole('link',{name:'Future Open'})).toHaveAttribute('href',expect.stringContaining('q=keep'))
   })
   it('keeps published player search in CS/EN and never renders stale unpublished outcome IDs',async()=>{
-    const data=fixture()
-    data.editions[0].result_published=true
-    data.editions[0].champion_player_id='P-V'
-    data.editions[0].finalist_player_id='P-F'
+    const data=fixture([[0,'P-V','P-F']])
     data.editions[1].champion_player_id='P-FAKE'
     api.getSavedTourCalendar.mockResolvedValue(data)
     const view=mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&playerId=P-V&playerOutcome=champion')
@@ -283,13 +282,7 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
   })
   it('opens exact published player outcomes from calendar rows with original URL scope intact',async()=>{
-    const data=fixture()
-    data.editions[0].result_published=true
-    data.editions[0].champion_player_id='P-1'
-    data.editions[0].finalist_player_id='P-10'
-    data.editions[1].result_published=true
-    data.editions[1].champion_player_id='P-10'
-    data.editions[1].finalist_player_id='P-2'
+    const data=fixture([[0,'P-1','P-10'],[1,'P-10','P-2']])
     api.getSavedTourCalendar.mockResolvedValue(data)
     mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&q=keep')
     expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()
@@ -314,13 +307,7 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
   })
   it('opens a published final-finishes ID as both roles, retaining exact Saved revision',async()=>{
-    const data=fixture()
-    data.editions[0].result_published=true
-    data.editions[0].champion_player_id='PLAYER-A'
-    data.editions[0].finalist_player_id='PLAYER-B'
-    data.editions[1].result_published=true
-    data.editions[1].champion_player_id='PLAYER-B'
-    data.editions[1].finalist_player_id='PLAYER-A'
+    const data=fixture([[0,'PLAYER-A','PLAYER-B'],[1,'PLAYER-B','PLAYER-A']])
     api.getSavedTourCalendar.mockResolvedValue(data)
     mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&q=keep')
     expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()
@@ -337,13 +324,7 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
   })
   it('counts only visible published results, without inventing official player records',async()=>{
-    const data=fixture()
-    data.editions[0].result_published=true
-    data.editions[0].champion_player_id='PLAYER-A'
-    data.editions[0].finalist_player_id='PLAYER-B'
-    data.editions[1].result_published=true
-    data.editions[1].champion_player_id='PLAYER-B'
-    data.editions[1].finalist_player_id='PLAYER-A'
+    const data=fixture([[0,'PLAYER-A','PLAYER-B'],[1,'PLAYER-B','PLAYER-A']])
     data.editions[2].champion_player_id='PLAYER-FAKE'
     api.getSavedTourCalendar.mockResolvedValue(data)
     mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list')

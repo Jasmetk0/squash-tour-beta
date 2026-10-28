@@ -304,6 +304,9 @@ export function RunPage(): JSX.Element {
     {ready && readinessQuery.isPending && <p role="status">{l.loading}</p>}
     {ready && readiness && <RunHomeReadinessPanel
       data={readiness} runId={runId} language={language}
+      rankingSetupAvailable={setupAllowed && sportingClockSupported &&
+        selectedBranch?.status === 'active' && !selectedBranch.read_only &&
+        Boolean(selectedBranch.saved_head_revision_id)}
       refreshing={readinessQuery.isFetching} refresh={() => { void readinessQuery.refetch() }} />}
     <div className="run-home-columns">
       <SectionCard title={l.next}>

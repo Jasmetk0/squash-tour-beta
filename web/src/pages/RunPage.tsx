@@ -202,9 +202,9 @@ export function RunPage(): JSX.Element {
     retry: false
   })
   const revisionsQuery = useQuery({
-    queryKey: ['run-home-revisions', runId, branchId],
+    queryKey: ['run-home-revisions', runId, branchId, selectedBranch?.saved_head_revision_id],
     queryFn: () => listSavedRevisionHistory(runId, branchId!, { limit: 4 }),
-    enabled: ready,
+    enabled: ready && Boolean(selectedBranch?.saved_head_revision_id),
     retry: false
   })
 
@@ -265,8 +265,17 @@ export function RunPage(): JSX.Element {
   const pending = pendingQuery.data?.run_id === runId && pendingQuery.data.branch_id === branchId ? pendingQuery.data : null
   const simulationHistory = simulationHistoryQuery.data?.run_id === runId && simulationHistoryQuery.data.branch_id === branchId
     ? simulationHistoryQuery.data.items : null
-  const revisions = revisionsQuery.data?.run_id === runId && revisionsQuery.data.branch_id === branchId
-    ? revisionsQuery.data.saved_revisions : null
+  // A saved-history response is authoritative for one HEAD only. Never
+  // show cached older-HEAD entries when the selected Branch has advanced.
+  const revisionsValid = revisionsQuery.isSuccess && !revisionsQuery.isFetching
+    && revisionsQuery.data?.run_id === runId
+    && revisionsQuery.data.branch_id === branchId
+    && revisionsQuery.data.saved_head_revision_id === selectedBranch?.saved_head_revision_id
+  const revisions = revisionsValid ? revisionsQuery.data!.saved_revisions : null
+  const revisionsMismatch = revisionsQuery.isSuccess && !revisionsQuery.isFetching && !revisionsValid
+  const revisionsMismatchMessage = language === 'cs'
+    ? 'Historie uložených revizí neodpovídá vybranému Runu, Branchi nebo Saved HEAD.'
+    : 'Saved revision history does not match the selected Run, Branch or Saved HEAD.'
   // Package state is a Branch-owned Saved projection, not a Run-global cache.
   // A missing envelope or foreign Run/Branch must never be interpreted as an
   // empty Run; an in-flight HEAD refresh must not reuse old package evidence.
@@ -293,6 +302,7 @@ export function RunPage(): JSX.Element {
     positionQuery.error && !isApiNotFound(positionQuery.error) ? formatApiError(positionQuery.error) : null,
     pendingQuery.error && !isApiNotFound(pendingQuery.error) ? formatApiError(pendingQuery.error) : null,
     revisionsQuery.error ? formatApiError(revisionsQuery.error) : null,
+    revisionsMismatch ? revisionsMismatchMessage : null,
     homeActivityQuery.error ? formatApiError(homeActivityQuery.error) : null,
     readinessQuery.error ? formatApiError(readinessQuery.error) : null,
     readinessMismatch ? 'Saved readiness identity/HEAD/draft/calendar differs from selected Run.' : null,
@@ -468,8 +478,9 @@ export function RunPage(): JSX.Element {
       {homeActivityQuery.isError && <Unavailable message={formatApiError(homeActivityQuery.error)}/>}
       {homeActivityMismatch && <Unavailable message="Saved Home activity identity mismatch"/>}
       {!ready && <p className="status">{l.missing}</p>}
-      {ready && revisionsQuery.isPending && <p role="status">{l.loading}</p>}
+      {ready && (revisionsQuery.isPending || revisionsQuery.isFetching) && <p role="status">{l.loading}</p>}
       {ready && revisionsQuery.isError && <Unavailable message={formatApiError(revisionsQuery.error)} />}
+      {ready && revisionsMismatch && <Unavailable message={revisionsMismatchMessage} />}
       {ready && simulationHistoryQuery.isPending && <p role="status">{l.loading}</p>}
       {ready && simulationHistoryQuery.isError && !isApiNotFound(simulationHistoryQuery.error) &&
         <Unavailable message={formatApiError(simulationHistoryQuery.error)} />}

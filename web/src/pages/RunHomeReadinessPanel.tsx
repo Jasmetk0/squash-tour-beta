@@ -23,6 +23,8 @@ const content = {
     task: 'Rozpracované úlohy',
     history: 'Uložené přechody',
     help: 'Co dál?',
+    labHint: 'Samostatné experimenty nevyžadují připravený Run.',
+    lab: 'Otevřít globální Test Lab',
     action: {
       world: 'Doplnit World Package',
       calendar_package: 'Doplnit Calendar Package',
@@ -63,6 +65,8 @@ const content = {
     task: 'Nonterminal tasks',
     history: 'Saved transitions',
     help: 'Next action',
+    labHint: 'Standalone experiments do not require a prepared Run.',
+    lab: 'Open global Test Lab',
     action: {
       world: 'Add a World Package',
       calendar_package: 'Add a Calendar Package',
@@ -147,6 +151,8 @@ export function RunHomeReadinessPanel({
           <Link to={base + href[next]}>{l.action[next]} →</Link>
         </p>
       : <p className="status">{l.allSaved}</p>}
+    {data.phase === 'preparation' &&
+      <p className="status">{l.labHint} <Link to="/admin/labs">{l.lab}</Link></p>}
     <details>
       <summary>{l.details}</summary>
       <p>{l.branch}: <code>{data.branch_id}</code></p>

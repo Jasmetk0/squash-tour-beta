@@ -686,7 +686,11 @@ describe('Run Home V1 canonical projections', () => {
   it('blocks legacy FAX setup while Run calendar metadata refetch is pending or failed', async () => {
     const initialRun = {
       run_id: runId, display_name: 'FAX Run', storage_kind: 'custom_local',
-      read_only: false, status: 'working', official_branch_id: branchId
+      read_only: false, status: 'working', official_branch_id: branchId,
+      metadata_json: { run_calendar: {
+        schema_version: 'run_calendar.v1', weeks_per_year: 61,
+        season_start_year_week: 37, start_year: 2000, season_count: 50
+      } }
     }
     let rejectRefresh!: (reason: Error) => void
     api.getRunContainer.mockResolvedValueOnce(initialRun)

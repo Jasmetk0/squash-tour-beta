@@ -72,7 +72,7 @@ const content = {
     labHint: 'Standalone experiments do not require a prepared Run.',
     lab: 'Open global Test Lab',
     candidateLink: 'Inspect ranking candidates',
-    rankingLimit: 'Initial-ranking preparation or publication is not available for this selected Run, Branch or calendar. You can inspect candidates separately; publication needs its own supported operation.'
+    rankingLimit: 'Initial-ranking preparation or publication is not available for this selected Run, Branch or calendar. You can inspect candidates separately; publication needs its own supported operation.',
     draftSave: 'Branch history does not Save a Working Draft. Explicitly Save changes in the editor that produced them.',
     action: {
       world: 'Add a World Package',

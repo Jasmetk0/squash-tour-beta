@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { createEmptyRunContainer } from '../api/client'
@@ -21,19 +21,23 @@ export function RunCreatePage(): JSX.Element {
     defaultNote: 'Nový Run začíná prázdný s vlastní Timeline 1, první Saved Revision a čistým Working Draftem. Výchozí FAX kalendář má 61 týdnů, začíná ve 37. týdnu roku 2000 a obsahuje 50 sezon.',
     create: 'Vytvořit samostatný Run', creating: 'Vytvářím Run…', back: 'Zpět na Runy',
     failure: 'Run se nepodařilo vytvořit', identity: 'Server vrátil neočekávanou identitu nebo vlastnictví Runu.',
-    mismatch: 'Uložený kalendář neodpovídá prověřenému zadání. Zkontroluj přehled Runů před dalším pokusem.'
+    mismatch: 'Uložený kalendář neodpovídá prověřenému zadání. Zkontroluj přehled Runů před dalším pokusem.',
+    afterCreate: 'Run byl vytvořen, ale nepodařilo se otevřít jeho stránku. Najdi jej v přehledu Runů; nezakládej ho znovu.'
   } : {
     title: 'Create Run', subtitle: 'Start a separate world and add independent package copies later.',
     section: 'New Run', name: 'Unique Run name', custom: 'Choose calendar and range',
     defaultNote: 'A new Run starts empty with its own Timeline 1, initial Saved Revision and clean Working Draft. The default FAX calendar has 61 weeks, starts in Year Week 37 of 2000 and contains 50 seasons.',
     create: 'Create isolated Run', creating: 'Creating Run…', back: 'Back to Runs',
     failure: 'Could not create Run', identity: 'The server returned an unexpected Run identity or ownership.',
-    mismatch: 'The saved calendar does not match the reviewed request. Check the Run inventory before trying again.'
+    mismatch: 'The saved calendar does not match the reviewed request. Check the Run inventory before trying again.',
+    afterCreate: 'The Run was created, but its page could not be opened. Find it in the Run inventory; do not create it again.'
   }
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [name, setName] = useState('')
   const [pending, setPending] = useState(false)
+  // React state alone cannot fence two submit events in the same render turn.
+  const submissionInFlight = useRef(false)
   const [error, setError] = useState<string | null>(null)
   const [custom, setCustom] = useState(false)
   const [review, setReview] = useState<ReviewedCreationCalendar | null>(null)
@@ -41,10 +45,12 @@ export function RunCreatePage(): JSX.Element {
   async function submit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
     const displayName = name.trim()
-    if (!displayName || pending || (custom && !review)) return
+    if (!displayName || submissionInFlight.current || (custom && !review)) return
     const reviewed = custom ? review : null
+    submissionInFlight.current = true
     setPending(true)
     setError(null)
+    let createdRunId: string | null = null
     try {
       const created = reviewed ? await createEmptyRunContainer(displayName, reviewed.input)
         : await createEmptyRunContainer(displayName)
@@ -54,13 +60,22 @@ export function RunCreatePage(): JSX.Element {
       if (reviewed && !sameCreationCalendar(created.metadata_json?.run_calendar, expectedCreationCalendar(reviewed.input))) {
         throw new Error(t.mismatch)
       }
+      createdRunId = created.run_id
+      // Only the server create response is authoritative. Browser hints/cache refresh
+      // must not turn a successful create into an apparent failure and a duplicate retry.
       writeLastRunId(created.run_id)
       rememberProductRun(created.run_id)
-      await queryClient.invalidateQueries({ queryKey: ['canonical-run-containers'] })
+      try {
+        void queryClient.invalidateQueries({ queryKey: ['canonical-run-containers'] }).catch(() => undefined)
+      } catch {
+        // The inventory can be refreshed separately; the created Run still exists.
+      }
       navigate(`/admin/runs/${encodeURIComponent(created.run_id)}`)
     } catch (cause) {
-      setError(`${t.failure}: ${formatApiError(cause)}`)
+      setError(createdRunId ? `${t.afterCreate} (${formatApiError(cause)})`
+        : `${t.failure}: ${formatApiError(cause)}`)
     } finally {
+      submissionInFlight.current = false
       setPending(false)
     }
   }

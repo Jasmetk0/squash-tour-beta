@@ -43,6 +43,8 @@ describe('saved Run readiness panel', () => {
   it('keeps the next action visible and collapses the detailed readiness checklist', () => {
     const refresh = mount()
     expect(screen.getByText('This Branch readiness')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open global Test Lab' }))
+      .toHaveAttribute('href', '/admin/labs')
     expect(screen.getByText(/This calendar is not supported by the legacy FAX simulation path/)).toHaveClass('status')
     expect(screen.getByText('Unsaved changes are not counted in this overview.')).toBeInTheDocument()
     // Only Saved evidence is inspected: direct the user to review pending work first.
@@ -74,6 +76,8 @@ describe('saved Run readiness panel', () => {
         season_start_year_week: 37, start_year: 2000, season_count: 50 }
     })
     expect(screen.getByText('Připravenost této Branch')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Otevřít globální Test Lab' }))
+      .toHaveAttribute('href', '/admin/labs')
     expect(screen.getByText('Zobrazit kontrolu uložených podkladů (6) · 3 položky k prověření')).toBeVisible()
     expect(screen.getByText(/Před každou operací je stále nutná vlastní kontrola/)).toBeInTheDocument()
     fireEvent.click(screen.getByText('Zobrazit kontrolu uložených podkladů (6) · 3 položky k prověření'))
@@ -119,5 +123,10 @@ describe('saved Run readiness panel', () => {
     expect(screen.getByRole('link', { name: 'Add a Calendar Package →' }))
       .toHaveAttribute('href', '/admin/runs/run-a/manage')
     expect(screen.queryByText('Unsaved changes are not counted in this overview.')).toBeNull()
+  })
+
+  it('keeps the optional global Test Lab shortcut limited to preparation', () => {
+    mount('en', { ...data, phase: 'sporting_history' })
+    expect(screen.queryByRole('link', { name: 'Open global Test Lab' })).toBeNull()
   })
 })

@@ -7,6 +7,8 @@ import { AdminBranchProvider } from '../admin/AdminBranchContext'
 import { AdminTimeProvider } from '../admin/AdminTimeContext'
 import { AdminTimeControl } from '../components/AdminTimeControl'
 import { LanguageProvider } from '../i18n/LanguageContext'
+import { runHomeReadinessFixture } from '../test/runHomeReadinessFixture'
+import type { RunHomeReadiness } from '../api/runHomeReadiness'
 
 const api = vi.hoisted(() => ({
   ApiError: class ApiError extends Error {
@@ -42,27 +44,21 @@ function refPosition(overrides: Record<string, unknown> = {}) {
     ...overrides
   }
 }
-function savedReadiness(draftVersion = 1) {
-  return {
-    schema_version: 'run_home_readiness.v1', run_id: runId, branch_id: branchId,
-    saved_revision_id: 'saved-1', saved_revision_content_hash: 'a'.repeat(64),
-    draft_version: draftVersion, run_status: 'working',
-    source: 'validated_selected_branch_saved_head',
+function savedReadiness(draftVersion = 1): RunHomeReadiness {
+  const codes = ['world', 'calendar_package', 'population', 'health',
+    'official_ranking', 'working_draft'] as const
+  const items: RunHomeReadiness['items'] = codes.map(code => ({
+    code, status: code === 'health' ? 'optional' : code === 'working_draft' ? 'saved' : 'missing',
+    evidence_count: 0
+  }))
+  return runHomeReadinessFixture(runId, branchId, {
+    saved_revision_id: 'saved-1', draft_version: draftVersion,
     current_calendar: {
       schema_version: 'run_calendar.v1', weeks_per_year: 61,
-      season_start_year_week: 37, start_year: 2000, season_count: 50,
+      season_start_year_week: 37, start_year: 2000, season_count: 50
     },
-    phase: 'preparation',
-    items: (['world', 'calendar_package', 'population', 'health',
-      'official_ranking', 'working_draft'] as const).map(code => ({
-      code, status: code === 'health' ? 'optional' : code === 'working_draft' ? 'saved' : 'missing',
-      evidence_count: 0
-    })),
-    saved_transition_count: 0, saved_published_ranking_count: 0,
-    active_full_simulation_task_count: 0, historical_full_simulation_task_count: 0,
-    sporting_calendar_supported_by_legacy_writers: true,
-    requires_operation_preflight: true, simulation_started: false
-  }
+    items, sporting_calendar_supported_by_legacy_writers: true
+  })
 }
 
 describe('Run Home V1 canonical projections', () => {
@@ -349,7 +345,7 @@ describe('Run Home V1 canonical projections', () => {
     mount()
     expect(await screen.findByRole('region', { name: 'Připravenost Runu' })).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: 'Obnovit kontrolu' }))
-    expect(screen.getByText('Ověřuji aktuální uložené podklady vybrané branche…')).toBeVisible()
+    expect(await screen.findByText('Ověřuji aktuální uložené podklady vybrané branche…')).toBeVisible()
     expect(screen.queryByRole('region', { name: 'Připravenost Runu' })).toBeNull()
     rejectRefresh(new Error('network lost on refresh'))
     expect(await screen.findByRole('region', { name: 'Obnova kontroly podkladů Runu' })).toBeVisible()

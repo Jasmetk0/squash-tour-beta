@@ -173,6 +173,31 @@ function HistoricalMatchReplay():JSX.Element{
         <button type="submit" disabled={q.isFetching||!frame||target===null}>
           {cs?'Přejít':'Jump to rally'}</button>
       </form>
+      {data.rallies.length>0&&<details>
+        <summary>{cs?'Přehled uložených výměn':'Browse archived rallies'}
+          {' · '}{data.rallies[0].rally_index}–{data.rallies[data.rallies.length-1].rally_index}
+          /{data.total_rallies}</summary>
+        <p className="status">{cs?
+          'Pouze výměny z aktuální ověřené stránky archivu; ostatní se načítají po výběru čísla.':
+          'Only rallies from this verified archive page; other pages load on navigation.'}</p>
+        <div className="table-responsive">
+          <table aria-label={cs?'Ověřená stránka výměn':'Verified archived rally page'}>
+            <thead><tr><th>{cs?'Výměna':'Rally'}</th><th>{cs?'Set':'Game'}</th>
+              <th>{cs?'Skóre před':'Before'}</th><th>{cs?'Skóre po':'After'}</th>
+              <th>{cs?'Vítěz výměny':'Rally winner'}</th></tr></thead>
+            <tbody>{data.rallies.map(r=><tr key={r.rally_index}>
+              <td><button type="button" aria-current={r.rally_index===index+1?'step':undefined}
+                disabled={r.rally_index===index+1}
+                aria-label={(cs?'Výměna ':'Rally ')+r.rally_index}
+                onClick={()=>moveToRally(r.rally_index)}>{r.rally_index}</button></td>
+              <td>{r.set_number}</td>
+              <td>{r.score_a_before}:{r.score_b_before}</td>
+              <td>{r.score_a_after}:{r.score_b_after}</td>
+              <td>{r.winner_player_id??'—'}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>
+      </details>}
       <p className="status">{cs?'Přehrání jen čte archiv, simulaci znovu neprovádí.':
         'The replay reads archived events only; it never reruns the simulation.'}</p>
     </>}

@@ -209,6 +209,17 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
     page.get_by_role("button", name="Jump to rally").click()
     expect(page.get_by_text("Rally 26/", exact=False)).to_be_visible()
     assert "rally=26" in page.url, page.url
+    # Real read-only frame list is sourced from the same Saved archive page.
+    page.get_by_text("Browse archived rallies", exact=False).click()
+    table = page.get_by_role("table", name="Verified archived rally page")
+    expect(table.get_by_role("row")).to_have_count(
+        min(25, archived["total_rallies"] - 25) + 1
+    )
+    expect(table.get_by_role("button", name="Rally 26")).to_be_disabled()
+    if archived["total_rallies"] > 26:
+        table.get_by_role("button", name="Rally 27").click()
+        expect(page.get_by_text("Rally 27/", exact=False)).to_be_visible()
+        assert "rally=27" in page.url, page.url
     page.get_by_role("button", name="First rally").click()
     expect(page.get_by_text("Rally 1/", exact=False)).to_be_visible()
     assert "rally=" not in page.url, page.url

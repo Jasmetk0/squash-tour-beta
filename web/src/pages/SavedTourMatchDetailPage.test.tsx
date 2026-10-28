@@ -1,4 +1,4 @@
-import {render,screen} from '@testing-library/react'
+import {render,screen,within} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query'
 import {MemoryRouter,Route,Routes} from 'react-router-dom'
@@ -189,6 +189,40 @@ describe('exact historical Edition match replay',()=>{
     expect(screen.queryByRole('link',{name:'B'})).not.toBeInTheDocument()
     expect(screen.getByRole('link',{name:'Back to Edition results'})).toHaveAttribute('href',
       expect.stringContaining('revision=old-rev'))
+  })
+  it('browses the 25 genuine page frames and selects a bookmarked rally without another fetch',async()=>{
+    mount(url+'&q=keep')
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByText('Browse archived rallies',{exact:false}))
+    const table=screen.getByRole('table',{name:'Verified archived rally page'})
+    expect(within(table).getAllByRole('row')).toHaveLength(26)
+    const first=within(table).getByRole('button',{name:'Rally 1'})
+    expect(first).toBeDisabled()
+    expect(first).toHaveAttribute('aria-current','step')
+    expect(within(table).getByRole('button',{name:'Rally 26'})).not.toBeInTheDocument()
+    expect(within(table).getByText('1:0')).toBeInTheDocument()
+    await userEvent.click(within(table).getByRole('button',{name:'Rally 20'}))
+    expect(await screen.findByText('Rally 20/30')).toBeInTheDocument()
+    expect(within(table).getByRole('button',{name:'Rally 20'})).toHaveAttribute('aria-current','step')
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('link',{name:'Back to Edition results'}))
+      .toHaveAttribute('href',expect.not.stringContaining('rally='))
+    await userEvent.click(screen.getByRole('button',{name:'Last rally'}))
+    expect(await screen.findByText('Rally 30/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByText('Browse archived rallies',{exact:false}))
+    const end=screen.getByRole('table',{name:'Verified archived rally page'})
+    expect(within(end).getAllByRole('row')).toHaveLength(6)
+    expect(within(end).queryByRole('button',{name:'Rally 20'})).not.toBeInTheDocument()
+    await userEvent.click(within(end).getByRole('button',{name:'Rally 26'}))
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)
+  })
+  it('does not expose a rally table for a forged page or an unavailable replay',async()=>{
+    api.getSavedTourMatchDetail.mockResolvedValue({...fixture(0),saved_revision_id:'other'})
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('does not match')
+    expect(screen.queryByRole('table',{name:'Verified archived rally page'})).not.toBeInTheDocument()
+    expect(screen.queryByText('Browse archived rallies',{exact:false})).not.toBeInTheDocument()
   })
   it('resolves a shared rally deep link at its true archive offset and clears it on Edition return',async()=>{
     const urlWithRally=url+'&rally=26&q=keep'

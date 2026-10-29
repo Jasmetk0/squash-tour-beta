@@ -46,7 +46,7 @@ export function SavedPlayerIdentityPage(): JSX.Element {
   const profile = scoped ? q.data : null
   const player = profile?.identity
   const countryReturn = safeCountryRosterReturn(searchParams.get('fromCountry'),
-    runId,player?.country_code??null)
+    runId,player?.country_code??null,branchId,savedHead??null)
   return <section className="panel run-home">
     <div className="page-intro">
       <p className="eyebrow">PRODUCT RUN · SAVED PLAYER PROFILE</p>

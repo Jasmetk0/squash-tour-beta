@@ -65,9 +65,12 @@ A player profile link carries a bounded `fromCountry` return URL to the
 currently filtered and paged country view. The present-time profile offers
 **Back to filtered country roster** only after a verified saved player
 identity is present, and only for an exact, local current-Run Country URL
-whose Country matches that player's verified nationality. External URLs,
-other Run IDs/countries, non-Country paths and historical revision links are
-ignored. Profile tabs preserve the return parameter. General Back to Players
+whose Country matches that player's verified nationality **and** whose
+embedded source scope matches the profile's current selected Branch and
+Saved HEAD exactly. External URLs, other Run IDs/countries, old Branches or
+Saved HEADs, missing/duplicated source scope, non-Country paths and historical
+revision links are ignored. Profile tabs preserve the return parameter.
+General Back to Players
 remains available and no new write or saved view is created.
 
 A permalink is not yet a named persisted `Saved View` from Master §27.24:
@@ -86,7 +89,11 @@ first/last jumps and synchronous cursor resets across filters, prospect opt-in
 and immutable sources. Another pair covers restoring a shared URL and rejecting
 scope from an older immutable HEAD. Four pure URL tests protect state round-trips,
 context preservation, rejected old-source filters/future opt-ins and safe
-profile returns. Original `RunWorldCountrySavedPaging.test.tsx` remains unchanged,
+profile returns. `SavedPlayerCountryRosterReturn.test.tsx` additionally
+mounts the actual Country and Saved Profile React routes together, verifying
+a real filtered-page → player-profile → filtered-page round trip and
+rejecting obsolete Branch, HEAD or foreign-country return targets.
+Original `RunWorldCountrySavedPaging.test.tsx` remains unchanged,
 so its unrelated source-switch/standings tests also run.
 
 These are mocked frontend tests; they do not replace real production
@@ -97,6 +104,6 @@ remains authoritative, and no unverified full pre-alpha completion is claimed.
 ## Isolation
 
 Only `RunWorldCountrySavedPlayers.tsx`, `SavedPlayerIdentityPage.tsx`,
-the search React test, a dedicated pure permalink helper + four tests and
-this document. Independent of the open Saved Career, Country Match Records, Country
+the search React test, a dedicated pure permalink helper + four tests, four full React
+route-transition cases and this document. Independent of the open Saved Career, Country Match Records, Country
 Match List and Country Standings PRs #1652–#1655, with **no shared file edits**.

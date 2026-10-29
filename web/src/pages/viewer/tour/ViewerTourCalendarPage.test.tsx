@@ -93,7 +93,7 @@ describe('Viewer Season Calendar saved read-only browser (mocked GET API)', () =
     expect(within(table).getByRole('link', { name: 'Open 002' }))
       .toHaveAttribute('href', '/viewer/runs/tour%20run/calendar/event%20002')
     expect(within(table).getByText('Dokončeno')).toBeInTheDocument()
-    expect(within(table).getByText('Plánováno')).toBeInTheDocument()
+    expect(within(table).getAllByText('Plánováno')).toHaveLength(2)
     expect(screen.getByText('branch-tour')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Otevřít kalendář Runu' }))
       .toHaveAttribute('href', '/viewer/runs/tour%20run/calendar')
@@ -170,7 +170,7 @@ describe('Viewer Season Calendar saved read-only browser (mocked GET API)', () =
     expect(screen.queryByText('internal error should stay hidden')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Načíst znovu (pouze GET)' }))
     expect(await screen.findByRole('table')).toBeInTheDocument()
-    expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(3)
+    expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(4)
   })
 
   it('rejects invalid context before issuing any calendar GET and retries the context', async () => {

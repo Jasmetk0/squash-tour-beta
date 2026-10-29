@@ -60,7 +60,7 @@ function mount(entry='/admin/runs/run/world/countries/CZE?tab=players&year=2025'
       <button type="button" onClick={()=>setCountry('ENG')}>Change country</button>
       <button type="button" onClick={()=>setHead(null)}>Clear Saved HEAD</button>
       <button type="button" onClick={()=>setLanguage(l=>l==='en'?'cs':'en')}>Switch language</button>
-      <button type="button" onClick={()=>navigate('/admin/runs/run-a/world/countries/CZE?'+
+      <button type="button" onClick={()=>navigate('/admin/runs/run/world/countries/CZE?'+
         bookmark.toString())}>Open same-route bookmark</button>
       <button type="button" onClick={()=>navigate(-1)}>Browser Back</button>
       <RunWorldCountrySavedPlayers runId="run" branchId={branch} savedHead={head}

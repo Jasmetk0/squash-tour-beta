@@ -38,19 +38,16 @@ function validRow(row: unknown, index: number, bestN: number, season: number, cu
 
   let sum = 0
   let previousPoints = Number.POSITIVE_INFINITY
-  const eventIds = new Set<string>()
   for (const item of v.counted_results) {
     if (!item || typeof item !== 'object') return false
     const result = item as { event_id?: unknown; completed_season_index?: unknown; completed_week?: unknown; race_points?: unknown }
     if (!identifier(result.event_id) ||
         !natural(result.completed_season_index, 0, MAX_SEASON) || result.completed_season_index !== season ||
         !natural(result.completed_week, 1, MAX_WEEK) || result.completed_week > cutoffWeek ||
-        !natural(result.race_points) || result.race_points > previousPoints ||
-        eventIds.has(result.event_id)) return false
+        !natural(result.race_points) || result.race_points > previousPoints) return false
     sum += result.race_points
     if (!Number.isSafeInteger(sum)) return false
     previousPoints = result.race_points
-    eventIds.add(result.event_id)
   }
   return sum === v.race_points
 }

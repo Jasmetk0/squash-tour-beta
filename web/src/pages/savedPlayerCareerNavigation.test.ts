@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  matchLoadedCareer, parseCareerCompletion, parseCareerOutcome, parseCareerPage,
+  hasAmbiguousPlayerLinkParams, matchLoadedCareer, parseCareerCompletion, parseCareerOutcome, parseCareerPage,
   parseCareerSeason, parsePageInput, parsePlayerRally, totalCareerPages,
   validPlayerReplayPagePair,
 } from './savedPlayerCareerNavigation'
@@ -38,6 +38,16 @@ describe('current-HEAD player career URL contracts', () => {
     expect(parsePageInput('2', 2)).toBe(1)
     for (const raw of ['0','3','-1','01','1.1','']) expect(parsePageInput(raw, 2)).toBeNull()
   })
+  it('rejects duplicate query keys, even when one value appears valid', () => {
+    expect(hasAmbiguousPlayerLinkParams(
+      new URLSearchParams('careerPage=1&careerPage=99'), ['careerPage'])).toBe(true)
+    expect(hasAmbiguousPlayerLinkParams(
+      new URLSearchParams('replayHead=old&replayHead=new'), ['replayHead'])).toBe(true)
+    expect(hasAmbiguousPlayerLinkParams(
+      new URLSearchParams('rally=26&rally=1'), ['rally'])).toBe(true)
+    expect(hasAmbiguousPlayerLinkParams(
+      new URLSearchParams('rally=26&replayHead=HEAD'), ['rally', 'replayHead'])).toBe(false)
+  })
   it('validates local filter URLs and matches only verified loaded fields', () => {
     expect(parseCareerOutcome('win')).toBe('win')
     expect(parseCareerOutcome('WIN')).toBeNull()
@@ -58,9 +68,15 @@ describe('current-HEAD player career URL contracts', () => {
     expect(validPlayerReplayPagePair(first, second)).toBe(true)
     expect(validPlayerReplayPagePair(first, {...second, saved_revision_id:'NEW'})).toBe(false)
     expect(validPlayerReplayPagePair(first, {...second, player_id:'C'})).toBe(false)
+    expect(validPlayerReplayPagePair(first, {...second, winner_player_id:'C'})).toBe(false)
+    expect(validPlayerReplayPagePair(first, {...second, match:{...match,scoreline:'3-0'}})).toBe(false)
+    expect(validPlayerReplayPagePair(first, {...second, match:{...match,completion:'walkover'}})).toBe(false)
+    expect(validPlayerReplayPagePair(first, {...second, source:'foreign' as typeof second.source})).toBe(false)
     expect(validPlayerReplayPagePair(first, {...second, total_rallies:31})).toBe(false)
     expect(validPlayerReplayPagePair(first, {...second, rallies:second.rallies.map((x,i)=>
       i===0 ? {...x,score_a_before:99}:x)})).toBe(false)
+    expect(validPlayerReplayPagePair(first, {...second, rallies:second.rallies.map((x,i)=>
+      i===0 ? {...x,sets_a_after:2}:x)})).toBe(false)
     // An empty out-of-range page is not a neighbor and cannot poison the last page.
     expect(validPlayerReplayPagePair(first, detail(50))).toBe(false)
     const boundary = detail(0)

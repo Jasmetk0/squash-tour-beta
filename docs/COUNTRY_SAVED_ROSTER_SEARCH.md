@@ -50,6 +50,30 @@ rewrite is introduced.
   recovery instead of a false empty state.
 - No UI read triggers Save, simulation, or a write endpoint.
 
+## Shareable deep link and return from a player profile
+
+The Country players tab preserves filter, exact status, prepared opt-in and
+one-based page as named `sp*` URL parameters, alongside the existing World
+year and country search. This state is keyed to the **exact Run + selected
+Branch + Saved HEAD + country**; an old `spScope` from a different Saved
+source is ignored completely (including opt-in to potentially future players).
+All URL inputs remain ordinary view requests, never sporting authority.
+Malformed/oversized filter parameters and invalid page numbers are rejected.
+The original API proof and full-source filter/page validations still apply.
+
+A player profile link carries a bounded `fromCountry` return URL to the
+currently filtered and paged country view. The present-time profile offers
+**Back to filtered country roster** only after a verified saved player
+identity is present, and only for an exact, local current-Run Country URL
+whose Country matches that player's verified nationality. External URLs,
+other Run IDs/countries, non-Country paths and historical revision links are
+ignored. Profile tabs preserve the return parameter. General Back to Players
+remains available and no new write or saved view is created.
+
+A permalink is not yet a named persisted `Saved View` from Master §27.24:
+it is a shareable current-Run view selection, and a branch/HEAD change
+intentionally resets it.
+
 ## Verification and limits
 
 `web/src/pages/RunWorldCountryRosterSearch.test.tsx` covers mock HTTP over
@@ -59,7 +83,10 @@ identity, loss of Saved HEAD, source changes, CS/EN and mismatched filter
 identity. Two further tests cover exact page 3 of 3 for 55 authentic-shaped
 Saved players, malformed and out-of-range page input without network GETs,
 first/last jumps and synchronous cursor resets across filters, prospect opt-in
-and immutable sources. Original `RunWorldCountrySavedPaging.test.tsx` remains unchanged,
+and immutable sources. Another pair covers restoring a shared URL and rejecting
+scope from an older immutable HEAD. Four pure URL tests protect state round-trips,
+context preservation, rejected old-source filters/future opt-ins and safe
+profile returns. Original `RunWorldCountrySavedPaging.test.tsx` remains unchanged,
 so its unrelated source-switch/standings tests also run.
 
 These are mocked frontend tests; they do not replace real production
@@ -69,6 +96,7 @@ remains authoritative, and no unverified full pre-alpha completion is claimed.
 
 ## Isolation
 
-Only `RunWorldCountrySavedPlayers.tsx`, the new search React test, and this
-document. Independent of the open Saved Career, Country Match Records, Country
+Only `RunWorldCountrySavedPlayers.tsx`, `SavedPlayerIdentityPage.tsx`,
+the search React test, a dedicated pure permalink helper + four tests and
+this document. Independent of the open Saved Career, Country Match Records, Country
 Match List and Country Standings PRs #1652–#1655, with **no shared file edits**.

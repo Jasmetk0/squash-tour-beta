@@ -53,6 +53,17 @@ describe('exact Country standings page contract',()=>{
       players:[{...player(1),position:2},...Array.from({length:24},(_,i)=>player(i+2))],
     }),scope)).toBe(false)
   })
+  it('accepts the backend code-point ID tie-break, including case and punctuation',()=>{
+    // Python sorts identifiers by Unicode code point, not browser collation.
+    const ids=['P-Z','P-a','P_A','P_a','P\uE000','P\u{10000}']
+    const rows=ids.map((player_id,i)=>({...player(i+1),player_id}))
+    const page=data({total_players:rows.length,country_played_wins:rows.length,
+      has_more:false,players:rows})
+    expect(validCountryStandingPage(page,scope)).toBe(true)
+    expect(validCountryStandingPage({...page,
+      players:[...rows].reverse().map((p,i)=>({...p,position:i+1})),
+    },scope)).toBe(false)
+  })
   it('verifies nationality, played vs W/O, complete finals and real evidence',()=>{
     const rest=Array.from({length:24},(_,i)=>player(i+2))
     for(const first of [

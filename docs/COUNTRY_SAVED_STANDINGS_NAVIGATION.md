@@ -47,6 +47,17 @@ Mocked frontend tests and build cannot establish full real-Run persistence.
 The existing real Country HTTP/SQLite/Chromium acceptance plus the separate
 release matrix remain distinct and must be checked before full release claims.
 
+### Independent review correction — 29 October
+
+The new ordering guard originally used browser `localeCompare` for tied player
+IDs, while the backend uses Python's Unicode code-point ordering. Valid server
+pages with mixed case or punctuation could therefore be incorrectly withheld.
+The guard now compares code points, including supplementary Unicode characters,
+without changing sporting order or sorting the returned rows. A regression failed
+before the correction and passes afterward; it also rejects a reversed server
+order. The three focused frontend files pass 15 tests locally. Final-head hosted
+checks remain required.
+
 ## Ownership
 
 Files: `RunWorldCountryPlayerStandings.tsx`, its new colocated tests,

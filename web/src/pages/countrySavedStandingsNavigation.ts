@@ -21,11 +21,21 @@ const playerCounts=[
 export const standingsPages=(total:number):number=>total===0?0:
   Math.ceil(total/COUNTRY_STANDINGS_PAGE_SIZE)
 
+/** Match Python's identifier ordering, independently of browser locale/UTF-16. */
+function comparePlayerIds(a:string,b:string):number{
+  const left=Array.from(a),right=Array.from(b)
+  for(let i=0;i<Math.min(left.length,right.length);i++){
+    const difference=left[i].codePointAt(0)!-right[i].codePointAt(0)!
+    if(difference)return difference
+  }
+  return left.length-right.length
+}
+
 /** Authored ordering: titles, all finals, on-court wins, fewest on-court losses, ID. */
 export function compareCountryStanding(a:CountryPlayerStanding,b:CountryPlayerStanding):number{
   return b.titles-a.titles||b.final_appearances-a.final_appearances||
     b.played_wins-a.played_wins||a.played_losses-b.played_losses||
-    a.player_id.localeCompare(b.player_id)
+    comparePlayerIds(a.player_id,b.player_id)
 }
 export function validCountryStandingPage(
   d:CountryPlayerStandings|undefined,s:CountryStandingsScope,

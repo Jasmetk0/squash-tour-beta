@@ -1,17 +1,18 @@
 import { describe, expect, it } from 'vitest'
+import type { ViewerFinalsRaceHistory, ViewerFinalsRacePublication, ViewerFinalsRaceRow } from '../../../api/types'
 import {
   filterRacePlayerRows, parseRacePage, raceSeasonLabel, raceSeasonsNewestFirst,
   validViewerRaceHistory, viewerRaceBranch
 } from './finalsRaceBrowsing'
 
-function row(rank = 1, id = 'player-a', points = 20) {
+function row(rank = 1, id = 'player-a', points = 20): ViewerFinalsRaceRow {
   return {
     rank, player_id: id, race_points: points,
     tournaments_counted: 1, finals_selected: null, finals_seed: null, qualification_source: null,
     counted_results: [{ event_id: 'event-' + id, completed_season_index: 4, completed_week: 10, race_points: points }]
   }
 }
-function publication(season = 4, rows = [row()]) {
+function publication(season = 4, rows: ViewerFinalsRaceRow[] = [row()]): ViewerFinalsRacePublication {
   return {
     schema_version: 'viewer_finals_race_publication.v1',
     product_run_id: 'run-a', viewer_branch_id: 'branch-a',
@@ -22,7 +23,7 @@ function publication(season = 4, rows = [row()]) {
     }))
   }
 }
-function history(publications = [publication()]) {
+function history(publications: ViewerFinalsRacePublication[] = [publication()]): ViewerFinalsRaceHistory {
   return {
     schema_version: 'viewer_finals_race_history.v1',
     product_run_id: 'run-a', viewer_branch_id: 'branch-a',

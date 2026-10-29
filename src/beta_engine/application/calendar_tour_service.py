@@ -205,12 +205,16 @@ class CalendarTourService:
         if current_global:
             # This same physical read authenticated the complete Saved owner.
             # The internal decoder rebinds the actual component hashes/scope
-            # and original match evidence. Only the strict checkpoint decode
-            # survives Tour-only Saves, under complete-value binding and
-            # defensive copies within the existing bounded data-cache budget.
-            saved_evidence, saved, signed = decode_prevalidated_calendar_sources(
-                payload, run_id=run_id, branch_id=branch_id,
-                _global_value_proofs=proofs, _repository=self.repository,
+            # and original match evidence on a miss. The whole-DTO adapter and
+            # unchanged-checkpoint reader share one retained checkpoint under
+            # complete-value keys and the existing bounded data-cache budget.
+            saved_evidence, saved, signed = decoded_global_tour_source(
+                self.repository, revision.saved_revision,
+                lambda source: decode_prevalidated_calendar_sources(
+                    source.payload, run_id=run_id, branch_id=branch_id,
+                    _global_value_proofs=proofs, _repository=self.repository,
+                ),
+                _retain_miss=False,
             )
         else:
             saved_evidence, saved, signed = decoded_global_tour_source(

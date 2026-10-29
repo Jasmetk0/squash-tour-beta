@@ -151,3 +151,85 @@ def test_global_checkpoint_decode_shares_existing_budget_and_bypasses_oversize(m
     cache.decoded_global_checkpoint_component(repo, component,
         run_id='run', branch_id='branch', decode=decode)
     assert retained == before
+
+
+def test_whole_dto_adapter_retains_one_checkpoint_and_preserves_complete_reuse(monkeypatch):
+    from copy import deepcopy
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    body = {'schema_version': 'calendar_sporting_checkpoint.v13', 'nested': {'values': [1]}}
+    component = {'state': body, 'fingerprint': canonical_hash(body)}
+    cp = SimpleNamespace(schema_version='calendar_sporting_checkpoint.v13', run_id='run',
+        branch_id='branch', fingerprint=component['fingerprint'], body=deepcopy(body))
+    src = source()
+    src.payload = {'run': {'name': 'saved'}, 'content': {
+        'calendar_player_sporting_checkpoint': component,
+        'calendar_tour_authority': {'state': {'schema_version': 'calendar_tour_authority.v5'}},
+    }}
+    captured = (SimpleNamespace(nested=[{'evidence': 1}]), cp,
+                SimpleNamespace(schema_version='legacy-test-value', nested=[{'tour': 2}]))
+    repo = repository()
+    copies = []
+    original_copy = cache._copy_decoded_value
+
+    def observe(value, *args):
+        copies.append(value)
+        return original_copy(value, *args)
+
+    monkeypatch.setattr(cache, '_copy_decoded_value', observe)
+    cache.remember_committed_global_sources(repo, src, captured)
+    assert copies == [cp, (captured[0], captured[2])]
+    retained = repo._global_tour_projection_cache
+    assert len(retained) == 2
+    assert sum(v[0] for v in retained.values()) == len(cache.canonical_json(src.payload).encode())
+
+    def forbidden(_):
+        pytest.fail('complete DTO or component was needlessly decoded again')
+
+    expected = deepcopy(captured)
+    cp.body['nested']['values'].append('capturing caller')
+    captured[0].nested[0]['evidence'] = 'capturing caller'
+    first = cache.decoded_global_tour_source(repo, deepcopy(src), forbidden)
+    assert first == expected
+    first[1].body['nested']['values'].clear()
+    first[0].nested.clear()
+    first[2].nested[0]['tour'] = 'reading caller'
+    assert cache.decoded_global_tour_source(repo, src, forbidden) == expected
+    assert cache.decoded_global_checkpoint_component(repo, component,
+        run_id='run', branch_id='branch', decode=forbidden) == expected[1]
+
+    # A declared component fingerprint cannot substitute for the model guard
+    # on a new complete key. This also leaves the previous entries intact.
+    mismatched = deepcopy(src)
+    mismatched.payload['run']['name'] = 'another Saved'
+    bad = deepcopy(expected)
+    bad[1].fingerprint = '0' * 64
+    before = dict(retained)
+    with pytest.raises(ValueError, match='scope/hash'):
+        cache.remember_committed_global_sources(repo, mismatched, bad)
+    assert retained == before
+
+    # Same component, different COMPLETE Saved content: no whole-tuple reuse.
+    changed = deepcopy(src)
+    changed.payload['run']['name'] = 'rehashed changed source'
+    with pytest.raises(LookupError):
+        cache.decoded_global_tour_source(repo, changed, lambda _: (_ for _ in ()).throw(LookupError()))
+    foreign = deepcopy(src)
+    foreign.branch_id = 'foreign'
+    with pytest.raises(LookupError):
+        cache.decoded_global_tour_source(repo, foreign, lambda _: (_ for _ in ()).throw(LookupError()))
+
+    # Evict the component via the ordinary shared budget. Its adapter must not
+    # keep that model alive, and a later whole read must use the strict fallback.
+    monkeypatch.setattr(cache, 'MAX_GLOBAL_TOUR_BYTES', 300)
+    for i in range(4):
+        state = {'i': i}
+        raw = {'state': state, 'fingerprint': canonical_hash(state)}
+        cache.decoded_global_checkpoint_component(repo, raw, run_id='run', branch_id='branch',
+            decode=lambda r: SimpleNamespace(schema_version='calendar_sporting_checkpoint.v13',
+                run_id='run', branch_id='branch', fingerprint=r['fingerprint']))
+    assert not any(isinstance(v[1], cache._GlobalTourValue) for v in retained.values())
+    assert sum(v[0] for v in retained.values()) <= 300
+    with pytest.raises(LookupError):
+        cache.decoded_global_tour_source(repo, src, lambda _: (_ for _ in ()).throw(LookupError()))

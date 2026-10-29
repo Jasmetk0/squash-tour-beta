@@ -21,9 +21,9 @@ from tests.api.test_saved_revision_history_api import ApiServer, _request
 pytestmark = pytest.mark.smoke
 
 
-def ready(server, width=52, *, seasons=2):
+def ready(server, width=52, *, seasons=2, population=8):
     offset = 37 if width == 61 else 80 if width == 80 else 1
-    repo, _ = setup(server, RunCalendar(width, offset, 2030, seasons), 8)
+    repo, _ = setup(server, RunCalendar(width, offset, 2030, seasons), population)
     for eid in ("parallel-a", "parallel-b"):
         view = inspect(server)
         week = view["state"]["week"]
@@ -1539,5 +1539,19 @@ def test_successful_global_save_seeds_next_checkpoint_decode(tmp_path, prepared_
         first = read()
         assert first.model_dump(mode='json') == component['state']
         first.__dict__['branch_id'] = 'mutated-caller'
+        first.week.__dict__['week'] = -1
         assert read().branch_id == 'branch'
+        assert read().model_dump(mode='json') == component['state']
         assert sum(v[0] for v in repository._global_tour_projection_cache.values()) <= cache.MAX_GLOBAL_TOUR_BYTES
+        if not limited_budget:
+            from beta_engine.infrastructure.db.calendar_standalone_match_state import decode_prevalidated_calendar_sources
+            record = repository.get_branch_saved_revision(revision_id=receipt['saved_revision']['revision_id'])
+            expected = decode_prevalidated_calendar_sources(record.payload, run_id='run', branch_id='branch')
+            whole = cache.decoded_global_tour_source(repository, record, unexpected_decode)
+            assert whole == expected
+            whole[1].week.__dict__['week'] = -1
+            assert cache.decoded_global_tour_source(repository, record, unexpected_decode) == expected
+        saved_view = inspect(server)
+    # A new server/repository and new SQLite connections have no decode cache.
+    with ApiServer(database_url=f'sqlite:///{path}') as restarted:
+        assert inspect(restarted) == saved_view

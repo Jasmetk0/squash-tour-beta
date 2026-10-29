@@ -47,12 +47,23 @@ describe('Country Saved Revision paging source changes', () => {
     ) => {
       const total = totalFor(countryCode)
       return {
+        schema_version: 'country_player_standings.v1',
+        source: 'reachable_saved_revision',
         run_id: runId, branch_id: branchId, country_code: countryCode,
         saved_revision_id: savedRevisionId, revision_branch_id: branchId,
+        calendar_status: 'ready', published_event_count: total,
+        country_titles: 0, country_runner_up_finishes: 0,
+        country_played_wins: total, country_played_losses: 0,
+        country_walkover_wins: 0, country_walkover_losses: 0,
         offset, limit, total_players: total, has_more: offset + limit < total,
-        players: [{ player_id: countryCode + '-one', player_name: 'Saved Player',
-          position: offset + 1, titles: 0, final_appearances: 1, runner_up_finishes: 1,
-          played_wins: 1, played_losses: 0, walkover_wins: 0, walkover_losses: 0 }],
+        players: Array.from({ length: Math.max(0, Math.min(limit, total - offset)) },
+          (_, i) => ({
+            player_id: countryCode + '-' + String(offset + i + 1).padStart(3, '0'),
+            player_name: 'Saved Player ' + (offset + i + 1),
+            country_code: countryCode, position: offset + i + 1,
+            titles: 0, final_appearances: 0, runner_up_finishes: 0,
+            played_wins: 1, played_losses: 0, walkover_wins: 0, walkover_losses: 0,
+          })),
       }
     })
   })

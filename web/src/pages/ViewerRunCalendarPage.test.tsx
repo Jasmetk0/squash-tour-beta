@@ -744,6 +744,25 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expectNoForbiddenViewerActions()
   })
 
+  it('does not trust a published row if the same event has an unpublished duplicate', async () => {
+    const original = await api.getViewerTournamentHistory('viewer-run-2d')
+    api.getViewerTournamentHistory.mockResolvedValue({
+      ...original,
+      tournaments: [
+        ...original.tournaments,
+        {...original.tournaments[0], result_published: false, champion_player_id: null, finalist_player_id: null}
+      ]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    expect(await screen.findByText(/published tournament records do not match unique Saved Calendar evidence/)).toBeInTheDocument()
+    const season = screen.getByRole('list', {name:'Viewer season calendar events 2028/2029'})
+    const first = within(season).getByText('Season Opener').closest('li') as HTMLElement
+    expect(within(first).queryByText('PLAYER-42')).not.toBeInTheDocument()
+    expect(within(first).queryByText('Completed · result published')).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
   it('does not select one of two conflicting published history rows', async () => {
     const history = await api.getViewerTournamentHistory('viewer-run-2d')
     api.getViewerTournamentHistory.mockResolvedValue({

@@ -4484,6 +4484,7 @@ export async function getSavedHomePlayerIdentities(
 export async function getSavedPlayersInventory(
   runId: string, branchId: string, savedHead: string,
   filters: { search: string; country_code: string; status_filter: string;
+    ranking_status_filter?: '' | 'ranked' | 'unranked' | 'unpublished';
     include_prepared: boolean; offset: number; limit: number }
 ): Promise<import('./types').SavedPlayersInventory> {
   if (!runId || !branchId || !savedHead || !Number.isInteger(filters.offset) ||
@@ -4494,6 +4495,7 @@ export async function getSavedPlayersInventory(
   const params = new URLSearchParams({
     search: filters.search, country_code: filters.country_code,
     status_filter: filters.status_filter,
+    ranking_status_filter: filters.ranking_status_filter ?? "",
     include_prepared: String(filters.include_prepared),
     offset: String(filters.offset), limit: String(filters.limit),
   })
@@ -4506,13 +4508,16 @@ export async function getSavedPlayersInventory(
       data.source !== 'selected_branch_saved_revision' || data.time_context !== 'present' ||
       data.search !== filters.search || data.country_code !== filters.country_code ||
       data.status_filter !== filters.status_filter ||
+      (data.ranking_status_filter ?? "") !== (filters.ranking_status_filter ?? "") ||
       data.include_prepared !== filters.include_prepared ||
       data.offset !== filters.offset || data.limit !== filters.limit ||
       !Number.isInteger(data.total) || data.total < 0 ||
       data.has_more !== (filters.offset + filters.limit < data.total) ||
-      !Array.isArray(data.players) || data.players.length > filters.limit ||
+      !Array.isArray(data.players) ||
+      data.players.length !== Math.min(filters.limit, Math.max(0, data.total - filters.offset)) ||
       new Set(data.players.map(row => row.player_id)).size !== data.players.length ||
       data.players.some(row => !row.player_id || !row.display_name?.trim() ||
+        Boolean(filters.ranking_status_filter) && row.ranking_status !== filters.ranking_status_filter ||
         !/^[A-Za-z]{3}$/.test(row.country_code) ||
         !['initial_world', 'run_prospect'].includes(row.identity_source) ||
         (!filters.include_prepared && row.identity_source === 'run_prospect') ||

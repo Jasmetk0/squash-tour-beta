@@ -97,3 +97,34 @@ def test_empty_saved_revision_does_not_fall_back_to_legacy_or_future_state():
     assert data.total == 0 and data.players == () and not data.has_more
     with pytest.raises(ValueError, match="page"):
         _query(initial_world=None, prospect_source=None, ranking=None, offset=-1)
+
+
+def test_ranking_status_filter_is_saved_only_server_side_before_paging(monkeypatch):
+    players = [_player(f"p-{i:03d}", f"Alpha {i:03d}") for i in range(60)]
+    ranking = SimpleNamespace(run_id="run-a", branch_id="branch-a",
+                              authoritative_transition_state={"world": {"current_ordinal": 4}})
+    monkeypatch.setattr(inventory, "resolve_viewer_official_ranking", lambda _state: SimpleNamespace(
+        product_run_id="run-a", viewer_branch_id="branch-a", week_ordinal=4,
+        rows=[SimpleNamespace(player_id=f"p-{i:03d}", rank=i)
+              for i in range(1, 31)]
+    ))
+    common = dict(initial_world=_world(rows=players), prospect_source=None,
+                  ranking=ranking, country_code="CZE")
+    ranked = _query(**common, ranking_status_filter="ranked", offset=25, limit=25)
+    assert ranked.ranking_status_filter == "ranked"
+    assert ranked.total == 30 and ranked.has_more is False
+    assert len(ranked.players) == 5
+    assert all(p.ranking_status == "ranked" and p.rank is not None for p in ranked.players)
+    unranked = _query(**common, ranking_status_filter="unranked", search="Alpha 05")
+    assert unranked.total == 10
+    assert all(p.ranking_status == "unranked" for p in unranked.players)
+    assert _query(**common, ranking_status_filter="unpublished").total == 0
+    unpublished = _query(initial_world=_world(rows=players), prospect_source=None,
+                         ranking=None, ranking_status_filter="unpublished")
+    assert unpublished.total == 60 and unpublished.ranking_week_ordinal is None
+    assert all(p.ranking_status == "unpublished" for p in unpublished.players)
+    assert _query(initial_world=_world(rows=players), prospect_source=None,
+                  ranking=None, ranking_status_filter="ranked").total == 0
+    with pytest.raises(ValueError, match="ranking status filter"):
+        _query(initial_world=None, prospect_source=None, ranking=None,
+               ranking_status_filter="any")

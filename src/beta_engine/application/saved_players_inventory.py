@@ -42,6 +42,7 @@ class SavedPlayersInventory(BaseModel):
     search: str
     country_code: str
     status_filter: str
+    ranking_status_filter: Literal["", "unpublished", "ranked", "unranked"] = ""
     include_prepared: bool = False
     offset: int = Field(ge=0)
     limit: int = Field(ge=1, le=100)
@@ -56,11 +57,14 @@ def resolve_saved_players_inventory(
     prospect_source: RunProspectSourceSnapshot | None,
     ranking: RankingRevisionState | None,
     search: str = "", country_code: str = "", status_filter: str = "",
+    ranking_status_filter: Literal["", "unpublished", "ranked", "unranked"] = "",
     include_prepared: bool = False,
     offset: int = 0, limit: int = 50,
 ) -> SavedPlayersInventory:
     if not 0 <= offset or not 1 <= limit <= 100:
         raise ValueError("Invalid inventory page")
+    if ranking_status_filter not in ("", "unpublished", "ranked", "unranked"):
+        raise ValueError("Invalid saved ranking status filter")
     if len(search) > 120 or len(status_filter) > 80 or (
         country_code and (len(country_code) != 3 or not country_code.isalpha())
     ):
@@ -129,10 +133,12 @@ def resolve_saved_players_inventory(
         if (not needle or needle in item.display_name.casefold() or needle in item.player_id.casefold())
         and (not country or item.country_code == country)
         and (not wanted_status or (item.status or "").casefold() == wanted_status)
+        and (not ranking_status_filter or item.ranking_status == ranking_status_filter)
     ), key=lambda item: (item.display_name.casefold(), item.player_id))
     return SavedPlayersInventory(
         run_id=run_id, branch_id=branch_id, saved_revision_id=saved_revision_id,
         search=search, country_code=country_code, status_filter=status_filter,
+        ranking_status_filter=ranking_status_filter,
         include_prepared=include_prepared, offset=offset, limit=limit, total=len(matching),
         has_more=offset + limit < len(matching),
         ranking_week_ordinal=week_ordinal, players=tuple(matching[offset:offset + limit]),

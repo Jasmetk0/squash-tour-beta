@@ -45,8 +45,8 @@ function rankings(runId = run, branchId = branch) {
     product_run_id: runId, viewer_branch_id: branchId,
     public_head_ordinal: 2000, publication_count: 2,
     publications: [
-      { season_index: 32, week: 11, week_ordinal: 1963, snapshot_fingerprint: 'a'.repeat(64), policy_id: 'best-15', best_n: 15, row_count: 64 },
-      { season_index: 32, week: 48, week_ordinal: 2000, snapshot_fingerprint: 'b'.repeat(64), policy_id: 'best-15', best_n: 15, row_count: 64 }
+      { season_index: 32, week: 12, week_ordinal: 1963, snapshot_fingerprint: 'a'.repeat(64), policy_id: 'best-15', best_n: 15, row_count: 64 },
+      { season_index: 32, week: 49, week_ordinal: 2000, snapshot_fingerprint: 'b'.repeat(64), policy_id: 'best-15', best_n: 15, row_count: 64 }
     ]
   }
 }
@@ -113,7 +113,7 @@ describe('ViewerHistoryPage source-safe canonical publication hub (mocked GET on
     }
     expect(screen.getByRole('link', { name: /History Open/ })).toHaveAttribute('href', '/viewer/runs/history%20run/calendar/EVT-1')
     expect(screen.queryByRole('link', { name: /Future Open/ })).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /2032\/33 · W48/ })).toHaveAttribute('href', '/viewer/runs/history%20run/rankings/2000')
+    expect(screen.getByRole('link', { name: /2032\/33 · W49/ })).toHaveAttribute('href', '/viewer/runs/history%20run/rankings/2000')
     expect(screen.getByRole('link', { name: '2032/33' })).toHaveAttribute('href', '/viewer/runs/history%20run/race')
     expect(screen.getByRole('link', { name: 'Historie vybraného Runu' })).toHaveAttribute('href', '/viewer/runs/history%20run/history')
     expect(screen.getByRole('link', { name: 'Historie rankingů' })).toHaveAttribute('href', '/viewer/runs/history%20run/rankings')

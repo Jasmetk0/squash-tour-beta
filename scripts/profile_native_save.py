@@ -13,6 +13,7 @@ import functools
 import gc
 import hashlib
 import json
+import marshal
 import multiprocessing
 import os
 from pathlib import Path
@@ -47,6 +48,17 @@ def measurement_root(value):
         raise argparse.ArgumentTypeError('Output must be work/<case-name>, using letters, digits, _ or -')
     # Reconstruct from the fixed base and the allowlisted leaf, not CLI text.
     return work / candidate.name
+
+
+def open_artifact(root, filename, *, binary=False):
+    """Create one new report; reject traversal, symlinks and existing files."""
+    if re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,99}', filename) is None:
+        raise ValueError('Invalid report filename')
+    directory = measurement_root(str(root))
+    destination = directory / filename
+    if destination.resolve().parent != directory:
+        raise ValueError('Report escapes the measurement directory')
+    return destination.open('xb' if binary else 'x')
 
 
 def retained_bytes(root):
@@ -238,7 +250,8 @@ def main(argv=None):
             expected = inspect(server)
             if a.tour_only:
                 assert expected['checkpoint_fingerprint'] == original_checkpoint
-            (a.root / 'expected.json').write_text(json.dumps(expected, sort_keys=True))
+            with open_artifact(a.root, 'expected.json') as stream:
+                json.dump(expected, stream, sort_keys=True)
         else:
             expected = json.loads((a.root / 'expected.json').read_text())
             assert view == expected, 'Complete inspection differs after a physical process restart'
@@ -248,13 +261,14 @@ def main(argv=None):
                     input_sha256=digest, python=sys.version, platform=platform.platform(), mode=a.mode,
                     tour_only=a.tour_only,
                     source_diff=subprocess.check_output(['git', 'diff', '--', 'src'], text=True))
-    (a.root / ('restart.json' if a.restart_child else 'timings.json')).write_text(
-        json.dumps(dict(metadata=metadata, phases=rows), indent=2))
+    with open_artifact(a.root, 'restart.json' if a.restart_child else 'timings.json') as stream:
+        json.dump(dict(metadata=metadata, phases=rows), stream, indent=2)
     for index, (name, profile) in enumerate(profiles):
         prefix = 'restart-' if a.restart_child else ''
-        target = a.root / f'{prefix}{index:02d}'
-        profile.dump_stats(str(target) + '.pstats')
-        with Path(str(target) + '.txt').open('w') as stream:
+        profile.create_stats()
+        with open_artifact(a.root, f'{prefix}{index:02d}.pstats', binary=True) as stream:
+            marshal.dump(profile.stats, stream)
+        with open_artifact(a.root, f'{prefix}{index:02d}.txt') as stream:
             pstats.Stats(profile, stream=stream).strip_dirs().sort_stats('cumulative').print_stats(65)
     if not a.restart_child:
         # spawn starts a fresh interpreter and keeps the selected virtualenv.

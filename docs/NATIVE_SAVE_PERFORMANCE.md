@@ -181,7 +181,7 @@ data remains in the task workspace alongside the final samples.
 
 ## Validation and distinct adversarial review
 
-The focused cache/dependency/domain/measurement suite passes **58 tests**.
+The focused cache/dependency/domain/measurement suite passes **59 tests**.
 An earlier implementation passed nine real HTTP/SQLite cases (528.86s), including
 partial/nested forks, actual final replay, concurrent/stale/retry/rollback,
 rehashed source, metadata history and strict version-directed equivalence.
@@ -227,6 +227,10 @@ semantics are unchanged. Focused regressions cover these boundaries. Ordinary
 timing samples above predate this equivalent float-comparison spelling; they
 remain observations of their explicitly recorded source tree, not a timing
 claim for a later revision.
+
+All report writes additionally validate the destination immediately before
+exclusive creation: traversal, symlink escapes and existing output files are
+rejected rather than followed or overwritten, including in the restart child.
 
 An intermediate attempt resolved the virtualenv interpreter symlink and the
 restart correctly failed because the underlying interpreter lacked pytest.

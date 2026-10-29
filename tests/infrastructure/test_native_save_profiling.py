@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import pytest
 
 from beta_engine.domain.rankings.official import FrozenInput
-from scripts.profile_native_save import measurement_root, retained_bytes, workspace_path
+from scripts.profile_native_save import measurement_root, open_artifact, retained_bytes, workspace_path
 
 pytestmark = pytest.mark.pr_critical
 
@@ -45,3 +45,21 @@ def test_measurement_paths_are_confined_after_resolving_traversal_and_symlinks(t
     for value in ('work/nested/output', 'work/-option', 'work/name with spaces', 'work/escape'):
         with pytest.raises(ArgumentTypeError):
             measurement_root(value)
+
+
+def test_report_creation_rejects_escape_symlinks_and_overwrite(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / 'work' / 'case'
+    root.mkdir(parents=True)
+    outside = tmp_path / 'keep.txt'
+    outside.write_text('keep')
+    (root / 'link.txt').symlink_to(outside)
+    for filename in ('../keep.txt', str(outside), 'link.txt'):
+        with pytest.raises(ValueError):
+            open_artifact(root, filename)
+    with open_artifact(root, 'report.json') as stream:
+        stream.write('report')
+    with pytest.raises(FileExistsError):
+        open_artifact(root, 'report.json')
+    assert outside.read_text() == 'keep'
+    assert (root / 'report.json').read_text() == 'report'

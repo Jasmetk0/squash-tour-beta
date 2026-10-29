@@ -67,6 +67,15 @@ def verify_saved_player_replay(page, run_url, artifacts, port, prefix="", expect
     assert roster["source"] == "selected_branch_saved_revision" and roster["time_context"] == "present"
     assert any(row["player_id"] == player_id for row in roster["players"]), roster
 
+    # Browser-only traffic is watched AFTER the fixture's legitimate Save.
+    # In particular, clicking a replay, switching locale, filtering, and
+    # recovering a URL must never issue a write/simulation request.
+    ui_writes = []
+    def note_ui_write(request):
+        if request.method not in ("GET", "HEAD", "OPTIONS"):
+            ui_writes.append((request.method, request.url))
+    page.on("request", note_ui_write)
+
     player_route = "/admin/runs/" + quote(run_id, safe="") + "/people/" + quote(player_id, safe="")
     match_route = player_route + "/matches/" + quote(event_id, safe="") + "/" + quote(match_id, safe="")
     page.goto(base + "/admin/runs/" + quote(run_id, safe="") + "/players")
@@ -147,6 +156,16 @@ def verify_saved_player_replay(page, run_url, artifacts, port, prefix="", expect
     expect(page.get_by_text("Invalid career season, page or filter in the link.", exact=False)).to_be_visible()
     page.get_by_role("button", name="Reset to a valid selection").click()
     expect(page.get_by_role("heading", name="Match career")).to_be_visible()
+    page.goto(base + player_route + "?tab=career&careerPage=0&careerPage=1")
+    expect(page.get_by_text("Invalid career season, page or filter in the link.", exact=False)).to_be_visible()
+    page.get_by_role("button", name="Reset to a valid selection").click()
+    expect(page.get_by_role("heading", name="Match career")).to_be_visible()
+    page.goto(base + linked_match_route + "&rally=1&rally=26")
+    expect(page.get_by_text("Ambiguous link: duplicated Branch, Saved HEAD or rally parameters.", exact=False)).to_be_visible()
+    page.get_by_role("button", name="Open current source").click()
+    expect(page.get_by_text(f"Rally 1/{total}", exact=False)).to_be_visible()
+    page.remove_listener("request", note_ui_write)
+    assert not ui_writes, ("Read-only career and replay triggered browser writes", ui_writes)
     return dict(run_id=run_id, branch_id=branch_id,
                 saved_revision_id=first["saved_revision_id"], event_id=event_id,
                 player_id=player_id, match_id=match_id, scoreline=final["scoreline"],

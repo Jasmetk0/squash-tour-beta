@@ -188,13 +188,13 @@ function mockCanonicalData(eventWeek = 2): void {
     schema_version: 'viewer_official_ranking_history.v1',
     product_run_id: 'viewer-run-2d',
     viewer_branch_id: 'branch-viewer',
-    public_head_ordinal: 4,
+    public_head_ordinal: 1709,
     publication_count: 1,
     publications: [
       {
         season_index: 28,
         week: 2,
-        week_ordinal: 4,
+        week_ordinal: 1709,
         snapshot_fingerprint: 'a'.repeat(64),
         policy_id: 'best-15',
         best_n: 15,
@@ -314,9 +314,9 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     const events = await screen.findByRole('list', { name: 'Viewer week Saved Calendar events' })
     expect(within(events).getByText('Gold Open')).toBeInTheDocument()
     expect(within(events).queryByText('Season Opener')).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ranking publication #4' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Ranking publication #1709' })).toHaveAttribute(
       'href',
-      '/viewer/runs/viewer-run-2d/rankings/4'
+      '/viewer/runs/viewer-run-2d/rankings/1709'
     )
     expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-2d')
     expect(screen.getByRole('link', { name: 'Open canonical Finals Race publication for this cutoff week' })).toHaveAttribute(
@@ -378,6 +378,43 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expect(screen.queryByText('PLAYER-42')).not.toBeInTheDocument()
   })
 
+  it.each([
+    {reason: 'an unrelated historic ordinal', patch: {week_ordinal: 1708}},
+    {reason: 'a future ordinal beyond the public head', patch: {week_ordinal: 1710}},
+    {reason: 'an out-of-range week coordinate', patch: {week: 62, week_ordinal: 1769}},
+    {reason: 'an out-of-range season index', patch: {season_index: 50, week_ordinal: 3051}}
+  ])('withholds an official ranking link with $reason', async ({patch}) => {
+    const original = await api.listViewerOfficialRankingHistory('viewer-run-2d')
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...original,
+      publications: [{...original.publications[0], ...patch}]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2?season=2028%2F2029')
+
+    expect(await screen.findByText(/Ranking History publications have inconsistent season\/week ordinals/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', {name:/^Ranking publication #/})).not.toBeInTheDocument()
+    expect(await screen.findByText('Gold Open')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('does not infer a second Saved season from a mismatched ordinal', async () => {
+    const original = await api.listViewerOfficialRankingHistory('viewer-run-2d')
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...original,
+      publications: [
+        original.publications[0],
+        {...original.publications[0], season_index:29, week_ordinal:1709}
+      ]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
+
+    expect(await screen.findByText('Gold Open')).toBeInTheDocument()
+    expect(screen.getByRole('link', {name:'Ranking publication #1709'})).toBeInTheDocument()
+    expect(screen.queryByText(/events or publications in multiple Saved seasons/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name:'Week W2 · season 2029/2030'})).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
   it('hides week ranking publications from another Viewer Branch', async () => {
     const original = await api.listViewerOfficialRankingHistory('viewer-run-2d')
     api.listViewerOfficialRankingHistory.mockResolvedValue({
@@ -387,7 +424,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
 
     expect(await screen.findByText('Ranking History source does not match the Saved Calendar Viewer Branch.')).toBeInTheDocument()
-    expect(screen.queryByRole('link', {name: 'Ranking publication #4'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Ranking publication #1709'})).not.toBeInTheDocument()
     expect(await screen.findByText('Gold Open')).toBeInTheDocument()
   })
 
@@ -419,7 +456,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expect(await screen.findByText(/events or publications in multiple Saved seasons/)).toBeInTheDocument()
     expect(screen.queryByText('Gold Open')).not.toBeInTheDocument()
     expect(screen.queryByText('Next Season Gold')).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', {name: 'Ranking publication #4'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Ranking publication #1709'})).not.toBeInTheDocument()
     expect(screen.getByRole('link', {name: 'Week W2 · season 2028/2029'})).toHaveAttribute(
       'href', '/viewer/runs/viewer-run-2d/weeks/2?season=2028%2F2029'
     )
@@ -439,7 +476,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     const events = await screen.findByRole('list', {name: 'Viewer week Saved Calendar events'})
     expect(within(events).getByText(included)).toBeInTheDocument()
     expect(within(events).queryByText(excluded)).not.toBeInTheDocument()
-    expect(Boolean(screen.queryByRole('link', {name: 'Ranking publication #4'}))).toBe(hasRanking)
+    expect(Boolean(screen.queryByRole('link', {name: 'Ranking publication #1709'}))).toBe(hasRanking)
     expectNoForbiddenViewerActions()
   })
 
@@ -448,7 +485,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
 
     expect(await screen.findByText(/requested season is not present in this Viewer Branch/)).toBeInTheDocument()
     expect(screen.queryByText('Gold Open')).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', {name: 'Ranking publication #4'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Ranking publication #1709'})).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -464,7 +501,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
 
     expect(await screen.findByText('Gold Open')).toBeInTheDocument()
     expect(screen.queryByRole('link', {name: 'Open canonical Finals Race publication for this cutoff week'})).not.toBeInTheDocument()
-    expect(screen.getByRole('link', {name: 'Ranking publication #4'})).toBeInTheDocument()
+    expect(screen.getByRole('link', {name: 'Ranking publication #1709'})).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -473,12 +510,13 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
     api.listViewerOfficialRankingHistory.mockResolvedValue({
       ...ranking,
-      publications: [{...ranking.publications[0], week: 4, week_ordinal: 6}]
+      public_head_ordinal: 1711,
+      publications: [{...ranking.publications[0], week: 4, week_ordinal: 1711}]
     })
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/4')
 
-    expect(await screen.findByRole('link', {name: 'Ranking publication #6'})).toHaveAttribute(
-      'href', '/viewer/runs/viewer-run-2d/rankings/6'
+    expect(await screen.findByRole('link', {name: 'Ranking publication #1711'})).toHaveAttribute(
+      'href', '/viewer/runs/viewer-run-2d/rankings/1711'
     )
     expect(screen.getByRole('link', {name: 'Week W4 · season 2028/2029'})).toHaveAttribute(
       'href', '/viewer/runs/viewer-run-2d/weeks/4?season=2028%2F2029'
@@ -509,15 +547,17 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
     api.listViewerOfficialRankingHistory.mockResolvedValue({
       ...ranking,
+      public_head_ordinal: 1770,
+      publication_count: 2,
       publications: [...ranking.publications, {...ranking.publications[0],
-        season_index: 29, week_ordinal: 65}]
+        season_index: 29, week_ordinal: 1770}]
     })
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
 
     expect(await screen.findByText(/events or publications in multiple Saved seasons/)).toBeInTheDocument()
     expect(screen.queryByText('Gold Open')).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', {name:'Ranking publication #4'})).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', {name:'Ranking publication #65'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name:'Ranking publication #1709'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name:'Ranking publication #1770'})).not.toBeInTheDocument()
     expect(screen.getByRole('link', {name: 'Week W2 · season 2028/2029'})).toBeInTheDocument()
     expect(screen.getByRole('link', {name: 'Week W2 · season 2029/2030'})).toBeInTheDocument()
     expectNoForbiddenViewerActions()
@@ -527,7 +567,8 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
     api.listViewerOfficialRankingHistory.mockResolvedValue({
       ...ranking,
-      publications: [{...ranking.publications[0], week: 4, week_ordinal: 6}]
+      public_head_ordinal: 1711,
+      publications: [{...ranking.publications[0], week: 4, week_ordinal: 1711}]
     })
     const race = await api.getViewerFinalsRace('viewer-run-2d')
     api.getViewerFinalsRace.mockResolvedValue({
@@ -536,7 +577,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     })
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/4')
 
-    expect(await screen.findByRole('link', {name: 'Ranking publication #6'})).toBeInTheDocument()
+    expect(await screen.findByRole('link', {name: 'Ranking publication #1711'})).toBeInTheDocument()
     expect(screen.queryByText(/events or publications in multiple Saved seasons/)).not.toBeInTheDocument()
     expect(screen.queryByRole('link', {name:'Open canonical Finals Race publication for this cutoff week'})).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
@@ -551,7 +592,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2?season=2028%2F2029')
 
     expect(await screen.findByText('Gold Open')).toBeInTheDocument()
-    expect(screen.queryByRole('link', {name:'Ranking publication #4'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name:'Ranking publication #1709'})).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

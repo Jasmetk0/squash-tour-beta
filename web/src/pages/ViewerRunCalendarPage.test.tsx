@@ -361,25 +361,83 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('caps the overview at 20 most recent publication-only weeks without losing the count', async () => {
+  async function rankingOnlyPublicationWeeks(total: number): Promise<void> {
     const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
     api.listViewerOfficialRankingHistory.mockResolvedValue({
       ...ranking,
-      public_head_ordinal: 1735,
-      publication_count: 25,
-      publications: Array.from({length: 25}, (_, index) => ({
+      public_head_ordinal: 1710 + total,
+      publication_count: total,
+      publications: Array.from({length: total}, (_, index) => ({
         ...ranking.publications[0],
         week: index + 4,
         week_ordinal: 1711 + index
       }))
     })
+  }
+
+  it('shows the first 20 verified publication-only weeks with a link to older history', async () => {
+    await rankingOnlyPublicationWeeks(25)
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
 
     const weeks = await screen.findByRole('list', {name: 'Viewer publication-only weeks'})
     expect(within(weeks).getAllByRole('link')).toHaveLength(20)
     expect(within(weeks).getAllByRole('link')[0]).toHaveTextContent('2028/2029 · W28')
     expect(within(weeks).getAllByRole('link')[19]).toHaveTextContent('2028/2029 · W9')
-    expect(screen.getByText('Showing the 20 most recent of 25 publication-only weeks.')).toBeInTheDocument()
+    expect(screen.getByText(/Showing 1–20 of 25 publication-only weeks/)).toBeInTheDocument()
+    expect(screen.getByText(/Page 1 of 2/)).toBeInTheDocument()
+    const pager = screen.getByRole('navigation', {name: 'Publication-only week pages'})
+    expect(within(pager).getByRole('link', {name: 'Older publication weeks'})).toHaveAttribute(
+      'href', '/viewer/runs/viewer-run-2d/calendar?pubPage=2'
+    )
+    expect(within(pager).queryByRole('link', {name: 'Newer publication weeks'})).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('opens remaining older publication-only weeks from a direct page-two URL', async () => {
+    await rankingOnlyPublicationWeeks(25)
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar?pubPage=2')
+
+    const weeks = await screen.findByRole('list', {name: 'Viewer publication-only weeks'})
+    const links = within(weeks).getAllByRole('link')
+    expect(links).toHaveLength(5)
+    expect(links[0]).toHaveTextContent('2028/2029 · W8')
+    expect(links[0]).toHaveAttribute('href',
+      '/viewer/runs/viewer-run-2d/weeks/8?season=2028%2F2029')
+    expect(links[4]).toHaveTextContent('2028/2029 · W4')
+    expect(links[4]).toHaveAttribute('href',
+      '/viewer/runs/viewer-run-2d/weeks/4?season=2028%2F2029')
+    expect(screen.getByText(/Showing 21–25 of 25 publication-only weeks/)).toBeInTheDocument()
+    expect(screen.getByText(/Page 2 of 2/)).toBeInTheDocument()
+    const pager = screen.getByRole('navigation', {name: 'Publication-only week pages'})
+    expect(within(pager).getByRole('link', {name: 'Newer publication weeks'})).toHaveAttribute(
+      'href', '/viewer/runs/viewer-run-2d/calendar'
+    )
+    expect(within(pager).queryByRole('link', {name: 'Older publication weeks'})).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it.each([
+    '?pubPage=0', '?pubPage=-1', '?pubPage=1.5', '?pubPage=abc',
+    '?pubPage=9007199254740992', '?pubPage=1&pubPage=2', '?pubPage=3'
+  ])('fails closed on invalid or unavailable calendar publication page %s', async (query) => {
+    await rankingOnlyPublicationWeeks(25)
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar'+query)
+
+    const warning = await screen.findByText(/Invalid or unavailable publication page/)
+    expect(warning).toBeInTheDocument()
+    expect(screen.queryByRole('list', {name: 'Viewer publication-only weeks'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('navigation', {name: 'Publication-only week pages'})).not.toBeInTheDocument()
+    expect(screen.getByRole('link', {name: 'Return to the latest publication weeks'})).toHaveAttribute(
+      'href', '/viewer/runs/viewer-run-2d/calendar'
+    )
+    expectNoForbiddenViewerActions()
+  })
+
+  it('does not invent older publication weeks when the Saved Calendar has no publications', async () => {
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar?pubPage=2')
+
+    expect(await screen.findByText(/Invalid or unavailable publication page/)).toBeInTheDocument()
+    expect(screen.queryByRole('list', {name: 'Viewer publication-only weeks'})).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

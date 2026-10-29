@@ -10,6 +10,9 @@ import { formatApiError } from '../utils/apiErrors'
 import {countryRosterReturnPath,readCountryRosterPermalink,writeCountryRosterPermalink}
   from './countrySavedRosterPermalink'
 
+type RankingFilter = '' | 'ranked' | 'unranked' | 'unpublished'
+type RosterFilters = { search: string; status: string; ranking: RankingFilter }
+
 const PAGE_SIZE = 25
 
 /** Strictly bounded, one-based navigation. Never request an invalid server offset. */
@@ -88,10 +91,12 @@ function ScopedCountryRoster({
   // Only the exact immutable source may restore a bookmarked roster view.
   const initialView = readCountryRosterPermalink(urlParams,sourceKey)
   const [includePrepared, setIncludePrepared] = useState(initialView.includePrepared)
-  const [draft, setDraft] = useState({ search: initialView.search, status: initialView.status,
-    ranking: initialView.ranking ?? '' })
-  const [filters, setFilters] = useState({ search: initialView.search, status: initialView.status,
-    ranking: initialView.ranking ?? '' })
+  const [draft, setDraft] = useState<RosterFilters>({
+    search: initialView.search, status: initialView.status, ranking: initialView.ranking ?? '',
+  })
+  const [filters, setFilters] = useState<RosterFilters>({
+    search: initialView.search, status: initialView.status, ranking: initialView.ranking ?? '',
+  })
   const pageKey = JSON.stringify([sourceKey, filters.search, filters.status, filters.ranking, includePrepared])
   const [pageSelection, setPageSelection] = useState({ sourceKey: pageKey, page: initialView.page })
   const [pageInput, setPageInput] = useState({ sourceKey: pageKey,

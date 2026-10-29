@@ -273,6 +273,116 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expectNoForbiddenViewerActions()
   })
 
+  it('links publication-only Ranking and Finals Race weeks from the Saved Calendar overview', async () => {
+    const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...ranking,
+      public_head_ordinal: 1711,
+      publications: [{...ranking.publications[0], week: 4, week_ordinal: 1711}]
+    })
+    const race = await api.getViewerFinalsRace('viewer-run-2d')
+    api.getViewerFinalsRace.mockResolvedValue({
+      ...race,
+      publications: [
+        race.publications[0],
+        {...race.publications[1], cutoff_week: 5}
+      ]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    const weeks = await screen.findByRole('list', {name: 'Viewer publication-only weeks'})
+    const links = within(weeks).getAllByRole('link')
+    expect(links).toHaveLength(2)
+    expect(links[0]).toHaveTextContent('2029/2030 · W5')
+    expect(links[0]).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/weeks/5?season=2029%2F2030')
+    expect(links[1]).toHaveTextContent('2028/2029 · W4')
+    expect(links[1]).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/weeks/4?season=2028%2F2029')
+    expect(weeks).toHaveTextContent('Finals Race')
+    expect(weeks).toHaveTextContent('Official Ranking')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('does not duplicate publications from weeks already containing Saved Calendar events', async () => {
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    expect(await screen.findByText('No verified publication-only weeks are available for this Saved Calendar.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', {name: 'Viewer publication-only weeks'})).not.toBeInTheDocument()
+    expect(await screen.findByText('Season Opener')).toBeInTheDocument()
+  })
+
+  it('withholds publication-only navigation from a foreign Ranking and Race branch', async () => {
+    const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...ranking, viewer_branch_id: 'foreign-branch',
+      public_head_ordinal: 1711,
+      publications: [{...ranking.publications[0], week: 4, week_ordinal: 1711}]
+    })
+    const race = await api.getViewerFinalsRace('viewer-run-2d')
+    api.getViewerFinalsRace.mockResolvedValue({
+      ...race, viewer_branch_id: 'foreign-branch',
+      publications: [{...race.publications[1], cutoff_week: 5}]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    expect(await screen.findByText('Ranking History source does not match the Saved Calendar Viewer Branch.')).toBeInTheDocument()
+    expect(screen.getByText('Finals Race source does not match the Saved Calendar Viewer Branch.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', {name: 'Viewer publication-only weeks'})).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('does not link a publication-only Ranking week when the saved ordinal is corrupt', async () => {
+    const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...ranking,
+      publications: [{...ranking.publications[0], week: 4, week_ordinal: 1709}]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    expect(await screen.findByText('No verified publication-only weeks are available for this Saved Calendar.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: '2028/2029 · W4'})).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('does not assign a publication-only week to an ambiguous Saved season year', async () => {
+    const calendar = await api.getViewerRunCalendar('viewer-run-2d')
+    api.getViewerRunCalendar.mockResolvedValue({
+      ...calendar,
+      seasons: [calendar.seasons[0], {...calendar.seasons[1], season:'2028'}]
+    })
+    const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...ranking, public_head_ordinal: 1711,
+      publications: [{...ranking.publications[0], week: 4, week_ordinal: 1711}]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    expect(await screen.findByText('No verified publication-only weeks are available for this Saved Calendar.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', {name: 'Viewer publication-only weeks'})).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('caps the overview at 20 most recent publication-only weeks without losing the count', async () => {
+    const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...ranking,
+      public_head_ordinal: 1735,
+      publication_count: 25,
+      publications: Array.from({length: 25}, (_, index) => ({
+        ...ranking.publications[0],
+        week: index + 4,
+        week_ordinal: 1711 + index
+      }))
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    const weeks = await screen.findByRole('list', {name: 'Viewer publication-only weeks'})
+    expect(within(weeks).getAllByRole('link')).toHaveLength(20)
+    expect(within(weeks).getAllByRole('link')[0]).toHaveTextContent('2028/2029 · W28')
+    expect(within(weeks).getAllByRole('link')[19]).toHaveTextContent('2028/2029 · W9')
+    expect(screen.getByText('Showing the 20 most recent of 25 publication-only weeks.')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
   it('fails closed when no Saved Calendar Package is published', async () => {
     api.getViewerRunCalendar.mockRejectedValueOnce(new api.ApiError('missing calendar', 404))
 

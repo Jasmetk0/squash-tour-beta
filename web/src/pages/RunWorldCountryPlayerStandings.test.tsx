@@ -66,7 +66,7 @@ describe('Country saved standing navigation (mock HTTP)',()=>{
       .getAllByRole('row')).toHaveLength(3)
     fireEvent.change(screen.getByRole('textbox',{name:'Country standings page number'}),
       {target:{value:'2'}})
-    fireEvent.click(screen.getByRole('button',{name:'Go',exact:true}))
+    fireEvent.click(screen.getByRole('button',{name:'Go'}))
     expect(await screen.findByText('Page 2 / 3')).toBeInTheDocument()
     expect(api.getCountryPlayerStandings).toHaveBeenCalledWith('run','branch-a','CZE','rev-a',25,25)
     const calls=api.getCountryPlayerStandings.mock.calls.length
@@ -75,8 +75,8 @@ describe('Country saved standing navigation (mock HTTP)',()=>{
     expect(api.getCountryPlayerStandings).toHaveBeenCalledTimes(calls)
     fireEvent.change(screen.getByRole('textbox',{name:'Country standings page number'}),
       {target:{value:'4'}})
-    expect(screen.getByRole('button',{name:'Přejít',exact:true})).toBeDisabled()
-    fireEvent.click(screen.getByRole('button',{name:'První',exact:true}))
+    expect(screen.getByRole('button',{name:'Přejít'})).toBeDisabled()
+    fireEvent.click(screen.getByRole('button',{name:'První'}))
     expect(await screen.findByText('Strana 1 / 3')).toBeInTheDocument()
   })
   it('resets the page before any read of a different Branch, HEAD or country',async()=>{

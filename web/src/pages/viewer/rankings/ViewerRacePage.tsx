@@ -252,9 +252,9 @@ export function ViewerRacePage(): JSX.Element {
 }
 
 export function ViewerRunRacePage(): JSX.Element {
-  const { productRunId, officialBranchId, officialContext, isLoading, isStale } = useViewerProductRunRouteContext()
+  const { productRunId, officialBranchId, officialContext, isLoading, isStale, refetch } = useViewerProductRunRouteContext()
   const branchId = viewerRaceBranch(officialContext, productRunId)
   return <RaceContent runId={productRunId} branchId={branchId}
     validScope={Boolean(branchId && branchId === officialBranchId)} pending={isLoading || isStale}
-    error={null} retryContext={() => undefined} showRunLink={false} />
+    error={null} retryContext={refetch} showRunLink={false} />
 }

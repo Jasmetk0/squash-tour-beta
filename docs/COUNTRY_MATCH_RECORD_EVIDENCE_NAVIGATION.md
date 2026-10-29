@@ -45,12 +45,17 @@ Revision.
 - `RunWorldCountryMatchHighlights.test.tsx`: mocked-API interaction tests for
   25-row page navigation, real source changes, locale, invalid detail, empty
   evidence and exact return links. These **do not** prove SQLite persistence.
-- Existing real Country Records HTTP/SQLite browser acceptance and full pre-alpha
-  release gates remain separate. No old acceptance, timeout, fixture or warning
-  is weakened, and no claim of full release readiness is implied.
+- The existing `scripts/country_records_browser_checks.py` is extended to
+  observe actual Chromium network writes while opening Saved Country match-record
+  evidence and returning through historical results. Its mandatory
+  `Pre-alpha Saved Player Replay Browser` Ready workflow uses genuine
+  production HTTP/SQLite, three canonical matches, physical Save and restart.
+  Completion on the latest head is required before merge; Draft skips are NOT
+  an acceptance pass. No old assertion, timeout, fixture or sporting rule is
+  weakened. Full pre-alpha release gates remain separate.
 
 **Ownership and conflict boundary:** Only
 `RunWorldCountryMatchHighlights.tsx`, its own new test,
-`countryMatchEvidenceValidation.ts` and its new unit test, plus this document.
+`countryMatchEvidenceValidation.ts` and its new unit test, plus this document and the existing read-only Country browser check.
 No edits to player Career PR #1652, common API clients/types, historical
 read models, Player/Match Engine or Work's sporting/Save integration.

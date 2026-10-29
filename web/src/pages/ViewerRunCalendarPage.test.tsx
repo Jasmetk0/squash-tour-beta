@@ -452,6 +452,22 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expectNoForbiddenViewerActions()
   })
 
+  it('rejects a foreign Finals Race publication even inside a matching branch response', async () => {
+    const original = await api.getViewerFinalsRace('viewer-run-2d')
+    api.getViewerFinalsRace.mockResolvedValue({
+      ...original,
+      publications: original.publications.map((publication: {cutoff_week: number}) =>
+        publication.cutoff_week === 2 ? {...publication, viewer_branch_id: 'foreign-branch'} : publication
+      )
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2?season=2028%2F2029')
+
+    expect(await screen.findByText('Gold Open')).toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Open canonical Finals Race publication for this cutoff week'})).not.toBeInTheDocument()
+    expect(screen.getByRole('link', {name: 'Ranking publication #4'})).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
   it.each(['not-a-week', '0', '-1', '1.5', '9007199254740992'])(
     'does not call canonical or Race readers for invalid week route %s', (invalidWeek) => {
     renderViewerCalendarRoute(`/viewer/runs/viewer-run-2d/weeks/${invalidWeek}`)

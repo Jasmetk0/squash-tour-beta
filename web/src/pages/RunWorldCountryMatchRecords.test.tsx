@@ -90,6 +90,7 @@ describe('Country lifetime Saved matches (mocked API)',()=>{
       {target:{value:'played'}})
     await waitFor(()=>expect(api.getCountrySavedMatchRecords).toHaveBeenCalledWith(
       'run','branch-a','CZE','rev-a',expect.objectContaining({resultKind:'played',offset:0})))
+    await screen.findByText('Page 1 / 2')
     fireEvent.click(screen.getByRole('button',{name:'Next →'}))
     await screen.findByText('Page 2 / 2')
     fireEvent.click(screen.getByRole('button',{name:'Switch revision and Branch'}))

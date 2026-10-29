@@ -13,7 +13,7 @@ const PAGE_SIZE = 25
 /** Strictly bounded, one-based navigation. Never request an invalid server offset. */
 function validatedPage(raw: string, pages: number): number | null {
   if (!Number.isSafeInteger(pages) || pages < 1 || pages > 1_000_000 ||
-      !/^[1-9]\\d{0,6}$/.test(raw)) return null
+      !/^[1-9]\d{0,6}$/.test(raw)) return null
   const value = Number(raw)
   return value <= pages ? value - 1 : null
 }

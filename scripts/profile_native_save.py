@@ -69,6 +69,7 @@ def observers(mode, root):
     from beta_engine.infrastructure.db import native_fork_source_projection as cache
     from beta_engine.infrastructure.db import calendar_sporting_checkpoint as cp
     from beta_engine.domain.tournaments import calendar_tour as tour
+    from beta_engine.domain.tournaments import calendar_global_slots as slots
     from scripts.profile_native_full_simulation_metrics import measure_calls
 
     counts = {name: measure_calls(owner, name) for owner, name in (
@@ -89,6 +90,15 @@ def observers(mode, root):
         return original_copy(value, *args, **kwargs)
 
     cache._copy_decoded_value = copied
+    hashes = counts['checkpoint_full_hashes'] = {'calls': 0}
+    original_hash = slots.canonical_hash
+
+    def hashed(value):
+        if isinstance(value, dict) and value.get('schema_version') == 'calendar_sporting_checkpoint.v13':
+            hashes['calls'] += 1
+        return original_hash(value)
+
+    slots.canonical_hash = hashed
     profiles = []
     if mode == 'profile':
         from beta_engine.application.calendar_tour_service import CalendarTourService
@@ -119,6 +129,7 @@ def main():
     p.add_argument('--players', type=int, default=8)
     p.add_argument('--width', type=int, default=80)
     p.add_argument('--mode', choices=('timing', 'calls', 'profile'), default='timing')
+    p.add_argument('--tour-only', action='store_true', help='Save changed Tour metadata with the same large checkpoint')
     p.add_argument('--restart-child', action='store_true', help=argparse.SUPPRESS)
     a = p.parse_args()
     if not a.prepare and subprocess.run(['git', 'diff', '--quiet', 'HEAD', '--', 'src'], check=False).returncode:
@@ -155,7 +166,24 @@ def main():
         view = phase('restart_cold' if a.restart_child else 'cold', lambda: inspect(server))
         phase('restart_warm' if a.restart_child else 'warm', lambda: inspect(server))
         if not a.restart_child:
-            phase('first_command', lambda: execute(server, command(view, 'next-match', name='measured-first')))
+            original_checkpoint = view['checkpoint_fingerprint']
+
+            def next_command(view, name, offset):
+                if not a.tour_only:
+                    return command(view, 'next-match', name=name)
+                week = view['state']['week']
+                return command(view, 'create-edition', name=name, data={
+                    'schema_version': 'calendar_tournament_edition.v2',
+                    'simulation_seed': 891, 'edition_id': name, 'name': name,
+                    'week': {**week, 'week': week['week'] + offset},
+                    'announcement_week': {**week, 'week': week['week'] + 1},
+                    'start_slot': 1, 'main_entrant_count': 4, 'ranked': True,
+                    'validity_weeks': week['calendar']['weeks_per_year'],
+                    'point_table': {'champion': 100, 'finalist': 60, 'semifinal': 30},
+                })
+
+            prefix = 'measured-tour' if a.tour_only else 'measured'
+            phase('first_command', lambda: execute(server, next_command(view, prefix + '-first', 2)))
             view = inspect(server)
 
             def save():
@@ -168,10 +196,14 @@ def main():
 
             phase('save_including_handoff', save)
             view = phase('immediate_saved_read', lambda: inspect(server))
-            phase('next_command', lambda: execute(server, command(view, 'next-match', name='measured-next')))
+            if a.tour_only:
+                assert view['checkpoint_fingerprint'] == original_checkpoint
+            phase('next_command', lambda: execute(server, next_command(view, prefix + '-next', 3)))
             view = inspect(server)
             phase('second_save', save)
             expected = inspect(server)
+            if a.tour_only:
+                assert expected['checkpoint_fingerprint'] == original_checkpoint
             (a.root / 'expected.json').write_text(json.dumps(expected, sort_keys=True))
         else:
             expected = json.loads((a.root / 'expected.json').read_text())
@@ -180,6 +212,7 @@ def main():
                     source_tree=subprocess.check_output(['git', 'rev-parse', 'HEAD:src'], text=True).strip(),
                     script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                     input_sha256=digest, python=sys.version, platform=platform.platform(), mode=a.mode,
+                    tour_only=a.tour_only,
                     source_diff=subprocess.check_output(['git', 'diff', '--', 'src'], text=True))
     (a.root / ('restart.json' if a.restart_child else 'timings.json')).write_text(
         json.dumps(dict(metadata=metadata, phases=rows), indent=2))
@@ -191,7 +224,7 @@ def main():
             pstats.Stats(profile, stream=stream).strip_dirs().sort_stats('cumulative').print_stats(65)
     if not a.restart_child:
         subprocess.run([sys.executable, __file__, '--root', str(a.root), '--mode', a.mode,
-                        '--restart-child'], check=True)
+                        '--restart-child', *(['--tour-only'] if a.tour_only else [])], check=True)
 
 
 if __name__ == '__main__':

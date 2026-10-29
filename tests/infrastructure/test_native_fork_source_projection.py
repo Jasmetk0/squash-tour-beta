@@ -236,3 +236,79 @@ def test_whole_dto_adapter_retains_one_checkpoint_and_preserves_complete_reuse(m
     assert sum(v[0] for v in retained.values()) <= 300
     with pytest.raises(LookupError):
         cache.decoded_global_tour_source(repo, src, lambda _: (_ for _ in ()).throw(LookupError()))
+
+
+def test_two_complete_native_sources_keep_the_original_whole_dto_reuse_contract():
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    repo, calls = repository(), []
+    sources = []
+    for index in range(2):
+        body = {'schema_version': 'calendar_sporting_checkpoint.v13', 'index': index}
+        current = source()
+        current.payload = {'content': {
+            'calendar_player_sporting_checkpoint': {'state': body, 'fingerprint': canonical_hash(body)},
+            'calendar_tour_authority': {'state': {'schema_version': 'calendar_tour_authority.v5'}},
+        }}
+        sources.append(current)
+
+    def decode(current):
+        calls.append(current)
+        component = current.payload['content']['calendar_player_sporting_checkpoint']
+        return (None, SimpleNamespace(schema_version='calendar_sporting_checkpoint.v13',
+            run_id='run', branch_id='branch', fingerprint=component['fingerprint']), None)
+
+    expected = [cache.decoded_global_tour_source(repo, current, decode) for current in sources]
+    for _ in range(2):
+        for current, value in zip(sources, expected):
+            assert cache.decoded_global_tour_source(repo, current, decode) == value
+    assert len(calls) == 2, 'Alternating full DTO readers must not silently return to repeated parse'
+    assert len(repo._global_tour_projection_cache) <= 4
+
+
+def test_equal_evidence_is_shared_privately_without_sharing_caller_mutations():
+    from beta_engine.domain.rankings.official import FrozenInput
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    class Evidence(FrozenInput):
+        data: dict[str, list[int]]
+
+    repo = repository()
+    sources = []
+    for index in range(2):
+        current = source()
+        body = {'schema_version': 'calendar_sporting_checkpoint.v13', 'index': index}
+        evidence = {'data': {'nested': [1, 2]}}
+        current.payload = {'content': {
+            'calendar_player_sporting_checkpoint': {'state': body, 'fingerprint': canonical_hash(body)},
+            'calendar_standalone_match': {'state': evidence, 'fingerprint': canonical_hash(evidence)},
+            'calendar_tour_authority': {'state': {'schema_version': 'calendar_tour_authority.v5'}},
+        }}
+        sources.append(current)
+
+    def decode(current):
+        content = current.payload['content']
+        return (Evidence.model_validate(content['calendar_standalone_match']['state']),
+            SimpleNamespace(schema_version='calendar_sporting_checkpoint.v13', run_id='run',
+                branch_id=current.branch_id, fingerprint=content['calendar_player_sporting_checkpoint']['fingerprint']), None)
+
+    expected = [cache.decoded_global_tour_source(repo, current, decode) for current in sources]
+    adapters = [entry[1] for entry in repo._global_tour_projection_cache.values()
+        if isinstance(entry[1], cache._GlobalTourValue)]
+    assert len(adapters) == 2 and adapters[0].other[0] is adapters[1].other[0]
+    expected[0][0].data['nested'].clear()
+    expected[1][0].data['nested'].append(3)
+    for current in sources:
+        value = cache.decoded_global_tour_source(repo, current, lambda _: pytest.fail('unexpected decode'))
+        assert value[0].data == {'nested': [1, 2]}
+        value[0].data['nested'].append(99)
+
+    from copy import deepcopy
+    changed = deepcopy(sources[-1])
+    changed.payload['content']['calendar_standalone_match']['state']['data']['nested'].append(4)
+    changed.payload['content']['calendar_standalone_match']['fingerprint'] = canonical_hash(
+        changed.payload['content']['calendar_standalone_match']['state'])
+    assert cache.decoded_global_tour_source(repo, changed, decode)[0].data == {'nested': [1, 2, 4]}
+    assert len(repo._global_tour_projection_cache) <= 4

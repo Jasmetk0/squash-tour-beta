@@ -1562,6 +1562,14 @@ def test_successful_global_save_seeds_next_checkpoint_decode(tmp_path, prepared_
             assert saved_view['saved_head_revision_id'] == newer['revision_id']
             cache.remember_committed_global_sources(repository, record, expected)
             assert inspect(server) == saved_view
+            from tests.api.test_calendar_tour_flow import create_edition
+            checkpoint_before_tour_save = saved_view['checkpoint_fingerprint']
+            create_edition(server, 'performance-future-edition', size=4)
+            saved_view = inspect(server)
+            assert saved_view['checkpoint_fingerprint'] == checkpoint_before_tour_save
+            latest = repository.get_branch_saved_revision(revision_id=saved_view['saved_head_revision_id'])
+            assert cache.decoded_global_tour_source(repository, latest, unexpected_decode) == decode_prevalidated_calendar_sources(
+                latest.payload, run_id='run', branch_id='branch')
     # A new server/repository and new SQLite connections have no decode cache.
     with ApiServer(database_url=f'sqlite:///{path}') as restarted:
         assert inspect(restarted) == saved_view

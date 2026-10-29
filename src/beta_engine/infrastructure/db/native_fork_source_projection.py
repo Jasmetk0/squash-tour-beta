@@ -24,6 +24,7 @@ class _GlobalTourValue(NamedTuple):
     # references are resolved under the cache lock, then copied outside it.
     checkpoint_key: tuple
     other: tuple
+    evidence_key: tuple | None = None
 
 
 def _value_identity(run_id, branch_id, payload):
@@ -39,11 +40,10 @@ def _global_cache(repository):
 
 
 def _trim_global_cache(cache, *, entry_limit=4):
-    # Keep the most recently used whole DTO, plus reusable components. A second
-    # full history's evidence/Tour tail can dwarf the checkpoint itself; readers
-    # of an older/other complete payload may always take the strict miss path.
+    # Preserve the original two-source whole-DTO reuse contract. Components and
+    # adapters still share the same four entries and unchanged byte ceiling.
     adapters = [key for key, entry in cache.items() if isinstance(entry[1], _GlobalTourValue)]
-    for key in adapters[:-1]:
+    for key in adapters[:-2]:
         cache.pop(key)
     while len(cache) > entry_limit or sum(entry[0] for entry in cache.values()) > MAX_GLOBAL_TOUR_BYTES:
         oldest = next(iter(cache))
@@ -74,6 +74,40 @@ def _checked_checkpoint(value, component, run_id, branch_id):
     ):
         raise ValueError('Prevalidated Saved sporting scope/hash changed')
     return value
+
+
+def _same_checkpoint(value, retained):
+    from beta_engine.domain.tournaments.calendar_global_slots import GlobalCompetitionCheckpoint
+
+    # Fingerprints of this exact model depend on its complete field values.
+    # Equality to the private, strictly checked value for this complete key
+    # preserves that model guard without another full canonical serialization.
+    # Unknown types/subclasses retain the ordinary fingerprint check.
+    return (type(value) is GlobalCompetitionCheckpoint
+        and type(retained) is GlobalCompetitionCheckpoint and value == retained)
+
+
+def _retained_global_other(repository, cache, source, result):
+    from pydantic import BaseModel
+
+    evidence_key = None
+    raw = source.payload.get('content', {}).get('calendar_standalone_match')
+    if result[0] is not None and raw is not None:
+        _, evidence_key = _value_identity(source.run_id, source.branch_id,
+            {'calendar_standalone_match': raw})
+    with repository._revision_validation_lock:
+        candidates = [(entry[1].other[0], entry[2]) for entry in cache.values()
+            if isinstance(entry[1], _GlobalTourValue) and evidence_key is not None
+            and entry[1].evidence_key == evidence_key]
+    for evidence, hints in candidates:
+        # Reuse only complete equal decode data for the complete actual
+        # component and scope. No source/math permission is retained here.
+        if (isinstance(evidence, BaseModel) and type(result[0]) is type(evidence)
+            and result[0] == evidence):
+            tour, tour_hints = _copy_decoded_value(result[2])
+            return (evidence, tour), {**hints, **tour_hints}, evidence_key
+    other, hints = _copy_decoded_value((result[0], result[2]))
+    return other, hints, evidence_key
 
 
 def _decoded_global_source(repository, source, component, decode, *, _identity=None, retain_miss=True):
@@ -111,7 +145,6 @@ def _decoded_global_source(repository, source, component, decode, *, _identity=N
         return result
     if not isinstance(result, tuple) or len(result) != 3:
         return result
-    checkpoint = _checked_checkpoint(result[1], component, source.run_id, source.branch_id)
     cp_size, cp_key = _value_identity(source.run_id, source.branch_id,
         {'calendar_player_sporting_checkpoint': component})
     if cp_size > MAX_GLOBAL_TOUR_BYTES:
@@ -120,18 +153,21 @@ def _decoded_global_source(repository, source, component, decode, *, _identity=N
     # to prime another entry. Never retain a caller's model by reference.
     with repository._revision_validation_lock:
         known = cache.get(cp_key)
+    checkpoint = result[1]
+    if known is None or not _same_checkpoint(checkpoint, known[1]):
+        _checked_checkpoint(checkpoint, component, source.run_id, source.branch_id)
     cp_entry = known
     if cp_entry is None:
         retained, hints = _copy_decoded_value(checkpoint)
         cp_entry = (cp_size, retained, hints)
-    other, hints = _copy_decoded_value((result[0], result[2]))
+    other, hints, evidence_key = _retained_global_other(repository, cache, source, result)
     with repository._revision_validation_lock:
         # Concurrent equivalent readers may have installed the same value.
         # Whichever copy wins has identical complete content; no HEAD pointer
         # or source authority is retained, so commit ordering is irrelevant.
         cache[cp_key] = cache.pop(cp_key, cp_entry)
         cache.pop(key, None)
-        cache[key] = (max(0, size - cp_size), _GlobalTourValue(cp_key, other), hints)
+        cache[key] = (max(0, size - cp_size), _GlobalTourValue(cp_key, other, evidence_key), hints)
         _trim_global_cache(cache)
     return result
 

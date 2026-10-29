@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getSavedHomePlayerIdentities, getSavedPlayerMatchHistory } from '../api/client'
 import {
-  CAREER_PAGE_SIZE, matchLoadedCareer, parseCareerCompletion, parseCareerOutcome,
+  CAREER_PAGE_SIZE, hasAmbiguousPlayerLinkParams, matchLoadedCareer, parseCareerCompletion, parseCareerOutcome,
   parseCareerPage, parseCareerSeason, parsePageInput, totalCareerPages,
 } from './savedPlayerCareerNavigation'
 
@@ -32,7 +32,8 @@ function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, loca
   const completion = parseCareerCompletion(params.get('careerCompletion'))
   const queryText = params.get('careerQ') ?? ''
   const invalidUrl = season === null || page === null || outcome === null || completion === null ||
-    queryText.length > 160
+    queryText.length > 160 || hasAmbiguousPlayerLinkParams(params,
+      ['careerSeason', 'careerPage', 'careerQ', 'careerOutcome', 'careerCompletion'])
   const missingScope = !runId || !branchId || !savedHead || !playerId
   const [pageInput, setPageInput] = useState('')
   const update = (updates: Record<string, string | null>) => {

@@ -99,13 +99,13 @@ function canonicalPublishedResults(
   const seenHistoryKeys = new Set<string>()
   const published = new Map<string, ViewerTournamentHistoryItem>()
   for (const item of history) {
-    if (!item.result_published) continue
     const key = calendarEventKey(item)
     if (seenHistoryKeys.has(key)) {
-      published.delete(key) // Duplicate result rows are ambiguous, not an authority.
+      published.delete(key) // Even conflicting publication status is ambiguous.
       continue
     }
     seenHistoryKeys.add(key)
+    if (!item.result_published) continue
     const event = calendarByKey.get(key)
     if (calendarCounts.get(key) === 1 && event && matchesPublishedEventMetadata(event, item)) {
       published.set(key, item)

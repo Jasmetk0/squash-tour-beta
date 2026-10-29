@@ -53,7 +53,7 @@ function mount(entry='/admin/runs/run/world/countries/CZE?tab=players&year=2025'
     const navigate=useNavigate()
     const bookmark=writeCountryRosterPermalink(
       new URLSearchParams('tab=players&year=2025'),JSON.stringify([
-        'run-a','branch-a','rev-a','CZE',
+        'run','branch-a','rev-a','CZE',
       ]),{search:'Alpha',status:'',includePrepared:false,page:1})
     return <>
       <button type="button" onClick={()=>{setHead('rev-b');setBranch('branch-b')}}>Change source</button>

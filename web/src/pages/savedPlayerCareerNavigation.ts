@@ -30,6 +30,26 @@ export function parseCareerCompletion(raw: string | null): 'all' | 'played' | 'w
 export function totalCareerPages(total: number): number {
   return Number.isSafeInteger(total) && total >= 0 ? Math.ceil(total / CAREER_PAGE_SIZE) : 0
 }
+/** Do not present an omitted/duplicated result window as an empty filter.
+ * The backend guarantees stable event+match keys within a saved career. */
+export function validCareerResultWindow(
+  total: number, offset: number, limit: number,
+  matches: readonly Pick<SavedPlayerMatch, 'event_id' | 'match_id'>[],
+  identityUnavailable: boolean,
+): boolean {
+  if (!Number.isSafeInteger(total) || total < 0 ||
+    !Number.isSafeInteger(offset) || offset < 0 ||
+    !Number.isSafeInteger(limit) || limit !== CAREER_PAGE_SIZE ||
+    !Array.isArray(matches) || matches.length > limit) return false
+  if (identityUnavailable) return total === 0 && matches.length === 0
+  const expected = Math.max(0, Math.min(limit, total - offset))
+  if ((expected > 0 && matches.length === 0) ||
+    (expected === 0 && matches.length !== 0) ||
+    new Set(matches.map(m => JSON.stringify([m.event_id, m.match_id]))).size !== matches.length)
+    return false
+  return true
+}
+
 export function parsePageInput(raw: string, totalPages: number): number | null {
   if (!/^[1-9]\d*$/.test(raw)) return null
   const oneBased = Number(raw)

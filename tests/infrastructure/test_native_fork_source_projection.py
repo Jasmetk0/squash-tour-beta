@@ -328,4 +328,6 @@ def test_model_hash_reuse_requires_type_exact_values_and_handles_unknown_types()
         assert original == changed  # Ordinary Pydantic/Python equality is insufficient.
         assert not _same_model_value(original, changed)
     assert _same_model_value(original, original.model_copy(deep=True))
+    assert 0.0 == -0.0
+    assert not _same_model_value({'value': 0.0}, {'value': -0.0})
     assert not _same_model_value({'value': object()}, {'value': object()})

@@ -7,6 +7,7 @@ retention and defensive copies isolate databases, requests and mutable model dat
 """
 
 import hashlib
+import math
 from copy import deepcopy
 from dataclasses import fields, is_dataclass
 from enum import Enum
@@ -105,7 +106,8 @@ def _same_model_value(value, retained):
         if left_type is not type(right):
             return False
         if left_type in _MODEL_SCALAR_TYPES:
-            if left != right:
+            if (left != right or left_type is float and left == 0.0
+                and math.copysign(1.0, left) != math.copysign(1.0, right)):
                 return False
         elif isinstance(left, BaseModel):
             pending.extend(((left.__dict__, right.__dict__),

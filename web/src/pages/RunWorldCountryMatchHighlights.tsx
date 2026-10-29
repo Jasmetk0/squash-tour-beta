@@ -8,8 +8,8 @@ import type {CountryPeriodRequest} from './runCountryRecordPeriods'
 import {sportLabel} from './runCountryRecordPeriods'
 import {calendarSeasonIndex} from './runWorldCountryTournaments'
 import {formatApiError} from '../utils/apiErrors'
+import {COUNTRY_EVIDENCE_PAGE_SIZE as PAGE,validCountryMatchEvidence} from './countryMatchEvidenceValidation'
 
-const PAGE=25
 type Props={runId:string;branchId:string;countryCode:string;revision:string
   request:CountryPeriodRequest;cs:boolean;selected:CountryMatchRecordKey|null
   onSelect:(key:CountryMatchRecordKey)=>void;onClose:()=>void}
@@ -18,7 +18,13 @@ const heading=(key:CountryMatchRecordKey,cs:boolean)=>key==='played_wins'?
   cs?'Nejvíce odehraných výher':'Most played wins':
   cs?'Nejvíce odehraných zápasů':'Most played matches'
 
-export function RunWorldCountryMatchHighlights({
+/** A changed source/interval/record starts at page zero before any new GET. */
+export function RunWorldCountryMatchHighlights(props:Props):JSX.Element {
+  const {runId,branchId,countryCode,revision,request,selected}=props
+  return <CountryEvidenceBrowser key={JSON.stringify([runId,branchId,countryCode,revision,
+    request.from.season,request.from.week,request.to.season,request.to.week,selected])} {...props}/>
+}
+function CountryEvidenceBrowser({
   runId,branchId,countryCode,revision,request,cs,selected,onSelect,onClose
 }:Props):JSX.Element{
   const [params]=useSearchParams()
@@ -39,17 +45,27 @@ export function RunWorldCountryMatchHighlights({
       ...Object.values(options),selected,page],
     queryFn:()=>getCountryMatchRecordHighlights(runId,branchId,countryCode,revision,
       {...options,recordKey:selected,offset:page*PAGE,limit:PAGE}),
-    enabled:selected!==null,
+    enabled:selected!==null&&query.isSuccess&&!query.isFetching&&
+      validCountryMatchEvidence(query.data,{
+        runId,branchId,countryCode,revision,
+        fromSeason:options.fromSeason,fromWeek:options.fromWeek,
+        toSeason:options.toSeason,toWeek:options.toWeek,selected:null,offset:0}),
     retry:false,
   })
-  const scoped=(d:CountryMatchRecordHighlights|undefined)=>{
-    return d?.run_id===runId&&d.branch_id===branchId&&d.saved_revision_id===revision&&
-      d.country_code===countryCode&&d.from_season===options.fromSeason&&
-      d.from_week===options.fromWeek&&d.to_season===options.toSeason&&
-      d.to_week===options.toWeek?d:null
-  }
-  const data=scoped(query.data)
-  const info=selected?scoped(detail.data):null
+  const common={runId,branchId,countryCode,revision,
+    fromSeason:options.fromSeason,fromWeek:options.fromWeek,
+    toSeason:options.toSeason,toWeek:options.toWeek}
+  const data=query.isSuccess&&!query.isFetching&&
+    validCountryMatchEvidence(query.data,{...common,selected:null,offset:0})?query.data:null
+  const candidate=selected!==null&&detail.isSuccess&&!detail.isFetching&&
+    validCountryMatchEvidence(detail.data,{...common,selected,offset:page*PAGE})?detail.data:null
+  // A different aggregate on two pages is not the same immutable sporting evidence.
+  const info=candidate&&data&&JSON.stringify(candidate.records)===JSON.stringify(data.records)&&
+    candidate.period_country_matches===data.period_country_matches&&
+    candidate.period_played_matches===data.period_played_matches&&
+    candidate.period_walkovers===data.period_walkovers&&
+    candidate.revision_branch_id===data.revision_branch_id?candidate:null
+  const outOfRange=Boolean(info&&page>0&&page*PAGE>=info.evidence_count)
   const number=(v:number)=>v.toLocaleString(cs?'cs-CZ':'en-US')
   const sourceLink=(m:CountrySavedMatch)=>{
     const season=calendarSeasonIndex(m.season)
@@ -69,10 +85,10 @@ export function RunWorldCountryMatchHighlights({
     <p className="status">{sportLabel(request.from)} → {sportLabel(request.to)}
       {' · '}{cs?'Pouze skutečně odehrané kanonické zápasy. Kontumace a BYE se nezapočítávají.':
         'Only canonical played matches. Walkovers and BYEs do not count.'}</p>
-    {query.isPending&&<p role="status">{cs?'Počítám zápasové rekordy z uložených výsledků…':
+    {(query.isPending||query.isFetching)&&<p role="status">{cs?'Počítám zápasové rekordy z uložených výsledků…':
       'Aggregating saved match record evidence…'}</p>}
     {query.error&&<p role="alert">{formatApiError(query.error)}</p>}
-    {query.isSuccess&&!data&&<p role="alert">{cs?'Nesouhlasí rozsah uloženého zdroje.':
+    {query.isSuccess&&!query.isFetching&&!data&&<p role="alert">{cs?'Nesouhlasí rozsah uloženého zdroje.':
       'Saved match record identity mismatch.'}</p>}
     {data&&<>
       <p role="status">{cs?'Ověřené zápasy hráčů země v období':'Country player matches in period'}:
@@ -101,10 +117,10 @@ export function RunWorldCountryMatchHighlights({
       </div>
       <p>{sportLabel(request.from)} → {sportLabel(request.to)}
         {' · '}Saved Revision: <code>{revision}</code></p>
-      {detail.isPending&&<p role="status">{cs?'Načítám doložené zápasy…':
+      {(detail.isPending||detail.isFetching)&&<p role="status">{cs?'Načítám doložené zápasy…':
         'Loading canonical match evidence…'}</p>}
       {detail.error&&<p role="alert">{formatApiError(detail.error)}</p>}
-      {detail.isSuccess&&!info&&<p role="alert">{cs?'Neplatný detail historického zdroje.':
+      {detail.isSuccess&&!detail.isFetching&&!info&&<p role="alert">{cs?'Neplatný detail historického zdroje.':
         'Historical match evidence detail mismatch.'}</p>}
       {info&&<>
         <p>{cs?'Hodnota':'Value'}: <strong>
@@ -115,26 +131,32 @@ export function RunWorldCountryMatchHighlights({
         <p className="status">{cs?'Původní branch revize':'Revision origin Branch'}:
           {' '}<code>{info.revision_branch_id}</code>
           {' · '}{cs?'Doložené zápasy':'Evidenced matches'}: {number(info.evidence_count)}</p>
-        {info.evidence.length?
+        {outOfRange&&<p role="alert">{cs?'Požadovaná stránka důkazů neexistuje.':
+          'Requested evidence page does not exist.'}{' '}
+          <button type="button" onClick={()=>setPage(0)}>{cs?'První platná stránka':'First valid page'}</button>
+          {' '}<button type="button" onClick={()=>setPage(Math.max(0,Math.ceil(info.evidence_count/PAGE)-1))}>
+            {cs?'Poslední platná stránka':'Last valid page'}</button></p>}
+        {!outOfRange&&info.evidence.length?
           <div className="table-responsive"><table aria-label="Country match record source matches">
             <thead><tr><th>{cs?'Sezona / týden':'Season / week'}</th>
               <th>{cs?'Turnaj a zápas':'Edition and match'}</th>
               <th>{cs?'Výsledek':'Result'}</th><th>{cs?'Skóre':'Score'}</th></tr></thead>
             <tbody>{info.evidence.map(m=><tr key={m.event_id+':'+m.match_id}>
               <td>{m.season} · {m.season_week}</td>
-              <td><Link to={sourceLink(m)!}>{m.event_name} · {m.match_id}</Link>
+              <td>{sourceLink(m)?<Link to={sourceLink(m)!}>{m.event_name} · {m.match_id}</Link>:
+                <span>{m.event_name} · {m.match_id}</span>}
                 {' '}<small>({m.draw_type}, {m.round_number})</small></td>
               <td>{m.winner_name} ({m.winner_country}) – {m.loser_name} ({m.loser_country})</td>
               <td>{m.scoreline}</td>
             </tr>)}</tbody>
           </table></div>:
-          <p role="status">{cs?'Žádné doložené zápasy.':'No evidenced matches.'}</p>}
+          !outOfRange&&<p role="status">{cs?'Žádné doložené zápasy.':'No evidenced matches.'}</p>}
         <div className="actions" aria-label="Country match record evidence pagination">
-          <button type="button" disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}>
+          <button type="button" disabled={page===0||detail.isFetching||outOfRange} onClick={()=>setPage(p=>Math.max(0,p-1))}>
             {cs?'← Předchozí':'← Previous'}</button>
-          <span>{cs?'Strana':'Page'} {page+1} /
-            {' '}{Math.max(1,Math.ceil(info.evidence_count/PAGE))}</span>
-          <button type="button" disabled={!info.has_more} onClick={()=>setPage(p=>p+1)}>
+          <span>{cs?'Strana':'Page'} {info.evidence_count===0?0:page+1} /
+            {' '}{Math.ceil(info.evidence_count/PAGE)}</span>
+          <button type="button" disabled={!info.has_more||detail.isFetching||outOfRange} onClick={()=>setPage(p=>p+1)}>
             {cs?'Další →':'Next →'}</button>
         </div>
       </>}

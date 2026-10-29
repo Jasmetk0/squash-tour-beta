@@ -432,7 +432,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
   it.each([
     ['2028%2F2029', 'Gold Open', 'Next Season Gold', true],
     ['2029%2F2030', 'Next Season Gold', 'Gold Open', false]
-  ])('shows only the selected season for W2 (%s)', async (season, included, excluded, hasRanking) => {
+  ] as const)('shows only the selected season for W2 (%s)', async (season, included, excluded, hasRanking) => {
     await overlappingWeekTwo()
     renderViewerCalendarRoute(`/viewer/runs/viewer-run-2d/weeks/2?season=${season}`)
 

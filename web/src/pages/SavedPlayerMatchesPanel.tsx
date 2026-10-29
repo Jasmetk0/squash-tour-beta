@@ -117,7 +117,8 @@ function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, loca
     {!invalidUrl && q.error && <p role="alert" className="error">{cs
       ? 'Historie zápasů není dostupná.' : 'Match history is unavailable.'}</p>}
     {!invalidUrl && q.isSuccess && !q.isFetching && !scoped && <p role="alert" className="error">{cs
-      ? 'Data patří jiné uložené revizi.' : 'Data does not match the selected Saved Revision.'}</p>}
+      ? 'Nelze ověřit uloženou revizi nebo úplnost stránky zápasů.'
+      : 'Cannot verify the Saved Revision or match page completeness.'}</p>}
     <button type="button" disabled={invalidUrl || missingScope || q.isFetching}
       onClick={() => { void q.refetch() }}>{cs ? 'Obnovit kariéru' : 'Retry career read'}</button>
     {data?.status === 'identity_unavailable' && <p className="status">{cs

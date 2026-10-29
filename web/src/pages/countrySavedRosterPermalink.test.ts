@@ -17,7 +17,7 @@ describe('Country Saved roster URL round trips',()=>{
     expect(readCountryRosterPermalink(params,scope)).toEqual(state)
     const path=countryRosterReturnPath('run','CZE',params)
     expect(path).toContain('/admin/runs/run/world/countries/CZE?')
-    expect(safeCountryRosterReturn(path,'run','CZE')).toBe(path)
+    expect(safeCountryRosterReturn(path,'run','CZE','branch-a','rev-a')).toBe(path)
   })
   it('never restores filters, prepared prospect consent or page from a different HEAD',()=>{
     const params=writeCountryRosterPermalink(base,scope,state)
@@ -64,8 +64,20 @@ describe('Country Saved roster URL round trips',()=>{
       '/admin/runs/run/world/countries/CZE',
       path+'#fragment',
       'x'.repeat(2501),
-    ])expect(safeCountryRosterReturn(invalid,'run','CZE')).toBeNull()
-    expect(safeCountryRosterReturn(path,'run','ENG')).toBeNull()
-    expect(safeCountryRosterReturn(path,'run',null)).toBeNull()
+    ])expect(safeCountryRosterReturn(invalid,'run','CZE','branch-a','rev-a')).toBeNull()
+    expect(safeCountryRosterReturn(path,'run','ENG','branch-a','rev-a')).toBeNull()
+    expect(safeCountryRosterReturn(path,'run',null,'branch-a','rev-a')).toBeNull()
+    expect(safeCountryRosterReturn(path,'run','CZE','branch-b','rev-a')).toBeNull()
+    expect(safeCountryRosterReturn(path,'run','CZE','branch-a','rev-b')).toBeNull()
+    expect(safeCountryRosterReturn(path,'run','CZE',null,'rev-a')).toBeNull()
+    expect(safeCountryRosterReturn(path,'run','CZE','branch-a',null)).toBeNull()
+    const duplicate = new URL(path,'https://country-roster.local')
+    duplicate.searchParams.append('spScope',scope)
+    expect(safeCountryRosterReturn(duplicate.pathname+duplicate.search,
+      'run','CZE','branch-a','rev-a')).toBeNull()
+    const noScope = new URL(path,'https://country-roster.local')
+    noScope.searchParams.delete('spScope')
+    expect(safeCountryRosterReturn(noScope.pathname+noScope.search,
+      'run','CZE','branch-a','rev-a')).toBeNull()
   })
 })

@@ -13,11 +13,13 @@ import functools
 import gc
 import hashlib
 import json
+import multiprocessing
 import os
 from pathlib import Path
 import platform
 import pstats
 import resource
+import re
 import subprocess
 import sys
 import time
@@ -36,6 +38,15 @@ def workspace_path(value):
     if candidate == work or not candidate.is_relative_to(work):
         raise argparse.ArgumentTypeError('Measurement paths must be inside this checkout\'s work/ directory')
     return candidate
+
+
+def measurement_root(value):
+    candidate = workspace_path(value)
+    work = (Path.cwd() / 'work').resolve()
+    if candidate.parent != work or re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]{0,79}', candidate.name) is None:
+        raise argparse.ArgumentTypeError('Output must be work/<case-name>, using letters, digits, _ or -')
+    # Reconstruct from the fixed base and the allowlisted leaf, not CLI text.
+    return work / candidate.name
 
 
 def retained_bytes(root):
@@ -144,9 +155,9 @@ def observers(mode, root):
     return counts, profiles
 
 
-def main():
+def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--root', type=workspace_path, required=True)
+    p.add_argument('--root', type=measurement_root, required=True)
     p.add_argument('--input', type=workspace_path)
     p.add_argument('--prepare', action='store_true')
     p.add_argument('--players', type=int, default=8)
@@ -154,7 +165,7 @@ def main():
     p.add_argument('--mode', choices=('timing', 'calls', 'profile'), default='timing')
     p.add_argument('--tour-only', action='store_true', help='Save changed Tour metadata with the same large checkpoint')
     p.add_argument('--restart-child', action='store_true', help=argparse.SUPPRESS)
-    a = p.parse_args()
+    a = p.parse_args(argv)
     if not a.prepare and subprocess.run(['git', 'diff', '--quiet', 'HEAD', '--', 'src'], check=False).returncode:
         raise ValueError('Commit the production source before measuring it')
     a.root.mkdir(parents=True, exist_ok=a.restart_child)
@@ -241,14 +252,21 @@ def main():
         json.dumps(dict(metadata=metadata, phases=rows), indent=2))
     for index, (name, profile) in enumerate(profiles):
         prefix = 'restart-' if a.restart_child else ''
-        target = a.root / f'{prefix}{index:02d}-{name}'
+        target = a.root / f'{prefix}{index:02d}'
         profile.dump_stats(str(target) + '.pstats')
         with Path(str(target) + '.txt').open('w') as stream:
             pstats.Stats(profile, stream=stream).strip_dirs().sort_stats('cumulative').print_stats(65)
     if not a.restart_child:
-        subprocess.run([str(Path(sys.executable).resolve()), str(Path(__file__).resolve()),
-                        f'--root={a.root}', f'--mode={a.mode}', '--restart-child',
-                        *(['--tour-only'] if a.tour_only else [])], check=True, shell=False)
+        # spawn starts a fresh interpreter and keeps the selected virtualenv.
+        # Measurement values travel as Python data, never executable CLI text.
+        child = multiprocessing.get_context('spawn').Process(target=main, args=([
+            f'--root={a.root}', f'--mode={a.mode}', '--restart-child',
+            *(['--tour-only'] if a.tour_only else []),
+        ],))
+        child.start()
+        child.join()
+        if child.exitcode != 0:
+            raise RuntimeError(f'Fresh-process restart failed with exit code {child.exitcode}')
 
 
 if __name__ == '__main__':

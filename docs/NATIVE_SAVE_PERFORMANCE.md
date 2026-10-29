@@ -216,14 +216,23 @@ Real process restart compares the entire inspection, not just fingerprints.
 
 The hosted Sonar review additionally identified ambiguous restart CLI arguments,
 unconfined measurement output paths and direct floating-point comparison. The
-harness now resolves and confines inputs/outputs beneath the checkout's `work/`
-tree (including symlink/traversal rejection) and passes absolute restart paths
-as explicit `--option=value` arguments without a shell. Exact float comparison
+harness now resolves and confines inputs beneath the checkout's `work/` tree
+(including symlink/traversal rejection), restricts output to an allowlisted
+`work/<case-name>` leaf, and starts restart with multiprocessing `spawn`.
+Restart parameters are Python data; no user-controlled subprocess command is
+constructed. The new interpreter preserves the selected virtualenv. Profile
+filenames use only fixed prefixes and numeric indices. Exact float comparison
 uses hexadecimal representations and rejects NaN; signed-zero and typed-value
 semantics are unchanged. Focused regressions cover these boundaries. Ordinary
 timing samples above predate this equivalent float-comparison spelling; they
 remain observations of their explicitly recorded source tree, not a timing
 claim for a later revision.
+
+An intermediate attempt resolved the virtualenv interpreter symlink and the
+restart correctly failed because the underlying interpreter lacked pytest.
+That failed sample is retained and is not a successful restart observation.
+The spawn correction is verified with the real HTTP/SQLite scenario before
+publishing the next candidate.
 
 One diagnostic invocation used an older script against an already-played input
 and correctly received 409 for a reused command ID with different payload. It

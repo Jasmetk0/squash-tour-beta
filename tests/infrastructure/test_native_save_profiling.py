@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import pytest
 
 from beta_engine.domain.rankings.official import FrozenInput
-from scripts.profile_native_save import retained_bytes, workspace_path
+from scripts.profile_native_save import measurement_root, retained_bytes, workspace_path
 
 pytestmark = pytest.mark.pr_critical
 
@@ -37,7 +37,11 @@ def test_measurement_paths_are_confined_after_resolving_traversal_and_symlinks(t
     outside.mkdir()
     (work / 'escape').symlink_to(outside, target_is_directory=True)
     assert workspace_path('work/sample') == work / 'sample'
+    assert measurement_root('work/sample-1_ok') == work / 'sample-1_ok'
     assert workspace_path(str(work / '-argument')) == work / '-argument'
     for value in ('work', 'work/../outside', 'work/escape/output', str(outside)):
         with pytest.raises(ArgumentTypeError):
             workspace_path(value)
+    for value in ('work/nested/output', 'work/-option', 'work/name with spaces', 'work/escape'):
+        with pytest.raises(ArgumentTypeError):
+            measurement_root(value)

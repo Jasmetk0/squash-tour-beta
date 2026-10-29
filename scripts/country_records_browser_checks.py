@@ -254,6 +254,13 @@ def verify_country_saved_records(
     match_records_panel = page.get_by_label("Country period match highlights")
     expect(match_records_panel.get_by_role(
         "table", name="Country period match record leaders")).to_be_visible()
+    # Real production-browser read-only proof: navigating national Saved
+    # evidence and switching locale may read, but cannot Save or simulate.
+    evidence_writes = []
+    def observe_evidence_write(request):
+        if request.method not in ("GET", "HEAD", "OPTIONS"):
+            evidence_writes.append((request.method, request.url))
+    page.on("request", observe_evidence_write)
     match_records_panel.get_by_role("button", name="Open evidence").first.click()
     record_detail = match_records_panel.get_by_label("Country match record detail")
     expect(record_detail).to_be_visible()
@@ -278,6 +285,8 @@ def verify_country_saved_records(
     assert "tab=records" in page.url
     assert "#country-match-record-played_wins" in page.url
     assert get("/run-branches/" + enc(branch_id))["saved_head_revision_id"] == head_id
+    page.remove_listener("request", observe_evidence_write)
+    assert not evidence_writes, ("Read-only Country record browsing sent writes", evidence_writes)
     page.screenshot(path=str(artifacts / f"{prefix}09b-country-period-match-record-evidence.png"),
                     full_page=True)
 

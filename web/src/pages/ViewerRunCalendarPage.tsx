@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import {
   getViewerFinalsRace,
@@ -39,13 +39,19 @@ function parseViewerWeekParam(value: string): number | null {
 }
 
 function calendarSeasonStart(value: string | number): number | null {
-  const first = String(value).split('/', 1)[0]
-  const parsed = Number.parseInt(first, 10)
-  return Number.isNaN(parsed) ? null : parsed
+  // A malformed season must not inherit a prefix from a different year.
+  const text = String(value)
+  if (!/^\d+(?:\/\d+)?$/.test(text)) return null
+  const parsed = Number(text.split('/', 1)[0])
+  return Number.isSafeInteger(parsed) ? parsed : null
 }
 
 function flattenCalendarEvents(seasons: Array<{ events: ViewerCalendarEvent[] }> | undefined): ViewerCalendarEvent[] {
   return (seasons ?? []).flatMap((season) => season.events)
+}
+
+function viewerWeekSeasonPath(runId: string, week: number, season: string | number): string {
+  return `${viewerWeekDetailPath(runId, week)}?season=${encodeURIComponent(String(season))}`
 }
 
 type ViewerSourceIdentity = { product_run_id: string; viewer_branch_id: string }
@@ -181,7 +187,7 @@ export function ViewerRunCalendarPage(): JSX.Element {
                     <p>
                       <Link to={viewerPlannedEventPath(runId, event.event_id)}>Open planned event</Link>
                       {' · '}
-                      <Link to={viewerWeekDetailPath(runId, event.season_week)}>Open week detail</Link>
+                      <Link to={viewerWeekSeasonPath(runId, event.season_week, event.season)}>Open week detail</Link>
                       {' · '}
                       <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
                     </p>
@@ -249,7 +255,7 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
         {runId && event ? (
           <ul className="item-list" aria-label="Planned event source links">
             <li><Link to={viewerSeasonCalendarPath(runId)}>Season calendar</Link></li>
-            <li><Link to={viewerWeekDetailPath(runId, event.season_week)}>{`Week W${event.season_week}`}</Link></li>
+            <li><Link to={viewerWeekSeasonPath(runId, event.season_week, event.season)}>{`Week W${event.season_week}`}</Link></li>
             <li><Link to={viewerTournamentDetailPath(runId, event.event_id)}>Tournament detail</Link></li>
           </ul>
         ) : null}
@@ -313,6 +319,8 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
 
 export function ViewerRunWeekPage(): JSX.Element {
   const { week = '' } = useParams()
+  const [searchParams] = useSearchParams()
+  const requestedSeason = searchParams.get('season')
   const { productRunId: runId, officialBranchId, currentSeason } = useViewerProductRunRouteContext()
   const parsedWeek = parseViewerWeekParam(week)
   const hasValidWeek = parsedWeek != null
@@ -352,15 +360,35 @@ export function ViewerRunWeekPage(): JSX.Element {
   const race = effectiveBranchId && matchesViewerSource(finalsRaceQuery.data, runId, effectiveBranchId)
     ? finalsRaceQuery.data : null
 
+  // A week number is not unique across seasons. Explicit season links are
+  // based on exact Saved Calendar labels, never on guessed publication years.
+  const matchingWeekEvents = useMemo(
+    () => flattenCalendarEvents(calendar?.seasons).filter((event) => event.season_week === parsedWeek),
+    [calendar?.seasons, parsedWeek]
+  )
+  const availableWeekSeasons = useMemo(
+    () => Array.from(new Set(matchingWeekEvents.map((event) => String(event.season)))),
+    [matchingWeekEvents]
+  )
+  const calendarSeasonLabels = calendar?.seasons.map((item) => String(item.season)) ?? []
+  const selectedSeason = requestedSeason !== null
+    ? calendarSeasonLabels.includes(requestedSeason) ? requestedSeason : null
+    : currentSeason !== null
+      ? calendarSeasonLabels.find((label) => calendarSeasonStart(label) === currentSeason) ?? null
+      : availableWeekSeasons.length === 1 ? availableWeekSeasons[0] : null
+  const unresolvedSeason = requestedSeason === null && currentSeason === null &&
+    availableWeekSeasons.length > 1
+  const unknownRequestedSeason = requestedSeason !== null && selectedSeason === null && calendar !== null
+  // Existing published ranking/Race sources use the legacy 2000-based season_index.
+  // Do not attribute a publication to an unspecified or unverified calendar season.
+  const selectedPublicationYear = requestedSeason !== null || currentSeason === null
+    ? selectedSeason !== null ? calendarSeasonStart(selectedSeason) : null
+    : currentSeason
   const weekEvents = useMemo(
-    () =>
-      flattenCalendarEvents(calendar?.seasons).filter((event) => {
-        if (event.season_week !== parsedWeek) return false
-        if (currentSeason == null) return true
-        const start = calendarSeasonStart(event.season)
-        return start == null || start === currentSeason
-      }),
-    [calendar?.seasons, currentSeason, parsedWeek]
+    () => selectedSeason === null
+      ? []
+      : matchingWeekEvents.filter((event) => String(event.season) === selectedSeason),
+    [matchingWeekEvents, selectedSeason]
   )
   const weekEventIds = useMemo(() => new Set(weekEvents.map((event) => event.event_id)), [weekEvents])
   const completedResults = useMemo(
@@ -378,17 +406,17 @@ export function ViewerRunWeekPage(): JSX.Element {
     () =>
       (rankings?.publications ?? []).filter((publication) => {
         if (publication.week !== parsedWeek) return false
-        return currentSeason == null || 2000 + publication.season_index === currentSeason
+        return selectedPublicationYear !== null && 2000 + publication.season_index === selectedPublicationYear
       }),
-    [rankings?.publications, currentSeason, parsedWeek]
+    [rankings?.publications, selectedPublicationYear, parsedWeek]
   )
   const finalsRacePublications = useMemo(
     () =>
       (race?.publications ?? []).filter((publication) => {
         if (publication.cutoff_week !== parsedWeek) return false
-        return currentSeason == null || 2000 + publication.cutoff_season_index === currentSeason
+        return selectedPublicationYear !== null && 2000 + publication.cutoff_season_index === selectedPublicationYear
       }),
-    [race?.publications, currentSeason, parsedWeek]
+    [race?.publications, selectedPublicationYear, parsedWeek]
   )
   const hasAnyData =
     weekEvents.length > 0 ||
@@ -408,6 +436,7 @@ export function ViewerRunWeekPage(): JSX.Element {
           { label: 'Active run', value: runId || 'unknown' },
           { label: 'Week', value: hasValidWeek ? `W${parsedWeek}` : '—' },
           { label: 'Current season', value: currentSeason ?? '—' },
+          { label: 'Displayed season', value: selectedSeason ?? '—' },
           { label: 'Saved Calendar events', value: weekEvents.length },
           { label: 'Published results', value: completedResults.length },
           { label: 'Ranking publications', value: rankingPublications.length },
@@ -417,6 +446,12 @@ export function ViewerRunWeekPage(): JSX.Element {
 
       <SectionCard title="Week context">
         {!hasValidWeek ? <EmptyState message="Week must be a positive safe integer in the URL." /> : null}
+        {unresolvedSeason ? (
+          <EmptyState message="This week occurs in multiple Saved seasons. Choose an exact season below to avoid mixing historical results." />
+        ) : null}
+        {unknownRequestedSeason ? (
+          <EmptyState message="The requested season is not present in this Viewer Branch's Saved Calendar." />
+        ) : null}
         {calendarQuery.data && !calendar ? (
           <p className="error">Saved Calendar source does not match this Product Run / Viewer Branch.</p>
         ) : null}
@@ -436,7 +471,7 @@ export function ViewerRunWeekPage(): JSX.Element {
         {isApiNotFound(calendarQuery.error) ? (
           <EmptyState message="No saved Calendar Package is available for this Viewer Branch yet." />
         ) : null}
-        {hasValidWeek && calendar && !hasAnyData ? (
+        {hasValidWeek && calendar && !hasAnyData && !unresolvedSeason && !unknownRequestedSeason ? (
           <EmptyState message="No Saved Calendar event or canonical publication is available for this week." />
         ) : null}
         {hasValidWeek ? (
@@ -445,6 +480,7 @@ export function ViewerRunWeekPage(): JSX.Element {
               { label: 'Run ID', value: runId || 'unknown' },
               { label: 'Week number', value: parsedWeek },
               { label: 'Current season', value: currentSeason ?? '—' },
+              { label: 'Displayed season', value: selectedSeason ?? '—' },
               { label: 'Saved Calendar events', value: weekEvents.length },
               { label: 'Published tournament results', value: completedResults.length },
               { label: 'Official Ranking publications', value: rankingPublications.length },
@@ -458,6 +494,13 @@ export function ViewerRunWeekPage(): JSX.Element {
         {hasValidWeek ? (
           <ul className="item-list" aria-label="Week source links">
             <li><Link to={viewerSeasonCalendarPath(runId)}>Season calendar</Link></li>
+            {availableWeekSeasons.map((season) => (
+              <li key={season}>
+                <Link to={viewerWeekSeasonPath(runId, parsedWeek, season)}>
+                  Week W{parsedWeek} · season {season}
+                </Link>
+              </li>
+            ))}
             <li><Link to={viewerRankingsPath(runId)}>Official Ranking history</Link></li>
             <li><Link to={viewerRacePath(runId)}>Finals Race publications</Link></li>
             {rankingPublications.map((publication) => (
@@ -481,7 +524,7 @@ export function ViewerRunWeekPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Saved Calendar events this week">
-        {hasValidWeek && calendar && weekEvents.length === 0 ? (
+        {hasValidWeek && calendar && weekEvents.length === 0 && !unresolvedSeason && !unknownRequestedSeason ? (
           <EmptyState message="No Saved Calendar events are scheduled for this week." />
         ) : null}
         {weekEvents.length > 0 ? (

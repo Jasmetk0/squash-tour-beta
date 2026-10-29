@@ -330,4 +330,6 @@ def test_model_hash_reuse_requires_type_exact_values_and_handles_unknown_types()
     assert _same_model_value(original, original.model_copy(deep=True))
     assert 0.0 == -0.0
     assert not _same_model_value({'value': 0.0}, {'value': -0.0})
+    assert not _same_model_value(float('nan'), float('nan'))
+    assert _same_model_value(float('inf'), float('inf'))
     assert not _same_model_value({'value': object()}, {'value': object()})

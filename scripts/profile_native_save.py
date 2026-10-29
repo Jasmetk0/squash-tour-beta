@@ -29,6 +29,15 @@ from tests.api.test_calendar_tour_flow import command, execute, inspect, tour_ur
 from tests.api.test_saved_revision_history_api import ApiServer, _request
 
 
+def workspace_path(value):
+    """Keep disposable inputs and outputs beneath this checkout's work/ tree."""
+    work = (Path.cwd() / 'work').resolve()
+    candidate = Path(value).resolve()
+    if candidate == work or not candidate.is_relative_to(work):
+        raise argparse.ArgumentTypeError('Measurement paths must be inside this checkout\'s work/ directory')
+    return candidate
+
+
 def retained_bytes(root):
     """Reachable Python heap, deduplicated by identity, including model slots.
 
@@ -137,8 +146,8 @@ def observers(mode, root):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--root', type=Path, required=True)
-    p.add_argument('--input', type=Path)
+    p.add_argument('--root', type=workspace_path, required=True)
+    p.add_argument('--input', type=workspace_path)
     p.add_argument('--prepare', action='store_true')
     p.add_argument('--players', type=int, default=8)
     p.add_argument('--width', type=int, default=80)
@@ -237,8 +246,9 @@ def main():
         with Path(str(target) + '.txt').open('w') as stream:
             pstats.Stats(profile, stream=stream).strip_dirs().sort_stats('cumulative').print_stats(65)
     if not a.restart_child:
-        subprocess.run([sys.executable, __file__, '--root', str(a.root), '--mode', a.mode,
-                        '--restart-child', *(['--tour-only'] if a.tour_only else [])], check=True)
+        subprocess.run([str(Path(sys.executable).resolve()), str(Path(__file__).resolve()),
+                        f'--root={a.root}', f'--mode={a.mode}', '--restart-child',
+                        *(['--tour-only'] if a.tour_only else [])], check=True, shell=False)
 
 
 if __name__ == '__main__':

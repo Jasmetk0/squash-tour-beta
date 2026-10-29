@@ -181,7 +181,7 @@ data remains in the task workspace alongside the final samples.
 
 ## Validation and distinct adversarial review
 
-The focused cache/dependency/domain/measurement suite passes **57 tests**.
+The focused cache/dependency/domain/measurement suite passes **58 tests**.
 An earlier implementation passed nine real HTTP/SQLite cases (528.86s), including
 partial/nested forks, actual final replay, concurrent/stale/retry/rollback,
 rehashed source, metadata history and strict version-directed equivalence.
@@ -213,6 +213,17 @@ values and foreign scope cannot reuse an entry; and nested mutations of returned
 CP/evidence/Tour models cannot modify cache data or immutable history. Both the
 whole DTO and component paths compare to the complete strict decoded value.
 Real process restart compares the entire inspection, not just fingerprints.
+
+The hosted Sonar review additionally identified ambiguous restart CLI arguments,
+unconfined measurement output paths and direct floating-point comparison. The
+harness now resolves and confines inputs/outputs beneath the checkout's `work/`
+tree (including symlink/traversal rejection) and passes absolute restart paths
+as explicit `--option=value` arguments without a shell. Exact float comparison
+uses hexadecimal representations and rejects NaN; signed-zero and typed-value
+semantics are unchanged. Focused regressions cover these boundaries. Ordinary
+timing samples above predate this equivalent float-comparison spelling; they
+remain observations of their explicitly recorded source tree, not a timing
+claim for a later revision.
 
 One diagnostic invocation used an older script against an already-played input
 and correctly received 409 for a reused command ID with different payload. It

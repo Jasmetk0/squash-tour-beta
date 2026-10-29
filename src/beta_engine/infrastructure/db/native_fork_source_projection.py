@@ -105,9 +105,13 @@ def _same_model_value(value, retained):
         left_type = type(left)
         if left_type is not type(right):
             return False
-        if left_type in _MODEL_SCALAR_TYPES:
-            if (left != right or left_type is float and left == 0.0
-                and math.copysign(1.0, left) != math.copysign(1.0, right)):
+        if left_type is float:
+            # Exact representation is required for canonical hashes, including
+            # signed zero. NaN never establishes reusable value equality.
+            if math.isnan(left) or left.hex() != right.hex():
+                return False
+        elif left_type in _MODEL_SCALAR_TYPES:
+            if left != right:
                 return False
         elif isinstance(left, BaseModel):
             pending.extend(((left.__dict__, right.__dict__),

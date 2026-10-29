@@ -96,7 +96,7 @@ describe('historical Official Ranking detail (mocked GET API, not HTTP/SQLite)',
     const table = await screen.findByRole('table', { name: 'Historický Official Ranking – hráči' })
     expect(api.getViewerOfficialRankingHistoryDetail).toHaveBeenCalledWith('run alpha', 1)
     expect(screen.getByText('past-policy')).toBeInTheDocument()
-    expect(screen.getByText('2000/01')).toBeInTheDocument()
+    expect(screen.getByText(/Sezona 2000\/01/)).toBeInTheDocument()
     expect(screen.getByText('b'.repeat(64))).toBeInTheDocument()
     expect(within(table).getByText('0')).toBeInTheDocument()
     expect(within(table).getByRole('link', { name: 'player-001' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/players/player-001/career')

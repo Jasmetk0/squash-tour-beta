@@ -94,6 +94,20 @@ describe('Saved player match history', () => {
     await waitFor(() => expect(screen.getByRole('link', {name: 'Detail zápasu →'})).toHaveAttribute('href',
       '/admin/runs/run/people/A/matches/event/second?tab=career&replayBranch=branch&replayHead=revision&careerSeason=2&careerPage=1'))
   })
+  it('rejects an empty in-range response rather than inventing an empty career', async () => {
+    api.getSavedPlayerMatchHistory.mockResolvedValueOnce({
+      schema_version:'saved_player_match_history.v1', source:'selected_branch_saved_revision',
+      run_id:'run',branch_id:'branch',saved_revision_id:'revision',player_id:'A',
+      status:'ready',season_index:null,offset:0,limit:20,available_seasons:[2],
+      total_results:1,played_wins:1,played_losses:0,walkovers:0,
+      career_played_wins:1,career_played_losses:0,career_walkovers:0,
+      has_more:false,matches:[],
+    })
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Data patří jiné uložené revizi.')
+    expect(screen.queryByText('Hráč nemá žádné uložené')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'Detail zápasu →'})).not.toBeInTheDocument()
+  })
   it('does not render foreign saved HEAD data', async () => {
     api.getSavedPlayerMatchHistory.mockResolvedValueOnce({
       schema_version: 'saved_player_match_history.v1', run_id: 'run', branch_id: 'branch',

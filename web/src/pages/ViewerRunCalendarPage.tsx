@@ -496,7 +496,7 @@ export function ViewerRunWeekPage(): JSX.Element {
             <li><Link to={viewerSeasonCalendarPath(runId)}>Season calendar</Link></li>
             {availableWeekSeasons.map((season) => (
               <li key={season}>
-                <Link to={viewerWeekSeasonPath(runId, parsedWeek, season)}>
+                <Link to={viewerWeekSeasonPath(runId, parsedWeek ?? 0, season)}>
                   Week W{parsedWeek} · season {season}
                 </Link>
               </li>

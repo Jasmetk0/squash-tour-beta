@@ -1,3 +1,21 @@
+# Native Save decode continuity candidate — 29 October 2026
+
+Verified `buuk`: `fbe8e00c346b1de6de6d3144509a92592dec38d0`, owner merge of #1657.
+That exact feature head passed all 58 applicable hosted checks, including the
+complete W80 calendar/Season Transition and the W80/1,000 Chromium scenario.
+The two unrelated scoped-out jobs were not counted as executed tests.
+
+The next bounded candidate connects successful manual Save to the component
+value cache used by the next native command. A direct real HTTP/SQLite test
+reproduced redundant structural decoding immediately after Save. The existing
+whole-payload handoff remains, and the additional component uses the same shared
+byte budget and isolated copies only after successful commit. All source/math,
+physical and late-write gates stay required. See `docs/NATIVE_SAVE_DECODE_CONTINUITY.md`.
+This candidate is not merged or release-certified. Parallel PRs #1652–#1656 and
+#1659 own their independent frontend/read-model files and are untouched.
+
+---
+
 # Native pure-group withdrawal candidate — 29 October 2026
 
 Owner merges #1647 and #1651 are present on `buuk` at

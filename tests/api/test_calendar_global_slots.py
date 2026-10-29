@@ -225,6 +225,16 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
         assert injected and code == 409, rejected
         assert repo._origin_projection_values == before_failed_save_origins
         assert 'dependenc' in str(rejected).lower()
+        # A rolled-back candidate must not seed the post-commit decode handoff.
+        from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_checkpoint_component
+        with repo._session_factory() as session:
+            live = session.get(CalendarPlayerSportingCheckpointModel, ('run', 'branch'))
+            uncommitted = {'state': json.loads(live.payload_json), 'fingerprint': live.fingerprint}
+        def not_retained(_component):
+            raise LookupError('uncommitted checkpoint requires its own decode')
+        with pytest.raises(LookupError, match='uncommitted checkpoint'):
+            decoded_global_checkpoint_component(repo, uncommitted,
+                run_id='run', branch_id='branch', decode=not_retained)
         monkeypatch.setattr(repo, '_to_branch_saved_revision', original_decode)
         after = inspect(server)
         assert after['saved_head_revision_id'] == saved['revision_id']
@@ -1472,3 +1482,62 @@ def test_cached_native_final_replay_keeps_actual_sources_engine_and_read_only_bo
         before = _dump(path)
         assert _request('GET', replay_root(restarted) + '/parallel-a:final/replay') == (200, expected)
         assert _dump(path) == before
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize('limited_budget', [False, True])
+def test_successful_global_save_seeds_next_checkpoint_decode(tmp_path, prepared_slots, monkeypatch, limited_budget):
+    """A completed real Save hands decode data to the next native command.
+
+    Failing on structural reparse makes this a deterministic performance
+    regression guard, independent of machine speed or a relaxed timeout.
+    """
+    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel, RunBranchModel, CalendarPlayerSportingCheckpointModel
+    from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_checkpoint_component
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+    from beta_engine.domain.run_revisions import canonical_json
+
+    path = tmp_path / 'committed-checkpoint-decode.db'
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f'sqlite:///{path}') as server:
+        execute(server, command(inspect(server), 'next-match', name='seed-after-real-save'))
+        view = inspect(server)
+        repository = server.app.state.runtime.repository
+        if limited_budget:
+            with repository._session_factory() as session:
+                live = session.get(CalendarPlayerSportingCheckpointModel, ('run', 'branch'))
+                source = {'calendar_player_sporting_checkpoint': {
+                    'state': json.loads(live.payload_json), 'fingerprint': live.fingerprint,
+                }}
+            # The checkpoint fits but the full Saved envelope does not. This
+            # exercises large-history eviction without a timing-dependent test.
+            budget = len(canonical_json(source).encode('utf-8')) + 1
+            monkeypatch.setattr(cache, 'MAX_GLOBAL_TOUR_BYTES', budget)
+        status, receipt = _request('POST', tour_url(server) + '/save', {
+            'expected_draft_version': view['draft_version'],
+            'expected_calendar_tour_fingerprint': view['tour_fingerprint'],
+        })
+        assert status == 201, receipt
+        # Do not call save_tour(): its trailing GET would itself warm the cache.
+
+        repository = server.app.state.runtime.repository
+        with repository._session_factory() as session:
+            branch = session.get(RunBranchModel, 'branch')
+            row = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
+            payload = json.loads(row.payload_json)
+        component = payload['content']['calendar_player_sporting_checkpoint']
+        if limited_budget:
+            assert len(canonical_json(payload).encode('utf-8')) > budget
+
+        def unexpected_decode(_component):
+            raise AssertionError('Completed Save did not seed the next checkpoint decode')
+
+        def read():
+            return decoded_global_checkpoint_component(repository, component,
+                run_id='run', branch_id='branch', decode=unexpected_decode)
+
+        first = read()
+        assert first.model_dump(mode='json') == component['state']
+        first.__dict__['branch_id'] = 'mutated-caller'
+        assert read().branch_id == 'branch'
+        assert sum(v[0] for v in repository._global_tour_projection_cache.values()) <= cache.MAX_GLOBAL_TOUR_BYTES

@@ -65,8 +65,17 @@ function ranking(player: SavedInventoryPlayer, cs: boolean): string {
 /** A different Saved Run/Branch/HEAD/country cannot inherit the old search or cursor. */
 export function RunWorldCountrySavedPlayers(props: Props): JSX.Element {
   const { runId, branchId, savedHead, countryCode } = props
-  return <ScopedCountryRoster key={JSON.stringify([runId, branchId, savedHead, countryCode])}
-    {...props} />
+  const [params] = useSearchParams()
+  // React Router can change only the search string while keeping the same
+  // Country component mounted (browser Back, copied bookmark, in-app links).
+  // Mount the view for the URL's exact roster selection as well as its Saved
+  // source, so stale draft state, page or future opt-in never overrides it.
+  const rosterLocationKey = JSON.stringify([
+    runId, branchId, savedHead, countryCode,
+    ...['spScope', 'spSearch', 'spStatus', 'spPrepared', 'spPage']
+      .map(param => params.getAll(param)),
+  ])
+  return <ScopedCountryRoster key={rosterLocationKey} {...props} />
 }
 function ScopedCountryRoster({
   runId, branchId, savedHead, countryCode, selectedWorldYear, language

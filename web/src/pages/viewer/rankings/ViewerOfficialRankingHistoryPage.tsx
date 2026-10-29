@@ -44,6 +44,7 @@ const copy = {
     clear: 'Vymazat filtry',
     table: 'Historie publikací Official Rankingu',
     open: 'Otevřít ranking týdne',
+    openSuffix: '',
     published: 'Celkem publikací:',
     showing: 'Zobrazeno',
     of: 'z',
@@ -84,6 +85,7 @@ const copy = {
     clear: 'Clear filters',
     table: 'Official Ranking publication history',
     open: 'Open Week',
+    openSuffix: ' ranking',
     published: 'Total publications:',
     showing: 'Showing',
     of: 'of',
@@ -98,7 +100,7 @@ const copy = {
   }
 } satisfies Record<Language, Record<string, string>>
 
-type Text = typeof copy.en
+type Text = Record<keyof typeof copy.en, string>
 
 function RankingHistoryForSource({ productRunId, viewerBranchId, text: t }: {
   productRunId: string
@@ -204,7 +206,7 @@ function RankingHistoryForSource({ productRunId, viewerBranchId, text: t }: {
                 <td>{item.policy_id}</td>
                 <td>{item.row_count}</td>
                 <td>{item.best_n}</td>
-                <td><Link to={viewerRankingSnapshotPath(productRunId, item.week_ordinal)}>{t.open} {item.week} {t.week.toLowerCase() === 'week' ? 'ranking' : '– ranking'} (#{item.week_ordinal})</Link></td>
+                <td><Link to={viewerRankingSnapshotPath(productRunId, item.week_ordinal)}>{t.open} {item.week}{t.openSuffix} (#{item.week_ordinal})</Link></td>
               </tr>
             ))}
           </tbody>

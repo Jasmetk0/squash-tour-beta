@@ -8,7 +8,7 @@ import {
   getViewerTournamentHistory,
   listViewerOfficialRankingHistory
 } from '../api/client'
-import type { ViewerCalendarEvent } from '../api/types'
+import type { ViewerCalendarEvent, ViewerTournamentHistoryItem } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -54,6 +54,39 @@ function viewerWeekSeasonPath(runId: string, week: number, season: string | numb
   return `${viewerWeekDetailPath(runId, week)}?season=${encodeURIComponent(String(season))}`
 }
 
+function viewerPlannedEventContextPath(runId: string, event: ViewerCalendarEvent): string {
+  return `${viewerPlannedEventPath(runId, event.event_id)}?season=${encodeURIComponent(String(event.season))}&week=${event.season_week}`
+}
+
+// Event IDs can be reused in different seasons. Never join by ID alone.
+function calendarEventKey(event: Pick<ViewerCalendarEvent, 'event_id' | 'season' | 'season_week'>): string {
+  return JSON.stringify([event.event_id, String(event.season), event.season_week])
+}
+
+function canonicalPublishedResults(
+  events: ViewerCalendarEvent[],
+  history: ViewerTournamentHistoryItem[]
+): Map<string, ViewerTournamentHistoryItem> {
+  const calendarCounts = new Map<string, number>()
+  for (const event of events) {
+    const key = calendarEventKey(event)
+    calendarCounts.set(key, (calendarCounts.get(key) ?? 0) + 1)
+  }
+  const seenHistoryKeys = new Set<string>()
+  const published = new Map<string, ViewerTournamentHistoryItem>()
+  for (const item of history) {
+    if (!item.result_published) continue
+    const key = calendarEventKey(item)
+    if (seenHistoryKeys.has(key)) {
+      published.delete(key) // Duplicate result rows are ambiguous, not an authority.
+      continue
+    }
+    seenHistoryKeys.add(key)
+    if (calendarCounts.get(key) === 1) published.set(key, item)
+  }
+  return published
+}
+
 type ViewerSourceIdentity = { product_run_id: string; viewer_branch_id: string }
 
 function matchesViewerSource<T extends ViewerSourceIdentity>(
@@ -87,18 +120,12 @@ export function ViewerRunCalendarPage(): JSX.Element {
   const history = effectiveBranchId && matchesViewerSource(historyQuery.data, runId, effectiveBranchId)
     ? historyQuery.data : null
 
-  const resultByEventId = useMemo(() => {
-    const calendarById = new Map(
-      (calendar?.seasons ?? []).flatMap((season) => season.events).map((event) => [event.event_id, event])
-    )
-    return new Map((history?.tournaments ?? [])
-      .filter((item) => {
-        const event = calendarById.get(item.event_id)
-        return event && String(event.season) === String(item.season) &&
-          event.season_week === item.season_week
-      })
-      .map((item) => [item.event_id, item]))
-  }, [calendar, history])
+  const resultByEventKey = useMemo(
+    () => canonicalPublishedResults(
+      flattenCalendarEvents(calendar?.seasons), history?.tournaments ?? []
+    ),
+    [calendar?.seasons, history?.tournaments]
+  )
 
   return (
     <section className="panel">
@@ -163,9 +190,9 @@ export function ViewerRunCalendarPage(): JSX.Element {
             <h3>{String(season.season)}</h3>
             <ol className="item-list" aria-label={`Viewer season calendar events ${String(season.season)}`}>
               {season.events.map((event, index) => {
-                const result = resultByEventId.get(event.event_id)
+                const result = resultByEventKey.get(calendarEventKey(event))
                 return (
-                  <li key={event.event_id}>
+                  <li key={calendarEventKey(event)}>
                     <strong>{event.event_name || event.event_id}</strong>
                     <MetadataList
                       items={[
@@ -185,7 +212,7 @@ export function ViewerRunCalendarPage(): JSX.Element {
                       ]}
                     />
                     <p>
-                      <Link to={viewerPlannedEventPath(runId, event.event_id)}>Open planned event</Link>
+                      <Link to={viewerPlannedEventContextPath(runId, event)}>Open planned event</Link>
                       {' · '}
                       <Link to={viewerWeekSeasonPath(runId, event.season_week, event.season)}>Open week detail</Link>
                       {' · '}
@@ -204,6 +231,12 @@ export function ViewerRunCalendarPage(): JSX.Element {
 
 export function ViewerRunPlannedEventPage(): JSX.Element {
   const { eventId = '' } = useParams()
+  const [searchParams] = useSearchParams()
+  const requestedSeason = searchParams.get('season')
+  const requestedWeek = searchParams.get('week')
+  const hasExplicitEventContext = requestedSeason !== null || requestedWeek !== null
+  const validExplicitEventContext = !hasExplicitEventContext ||
+    (requestedSeason !== null && requestedWeek !== null && parseViewerWeekParam(requestedWeek) !== null)
   const { productRunId: runId, officialBranchId } = useViewerProductRunRouteContext()
 
   const calendarQuery = useQuery({
@@ -224,15 +257,24 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
   const history = effectiveBranchId && matchesViewerSource(historyQuery.data, runId, effectiveBranchId)
     ? historyQuery.data : null
 
-  const event = useMemo(
-    () => flattenCalendarEvents(calendar?.seasons).find((item) => item.event_id === eventId) ?? null,
-    [calendar?.seasons, eventId]
+  const calendarEvents = useMemo(() => flattenCalendarEvents(calendar?.seasons), [calendar?.seasons])
+  const eventCandidates = useMemo(
+    () => calendarEvents.filter((item) => item.event_id === eventId),
+    [calendarEvents, eventId]
   )
-  const result = history?.tournaments.find((item) =>
-    event && item.event_id === eventId &&
-    String(item.season) === String(event.season) &&
-    item.season_week === event.season_week
-  ) ?? null
+  const selectedCandidates = eventCandidates.filter((item) =>
+    !hasExplicitEventContext ||
+    (validExplicitEventContext &&
+      String(item.season) === requestedSeason &&
+      String(item.season_week) === requestedWeek)
+  )
+  const event = selectedCandidates.length === 1 ? selectedCandidates[0] : null
+  const result = event ? canonicalPublishedResults(
+    calendarEvents, history?.tournaments ?? []
+  ).get(calendarEventKey(event)) : null
+  const availableCandidates = eventCandidates.filter((candidate) =>
+    eventCandidates.filter((other) => calendarEventKey(other) === calendarEventKey(candidate)).length === 1
+  )
 
   return (
     <section className="panel">
@@ -276,8 +318,30 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
           <EmptyState message="No saved Calendar Package is available for this Viewer Branch yet." />
         ) : null}
         {!eventId ? <EmptyState message="No planned event ID was provided in the URL." /> : null}
-        {eventId && calendar && !event ? (
+        {eventId && calendar && eventCandidates.length === 0 ? (
           <EmptyState message="This event is not present in the Saved Calendar Package." />
+        ) : null}
+        {eventId && calendar && eventCandidates.length > 0 && !validExplicitEventContext ? (
+          <EmptyState message="Planned Event links require both an exact season and a valid week when either is supplied." />
+        ) : null}
+        {eventId && calendar && hasExplicitEventContext && validExplicitEventContext && selectedCandidates.length === 0 ? (
+          <EmptyState message="The requested event season/week does not match the Saved Calendar." />
+        ) : null}
+        {eventId && calendar && selectedCandidates.length > 1 ? (
+          <>
+            <EmptyState message="Multiple Saved Calendar events have this ID. Choose an exact season and week; indistinguishable duplicates cannot be opened." />
+            {availableCandidates.length > 0 ? (
+              <ul className="item-list" aria-label="Planned event occurrence choices">
+                {availableCandidates.map((candidate) => (
+                  <li key={calendarEventKey(candidate)}>
+                    <Link to={viewerPlannedEventContextPath(runId, candidate)}>
+                      {String(candidate.season)} · W{candidate.season_week} · {candidate.event_name || candidate.event_id}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </>
         ) : null}
         {event ? (
           <>
@@ -390,18 +454,16 @@ export function ViewerRunWeekPage(): JSX.Element {
       : matchingWeekEvents.filter((event) => String(event.season) === selectedSeason),
     [matchingWeekEvents, selectedSeason]
   )
-  const weekEventIds = useMemo(() => new Set(weekEvents.map((event) => event.event_id)), [weekEvents])
-  const completedResults = useMemo(
-    () => (history?.tournaments ?? []).filter((item) =>
-      weekEventIds.has(item.event_id) && item.result_published &&
-      weekEvents.some((event) =>
-        event.event_id === item.event_id &&
-        String(event.season) === String(item.season) &&
-        event.season_week === item.season_week
-      )
+  const publishedByEventKey = useMemo(
+    () => canonicalPublishedResults(
+      flattenCalendarEvents(calendar?.seasons), history?.tournaments ?? []
     ),
-    [history?.tournaments, weekEventIds, weekEvents]
+    [calendar?.seasons, history?.tournaments]
   )
+  const completedResults = weekEvents.flatMap((event) => {
+    const result = publishedByEventKey.get(calendarEventKey(event))
+    return result ? [result] : []
+  })
   const rankingPublications = useMemo(
     () =>
       (rankings?.publications ?? []).filter((publication) => {
@@ -531,9 +593,9 @@ export function ViewerRunWeekPage(): JSX.Element {
         {weekEvents.length > 0 ? (
           <ol className="item-list" aria-label="Viewer week Saved Calendar events">
             {weekEvents.map((event) => {
-              const result = completedResults.find((item) => item.event_id === event.event_id)
+              const result = publishedByEventKey.get(calendarEventKey(event))
               return (
-                <li key={event.event_id}>
+                <li key={calendarEventKey(event)}>
                   <strong>{event.event_name || event.event_id}</strong>
                   <MetadataList
                     items={[
@@ -549,7 +611,7 @@ export function ViewerRunWeekPage(): JSX.Element {
                     ]}
                   />
                   <p>
-                    <Link to={viewerPlannedEventPath(runId, event.event_id)}>Open planned event</Link>
+                    <Link to={viewerPlannedEventContextPath(runId, event)}>Open planned event</Link>
                     {' · '}
                     <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
                   </p>

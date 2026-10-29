@@ -2,20 +2,43 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
+import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictInt,
+    field_validator,
+    model_validator,
+)
 
-from beta_engine.application.world_package_registry_service import WorldPackageRegistryRecord, WorldPackageRegistryService
+from beta_engine.application.world_package_registry_service import (
+    WorldPackageRegistryRecord,
+    WorldPackageRegistryService,
+)
+from beta_engine.application.world_package_validation_service import (
+    WorldPackageValidationResult,
+    WorldPackageValidationService,
+)
 from beta_engine.domain.countries import Country
-from beta_engine.domain.countries.models import VersionedCountrySimFactor, _validate_country_rating
-from beta_engine.domain.countries.rating_history import CountryRatingHistory, GAME_ATTRIBUTE_NAMES, RATING_SCALE_V2, LEGACY_RATING_SCALE, validate_rating_v2
+from beta_engine.domain.countries.models import (
+    VersionedCountrySimFactor,
+    _validate_country_rating,
+)
+from beta_engine.domain.countries.rating_history import (
+    GAME_ATTRIBUTE_NAMES,
+    LEGACY_RATING_SCALE,
+    RATING_SCALE_V2,
+    CountryRatingHistory,
+    validate_rating_v2,
+)
 from beta_engine.domain.timezone_areas import TimezoneArea, validate_timezone_areas
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
-from beta_engine.application.world_package_validation_service import WorldPackageValidationResult, WorldPackageValidationService
 
 
 @dataclass(frozen=True)
@@ -125,6 +148,25 @@ class WorldPackageCountryCreate(WorldPackageCountryUpdate):
         if any(isinstance(population, bool) or population <= 0 for population in value.values()):
             raise ValueError("population values must be positive integers")
         return value
+
+
+def _replace_registry_bytes(path: Path, content: bytes) -> None:
+    """Replace only the registry, never a package-supplied temporary filename."""
+    if path.is_symlink() or path.parent.is_symlink():
+        raise ValueError("Timezone Area registry must not use symlinks")
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "wb", dir=path.parent, prefix=f".{path.name}.", delete=False,
+        ) as stream:
+            temporary = Path(stream.name)
+            stream.write(content)
+        if path.is_symlink() or path.parent.is_symlink():
+            raise ValueError("Timezone Area registry became a symlink during write")
+        temporary.replace(path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 class WorldPackageMutationError(ValueError):
@@ -342,17 +384,20 @@ class WorldPackageCountriesService:
             raise WorldPackageMutationError(f"Timezone Area registry would orphan country assignments: {missing}")
         path = paths["timezone_areas"]
         original = path.read_bytes() if path.is_file() else None
-        temporary = path.with_name(f".{path.name}.tmp")
+        installed = False
         try:
-            temporary.write_text(json.dumps({"timezone_areas": [a.model_dump(mode="json") for a in ordered]}, indent=2) + "\n", encoding="utf-8")
-            temporary.replace(path)
+            content = (json.dumps({"timezone_areas": [a.model_dump(mode="json") for a in ordered]}, indent=2) + "\n").encode("utf-8")
+            _replace_registry_bytes(path, content)
+            installed = True
             assert self.validation_service is not None
             validation = self.validation_service.validate_package(world_id)
             if validation is None or validation.status == "errors": raise RuntimeError("registry edit would leave the World Package invalid")
         except Exception as exc:
-            if original is None: path.unlink(missing_ok=True)
-            else: path.write_bytes(original)
-            temporary.unlink(missing_ok=True)
+            if installed:
+                if original is None:
+                    path.unlink(missing_ok=True)
+                else:
+                    _replace_registry_bytes(path, original)
             if isinstance(exc, WorldPackageMutationError): raise
             raise WorldPackageMutationError(f"Timezone Area registry edit failed: {exc}") from exc
         result = self.get_geography(world_id)

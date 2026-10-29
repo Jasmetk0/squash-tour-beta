@@ -32,6 +32,7 @@ describe('Country Saved roster URL round trips',()=>{
     })
     expect(reset.get('spSearch')).toBeNull()
     expect(reset.get('spStatus')).toBeNull()
+    expect(reset.get('spRanking')).toBeNull()
     expect(reset.get('spPrepared')).toBeNull()
     expect(reset.get('spPage')).toBeNull()
     expect(reset.get('year')).toBe('2025')
@@ -79,5 +80,14 @@ describe('Country Saved roster URL round trips',()=>{
     noScope.searchParams.delete('spScope')
     expect(safeCountryRosterReturn(noScope.pathname+noScope.search,
       'run','CZE','branch-a','rev-a')).toBeNull()
+  })
+  it('round-trips exact published-ranking filter and rejects unknown URL status',()=>{
+    const ranked=writeCountryRosterPermalink(base,scope,{...state,ranking:'ranked'})
+    expect(ranked.get('spRanking')).toBe('ranked')
+    expect(readCountryRosterPermalink(ranked,scope).ranking).toBe('ranked')
+    const wrong=new URLSearchParams(ranked)
+    wrong.set('spRanking','guessed')
+    expect(readCountryRosterPermalink(wrong,scope).ranking).toBeUndefined()
+    expect(readCountryRosterPermalink(ranked,'wrong-source').ranking).toBeUndefined()
   })
 })

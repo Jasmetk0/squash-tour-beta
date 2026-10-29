@@ -1,3 +1,23 @@
+# Native pure-group withdrawal candidate — 29 October 2026
+
+Owner merges #1647 and #1651 are present on `buuk` at
+`e4d0dd3b7da9f8767d19ece2cf194919a9bf864d`. Their final feature heads
+completed their relevant functional gates, including the W80/1,000 browser
+(946.88s) and all-week W52/W61/W80 Season Transition cases. Older candidate
+sections below are historical evidence, not the current open-PR inventory.
+
+The next bounded candidate adds explicit post-start pure-group withdrawal,
+separate non-played W/O in the global ledger, original/target/nested-fork source
+integrity and normal Full Simulation/manual Save controls. It deliberately
+rejects hybrid advancement, nonzero Official W/O phase rewards and a second
+withdrawal in one group until their specific policies exist. It fabricates no
+played match, rally, physical effect or H2H. Five real HTTP/SQLite cases and a
+real CS/EN Chromium flow passed locally; hosted final-head gates remain required.
+See `docs/NATIVE_GROUP_WITHDRAWALS.md`. The parallel Saved player career/replay
+and Country match record frontend slices are untouched. No release is certified.
+
+---
+
 # Native groups/global-slot integration candidate — 27 October 2026
 
 Refreshed `buuk`: `af0e906ce374c3406fb43c29fe65b007546b9303`; #1643,

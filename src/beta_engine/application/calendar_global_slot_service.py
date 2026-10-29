@@ -9,6 +9,10 @@ from beta_engine.domain.tournaments.calendar_global_slots import (
     is_group_edition,
     next_schedule,
     slot_match_id,
+    playing_slot_conflicts,
+)
+from beta_engine.domain.tournaments.calendar_group_withdrawals import (
+    NativeGroupWalkover, group_resolved_matches, group_withdrawals, pending_group_walkovers,
 )
 
 
@@ -16,9 +20,11 @@ def slot_inspection(state, checkpoint):
     number, due, opened = next_schedule(state, checkpoint)
     if number is None:
         return None
-    accepted = opened.accepted if opened else ()
+    history = getattr(checkpoint, 'history_global_slots', getattr(checkpoint, 'events', ()))
+    withdrawals = group_withdrawals(history)
+    accepted = (*opened.accepted, *opened.walkovers) if opened else ()
     if opened and opened.inherited_match_ids:
-        inherited = {m.match_id: m for m in checkpoint.played_continuations}
+        inherited = group_resolved_matches(history)
         accepted = (*accepted, *(inherited[mid] for mid in opened.inherited_match_ids))
     scheduled = opened.scheduled if opened else ()
     rows = [
@@ -28,6 +34,8 @@ def slot_inspection(state, checkpoint):
             "player_a_id": ids[0] if ids else None,
             "player_b_id": ids[1] if ids else None,
             "completed": False,
+            **({'completion': 'walkover'} if any(r.edition_id == a.edition.edition_id
+                and r.player_id in ids for r in withdrawals) else {}),
         }
         for a, i, ids in due
     ]
@@ -37,15 +45,18 @@ def slot_inspection(state, checkpoint):
                 s.edition_id for s in scheduled if s.match_id == m.match_id
             ),
             "match_id": m.match_id,
-            "player_a_id": m.result.player_a_id,
-            "player_b_id": m.result.player_b_id,
+            "player_a_id": next(s.projections[0].player_id for s in scheduled if s.match_id == m.match_id),
+            "player_b_id": next(s.projections[1].player_id for s in scheduled if s.match_id == m.match_id),
             "winner_player_id": m.result.winner_player_id,
             "completed": True,
+            **({'completion': 'walkover'} if isinstance(m, NativeGroupWalkover) else {}),
         }
         for m in accepted
     ]
     seen = {}
     for row in rows:
+        if row.get('completion') == 'walkover':
+            continue
         for pid in (row["player_a_id"], row["player_b_id"]):
             if pid:
                 seen.setdefault(pid, []).append(row["match_id"])
@@ -142,14 +153,15 @@ def prepare_global_slot(
     selected = [
         s.match_id for s in slot.remaining if match_id is None or s.match_id == match_id
     ]
+    walkovers = pending_group_walkovers(cp, slot)
     for item in slot.remaining:
-        if item.match_id in selected and any(
+        if item.match_id in selected and item.match_id not in walkovers and any(
             p.numeric_calibration_required for p in item.health.player_profiles
         ):
             raise ValueError(
                 f"Global slot {slot.number}, {item.match_id}: unresolved numeric Health effects"
             )
-    for pid, ids in slot.conflicts.items():
+    for pid, ids in playing_slot_conflicts(cp, slot).items():
         if set(selected).intersection(ids):
             raise ValueError(
                 f"Global slot {slot.number}: player {pid} collides in {', '.join(ids)}"
@@ -160,7 +172,8 @@ def prepare_global_slot(
         "slot": slot.number,
         "snapshot_fingerprint": slot.snapshot_fingerprint,
         "selected_match_ids": selected,
-        "completed": len(slot.accepted),
+        **({'walkover_match_ids': [mid for mid in selected if mid in walkovers]} if walkovers else {}),
+        "completed": len(slot.accepted) + len(slot.walkovers),
         "remaining": len(slot.remaining),
     }
 
@@ -264,7 +277,7 @@ def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=No
         "slot": completed_slot.number,
         "week": completed_slot.week.model_dump(mode="json"),
         "snapshot_fingerprint": completed_slot.snapshot_fingerprint,
-        "completed": len(completed_slot.accepted),
+        "completed": len(completed_slot.accepted) + len(completed_slot.walkovers),
         "remaining": len(completed_slot.remaining),
         "match_ids": impact["selected_match_ids"],
         "checkpoint_fingerprint": successor.fingerprint,

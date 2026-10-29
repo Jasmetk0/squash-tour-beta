@@ -368,10 +368,11 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
         previous = planned.model_copy(
             update={"receipts": planned.receipts + (receipt,)}
         )
-        if command.action == "resolve-group-tie":
-            from beta_engine.application.calendar_native_groups import apply_group_tie
+        if command.action in {"resolve-group-tie", "withdraw-group"}:
+            from beta_engine.application.calendar_native_groups import apply_group_tie, apply_group_withdrawal
+            apply = apply_group_tie if command.action == 'resolve-group-tie' else apply_group_withdrawal
             captured = {}
-            apply_group_tie(None, ctx, previous_before_tie, authority, command, persist=False, _successor_out=captured)
+            apply(None, ctx, previous_before_tie, authority, command, persist=False, _successor_out=captured)
             next_cp = captured['checkpoint']
         cp = next_cp
         if isinstance(cp, GlobalCompetitionCheckpoint):

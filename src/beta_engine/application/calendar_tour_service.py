@@ -112,6 +112,7 @@ class CalendarTourCommand(FrozenInput):
         "next-slot",
         "next-match",
         "resolve-group-tie",
+        "withdraw-group",
         "confirm-result",
         "policy",
         "transition",
@@ -689,6 +690,7 @@ class CalendarTourService:
         # advancing the public week must still start from an immutable Save.
         if state != signed and command.action in (
             "play",
+            "withdraw-group",
             "confirm-result",
             "transition",
             "season-transition",
@@ -1263,9 +1265,10 @@ class CalendarTourService:
             if persist and cp != previous_cp:
                 replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp, _repository=self.repository)
             ctx = (*ctx[:4], cp, *ctx[5:])
-        if command.action == "resolve-group-tie":
-            from beta_engine.application.calendar_native_groups import apply_group_tie
-            return apply_group_tie(session, ctx, state, authority, command, persist=persist, _repository=self.repository)
+        if command.action in {"resolve-group-tie", "withdraw-group"}:
+            from beta_engine.application.calendar_native_groups import apply_group_tie, apply_group_withdrawal
+            apply = apply_group_tie if command.action == 'resolve-group-tie' else apply_group_withdrawal
+            return apply(session, ctx, state, authority, command, persist=persist, _repository=self.repository)
         if command.action in {"next-slot", "next-match"}:
             from beta_engine.application.calendar_global_slot_service import (
                 apply_global_slot,

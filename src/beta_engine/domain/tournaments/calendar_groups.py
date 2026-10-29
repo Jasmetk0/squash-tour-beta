@@ -44,6 +44,9 @@ from beta_engine.domain.tournaments.topology_authority import (
     TournamentTopologyAuthority,
     TournamentTopologyAuthorityBuilder,
 )
+from beta_engine.domain.tournaments.calendar_group_withdrawals import (
+    NativeGroupWalkover, group_resolved_matches, group_withdrawals,
+)
 
 
 class NativeGroupConfiguration(FrozenInput):
@@ -195,14 +198,33 @@ def group_plan(authority, matches, decisions=()):
 def group_progress(authority, slots):
     if not authority.draw:
         return {'standings': None, 'tie_case': None, 'bracket': None}
-    matches = {m.match_id: m for slot in slots for m in slot.accepted}
+    matches = group_resolved_matches(slots)
+    extra = {}
+    withdrawals = tuple(r for r in group_withdrawals(slots) if r.edition_id == authority.edition.edition_id)
+    if withdrawals:
+        extra['withdrawals'] = [r.model_dump(mode='json') for r in withdrawals]
+        extra['walkovers'] = [m.model_dump(mode='json') for m in matches.values()
+            if isinstance(m, NativeGroupWalkover) and m.edition_id == authority.edition.edition_id]
+    config = authority.edition.group_configuration
+    if config.format_kind == 'groups' and not config.played_group_win_points and not authority.tournament_fingerprint:
+        blocked_groups = {r.group_index for r in withdrawals}
+        eligible = []
+        for player in authority.draw.topology.group_slots:
+            scheduled = tuple(m for m in authority.draw.schedule.matches if player.player_id in (
+                m.top_player_id, m.bottom_player_id))
+            if (player.group_index not in blocked_groups and any(m.match_id in matches for m in scheduled)
+                and any(m.match_id not in matches for m in scheduled)):
+                eligible.append(player.player_id)
+        if eligible:
+            extra['withdrawal_available_player_ids'] = eligible
     try:
         standings = group_standings(authority, matches, group_decisions(slots, authority.edition.edition_id))
         bracket = group_bracket(authority, standings)
-        return {'standings': standings.model_dump(mode='json') if standings else None,
-                'tie_case': None, 'bracket': bracket.model_dump(mode='json') if bracket else None}
+        result = {'standings': standings.model_dump(mode='json') if standings else None,
+                  'tie_case': None, 'bracket': bracket.model_dump(mode='json') if bracket else None}
+        return {**result, **extra}
     except TournamentGroupStandingsUnresolvedTie as exc:
-        return {'standings': None, 'tie_case': exc.case.model_dump(mode='json'), 'bracket': None}
+        return {'standings': None, 'tie_case': exc.case.model_dump(mode='json'), 'bracket': None, **extra}
 
 
 class NativeGroupPointPolicy(FrozenInput):
@@ -240,7 +262,7 @@ class NativeGroupAward(FrozenInput):
 
 
 class NativeGroupTournamentResult(FrozenInput):
-    schema_version: Literal['calendar_group_tournament_result.v1'] = 'calendar_group_tournament_result.v1'
+    schema_version: Literal['calendar_group_tournament_result.v1', 'calendar_group_tournament_result.v2'] = 'calendar_group_tournament_result.v1'
     run_id: str
     branch_id: str
     tournament_id: str
@@ -251,6 +273,7 @@ class NativeGroupTournamentResult(FrozenInput):
     seed: int
     entrant_ids: tuple[str, ...]
     matches: tuple[CalendarContinuationMatch, ...]
+    walkovers: tuple[NativeGroupWalkover, ...] = Field(default=(), exclude_if=lambda value: not value)
     edition_authority_fingerprint: str
     prepared_policy: NativeGroupPointPolicy
     prepared_awards: tuple[NativeGroupAward, ...]
@@ -258,6 +281,12 @@ class NativeGroupTournamentResult(FrozenInput):
     knockout_bracket: TournamentHybridKnockoutBracketAuthority | None
     winner_player_id: str | None
     scope: Literal['configured_tour_groups'] = 'configured_tour_groups'
+
+    @model_validator(mode='after')
+    def versioned_nonplayed(self):
+        if self.walkovers and self.schema_version != 'calendar_group_tournament_result.v2':
+            raise ValueError('Historical group result cannot acquire nonplayed matches')
+        return self
 
     @property
     def fingerprint(self):
@@ -272,7 +301,7 @@ class NativeGroupTournamentResult(FrozenInput):
 
 def completed_group_result(authority, slots, *, owner=None):
     eid = authority.edition.edition_id
-    accepted = {m.match_id: m for slot in slots for m in slot.accepted}
+    accepted = group_resolved_matches(slots)
     decisions = group_decisions(slots, eid)
     try:
         plan = group_plan(authority, accepted, decisions)
@@ -312,13 +341,16 @@ def completed_group_result(authority, slots, *, owner=None):
     source = next(s.source_saved_head for s in first.scheduled if s.edition_id == eid)
     winner = (accepted[bracket.terminal_match_id].result.winner_player_id if bracket else
               standings.groups[0].rows[0].player_id if len(standings.groups) == 1 else None)
+    walkovers = tuple(accepted[mid] for mid, *_ in plan if isinstance(accepted[mid], NativeGroupWalkover))
     return NativeGroupTournamentResult(
+        schema_version='calendar_group_tournament_result.v2' if walkovers else 'calendar_group_tournament_result.v1',
         run_id=first.run_id, branch_id=owner or first.branch_id,
         tournament_id=eid, command_id='global-tournament:' + authority.execution_fingerprint,
         source_saved_head=source, source_checkpoint_fingerprint=first.source_checkpoint_fingerprint,
         week=first.week, seed=authority.edition.simulation_seed,
         entrant_ids=tuple(s.player_id for s in authority.draw.topology.group_slots),
-        matches=tuple(accepted[mid] for mid, *_ in plan),
+        matches=tuple(accepted[mid] for mid, *_ in plan if not isinstance(accepted[mid], NativeGroupWalkover)),
+        walkovers=walkovers,
         edition_authority_fingerprint=authority.execution_fingerprint,
         prepared_policy=policy, prepared_awards=tuple(sorted(awards, key=lambda a: a.player_id)),
         standings=standings, knockout_bracket=bracket, winner_player_id=winner,

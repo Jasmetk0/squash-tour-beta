@@ -439,7 +439,7 @@ def edition_results(authority, event):
     if authority.tournament_fingerprint != played_fingerprint:
         raise ValueError("Edition result is detached from played MatchEngine evidence")
     if (
-        event.schema_version not in {"calendar_followup_knockout.v5", "calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8", "calendar_group_tournament_result.v1"}
+        event.schema_version not in {"calendar_followup_knockout.v5", "calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8", "calendar_group_tournament_result.v1", "calendar_group_tournament_result.v2"}
         or event.edition_authority_fingerprint != authority.execution_fingerprint
     ):
         raise ValueError(
@@ -489,7 +489,7 @@ def edition_results(authority, event):
         "played": played_fingerprint,
     }
     if terminal:
-        inherited = event.schema_version in {"calendar_followup_knockout.v8", "calendar_group_tournament_result.v1"} and event.branch_id != authority.ranking_authority.branch_id
+        inherited = event.schema_version in {"calendar_followup_knockout.v8", "calendar_group_tournament_result.v1", "calendar_group_tournament_result.v2"} and event.branch_id != authority.ranking_authority.branch_id
         if event.run_id != authority.ranking_authority.run_id or event.source_saved_head != authority.played_saved_head or (event.branch_id != authority.ranking_authority.branch_id and not inherited):
             raise ValueError("Terminal Edition has a foreign played owner/source")
         from beta_engine.domain.rankings.calendar_terminal_result import CalendarInheritedTerminalRankingResult

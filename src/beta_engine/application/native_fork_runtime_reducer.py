@@ -524,10 +524,11 @@ def prepare_command(runtime, command, sources, *, saved_head, draft_version, is_
             cp,
             sources.opening,
         )
-        if command.action == "resolve-group-tie":
-            from beta_engine.application.calendar_native_groups import apply_group_tie
+        if command.action in {"resolve-group-tie", "withdraw-group"}:
+            from beta_engine.application.calendar_native_groups import apply_group_tie, apply_group_withdrawal
+            apply = apply_group_tie if command.action == 'resolve-group-tie' else apply_group_withdrawal
             captured = {}
-            tour, result = apply_group_tie(None, ctx, runtime.tour, authority, command, persist=False, _successor_out=captured)
+            tour, result = apply(None, ctx, runtime.tour, authority, command, persist=False, _successor_out=captured)
             candidate = cohere(captured['checkpoint'].runtime, tour=tour)
         elif command.action in {"next-slot", "next-match"}:
             from beta_engine.application.calendar_global_slot_service import prepare_global_slot

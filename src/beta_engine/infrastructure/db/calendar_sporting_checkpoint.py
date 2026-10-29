@@ -76,7 +76,7 @@ def parse_checkpoint_json(raw, *, _parsed_global_parts=None):
         for entry in body.get('events', ()):
             if not isinstance(entry, dict):
                 raise TypeError('Global checkpoint event must be a versioned object')
-            model = (GlobalSlot if entry.get('schema_version') in {'calendar_global_slot.v1', 'calendar_global_slot.v2'}
+            model = (GlobalSlot if entry.get('schema_version') in {'calendar_global_slot.v1', 'calendar_global_slot.v2', 'calendar_global_slot.v3'}
                 else CalendarNativeSportingWeek if entry.get('schema_version') == 'calendar_native_sporting_week.v1'
                 else CalendarFollowupKnockout)
             events.append(strict_part(entry, model.model_validate_json))

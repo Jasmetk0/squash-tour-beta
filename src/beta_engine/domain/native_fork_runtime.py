@@ -296,3 +296,17 @@ class ForkCompetitionView:
             "global_slots": (*previous[:index], slot, *previous[index + 1:]),
         })
         return ForkCompetitionView(runtime, self.original)
+
+    def with_group_withdrawal(self, index, slot):
+        previous = self.runtime.global_slots
+        if not 0 <= index < len(previous):
+            raise ValueError('Withdrawal slot is not owned by this fork')
+        old = previous[index]
+        if (slot.model_copy(update={'schema_version': old.schema_version,
+                'group_withdrawals': old.group_withdrawals}) != old
+            or slot.group_withdrawals[:-1] != old.group_withdrawals
+            or len(slot.group_withdrawals) != len(old.group_withdrawals) + 1):
+            raise ValueError('Withdrawal must only append one administrative record')
+        runtime = self.runtime.model_copy(update={'global_slots': (
+            *previous[:index], slot, *previous[index+1:])})
+        return ForkCompetitionView(runtime, self.original)

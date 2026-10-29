@@ -9,7 +9,7 @@ import { useAdminTime } from '../admin/AdminTimeContext'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import {
-  parseCareerCompletion, parseCareerOutcome, parseCareerPage, parseCareerSeason,
+  hasAmbiguousPlayerLinkParams, parseCareerCompletion, parseCareerOutcome, parseCareerPage, parseCareerSeason,
   parsePlayerRally, REPLAY_PAGE_SIZE, validPlayerReplayPagePair,
 } from './savedPlayerCareerNavigation'
 
@@ -37,11 +37,12 @@ function SavedPlayerMatchReplay(): JSX.Element {
   const linkedBranch = params.get('replayBranch')
   const linkedHead = params.get('replayHead')
   const requestedRally = parsePlayerRally(params.get('rally'))
+  const ambiguousReplayUrl = hasAmbiguousPlayerLinkParams(params, ['replayBranch', 'replayHead', 'rally'])
   // A non-default deep link is never allowed to resolve against an implicit new HEAD.
   // The API itself reads only the *current* Saved HEAD, not an arbitrary revision.
   const hasLinkScope = linkedBranch !== null || linkedHead !== null || params.has('rally')
-  const exactLink = !hasLinkScope ||
-    (Boolean(linkedBranch && linkedHead) && linkedBranch === branchId && linkedHead === savedHead)
+  const exactLink = !ambiguousReplayUrl && (!hasLinkScope ||
+    (Boolean(linkedBranch && linkedHead) && linkedBranch === branchId && linkedHead === savedHead))
   const [rallyInput, setRallyInput] = useState('')
   const index = (requestedRally ?? 1) - 1
   const offset = Math.floor(index / REPLAY_PAGE_SIZE) * REPLAY_PAGE_SIZE
@@ -87,6 +88,7 @@ function SavedPlayerMatchReplay(): JSX.Element {
   })
   const namesData = namesQuery.data
   const names = namesQuery.isSuccess && !namesQuery.isFetching && namesData &&
+    namesData.source === 'selected_branch_saved_revision' &&
     namesData.saved_revision_id === savedHead && namesData.run_id === runId &&
     namesData.branch_id === branchId && namesData.requested_ids?.join('|') === ids.join('|') &&
     Array.isArray(namesData.players) &&
@@ -144,7 +146,11 @@ function SavedPlayerMatchReplay(): JSX.Element {
       {requestedRally === null && <p role="alert">{cs
         ? 'Neplatné číslo výměny v odkazu.' : 'Invalid rally number in the link.'}{' '}
         <button type="button" onClick={moveToCurrent}>{cs ? 'Otevřít aktuální první výměnu' : 'Open current first rally'}</button></p>}
-      {!exactLink && requestedRally !== null && <p role="alert">{cs
+      {ambiguousReplayUrl && requestedRally !== null && <p role="alert">{cs
+        ? 'Nejednoznačný odkaz: opakované parametry Branch, Saved HEAD nebo výměny.'
+        : 'Ambiguous link: duplicated Branch, Saved HEAD or rally parameters.'}{' '}
+        <button type="button" onClick={moveToCurrent}>{cs ? 'Otevřít aktuální zdroj' : 'Open current source'}</button></p>}
+      {!exactLink && !ambiguousReplayUrl && requestedRally !== null && <p role="alert">{cs
         ? 'Odkaz patří jiné Branch nebo Saved HEAD. Archiv jiného zdroje zde nelze načíst.'
         : 'This link belongs to a different Branch or Saved HEAD. A foreign archive cannot be loaded here.'}{' '}
         <button type="button" onClick={moveToCurrent}>{cs ? 'Přejít na aktuální zdroj' : 'Open current Saved HEAD'}</button></p>}

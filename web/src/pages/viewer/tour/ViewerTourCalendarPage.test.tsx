@@ -8,6 +8,7 @@ import type { ViewerCalendarEvent, ViewerRunCalendar } from '../../../api/types'
 import { LanguageProvider, useLanguage } from '../../../i18n/LanguageContext'
 import { expectNoForbiddenViewerActions } from '../../../test/viewerTestUtils'
 import { writeViewerActiveProductRunId } from '../../../viewer/activeProductRun'
+import { ViewerContextProvider } from '../../../viewer/ViewerContext'
 import { ViewerTourCalendarPage } from './ViewerTourCalendarPage'
 
 const api = vi.hoisted(() => ({
@@ -57,7 +58,7 @@ function mount() {
   const result = render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <LanguageProvider><SwitchLanguage /><ViewerTourCalendarPage /></LanguageProvider>
+        <LanguageProvider><ViewerContextProvider><SwitchLanguage /><ViewerTourCalendarPage /></ViewerContextProvider></LanguageProvider>
       </MemoryRouter>
     </QueryClientProvider>
   )

@@ -53,14 +53,19 @@ export function countryRosterReturnPath(
 /** Reject external, cross-Run, non-country, historical and cross-country redirects. */
 export function safeCountryRosterReturn(
   value:string|null,runId:string,countryCode:string|null,
+  branchId:string|null,savedHead:string|null,
 ):string|null{
-  if(!value||value.length>2500||!/^[A-Z]{3}$/.test(countryCode??''))return null
+  if(!value||value.length>2500||!runId||!branchId||!savedHead||
+    !/^[A-Z]{3}$/.test(countryCode??''))return null
   const exact='/admin/runs/'+encodeURIComponent(runId)+'/world/countries/'+countryCode
+  const scope=JSON.stringify([runId,branchId,savedHead,countryCode])
   try {
     const url=new URL(value,'https://country-roster.local')
     if(url.origin!=='https://country-roster.local'||url.username||url.password||
       url.pathname!==exact||!value.startsWith(exact+'?')||
       url.searchParams.get('tab')!=='players'||
+      url.searchParams.getAll('spScope').length!==1||
+      url.searchParams.get('spScope')!==scope||
       url.searchParams.has('revision')||url.hash)return null
     return url.pathname+url.search
   }catch{return null}

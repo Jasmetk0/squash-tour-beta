@@ -38,7 +38,9 @@ export function validCountryStandingPage(
     d.offset!==s.offset||d.limit!==COUNTRY_STANDINGS_PAGE_SIZE||
     !summaryCounts.every(k=>count(d[k]))||!Array.isArray(d.players)||
     typeof d.has_more!=='boolean')return false
-  if(d.country_titles>d.published_event_count||
+  if((d.calendar_status==='empty'&&
+      (d.published_event_count!==0||d.total_players!==0))||
+    d.country_titles>d.published_event_count||
     d.country_runner_up_finishes>d.published_event_count||
     d.total_players>d.country_titles+d.country_runner_up_finishes+
       d.country_played_wins+d.country_played_losses+

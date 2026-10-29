@@ -112,3 +112,25 @@ def test_full_57_match_aggregate_survives_three_evidence_pages(monkeypatch):
     assert [len(x.evidence) for x in (first,middle,last)]==[25,25,7]
     assert first.has_more and middle.has_more and not last.has_more
     assert len({m.match_id for part in (first,middle,last) for m in part.evidence})==57
+
+
+def test_summary_and_beyond_end_page_keep_full_record_without_inventing_evidence(monkeypatch):
+    """A period record is calculated before evidence pagination, not from shown rows."""
+    rows=[row(f"m-{i:03d}","2000/2001",1+(i%61),"P1",f"other-{i}")
+          for i in range(31)]
+    summary=read(monkeypatch,rows,key=None,offset=0,limit=25)
+    assert summary.selected_record is None
+    assert summary.records[0].value==31
+    assert summary.evidence_count==0 and summary.evidence==()
+    assert not summary.has_more
+
+    outside=read(monkeypatch,rows,key="played_wins",offset=50,limit=25)
+    assert outside.selected_record=="played_wins"
+    assert outside.records==summary.records
+    assert outside.period_played_matches==31
+    assert outside.evidence_count==31
+    assert outside.evidence==() and not outside.has_more
+
+    last=read(monkeypatch,rows,key="played_wins",offset=25,limit=25)
+    assert last.evidence_count==31 and len(last.evidence)==6
+    assert {m.match_id for m in last.evidence}=={f"m-{i:03d}" for i in range(25,31)}

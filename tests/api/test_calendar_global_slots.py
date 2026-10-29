@@ -1552,6 +1552,16 @@ def test_successful_global_save_seeds_next_checkpoint_decode(tmp_path, prepared_
             whole[1].week.__dict__['week'] = -1
             assert cache.decoded_global_tour_source(repository, record, unexpected_decode) == expected
         saved_view = inspect(server)
+        if not limited_budget:
+            # Two real committed Saves, then deterministically reverse their
+            # handoff completion order. A delayed older publisher may evict
+            # decode data; it must never select or authorize the older HEAD.
+            execute(server, command(saved_view, 'next-match', name='later-committed-save'))
+            newer = save_tour(server)
+            saved_view = inspect(server)
+            assert saved_view['saved_head_revision_id'] == newer['revision_id']
+            cache.remember_committed_global_sources(repository, record, expected)
+            assert inspect(server) == saved_view
     # A new server/repository and new SQLite connections have no decode cache.
     with ApiServer(database_url=f'sqlite:///{path}') as restarted:
         assert inspect(restarted) == saved_view

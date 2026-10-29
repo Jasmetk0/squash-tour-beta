@@ -300,7 +300,7 @@ describe('Country Saved roster server-side filters (mock HTTP)',()=>{
     expect(screen.getByRole('textbox',{name:'Country roster page number'})).toHaveValue('2')
     expect(screen.getByRole('link',{name:'Alpha Player 030'})).toBeInTheDocument()
     expect(calls().length).toBeGreaterThan(before)
-    expect(calls().at(-1)?.[3]).toMatchObject({
+    expect(calls()[calls().length-1][3]).toMatchObject({
       search:'Alpha',status_filter:'',include_prepared:false,offset:25,
     })
     fireEvent.click(screen.getByRole('button',{name:'Browser Back'}))

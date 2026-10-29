@@ -9,6 +9,7 @@ import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
+import {safeCountryRosterReturn} from './countrySavedRosterPermalink'
 
 export function SavedPlayerIdentityPage(): JSX.Element {
   const { runId = '', playerId = '' } = useParams()
@@ -44,6 +45,8 @@ export function SavedPlayerIdentityPage(): JSX.Element {
     q.data.saved_revision_id === savedHead && q.data.player_id === playerId
   const profile = scoped ? q.data : null
   const player = profile?.identity
+  const countryReturn = safeCountryRosterReturn(searchParams.get('fromCountry'),
+    runId,player?.country_code??null)
   return <section className="panel run-home">
     <div className="page-intro">
       <p className="eyebrow">PRODUCT RUN · SAVED PLAYER PROFILE</p>
@@ -150,6 +153,8 @@ export function SavedPlayerIdentityPage(): JSX.Element {
             : 'Source: verified Saved Revision. Excludes unpublished tournaments, legacy career, attributes and other Branches.'}</p>
         </>}
       </>}
+    {countryReturn&&<p><Link to={countryReturn}>{cs
+      ? '← Zpět na filtrovanou soupisku země' : '← Back to filtered country roster'}</Link></p>}
     <p><Link to={'/admin/runs/' + encodeURIComponent(runId) + '/players'}>{cs ? '← Zpět na Hráče' : '← Back to Players'}</Link></p>
     <Link to={'/admin/runs/' + encodeURIComponent(runId)}>{cs ? '← Domů do Runu' : '← Back to Run Home'}</Link>
   </section>

@@ -10,6 +10,14 @@ import { formatApiError } from '../utils/apiErrors'
 
 const PAGE_SIZE = 25
 
+/** Strictly bounded, one-based navigation. Never request an invalid server offset. */
+function validatedPage(raw: string, pages: number): number | null {
+  if (!Number.isSafeInteger(pages) || pages < 1 || pages > 1_000_000 ||
+      !/^[1-9]\\d{0,6}$/.test(raw)) return null
+  const value = Number(raw)
+  return value <= pages ? value - 1 : null
+}
+
 type Props = {
   runId: string
   branchId: string
@@ -68,15 +76,20 @@ function ScopedCountryRoster({
   const sourceKey = JSON.stringify([runId, branchId, savedHead, countryCode])
   const pageKey = JSON.stringify([sourceKey, filters.search, filters.status, includePrepared])
   const [pageSelection, setPageSelection] = useState({ sourceKey: pageKey, page: 0 })
+  const [pageInput, setPageInput] = useState({ sourceKey: pageKey, value: '1' })
   // Changes to source, search, exact status or prepared visibility reset the cursor
   // in the same render: never request offset 25 from a new filtered result.
   const page = pageSelection.sourceKey === pageKey ? pageSelection.page : 0
+  const jump = pageInput.sourceKey === pageKey ? pageInput.value : '1'
+  const movePage = (next: number) => {
+    setPageSelection({ sourceKey: pageKey, page: next })
+    setPageInput({ sourceKey: pageKey, value: String(next + 1) })
+  }
   const applyFilters = (next: typeof filters) => {
     setFilters(next)
-    setPageSelection({
-      sourceKey: JSON.stringify([sourceKey, next.search, next.status, includePrepared]),
-      page: 0,
-    })
+    const nextKey = JSON.stringify([sourceKey, next.search, next.status, includePrepared])
+    setPageSelection({ sourceKey: nextKey, page: 0 })
+    setPageInput({ sourceKey: nextKey, value: '1' })
   }
   const offset = page * PAGE_SIZE
   const enabled = Boolean(runId && branchId && savedHead && countryCode)
@@ -99,6 +112,7 @@ function ScopedCountryRoster({
   const data = correct && !q.isFetching ? q.data : null
   const pageCount = data ? Math.ceil(data.total/PAGE_SIZE) : 0
   const outOfRange = Boolean(data && page > 0 && offset >= data.total)
+  const targetPage = validatedPage(jump, pageCount)
   return <section className="section-subtle run-world-country-roster"
     aria-label="Run World canonical country players">
     <h4>{cs ? 'Uložení hráči země' : 'Saved country players'}</h4>
@@ -142,8 +156,10 @@ function ScopedCountryRoster({
       <input type="checkbox" checked={includePrepared}
         onChange={e=>{
           setIncludePrepared(e.target.checked)
-          setPageSelection({ sourceKey: JSON.stringify([sourceKey, filters.search,
-            filters.status, e.target.checked]), page: 0 })
+          const nextKey = JSON.stringify([sourceKey, filters.search,
+            filters.status, e.target.checked])
+          setPageSelection({ sourceKey: nextKey, page: 0 })
+          setPageInput({ sourceKey: nextKey, value: '1' })
         }} />
       {' '}{cs
         ? 'Výslovně zobrazit také uložené připravené prospekty (mohou být z budoucnosti)'
@@ -159,12 +175,18 @@ function ScopedCountryRoster({
       <p role="status">{cs ? 'Hráčů v uloženém inventáři země' : 'Saved players in this country'}:
         {' '}<strong>{data.total.toLocaleString(cs?'cs-CZ':'en-US')}</strong>
         {' '}· {cs?'Zobrazeno':'Showing'} {data.players.length}
+        {!outOfRange && data.total>0 && <>
+          {' '}· {cs?'Položky':'Rows'} {offset+1}–{offset+data.players.length}
+          {' '}{cs?'z':'of'} {data.total.toLocaleString(cs?'cs-CZ':'en-US')}
+        </>}
       </p>
       {outOfRange && <p role="alert">{cs
         ? 'Zvolená stránka již v tomto uloženém výběru neexistuje.'
         : 'The selected page no longer exists in this Saved result.'}{' '}
-        <button type="button" onClick={()=>setPageSelection({sourceKey:pageKey,page:0})}>
-          {cs?'První platná stránka':'First valid page'}</button></p>}
+        <button type="button" onClick={()=>movePage(0)}>
+          {cs?'První platná stránka':'First valid page'}</button>{' '}
+        <button type="button" onClick={()=>movePage(Math.max(0,pageCount-1))}>
+          {cs?'Poslední platná stránka':'Last valid page'}</button></p>}
       {!outOfRange && <div className="table-responsive"><table aria-label="Saved country roster">
         <thead><tr><th>{cs?'Hráč':'Player'}</th><th>{cs?'Věk':'Age'}</th>
           <th>Status</th><th>OVR</th><th>Potential OVR</th><th>Ranking / NR</th>
@@ -179,12 +201,25 @@ function ScopedCountryRoster({
       {data.total===0 && <p role="status">{cs
         ? 'Tato země nemá v uloženém inventáři odpovídající hráče. Nejde o odhad talentů.'
         : 'No saved player identities match this country. This is not a talent forecast.'}</p>}
-      <div className="actions">
-        <button type="button" disabled={page===0||q.isFetching||outOfRange} onClick={()=>setPageSelection({ sourceKey:pageKey, page: Math.max(0,page-1) })}>
+      <div className="actions" aria-label="Country roster pagination">
+        <button type="button" disabled={page===0||q.isFetching} onClick={()=>movePage(0)}>
+          {cs?'První':'First'}</button>
+        <button type="button" disabled={page===0||q.isFetching} onClick={()=>movePage(Math.max(0,page-1))}>
           {cs?'← Předchozí':'← Previous'}</button>
-        <span>{cs?'Strana':'Page'} {pageCount===0?0:page+1} / {pageCount}</span>
-        <button type="button" disabled={!data.has_more||q.isFetching||outOfRange} onClick={()=>setPageSelection({ sourceKey:pageKey, page: page+1 })}>
+        <span aria-live="polite">{cs?'Strana':'Page'} {pageCount===0?0:page+1} / {pageCount}</span>
+        <button type="button" disabled={!data.has_more||q.isFetching||outOfRange} onClick={()=>movePage(page+1)}>
           {cs?'Další →':'Next →'}</button>
+        <button type="button" disabled={pageCount===0||page>=pageCount-1||q.isFetching}
+          onClick={()=>movePage(pageCount-1)}>{cs?'Poslední':'Last'}</button>
+        <label>{cs?'Přejít na stránku':'Go to page'}{' '}
+          <input aria-label="Country roster page number" inputMode="numeric"
+            value={jump} disabled={pageCount===0||q.isFetching}
+            onChange={e=>setPageInput({sourceKey:pageKey,value:e.target.value})}
+            style={{width:'5rem'}} />
+        </label>
+        <button type="button" disabled={targetPage===null||targetPage===page||outOfRange||q.isFetching}
+          onClick={()=>{if(targetPage!==null)movePage(targetPage)}}>
+          {cs?'Přejít':'Go'}</button>
       </div>
     </>}
     <p className="status">{cs

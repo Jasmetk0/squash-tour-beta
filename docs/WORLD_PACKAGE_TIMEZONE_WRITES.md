@@ -46,3 +46,9 @@ boundary cases passed together in 88.38 seconds, including all five new
 regressions. Scoped E9/F/I lint, Python compilation and whitespace checks pass.
 Full-file Ruff additionally reports five unchanged baseline warnings outside
 the changed code; this fix does not broaden into their cleanup.
+
+The Fast CI security path filter now watches the registry service and its new
+regression module. The Python 3.12 security job explicitly runs both the existing
+filesystem-boundary suite and the new temporary-write tests under the same
+acceptance event. All 77 selected filesystem/regression/CI-policy tests pass
+locally; hosted execution must be confirmed, rather than treating a skip as proof.

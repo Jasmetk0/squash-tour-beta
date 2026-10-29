@@ -70,6 +70,8 @@ jobs:
             world_package_security:
               - '.github/workflows/ci.yml'
               - 'src/beta_engine/infrastructure/world_package_storage.py'
+              - 'src/beta_engine/application/world_package_countries_service.py'
+              - 'tests/application/test_timezone_registry_atomic_write.py'
               - 'tests/application/test_codeql_security_boundaries.py'
             backend_core:
               - 'config/world_packages/**'
@@ -113,6 +115,7 @@ jobs:
         run: |
           GITHUB_EVENT_NAME=world_package_security_acceptance \
             python -m pytest tests/application/test_codeql_security_boundaries.py \
+            tests/application/test_timezone_registry_atomic_write.py \
             --maxfail=1 --durations=10
 
   backend-tests:

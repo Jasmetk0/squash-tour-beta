@@ -7,6 +7,8 @@ No instrumentation is installed in timing mode. No authority gate is bypassed.
 
 import argparse
 import cProfile
+from dataclasses import fields, is_dataclass
+from enum import Enum
 import functools
 import gc
 import hashlib
@@ -51,6 +53,12 @@ def retained_bytes(root):
             pending.append(value.__dict__)
             for slot in ('__pydantic_extra__', '__pydantic_private__', '__pydantic_fields_set__'):
                 pending.append(getattr(value, slot, None))
+        elif isinstance(value, Enum):
+            pending.extend((value.name, value.value))
+        elif is_dataclass(value) and not isinstance(value, type):
+            pending.extend(getattr(value, field.name) for field in fields(value))
+            if hasattr(value, '__dict__'):
+                pending.append(value.__dict__)
     return size
 
 

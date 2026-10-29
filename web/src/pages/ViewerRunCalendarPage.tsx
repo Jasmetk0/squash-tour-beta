@@ -258,8 +258,12 @@ export function ViewerRunCalendarPage(): JSX.Element {
   )
   const publicationPageSize = 20
   const publicationPageCount = Math.ceil(publicationOnlyWeeks.length / publicationPageSize)
+  // An empty candidate list during async reads does not prove page 2 is absent.
+  // Only call an in-range positive page unavailable after all readers settle.
+  const publicationSourcesLoading = calendarQuery.isLoading ||
+    rankingHistoryQuery.isLoading || finalsRaceQuery.isLoading
   const invalidPublicationPage = publicationPage === null ||
-    publicationPage > Math.max(1, publicationPageCount)
+    (!publicationSourcesLoading && publicationPage > Math.max(1, publicationPageCount))
   const visiblePublicationWeeks = invalidPublicationPage || publicationPage === null ? []
     : publicationOnlyWeeks.slice(
       (publicationPage - 1) * publicationPageSize,

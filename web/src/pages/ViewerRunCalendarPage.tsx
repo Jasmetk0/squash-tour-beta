@@ -8,7 +8,14 @@ import {
   getViewerTournamentHistory,
   listViewerOfficialRankingHistory
 } from '../api/client'
-import type { ViewerCalendarEvent, ViewerOfficialRankingHistoryItem, ViewerTournamentHistoryItem } from '../api/types'
+import type {
+  ViewerCalendarEvent,
+  ViewerFinalsRaceHistory,
+  ViewerOfficialRankingHistory,
+  ViewerOfficialRankingHistoryItem,
+  ViewerRunCalendar,
+  ViewerTournamentHistoryItem
+} from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -128,6 +135,64 @@ function isValidRankingPublication(
     item.week_ordinal <= publicHeadOrdinal
 }
 
+type PublicationOnlyWeek = {
+  season: string
+  week: number
+  ranking: boolean
+  finalsRace: boolean
+}
+
+function findPublicationOnlyWeeks(
+  calendar: ViewerRunCalendar | null,
+  rankings: ViewerOfficialRankingHistory | null,
+  race: ViewerFinalsRaceHistory | null,
+  runId: string,
+  branchId: string
+): PublicationOnlyWeek[] {
+  if (!calendar) return []
+  const labels = calendar.seasons.map((season) => String(season.season))
+  const byYear = new Map<number, string[]>()
+  for (const label of labels) {
+    const year = calendarSeasonStart(label)
+    if (year !== null) byYear.set(year, [...(byYear.get(year) ?? []), label])
+  }
+  const matchingSeason = (seasonIndex: number): string | null => {
+    const value = byYear.get(2000 + seasonIndex)
+    return value?.length === 1 ? value[0] : null
+  }
+  const eventWeeks = new Set(
+    calendar.seasons.flatMap((season) =>
+      season.events.map((event) => JSON.stringify([String(event.season), event.season_week]))
+    )
+  )
+  const result = new Map<string, PublicationOnlyWeek>()
+  const add = (season: string | null, week: number, kind: 'ranking' | 'finalsRace'): void => {
+    if (!season || !Number.isSafeInteger(week) || week < 1) return
+    const key = JSON.stringify([season, week])
+    if (eventWeeks.has(key)) return
+    const entry = result.get(key) ?? { season, week, ranking: false, finalsRace: false }
+    entry[kind] = true
+    result.set(key, entry)
+  }
+  for (const item of rankings?.publications ?? []) {
+    if (isValidRankingPublication(item, rankings?.public_head_ordinal ?? -1)) {
+      add(matchingSeason(item.season_index), item.week, 'ranking')
+    }
+  }
+  for (const item of race?.publications ?? []) {
+    if (matchesViewerSource(item, runId, branchId) &&
+      Number.isInteger(item.cutoff_season_index) && item.cutoff_season_index >= 0 &&
+      item.cutoff_season_index < 50 && Number.isInteger(item.cutoff_week) &&
+      item.cutoff_week >= 1 && item.cutoff_week <= 61) {
+      add(matchingSeason(item.cutoff_season_index), item.cutoff_week, 'finalsRace')
+    }
+  }
+  return [...result.values()].sort((a, b) =>
+    (calendarSeasonStart(b.season) ?? -1) - (calendarSeasonStart(a.season) ?? -1) ||
+    b.week - a.week
+  )
+}
+
 type ViewerSourceIdentity = { product_run_id: string; viewer_branch_id: string }
 
 function matchesViewerSource<T extends ViewerSourceIdentity>(
@@ -155,11 +220,32 @@ export function ViewerRunCalendarPage(): JSX.Element {
     enabled: Boolean(runId),
     retry: false
   })
+  const rankingHistoryQuery = useQuery({
+    queryKey: ['viewer-official-ranking-history', runId, officialBranchId],
+    queryFn: () => listViewerOfficialRankingHistory(runId),
+    enabled: Boolean(runId),
+    retry: false
+  })
+  const finalsRaceQuery = useQuery({
+    queryKey: ['viewer-week-finals-race-history', runId, officialBranchId],
+    queryFn: () => getViewerFinalsRace(runId),
+    enabled: Boolean(runId),
+    retry: false
+  })
 
   const calendar = matchesViewerSource(calendarQuery.data, runId, officialBranchId) ? calendarQuery.data : null
   const effectiveBranchId = officialBranchId || calendar?.viewer_branch_id || ''
   const history = effectiveBranchId && matchesViewerSource(historyQuery.data, runId, effectiveBranchId)
     ? historyQuery.data : null
+  const rankings = effectiveBranchId && matchesViewerSource(rankingHistoryQuery.data, runId, effectiveBranchId)
+    ? rankingHistoryQuery.data : null
+  const race = effectiveBranchId && matchesViewerSource(finalsRaceQuery.data, runId, effectiveBranchId)
+    ? finalsRaceQuery.data : null
+  const publicationOnlyWeeks = useMemo(
+    () => findPublicationOnlyWeeks(calendar, rankings, race, runId, effectiveBranchId),
+    [calendar, rankings, race, runId, effectiveBranchId]
+  )
+  const recentPublicationOnlyWeeks = publicationOnlyWeeks.slice(0, 20)
 
   const addressableEventIds = useMemo(
     () => uniquelyAddressableEventIds(flattenCalendarEvents(calendar?.seasons)),
@@ -226,6 +312,53 @@ export function ViewerRunCalendarPage(): JSX.Element {
               ]}
             />
           </>
+        ) : null}
+      </SectionCard>
+
+      <SectionCard title="Published weeks without scheduled events">
+        <p className="status">
+          Recent official ranking and Finals Race publication weeks that have no Saved Calendar event.
+          Open a season-specific Week Detail to inspect the source.
+        </p>
+        {rankingHistoryQuery.isLoading || finalsRaceQuery.isLoading ? (
+          <p className="status">Loading public publication history…</p>
+        ) : null}
+        {rankingHistoryQuery.error && !isApiNotFound(rankingHistoryQuery.error) ? (
+          <p className="error">Failed to load Official Ranking history: {formatApiError(rankingHistoryQuery.error)}</p>
+        ) : null}
+        {finalsRaceQuery.error && !isApiNotFound(finalsRaceQuery.error) ? (
+          <p className="error">Failed to load Finals Race history: {formatApiError(finalsRaceQuery.error)}</p>
+        ) : null}
+        {rankingHistoryQuery.data && !rankings ? (
+          <p className="error">Ranking History source does not match the Saved Calendar Viewer Branch.</p>
+        ) : null}
+        {finalsRaceQuery.data && !race ? (
+          <p className="error">Finals Race source does not match the Saved Calendar Viewer Branch.</p>
+        ) : null}
+        {calendar && !rankingHistoryQuery.isLoading && !finalsRaceQuery.isLoading &&
+          publicationOnlyWeeks.length === 0 ? (
+          <EmptyState message="No verified publication-only weeks are available for this Saved Calendar." />
+        ) : null}
+        {recentPublicationOnlyWeeks.length > 0 ? (
+          <ol className="item-list" aria-label="Viewer publication-only weeks">
+            {recentPublicationOnlyWeeks.map((entry) => (
+              <li key={JSON.stringify([entry.season, entry.week])}>
+                <Link to={viewerWeekSeasonPath(runId, entry.week, entry.season)}>
+                  {entry.season} · W{entry.week}
+                </Link>
+                {' · '}
+                {[
+                  entry.ranking ? 'Official Ranking' : null,
+                  entry.finalsRace ? 'Finals Race' : null
+                ].filter(Boolean).join(' + ')}
+              </li>
+            ))}
+          </ol>
+        ) : null}
+        {publicationOnlyWeeks.length > recentPublicationOnlyWeeks.length ? (
+          <p className="status">
+            Showing the {recentPublicationOnlyWeeks.length} most recent of {publicationOnlyWeeks.length} publication-only weeks.
+          </p>
         ) : null}
       </SectionCard>
 

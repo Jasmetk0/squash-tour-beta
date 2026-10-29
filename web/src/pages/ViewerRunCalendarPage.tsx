@@ -63,6 +63,12 @@ function calendarEventKey(event: Pick<ViewerCalendarEvent, 'event_id' | 'season'
   return JSON.stringify([event.event_id, String(event.season), event.season_week])
 }
 
+function uniquelyAddressableEventIds(events: ViewerCalendarEvent[]): Set<string> {
+  const counts = new Map<string, number>()
+  for (const event of events) counts.set(event.event_id, (counts.get(event.event_id) ?? 0) + 1)
+  return new Set([...counts].filter(([, count]) => count === 1).map(([id]) => id))
+}
+
 function canonicalPublishedResults(
   events: ViewerCalendarEvent[],
   history: ViewerTournamentHistoryItem[]
@@ -120,6 +126,10 @@ export function ViewerRunCalendarPage(): JSX.Element {
   const history = effectiveBranchId && matchesViewerSource(historyQuery.data, runId, effectiveBranchId)
     ? historyQuery.data : null
 
+  const addressableEventIds = useMemo(
+    () => uniquelyAddressableEventIds(flattenCalendarEvents(calendar?.seasons)),
+    [calendar?.seasons]
+  )
   const resultByEventKey = useMemo(
     () => canonicalPublishedResults(
       flattenCalendarEvents(calendar?.seasons), history?.tournaments ?? []
@@ -216,7 +226,11 @@ export function ViewerRunCalendarPage(): JSX.Element {
                       {' · '}
                       <Link to={viewerWeekSeasonPath(runId, event.season_week, event.season)}>Open week detail</Link>
                       {' · '}
-                      <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
+                      {addressableEventIds.has(event.event_id) ? (
+                        <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
+                      ) : (
+                        <span className="status">Tournament detail unavailable for a reused event ID.</span>
+                      )}
                     </p>
                   </li>
                 )
@@ -298,7 +312,11 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
           <ul className="item-list" aria-label="Planned event source links">
             <li><Link to={viewerSeasonCalendarPath(runId)}>Season calendar</Link></li>
             <li><Link to={viewerWeekSeasonPath(runId, event.season_week, event.season)}>{`Week W${event.season_week}`}</Link></li>
-            <li><Link to={viewerTournamentDetailPath(runId, event.event_id)}>Tournament detail</Link></li>
+            {eventCandidates.length === 1 ? (
+              <li><Link to={viewerTournamentDetailPath(runId, event.event_id)}>Tournament detail</Link></li>
+            ) : (
+              <li className="status">Tournament detail unavailable for a reused event ID.</li>
+            )}
           </ul>
         ) : null}
       </SectionCard>
@@ -453,6 +471,10 @@ export function ViewerRunWeekPage(): JSX.Element {
       ? []
       : matchingWeekEvents.filter((event) => String(event.season) === selectedSeason),
     [matchingWeekEvents, selectedSeason]
+  )
+  const addressableEventIds = useMemo(
+    () => uniquelyAddressableEventIds(flattenCalendarEvents(calendar?.seasons)),
+    [calendar?.seasons]
   )
   const publishedByEventKey = useMemo(
     () => canonicalPublishedResults(
@@ -613,7 +635,11 @@ export function ViewerRunWeekPage(): JSX.Element {
                   <p>
                     <Link to={viewerPlannedEventContextPath(runId, event)}>Open planned event</Link>
                     {' · '}
-                    <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
+                    {addressableEventIds.has(event.event_id) ? (
+                        <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
+                      ) : (
+                        <span className="status">Tournament detail unavailable for a reused event ID.</span>
+                      )}
                   </p>
                 </li>
               )

@@ -1,3 +1,26 @@
+# Native Save performance candidate — 29 October 2026
+
+Verified base `buuk`: `edd237b7a2d5e1d69cf96aafce13799bf428253b`.
+#1660 and #1659 are merged; the older candidate/unmerged headings below are
+historical evidence, not the current merge inventory. This backend slice is
+PR #1662 on `feat/native-save-performance-20261029`. Independent Viewer PR
+#1661 and all `web/` files remain outside its scope.
+
+An actual HTTP/SQLite profile confirmed duplicate retained checkpoint copies
+in the successful Save handoffs. The bounded full-DTO adapter now references
+one retained complete-component value; the native reader can consume an
+already retained DTO while cold misses retain the original component route.
+All physical/source/dependency/math/post-write gates, whole-DTO reuse, legacy
+schemas, caller isolation, manual Save, sporting outcomes and audit remain.
+The unchanged 64 MiB budget measures input bytes, not process heap; actual
+reachable heap and RSS are measured separately. See `docs/NATIVE_SAVE_PERFORMANCE.md`
+for paired results, targeted regressions and the distinct adversarial review.
+Relevant final-head hosted gates, including unchanged W80/1,000 Chromium,
+are required before owner handoff; their exact inventory belongs to PR #1662.
+No merge, auto-merge or full pre-alpha/50-season certification is performed.
+
+---
+
 # Native Save decode continuity candidate — 29 October 2026
 
 Verified `buuk`: `fbe8e00c346b1de6de6d3144509a92592dec38d0`, owner merge of #1657.

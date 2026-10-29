@@ -10,12 +10,15 @@ Scope: read-only canonical Viewer Calendar, Planned Event and Week Detail in `we
 - Query keys include Viewer Branch identity, avoiding reusing an old branch's cached public data after a branch change.
 - Week navigation from the season timeline and planned event preserves the exact Saved season in an encoded `?season=` URL. When no active season is known and W occurs in multiple Saved seasons, the Viewer offers exact season links instead of combining historical events and ranking/Finals publications. A nonexistent explicit season fails closed; unknown/malformed calendar years are not inferred from a numeric prefix.
 - Within an otherwise matching Finals Race history response, a publication with a foreign Run or Branch identity is rejected individually. Legacy published ranking indices are interpreted against their original 2000-based season system only when the displayed calendar year is resolved.
+- Published tournament matches in the Viewer are joined by **(event ID, Saved season label, season week)**. Duplicate published history rows or indistinguishable duplicate calendar occurrences produce no authoritative champion/runner-up projection rather than picking one arbitrary row.
+- The Planned Event route retains backward-compatible bare event IDs only when exactly one event is found. When IDs are reused, it requires both `?season=` and `&week=` and offers occurrence links; incomplete or mismatched context fails closed. The calendar and week lists preserve these exact coordinates.
+- The separate Tournament Detail route accepts only an event ID, so links to it are intentionally withheld for reused IDs; this avoids misleading cross-season navigation until that separate route supports independently verified occurrence context. Duplicate display rows get stable React keys but are never treated as unique sporting sources.
 
 No API/backend/SQLite/command/write/revision or sporting logic is changed, and empty calendars do not invent sporting events.
 
 ## Test evidence and limitations
 
-Focused mocked-HTTP Vitest cases cover week 80, invalid/overflow week coordinates, foreign Run calendar, foreign Viewer Branch tournament/ranking sources, a reused event ID at a different week, season-specific Week links, overlapping season/week entries, invalid season query, and a foreign nested Finals Race publication. These are component contracts, not genuine backend, persistence or browser integration.
+Focused mocked-HTTP Vitest cases cover week 80, invalid/overflow week coordinates, foreign Run calendar, foreign Viewer Branch tournament/ranking sources, reused event IDs across seasons, distinct champion projections, exact-context Planned Event links and ambiguous bare links, nonexistent/partial coordinates, duplicate published source evidence, withheld unscoped Tournament Detail links, season-specific Week links, overlapping season/week entries, invalid season query, and a foreign nested Finals Race publication. These are component contracts, not genuine backend, persistence or browser integration.
 
 The connected GitHub environment did not provide a local runnable repo; **do not present this PR as ready for merge** without reviewing actual latest-head CI/frontend tests and applicable acceptance gates. This is a Draft PR for owner review and merge decision.
 

@@ -149,3 +149,35 @@ production HTTP/SQLite cases in 170.03s: actual append/late-write gates and chan
 ancestor rejection, metadata-only histories with complete physical gates,
 concurrent/stale/retry/rollback/rehashed slot rejection, and cached final replay
 with unchanged real-engine and read-only boundaries. No negative case was removed.
+
+## Component decode follow-up (29 October 2026)
+
+On head `238639cfb3176b95d563f19b6a05db771b6839ec`, the real group/W-O
+browser and HTTP matrices and the W80 final-week closing gate passed. The
+W80/1,000-player native Tour browser still exceeded its original 18-minute
+budget during the final Week Transition. That remains a failed gate.
+
+Profiling its retained actual database showed a subsequent Saved inspection
+spending 6.58 seconds strictly decoding the same checkpoint again and 3.37
+seconds in defensive-copy work (instrumented total: 17.42 seconds). The former
+same-read handoff did not seed the cross-read decode cache, whose whole-payload
+key also changed after a Tour-only Save even when the sporting owner did not.
+
+The internal authenticated-context reader now keys v13 checkpoint decode data
+by its complete actual component envelope plus Run/Branch scope. Strict model
+parsing and scope/hash checks run on misses; hits hash the complete component
+and return defensive copies. This shares the existing 64 MiB projection budget,
+with at most four entries, rather than adding another model cache. An optional
+same-read replay value may seed it only after its existing complete-value guard.
+Original match evidence and coupled Tour checks still run independently.
+Legacy schemas and the default decoder retain their original path. No cached
+value authenticates a Saved row, graph, owner, sporting result or new write.
+
+The final follow-up adds tests for changed actual data with an unchanged declared
+hash, repeated failed decodes, foreign ownership, nested caller mutation, byte
+and entry budgets, oversize bypass, and genuine SQLite/default-decoder equality.
+The focused dependency/decode/domain set passed all 49 cases in 31.69 seconds.
+Further real HTTP/SQLite withdrawal and corruption/rollback/retry cases and the
+complete unchanged W80/1,000 browser are being verified on this follow-up.
+Hosted checks on its final commit remain required before owner merge; the prior
+local browser pass and other green jobs do not substitute for that failed gate.

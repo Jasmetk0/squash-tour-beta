@@ -196,24 +196,21 @@ class CalendarTourService:
         from beta_engine.infrastructure.db.native_fork_source_projection import (
             decoded_global_tour_source,
         )
-        from beta_engine.infrastructure.db.calendar_native_competition import (
-            replayed_global_checkpoint_value, replayed_global_tour_value,
-        )
         payload = revision.saved_revision.payload
-        replayed_checkpoint = replayed_global_checkpoint_value(
-            payload, proofs, run_id=run_id, branch_id=branch_id,
+        global_components = payload.get('content', {})
+        current_global = (
+            global_components.get('calendar_player_sporting_checkpoint', {}).get('state', {}).get('schema_version') == 'calendar_sporting_checkpoint.v13'
+            and global_components.get('calendar_tour_authority', {}).get('state', {}).get('schema_version') == 'calendar_tour_authority.v5'
         )
-        replayed_tour = replayed_global_tour_value(
-            payload, proofs, run_id=run_id, branch_id=branch_id,
-        ) if replayed_checkpoint is not None else None
-        if replayed_checkpoint is not None and replayed_tour is not None:
-            # This same physical read already rebuilt both complete values.
+        if current_global:
+            # This same physical read authenticated the complete Saved owner.
             # The internal decoder rebinds the actual component hashes/scope
-            # and original match evidence. No cross-request copy/cache is
-            # needed for these private models owned by this one context.
+            # and original match evidence. Only the strict checkpoint decode
+            # survives Tour-only Saves, under complete-value binding and
+            # defensive copies within the existing bounded data-cache budget.
             saved_evidence, saved, signed = decode_prevalidated_calendar_sources(
                 payload, run_id=run_id, branch_id=branch_id,
-                _global_value_proofs=proofs,
+                _global_value_proofs=proofs, _repository=self.repository,
             )
         else:
             saved_evidence, saved, signed = decoded_global_tour_source(

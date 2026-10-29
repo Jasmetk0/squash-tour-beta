@@ -469,6 +469,14 @@ def test_replayed_tour_value_is_private_and_bound_to_complete_actual_state(tmp_p
         decoded = decode_prevalidated_calendar_sources(payload, **scope)
         reused = decode_prevalidated_calendar_sources(payload, **scope, _global_value_proofs=proofs)
         assert reused == decoded
+        cached = decode_prevalidated_calendar_sources(payload, **scope, _repository=repository)
+        assert cached == decoded
+        cached[1].__dict__['branch_id'] = 'mutated-private-copy'
+        metadata_changed = deepcopy(payload)
+        metadata_changed['run']['display_name'] = 'Independent current Saved metadata'
+        assert decode_prevalidated_calendar_sources(
+            metadata_changed, **scope, _repository=repository,
+        ) == decoded
         for part in ('run_id', 'branch_id'):
             assert replayed_global_checkpoint_value(payload, proofs, **{**scope, part: 'foreign'}) is None
         changed = deepcopy(payload)
@@ -479,6 +487,8 @@ def test_replayed_tour_value_is_private_and_bound_to_complete_actual_state(tmp_p
         assert replayed_global_checkpoint_value(changed, proofs, **scope) is None
         with pytest.raises(ValueError):
             decode_prevalidated_calendar_sources(changed, **scope, _global_value_proofs=proofs)
+        with pytest.raises(ValueError):
+            decode_prevalidated_calendar_sources(changed, **scope, _repository=repository)
         changed = deepcopy(payload)
         changed['content']['calendar_player_sporting_checkpoint']['fingerprint'] = '0' * 64
         assert replayed_global_checkpoint_value(changed, proofs, **scope) is None

@@ -8,6 +8,7 @@ retention and defensive copies isolate databases, requests and mutable model dat
 
 import hashlib
 from copy import deepcopy
+from types import SimpleNamespace
 
 from beta_engine.domain.run_revisions import canonical_json
 
@@ -71,6 +72,33 @@ def decoded_global_tour_source(repository, source, decode):
                 # complete physical Saved gate; cache hits bind its full bytes.
                 _prime_private_fingerprint(value, source.payload['content'][key]['fingerprint'])
     return result
+
+
+def decoded_global_checkpoint_component(repository, component, *, run_id, branch_id, decode):
+    """Strict v13 decode data bound to the complete actual component.
+
+    Tour-only Saves need not decode an unchanged 1,000-player checkpoint again.
+    This shares the existing 64 MiB budget and defensive copies. The caller's
+    full physical Saved, ownership, dependency and math gates stay mandatory.
+    """
+    def checked(source):
+        value = decode(source.payload['calendar_player_sporting_checkpoint'])
+        if (value.schema_version, value.run_id, value.branch_id, value.fingerprint) != (
+            'calendar_sporting_checkpoint.v13', run_id, branch_id, component['fingerprint'],
+        ):
+            raise ValueError('Prevalidated Saved sporting scope/hash changed')
+        return value
+
+    source = SimpleNamespace(run_id=run_id, branch_id=branch_id,
+        payload={'calendar_player_sporting_checkpoint': component})
+    value = _decoded_value(repository, source, checked,
+        cache_name='_global_tour_projection_cache', byte_limit=MAX_GLOBAL_TOUR_BYTES,
+        entry_limit=4)
+    # checked() bound the strict decode to this entire component. Every hit
+    # rehashes that full envelope and returns a defensive private copy.
+    from beta_engine.domain.tournaments.calendar_global_slots import _prime_private_fingerprint
+    _prime_private_fingerprint(value, component['fingerprint'])
+    return value
 
 
 def decoded_live_calendar_component(repository, *, run_id, branch_id, kind, raw, parse, _with_fingerprint=False):

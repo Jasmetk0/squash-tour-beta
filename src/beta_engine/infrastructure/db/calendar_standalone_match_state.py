@@ -410,7 +410,7 @@ def _parse_saved_calendar_match_evidence(payload: dict, *, run_id: str, branch_i
 
 
 def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
-                                         _global_value_proofs=None):
+                                         _global_value_proofs=None, _repository=None):
     """Decode an ALREADY authenticated Saved HEAD without a redundant replay.
 
     INTERNAL ONLY: its caller MUST first pass these exact immutable payload bytes
@@ -445,7 +445,15 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
         checkpoint = replayed_global_checkpoint_value(
             payload, _global_value_proofs, run_id=run_id, branch_id=branch_id,
         ) if _global_value_proofs is not None else None
-        if checkpoint is None:
+        if (_repository is not None and isinstance(cp_raw.get('state'), dict)
+            and cp_raw['state'].get('schema_version') == 'calendar_sporting_checkpoint.v13'):
+            from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_checkpoint_component
+            replayed = checkpoint
+            checkpoint = decoded_global_checkpoint_component(
+                _repository, cp_raw, run_id=run_id, branch_id=branch_id,
+                decode=lambda component: replayed if replayed is not None else parse_checkpoint_json(json.dumps(component['state'])),
+            )
+        elif checkpoint is None:
             checkpoint = parse_checkpoint_json(json.dumps(cp_raw["state"]))
         checkpoint_fingerprint = checkpoint.fingerprint
         if (checkpoint.run_id, checkpoint.branch_id, checkpoint_fingerprint) != (

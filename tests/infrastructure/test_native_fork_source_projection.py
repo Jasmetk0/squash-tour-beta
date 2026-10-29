@@ -81,3 +81,73 @@ def test_entry_and_byte_budgets_and_oversize_bypass(monkeypatch):
     assert repo._native_source_projection_cache == before
     decoded_original_source(repo, source("x" * 45), lambda src: [])
     assert sum(v[0] for v in repo._native_source_projection_cache.values()) <= 100
+
+
+def test_global_checkpoint_decode_binds_complete_values_and_isolates_nested_copies():
+    from copy import deepcopy
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_checkpoint_component
+
+    class Value:
+        schema_version = 'calendar_sporting_checkpoint.v13'
+        run_id = 'run'
+        branch_id = 'branch'
+
+        def __init__(self, body):
+            self.body = deepcopy(body)
+
+        @property
+        def fingerprint(self):
+            return canonical_hash(self.body)
+
+    body = {'nested': {'actual': [1, 2]}}
+    component = {'state': body, 'fingerprint': canonical_hash(body)}
+    repo, calls = repository(), []
+
+    def decode(raw):
+        calls.append(deepcopy(raw))
+        return Value(raw['state'])
+
+    def read(current=component, **scope):
+        return decoded_global_checkpoint_component(repo, current,
+            **({'run_id': 'run', 'branch_id': 'branch'} | scope), decode=decode)
+
+    first = read()
+    first.body['nested']['actual'].append('caller mutation')
+    assert read(deepcopy(component)).body == body
+    assert len(calls) == 1
+    with pytest.raises(ValueError, match='scope/hash'):
+        read(branch_id='foreign')
+    changed = deepcopy(component)
+    changed['state']['nested']['actual'].append(3)
+    for _ in range(2):
+        with pytest.raises(ValueError, match='scope/hash'):
+            read(changed)  # An unchanged declared hash cannot hide changed data.
+    changed['fingerprint'] = canonical_hash(changed['state'])
+    assert read(changed).body == changed['state']
+    assert read().body == body
+
+
+def test_global_checkpoint_decode_shares_existing_budget_and_bypasses_oversize(monkeypatch):
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+    from beta_engine.domain.run_packages import canonical_hash
+
+    repo = repository()
+    monkeypatch.setattr(cache, 'MAX_GLOBAL_TOUR_BYTES', 200)
+    def decode(raw):
+        return SimpleNamespace(schema_version='calendar_sporting_checkpoint.v13',
+            run_id='run', branch_id='branch', fingerprint=canonical_hash(raw['state']))
+    for index in range(8):
+        body = {'index': index}
+        component = {'state': body, 'fingerprint': canonical_hash(body)}
+        cache.decoded_global_checkpoint_component(repo, component,
+            run_id='run', branch_id='branch', decode=decode)
+    retained = repo._global_tour_projection_cache
+    assert len(retained) <= 4
+    assert sum(item[0] for item in retained.values()) <= 200
+    before = dict(retained)
+    body = {'oversize': 'x' * 201}
+    component = {'state': body, 'fingerprint': canonical_hash(body)}
+    cache.decoded_global_checkpoint_component(repo, component,
+        run_id='run', branch_id='branch', decode=decode)
+    assert retained == before

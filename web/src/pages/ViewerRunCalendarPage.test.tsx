@@ -416,7 +416,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     await overlappingWeekTwo()
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
 
-    expect(await screen.findByText(/This week occurs in multiple Saved seasons/)).toBeInTheDocument()
+    expect(await screen.findByText(/events or publications in multiple Saved seasons/)).toBeInTheDocument()
     expect(screen.queryByText('Gold Open')).not.toBeInTheDocument()
     expect(screen.queryByText('Next Season Gold')).not.toBeInTheDocument()
     expect(screen.queryByRole('link', {name: 'Ranking publication #4'})).not.toBeInTheDocument()
@@ -468,6 +468,92 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expectNoForbiddenViewerActions()
   })
 
+
+  it('opens a ranking-only week without requiring a scheduled tournament', async () => {
+    const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...ranking,
+      publications: [{...ranking.publications[0], week: 4, week_ordinal: 6}]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/4')
+
+    expect(await screen.findByRole('link', {name: 'Ranking publication #6'})).toHaveAttribute(
+      'href', '/viewer/runs/viewer-run-2d/rankings/6'
+    )
+    expect(screen.getByRole('link', {name: 'Week W4 · season 2028/2029'})).toHaveAttribute(
+      'href', '/viewer/runs/viewer-run-2d/weeks/4?season=2028%2F2029'
+    )
+    expect(screen.queryByRole('list', {name: 'Viewer week Saved Calendar events'})).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('opens a Finals Race-only week without requiring a scheduled tournament', async () => {
+    const race = await api.getViewerFinalsRace('viewer-run-2d')
+    api.getViewerFinalsRace.mockResolvedValue({
+      ...race,
+      publications: [{...race.publications[1], cutoff_week: 5}]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/5')
+
+    expect(await screen.findByRole('link', {
+      name: 'Open canonical Finals Race publication for this cutoff week'
+    })).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/race')
+    expect(screen.getByRole('link', {name: 'Week W5 · season 2029/2030'})).toHaveAttribute(
+      'href', '/viewer/runs/viewer-run-2d/weeks/5?season=2029%2F2030'
+    )
+    expect(screen.queryByRole('list', {name: 'Viewer week Saved Calendar events'})).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('requires season selection when a scheduled event and a different-season ranking share W2', async () => {
+    const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...ranking,
+      publications: [...ranking.publications, {...ranking.publications[0],
+        season_index: 29, week_ordinal: 65}]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
+
+    expect(await screen.findByText(/events or publications in multiple Saved seasons/)).toBeInTheDocument()
+    expect(screen.queryByText('Gold Open')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name:'Ranking publication #4'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name:'Ranking publication #65'})).not.toBeInTheDocument()
+    expect(screen.getByRole('link', {name: 'Week W2 · season 2028/2029'})).toBeInTheDocument()
+    expect(screen.getByRole('link', {name: 'Week W2 · season 2029/2030'})).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('does not let a foreign nested Race publication create a season candidate', async () => {
+    const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...ranking,
+      publications: [{...ranking.publications[0], week: 4, week_ordinal: 6}]
+    })
+    const race = await api.getViewerFinalsRace('viewer-run-2d')
+    api.getViewerFinalsRace.mockResolvedValue({
+      ...race,
+      publications: [{...race.publications[1], cutoff_week: 4, viewer_branch_id: 'foreign-branch'}]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/4')
+
+    expect(await screen.findByRole('link', {name: 'Ranking publication #6'})).toBeInTheDocument()
+    expect(screen.queryByText(/events or publications in multiple Saved seasons/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name:'Open canonical Finals Race publication for this cutoff week'})).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('fails closed if two distinct Saved season labels map to one ranking year', async () => {
+    const calendar = await api.getViewerRunCalendar('viewer-run-2d')
+    api.getViewerRunCalendar.mockResolvedValue({
+      ...calendar,
+      seasons: [calendar.seasons[0], {...calendar.seasons[1], season:'2028'}]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2?season=2028%2F2029')
+
+    expect(await screen.findByText('Gold Open')).toBeInTheDocument()
+    expect(screen.queryByRole('link', {name:'Ranking publication #4'})).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
 
   async function reusedEventIdAcrossSeasons(): Promise<void> {
     const calendar = await api.getViewerRunCalendar('viewer-run-2d')

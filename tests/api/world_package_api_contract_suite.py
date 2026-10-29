@@ -1051,16 +1051,21 @@ def test_clone_official_world_duplicate_invalid_official_id_and_missing_name_rej
     assert not (worlds_root / "custom" / "missing_name_world").exists()
 
 
-def test_real_world_clone_is_not_supported(tmp_path) -> None:
+def test_missing_builtin_world_clone_fails_without_writing(tmp_path) -> None:
     countries_path = tmp_path / "countries.json"
     overrides_path = tmp_path / "manual_overrides.json"
     _write_fixture(countries_path, COUNTRIES_FIXTURE)
     _write_fixture(overrides_path, OVERRIDES_FIXTURE)
+    worlds_root = _copy_worlds_root(tmp_path)
+    source_files = {p.relative_to(worlds_root): p.read_bytes() for p in worlds_root.rglob("*") if p.is_file()}
 
+    # This isolated registry contains FAX only. The generic clone endpoint
+    # reports an unavailable built-in source through its structured result.
     with ApiServer(
-        database_url=f"sqlite:///{tmp_path / 'real-world-clone-rejected.db'}",
+        database_url=f"sqlite:///{tmp_path / 'missing-world-clone-rejected.db'}",
         countries_config_path=str(countries_path),
         manual_overrides_config_path=str(overrides_path),
+        worlds_root=str(worlds_root),
     ) as server:
         status, payload = _request(
             "POST",
@@ -1068,8 +1073,11 @@ def test_real_world_clone_is_not_supported(tmp_path) -> None:
             {"new_world_id": "real_copy", "name": "Real Copy", "dry_run": False},
         )
 
-    assert status == 404
-    assert "clone is not supported" in payload["detail"]
+    assert status == 200
+    assert payload["ok"] is False
+    assert any("missing, incomplete, or not cloneable" in error["message"] for error in payload["errors"])
+    assert not (worlds_root / "custom" / "real_copy").exists()
+    assert {p.relative_to(worlds_root): p.read_bytes() for p in worlds_root.rglob("*") if p.is_file()} == source_files
 
 
 def test_clone_official_world_filesystem_failure_cleans_temporary_package(tmp_path, monkeypatch) -> None:

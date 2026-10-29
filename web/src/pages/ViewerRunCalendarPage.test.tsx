@@ -416,6 +416,27 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expectNoForbiddenViewerActions()
   })
 
+  it('does not falsely reject page two while publication history is still loading', async () => {
+    await rankingOnlyPublicationWeeks(25)
+    const ranking = await api.listViewerOfficialRankingHistory('viewer-run-2d')
+    let releaseRanking!: (value: typeof ranking) => void
+    const delayedRanking = new Promise<typeof ranking>((resolve) => {
+      releaseRanking = resolve
+    })
+    api.listViewerOfficialRankingHistory.mockReturnValue(delayedRanking)
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar?pubPage=2')
+
+    expect(await screen.findByText('Season Opener')).toBeInTheDocument()
+    expect(screen.getByText('Loading public publication history…')).toBeInTheDocument()
+    expect(screen.queryByText(/Invalid or unavailable publication page/)).not.toBeInTheDocument()
+
+    releaseRanking(ranking)
+    const weeks = await screen.findByRole('list', {name: 'Viewer publication-only weeks'})
+    expect(within(weeks).getAllByRole('link')).toHaveLength(5)
+    expect(screen.queryByText(/Invalid or unavailable publication page/)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
   it.each([
     '?pubPage=0', '?pubPage=-1', '?pubPage=1.5', '?pubPage=abc',
     '?pubPage=9007199254740992', '?pubPage=1&pubPage=2', '?pubPage=3'

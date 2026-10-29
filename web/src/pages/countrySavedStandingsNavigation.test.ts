@@ -68,6 +68,9 @@ describe('exact Country standings page contract',()=>{
     const empty=data({total_players:0,players:[],has_more:false,
       country_played_wins:0})
     expect(validCountryStandingPage(empty,scope)).toBe(true)
+    expect(validCountryStandingPage({...empty,calendar_status:'empty',
+      published_event_count:0},scope)).toBe(true)
+    expect(validCountryStandingPage(data({calendar_status:'empty'}),scope)).toBe(false)
     expect(validCountryStandingPage(data({offset:50,players:[],has_more:false}),
       {...scope,offset:50})).toBe(true)
     expect(validCountryStandingPage(data({offset:50,players:[player(51)],has_more:false}),

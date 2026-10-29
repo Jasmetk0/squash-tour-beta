@@ -68,6 +68,7 @@ def observers(mode, root):
         return {}, []
     from beta_engine.infrastructure.db import native_fork_source_projection as cache
     from beta_engine.infrastructure.db import calendar_sporting_checkpoint as cp
+    from beta_engine.infrastructure.db import calendar_standalone_match_state as match_state
     from beta_engine.domain.tournaments import calendar_tour as tour
     from beta_engine.domain.tournaments import calendar_global_slots as slots
     from scripts.profile_native_full_simulation_metrics import measure_calls
@@ -76,9 +77,11 @@ def observers(mode, root):
         (cache, '_copy_decoded_value'), (cache, 'canonical_json'),
         (cache, 'decoded_global_checkpoint_component'), (cache, 'decoded_global_tour_source'),
         (cp, 'parse_checkpoint_json'), (tour, 'parse_tour_json'),
+        (match_state, '_parse_saved_calendar_match_evidence'),
     )}
     checkpoint_copies = counts['checkpoint_root_copies'] = {'calls': 0}
     whole_copies = counts['whole_dto_copies'] = {'calls': 0}
+    evidence_copies = counts['evidence_root_copies'] = {'calls': 0}
     original_copy = cache._copy_decoded_value
 
     def copied(value, *args, **kwargs):
@@ -87,6 +90,8 @@ def observers(mode, root):
                 for item in values)
         checkpoint_copies['calls'] += n
         whole_copies['calls'] += bool(n and isinstance(value, tuple) and len(value) == 3)
+        evidence_copies['calls'] += sum(str(getattr(item, 'schema_version', '')).startswith(
+            ('calendar_opening_knockout.', 'calendar_standalone_match.', 'calendar_match.')) for item in values)
         return original_copy(value, *args, **kwargs)
 
     cache._copy_decoded_value = copied

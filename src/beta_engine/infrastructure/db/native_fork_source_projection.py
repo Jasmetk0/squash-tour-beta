@@ -8,6 +8,8 @@ retention and defensive copies isolate databases, requests and mutable model dat
 
 import hashlib
 from copy import deepcopy
+from dataclasses import fields, is_dataclass
+from enum import Enum
 from types import SimpleNamespace
 from typing import NamedTuple
 
@@ -17,6 +19,7 @@ MAX_SOURCE_BYTES = 4 * 1024 * 1024
 MAX_SOURCES = 2
 MAX_GLOBAL_TOUR_BYTES = 64 * 1024 * 1024
 MAX_LIVE_COMPONENT_BYTES = 64 * 1024 * 1024
+_MODEL_SCALAR_TYPES = (type(None), str, int, bool, float, bytes)
 
 
 class _GlobalTourValue(NamedTuple):
@@ -84,7 +87,46 @@ def _same_checkpoint(value, retained):
     # preserves that model guard without another full canonical serialization.
     # Unknown types/subclasses retain the ordinary fingerprint check.
     return (type(value) is GlobalCompetitionCheckpoint
-        and type(retained) is GlobalCompetitionCheckpoint and value == retained)
+        and type(retained) is GlobalCompetitionCheckpoint and _same_model_value(value, retained))
+
+
+def _same_model_value(value, retained):
+    """Type-exact data equality; Python's True == 1 cannot preserve a hash.
+
+    Inspect every field, without an object-identity shortcut. Unknown value
+    types conservatively use the original fingerprint/copy path instead.
+    """
+    from pydantic import BaseModel
+
+    pending = [(value, retained)]
+    while pending:
+        left, right = pending.pop()
+        left_type = type(left)
+        if left_type is not type(right):
+            return False
+        if left_type in _MODEL_SCALAR_TYPES:
+            if left != right:
+                return False
+        elif isinstance(left, BaseModel):
+            pending.extend(((left.__dict__, right.__dict__),
+                (left.__pydantic_extra__, right.__pydantic_extra__),
+                (left.__pydantic_private__, right.__pydantic_private__)))
+        elif isinstance(left, dict):
+            if (left.keys() != right.keys() or any(type(key) is not str for key in left)
+                or any(type(key) is not str for key in right)):
+                return False
+            pending.extend((item, right[key]) for key, item in left.items())
+        elif isinstance(left, (tuple, list)):
+            if len(left) != len(right):
+                return False
+            pending.extend(zip(left, right))
+        elif isinstance(left, Enum):
+            pending.append((left.value, right.value))
+        elif is_dataclass(left) and not isinstance(left, type):
+            pending.extend((getattr(left, field.name), getattr(right, field.name)) for field in fields(left))
+        else:
+            return False
+    return True
 
 
 def _retained_global_other(repository, cache, source, result):
@@ -103,7 +145,7 @@ def _retained_global_other(repository, cache, source, result):
         # Reuse only complete equal decode data for the complete actual
         # component and scope. No source/math permission is retained here.
         if (isinstance(evidence, BaseModel) and type(result[0]) is type(evidence)
-            and result[0] == evidence):
+            and _same_model_value(result[0], evidence)):
             tour, tour_hints = _copy_decoded_value(result[2])
             return (evidence, tour), {**hints, **tour_hints}, evidence_key
     other, hints = _copy_decoded_value((result[0], result[2]))

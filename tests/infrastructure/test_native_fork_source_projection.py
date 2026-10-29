@@ -312,3 +312,20 @@ def test_equal_evidence_is_shared_privately_without_sharing_caller_mutations():
         changed.payload['content']['calendar_standalone_match']['state'])
     assert cache.decoded_global_tour_source(repo, changed, decode)[0].data == {'nested': [1, 2, 4]}
     assert len(repo._global_tour_projection_cache) <= 4
+
+
+def test_model_hash_reuse_requires_type_exact_values_and_handles_unknown_types():
+    from beta_engine.domain.rankings.official import FrozenInput
+    from beta_engine.infrastructure.db.native_fork_source_projection import _same_model_value
+
+    class Value(FrozenInput):
+        data: dict[str, list[int]]
+
+    original = Value(data={'nested': [1]})
+    for replacement in (True, 1.0):
+        changed = original.model_copy(deep=True)
+        changed.data['nested'][0] = replacement
+        assert original == changed  # Ordinary Pydantic/Python equality is insufficient.
+        assert not _same_model_value(original, changed)
+    assert _same_model_value(original, original.model_copy(deep=True))
+    assert not _same_model_value({'value': object()}, {'value': object()})

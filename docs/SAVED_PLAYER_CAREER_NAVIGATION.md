@@ -25,7 +25,7 @@ position never invoke simulation, Save, or mutation.
   The UI states this explicitly. Searches check event name/ID, match ID, opponent
   ID, verified opponent display name *from the same Saved HEAD*, and scoreline.
   A missing/foreign/invalid identity lookup falls back to the opponent ID.
-* Invalid URL parameters block the read and offer a safe reset; a valid numeric
+* Repeated URL keys are rejected, even if the first value is valid. Invalid URL parameters block the read and offer a safe reset; a valid numeric
   page beyond `total_results` offers the first and actual last page. Empty
   results never render `Page 1/0`. An empty local filter differs from no career,
   an unavailable identity, an HTTP failure, or a mismatched response.
@@ -55,7 +55,9 @@ share the same validated URL position and exact source. The active frame is
 marked `aria-current=step`. Existing selected frames, scores and players are
 displayed only from actual stored responses, never inferred. Valid real
 adjacent pages in the same archive are checked in both directions for scope,
-total, rally index and score/game continuity. An out-of-range empty page is
+total, complete immutable match metadata, rally index and score/game/set
+continuity. Opponent names require the verified exact Saved HEAD and identity
+source; otherwise raw IDs remain visible. An out-of-range empty page is
 **not** considered a neighbor; after returning to the first frame the actual
 last page remains accessible (regression following PR #1651).
 
@@ -70,7 +72,8 @@ missing identity and unavailable replay are distinct.
   use **mocked API responses** and cannot establish production persistence.
   Their cases include malformed URLs, missing/empty pages, filters, return
   context, source changes, delayed replies, frame boundaries, malformed rally,
-  out-of-range bookmark regression, CS/EN, and absent replay.
+  out-of-range bookmark regression, duplicate URL tokens, foreign identities,
+  cross-page match/set contradictions, CS/EN, and absent replay.
 * `scripts/saved_player_replay_browser_checks.py` runs through real Chromium,
   production HTTP and SQLite under the existing Saved player replay acceptance.
   It retains the actual canonical match, Saved HEAD, fork, score, archive,

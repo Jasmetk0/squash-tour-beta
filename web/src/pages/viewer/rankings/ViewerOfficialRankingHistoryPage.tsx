@@ -15,92 +15,56 @@ import {
   type RankingHistoryOrder
 } from './rankingHistoryBrowsing'
 
-const copy = {
-  cs: {
-    title: 'MSA žebříčky',
-    subtitle: 'Historické publikace Official Rankingu z vybrané Viewer Branch.',
-    section: 'Historie publikovaných Official Rankingů',
-    loading: 'Načítání historie Official Rankingů…',
-    context: 'Čeká se na platný kontext Product Runu a Viewer Branch.',
-    failed: 'Historii Official Rankingů se nepodařilo načíst:',
-    invalid: 'Vrácená historie neodpovídá zdroji nebo obsahuje neplatné či duplicitní publikace. Záznamy se nezobrazují.',
-    retry: 'Zkusit znovu',
-    empty: 'Pro tuto Viewer Branch zatím nejsou publikovány žádné Official Rankingy.',
-    none: 'Žádné publikace neodpovídají zvoleným filtrům.',
-    season: 'Sezona',
-    allSeasons: 'Všechny sezony',
-    week: 'Týden',
-    players: 'Hráči',
-    bestN: 'Historické Best N',
-    allBestN: 'Všechna Best N',
-    publication: 'Publikace',
-    ordinal: 'Ordinal',
-    policy: 'Policy ID',
-    search: 'Hledat policy_id nebo ordinal publikace',
-    searchHint: 'Hledání prochází jen metadata publikací, nikoli hráče uvnitř snapshotů.',
-    sort: 'Řazení',
-    newest: 'Od nejnovějších',
-    oldest: 'Od nejstarších',
-    clear: 'Vymazat filtry',
-    table: 'Historie publikací Official Rankingu',
-    open: 'Otevřít ranking týdne',
-    openSuffix: '',
-    published: 'Celkem publikací:',
-    showing: 'Zobrazeno',
-    of: 'z',
-    first: 'První stránka',
-    previous: 'Předchozí stránka',
-    next: 'Další stránka',
-    last: 'Poslední stránka',
-    page: 'Stránka',
-    jumpLabel: 'Přejít na stránku',
-    jump: 'Přejít',
-    invalidJump: 'Zadej celé číslo existující stránky.'
-  },
-  en: {
-    title: 'MSA Rankings',
-    subtitle: 'Historically faithful Official Ranking publications from the selected Viewer Branch.',
-    section: 'Official Ranking publication history',
-    loading: 'Loading Official Ranking history…',
-    context: 'Waiting for a valid Product Run and Viewer Branch context.',
-    failed: 'Failed to load Official Ranking history:',
-    invalid: 'The returned history does not match this source or contains invalid or duplicate publications. No records are shown.',
-    retry: 'Retry read',
-    empty: 'No Official Rankings have been published for this Viewer Branch yet.',
-    none: 'No publications match the selected filters.',
-    season: 'Season',
-    allSeasons: 'All seasons',
-    week: 'Week',
-    players: 'Players',
-    bestN: 'Historical Best N',
-    allBestN: 'All Best N',
-    publication: 'Publication',
-    ordinal: 'Ordinal',
-    policy: 'Policy ID',
-    search: 'Search policy_id or publication ordinal',
-    searchHint: 'Search covers publication metadata only, not players inside snapshots.',
-    sort: 'Order',
-    newest: 'Newest first',
-    oldest: 'Oldest first',
-    clear: 'Clear filters',
-    table: 'Official Ranking publication history',
-    open: 'Open Week',
-    openSuffix: ' ranking',
-    published: 'Total publications:',
-    showing: 'Showing',
-    of: 'of',
-    first: 'First page',
-    previous: 'Previous page',
-    next: 'Next page',
-    last: 'Last page',
-    page: 'Page',
-    jumpLabel: 'Jump to page',
-    jump: 'Go',
-    invalidJump: 'Enter an existing page number as a positive integer.'
-  }
-} satisfies Record<Language, Record<string, string>>
-
-type Text = Record<keyof typeof copy.en, string>
+// Keep both translations for each key together. This avoids duplicate
+// locale-specific object structures while preserving literal copy.
+const translations = {
+  title: ["MSA žebříčky", "MSA Rankings"],
+  subtitle: ["Historické publikace Official Rankingu z vybrané Viewer Branch.", "Historically faithful Official Ranking publications from the selected Viewer Branch."],
+  section: ["Historie publikovaných Official Rankingů", "Official Ranking publication history"],
+  loading: ["Načítání historie Official Rankingů…", "Loading Official Ranking history…"],
+  context: ["Čeká se na platný kontext Product Runu a Viewer Branch.", "Waiting for a valid Product Run and Viewer Branch context."],
+  failed: ["Historii Official Rankingů se nepodařilo načíst:", "Failed to load Official Ranking history:"],
+  invalid: ["Vrácená historie neodpovídá zdroji nebo obsahuje neplatné či duplicitní publikace. Záznamy se nezobrazují.", "The returned history does not match this source or contains invalid or duplicate publications. No records are shown."],
+  retry: ["Zkusit znovu", "Retry read"],
+  empty: ["Pro tuto Viewer Branch zatím nejsou publikovány žádné Official Rankingy.", "No Official Rankings have been published for this Viewer Branch yet."],
+  none: ["Žádné publikace neodpovídají zvoleným filtrům.", "No publications match the selected filters."],
+  season: ["Sezona", "Season"],
+  allSeasons: ["Všechny sezony", "All seasons"],
+  week: ["Týden", "Week"],
+  players: ["Hráči", "Players"],
+  bestN: ["Historické Best N", "Historical Best N"],
+  allBestN: ["Všechna Best N", "All Best N"],
+  publication: ["Publikace", "Publication"],
+  ordinal: ["Ordinal", "Ordinal"],
+  policy: ["Policy ID", "Policy ID"],
+  search: ["Hledat policy_id nebo ordinal publikace", "Search policy_id or publication ordinal"],
+  searchHint: ["Hledání prochází jen metadata publikací, nikoli hráče uvnitř snapshotů.", "Search covers publication metadata only, not players inside snapshots."],
+  sort: ["Řazení", "Order"],
+  newest: ["Od nejnovějších", "Newest first"],
+  oldest: ["Od nejstarších", "Oldest first"],
+  clear: ["Vymazat filtry", "Clear filters"],
+  table: ["Historie publikací Official Rankingu", "Official Ranking publication history"],
+  open: ["Otevřít ranking týdne", "Open Week"],
+  openSuffix: ["", " ranking"],
+  published: ["Celkem publikací:", "Total publications:"],
+  showing: ["Zobrazeno", "Showing"],
+  of: ["z", "of"],
+  first: ["První stránka", "First page"],
+  previous: ["Předchozí stránka", "Previous page"],
+  next: ["Další stránka", "Next page"],
+  last: ["Poslední stránka", "Last page"],
+  page: ["Stránka", "Page"],
+  jumpLabel: ["Přejít na stránku", "Jump to page"],
+  jump: ["Přejít", "Go"],
+  invalidJump: ["Zadej celé číslo existující stránky.", "Enter an existing page number as a positive integer."]
+} as const
+type Text = Record<keyof typeof translations, string>
+function copyForLanguage(language: Language): Text {
+  const column = language === 'cs' ? 0 : 1
+  return Object.fromEntries(
+    Object.entries(translations).map(([key, pair]) => [key, pair[column]])
+  ) as Text
+}
 
 function RankingHistoryForSource({ productRunId, viewerBranchId, text: t }: {
   productRunId: string
@@ -234,7 +198,7 @@ function RankingHistoryForSource({ productRunId, viewerBranchId, text: t }: {
 
 export function ViewerOfficialRankingHistoryPage(): JSX.Element {
   const { language } = useLanguage()
-  const t = copy[language]
+  const t = copyForLanguage(language)
   const { productRunId, officialBranchId, officialContext, isLoading, isStale } = useViewerProductRunRouteContext()
   const validRoute = Boolean(
     productRunId?.trim() && officialBranchId?.trim() &&

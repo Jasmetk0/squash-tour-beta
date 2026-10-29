@@ -62,7 +62,7 @@ describe('canonical saved match detail', () => {
     branchContext.current = { run_id: 'run', branch_id: 'branch', saved_head_revision_id: 'rev' }
     api.getSavedPlayerMatchDetail.mockResolvedValue(result())
     api.getSavedHomePlayerIdentities.mockImplementation(async (_r: string, _b: string, ids: string[]) => ({
-      run_id: 'run', branch_id: 'branch', saved_revision_id: 'rev',
+      run_id: 'run', branch_id: 'branch', saved_revision_id: 'rev', source: 'selected_branch_saved_revision',
       requested_ids: ids, players: ids.map(id => ({ player_id: id, display_name: id === 'A' ? 'Alpha' : 'Bravo' })),
     }))
   })
@@ -132,7 +132,7 @@ function useLongMatchFixture(): void {
   ) => ({
     run_id: runId, branch_id: branchId,
     saved_revision_id: branchContext.current.saved_head_revision_id,
-    requested_ids: ids, players: ids.map(id => ({ player_id: id, display_name: id }))
+    source: 'selected_branch_saved_revision', requested_ids: ids, players: ids.map(id => ({ player_id: id, display_name: id }))
   }))
 }
 async function seekSecondPage(): Promise<void> {
@@ -301,6 +301,25 @@ describe('archived player rally navigation (mocked API, not real browser)', () =
     mount('/admin/runs/run/people/A/matches/event/final?replayBranch=branch&replayHead=rev&rally=26')
     expect(screen.getByRole('alert')).toHaveTextContent('Odkaz patří jiné Branch')
     expect(api.getSavedPlayerMatchDetail).not.toHaveBeenCalled()
+  })
+
+  it('rejects repeated replay authority keys before reading any archive', async () => {
+    mount('/admin/runs/run/people/A/matches/event/final?replayBranch=branch&replayHead=rev&rally=26&rally=1')
+    expect(screen.getByRole('alert')).toHaveTextContent('Nejednoznačný odkaz')
+    expect(api.getSavedPlayerMatchDetail).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name:'Otevřít aktuální zdroj'}))
+    expect(await screen.findByText(/1\/30/)).toBeInTheDocument()
+  })
+  it('does not expose names from a foreign identity source even if other keys match', async () => {
+    api.getSavedHomePlayerIdentities.mockImplementation(async (_r:string,_b:string,ids:string[])=>({
+      run_id:'run',branch_id:'branch',saved_revision_id:'rev',
+      source:'wrong_source',requested_ids:ids,
+      players:ids.map(id=>({player_id:id,display_name:'UNVERIFIED '+id})),
+    }))
+    mount()
+    expect(await screen.findByText('Championship')).toBeInTheDocument()
+    expect(screen.queryByText(/UNVERIFIED/)).not.toBeInTheDocument()
+    expect(screen.getByText(/A porazil B/)).toBeInTheDocument()
   })
   it('makes no replay when the canonical result has no saved rally archive', async () => {
     api.getSavedPlayerMatchDetail.mockResolvedValue(result({

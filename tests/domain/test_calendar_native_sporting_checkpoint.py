@@ -157,7 +157,7 @@ def test_recomputed_outer_hash_cannot_authenticate_changed_inputs(damage):
     elif damage=="counts": entry["advance"]["played_counts"][0][1]+=1
     elif damage=="health": entry["health_fingerprint"]="0"*64
     elif damage=="life": entry["lifecycle_fingerprint"]="0"*64
-    elif damage=="source": context={**context,"source":SimpleNamespace(**(vars(context["source"])|{"fingerprint":"0"*64}))}
+    elif damage=="source": context={**context,"source":type(context["source"])(**(vars(context["source"])|{"fingerprint":"0"*64}))}
     elif damage=="policy": context={**context,"policy_for_week":lambda _:CalendarAnnualDevelopmentPolicy(annual_change_basis_points=1)}
     elif damage=="scope": raw["branch_id"]="other"
     elif damage=="prefix": entry["advance"]["source_checkpoint_fingerprint"]="0"*64

@@ -104,3 +104,48 @@ passed together in 321.59 seconds with a fresh W52 fixture, including rollback,
 exact retry, nested forks, the real worker and reverse-order restart equality.
 All five focused withdrawal domain cases, scoped Ruff and whitespace checks
 also pass. New-head hosted acceptance is still required.
+
+## Same-read decoded values candidate
+
+The original Saved physical-row, complete dependency graph, ownership, lineage
+and sporting replay gates still run. A completed private global replay now
+retains at most eight checkpoint model values beside its existing Tour values.
+The authenticated Admin context can consume them only after binding the entire
+actual component value, declared fingerprint, independently computed model
+fingerprint and Run/Branch scope. Original match evidence is still decoded and
+checked. Missing, changed or evicted values take the ordinary strict decoder
+and bounded defensive-copy cache. No cross-request source proof or new persisted
+hash is introduced, and the default internal decoder contract remains unchanged.
+A cache hit also avoids constructing a JSON string that its checked part decoder
+would immediately discard; its actual-value and retained-model guards remain.
+
+The same retained W80/1,000 database produced identical COMPLETE production
+inspection DTOs in a paired cold-read comparison: ordinary decoding 79.102s,
+same-read values 73.712s (6.81% less). This is a read measurement, not whole-Run
+or hosted speed certification. The actual unchanged full Admin Chromium flow
+with 1,000 real players and W80 then passed in 760.259s under its original
+18-minute outer deadline, including both real tournaments, manual Saves,
+confirmed results, physical backend/SQLite restart, public Week 6 and CS/EN.
+The restart portion took 52.762s. No fixture, assertion or timeout was reduced.
+
+The extended actual SQLite source-value case checks strict decoder equivalence,
+foreign scope, changed/rehashed component values, declared hash changes and a
+changed private model. The strict version-dispatch case still checks byte-for-
+byte serialization against the original strict Union validator. Sixty-six
+additional dependency/snapshot/value-isolation/history/domain cases passed.
+An existing corruption fixture now preserves its source class/for_week interface
+while changing its fingerprint, so it reaches the intended ValueError rather
+than an unrelated AttributeError; the original failure was reproduced on buuk.
+
+On preceding head b6d90e4d, all three W52/W61/W80 group HTTP jobs passed. The
+W80/1,000 browser still timed out, and the final-week W80 job ended without
+available logs or its artifact; GitHub left its execution step in progress in
+the failed job record. Its cause is not established. The same unchanged runtime
+passed that final-week job on dc1832330f. Neither missing evidence nor an older
+pass substitutes for successful final-head hosted acceptance.
+
+Final local physical-source/Save verification also passed all four selected
+production HTTP/SQLite cases in 170.03s: actual append/late-write gates and changed
+ancestor rejection, metadata-only histories with complete physical gates,
+concurrent/stale/retry/rollback/rehashed slot rejection, and cached final replay
+with unchanged real-engine and read-only boundaries. No negative case was removed.

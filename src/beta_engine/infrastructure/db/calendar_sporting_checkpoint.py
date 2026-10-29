@@ -18,11 +18,11 @@ def _parsed_global_part(body, cache, parse):
 
     if not isinstance(body, dict):
         raise TypeError('Global checkpoint part must be a versioned object')
-    encoded = json.dumps(body)
     key = canonical_hash(body)
     entry = cache.get(key)
     if entry is not None and entry[1] == canonical_hash(entry[2].model_dump(mode='json')):
         return entry[2]
+    encoded = json.dumps(body)
     value = parse(encoded)
     size = len(encoded.encode("utf-8"))
     if size <= _MAX_GLOBAL_PART_BYTES:

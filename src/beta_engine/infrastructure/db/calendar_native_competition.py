@@ -100,6 +100,26 @@ def replayed_global_tour_value(payload, proofs, *, run_id, branch_id):
     return value
 
 
+def replayed_global_checkpoint_value(payload, proofs, *, run_id, branch_id):
+    """Private decoded value only; every physical and source gate stays required."""
+    from beta_engine.domain.tournaments.calendar_global_slots import GlobalCompetitionCheckpoint
+
+    known = (proofs or {}).get('_prefixes', {}).get('_global_replayed_checkpoints', {})
+    if not known:
+        return None
+    component = payload.get('content', {}).get('calendar_player_sporting_checkpoint', {})
+    if (not isinstance(component, dict) or set(component) != {'state', 'fingerprint'}
+        or not isinstance(component.get('state'), dict)):
+        return None
+    actual = canonical_hash(component['state'])
+    value = known.get(actual)
+    if (not isinstance(value, GlobalCompetitionCheckpoint)
+        or (value.run_id, value.branch_id) != (run_id, branch_id)
+        or actual != component['fingerprint'] or value.fingerprint != actual):
+        return None
+    return value
+
+
 def root_payload(payload, checkpoint, tour):
     content = dict(payload["content"])
     for key in ("player_lifecycle", "player_health_state"):
@@ -383,10 +403,14 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
         raw_inputs = _raw_global_inputs(payload)
         values = source_proofs.setdefault('_global_replayed_values', {})
         tours = source_proofs.setdefault('_global_replayed_tours', {})
+        checkpoints = source_proofs.setdefault('_global_replayed_checkpoints', {})
         checkpoint_values = source_proofs.setdefault('_global_checkpoint_json_values', {})
         for verified_cp, verified_tour in verified_states:
             tours[verified_tour.fingerprint] = verified_tour
             fingerprint = verified_cp.fingerprint
+            checkpoints[fingerprint] = verified_cp
+            while len(checkpoints) > 8:
+                checkpoints.pop(next(iter(checkpoints)))
             value_hash = (projection or {}).get('checkpoint_value_hashes', {}).get(fingerprint)
             if value_hash is not None:
                 checkpoint_values[fingerprint] = value_hash

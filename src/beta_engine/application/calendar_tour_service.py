@@ -196,12 +196,32 @@ class CalendarTourService:
         from beta_engine.infrastructure.db.native_fork_source_projection import (
             decoded_global_tour_source,
         )
-        saved_evidence, saved, signed = decoded_global_tour_source(
-            self.repository, revision.saved_revision,
-            lambda source: decode_prevalidated_calendar_sources(
-                source.payload, run_id=run_id, branch_id=branch_id,
-            ),
+        from beta_engine.infrastructure.db.calendar_native_competition import (
+            replayed_global_checkpoint_value, replayed_global_tour_value,
         )
+        payload = revision.saved_revision.payload
+        replayed_checkpoint = replayed_global_checkpoint_value(
+            payload, proofs, run_id=run_id, branch_id=branch_id,
+        )
+        replayed_tour = replayed_global_tour_value(
+            payload, proofs, run_id=run_id, branch_id=branch_id,
+        ) if replayed_checkpoint is not None else None
+        if replayed_checkpoint is not None and replayed_tour is not None:
+            # This same physical read already rebuilt both complete values.
+            # The internal decoder rebinds the actual component hashes/scope
+            # and original match evidence. No cross-request copy/cache is
+            # needed for these private models owned by this one context.
+            saved_evidence, saved, signed = decode_prevalidated_calendar_sources(
+                payload, run_id=run_id, branch_id=branch_id,
+                _global_value_proofs=proofs,
+            )
+        else:
+            saved_evidence, saved, signed = decoded_global_tour_source(
+                self.repository, revision.saved_revision,
+                lambda source: decode_prevalidated_calendar_sources(
+                    source.payload, run_id=run_id, branch_id=branch_id,
+                ),
+            )
         rows = load_match_rows(
             session,
             run_id=run_id,

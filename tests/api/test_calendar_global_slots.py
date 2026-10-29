@@ -459,6 +459,35 @@ def test_replayed_tour_value_is_private_and_bound_to_complete_actual_state(tmp_p
         changed = deepcopy(payload)
         changed['content']['calendar_tour_authority']['fingerprint'] = '0' * 64
         assert replayed_global_tour_value(changed, proofs, **scope) is None
+        from beta_engine.infrastructure.db.calendar_native_competition import replayed_global_checkpoint_value
+        from beta_engine.infrastructure.db.calendar_standalone_match_state import decode_prevalidated_calendar_sources
+
+        checkpoint = replayed_global_checkpoint_value(payload, proofs, **scope)
+        assert checkpoint is not None
+        actual_checkpoint = payload['content']['calendar_player_sporting_checkpoint']
+        assert checkpoint.model_dump(mode='json') == actual_checkpoint['state']
+        decoded = decode_prevalidated_calendar_sources(payload, **scope)
+        reused = decode_prevalidated_calendar_sources(payload, **scope, _global_value_proofs=proofs)
+        assert reused == decoded
+        for part in ('run_id', 'branch_id'):
+            assert replayed_global_checkpoint_value(payload, proofs, **{**scope, part: 'foreign'}) is None
+        changed = deepcopy(payload)
+        changed_cp = changed['content']['calendar_player_sporting_checkpoint']
+        changed_cp['state']['unexpected_owner_field'] = True
+        assert replayed_global_checkpoint_value(changed, proofs, **scope) is None
+        changed_cp['fingerprint'] = canonical_hash(changed_cp['state'])
+        assert replayed_global_checkpoint_value(changed, proofs, **scope) is None
+        with pytest.raises(ValueError):
+            decode_prevalidated_calendar_sources(changed, **scope, _global_value_proofs=proofs)
+        changed = deepcopy(payload)
+        changed['content']['calendar_player_sporting_checkpoint']['fingerprint'] = '0' * 64
+        assert replayed_global_checkpoint_value(changed, proofs, **scope) is None
+        retained = proofs['_prefixes']['_global_replayed_checkpoints']
+        fingerprint = checkpoint.fingerprint
+        retained[fingerprint] = checkpoint.model_copy(update={'branch_id': 'foreign'})
+        assert replayed_global_checkpoint_value(payload, proofs, **scope) is None
+        retained[fingerprint] = checkpoint
+
         value.receipts[-1].request['command']['audit_reason'] = 'Mutated private witness'
         assert replayed_global_tour_value(payload, proofs, **scope) is None
         assert payload == original

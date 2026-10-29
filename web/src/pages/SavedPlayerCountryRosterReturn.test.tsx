@@ -1,4 +1,4 @@
-import {fireEvent,render,screen,waitFor} from '@testing-library/react'
+import {fireEvent,render,screen} from '@testing-library/react'
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query'
 import {MemoryRouter,Routes,Route} from 'react-router-dom'
 import {beforeEach,describe,expect,it,vi} from 'vitest'
@@ -86,18 +86,21 @@ describe('Saved Country roster → verified player profile → exact-filter retu
       branch==='branch-a'&&head==='rev-a'&&f.search==='Alpha'&&f.offset===25)).toBe(true)
   })
 
-  it('rejects an obsolete Branch or Saved HEAD link even when nationality still matches',async()=>{
+  it('rejects an obsolete Branch even when the verified nationality still matches',async()=>{
     ctx.branch='branch-b'
     mount('/admin/runs/run/people/p-030?'+new URLSearchParams({
       fromCountry:initial,
     }))
-    await screen.findByRole('heading',{name:'Alpha 030'})
+    expect(await screen.findByRole('heading',{name:'Alpha 030'})).toBeInTheDocument()
     expect(screen.queryByRole('link',{name:'← Back to filtered country roster'})).not.toBeInTheDocument()
-    ctx.branch='branch-a';ctx.head='rev-b'
+  })
+
+  it('rejects a retired Saved HEAD despite the same Run, Branch and Country',async()=>{
+    ctx.head='rev-b'
     mount('/admin/runs/run/people/p-030?'+new URLSearchParams({
       fromCountry:initial,
     }))
-    await waitFor(()=>expect(api.getSavedPlayerProfile).toHaveBeenCalled())
+    expect(await screen.findByRole('heading',{name:'Alpha 030'})).toBeInTheDocument()
     expect(screen.queryByRole('link',{name:'← Back to filtered country roster'})).not.toBeInTheDocument()
   })
 

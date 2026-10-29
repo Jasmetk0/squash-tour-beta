@@ -7,6 +7,11 @@ export const REPLAY_PAGE_SIZE = 25
 export const MAX_CAREER_PAGE = 10000
 export const MAX_REPLAY_RALLY = 100000
 
+/** Reject duplicate URL keys instead of trusting URLSearchParams.get's first value. */
+export function hasAmbiguousPlayerLinkParams(params: URLSearchParams, keys: readonly string[]): boolean {
+  return keys.some(key => params.getAll(key).length > 1)
+}
+
 export function parseCareerSeason(raw: string | null): string | null {
   return raw === null ? 'all' : /^(0|[1-9]\d*)$/.test(raw) && Number(raw) <= 49 ? raw : null
 }
@@ -53,22 +58,30 @@ export function parsePlayerRally(raw: string | null): number | null {
 export function validPlayerReplayPagePair(
   previous: SavedPlayerMatchDetail, next: SavedPlayerMatchDetail,
 ): boolean {
+  const identity = ['schema_version', 'source', 'run_id', 'branch_id',
+    'saved_revision_id', 'player_id', 'winner_player_id', 'loser_player_id',
+    'replay_status', 'player_a_id', 'player_b_id', 'total_rallies', 'limit'] as const
+  const matchIdentity = ['event_id', 'event_name', 'match_id', 'season_index',
+    'season', 'week', 'draw_type', 'round_number', 'opponent_player_id',
+    'outcome', 'completion', 'scoreline'] as const
   if (previous.replay_status !== 'available' || next.replay_status !== 'available' ||
-    previous.total_rallies !== next.total_rallies ||
-    previous.run_id !== next.run_id || previous.branch_id !== next.branch_id ||
-    previous.saved_revision_id !== next.saved_revision_id ||
-    previous.player_id !== next.player_id ||
-    previous.match.event_id !== next.match.event_id ||
-    previous.match.match_id !== next.match.match_id ||
-    previous.player_a_id !== next.player_a_id || previous.player_b_id !== next.player_b_id ||
-    previous.offset + REPLAY_PAGE_SIZE !== next.offset ||
+    !identity.every(key => previous[key] === next[key]) ||
+    !matchIdentity.every(key => previous.match[key] === next.match[key]) ||
+    previous.offset + previous.limit !== next.offset ||
+    previous.limit !== REPLAY_PAGE_SIZE ||
     previous.offset >= previous.total_rallies || next.offset >= next.total_rallies ||
+    !previous.has_more ||
     previous.rallies.length === 0 || next.rallies.length === 0) return false
   const a = previous.rallies[previous.rallies.length - 1]
   const b = next.rallies[0]
   if (a.rally_index + 1 !== b.rally_index || a.match_complete) return false
-  // The first rally after a completed game begins at 0:0; within the game
-  // scores must carry over exactly. The API still owns complete replay proof.
+  const setsA = b.sets_a_after - a.sets_a_after
+  const setsB = b.sets_b_after - a.sets_b_after
+  // A new rally either awards one completed game or none; earned games
+  // cannot disappear when crossing a saved 25-rally page boundary.
+  if (setsA < 0 || setsB < 0 || setsA + setsB !== Number(b.set_complete)) return false
+  // The first rally after a completed game begins at 0:0; otherwise the
+  // exact score and set number must continue.
   return a.set_complete
     ? b.set_number === a.set_number + 1 && b.score_a_before === 0 && b.score_b_before === 0
     : b.set_number === a.set_number &&

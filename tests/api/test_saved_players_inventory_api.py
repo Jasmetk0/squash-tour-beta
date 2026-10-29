@@ -56,7 +56,7 @@ def _publish_real_ranking(server, run, branch):
     snapshot = calculate_official_ranking(
         run_id=run, branch_id=branch, week=week,
         policy=OfficialRankingPolicy(policy_id="saved-roster-http", best_n=15),
-        players=(
+        players=tuple(
             OfficialRankingPlayer(
                 player_id=player_id,
                 tie_break_token=token * 64,
@@ -81,7 +81,7 @@ def _publish_real_ranking(server, run, branch):
                 ranking_fingerprint=snapshot.fingerprint,
             ),
         ))
-    return save_ranking(server, run, branch)
+    return snapshot
 
 
 def test_saved_country_ranking_filter_real_http_sqlite_publish_and_restart(tmp_path):
@@ -120,8 +120,12 @@ def test_saved_country_ranking_filter_real_http_sqlite_publish_and_restart(tmp_p
         assert _read(server, run, branch, ranking_status_filter="unranked")["total"] == 0
         old_head = unpublished["saved_revision_id"]
 
-        # Live publication alone must not make the saved read time-travel.
+        # The live Ranking publication must not leak until an explicit Save.
         _publish_real_ranking(server, run, branch)
+        assert _read(server, run, branch, country_code="CZE",
+                     ranking_status_filter="unpublished") == unpublished
+        assert _read(server, run, branch, ranking_status_filter="ranked")["total"] == 0
+        save_ranking(server, run, branch)
         ranked = _read(server, run, branch, ranking_status_filter="ranked")
         unranked = _read(server, run, branch, ranking_status_filter="unranked")
         assert ranked["saved_revision_id"] != old_head

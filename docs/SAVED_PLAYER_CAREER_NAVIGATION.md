@@ -27,7 +27,9 @@ position never invoke simulation, Save, or mutation.
   A missing/foreign/invalid identity lookup falls back to the opponent ID.
 * Repeated URL keys are rejected, even if the first value is valid. Invalid URL parameters block the read and offer a safe reset; a valid numeric
   page beyond `total_results` offers the first and actual last page. Empty
-  results never render `Page 1/0`. An empty local filter differs from no career,
+  results never render `Page 1/0`. An in-range empty server page or
+  duplicate event/match identity is rejected rather than misrepresented as an
+  empty career or local filter. An empty local filter differs from no career,
   an unavailable identity, an HTTP failure, or a mismatched response.
 * Match links retain valid season, page, query and local filters to restore
   them after the detail view. They also carry `replayBranch` and `replayHead`.
@@ -79,8 +81,11 @@ missing identity and unavailable replay are distinct.
   It retains the actual canonical match, Saved HEAD, fork, score, archive,
   publication and restart proofs. It additionally exercises URL replay refresh,
   page bounds, local filtering/return, first/last, direct frame selection,
-  numeric jump, empty bookmark → first → last, CS/EN and old-source rejection
-  on a distinct fork. No fixture, deadline, or original negative assertion is
+  numeric jump, empty bookmark → first → last, CS/EN, invalid/duplicated
+  career/replay URL recovery, and old-source rejection on a distinct fork.
+  It explicitly records browser network requests during read-only UI activity
+  and asserts there were **no POST/PUT/PATCH/DELETE writes** after the
+  separately authorized tournament Save. No fixture, deadline, or original negative assertion is
   weakened. Its execution still needs a real hosted acceptance run.
 * The separate full pre-alpha release gates remain mandatory; neither mocked
   UI tests nor this narrow real-browser flow certify a full release.

@@ -265,6 +265,10 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
       'href',
       '/viewer/runs/viewer-run-2d/calendar/EVENT-COMPLETE'
     )
+    expect(within(opener).getByRole('link', { name: 'Open week detail' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2d/weeks/1?season=2028%2F2029'
+    )
     expect(await screen.findByRole('list', { name: 'Viewer season calendar events 2029/2030' })).toHaveTextContent('Future Bronze')
     expectNoForbiddenViewerActions()
   })
@@ -286,7 +290,9 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expect(api.getViewerRunCalendar).toHaveBeenCalledWith('viewer-run-2d')
     expect((await screen.findAllByText('Season Opener')).length).toBeGreaterThan(0)
     expect(screen.getAllByText('PLAYER-42').length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: 'Week W1' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/weeks/1')
+    expect(screen.getByRole('link', { name: 'Week W1' })).toHaveAttribute(
+      'href', '/viewer/runs/viewer-run-2d/weeks/1?season=2028%2F2029'
+    )
     expectNoForbiddenViewerActions()
   })
 
@@ -383,6 +389,67 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expect(await screen.findByText('Ranking History source does not match the Saved Calendar Viewer Branch.')).toBeInTheDocument()
     expect(screen.queryByRole('link', {name: 'Ranking publication #4'})).not.toBeInTheDocument()
     expect(await screen.findByText('Gold Open')).toBeInTheDocument()
+  })
+
+
+  // The same season week can occur in multiple years of a Run.
+  // Keep competing historical evidence separate instead of mixing by W alone.
+  async function overlappingWeekTwo(): Promise<void> {
+    const original = await api.getViewerRunCalendar('viewer-run-2d')
+    api.getViewerRunCalendar.mockResolvedValue({
+      ...original,
+      seasons: [
+        original.seasons[0],
+        {
+          ...original.seasons[1],
+          events: [{
+            ...original.seasons[1].events[0],
+            season_week: 2,
+            event_name: 'Next Season Gold'
+          }]
+        }
+      ]
+    })
+  }
+
+  it('asks for a season when W2 contains distinct Saved seasons and no active season is known', async () => {
+    await overlappingWeekTwo()
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
+
+    expect(await screen.findByText(/This week occurs in multiple Saved seasons/)).toBeInTheDocument()
+    expect(screen.queryByText('Gold Open')).not.toBeInTheDocument()
+    expect(screen.queryByText('Next Season Gold')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Ranking publication #4'})).not.toBeInTheDocument()
+    expect(screen.getByRole('link', {name: 'Week W2 · season 2028/2029'})).toHaveAttribute(
+      'href', '/viewer/runs/viewer-run-2d/weeks/2?season=2028%2F2029'
+    )
+    expect(screen.getByRole('link', {name: 'Week W2 · season 2029/2030'})).toHaveAttribute(
+      'href', '/viewer/runs/viewer-run-2d/weeks/2?season=2029%2F2030'
+    )
+    expectNoForbiddenViewerActions()
+  })
+
+  it.each([
+    ['2028%2F2029', 'Gold Open', 'Next Season Gold', true],
+    ['2029%2F2030', 'Next Season Gold', 'Gold Open', false]
+  ])('shows only the selected season for W2 (%s)', async (season, included, excluded, hasRanking) => {
+    await overlappingWeekTwo()
+    renderViewerCalendarRoute(`/viewer/runs/viewer-run-2d/weeks/2?season=${season}`)
+
+    const events = await screen.findByRole('list', {name: 'Viewer week Saved Calendar events'})
+    expect(within(events).getByText(included)).toBeInTheDocument()
+    expect(within(events).queryByText(excluded)).not.toBeInTheDocument()
+    expect(Boolean(screen.queryByRole('link', {name: 'Ranking publication #4'}))).toBe(hasRanking)
+    expectNoForbiddenViewerActions()
+  })
+
+  it('rejects an unrecognized season query without showing another season or its publications', async () => {
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2?season=unrecognized')
+
+    expect(await screen.findByText(/requested season is not present in this Viewer Branch/)).toBeInTheDocument()
+    expect(screen.queryByText('Gold Open')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Ranking publication #4'})).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
   })
 
   it.each(['not-a-week', '0', '-1', '1.5', '9007199254740992'])(

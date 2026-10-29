@@ -32,7 +32,7 @@ function renderViewerCalendarRoute(route: string): void {
   )
 }
 
-function mockCanonicalData(): void {
+function mockCanonicalData(eventWeek = 2): void {
   api.getViewerRunCalendar.mockResolvedValue({
     schema_version: 'viewer_run_calendar.v1',
     product_run_id: 'viewer-run-2d',
@@ -72,7 +72,7 @@ function mockCanonicalData(): void {
           {
             event_id: 'EVENT-NEXT',
             season: '2028/2029',
-            season_week: 2,
+            season_week: eventWeek,
             calendar_year: 2028,
             year_week: 41,
             template_id: 'ET-GOLD',
@@ -320,10 +320,76 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('does not call canonical or Race readers for an invalid week route', () => {
-    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/not-a-week')
 
-    expect(screen.getByText('Week must be a whole number from 1 to 61 in the URL.')).toBeInTheDocument()
+  it('opens W80 from the Saved Calendar without an obsolete 61-week limit', async () => {
+    mockCanonicalData(80)
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/80')
+
+    expect(await screen.findByText('Gold Open')).toBeInTheDocument()
+    expect(screen.getAllByText('W80').length).toBeGreaterThan(0)
+    expect(api.getViewerRunCalendar).toHaveBeenCalledWith('viewer-run-2d')
+    expectNoForbiddenViewerActions()
+  })
+
+  it('rejects a foreign Product Run calendar instead of showing its events', async () => {
+    const original = await api.getViewerRunCalendar('viewer-run-2d')
+    api.getViewerRunCalendar.mockResolvedValue({
+      ...original,
+      product_run_id: 'foreign-run'
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    expect(await screen.findByText(/Saved Calendar source does not match this Product Run/)).toBeInTheDocument()
+    expect(screen.queryByText('Season Opener')).not.toBeInTheDocument()
+  })
+
+  it('does not attribute a foreign Viewer Branch result to an event', async () => {
+    const original = await api.getViewerTournamentHistory('viewer-run-2d')
+    api.getViewerTournamentHistory.mockResolvedValue({
+      ...original,
+      viewer_branch_id: 'foreign-branch'
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    expect(await screen.findByText('Tournament History source does not match the Saved Calendar Viewer Branch.')).toBeInTheDocument()
+    const events = screen.getByRole('list', { name: 'Viewer season calendar events 2028/2029' })
+    const opener = within(events).getByText('Season Opener').closest('li') as HTMLElement
+    expect(within(opener).queryByText('PLAYER-42')).not.toBeInTheDocument()
+    expect(within(opener).queryByText('Completed · result published')).not.toBeInTheDocument()
+  })
+
+  it('does not join a result from a different season-week using event ID alone', async () => {
+    const original = await api.getViewerTournamentHistory('viewer-run-2d')
+    api.getViewerTournamentHistory.mockResolvedValue({
+      ...original,
+      tournaments: original.tournaments.map((item: {event_id: string}) =>
+        item.event_id === 'EVENT-COMPLETE' ? {...item, season_week: 80} : item
+      )
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar/EVENT-COMPLETE')
+
+    expect((await screen.findAllByText('Season Opener')).length).toBeGreaterThan(0)
+    expect(screen.queryByText('PLAYER-42')).not.toBeInTheDocument()
+  })
+
+  it('hides week ranking publications from another Viewer Branch', async () => {
+    const original = await api.listViewerOfficialRankingHistory('viewer-run-2d')
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...original,
+      viewer_branch_id: 'foreign-branch'
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
+
+    expect(await screen.findByText('Ranking History source does not match the Saved Calendar Viewer Branch.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', {name: 'Ranking publication #4'})).not.toBeInTheDocument()
+    expect(await screen.findByText('Gold Open')).toBeInTheDocument()
+  })
+
+  it.each(['not-a-week', '0', '-1', '1.5', '9007199254740992'])(
+    'does not call canonical or Race readers for invalid week route %s', (invalidWeek) => {
+    renderViewerCalendarRoute(`/viewer/runs/viewer-run-2d/weeks/${invalidWeek}`)
+
+    expect(screen.getByText('Week must be a positive safe integer in the URL.')).toBeInTheDocument()
     expect(api.getViewerRunCalendar).not.toHaveBeenCalled()
     expect(api.getViewerTournamentHistory).not.toHaveBeenCalled()
     expect(api.listViewerOfficialRankingHistory).not.toHaveBeenCalled()

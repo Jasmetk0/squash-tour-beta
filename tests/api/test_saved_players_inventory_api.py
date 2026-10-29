@@ -52,7 +52,9 @@ def _save_initial_world(server, run, branch):
 
 
 def _publish_real_ranking(server, run, branch):
-    week = RankingWeek(season_index=0, week=1)
+    # FAX: a player entering in W1 is first eligible for classification in W2.
+    week = RankingWeek(season_index=0, week=2)
+    entry_week = RankingWeek(season_index=0, week=1)
     snapshot = calculate_official_ranking(
         run_id=run, branch_id=branch, week=week,
         policy=OfficialRankingPolicy(policy_id="saved-roster-http", best_n=15),
@@ -60,7 +62,7 @@ def _publish_real_ranking(server, run, branch):
             OfficialRankingPlayer(
                 player_id=player_id,
                 tie_break_token=token * 64,
-                tour_entry_week=week,
+                tour_entry_week=entry_week,
             )
             for player_id, token in (("player-a", "a"), ("player-b", "b"))
         ),
@@ -130,7 +132,7 @@ def test_saved_country_ranking_filter_real_http_sqlite_publish_and_restart(tmp_p
         ranked = _read(server, run, branch, ranking_status_filter="ranked")
         unranked = _read(server, run, branch, ranking_status_filter="unranked")
         assert ranked["saved_revision_id"] != old_head
-        assert ranked["ranking_week_ordinal"] == 0
+        assert ranked["ranking_week_ordinal"] == 1
         assert ranked["total"] == 2 and unranked["total"] == 1, (
             "Saved ranking publication did not project expected identities",
             ranked, unranked,

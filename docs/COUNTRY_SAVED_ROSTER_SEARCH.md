@@ -1,11 +1,12 @@
-# Country Saved roster search and exact-status filtering
+# Country Saved roster search, ranking status and safe navigation
 
 ## Real feature, existing backend authority
 
 Admin → Run → World → Country → Saved country players now supports a
 **full-source server-side search** on saved player **name or player ID**, plus
-the backend's exact status string filter. Both may be combined and include all
-matching records before pagination. A visible **Apply filters** action submits
+the backend's exact lifecycle-status string filter, plus a separate **published
+ranking status filter** (ranked / unranked / unpublished). All three may be
+combined and are applied **before** server pagination, not to 25 visible rows. A visible **Apply filters** action submits
 a search (typing does not trigger network requests); **Clear filters** returns
 to the full country roster. Status comparison is exact, case-insensitive in
 the existing backend, not a locally guessed category or an enum invented by
@@ -16,22 +17,31 @@ prospects are still hidden by default; enabling them does not pretend they
 are present-day players. The selected World data year is not the Saved player's
 sport-time clock, and old initial ability/age are not fabricated as OVR/current
 age. Ranking / NR remains the existing Saved public-ranking indication.
+The new ranking filter uses the Saved Branch's latest verified publication:
+without a published ranking, players are explicitly **unpublished**, not
+incorrectly marked unranked. The filter does not use country-statistics
+standings, Viewer Branch data or inferred sporting facts.
 
 All reads use the existing immutable selected Run/Branch/Saved HEAD inventory
 endpoint with `search`, `country_code`, `status_filter`,
-`include_prepared`, `offset` and `limit=25`. The client already validates
+`ranking_status_filter`, `include_prepared`, `offset` and `limit=25`. The client already validates
 identity/source/filters and each player response; this country view additionally
-checks its own expected filter values. No API/schema/backend/Save/Viewer/source
-rewrite is introduced.
+checks its own expected filter values. A backwards-compatible optional
+ranking-status parameter is added to the existing backend endpoint and Saved
+inventory read model. It strictly accepts `""`, `ranked`, `unranked`, or
+`unpublished` and echoes the selection in the response. The existing API
+client rejects a mismatched echoed filter, rows outside the requested ranking
+status, or a truncated/extra server page. No Save, Viewer, source provenance,
+player-stat calculations or simulation is changed.
 
 ## Stateful navigation rules
 
-- A user may edit the search/status drafts without changing the displayed
-  results or making a network request. Submitting applies **both** at once,
+- A user may edit the search/lifecycle-status/ranking-status drafts without changing the displayed
+  results or making a network request. Submitting applies **all three** at once,
   resets the page **before** the first new read and retains a visible filter
   summary.
 - Changing prepared-prospect inclusion resets the page while preserving the
-  current applied search and status. Clearing filters does not silently enable
+  current applied search, lifecycle status and ranking status. Clearing filters does not silently enable
   prepared prospects.
 - Run, Branch, Saved HEAD or country changes remount the scoped viewer: no
   draft, applied filter, prepared opt-in or page may cross from another source.
@@ -52,7 +62,8 @@ rewrite is introduced.
 
 ## Shareable deep link and return from a player profile
 
-The Country players tab preserves filter, exact status, prepared opt-in and
+The Country players tab preserves name/ID search, exact lifecycle status,
+**ranking publication status**, prepared opt-in and
 one-based page as named `sp*` URL parameters, alongside the existing World
 year and country search. This state is keyed to the **exact Run + selected
 Branch + Saved HEAD + country**; an old `spScope` from a different Saved
@@ -95,7 +106,11 @@ first/last jumps and synchronous cursor resets across filters, prospect opt-in
 and immutable sources. Another pair covers restoring a shared URL and rejecting
 scope from an older immutable HEAD. Four pure URL tests protect state round-trips,
 context preservation, rejected old-source filters/future opt-ins and safe
-profile returns. `SavedPlayerCountryRosterReturn.test.tsx` additionally
+profile returns. A fifth URL test covers allowed ranking values and stale-source
+rejection. A new React test verifies ranked/unranked/unpublished server-wide
+pagination and empty results. A new Python application test creates a real
+published-ranking read model and verifies exact pre-page selection and fail-closed
+unsupported filters. `SavedPlayerCountryRosterReturn.test.tsx` additionally
 mounts the actual Country and Saved Profile React routes together, verifying
 a real filtered-page → player-profile → filtered-page round trip and
 rejecting obsolete Branch, HEAD or foreign-country return targets.
@@ -112,7 +127,10 @@ remains authoritative, and no unverified full pre-alpha completion is claimed.
 
 ## Isolation
 
-Only `RunWorldCountrySavedPlayers.tsx`, `SavedPlayerIdentityPage.tsx`,
-the search React test, a dedicated pure permalink helper + four tests, four full React
-route-transition cases and this document. Independent of the open Saved Career, Country Match Records, Country
+The frontend changes are limited to the scoped roster component, player-profile
+return, a permalink helper and their tests. The complete ranking-filter slice
+also changes `saved_players_inventory.py`, its Python application tests,
+`admin_run_home.py` (the existing read-only endpoint), and the existing API
+client/DTO to carry and verify the new bounded query parameter. No new
+persistence, engine writes, background jobs or shared simulation files. Independent of the open Saved Career, Country Match Records, Country
 Match List and Country Standings PRs #1652–#1655, with **no shared file edits**.

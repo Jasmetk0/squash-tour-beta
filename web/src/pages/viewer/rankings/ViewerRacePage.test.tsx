@@ -245,10 +245,13 @@ describe('canonical Viewer Race browsing (mocked API, not real HTTP/SQLite/Chrom
     const context = {
       ...makeViewerProductRunRouteTestValue('run alpha'),
       officialBranchId: 'viewer-b',
-      officialContext: makeContext() as ViewerProductRunRouteValue['officialContext']
+      officialContext: makeContext() as ViewerProductRunRouteValue['officialContext'],
+      refetch: vi.fn()
     }
     mount('run', context)
     expect(screen.getByRole('alert')).toHaveTextContent('neodpovídá zvolenému Runu')
     expect(api.getViewerFinalsRace).not.toHaveBeenCalled()
+    screen.getByRole('button', { name: 'Zkusit načíst znovu' }).click()
+    expect(context.refetch).toHaveBeenCalledTimes(1)
   })
 })

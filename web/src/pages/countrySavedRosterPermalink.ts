@@ -2,12 +2,13 @@
  * URL state is a view hint only, not authorisation of source or player identity.
  */
 export type CountryRosterViewState={
-  search:string;status:string;includePrepared:boolean;page:number
+  search:string;status:string;ranking?: "ranked" | "unranked" | "unpublished";
+  includePrepared:boolean;page:number
 }
 export const DEFAULT_COUNTRY_ROSTER_VIEW:CountryRosterViewState={
   search:'',status:'',includePrepared:false,page:0,
 }
-const owned=['spScope','spSearch','spStatus','spPrepared','spPage'] as const
+const owned=['spScope','spSearch','spStatus','spRanking','spPrepared','spPage'] as const
 const MAX_PAGE=1_000_000
 
 function safeFilter(v:string|null,max:number):string{
@@ -21,9 +22,12 @@ export function readCountryRosterPermalink(
   const p=params.get('spPage')
   const n=p&&/^[1-9]\d{0,6}$/.test(p)?Number(p):1
   const page=Number.isSafeInteger(n)&&n>=1&&n<=MAX_PAGE?n-1:0
+  const ranking = params.get('spRanking')
   return {
     search:safeFilter(params.get('spSearch'),120),
     status:safeFilter(params.get('spStatus'),80),
+    ...(ranking==='ranked'||ranking==='unranked'||ranking==='unpublished'?
+      {ranking}:{}),
     includePrepared:params.get('spPrepared')==='1',
     page,
   }
@@ -39,6 +43,7 @@ export function writeCountryRosterPermalink(
   result.set('spScope',scope)
   if(state.search)result.set('spSearch',state.search)
   if(state.status)result.set('spStatus',state.status)
+  if(state.ranking)result.set('spRanking',state.ranking)
   if(state.includePrepared)result.set('spPrepared','1')
   if(state.page>0)result.set('spPage',String(state.page+1))
   return result

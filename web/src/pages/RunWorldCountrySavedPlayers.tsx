@@ -33,7 +33,7 @@ function validCountryInventory(
   data: SavedPlayersInventory | undefined,
   runId: string, branchId: string, savedHead: string,
   countryCode: string, search: string, statusFilter: string,
-  includePrepared: boolean, offset: number
+  rankingFilter: string, includePrepared: boolean, offset: number
 ): data is SavedPlayersInventory {
   return Boolean(data &&
     data.schema_version === 'saved_players_inventory.v1' &&
@@ -45,6 +45,7 @@ function validCountryInventory(
     data.country_code === countryCode &&
     data.search === search &&
     data.status_filter === statusFilter &&
+    (data.ranking_status_filter ?? "") === rankingFilter &&
     data.include_prepared === includePrepared &&
     data.offset === offset &&
     data.limit === PAGE_SIZE &&
@@ -52,7 +53,8 @@ function validCountryInventory(
     data.has_more === (offset + PAGE_SIZE < data.total) &&
     Array.isArray(data.players) && data.players.length <= PAGE_SIZE &&
     new Set(data.players.map(p => p.player_id)).size === data.players.length &&
-    data.players.every(p => p.country_code === countryCode && Boolean(p.player_id))
+    data.players.every(p => p.country_code === countryCode && Boolean(p.player_id) &&
+      (!rankingFilter || p.ranking_status === rankingFilter))
   )
 }
 
@@ -72,7 +74,7 @@ export function RunWorldCountrySavedPlayers(props: Props): JSX.Element {
   // source, so stale draft state, page or future opt-in never overrides it.
   const rosterLocationKey = JSON.stringify([
     runId, branchId, savedHead, countryCode,
-    ...['spScope', 'spSearch', 'spStatus', 'spPrepared', 'spPage']
+    ...['spScope', 'spSearch', 'spStatus', 'spRanking', 'spPrepared', 'spPage']
       .map(param => params.getAll(param)),
   ])
   return <ScopedCountryRoster key={rosterLocationKey} {...props} />
@@ -86,9 +88,11 @@ function ScopedCountryRoster({
   // Only the exact immutable source may restore a bookmarked roster view.
   const initialView = readCountryRosterPermalink(urlParams,sourceKey)
   const [includePrepared, setIncludePrepared] = useState(initialView.includePrepared)
-  const [draft, setDraft] = useState({ search: initialView.search, status: initialView.status })
-  const [filters, setFilters] = useState({ search: initialView.search, status: initialView.status })
-  const pageKey = JSON.stringify([sourceKey, filters.search, filters.status, includePrepared])
+  const [draft, setDraft] = useState({ search: initialView.search, status: initialView.status,
+    ranking: initialView.ranking ?? '' })
+  const [filters, setFilters] = useState({ search: initialView.search, status: initialView.status,
+    ranking: initialView.ranking ?? '' })
+  const pageKey = JSON.stringify([sourceKey, filters.search, filters.status, filters.ranking, includePrepared])
   const [pageSelection, setPageSelection] = useState({ sourceKey: pageKey, page: initialView.page })
   const [pageInput, setPageInput] = useState({ sourceKey: pageKey,
     value: String(initialView.page + 1) })
@@ -96,32 +100,34 @@ function ScopedCountryRoster({
   // in the same render: never request offset 25 from a new filtered result.
   const page = pageSelection.sourceKey === pageKey ? pageSelection.page : 0
   const jump = pageInput.sourceKey === pageKey ? pageInput.value : '1'
-  const syncUrl = (search: string, status: string, prepared: boolean, nextPage: number) => {
+  const syncUrl = (search: string, status: string,
+    ranking: typeof filters.ranking, prepared: boolean, nextPage: number) => {
     setUrlParams(writeCountryRosterPermalink(urlParams,sourceKey,{
-      search,status,includePrepared:prepared,page:nextPage,
+      search,status,ranking:ranking || undefined,includePrepared:prepared,page:nextPage,
     }),{replace:true})
   }
   const movePage = (next: number) => {
     setPageSelection({ sourceKey: pageKey, page: next })
     setPageInput({ sourceKey: pageKey, value: String(next + 1) })
-    syncUrl(filters.search,filters.status,includePrepared,next)
+    syncUrl(filters.search,filters.status,filters.ranking,includePrepared,next)
   }
   const applyFilters = (next: typeof filters) => {
     setFilters(next)
-    const nextKey = JSON.stringify([sourceKey, next.search, next.status, includePrepared])
+    const nextKey = JSON.stringify([sourceKey, next.search, next.status, next.ranking, includePrepared])
     setPageSelection({ sourceKey: nextKey, page: 0 })
     setPageInput({ sourceKey: nextKey, value: '1' })
-    syncUrl(next.search,next.status,includePrepared,0)
+    syncUrl(next.search,next.status,next.ranking,includePrepared,0)
   }
   const offset = page * PAGE_SIZE
   const enabled = Boolean(runId && branchId && savedHead && countryCode)
   const q = useQuery({
     queryKey: [
       'run-world-country-saved-roster',runId,branchId,savedHead,
-      countryCode,filters.search,filters.status,includePrepared,offset
+      countryCode,filters.search,filters.status,filters.ranking,includePrepared,offset
     ],
     queryFn:()=>getSavedPlayersInventory(runId,branchId,savedHead!,{
       search:filters.search,country_code:countryCode,status_filter:filters.status,
+      ranking_status_filter:filters.ranking,
       include_prepared:includePrepared,offset,limit:PAGE_SIZE
     }),
     enabled,
@@ -129,7 +135,7 @@ function ScopedCountryRoster({
   })
   const correct = savedHead != null && validCountryInventory(
     q.data,runId,branchId,savedHead,countryCode,
-    filters.search,filters.status,includePrepared,offset
+    filters.search,filters.status,filters.ranking,includePrepared,offset
   )
   const data = correct && !q.isFetching ? q.data : null
   const pageCount = data ? Math.ceil(data.total/PAGE_SIZE) : 0
@@ -137,7 +143,7 @@ function ScopedCountryRoster({
   const targetPage = validatedPage(jump, pageCount)
   const returnToCountry = countryRosterReturnPath(runId,countryCode,
     writeCountryRosterPermalink(urlParams,sourceKey,{
-      search:filters.search,status:filters.status,includePrepared,page,
+      search:filters.search,status:filters.status,ranking:filters.ranking||undefined,includePrepared,page,
     }))
   return <section className="section-subtle run-world-country-roster"
     aria-label="Run World canonical country players">
@@ -154,7 +160,7 @@ function ScopedCountryRoster({
         : 'No authoritative Saved Revision is available. Legacy players are never substituted.'}</p>}
     <form className="actions" aria-label="Country roster filters" onSubmit={e=>{
       e.preventDefault()
-      applyFilters({search:draft.search.trim(),status:draft.status.trim()})
+      applyFilters({search:draft.search.trim(),status:draft.status.trim(),ranking:draft.ranking})
     }}>
       <label>{cs ? 'Hledat jméno nebo ID' : 'Find name or player ID'}{' '}
         <input aria-label="Country roster search" type="search" maxLength={120}
@@ -166,27 +172,39 @@ function ScopedCountryRoster({
           placeholder={cs ? 'Např. active' : 'e.g. active'}
           value={draft.status} onChange={e=>setDraft(prev=>({...prev,status:e.target.value}))}/>
       </label>
+      <label>{cs ? 'Žebříček' : 'Ranking publication'}{' '}
+        <select aria-label="Country roster ranking status"
+          value={draft.ranking}
+          onChange={e=>setDraft(prev=>({...prev,
+            ranking:e.target.value as typeof prev.ranking}))}>
+          <option value="">{cs?'Všechny stavy':'All states'}</option>
+          <option value="ranked">{cs?'V žebříčku':'Ranked'}</option>
+          <option value="unranked">{cs?'Mimo žebříček':'Unranked'}</option>
+          <option value="unpublished">{cs?'Dosud nepublikováno':'Unpublished'}</option>
+        </select>
+      </label>
       <button type="submit">{cs ? 'Použít filtry' : 'Apply filters'}</button>
       <button type="button" onClick={()=>{
-        setDraft({search:'',status:''})
-        applyFilters({search:'',status:''})
+        setDraft({search:'',status:'',ranking:''})
+        applyFilters({search:'',status:'',ranking:''})
       }}>{cs ? 'Vymazat filtry' : 'Clear filters'}</button>
     </form>
-    {(filters.search || filters.status) && <p role="status">{cs
+    {(filters.search || filters.status || filters.ranking) && <p role="status">{cs
       ? 'Filtry se uplatní na celou uloženou soupisku před stránkováním.'
       : 'Filters apply to the full Saved roster before pagination.'}
       {filters.search && <> · {cs?'Hledání':'Search'}: <strong>{filters.search}</strong></>}
       {filters.status && <> · Status: <strong>{filters.status}</strong></>}
+      {filters.ranking && <> · {cs?'Žebříček':'Ranking'}: <strong>{filters.ranking}</strong></>}
     </p>}
     <label>
       <input type="checkbox" checked={includePrepared}
         onChange={e=>{
           setIncludePrepared(e.target.checked)
           const nextKey = JSON.stringify([sourceKey, filters.search,
-            filters.status, e.target.checked])
+            filters.status, filters.ranking, e.target.checked])
           setPageSelection({ sourceKey: nextKey, page: 0 })
           setPageInput({ sourceKey: nextKey, value: '1' })
-          syncUrl(filters.search,filters.status,e.target.checked,0)
+          syncUrl(filters.search,filters.status,filters.ranking,e.target.checked,0)
         }} />
       {' '}{cs
         ? 'Výslovně zobrazit také uložené připravené prospekty (mohou být z budoucnosti)'

@@ -1,6 +1,6 @@
 import {fireEvent,render,screen,waitFor,within} from '@testing-library/react'
 import {QueryClient,QueryClientProvider} from '@tanstack/react-query'
-import {MemoryRouter} from 'react-router-dom'
+import {MemoryRouter,useNavigate} from 'react-router-dom'
 import {useState} from 'react'
 import {beforeEach,describe,expect,it,vi} from 'vitest'
 import type {SavedInventoryPlayer,SavedPlayersInventory} from '../api/types'
@@ -50,11 +50,19 @@ function mount(entry='/admin/runs/run/world/countries/CZE?tab=players&year=2025'
     const [branch,setBranch]=useState('branch-a')
     const [country,setCountry]=useState('CZE')
     const [language,setLanguage]=useState<'en'|'cs'>('en')
+    const navigate=useNavigate()
+    const bookmark=writeCountryRosterPermalink(
+      new URLSearchParams('tab=players&year=2025'),JSON.stringify([
+        'run-a','branch-a','rev-a','CZE',
+      ]),{search:'Alpha',status:'',includePrepared:false,page:1})
     return <>
       <button type="button" onClick={()=>{setHead('rev-b');setBranch('branch-b')}}>Change source</button>
       <button type="button" onClick={()=>setCountry('ENG')}>Change country</button>
       <button type="button" onClick={()=>setHead(null)}>Clear Saved HEAD</button>
       <button type="button" onClick={()=>setLanguage(l=>l==='en'?'cs':'en')}>Switch language</button>
+      <button type="button" onClick={()=>navigate('/admin/runs/run-a/world/countries/CZE?'+
+        bookmark.toString())}>Open same-route bookmark</button>
+      <button type="button" onClick={()=>navigate(-1)}>Browser Back</button>
       <RunWorldCountrySavedPlayers runId="run" branchId={branch} savedHead={head}
         countryCode={country} selectedWorldYear={2025} language={language}/>
     </>
@@ -276,5 +284,28 @@ describe('Country Saved roster server-side filters (mock HTTP)',()=>{
     expect(screen.getByRole('checkbox')).not.toBeChecked()
     expect(calls().every(([, , ,f])=>f.offset===0&&
       f.search===''&&f.status_filter===''&&!f.include_prepared)).toBe(true)
+  })
+
+  it('honors a different bookmark on the SAME mounted Country route and Back history',async()=>{
+    mount()
+    expect(await screen.findByText('Page 1 / 3')).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('searchbox',{name:'Country roster search'}),
+      {target:{value:'Beta'}})
+    apply()
+    expect(await screen.findByText('Page 1 / 1')).toBeInTheDocument()
+    const before=calls().length
+    fireEvent.click(screen.getByRole('button',{name:'Open same-route bookmark'}))
+    expect(await screen.findByText('Page 2 / 2')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox',{name:'Country roster search'})).toHaveValue('Alpha')
+    expect(screen.getByRole('textbox',{name:'Country roster page number'})).toHaveValue('2')
+    expect(screen.getByRole('link',{name:'Alpha Player 030'})).toBeInTheDocument()
+    expect(calls().length).toBeGreaterThan(before)
+    expect(calls().at(-1)?.[3]).toMatchObject({
+      search:'Alpha',status_filter:'',include_prepared:false,offset:25,
+    })
+    fireEvent.click(screen.getByRole('button',{name:'Browser Back'}))
+    expect(await screen.findByText('Page 1 / 1')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox',{name:'Country roster search'})).toHaveValue('Beta')
+    expect(screen.queryByRole('link',{name:'Alpha Player 030'})).not.toBeInTheDocument()
   })
 })

@@ -10,6 +10,7 @@ import {writeCountryRosterPermalink} from './countrySavedRosterPermalink'
 const api=vi.hoisted(()=>({getSavedPlayersInventory:vi.fn()}))
 vi.mock('../api/client',()=>api)
 type Filters={search:string;country_code:string;status_filter:string;
+  ranking_status_filter?: ''|'ranked'|'unranked'|'unpublished';
   include_prepared:boolean;offset:number;limit:number}
 const saved=(i:number):SavedInventoryPlayer=>({
   player_id:'p-'+String(i).padStart(3,'0'),
@@ -34,13 +35,15 @@ function response(run:string,branch:string,head:string,f:Filters):SavedPlayersIn
     p.country_code===f.country_code&&
     (!needle||p.player_id.toLowerCase().includes(needle)||
       p.display_name.toLowerCase().includes(needle))&&
-    (!status||p.status?.toLowerCase()===status))
+    (!status||p.status?.toLowerCase()===status)&&
+    (!f.ranking_status_filter||p.ranking_status===f.ranking_status_filter))
     .sort((a,b)=>a.display_name.localeCompare(b.display_name)||a.player_id.localeCompare(b.player_id))
   return {schema_version:'saved_players_inventory.v1',
     source:'selected_branch_saved_revision',time_context:'present',
     run_id:run,branch_id:branch,saved_revision_id:head,
     ranking_week_ordinal:null,search:f.search,country_code:f.country_code,
-    status_filter:f.status_filter,include_prepared:f.include_prepared,
+    status_filter:f.status_filter,ranking_status_filter:f.ranking_status_filter??'',
+    include_prepared:f.include_prepared,
     offset:f.offset,limit:f.limit,total:rows.length,
     has_more:f.offset+f.limit<rows.length,players:rows.slice(f.offset,f.offset+f.limit)}
 }
@@ -308,4 +311,52 @@ describe('Country Saved roster server-side filters (mock HTTP)',()=>{
     expect(screen.getByRole('searchbox',{name:'Country roster search'})).toHaveValue('Beta')
     expect(screen.queryByRole('link',{name:'Alpha Player 030'})).not.toBeInTheDocument()
   })
+  it('filters ranked and unranked saved identities on the server before paging',async()=>{
+    const all=Array.from({length:55},(_,i)=>({
+      ...saved(i+1),
+      ranking_status:(i<30?'ranked':'unranked') as 'ranked'|'unranked',
+      rank:i<30?i+1:null,
+    }))
+    api.getSavedPlayersInventory.mockImplementation(async (
+      run:string,branch:string,head:string,f:Filters,
+    )=>{
+      const ranking=f.ranking_status_filter??''
+      const matching=all.filter(p=>!ranking||p.ranking_status===ranking)
+      return {
+        ...response(run,branch,head,f),
+        ranking_week_ordinal:4, ranking_status_filter:ranking,
+        total:matching.length,has_more:f.offset+f.limit<matching.length,
+        players:matching.slice(f.offset,f.offset+f.limit),
+      }
+    })
+    mount()
+    expect(await screen.findByText('Page 1 / 3')).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('combobox',{name:'Country roster ranking status'}),
+      {target:{value:'ranked'}})
+    const n=calls().length
+    expect(calls()).toHaveLength(n)
+    apply()
+    expect(await screen.findByText('Page 1 / 2')).toBeInTheDocument()
+    expect(calls().filter(([, , ,f])=>f.ranking_status_filter==='ranked')
+      .every(([, , ,f])=>f.offset===0)).toBe(true)
+    fireEvent.click(screen.getByRole('button',{name:'Next →'}))
+    expect(await screen.findByText('Page 2 / 2')).toBeInTheDocument()
+    expect(screen.getByRole('link',{name:'Alpha Player 030'})).toBeInTheDocument()
+    expect(calls().some(([, , ,f])=>
+      f.ranking_status_filter==='ranked'&&f.offset===25)).toBe(true)
+    fireEvent.change(screen.getByRole('combobox',{name:'Country roster ranking status'}),
+      {target:{value:'unranked'}})
+    apply()
+    expect(await screen.findByText('Page 1 / 1')).toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'Alpha Player 001'})).not.toBeInTheDocument()
+    expect(screen.getByRole('link',{name:'Beta Player 055'})).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('combobox',{name:'Country roster ranking status'}),
+      {target:{value:'unpublished'}})
+    apply()
+    expect(await screen.findByText('Page 0 / 0')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Clear filters'}))
+    expect(await screen.findByText('Page 1 / 3')).toBeInTheDocument()
+    expect(screen.getByRole('combobox',{name:'Country roster ranking status'})).toHaveValue('')
+  })
+
 })

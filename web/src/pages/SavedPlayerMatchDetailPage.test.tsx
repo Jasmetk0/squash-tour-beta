@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SavedPlayerMatchDetailPage } from './SavedPlayerMatchDetailPage'
-import { LanguageProvider } from '../i18n/LanguageContext'
+import { LanguageProvider, useLanguage } from '../i18n/LanguageContext'
 
 const api = vi.hoisted(() => ({
   getSavedPlayerMatchDetail: vi.fn(), getSavedHomePlayerIdentities: vi.fn(),
@@ -17,11 +17,13 @@ vi.mock('../admin/AdminBranchContext', () => ({
 }))
 vi.mock('../admin/AdminTimeContext', () => ({ useAdminTime: () => ({ mode: 'present' }) }))
 
+function LanguageSwitch() { const { setLanguage } = useLanguage(); return <button onClick={() => setLanguage('en')}>Test English</button> }
+
 function mount(entry = '/admin/runs/run/people/A/matches/event/final') {
   const cache = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
   const tree = () => <QueryClientProvider client={cache}><LanguageProvider><MemoryRouter
     initialEntries={[entry]}>
-    <nav aria-label="Replay scope test navigation">
+    <LanguageSwitch /><nav aria-label="Replay scope test navigation">
       <Link to="/admin/runs/run/people/A/matches/event/short">Switch match</Link>
       <Link to="/admin/runs/run/people/A/matches/second/final">Switch event</Link>
       <Link to="/admin/runs/run/people/B/matches/event/final">Switch player</Link>
@@ -60,7 +62,7 @@ describe('canonical saved match detail', () => {
     branchContext.current = { run_id: 'run', branch_id: 'branch', saved_head_revision_id: 'rev' }
     api.getSavedPlayerMatchDetail.mockResolvedValue(result())
     api.getSavedHomePlayerIdentities.mockImplementation(async (_r: string, _b: string, ids: string[]) => ({
-      run_id: 'run', branch_id: 'branch', saved_revision_id: 'rev',
+      run_id: 'run', branch_id: 'branch', saved_revision_id: 'rev', source: 'selected_branch_saved_revision',
       requested_ids: ids, players: ids.map(id => ({ player_id: id, display_name: id === 'A' ? 'Alpha' : 'Bravo' })),
     }))
   })
@@ -93,7 +95,7 @@ describe('canonical saved match detail', () => {
   it('hides a stale saved HEAD rather than exposing a foreign match', async () => {
     api.getSavedPlayerMatchDetail.mockResolvedValueOnce(result({ saved_revision_id: 'foreign' }))
     mount()
-    expect(await screen.findByRole('alert')).toHaveTextContent('Detail neodpovídá vybrané uložené revizi.')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Detail neodpovídá vybrané uložené revizi')
     expect(screen.queryByText('Championship')).not.toBeInTheDocument()
   })
 })
@@ -130,7 +132,7 @@ function useLongMatchFixture(): void {
   ) => ({
     run_id: runId, branch_id: branchId,
     saved_revision_id: branchContext.current.saved_head_revision_id,
-    requested_ids: ids, players: ids.map(id => ({ player_id: id, display_name: id }))
+    source: 'selected_branch_saved_revision', requested_ids: ids, players: ids.map(id => ({ player_id: id, display_name: id }))
   }))
 }
 async function seekSecondPage(): Promise<void> {
@@ -206,25 +208,21 @@ describe('replay identity cursor isolation', () => {
   it.each([
     ['Branch', 'branch-next', 'rev-next'],
     ['Saved Revision', 'branch', 'rev-next'],
-  ])('remounts and begins at first rally when %s changes without navigating', async (
+  ])('blocks the old scoped URL on %s change without reading the old page of the new HEAD', async (
     _label, nextBranch, nextHead
   ) => {
     const view = mount()
     await seekSecondPage()
-    // Saved Revision intentionally isn't an API parameter: compare ONLY requests
-    // issued after changing scope, not page-2 requests from the previous revision.
     const previousCallCount = api.getSavedPlayerMatchDetail.mock.calls.length
     branchContext.current = { run_id: 'run', branch_id: nextBranch, saved_head_revision_id: nextHead }
     await act(async () => { view.refreshBranch() })
+    expect(await screen.findByRole('alert')).toHaveTextContent('Odkaz patří jiné Branch nebo Saved HEAD')
+    expect(api.getSavedPlayerMatchDetail).toHaveBeenCalledTimes(previousCallCount)
+    fireEvent.click(screen.getByRole('button', { name: 'Přejít na aktuální zdroj' }))
     await waitFor(() => expect(screen.getByText(/1\/2/)).toBeInTheDocument())
     const newScopeCalls = api.getSavedPlayerMatchDetail.mock.calls.slice(previousCallCount)
-    expect(newScopeCalls).toContainEqual([
-      'run', nextBranch, 'A', 'event', 'final', 0, 25
-    ])
-    expect(newScopeCalls).not.toContainEqual([
-      'run', nextBranch, 'A', 'event', 'final', 25, 25
-    ])
-    expect(screen.getByRole('button', { name: '← Předchozí výměna' })).toBeDisabled()
+    expect(newScopeCalls).toContainEqual(['run', nextBranch, 'A', 'event', 'final', 0, 25])
+    expect(newScopeCalls).not.toContainEqual(['run', nextBranch, 'A', 'event', 'final', 25, 25])
   })
   it('retries an interrupted archived match read without altering its cursor or Saved HEAD',async()=>{
     api.getSavedPlayerMatchDetail.mockRejectedValueOnce(new Error('offline'))
@@ -237,4 +235,102 @@ describe('replay identity cursor isolation', () => {
       'run','branch','A','event','final',0,25)
   })
 
+})
+
+describe('archived player rally navigation (mocked API, not real browser)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    branchContext.current = { run_id: 'run', branch_id: 'branch', saved_head_revision_id: 'rev' }
+    useLongMatchFixture()
+    localStorage.removeItem('squash-engine-language-v1')
+  })
+  it('restores scoped rally from URL with only its actual 25-frame page', async () => {
+    mount('/admin/runs/run/people/A/matches/event/final?tab=career&careerSeason=2&careerPage=1&careerQ=Brno&careerOutcome=win&replayBranch=branch&replayHead=rev&rally=27')
+    expect(await screen.findByText(/27\/30/)).toBeInTheDocument()
+    expect(api.getSavedPlayerMatchDetail).toHaveBeenCalledWith('run','branch','A','event','final',25,25)
+    expect(api.getSavedPlayerMatchDetail).not.toHaveBeenCalledWith('run','branch','A','event','final',0,25)
+    expect(screen.getByRole('link',{name:/Zpět na profil hráče/})).toHaveAttribute('href',
+      '/admin/runs/run/people/A?tab=career&careerSeason=2&careerPage=1&careerOutcome=win&careerQ=Brno')
+    fireEvent.click(screen.getByRole('button',{name:'Test English'}))
+    expect(screen.getByText(/Rally 27\/30/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Last rally'})).toBeEnabled()
+    expect(api.getSavedPlayerMatchDetail).toHaveBeenCalledTimes(1)
+  })
+  it('rejects invalid and unscoped deep links without reading the archive', async () => {
+    mount('/admin/runs/run/people/A/matches/event/final?rally=26')
+    expect(screen.getByRole('alert')).toHaveTextContent('Odkaz patří jiné Branch')
+    expect(api.getSavedPlayerMatchDetail).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button',{name:'Přejít na aktuální zdroj'}))
+    expect(await screen.findByText(/1\/30/)).toBeInTheDocument()
+  })
+  it('rejects malicious/noncanonical rally without an API call', async () => {
+    mount('/admin/runs/run/people/A/matches/event/final?replayBranch=branch&replayHead=rev&rally=001')
+    expect(screen.getByRole('alert')).toHaveTextContent('Neplatné číslo výměny')
+    expect(api.getSavedPlayerMatchDetail).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button',{name:'Otevřít aktuální první výměnu'}))
+    expect(await screen.findByText(/1\/30/)).toBeInTheDocument()
+  })
+  it('first, last, numeric jump and loaded-page timeline share one verified source', async () => {
+    mount()
+    expect(await screen.findByText(/1\/30/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Poslední výměna'}))
+    expect(await screen.findByText(/30\/30/)).toBeInTheDocument()
+    fireEvent.click(screen.getByText(/Přehled uložených výměn/))
+    const item=screen.getByRole('button',{name:/Výměna 27/})
+    fireEvent.click(item)
+    expect(await screen.findByText(/27\/30/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:/Výměna 27/})).toHaveAttribute('aria-current','step')
+    fireEvent.change(screen.getByRole('spinbutton',{name:'Číslo archivované výměny'}),{target:{value:'31'}})
+    expect(screen.getByRole('button',{name:'Přejít'})).toBeDisabled()
+    fireEvent.change(screen.getByRole('spinbutton',{name:'Číslo archivované výměny'}),{target:{value:'1'}})
+    fireEvent.click(screen.getByRole('button',{name:'Přejít'}))
+    expect(await screen.findByText(/1\/30/)).toBeInTheDocument()
+  })
+  it('out-of-range bookmarked page does not poison a legitimate final page after recovery', async () => {
+    mount('/admin/runs/run/people/A/matches/event/final?replayBranch=branch&replayHead=rev&rally=60')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Požadovaná výměna v tomto archivu neexistuje')
+    expect(api.getSavedPlayerMatchDetail).toHaveBeenCalledWith('run','branch','A','event','final',50,25)
+    fireEvent.click(screen.getByRole('button',{name:'První platná výměna'}))
+    expect(await screen.findByText(/1\/30/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Poslední výměna'}))
+    expect(await screen.findByText(/30\/30/)).toBeInTheDocument()
+    expect(screen.queryByText('Detail neodpovídá vybrané uložené revizi')).not.toBeInTheDocument()
+  })
+  it('rejects a foreign scoped bookmark after a HEAD change, even for same match', async () => {
+    branchContext.current = { run_id:'run',branch_id:'branch',saved_head_revision_id:'rev-next' }
+    mount('/admin/runs/run/people/A/matches/event/final?replayBranch=branch&replayHead=rev&rally=26')
+    expect(screen.getByRole('alert')).toHaveTextContent('Odkaz patří jiné Branch')
+    expect(api.getSavedPlayerMatchDetail).not.toHaveBeenCalled()
+  })
+
+  it('rejects repeated replay authority keys before reading any archive', async () => {
+    mount('/admin/runs/run/people/A/matches/event/final?replayBranch=branch&replayHead=rev&rally=26&rally=1')
+    expect(screen.getByRole('alert')).toHaveTextContent('Nejednoznačný odkaz')
+    expect(api.getSavedPlayerMatchDetail).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name:'Otevřít aktuální zdroj'}))
+    expect(await screen.findByText(/1\/30/)).toBeInTheDocument()
+  })
+  it('does not expose names from a foreign identity source even if other keys match', async () => {
+    api.getSavedHomePlayerIdentities.mockImplementation(async (_r:string,_b:string,ids:string[])=>({
+      run_id:'run',branch_id:'branch',saved_revision_id:'rev',
+      source:'wrong_source',requested_ids:ids,
+      players:ids.map(id=>({player_id:id,display_name:'UNVERIFIED '+id})),
+    }))
+    mount()
+    expect(await screen.findByText('Championship')).toBeInTheDocument()
+    expect(screen.queryByText(/UNVERIFIED/)).not.toBeInTheDocument()
+    expect(screen.getByText((_, node) => node?.tagName === 'P' &&
+      /A\s+porazil\s+B/.test(node.textContent ?? ''))).toBeInTheDocument()
+  })
+  it('makes no replay when the canonical result has no saved rally archive', async () => {
+    api.getSavedPlayerMatchDetail.mockResolvedValue(result({
+      replay_status:'unavailable', total_rallies:0, has_more:false,
+      player_a_id:null,player_b_id:null, rallies:[],
+      match:{...result().match, completion:'walkover', scoreline:'W/O'},
+    }))
+    mount()
+    expect(await screen.findByText(/Ověřený archiv výměn není/)).toBeInTheDocument()
+    expect(screen.getByText(/Výsledek kontumací/)).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Poslední výměna'})).not.toBeInTheDocument()
+  })
 })

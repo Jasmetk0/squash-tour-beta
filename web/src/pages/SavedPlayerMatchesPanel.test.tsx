@@ -10,11 +10,11 @@ const api = vi.hoisted(() => ({
 }))
 vi.mock('../api/client', () => api)
 
-function mount() {
+function mount(entry = '/', head = 'revision') {
   let locale:'cs'|'en'='cs'
   const client=new QueryClient({ defaultOptions: {queries:{retry:false,gcTime:0}} })
-  const ui=()=> <QueryClientProvider client={client}><MemoryRouter><SavedPlayerMatchesPanel
-    runId="run" branchId="branch" playerId="A" savedHead="revision"
+  const ui=()=> <QueryClientProvider client={client}><MemoryRouter initialEntries={[entry]}><SavedPlayerMatchesPanel
+    runId="run" branchId="branch" playerId="A" savedHead={head}
     locale={locale}
   /></MemoryRouter></QueryClientProvider>
   const view=render(ui())
@@ -25,7 +25,7 @@ describe('Saved player match history', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     api.getSavedHomePlayerIdentities.mockImplementation(async (_r: string, _b: string, ids: string[]) => ({
-      run_id: 'run', branch_id: 'branch', saved_revision_id: 'revision', requested_ids: ids,
+      run_id: 'run', branch_id: 'branch', saved_revision_id: 'revision', source: 'selected_branch_saved_revision', requested_ids: ids,
       players: ids.map(id => ({ player_id: id, display_name: 'Opponent '+id }))
     }))
     api.getSavedPlayerMatchHistory.mockImplementation(async (_r: string, _b: string, _id: string,
@@ -87,12 +87,26 @@ describe('Saved player match history', () => {
     await waitFor(() => expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith(
       'run', 'branch', 'A', 2, 0, 20))
     await waitFor(() => expect(screen.getByRole('link', {name: 'Detail zápasu →'})).toHaveAttribute('href',
-      '/admin/runs/run/people/A/matches/event/first?tab=career&careerSeason=2'))
+      '/admin/runs/run/people/A/matches/event/first?tab=career&replayBranch=branch&replayHead=revision&careerSeason=2'))
     fireEvent.click(screen.getByRole('button', {name: 'Další →'}))
     await waitFor(() => expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith(
       'run', 'branch', 'A', 2, 20, 20))
     await waitFor(() => expect(screen.getByRole('link', {name: 'Detail zápasu →'})).toHaveAttribute('href',
-      '/admin/runs/run/people/A/matches/event/second?tab=career&careerSeason=2&careerPage=1'))
+      '/admin/runs/run/people/A/matches/event/second?tab=career&replayBranch=branch&replayHead=revision&careerSeason=2&careerPage=1'))
+  })
+  it('rejects an empty in-range response rather than inventing an empty career', async () => {
+    api.getSavedPlayerMatchHistory.mockResolvedValueOnce({
+      schema_version:'saved_player_match_history.v1', source:'selected_branch_saved_revision',
+      run_id:'run',branch_id:'branch',saved_revision_id:'revision',player_id:'A',
+      status:'ready',season_index:null,offset:0,limit:20,available_seasons:[2],
+      total_results:1,played_wins:1,played_losses:0,walkovers:0,
+      career_played_wins:1,career_played_losses:0,career_walkovers:0,
+      has_more:false,matches:[],
+    })
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Nelze ověřit uloženou revizi nebo úplnost stránky zápasů.')
+    expect(screen.queryByText('Hráč nemá žádné uložené')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'Detail zápasu →'})).not.toBeInTheDocument()
   })
   it('does not render foreign saved HEAD data', async () => {
     api.getSavedPlayerMatchHistory.mockResolvedValueOnce({
@@ -104,7 +118,7 @@ describe('Saved player match history', () => {
       career_walkovers: 0, has_more: false, matches: [],
     })
     mount()
-    expect(await screen.findByRole('alert')).toHaveTextContent('Data patří jiné uložené revizi.')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Nelze ověřit uloženou revizi nebo úplnost stránky zápasů.')
     expect(screen.queryByText('Championship')).not.toBeInTheDocument()
   })
   it('recovers an error without accepting cached career results',async()=>{
@@ -127,4 +141,111 @@ describe('Saved player match history', () => {
     expect(screen.queryByText('WRONG')).not.toBeInTheDocument()
   })
 
+})
+
+describe('career navigation and filtering (mocked API, not browser acceptance)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    api.getSavedHomePlayerIdentities.mockImplementation(async (_r:string,_b:string, ids:string[]) => ({
+      run_id:'run', branch_id:'branch',saved_revision_id:'revision',
+      source:'selected_branch_saved_revision',requested_ids:ids,
+      players:ids.map(id=>({player_id:id, display_name:'Verified '+id})),
+    }))
+    api.getSavedPlayerMatchHistory.mockImplementation(async (_r:string,_b:string,_p:string,
+      season:number|null, offset:number,limit:number) => ({
+      schema_version:'saved_player_match_history.v1',source:'selected_branch_saved_revision',
+      run_id:'run',branch_id:'branch',saved_revision_id:'revision',player_id:'A',
+      status:'ready',season_index:season,offset,limit,available_seasons:[2],
+      total_results:21,played_wins:20,played_losses:1,walkovers:1,
+      career_played_wins:20,career_played_losses:1,career_walkovers:1,
+      has_more:offset===0,
+      matches:offset>=21?[]:[{
+        event_id:'EV',event_name:'Brno Championship',match_id:offset?'later':'M12',
+        season_index:2,season:'2002/03',week:17,draw_type:'main',round_number:2,
+        opponent_player_id:'B',outcome:offset?'loss':'win',completion:offset?'walkover':'played',
+        scoreline:offset?'W/O':'3-2',
+      }],
+    }))
+  })
+  it('rejects duplicate season/page/filter keys without asking the API for results', async () => {
+    mount('/?tab=career&careerPage=0&careerPage=1&careerOutcome=win')
+    expect(screen.getByRole('alert')).toHaveTextContent('Neplatná sezona, stránka nebo filtr')
+    expect(api.getSavedPlayerMatchHistory).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button',{name:'Platný výběr'}))
+    expect(await screen.findByText('Brno Championship')).toBeInTheDocument()
+    expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith('run','branch','A',null,0,20)
+  })
+  it('rejects malformed URL before any read, and recovers', async () => {
+    mount('/?tab=career&careerSeason=050&careerPage=999999')
+    expect(screen.getByRole('alert')).toHaveTextContent('Neplatná sezona')
+    expect(api.getSavedPlayerMatchHistory).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button',{name:'Platný výběr'}))
+    expect(await screen.findByText('Brno Championship')).toBeInTheDocument()
+    expect(api.getSavedPlayerMatchHistory).toHaveBeenCalledWith('run','branch','A',null,0,20)
+  })
+  it('recovers a nonexistent high page without page 1/0 or stale rows', async () => {
+    mount('/?tab=career&careerPage=5')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Požadovaná stránka kariéry neexistuje.')
+    expect(screen.queryByText('Brno Championship')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Poslední platná stránka'}))
+    await waitFor(()=>expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith('run','branch','A',null,20,20))
+    expect(await screen.findByText('Brno Championship')).toBeInTheDocument()
+    expect(screen.getByText(/Strana 2 \/ 2/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'První stránka'}))
+    await waitFor(()=>expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith('run','branch','A',null,0,20))
+  })
+  it('searches verified fields, filters only local rows, preserves server career counts', async () => {
+    mount()
+    expect(await screen.findByText('Brno Championship')).toBeInTheDocument()
+    await screen.findByText(/Verified B/)
+    fireEvent.change(screen.getByRole('searchbox',{name:'Hledat v načtené stránce'}),{target:{value:'Verified B'}})
+    expect(screen.getByText('Brno Championship')).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('combobox',{name:'Filtrovat výhry a prohry'}),{target:{value:'loss'}})
+    expect(screen.queryByText('Brno Championship')).not.toBeInTheDocument()
+    expect(screen.getByText(/žádný zápas neodpovídá lokálním filtrům/)).toBeInTheDocument()
+    expect(screen.getAllByText(/20 W \/ 1 L/).length).toBeGreaterThan(0)
+    fireEvent.change(screen.getByRole('combobox',{name:'Filtrovat výhry a prohry'}),{target:{value:'win'}})
+    expect(screen.getByText('Brno Championship')).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('combobox',{name:'Filtrovat odehrané a kontumace'}),{target:{value:'walkover'}})
+    expect(screen.queryByText('Brno Championship')).not.toBeInTheDocument()
+    expect(api.getSavedPlayerMatchHistory).toHaveBeenCalledTimes(1)
+  })
+  it('validates numeric jump, keeps local filters and passes source-bound link', async () => {
+    mount('/?tab=career&careerOutcome=loss&careerCompletion=walkover&careerQ=W%2FO')
+    expect(await screen.findByText(/žádný zápas neodpovídá lokálním filtrům/)).toBeInTheDocument()
+    fireEvent.change(screen.getByRole('spinbutton',{name:'Číslo stránky kariéry'}),{target:{value:'3'}})
+    expect(screen.getByRole('button',{name:'Přejít'})).toBeDisabled()
+    fireEvent.change(screen.getByRole('spinbutton',{name:'Číslo stránky kariéry'}),{target:{value:'2'}})
+    fireEvent.click(screen.getByRole('button',{name:'Přejít'}))
+    expect(await screen.findByText('Brno Championship')).toBeInTheDocument()
+    const link=screen.getByRole('link',{name:'Detail zápasu →'})
+    expect(link.getAttribute('href')).toContain('replayHead=revision')
+    expect(link.getAttribute('href')).toContain('careerOutcome=loss')
+    expect(link.getAttribute('href')).toContain('careerCompletion=walkover')
+    expect(link.getAttribute('href')).toContain('careerQ=W%2FO')
+  })
+  it('shows true empty career without nonsensical page count', async () => {
+    api.getSavedPlayerMatchHistory.mockImplementation(async (_r:string,_b:string,_p:string,
+      season:number|null,offset:number,limit:number) => ({
+        schema_version:'saved_player_match_history.v1',source:'selected_branch_saved_revision',
+        run_id:'run',branch_id:'branch',saved_revision_id:'revision',player_id:'A',
+        status:'ready',season_index:season,offset,limit,available_seasons:[],total_results:0,
+        played_wins:0,played_losses:0,walkovers:0,career_played_wins:0,career_played_losses:0,
+        career_walkovers:0,has_more:false,matches:[],
+      }))
+    mount()
+    expect(await screen.findByText(/Hráč nemá žádné uložené/)).toBeInTheDocument()
+    expect(screen.queryByText(/Strana 1 \/ 0/)).not.toBeInTheDocument()
+  })
+})
+
+describe('career without a selected Saved HEAD (mocked API)', () => {
+  it('does not spin indefinitely or send a request without a source', () => {
+    vi.clearAllMocks()
+    mount('/', '')
+    expect(screen.getByRole('alert')).toHaveTextContent('Chybí vybraná Branch, Saved HEAD')
+    expect(screen.queryByText('Načítám zápasy…')).not.toBeInTheDocument()
+    expect(api.getSavedPlayerMatchHistory).not.toHaveBeenCalled()
+    expect(screen.getByRole('button',{name:'Obnovit kariéru'})).toBeDisabled()
+  })
 })

@@ -153,6 +153,14 @@ describe('career navigation and filtering (mocked API, not browser acceptance)',
       }],
     }))
   })
+  it('rejects duplicate season/page/filter keys without asking the API for results', async () => {
+    mount('/?tab=career&careerPage=0&careerPage=1&careerOutcome=win')
+    expect(screen.getByRole('alert')).toHaveTextContent('Neplatná sezona, stránka nebo filtr')
+    expect(api.getSavedPlayerMatchHistory).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button',{name:'Platný výběr'}))
+    expect(await screen.findByText('Brno Championship')).toBeInTheDocument()
+    expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith('run','branch','A',null,0,20)
+  })
   it('rejects malformed URL before any read, and recovers', async () => {
     mount('/?tab=career&careerSeason=050&careerPage=999999')
     expect(screen.getByRole('alert')).toHaveTextContent('Neplatná sezona')

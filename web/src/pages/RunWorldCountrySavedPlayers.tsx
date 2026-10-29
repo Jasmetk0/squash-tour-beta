@@ -22,7 +22,8 @@ type Props = {
 function validCountryInventory(
   data: SavedPlayersInventory | undefined,
   runId: string, branchId: string, savedHead: string,
-  countryCode: string, includePrepared: boolean, offset: number
+  countryCode: string, search: string, statusFilter: string,
+  includePrepared: boolean, offset: number
 ): data is SavedPlayersInventory {
   return Boolean(data &&
     data.schema_version === 'saved_players_inventory.v1' &&
@@ -32,8 +33,8 @@ function validCountryInventory(
     data.source === 'selected_branch_saved_revision' &&
     data.time_context === 'present' &&
     data.country_code === countryCode &&
-    data.search === '' &&
-    data.status_filter === '' &&
+    data.search === search &&
+    data.status_filter === statusFilter &&
     data.include_prepared === includePrepared &&
     data.offset === offset &&
     data.limit === PAGE_SIZE &&
@@ -51,33 +52,53 @@ function ranking(player: SavedInventoryPlayer, cs: boolean): string {
     ? '#'+player.rank : 'NR'
 }
 
-export function RunWorldCountrySavedPlayers({
+/** A different Saved Run/Branch/HEAD/country cannot inherit the old search or cursor. */
+export function RunWorldCountrySavedPlayers(props: Props): JSX.Element {
+  const { runId, branchId, savedHead, countryCode } = props
+  return <ScopedCountryRoster key={JSON.stringify([runId, branchId, savedHead, countryCode])}
+    {...props} />
+}
+function ScopedCountryRoster({
   runId, branchId, savedHead, countryCode, selectedWorldYear, language
 }: Props): JSX.Element {
   const cs = language === 'cs'
   const [includePrepared, setIncludePrepared] = useState(false)
+  const [draft, setDraft] = useState({ search: '', status: '' })
+  const [filters, setFilters] = useState({ search: '', status: '' })
   const sourceKey = JSON.stringify([runId, branchId, savedHead, countryCode])
-  const [pageSelection, setPageSelection] = useState({ sourceKey, page: 0 })
-  // Reset synchronously: never fetch old offset 25/50 from a different Saved HEAD.
-  const page = pageSelection.sourceKey === sourceKey ? pageSelection.page : 0
+  const pageKey = JSON.stringify([sourceKey, filters.search, filters.status, includePrepared])
+  const [pageSelection, setPageSelection] = useState({ sourceKey: pageKey, page: 0 })
+  // Changes to source, search, exact status or prepared visibility reset the cursor
+  // in the same render: never request offset 25 from a new filtered result.
+  const page = pageSelection.sourceKey === pageKey ? pageSelection.page : 0
+  const applyFilters = (next: typeof filters) => {
+    setFilters(next)
+    setPageSelection({
+      sourceKey: JSON.stringify([sourceKey, next.search, next.status, includePrepared]),
+      page: 0,
+    })
+  }
   const offset = page * PAGE_SIZE
   const enabled = Boolean(runId && branchId && savedHead && countryCode)
   const q = useQuery({
     queryKey: [
       'run-world-country-saved-roster',runId,branchId,savedHead,
-      countryCode,includePrepared,offset
+      countryCode,filters.search,filters.status,includePrepared,offset
     ],
     queryFn:()=>getSavedPlayersInventory(runId,branchId,savedHead!,{
-      search:'',country_code:countryCode,status_filter:'',
+      search:filters.search,country_code:countryCode,status_filter:filters.status,
       include_prepared:includePrepared,offset,limit:PAGE_SIZE
     }),
     enabled,
     retry:false
   })
   const correct = savedHead != null && validCountryInventory(
-    q.data,runId,branchId,savedHead,countryCode,includePrepared,offset
+    q.data,runId,branchId,savedHead,countryCode,
+    filters.search,filters.status,includePrepared,offset
   )
-  const data = correct ? q.data : null
+  const data = correct && !q.isFetching ? q.data : null
+  const pageCount = data ? Math.ceil(data.total/PAGE_SIZE) : 0
+  const outOfRange = Boolean(data && page > 0 && offset >= data.total)
   return <section className="section-subtle run-world-country-roster"
     aria-label="Run World canonical country players">
     <h4>{cs ? 'Uložení hráči země' : 'Saved country players'}</h4>
@@ -91,17 +112,47 @@ export function RunWorldCountrySavedPlayers({
       : <p role="alert">{cs
         ? 'Není dostupná autoritativní uložená revize. Žádní hráči se nedoplňují z legacy dat.'
         : 'No authoritative Saved Revision is available. Legacy players are never substituted.'}</p>}
+    <form className="actions" aria-label="Country roster filters" onSubmit={e=>{
+      e.preventDefault()
+      applyFilters({search:draft.search.trim(),status:draft.status.trim()})
+    }}>
+      <label>{cs ? 'Hledat jméno nebo ID' : 'Find name or player ID'}{' '}
+        <input aria-label="Country roster search" type="search" maxLength={120}
+          placeholder={cs ? 'Jméno / ID hráče' : 'Player name / ID'}
+          value={draft.search} onChange={e=>setDraft(prev=>({...prev,search:e.target.value}))}/>
+      </label>
+      <label>{cs ? 'Přesný status' : 'Exact status'}{' '}
+        <input aria-label="Country roster status" type="text" maxLength={80}
+          placeholder={cs ? 'Např. active' : 'e.g. active'}
+          value={draft.status} onChange={e=>setDraft(prev=>({...prev,status:e.target.value}))}/>
+      </label>
+      <button type="submit">{cs ? 'Použít filtry' : 'Apply filters'}</button>
+      <button type="button" onClick={()=>{
+        setDraft({search:'',status:''})
+        applyFilters({search:'',status:''})
+      }}>{cs ? 'Vymazat filtry' : 'Clear filters'}</button>
+    </form>
+    {(filters.search || filters.status) && <p role="status">{cs
+      ? 'Filtry se uplatní na celou uloženou soupisku před stránkováním.'
+      : 'Filters apply to the full Saved roster before pagination.'}
+      {filters.search && <> · {cs?'Hledání':'Search'}: <strong>{filters.search}</strong></>}
+      {filters.status && <> · Status: <strong>{filters.status}</strong></>}
+    </p>}
     <label>
       <input type="checkbox" checked={includePrepared}
-        onChange={e=>{setIncludePrepared(e.target.checked);setPageSelection({ sourceKey, page: 0 })}} />
+        onChange={e=>{
+          setIncludePrepared(e.target.checked)
+          setPageSelection({ sourceKey: JSON.stringify([sourceKey, filters.search,
+            filters.status, e.target.checked]), page: 0 })
+        }} />
       {' '}{cs
         ? 'Výslovně zobrazit také uložené připravené prospekty (mohou být z budoucnosti)'
         : 'Explicitly include saved prepared prospects (may contain future identities)'}
     </label>
-    {enabled && q.isPending && <p role="status">{cs
+    {enabled && (q.isPending || q.isFetching) && <p role="status">{cs
       ? 'Načítám ověřené hráče…' : 'Loading verified saved players…'}</p>}
     {enabled && q.error && <p role="alert">{formatApiError(q.error)}</p>}
-    {enabled && q.isSuccess && !correct && <p role="alert">{cs
+    {enabled && q.isSuccess && !q.isFetching && !correct && <p role="alert">{cs
       ? 'Odpověď nesouhlasí s Runem, branchí, uloženou revizí nebo zemí. Nezobrazí se.'
       : 'Response scope does not match the Run, Branch, Saved Revision or country. Players are hidden.'}</p>}
     {data && <>
@@ -109,7 +160,12 @@ export function RunWorldCountrySavedPlayers({
         {' '}<strong>{data.total.toLocaleString(cs?'cs-CZ':'en-US')}</strong>
         {' '}· {cs?'Zobrazeno':'Showing'} {data.players.length}
       </p>
-      <div className="table-responsive"><table aria-label="Saved country roster">
+      {outOfRange && <p role="alert">{cs
+        ? 'Zvolená stránka již v tomto uloženém výběru neexistuje.'
+        : 'The selected page no longer exists in this Saved result.'}{' '}
+        <button type="button" onClick={()=>setPageSelection({sourceKey:pageKey,page:0})}>
+          {cs?'První platná stránka':'First valid page'}</button></p>}
+      {!outOfRange && <div className="table-responsive"><table aria-label="Saved country roster">
         <thead><tr><th>{cs?'Hráč':'Player'}</th><th>{cs?'Věk':'Age'}</th>
           <th>Status</th><th>OVR</th><th>Potential OVR</th><th>Ranking / NR</th>
         </tr></thead>
@@ -119,15 +175,15 @@ export function RunWorldCountrySavedPlayers({
           <td>{player.age??'—'}</td>
           <td>{player.status??'—'}</td><td>{player.ovr??'—'}</td>
           <td>{player.potential_ovr??'—'}</td><td>{ranking(player,cs)}</td>
-        </tr>)}</tbody></table></div>
+        </tr>)}</tbody></table></div>}
       {data.total===0 && <p role="status">{cs
         ? 'Tato země nemá v uloženém inventáři odpovídající hráče. Nejde o odhad talentů.'
         : 'No saved player identities match this country. This is not a talent forecast.'}</p>}
       <div className="actions">
-        <button type="button" disabled={page===0} onClick={()=>setPageSelection({ sourceKey, page: Math.max(0,page-1) })}>
+        <button type="button" disabled={page===0||q.isFetching||outOfRange} onClick={()=>setPageSelection({ sourceKey:pageKey, page: Math.max(0,page-1) })}>
           {cs?'← Předchozí':'← Previous'}</button>
-        <span>{cs?'Strana':'Page'} {page+1} / {Math.max(1,Math.ceil(data.total/PAGE_SIZE))}</span>
-        <button type="button" disabled={!data.has_more} onClick={()=>setPageSelection({ sourceKey, page: page+1 })}>
+        <span>{cs?'Strana':'Page'} {pageCount===0?0:page+1} / {pageCount}</span>
+        <button type="button" disabled={!data.has_more||q.isFetching||outOfRange} onClick={()=>setPageSelection({ sourceKey:pageKey, page: page+1 })}>
           {cs?'Další →':'Next →'}</button>
       </div>
     </>}

@@ -66,6 +66,7 @@ def _publish_real_ranking(server, run, branch):
         ),
         results=(),
     )
+    assert len(snapshot.rows) == 2, ("Source publication has no ranked rows", snapshot)
     repo = server.app.state.runtime.repository
     with repo._session_factory.begin() as session:
         session.add_all((
@@ -130,7 +131,10 @@ def test_saved_country_ranking_filter_real_http_sqlite_publish_and_restart(tmp_p
         unranked = _read(server, run, branch, ranking_status_filter="unranked")
         assert ranked["saved_revision_id"] != old_head
         assert ranked["ranking_week_ordinal"] == 0
-        assert ranked["total"] == 2 and unranked["total"] == 1
+        assert ranked["total"] == 2 and unranked["total"] == 1, (
+            "Saved ranking publication did not project expected identities",
+            ranked, unranked,
+        )
         assert [row["player_id"] for row in ranked["players"]] == [
             "player-a", "player-b"
         ]

@@ -413,10 +413,11 @@ export function ViewerRunWeekPage(): JSX.Element {
   const finalsRacePublications = useMemo(
     () =>
       (race?.publications ?? []).filter((publication) => {
+        if (!matchesViewerSource(publication, runId, effectiveBranchId)) return false
         if (publication.cutoff_week !== parsedWeek) return false
         return selectedPublicationYear !== null && 2000 + publication.cutoff_season_index === selectedPublicationYear
       }),
-    [race?.publications, selectedPublicationYear, parsedWeek]
+    [race?.publications, runId, effectiveBranchId, selectedPublicationYear, parsedWeek]
   )
   const hasAnyData =
     weekEvents.length > 0 ||

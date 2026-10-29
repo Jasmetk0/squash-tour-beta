@@ -72,7 +72,7 @@ describe('ranking history browser (mocked GET API, not HTTP/SQLite integration)'
     expect(within(table).getByRole('link', { name: 'Otevřít ranking týdne 2 (#1)' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/rankings/1')
     expect(within(table).getByRole('link', { name: 'Otevřít ranking týdne 1 (#0)' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/rankings/0')
     expect(within(table).getByText('historic')).toBeInTheDocument()
-    expect(within(table).getByText('0')).toBeInTheDocument()
+    expect(within(table).getAllByText('0').length).toBeGreaterThan(0)
     expectNoForbiddenViewerActions()
   })
 

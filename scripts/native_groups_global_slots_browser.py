@@ -32,6 +32,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--source', type=Path)
+    parser.add_argument('--withdrawal', action='store_true', help='Pure groups with explicit withdrawal and non-played W/O')
     parser.add_argument('--chromium', default=os.environ.get('CHROME_BIN', '/usr/bin/chromium'))
     args = parser.parse_args()
     root = local_database_path(args.root)
@@ -108,9 +109,10 @@ def main():
                 panel.get_by_text('New Tournament Edition', exact=True).click()
                 panel.get_by_label('Tour Edition ID').fill('browser-groups')
                 panel.get_by_label('Tour Edition name').fill('Chromium Groups + knockout')
-                panel.get_by_label('Tour Edition format').select_option('groups_knockout')
-                panel.get_by_label('Group ranking win points').fill('7')
-                expect(panel.get_by_label('Group crossings')).to_have_value('A1-B2 / B1-A2')
+                panel.get_by_label('Tour Edition format').select_option('groups' if args.withdrawal else 'groups_knockout')
+                panel.get_by_label('Group ranking win points').fill('0' if args.withdrawal else '7')
+                if not args.withdrawal:
+                    expect(panel.get_by_label('Group crossings')).to_have_value('A1-B2 / B1-A2')
                 accept(page, panel, 'Review new Edition')
                 manual_save(page, panel)
                 for _ in range(2):
@@ -122,19 +124,34 @@ def main():
                 accept(page, panel, 'Review approval')
                 accept(page, panel, 'Review draw')
                 manual_save(page, panel)
-                accept(page, panel, 'Review Next Match')
+                accept(page, panel, 'Review Next Slot' if args.withdrawal else 'Review Next Match')
                 manual_save(page, panel)
+                if args.withdrawal:
+                    current = inspect(server)
+                    withdrawn = current['groups']['browser-groups']['withdrawal_available_player_ids'][0]
+                    panel.get_by_label('Withdraw player browser-groups').select_option(withdrawn)
+                    panel.get_by_label('Withdrawal reason browser-groups').select_option('illness')
+                    panel.get_by_label('Withdrawal note browser-groups').fill('Reviewed actual Chromium withdrawal')
+                    updated = accept(page, panel, 'Review withdrawal')
+                    assert updated['groups']['browser-groups']['withdrawals'][0]['player_id'] == withdrawn
+                    manual_save(page, panel)
                 frozen = inspect(server)['next_slot']['snapshot_fingerprint']
                 page.screenshot(path=str(root / 'partial-group-saved.png'), full_page=True)
         with ApiServer(database_url=f'sqlite:///{database}') as server:
             assert inspect(server)['next_slot']['snapshot_fingerprint'] == frozen
             with browser_session(pw, server, 'en') as (page, panel):
-                for _ in range(5):
+                for _ in range(2 if args.withdrawal else 5):
                     accept(page, panel, 'Review Next Slot')
                     manual_save(page, panel)
                 expect(panel.get_by_role('table', name='Group 1 standings')).to_be_visible()
                 expect(panel.get_by_role('table', name='Group 2 standings')).to_be_visible()
-                expect(panel.get_by_role('table', name='Played matches browser-groups').locator('tbody tr')).to_have_count(15)
+                expected_matches = 10 if args.withdrawal else 15
+                expect(panel.get_by_role('table', name='Played matches browser-groups').locator('tbody tr')).to_have_count(expected_matches)
+                if args.withdrawal:
+                    group = inspect(server)['groups']['browser-groups']
+                    assert len(group['walkovers']) == 2
+                    assert all(r['result']['loser_player_id'] == withdrawn for r in group['walkovers'])
+                    expect(panel.get_by_text('W/O · ', exact=False)).to_have_count(2)
                 expect(panel.get_by_role('table', name='Edition results browser-groups').locator('tbody tr')).to_have_count(8)
                 accept(page, panel, 'Review results')
                 manual_save(page, panel)
@@ -151,9 +168,10 @@ def main():
                 expect(panel.get_by_role('table', name='Group 1 standings')).to_be_visible()
                 page.screenshot(path=str(root / 'cold-czech-groups.png'), full_page=True)
     assert not errors, errors
-    (root / 'result.json').write_text(json.dumps({'real_chromium':True,'actual_matches':15,
+    (root / 'result.json').write_text(json.dumps({'real_chromium':True,'actual_matches':10 if args.withdrawal else 15,
+        'walkovers':2 if args.withdrawal else 0,'withdrawal':args.withdrawal,
         'manual_save':True,'cold_restart':True,'ranked_players':len(rows),'browser_errors':errors}, indent=2))
-    print('PASS: actual Admin groups, 15 MatchEngine matches, playoff, points, Save, cold restart and CS/EN')
+    print('PASS: actual Admin groups, MatchEngine results, non-played W/O if selected, points, Save, cold restart and CS/EN')
 
 
 if __name__ == '__main__':

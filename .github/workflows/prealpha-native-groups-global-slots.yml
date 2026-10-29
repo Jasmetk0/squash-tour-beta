@@ -17,7 +17,9 @@ on:
       - 'src/beta_engine/infrastructure/db/native_fork*'
       - 'src/beta_engine/infrastructure/db/repositories.py'
       - 'tests/api/test_calendar_native_groups.py'
+      - 'tests/api/test_calendar_native_group_withdrawal.py'
       - 'tests/domain/test_calendar_native_groups_contract.py'
+      - 'tests/domain/test_calendar_group_withdrawals.py'
       - 'tests/domain/test_native_group_slot_dependencies.py'
       - 'scripts/native_groups_global_slots_browser.py'
       - 'web/src/pages/CalendarTourPanel*'
@@ -53,7 +55,7 @@ jobs:
       - name: Actual configured group lifecycle, forks, worker and rejection
         env:
           NATIVE_GROUP_CALENDAR: ${{ matrix.width }}
-        run: GITHUB_EVENT_NAME=native_groups_acceptance python -m pytest tests/api/test_calendar_native_groups.py -vv -s --basetemp "${{ runner.temp }}/native-groups-${{ matrix.width }}" --maxfail=1 --durations=10
+        run: GITHUB_EVENT_NAME=native_groups_acceptance python -m pytest tests/api/test_calendar_native_groups.py tests/api/test_calendar_native_group_withdrawal.py -vv -s --basetemp "${{ runner.temp }}/native-groups-${{ matrix.width }}" --maxfail=1 --durations=10
       - name: Retain actual SQLite evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -64,7 +66,11 @@ jobs:
 
   native-groups-browser:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
-    name: Native groups / real Admin Chromium / manual Save / cold restart
+    name: Native groups / real Admin Chromium / manual Save / cold restart${{ matrix.mode == 'withdrawal' && ' / W-O' || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [hybrid, withdrawal]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -83,11 +89,11 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - run: npm --prefix web ci
       - name: Real Chromium creation, groups, playoff, results and restart
-        run: python scripts/native_groups_global_slots_browser.py --root "${{ runner.temp }}/native-groups-browser" --chromium "$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')"
+        run: python scripts/native_groups_global_slots_browser.py --root "${{ runner.temp }}/native-groups-browser" ${{ matrix.mode == 'withdrawal' && '--withdrawal' || '' }} --chromium "$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')"
       - name: Retain browser and SQLite evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: native-groups-browser-${{ github.run_id }}
+          name: native-groups-browser-${{ matrix.mode }}-${{ github.run_id }}
           path: ${{ runner.temp }}/native-groups-browser
           retention-days: 7

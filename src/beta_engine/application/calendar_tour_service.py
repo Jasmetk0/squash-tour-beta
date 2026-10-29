@@ -112,6 +112,7 @@ class CalendarTourCommand(FrozenInput):
         "next-slot",
         "next-match",
         "resolve-group-tie",
+        "withdraw-group",
         "confirm-result",
         "policy",
         "transition",
@@ -195,12 +196,29 @@ class CalendarTourService:
         from beta_engine.infrastructure.db.native_fork_source_projection import (
             decoded_global_tour_source,
         )
-        saved_evidence, saved, signed = decoded_global_tour_source(
-            self.repository, revision.saved_revision,
-            lambda source: decode_prevalidated_calendar_sources(
-                source.payload, run_id=run_id, branch_id=branch_id,
-            ),
+        payload = revision.saved_revision.payload
+        global_components = payload.get('content', {})
+        current_global = (
+            global_components.get('calendar_player_sporting_checkpoint', {}).get('state', {}).get('schema_version') == 'calendar_sporting_checkpoint.v13'
+            and global_components.get('calendar_tour_authority', {}).get('state', {}).get('schema_version') == 'calendar_tour_authority.v5'
         )
+        if current_global:
+            # This same physical read authenticated the complete Saved owner.
+            # The internal decoder rebinds the actual component hashes/scope
+            # and original match evidence. Only the strict checkpoint decode
+            # survives Tour-only Saves, under complete-value binding and
+            # defensive copies within the existing bounded data-cache budget.
+            saved_evidence, saved, signed = decode_prevalidated_calendar_sources(
+                payload, run_id=run_id, branch_id=branch_id,
+                _global_value_proofs=proofs, _repository=self.repository,
+            )
+        else:
+            saved_evidence, saved, signed = decoded_global_tour_source(
+                self.repository, revision.saved_revision,
+                lambda source: decode_prevalidated_calendar_sources(
+                    source.payload, run_id=run_id, branch_id=branch_id,
+                ),
+            )
         rows = load_match_rows(
             session,
             run_id=run_id,
@@ -689,6 +707,7 @@ class CalendarTourService:
         # advancing the public week must still start from an immutable Save.
         if state != signed and command.action in (
             "play",
+            "withdraw-group",
             "confirm-result",
             "transition",
             "season-transition",
@@ -1263,9 +1282,10 @@ class CalendarTourService:
             if persist and cp != previous_cp:
                 replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp, _repository=self.repository)
             ctx = (*ctx[:4], cp, *ctx[5:])
-        if command.action == "resolve-group-tie":
-            from beta_engine.application.calendar_native_groups import apply_group_tie
-            return apply_group_tie(session, ctx, state, authority, command, persist=persist, _repository=self.repository)
+        if command.action in {"resolve-group-tie", "withdraw-group"}:
+            from beta_engine.application.calendar_native_groups import apply_group_tie, apply_group_withdrawal
+            apply = apply_group_tie if command.action == 'resolve-group-tie' else apply_group_withdrawal
+            return apply(session, ctx, state, authority, command, persist=persist, _repository=self.repository)
         if command.action in {"next-slot", "next-match"}:
             from beta_engine.application.calendar_global_slot_service import (
                 apply_global_slot,

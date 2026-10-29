@@ -15,6 +15,7 @@ import type {RunBranchListResponse} from '../api/types'
 
 const actionLabels={approve:['Zkontrolovat schválení','Review approval'],draw:['Zkontrolovat los','Review draw'],play:['Zkontrolovat odehrání','Review play'],'confirm-result':['Zkontrolovat výsledky','Review results']}
 const stageLabels:Record<string,string>={champion:'Vítěz',finalist:'Finalista',semifinal:'Semifinále',quarterfinal:'Čtvrtfinále'}
+const withdrawalReasonLabels:Record<string,[string,string]>={injury:['Zranění','Injury'],illness:['Nemoc','Illness'],personal:['Osobní důvod','Personal'],travel:['Cesta nebo víza','Travel or visa'],no_show:['Nedostavení se','No show'],ineligible:['Nezpůsobilost','Ineligible'],other:['Jiné','Other']}
 const pointStatus:Record<string,string>={counted:'Započteno',awaiting_activation:'Čeká na aktivaci',closing_only:'Pouze závěrečná uzávěrka',expired:'Expirováno',excluded_best_n:'Mimo Best N'}
 const blockerLabels:Record<string,[string,string]>={season_transition_required:['Je nutný Season Transition.','Season Transition is required.'],season_transition_requires_last_week:['Season Transition lze provést až po posledním týdnu.','Season Transition requires the last week.'],season_transition_horizon_exhausted:['Další sezóna je mimo horizont Runu; nejprve prodlužte horizont.','The next season is beyond the Run horizon; extend it first.'],saved_health_baseline_missing:['Chybí uložený Health stav.','Saved Health state is missing.'],health_healing_or_permanent_effect_authority_unsupported:['Léčení či trvalé následky vyžadují dosud nepodporovanou autoritu.','Healing or permanent effects require an unsupported authority.'],intake_source_requires_native_calendar_materialization:['Prospect intake vyžaduje nativní kalendářovou materializaci.','Prospect intake requires native calendar materialization.'],disciplinary_source_requires_native_activation_authority:['Disciplinární zdroj vyžaduje nativní aktivaci.','Disciplinary source requires native activation.'],sporting_owner_drift:['Sportovní stav se změnil mimo Tour.','Sporting state changed outside Tour.']}
 
@@ -36,6 +37,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
   const [groupCount,setGroupCount]=useState(2),[groupSize,setGroupSize]=useState(4),[advancing,setAdvancing]=useState(2)
   const [groupBestOf,setGroupBestOf]=useState(3),[knockoutBestOf,setKnockoutBestOf]=useState(5),[winPoints,setWinPoints]=useState('0')
   const [crossings,setCrossings]=useState(crossingPreset(2)),[tieOrder,setTieOrder]=useState('')
+  const [withdrawPlayer,setWithdrawPlayer]=useState(''),[withdrawReason,setWithdrawReason]=useState(''),[withdrawNote,setWithdrawNote]=useState('')
   const [points,setPoints]=useState<Record<string,string>>({champion:'100',finalist:'60',semifinal:'30',quarterfinal:'15'})
   const [selected,setSelected]=useState<string[]>([]),[contributions,setContributions]=useState<TourContribution[]|null>(null)
   const [selectedSlotMatch,setSelectedSlotMatch]=useState('')
@@ -141,6 +143,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         data={schema_version:groupConfiguration?'calendar_tournament_edition.v3':'calendar_tournament_edition.v2',simulation_seed:Number(seed),edition_id:editionId,name,week:schedule.week,announcement_week:schedule.announcement_week,start_slot:Number(slot),main_entrant_count:groupConfiguration?groupCount*groupSize:size,ranked:true,point_table:table,validity_weeks:current.calendar.weeks_per_year,...(groupConfiguration?{group_configuration:groupConfiguration}:{})}
       } else if(action==='submit') data={player_ids:selected}
       else if(action==='resolve-group-tie'&&id) data={case:view.groups?.[id]?.tie_case,ordered_player_ids:tieOrder.split(',').map(s=>s.trim())}
+      else if(action==='withdraw-group'&&id) data={player_id:withdrawPlayer,reason_category:withdrawReason,note:withdrawNote}
       else if(action==='next-match'&&id) data={match_id:id}
       const command:TourCommand={action,command_id:commandId,edition_id:action==='next-match'?null:id,expected_saved_head:view.saved_head_revision_id,expected_checkpoint_fingerprint:view.checkpoint_fingerprint,expected_tour_fingerprint:view.tour_fingerprint,seed:Number(seed),operator_label:'Admin',audit_reason:reason.trim(),data}
       const checked=validateTourPreview(await previewCalendarTour(runId,branchId,command),command,runId,branchId)
@@ -311,7 +314,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           <p>{cs?'Dokončeno':'Completed'}: {view.next_slot.completed} · {cs?'Zbývá':'Remaining'}: {view.next_slot.remaining}</p>
           {view.next_slot.blockers?.map(blocker=><p role="alert" key={blocker}>{cs?'Nejprve výslovně vyřešte shodu ve skupině. Tento slot čeká na její výsledek.':'Explicitly resolve the group tie first. This slot is waiting for its result.'} · {blocker}</p>)}
           {view.next_slot.conflicts?.map(c=><p role="alert" key={c.player_id}>{cs?'Kolize hráče ve stejném slotu':'Player conflict in the same slot'}: {names.get(c.player_id)??c.player_id} · {c.match_ids.join(' / ')}</p>)}
-          <table><thead><tr><th>Edition</th><th>{cs?'Zápas':'Match'}</th><th>{cs?'Stav':'State'}</th></tr></thead><tbody>{view.next_slot.matches.map(m=><tr key={m.match_id}><td>{m.edition_id}</td><td>{names.get(m.player_a_id??'')??m.player_a_id} / {names.get(m.player_b_id??'')??m.player_b_id}</td><td>{m.completed?(cs?'Dokončeno':'Completed'):(cs?'Čeká':'Pending')}</td></tr>)}</tbody></table>
+          <table><thead><tr><th>Edition</th><th>{cs?'Zápas':'Match'}</th><th>{cs?'Stav':'State'}</th></tr></thead><tbody>{view.next_slot.matches.map(m=><tr key={m.match_id}><td>{m.edition_id}</td><td>{names.get(m.player_a_id??'')??m.player_a_id} / {names.get(m.player_b_id??'')??m.player_b_id}</td><td>{m.completion==='walkover'?(m.completed?'W/O':(cs?'Čeká W/O':'Pending W/O')):m.completed?(cs?'Dokončeno':'Completed'):(cs?'Čeká':'Pending')}</td></tr>)}</tbody></table>
           <button disabled={busy||!reason.trim()||Boolean(view.next_slot.conflicts?.length)||Boolean(view.next_slot.blockers?.length)} onClick={()=>void perform('next-slot')}>{cs?'Zkontrolovat Next Slot':'Review Next Slot'}</button>
           <button disabled={busy||!reason.trim()||Boolean(view.next_slot.blockers?.length)} onClick={()=>void perform('next-match',selectedSlotMatch||null)}>{cs?'Zkontrolovat Next Match':'Review Next Match'}</button>
           <label>{cs?'Zápas tohoto slotu':'Match in this slot'}<select aria-label="Global slot match" value={selectedSlotMatch} onChange={e=>{setSelectedSlotMatch(e.target.value);invalidate()}}><option value="">{cs?'První zbývající zápas':'First remaining match'}</option>{view.next_slot.matches.filter(m=>!m.completed).map(m=><option key={m.match_id} value={m.match_id}>{m.edition_id}: {names.get(m.player_a_id??'')??m.player_a_id} / {names.get(m.player_b_id??'')??m.player_b_id}</option>)}</select></label>
@@ -331,6 +334,22 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
             {a.draw&&<ol>{tourDrawSlots(a.draw).map(s=><li key={s.player_id}>{names.get(s.player_id)??s.player_id}</li>)}</ol>}
             {view.groups?.[id]&&<section aria-label={`Groups ${id}`}>
               <h4>{cs?'Skupiny a postup':'Groups and advancement'}</h4>
+              {(view.groups[id].withdrawal_available_player_ids?.length??0)>0&&<fieldset disabled={busy||!view.saved}>
+                <legend>{cs?'Odstoupení ze skupiny':'Group withdrawal'}</legend>
+                <p>{cs?'Odehrané zápasy zůstanou zachované. Zbývající soupeři získají W/O bez skóre, rally a fyzických účinků. Náhled a potvrzení jsou oddělené od ručního Save.':'Played matches remain. Remaining opponents receive W/O without a score, rallies or physical effects. Review and confirmation are separate from manual Save.'}</p>
+                <label>{cs?'Odstupující hráč':'Withdrawing player'}<select aria-label={`Withdraw player ${id}`} value={withdrawPlayer} onChange={e=>{setWithdrawPlayer(e.target.value);invalidate()}}>
+                  <option value="">{cs?'Vyberte hráče':'Select player'}</option>
+                  {view.groups[id].withdrawal_available_player_ids?.map(pid=><option key={pid} value={pid}>{names.get(pid)??pid}</option>)}
+                </select></label>
+                <label>{cs?'Kategorie důvodu':'Reason category'}<select aria-label={`Withdrawal reason ${id}`} value={withdrawReason} onChange={e=>{setWithdrawReason(e.target.value);invalidate()}}>
+                  <option value="">{cs?'Vyberte důvod':'Select reason'}</option>
+                  {Object.entries(withdrawalReasonLabels).map(([value,label])=><option key={value} value={value}>{label[cs?0:1]}</option>)}
+                </select></label>
+                <label>{cs?'Poznámka (nepovinná)':'Note (optional)'}<input aria-label={`Withdrawal note ${id}`} maxLength={1000} value={withdrawNote} onChange={e=>{setWithdrawNote(e.target.value);invalidate()}}/></label>
+                <button disabled={!reason.trim()||!withdrawReason||!view.groups[id].withdrawal_available_player_ids?.includes(withdrawPlayer)} onClick={()=>void perform('withdraw-group',id)}>{cs?'Zkontrolovat odstoupení':'Review withdrawal'}</button>
+              </fieldset>}
+              {view.groups[id].withdrawals?.map(r=><p key={r.command_id}>{cs?'Odstoupil':'Withdrawn'}: {names.get(r.player_id)??r.player_id} · {withdrawalReasonLabels[r.reason_category]?.[cs?0:1]??r.reason_category}{r.note?' · '+r.note:''}</p>)}
+              {view.groups[id].walkovers?.map(r=><p key={r.result.match_id}>W/O · {names.get(r.result.winner_player_id)??r.result.winner_player_id} / {names.get(r.result.loser_player_id)??r.result.loser_player_id}</p>)}
               {a.draw?.topology?.group_slots.map(s=><p key={s.player_id}>{cs?'Skupina':'Group'} {s.group_index} · {names.get(s.player_id)??s.player_id}</p>)}
               {view.groups[id].standings?.groups.map(g=><table key={g.group_index} aria-label={`Group ${g.group_index} standings`}><caption>{cs?'Skupina':'Group'} {g.group_index}</caption><thead><tr><th>#</th><th>{cs?'Hráč':'Player'}</th><th>{cs?'Výhry':'Wins'}</th><th>{cs?'Skupinové body':'Group points'}</th><th>{cs?'Hry':'Games'}</th><th>{cs?'Míčky':'Points'}</th></tr></thead><tbody>{g.rows.map(r=><tr key={r.player_id}><td>{r.position}</td><td>{names.get(r.player_id)??r.player_id}</td><td>{r.wins}</td><td>{r.group_points}</td><td>{r.games_won}/{r.games_lost}</td><td>{r.points_won}/{r.points_lost}</td></tr>)}</tbody></table>)}
               {view.groups[id].bracket?.matches.map(m=><p key={m.match_id}>{cs?'Kolo':'Round'} {m.round_number}: {m.participant_sources.map(s=>s.startsWith('player:')?names.get(s.slice(7))??s:s).join(' / ')}</p>)}

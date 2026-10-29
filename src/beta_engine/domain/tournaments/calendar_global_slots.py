@@ -73,6 +73,10 @@ from beta_engine.domain.tournaments.calendar_groups import (
     TournamentGroupStandingsUnresolvedTie,
 )
 from beta_engine.domain.matches.formats import EffectiveMatchFormatSnapshot, MatchFormat
+from beta_engine.domain.tournaments.calendar_group_withdrawals import (
+    NativeGroupWithdrawal, NativeGroupWalkover, group_resolved_matches,
+    pending_group_walkovers,
+)
 
 _replay_projections = ContextVar("global_slot_private_replay_projections", default=None)
 
@@ -224,7 +228,7 @@ def is_group_edition(authority):
 
 def edition_plan(authority, matches, slots=()):
     if is_group_edition(authority):
-        return group_plan(authority, matches, group_decisions(slots, authority.edition.edition_id))
+        return group_plan(authority, {**matches, **group_resolved_matches(slots)}, group_decisions(slots, authority.edition.edition_id))
     ids = tuple(s.player_id for s in authority.draw.main.slots) if authority.draw else ()
     prior = tuple(matches.get(f"{authority.edition.edition_id}:{suffix}") for suffix in bracket(authority))
     return tuple((f"{authority.edition.edition_id}:{suffix}", native_match_slot(authority, i),
@@ -290,7 +294,7 @@ class FrozenGroupSlotMatch(FrozenSlotMatch):
 
 
 class GlobalSlot(FrozenInput):
-    schema_version: Literal["calendar_global_slot.v1", "calendar_global_slot.v2"] = "calendar_global_slot.v1"
+    schema_version: Literal["calendar_global_slot.v1", "calendar_global_slot.v2", "calendar_global_slot.v3"] = "calendar_global_slot.v1"
     run_id: str
     branch_id: str
     week: RunWeekPosition
@@ -302,6 +306,8 @@ class GlobalSlot(FrozenInput):
     scheduled: tuple[FrozenSlotMatch | FrozenGroupSlotMatch, ...]
     accepted: tuple[CalendarContinuationMatch, ...] = ()
     group_tie_decisions: tuple[NativeGroupTieDecision, ...] = Field(default=(), exclude_if=lambda value: not value)
+    group_withdrawals: tuple[NativeGroupWithdrawal, ...] = Field(default=(), exclude_if=lambda value: not value)
+    walkovers: tuple[NativeGroupWalkover, ...] = Field(default=(), exclude_if=lambda value: not value)
     # Keep the original empty-field omission in the native serializer. A wrap
     # serializer materializes every player's full attributes and rally log an
     # extra time whenever an enclosing checkpoint is serialized.
@@ -350,7 +356,7 @@ class GlobalSlot(FrozenInput):
 
     @property
     def remaining(self):
-        done = {m.match_id for m in self.accepted} | set(self.inherited_match_ids)
+        done = {m.match_id for m in (*self.accepted, *self.walkovers)} | set(self.inherited_match_ids)
         return tuple(m for m in self.scheduled if m.match_id not in done)
 
     @property
@@ -359,6 +365,8 @@ class GlobalSlot(FrozenInput):
 
     @model_validator(mode="after")
     def canonical_evidence(self):
+        if self.schema_version != 'calendar_global_slot.v3' and (self.group_withdrawals or self.walkovers):
+            raise ValueError('Historical slot cannot acquire withdrawal or walkover evidence')
         if self.schema_version == "calendar_global_slot.v1" and (self.group_tie_decisions or any(isinstance(m, FrozenGroupSlotMatch) for m in self.scheduled) or any(is_group_edition(a) for a in self.authorities)):
             raise ValueError("Historical slot cannot acquire group authority")
         if any(r.edition_id not in {a.edition.edition_id for a in self.authorities} for r in self.group_tie_decisions):
@@ -366,7 +374,12 @@ class GlobalSlot(FrozenInput):
         if len({r.command_id for r in self.group_tie_decisions}) != len(self.group_tie_decisions):
             raise ValueError('Global slot contains duplicate tie decision commands')
         ids = tuple(m.match_id for m in self.scheduled)
-        done = tuple(m.match_id for m in self.accepted)
+        done = tuple(sorted(m.match_id for m in (*self.accepted, *self.walkovers)))
+        if len(done) != len(set(done)):
+            raise ValueError('A slot match cannot be both played and a walkover')
+        if (tuple(m.match_id for m in self.accepted) != tuple(sorted({m.match_id for m in self.accepted}))
+            or tuple(m.match_id for m in self.walkovers) != tuple(sorted({m.match_id for m in self.walkovers}))):
+            raise ValueError('Slot played and walkover evidence must be canonical')
         if set(self.inherited_match_ids) & set(done) or not set(
             self.inherited_match_ids
         ) <= set(ids):
@@ -385,6 +398,23 @@ class GlobalSlot(FrozenInput):
             for m in self.accepted
         ):
             raise ValueError("Accepted match differs from frozen global slot owner")
+        for record in self.group_withdrawals:
+            if (record.run_id, record.branch_id, record.week, record.slot_number) != (
+                self.run_id, self.branch_id, self.week, self.number
+            ) or record.edition_id not in {a.edition.edition_id for a in self.authorities}:
+                raise ValueError('Group withdrawal differs from its slot owner')
+        if len({r.command_id for r in self.group_withdrawals}) != len(self.group_withdrawals):
+            raise ValueError('Duplicate group withdrawal command')
+        for record in self.walkovers:
+            item = next(s for s in self.scheduled if s.match_id == record.match_id)
+            if (record.run_id, record.branch_id, record.week, record.slot_number,
+                record.edition_id, record.source_checkpoint_fingerprint) != (
+                self.run_id, self.branch_id, self.week, self.number,
+                item.edition_id, self.snapshot_fingerprint
+            ) or {record.result.winner_player_id, record.result.loser_player_id} != {
+                p.player_id for p in item.projections
+            } or not isinstance(item, FrozenGroupSlotMatch):
+                raise ValueError('Walkover differs from its frozen group match')
         return self
 
 
@@ -658,9 +688,7 @@ def next_schedule(state, checkpoint):
             opened,
         )
     history = getattr(checkpoint, "history_global_slots", slots)
-    accepted = {
-        m.match_id: m for s in history if isinstance(s, GlobalSlot) for m in s.accepted
-    }
+    accepted = group_resolved_matches(tuple(s for s in history if isinstance(s, GlobalSlot)))
     due = []
     for a in state.editions:
         if (
@@ -846,23 +874,29 @@ def accept_slot(checkpoint, slot, *, match_id=None):
     if not selected:
         raise ValueError("Selected match is not unresolved in the nearest global slot")
     selected_ids = {m.match_id for m in selected}
+    walkovers = pending_group_walkovers(checkpoint, slot)
     for item in selected:
+        if item.match_id in walkovers:
+            continue
         if any(p.numeric_calibration_required for p in item.health.player_profiles):
             raise ValueError(
                 f"Global slot {slot.number}, {item.match_id}: unresolved numeric Health effects"
             )
-    for pid, ids in slot.conflicts.items():
+    for pid, ids in playing_slot_conflicts(checkpoint, slot).items():
         if selected_ids.intersection(ids):
             raise ValueError(
                 f"Global slot {slot.number}: player {pid} collides in {', '.join(ids)}"
             )
     accepted = tuple(
         sorted(
-            (*slot.accepted, *(calculate_match(slot, s) for s in selected)),
+            (*slot.accepted, *(calculate_match(slot, s) for s in selected if s.match_id not in walkovers)),
             key=lambda m: m.match_id,
         )
     )
-    successor = slot.model_copy(update={"accepted": accepted})
+    nonplayed = tuple(sorted((*slot.walkovers, *(walkovers[s.match_id] for s in selected
+        if s.match_id in walkovers)), key=lambda m: m.match_id))
+    successor = slot.model_copy(update={"accepted": accepted, 'walkovers': nonplayed,
+        **({'schema_version': 'calendar_global_slot.v3'} if nonplayed else {})})
     if getattr(checkpoint, "schema_version", None) == "native_fork_competition.v1":
         return checkpoint.with_global_slot(successor), successor
     events = checkpoint.events
@@ -876,15 +910,30 @@ def accept_slot(checkpoint, slot, *, match_id=None):
     return checkpoint.model_copy(update={"events": (*events, successor)}), successor
 
 
+def playing_slot_conflicts(checkpoint, slot):
+    history = getattr(checkpoint, 'history_global_slots', getattr(checkpoint, 'events', ()))
+    resolved = group_resolved_matches(tuple(s for s in history if isinstance(s, GlobalSlot)))
+    nonplayed = set(pending_group_walkovers(checkpoint, slot)) | {m.match_id for m in slot.walkovers}
+    nonplayed.update(mid for mid in slot.inherited_match_ids if isinstance(resolved.get(mid), NativeGroupWalkover))
+    seen = {}
+    for item in slot.scheduled:
+        if item.match_id not in nonplayed:
+            for player in item.projections:
+                seen.setdefault(player.player_id, []).append(item.match_id)
+    return {pid: tuple(sorted(ids)) for pid, ids in sorted(seen.items()) if len(ids) > 1}
+
+
 def inherit_open_slot(slot, *, branch_id):
     """New fork snapshot references accepted source matches without re-owning them."""
     value = slot.model_copy(
         update={
             "branch_id": branch_id,
             "accepted": (),
+            'walkovers': (),
+            'group_withdrawals': (),
             "inherited_match_ids": tuple(
                 sorted(
-                    set(slot.inherited_match_ids) | {m.match_id for m in slot.accepted}
+                    set(slot.inherited_match_ids) | {m.match_id for m in (*slot.accepted, *slot.walkovers)}
                 )
             ),
         }

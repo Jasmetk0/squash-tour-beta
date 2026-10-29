@@ -17,7 +17,7 @@ from tests.api.test_saved_revision_history_api import ApiServer, _request
 pytestmark = pytest.mark.smoke
 
 
-def configuration(group_count=2, group_size=4, *, hybrid=True, width=52):
+def configuration(group_count=2, group_size=4, *, hybrid=True, width=52, group_win_points=7):
     rules = TournamentGroupRulesPolicy(run_id='run', branch_id='branch',
         effective_from_season_index=0, default_match_best_of=3, adopted_by_command_id='group-rules-v1')
     crossings = []
@@ -30,7 +30,7 @@ def configuration(group_count=2, group_size=4, *, hybrid=True, width=52):
     return {'schema_version': 'native_group_configuration.v1',
         'format_kind': 'groups_knockout' if hybrid else 'groups',
         'rules': rules.model_dump(mode='json'), 'knockout_best_of': 5,
-        'played_group_win_points': 7,
+        'played_group_win_points': group_win_points,
         'groups': {'group_count': group_count, 'group_size': group_size,
             'match_best_of': 3, 'rules_source_kind': 'season_policy',
             'group_rules_policy_fingerprint': rules.fingerprint,
@@ -38,7 +38,7 @@ def configuration(group_count=2, group_size=4, *, hybrid=True, width=52):
             'advancing_per_group': 2 if hybrid else 0, 'knockout_crossings': crossings}}
 
 
-def ready_groups(server, *, groups=2, size=4, hybrid=True, width=None, parallel=False):
+def ready_groups(server, *, groups=2, size=4, hybrid=True, width=None, parallel=False, group_win_points=7):
     width = width or int(os.environ.get("NATIVE_GROUP_CALENDAR", "52"))
     repo, _ = setup(server, RunCalendar(width, 1, 2030, 2), groups * size + (4 if parallel else 0))
     view = inspect(server)
@@ -51,7 +51,7 @@ def ready_groups(server, *, groups=2, size=4, hybrid=True, width=None, parallel=
         'validity_weeks': width,
         'point_table': ({'champion': 100, 'finalist': 60, 'semifinal': 30,
                          **({'quarterfinal': 15} if groups == 4 else {})} if hybrid else {}),
-        'group_configuration': configuration(groups, size, hybrid=hybrid, width=width),
+        'group_configuration': configuration(groups, size, hybrid=hybrid, width=width, group_win_points=group_win_points),
     }))
     save_tour(server)
     if parallel:

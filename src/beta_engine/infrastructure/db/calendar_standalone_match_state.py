@@ -409,7 +409,8 @@ def _parse_saved_calendar_match_evidence(payload: dict, *, run_id: str, branch_i
     return state
 
 
-def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_id: str):
+def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
+                                         _global_value_proofs=None, _repository=None):
     """Decode an ALREADY authenticated Saved HEAD without a redundant replay.
 
     INTERNAL ONLY: its caller MUST first pass these exact immutable payload bytes
@@ -421,8 +422,9 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     history, public Viewer, a new/unverified Save candidate, or unknown JSON.
     A Save coordinator may decode its authenticated PREVIOUS Saved HEAD as a
     prefix; it must still fully validate the new candidate and every new event.
-    Re-parse and re-check each source's scope/fingerprint; the only work elided
-    here is a second full MatchEngine/ranking fold of the very same Signed bytes.
+    Strictly decode each source (or bind a value from this same private full
+    replay) and re-check its scope/fingerprint. Physical/source authority is
+    unchanged; only redundant parsing and sporting replay are omitted.
     """
     evidence = _parse_saved_calendar_match_evidence(
         payload, run_id=run_id, branch_id=branch_id
@@ -439,7 +441,20 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     if cp_raw is not None:
         if not isinstance(cp_raw, dict) or set(cp_raw) != {"fingerprint", "state"}:
             raise ValueError("Invalid prevalidated Saved sporting component")
-        checkpoint = parse_checkpoint_json(json.dumps(cp_raw["state"]))
+        from beta_engine.infrastructure.db.calendar_native_competition import replayed_global_checkpoint_value
+        checkpoint = replayed_global_checkpoint_value(
+            payload, _global_value_proofs, run_id=run_id, branch_id=branch_id,
+        ) if _global_value_proofs is not None else None
+        if (_repository is not None and isinstance(cp_raw.get('state'), dict)
+            and cp_raw['state'].get('schema_version') == 'calendar_sporting_checkpoint.v13'):
+            from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_checkpoint_component
+            replayed = checkpoint
+            checkpoint = decoded_global_checkpoint_component(
+                _repository, cp_raw, run_id=run_id, branch_id=branch_id,
+                decode=lambda component: replayed if replayed is not None else parse_checkpoint_json(json.dumps(component['state'])),
+            )
+        elif checkpoint is None:
+            checkpoint = parse_checkpoint_json(json.dumps(cp_raw["state"]))
         checkpoint_fingerprint = checkpoint.fingerprint
         if (checkpoint.run_id, checkpoint.branch_id, checkpoint_fingerprint) != (
             run_id, branch_id, cp_raw["fingerprint"]
@@ -451,7 +466,12 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     if tour_raw is not None:
         if not isinstance(tour_raw, dict) or set(tour_raw) != {"fingerprint", "state"}:
             raise ValueError("Invalid prevalidated Saved Tour component")
-        tour = parse_tour_json(json.dumps(tour_raw["state"]))
+        from beta_engine.infrastructure.db.calendar_native_competition import replayed_global_tour_value
+        tour = replayed_global_tour_value(
+            payload, _global_value_proofs, run_id=run_id, branch_id=branch_id,
+        ) if _global_value_proofs is not None else None
+        if tour is None:
+            tour = parse_tour_json(json.dumps(tour_raw["state"]))
         if (tour.run_id, tour.branch_id, tour.fingerprint) != (
             run_id, branch_id, tour_raw["fingerprint"]
         ):

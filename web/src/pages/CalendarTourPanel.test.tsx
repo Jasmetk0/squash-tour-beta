@@ -17,6 +17,35 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
   beforeEach(()=>{vi.clearAllMocks();localStorage.setItem('squash-engine-language-v1','en');api.inspectCalendarTour.mockImplementation((r,b)=>Promise.resolve(view(r,b)))})
   const slotView=(run='r',branch='b'):TourView=>({...view(run,branch),saved:true,sporting_saved:true,tour_fingerprint:'c'.repeat(64),next_slot:{schema_version:'calendar_global_slot_inspection.v1',number:14,snapshot_fingerprint:null,completed:0,remaining:2,matches:[{edition_id:'a',match_id:'a:sf1',player_a_id:'p1',player_b_id:'p2',completed:false},{edition_id:'b',match_id:'b:sf1',player_a_id:'p3',player_b_id:'p4',completed:false}]},state:{week:{calendar:{schema_version:'run_calendar.v1',weeks_per_year:80,season_start_year_week:80,start_year:2030,season_count:2},season_index:0,week:4},editions:[],rankings:[],transitions:[]}})
 
+  it.each(['en','cs'])('reviews an explicit group withdrawal without mutation or Save in %s',async language=>{
+    localStorage.setItem('squash-engine-language-v1',language)
+    const current=slotView()
+    current.state!.editions=[{edition:{schema_version:'calendar_tournament_edition.v3',
+      edition_id:'groups',name:'Groups',week:current.state!.week,announcement_week:current.state!.week,
+      start_slot:1,main_entrant_count:4,point_table:{},validity_weeks:80},submissions:[],
+      field:{direct_main_player_ids:['p1','p2','p3','p4'],below_qualification_cut_player_ids:[]},
+      draw:{topology:{group_slots:[{group_index:1,slot_index:1,player_id:'p1'}]}},
+      tournament_fingerprint:null,result_confirmed:false}]
+    current.groups={groups:{standings:null,tie_case:null,bracket:null,withdrawal_available_player_ids:['p1']}}
+    api.inspectCalendarTour.mockResolvedValue(current)
+    api.previewCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve(preview(c)))
+    render(panel());await screen.findByLabelText('Withdraw player groups')
+    const button=screen.getByRole('button',{name:language==='cs'?'Zkontrolovat odstoupení':'Review withdrawal'})
+    expect(button).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Reviewed withdrawal'}})
+    fireEvent.change(screen.getByLabelText('Withdraw player groups'),{target:{value:'p1'}})
+    fireEvent.change(screen.getByLabelText('Withdrawal reason groups'),{target:{value:'illness'}})
+    fireEvent.change(screen.getByLabelText('Withdrawal note groups'),{target:{value:'A reviewed note'}})
+    expect(api.previewCalendarTour).not.toHaveBeenCalled()
+    fireEvent.click(button);await screen.findByLabelText('Confirm Tour command')
+    expect(api.previewCalendarTour.mock.calls[0][2]).toMatchObject({action:'withdraw-group',edition_id:'groups',
+      data:{player_id:'p1',reason_category:'illness',note:'A reviewed note'}})
+    expect(api.executeCalendarTour).not.toHaveBeenCalled()
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText('Withdrawal note groups'),{target:{value:'Changed reason'}})
+    expect(screen.queryByLabelText('Confirm Tour command')).not.toBeInTheDocument()
+  })
+
   it.each(['en','cs'])('blocks slot execution while a group tie awaits review in %s',async language=>{
     localStorage.setItem('squash-engine-language-v1',language)
     const current=slotView()

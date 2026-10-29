@@ -84,6 +84,7 @@ def test_slot_serialization_preserves_the_complete_historical_shape(inherited):
         scheduled=(), accepted=(), inherited_match_ids=inherited,
     )
     body = slot.model_dump(mode="json")
+    assert not {'group_withdrawals', 'walkovers'} & set(body)
     assert ("inherited_match_ids" in body) == bool(inherited)
     if inherited:
         assert body["inherited_match_ids"] == list(inherited)

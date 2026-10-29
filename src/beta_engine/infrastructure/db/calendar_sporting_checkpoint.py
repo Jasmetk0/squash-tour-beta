@@ -18,11 +18,11 @@ def _parsed_global_part(body, cache, parse):
 
     if not isinstance(body, dict):
         raise TypeError('Global checkpoint part must be a versioned object')
-    encoded = json.dumps(body)
     key = canonical_hash(body)
     entry = cache.get(key)
     if entry is not None and entry[1] == canonical_hash(entry[2].model_dump(mode='json')):
         return entry[2]
+    encoded = json.dumps(body)
     value = parse(encoded)
     size = len(encoded.encode("utf-8"))
     if size <= _MAX_GLOBAL_PART_BYTES:
@@ -76,7 +76,7 @@ def parse_checkpoint_json(raw, *, _parsed_global_parts=None):
         for entry in body.get('events', ()):
             if not isinstance(entry, dict):
                 raise TypeError('Global checkpoint event must be a versioned object')
-            model = (GlobalSlot if entry.get('schema_version') in {'calendar_global_slot.v1', 'calendar_global_slot.v2'}
+            model = (GlobalSlot if entry.get('schema_version') in {'calendar_global_slot.v1', 'calendar_global_slot.v2', 'calendar_global_slot.v3'}
                 else CalendarNativeSportingWeek if entry.get('schema_version') == 'calendar_native_sporting_week.v1'
                 else CalendarFollowupKnockout)
             events.append(strict_part(entry, model.model_validate_json))

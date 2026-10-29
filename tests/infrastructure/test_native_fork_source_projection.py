@@ -178,6 +178,9 @@ def test_whole_dto_adapter_retains_one_checkpoint_and_preserves_complete_reuse(m
         return original_copy(value, *args)
 
     monkeypatch.setattr(cache, '_copy_decoded_value', observe)
+    assert cache.decoded_global_tour_source(repo, src, lambda _: captured,
+        _retain_miss=False) == captured
+    assert copies == [] and not hasattr(repo, '_global_tour_projection_cache')
     cache.remember_committed_global_sources(repo, src, captured)
     assert copies == [cp, (captured[0], captured[2])]
     retained = repo._global_tour_projection_cache

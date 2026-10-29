@@ -38,14 +38,14 @@ def _global_cache(repository):
     return cache
 
 
-def _trim_global_cache(cache):
+def _trim_global_cache(cache, *, entry_limit=4):
     # Keep the most recently used whole DTO, plus reusable components. A second
     # full history's evidence/Tour tail can dwarf the checkpoint itself; readers
     # of an older/other complete payload may always take the strict miss path.
     adapters = [key for key, entry in cache.items() if isinstance(entry[1], _GlobalTourValue)]
     for key in adapters[:-1]:
         cache.pop(key)
-    while len(cache) > 4 or sum(entry[0] for entry in cache.values()) > MAX_GLOBAL_TOUR_BYTES:
+    while len(cache) > entry_limit or sum(entry[0] for entry in cache.values()) > MAX_GLOBAL_TOUR_BYTES:
         oldest = next(iter(cache))
         cache.pop(oldest)
         # An adapter never keeps an evicted checkpoint alive out of budget.
@@ -189,7 +189,7 @@ def decoded_global_tour_source(repository, source, decode, *, _retain_miss=True)
     else:
         result = _decoded_value(repository, source, decode,
             cache_name='_global_tour_projection_cache', byte_limit=MAX_GLOBAL_TOUR_BYTES,
-            entry_limit=4)
+            entry_limit=2)
     if isinstance(result, tuple) and len(result) == 3:
         from beta_engine.domain.tournaments.calendar_global_slots import _prime_private_fingerprint
 
@@ -319,7 +319,7 @@ def _decoded_value(repository, source, decode, *, cache_name, byte_limit, entry_
     with repository._revision_validation_lock:
         cache[key] = (size, retained, attribute_hints)
         if cache_name == '_global_tour_projection_cache':
-            _trim_global_cache(cache)
+            _trim_global_cache(cache, entry_limit=entry_limit)
         else:
             while len(cache) > entry_limit or sum(item[0] for item in cache.values()) > byte_limit:
                 cache.pop(next(iter(cache)))

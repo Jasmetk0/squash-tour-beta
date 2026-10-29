@@ -3,10 +3,12 @@
  */
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getSavedPlayersInventory } from '../api/client'
 import type { SavedPlayersInventory, SavedInventoryPlayer } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
+import {countryRosterReturnPath,readCountryRosterPermalink,writeCountryRosterPermalink}
+  from './countrySavedRosterPermalink'
 
 const PAGE_SIZE = 25
 
@@ -70,26 +72,37 @@ function ScopedCountryRoster({
   runId, branchId, savedHead, countryCode, selectedWorldYear, language
 }: Props): JSX.Element {
   const cs = language === 'cs'
-  const [includePrepared, setIncludePrepared] = useState(false)
-  const [draft, setDraft] = useState({ search: '', status: '' })
-  const [filters, setFilters] = useState({ search: '', status: '' })
+  const [urlParams, setUrlParams] = useSearchParams()
   const sourceKey = JSON.stringify([runId, branchId, savedHead, countryCode])
+  // Only the exact immutable source may restore a bookmarked roster view.
+  const initialView = readCountryRosterPermalink(urlParams,sourceKey)
+  const [includePrepared, setIncludePrepared] = useState(initialView.includePrepared)
+  const [draft, setDraft] = useState({ search: initialView.search, status: initialView.status })
+  const [filters, setFilters] = useState({ search: initialView.search, status: initialView.status })
   const pageKey = JSON.stringify([sourceKey, filters.search, filters.status, includePrepared])
-  const [pageSelection, setPageSelection] = useState({ sourceKey: pageKey, page: 0 })
-  const [pageInput, setPageInput] = useState({ sourceKey: pageKey, value: '1' })
+  const [pageSelection, setPageSelection] = useState({ sourceKey: pageKey, page: initialView.page })
+  const [pageInput, setPageInput] = useState({ sourceKey: pageKey,
+    value: String(initialView.page + 1) })
   // Changes to source, search, exact status or prepared visibility reset the cursor
   // in the same render: never request offset 25 from a new filtered result.
   const page = pageSelection.sourceKey === pageKey ? pageSelection.page : 0
   const jump = pageInput.sourceKey === pageKey ? pageInput.value : '1'
+  const syncUrl = (search: string, status: string, prepared: boolean, nextPage: number) => {
+    setUrlParams(writeCountryRosterPermalink(urlParams,sourceKey,{
+      search,status,includePrepared:prepared,page:nextPage,
+    }),{replace:true})
+  }
   const movePage = (next: number) => {
     setPageSelection({ sourceKey: pageKey, page: next })
     setPageInput({ sourceKey: pageKey, value: String(next + 1) })
+    syncUrl(filters.search,filters.status,includePrepared,next)
   }
   const applyFilters = (next: typeof filters) => {
     setFilters(next)
     const nextKey = JSON.stringify([sourceKey, next.search, next.status, includePrepared])
     setPageSelection({ sourceKey: nextKey, page: 0 })
     setPageInput({ sourceKey: nextKey, value: '1' })
+    syncUrl(next.search,next.status,includePrepared,0)
   }
   const offset = page * PAGE_SIZE
   const enabled = Boolean(runId && branchId && savedHead && countryCode)
@@ -113,6 +126,10 @@ function ScopedCountryRoster({
   const pageCount = data ? Math.ceil(data.total/PAGE_SIZE) : 0
   const outOfRange = Boolean(data && page > 0 && offset >= data.total)
   const targetPage = validatedPage(jump, pageCount)
+  const returnToCountry = countryRosterReturnPath(runId,countryCode,
+    writeCountryRosterPermalink(urlParams,sourceKey,{
+      search:filters.search,status:filters.status,includePrepared,page,
+    }))
   return <section className="section-subtle run-world-country-roster"
     aria-label="Run World canonical country players">
     <h4>{cs ? 'Uložení hráči země' : 'Saved country players'}</h4>
@@ -160,6 +177,7 @@ function ScopedCountryRoster({
             filters.status, e.target.checked])
           setPageSelection({ sourceKey: nextKey, page: 0 })
           setPageInput({ sourceKey: nextKey, value: '1' })
+          syncUrl(filters.search,filters.status,e.target.checked,0)
         }} />
       {' '}{cs
         ? 'Výslovně zobrazit také uložené připravené prospekty (mohou být z budoucnosti)'
@@ -192,7 +210,10 @@ function ScopedCountryRoster({
           <th>Status</th><th>OVR</th><th>Potential OVR</th><th>Ranking / NR</th>
         </tr></thead>
         <tbody>{data.players.map(player=><tr key={player.player_id}>
-          <td><Link to={'/admin/runs/'+encodeURIComponent(runId)+'/people/'+encodeURIComponent(player.player_id)}>
+          <td><Link to={'/admin/runs/'+encodeURIComponent(runId)+'/people/'+
+            encodeURIComponent(player.player_id)+'?'+new URLSearchParams({
+              fromCountry:returnToCountry,
+            }).toString()}>
             {player.display_name}</Link> <small>· {player.player_id}</small></td>
           <td>{player.age??'—'}</td>
           <td>{player.status??'—'}</td><td>{player.ovr??'—'}</td>

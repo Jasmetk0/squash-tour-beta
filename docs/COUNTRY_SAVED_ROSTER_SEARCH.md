@@ -59,6 +59,12 @@ Branch + Saved HEAD + country**; an old `spScope` from a different Saved
 source is ignored completely (including opt-in to potentially future players).
 All URL inputs remain ordinary view requests, never sporting authority.
 Malformed/oversized filter parameters and invalid page numbers are rejected.
+React Router may update only the query string while keeping the Country component
+mounted: changes to roster-owned URL keys therefore remount that scoped view
+and restore the newly selected query/filters/page immediately. Browser Back and
+in-app same-route bookmark navigation cannot leave earlier local filters/page
+in charge of a different URL. Changes to unrelated World parameters or CS/EN
+do not remount the roster.
 The original API proof and full-source filter/page validations still apply.
 
 A player profile link carries a bounded `fromCountry` return URL to the
@@ -93,6 +99,9 @@ profile returns. `SavedPlayerCountryRosterReturn.test.tsx` additionally
 mounts the actual Country and Saved Profile React routes together, verifying
 a real filtered-page → player-profile → filtered-page round trip and
 rejecting obsolete Branch, HEAD or foreign-country return targets.
+The Country roster React tests also navigate to an entirely different Saved
+roster bookmark **on the same mounted route**, then Browser Back, asserting
+the exact new search, page and server offset instead of stale component state.
 Original `RunWorldCountrySavedPaging.test.tsx` remains unchanged,
 so its unrelated source-switch/standings tests also run.
 

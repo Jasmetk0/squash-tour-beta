@@ -61,6 +61,12 @@ function viewerWeekSeasonPath(runId: string, week: number, season: string | numb
   return `${viewerWeekDetailPath(runId, week)}?season=${encodeURIComponent(String(season))}`
 }
 
+function viewerCalendarPublicationPagePath(runId: string, page: number): string {
+  return page === 1
+    ? viewerSeasonCalendarPath(runId)
+    : `${viewerSeasonCalendarPath(runId)}?pubPage=${page}`
+}
+
 function viewerPlannedEventContextPath(runId: string, event: ViewerCalendarEvent): string {
   return `${viewerPlannedEventPath(runId, event.event_id)}?season=${encodeURIComponent(String(event.season))}&week=${event.season_week}`
 }
@@ -207,6 +213,11 @@ function matchesViewerSource<T extends ViewerSourceIdentity>(
 
 export function ViewerRunCalendarPage(): JSX.Element {
   const { productRunId: runId, officialBranchId } = useViewerProductRunRouteContext()
+  const [searchParams] = useSearchParams()
+  const requestedPublicationPages = searchParams.getAll('pubPage')
+  const publicationPage = requestedPublicationPages.length === 0 ? 1
+    : requestedPublicationPages.length === 1
+      ? parseViewerWeekParam(requestedPublicationPages[0]) : null
 
   const calendarQuery = useQuery({
     queryKey: ['viewer-run-calendar', runId, officialBranchId],
@@ -245,7 +256,16 @@ export function ViewerRunCalendarPage(): JSX.Element {
     () => findPublicationOnlyWeeks(calendar, rankings, race, runId, effectiveBranchId),
     [calendar, rankings, race, runId, effectiveBranchId]
   )
-  const recentPublicationOnlyWeeks = publicationOnlyWeeks.slice(0, 20)
+  const publicationPageSize = 20
+  const publicationPageCount = Math.ceil(publicationOnlyWeeks.length / publicationPageSize)
+  const invalidPublicationPage = publicationPage === null ||
+    publicationPage > Math.max(1, publicationPageCount)
+  const visiblePublicationWeeks = invalidPublicationPage || publicationPage === null ? []
+    : publicationOnlyWeeks.slice(
+      (publicationPage - 1) * publicationPageSize,
+      publicationPage * publicationPageSize
+    )
+  const publicationStart = publicationPage === null ? 0 : (publicationPage - 1) * publicationPageSize
 
   const addressableEventIds = useMemo(
     () => uniquelyAddressableEventIds(flattenCalendarEvents(calendar?.seasons)),
@@ -335,30 +355,53 @@ export function ViewerRunCalendarPage(): JSX.Element {
         {finalsRaceQuery.data && !race ? (
           <p className="error">Finals Race source does not match the Saved Calendar Viewer Branch.</p>
         ) : null}
+        {invalidPublicationPage ? (
+          <p className="error">
+            Invalid or unavailable publication page. <Link to={viewerSeasonCalendarPath(runId)}>
+              Return to the latest publication weeks
+            </Link>
+          </p>
+        ) : null}
         {calendar && !rankingHistoryQuery.isLoading && !finalsRaceQuery.isLoading &&
-          publicationOnlyWeeks.length === 0 ? (
+          publicationOnlyWeeks.length === 0 && !invalidPublicationPage ? (
           <EmptyState message="No verified publication-only weeks are available for this Saved Calendar." />
         ) : null}
-        {recentPublicationOnlyWeeks.length > 0 ? (
-          <ol className="item-list" aria-label="Viewer publication-only weeks">
-            {recentPublicationOnlyWeeks.map((entry) => (
-              <li key={JSON.stringify([entry.season, entry.week])}>
-                <Link to={viewerWeekSeasonPath(runId, entry.week, entry.season)}>
-                  {entry.season} · W{entry.week}
-                </Link>
-                {' · '}
-                {[
-                  entry.ranking ? 'Official Ranking' : null,
-                  entry.finalsRace ? 'Finals Race' : null
-                ].filter(Boolean).join(' + ')}
-              </li>
-            ))}
-          </ol>
-        ) : null}
-        {publicationOnlyWeeks.length > recentPublicationOnlyWeeks.length ? (
-          <p className="status">
-            Showing the {recentPublicationOnlyWeeks.length} most recent of {publicationOnlyWeeks.length} publication-only weeks.
-          </p>
+        {visiblePublicationWeeks.length > 0 ? (
+          <>
+            <ol className="item-list" aria-label="Viewer publication-only weeks">
+              {visiblePublicationWeeks.map((entry) => (
+                <li key={JSON.stringify([entry.season, entry.week])}>
+                  <Link to={viewerWeekSeasonPath(runId, entry.week, entry.season)}>
+                    {entry.season} · W{entry.week}
+                  </Link>
+                  {' · '}
+                  {[
+                    entry.ranking ? 'Official Ranking' : null,
+                    entry.finalsRace ? 'Finals Race' : null
+                  ].filter(Boolean).join(' + ')}
+                </li>
+              ))}
+            </ol>
+            <p className="status">
+              Showing {publicationStart + 1}–{publicationStart + visiblePublicationWeeks.length} of {publicationOnlyWeeks.length} publication-only weeks.
+              {' '}Page {publicationPage} of {publicationPageCount}.
+            </p>
+            {publicationPage !== null && publicationPageCount > 1 ? (
+              <nav aria-label="Publication-only week pages">
+                {publicationPage > 1 ? (
+                  <Link to={viewerCalendarPublicationPagePath(runId, publicationPage - 1)}>
+                    Newer publication weeks
+                  </Link>
+                ) : null}
+                {publicationPage > 1 && publicationPage < publicationPageCount ? ' · ' : null}
+                {publicationPage < publicationPageCount ? (
+                  <Link to={viewerCalendarPublicationPagePath(runId, publicationPage + 1)}>
+                    Older publication weeks
+                  </Link>
+                ) : null}
+              </nav>
+            ) : null}
+          </>
         ) : null}
       </SectionCard>
 

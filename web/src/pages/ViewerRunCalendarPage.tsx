@@ -69,14 +69,32 @@ function uniquelyAddressableEventIds(events: ViewerCalendarEvent[]): Set<string>
   return new Set([...counts].filter(([, count]) => count === 1).map(([id]) => id))
 }
 
+// Both canonical read models derive these properties from the same Saved
+// Calendar Package. Equal occurrence coordinates alone do not prove equal
+// evidence when the tournament's sporting metadata differs.
+const publishedEventMetadataKeys = [
+  'event_name', 'template_id', 'category', 'tour_level', 'host_country',
+  'host_city', 'region', 'main_draw_size', 'qualification_draw_size',
+  'seeds_count', 'qualifier_spots', 'wild_cards', 'byes'
+] as const
+
+function matchesPublishedEventMetadata(
+  event: ViewerCalendarEvent,
+  result: ViewerTournamentHistoryItem
+): boolean {
+  return publishedEventMetadataKeys.every((key) => event[key] === result[key])
+}
+
 function canonicalPublishedResults(
   events: ViewerCalendarEvent[],
   history: ViewerTournamentHistoryItem[]
 ): Map<string, ViewerTournamentHistoryItem> {
   const calendarCounts = new Map<string, number>()
+  const calendarByKey = new Map<string, ViewerCalendarEvent>()
   for (const event of events) {
     const key = calendarEventKey(event)
     calendarCounts.set(key, (calendarCounts.get(key) ?? 0) + 1)
+    calendarByKey.set(key, event)
   }
   const seenHistoryKeys = new Set<string>()
   const published = new Map<string, ViewerTournamentHistoryItem>()
@@ -88,7 +106,10 @@ function canonicalPublishedResults(
       continue
     }
     seenHistoryKeys.add(key)
-    if (calendarCounts.get(key) === 1) published.set(key, item)
+    const event = calendarByKey.get(key)
+    if (calendarCounts.get(key) === 1 && event && matchesPublishedEventMetadata(event, item)) {
+      published.set(key, item)
+    }
   }
   return published
 }
@@ -150,7 +171,7 @@ export function ViewerRunCalendarPage(): JSX.Element {
           { label: 'Viewer Branch', value: calendar?.viewer_branch_id ?? '—' },
           { label: 'Saved seasons', value: calendar?.season_count ?? 0 },
           { label: 'Saved events', value: calendar?.event_count ?? 0 },
-          { label: 'Published results', value: history?.published_result_count ?? 0 }
+          { label: 'Verified published results', value: resultByEventKey.size }
         ]}
       />
 
@@ -160,6 +181,9 @@ export function ViewerRunCalendarPage(): JSX.Element {
         ) : null}
         {historyQuery.data && !history ? (
           <p className="error">Tournament History source does not match the Saved Calendar Viewer Branch.</p>
+        ) : null}
+        {history && calendar && history.published_result_count !== resultByEventKey.size ? (
+          <p className="error">Some published tournament records do not match unique Saved Calendar evidence and were withheld.</p>
         ) : null}
         {calendarQuery.isLoading ? <p className="status">Loading canonical Saved Calendar…</p> : null}
         {calendarQuery.error && !isApiNotFound(calendarQuery.error) ? (
@@ -177,7 +201,7 @@ export function ViewerRunCalendarPage(): JSX.Element {
               items={[
                 { label: 'Saved seasons', value: calendar.season_count },
                 { label: 'Calendar events', value: calendar.event_count },
-                { label: 'Published results', value: history?.published_result_count ?? 0 }
+                { label: 'Verified published results', value: resultByEventKey.size }
               ]}
             />
             <CompactSummaryCard

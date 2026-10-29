@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getSavedHomePlayerIdentities, getSavedPlayerMatchHistory } from '../api/client'
 import {
-  CAREER_PAGE_SIZE, hasAmbiguousPlayerLinkParams, matchLoadedCareer, parseCareerCompletion, parseCareerOutcome,
+  CAREER_PAGE_SIZE, hasAmbiguousPlayerLinkParams, matchLoadedCareer, validCareerResultWindow, parseCareerCompletion, parseCareerOutcome,
   parseCareerPage, parseCareerSeason, parsePageInput, totalCareerPages,
 } from './savedPlayerCareerNavigation'
 

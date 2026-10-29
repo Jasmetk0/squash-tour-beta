@@ -16,7 +16,7 @@ const route = vi.hoisted(() => ({
     isLoading: false, isStale: false
   }
 }))
-vi.mock('../../../api/client', () => api)
+vi.mock('../../../api/client', () => ({ ...api, ApiError: class ApiError extends Error {} }))
 vi.mock('../../../viewer/ViewerProductRunRouteContext', () => ({
   useViewerProductRunRouteContext: () => route.current
 }))

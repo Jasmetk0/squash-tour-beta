@@ -168,7 +168,7 @@ function RankingHistoryForSource({ productRunId, viewerBranchId, text: t }: {
     </div>
   )
   if (!history) return <p className="status" role="status">{t.loading}</p>
-  if (history.publication_count === 0) return <EmptyState message={t.empty} />
+  if (history.publication_count === 0) return <><p>{t.published} 0</p><EmptyState message={t.empty} /><p role="status">{t.showing} 0–0 {t.of} 0</p></>
 
   return (
     <>

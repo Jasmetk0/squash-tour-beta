@@ -687,6 +687,63 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expect(within(copy).queryByText('PLAYER-42')).not.toBeInTheDocument()
   })
 
+  it.each([
+    ['event_name', 'Different Tournament'],
+    ['template_id', 'CHANGED-TEMPLATE'],
+    ['host_country', 'USA'],
+    ['main_draw_size', 64],
+    ['qualification_draw_size', 32],
+    ['seeds_count', 12]
+  ] as const)('refuses a published winner when Saved event metadata disagrees on %s', async (field, value) => {
+    const original = await api.getViewerTournamentHistory('viewer-run-2d')
+    api.getViewerTournamentHistory.mockResolvedValue({
+      ...original,
+      tournaments: original.tournaments.map((item: {event_id: string}) =>
+        item.event_id === 'EVENT-COMPLETE' ? {...item, [field]: value} : item
+      )
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    const warning = await screen.findByText(/published tournament records do not match unique Saved Calendar evidence/)
+    expect(warning).toBeInTheDocument()
+    const season = screen.getByRole('list', {name:'Viewer season calendar events 2028/2029'})
+    const opener = within(season).getByText('Season Opener').closest('li') as HTMLElement
+    expect(within(opener).queryByText('PLAYER-42')).not.toBeInTheDocument()
+    expect(within(opener).queryByText('Completed · result published')).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('does not show a mismatched published winner on the exact Planned Event or Week route', async () => {
+    const original = await api.getViewerTournamentHistory('viewer-run-2d')
+    api.getViewerTournamentHistory.mockResolvedValue({
+      ...original,
+      tournaments: original.tournaments.map((item: {event_id: string}) =>
+        item.event_id === 'EVENT-COMPLETE' ? {...item, host_city: 'Not Cairo'} : item
+      )
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar/EVENT-COMPLETE?season=2028%2F2029&week=1')
+
+    expect((await screen.findAllByText('Season Opener')).length).toBeGreaterThan(0)
+    expect(screen.queryByText('PLAYER-42')).not.toBeInTheDocument()
+    expect(screen.queryByText('Completed · result published')).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('displays the verified result count rather than an unverified history total', async () => {
+    const original = await api.getViewerTournamentHistory('viewer-run-2d')
+    api.getViewerTournamentHistory.mockResolvedValue({
+      ...original,
+      published_result_count: 3
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    expect(await screen.findByText(/published tournament records do not match unique Saved Calendar evidence/)).toBeInTheDocument()
+    expect(screen.getAllByText('Verified published results').length).toBeGreaterThan(0)
+    const season = screen.getByRole('list', {name:'Viewer season calendar events 2028/2029'})
+    expect(within(season).getByText('PLAYER-42')).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
   it('does not select one of two conflicting published history rows', async () => {
     const history = await api.getViewerTournamentHistory('viewer-run-2d')
     api.getViewerTournamentHistory.mockResolvedValue({

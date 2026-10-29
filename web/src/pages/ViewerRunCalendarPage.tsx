@@ -448,24 +448,44 @@ export function ViewerRunWeekPage(): JSX.Element {
     () => flattenCalendarEvents(calendar?.seasons).filter((event) => event.season_week === parsedWeek),
     [calendar?.seasons, parsedWeek]
   )
-  const availableWeekSeasons = useMemo(
-    () => Array.from(new Set(matchingWeekEvents.map((event) => String(event.season)))),
-    [matchingWeekEvents]
-  )
+  // A week can have an official ranking or Finals Race publication even when
+  // no tournament is scheduled. Include all verified public evidence when
+  // deciding whether the bare W route identifies exactly one Saved season.
+  const availableWeekSeasons = useMemo(() => {
+    const labels = (calendar?.seasons ?? []).map((item) => String(item.season))
+    const candidates = new Set(matchingWeekEvents.map((event) => String(event.season)))
+    const addPublicationYear = (year: number): void => {
+      const matchingLabels = labels.filter((label) => calendarSeasonStart(label) === year)
+      if (matchingLabels.length === 1) candidates.add(matchingLabels[0])
+    }
+    for (const publication of rankings?.publications ?? []) {
+      if (publication.week === parsedWeek) addPublicationYear(2000 + publication.season_index)
+    }
+    for (const publication of race?.publications ?? []) {
+      if (publication.cutoff_week === parsedWeek &&
+        matchesViewerSource(publication, runId, effectiveBranchId)) {
+        addPublicationYear(2000 + publication.cutoff_season_index)
+      }
+    }
+    return labels.filter((label) => candidates.has(label))
+  }, [calendar?.seasons, matchingWeekEvents, parsedWeek, rankings?.publications,
+    race?.publications, runId, effectiveBranchId])
   const calendarSeasonLabels = calendar?.seasons.map((item) => String(item.season)) ?? []
   const selectedSeason = requestedSeason !== null
     ? calendarSeasonLabels.includes(requestedSeason) ? requestedSeason : null
     : currentSeason !== null
       ? calendarSeasonLabels.find((label) => calendarSeasonStart(label) === currentSeason) ?? null
-      : availableWeekSeasons.length === 1 ? availableWeekSeasons[0] : null
+      : availableWeekSeasons.length === 1 ? availableWeekSeasons[0]
+        : calendarSeasonLabels.length === 1 ? calendarSeasonLabels[0] : null
   const unresolvedSeason = requestedSeason === null && currentSeason === null &&
     availableWeekSeasons.length > 1
   const unknownRequestedSeason = requestedSeason !== null && selectedSeason === null && calendar !== null
-  // Existing published ranking/Race sources use the legacy 2000-based season_index.
-  // Do not attribute a publication to an unspecified or unverified calendar season.
-  const selectedPublicationYear = requestedSeason !== null || currentSeason === null
-    ? selectedSeason !== null ? calendarSeasonStart(selectedSeason) : null
-    : currentSeason
+  // Ranking/Race ordinals use the legacy year base of 2000. Do not guess a
+  // publication owner if multiple Saved season labels map to the same year.
+  const candidatePublicationYear = selectedSeason === null ? null : calendarSeasonStart(selectedSeason)
+  const selectedPublicationYear = candidatePublicationYear !== null &&
+    calendarSeasonLabels.filter((label) => calendarSeasonStart(label) === candidatePublicationYear).length === 1
+    ? candidatePublicationYear : null
   const weekEvents = useMemo(
     () => selectedSeason === null
       ? []
@@ -532,7 +552,7 @@ export function ViewerRunWeekPage(): JSX.Element {
       <SectionCard title="Week context">
         {!hasValidWeek ? <EmptyState message="Week must be a positive safe integer in the URL." /> : null}
         {unresolvedSeason ? (
-          <EmptyState message="This week occurs in multiple Saved seasons. Choose an exact season below to avoid mixing historical results." />
+          <EmptyState message="This week has events or publications in multiple Saved seasons. Choose an exact season below to avoid mixing historical evidence." />
         ) : null}
         {unknownRequestedSeason ? (
           <EmptyState message="The requested season is not present in this Viewer Branch's Saved Calendar." />

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  hasAmbiguousPlayerLinkParams, matchLoadedCareer, parseCareerCompletion, parseCareerOutcome, parseCareerPage,
+  hasAmbiguousPlayerLinkParams, matchLoadedCareer, validCareerResultWindow, parseCareerCompletion, parseCareerOutcome, parseCareerPage,
   parseCareerSeason, parsePageInput, parsePlayerRally, totalCareerPages,
   validPlayerReplayPagePair,
 } from './savedPlayerCareerNavigation'
@@ -37,6 +37,19 @@ describe('current-HEAD player career URL contracts', () => {
     expect(totalCareerPages(21)).toBe(2)
     expect(parsePageInput('2', 2)).toBe(1)
     for (const raw of ['0','3','-1','01','1.1','']) expect(parsePageInput(raw, 2)).toBeNull()
+  })
+  it('treats a missing in-range or duplicated saved result as invalid evidence', () => {
+    const one = {event_id:'event',match_id:'m1'}
+    const other = {event_id:'event',match_id:'m2'}
+    expect(validCareerResultWindow(0,0,20,[],false)).toBe(true)
+    expect(validCareerResultWindow(21,40,20,[],false)).toBe(true)
+    expect(validCareerResultWindow(21,0,20,[one],false)).toBe(true)
+    expect(validCareerResultWindow(21,0,20,[],false)).toBe(false)
+    expect(validCareerResultWindow(1,20,20,[one],false)).toBe(false)
+    expect(validCareerResultWindow(3,0,20,[one,one],false)).toBe(false)
+    expect(validCareerResultWindow(3,0,20,[one,other],false)).toBe(true)
+    expect(validCareerResultWindow(1,0,20,[one],true)).toBe(false)
+    expect(validCareerResultWindow(0,0,20,[],true)).toBe(true)
   })
   it('rejects duplicate query keys, even when one value appears valid', () => {
     expect(hasAmbiguousPlayerLinkParams(

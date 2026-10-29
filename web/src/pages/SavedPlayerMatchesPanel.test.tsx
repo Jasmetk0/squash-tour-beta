@@ -104,7 +104,7 @@ describe('Saved player match history', () => {
       has_more:false,matches:[],
     })
     mount()
-    expect(await screen.findByRole('alert')).toHaveTextContent('Data patří jiné uložené revizi.')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Nelze ověřit uloženou revizi nebo úplnost stránky zápasů.')
     expect(screen.queryByText('Hráč nemá žádné uložené')).not.toBeInTheDocument()
     expect(screen.queryByRole('link',{name:'Detail zápasu →'})).not.toBeInTheDocument()
   })
@@ -118,7 +118,7 @@ describe('Saved player match history', () => {
       career_walkovers: 0, has_more: false, matches: [],
     })
     mount()
-    expect(await screen.findByRole('alert')).toHaveTextContent('Data patří jiné uložené revizi.')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Nelze ověřit uloženou revizi nebo úplnost stránky zápasů.')
     expect(screen.queryByText('Championship')).not.toBeInTheDocument()
   })
   it('recovers an error without accepting cached career results',async()=>{

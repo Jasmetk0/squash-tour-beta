@@ -202,7 +202,7 @@ export function ViewerRunCalendarPage(): JSX.Element {
               {season.events.map((event, index) => {
                 const result = resultByEventKey.get(calendarEventKey(event))
                 return (
-                  <li key={calendarEventKey(event)}>
+                  <li key={`${calendarEventKey(event)}-${index}`}>
                     <strong>{event.event_name || event.event_id}</strong>
                     <MetadataList
                       items={[
@@ -614,10 +614,10 @@ export function ViewerRunWeekPage(): JSX.Element {
         ) : null}
         {weekEvents.length > 0 ? (
           <ol className="item-list" aria-label="Viewer week Saved Calendar events">
-            {weekEvents.map((event) => {
+            {weekEvents.map((event, index) => {
               const result = publishedByEventKey.get(calendarEventKey(event))
               return (
-                <li key={calendarEventKey(event)}>
+                <li key={`${calendarEventKey(event)}-${index}`}>
                   <strong>{event.event_name || event.event_id}</strong>
                   <MetadataList
                     items={[

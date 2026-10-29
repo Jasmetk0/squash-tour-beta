@@ -8,7 +8,7 @@ import {
   getViewerTournamentHistory,
   listViewerOfficialRankingHistory
 } from '../api/client'
-import type { ViewerCalendarEvent, ViewerTournamentHistoryItem } from '../api/types'
+import type { ViewerCalendarEvent, ViewerOfficialRankingHistoryItem, ViewerTournamentHistoryItem } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -112,6 +112,20 @@ function canonicalPublishedResults(
     }
   }
   return published
+}
+
+// Official Ranking Saved revisions encode weeks as zero-based ordinals within
+// a fixed 61-week ranking season. This is distinct from arbitrary W values in
+// future Run calendar packages; never use an inconsistent ordinal as a link.
+function isValidRankingPublication(
+  item: ViewerOfficialRankingHistoryItem,
+  publicHeadOrdinal: number
+): boolean {
+  return Number.isInteger(item.season_index) && item.season_index >= 0 && item.season_index < 50 &&
+    Number.isInteger(item.week) && item.week >= 1 && item.week <= 61 &&
+    Number.isInteger(item.week_ordinal) &&
+    item.week_ordinal === item.season_index * 61 + item.week - 1 &&
+    item.week_ordinal <= publicHeadOrdinal
 }
 
 type ViewerSourceIdentity = { product_run_id: string; viewer_branch_id: string }
@@ -465,6 +479,14 @@ export function ViewerRunWeekPage(): JSX.Element {
     ? rankingHistoryQuery.data : null
   const race = effectiveBranchId && matchesViewerSource(finalsRaceQuery.data, runId, effectiveBranchId)
     ? finalsRaceQuery.data : null
+  const validRankingPublications = useMemo(
+    () => (rankings?.publications ?? []).filter((publication) =>
+      isValidRankingPublication(publication, rankings?.public_head_ordinal ?? -1)
+    ),
+    [rankings?.publications, rankings?.public_head_ordinal]
+  )
+  const hasInvalidRankingPublications = Boolean(rankings &&
+    validRankingPublications.length !== rankings.publications.length)
 
   // A week number is not unique across seasons. Explicit season links are
   // based on exact Saved Calendar labels, never on guessed publication years.
@@ -482,7 +504,7 @@ export function ViewerRunWeekPage(): JSX.Element {
       const matchingLabels = labels.filter((label) => calendarSeasonStart(label) === year)
       if (matchingLabels.length === 1) candidates.add(matchingLabels[0])
     }
-    for (const publication of rankings?.publications ?? []) {
+    for (const publication of validRankingPublications) {
       if (publication.week === parsedWeek) addPublicationYear(2000 + publication.season_index)
     }
     for (const publication of race?.publications ?? []) {
@@ -492,7 +514,7 @@ export function ViewerRunWeekPage(): JSX.Element {
       }
     }
     return labels.filter((label) => candidates.has(label))
-  }, [calendar?.seasons, matchingWeekEvents, parsedWeek, rankings?.publications,
+  }, [calendar?.seasons, matchingWeekEvents, parsedWeek, validRankingPublications,
     race?.publications, runId, effectiveBranchId])
   const calendarSeasonLabels = calendar?.seasons.map((item) => String(item.season)) ?? []
   const selectedSeason = requestedSeason !== null
@@ -532,11 +554,11 @@ export function ViewerRunWeekPage(): JSX.Element {
   })
   const rankingPublications = useMemo(
     () =>
-      (rankings?.publications ?? []).filter((publication) => {
+      validRankingPublications.filter((publication) => {
         if (publication.week !== parsedWeek) return false
         return selectedPublicationYear !== null && 2000 + publication.season_index === selectedPublicationYear
       }),
-    [rankings?.publications, selectedPublicationYear, parsedWeek]
+    [validRankingPublications, selectedPublicationYear, parsedWeek]
   )
   const finalsRacePublications = useMemo(
     () =>
@@ -589,6 +611,9 @@ export function ViewerRunWeekPage(): JSX.Element {
         ) : null}
         {rankingHistoryQuery.data && !rankings ? (
           <p className="error">Ranking History source does not match the Saved Calendar Viewer Branch.</p>
+        ) : null}
+        {hasInvalidRankingPublications ? (
+          <p className="error">Some Ranking History publications have inconsistent season/week ordinals and were withheld.</p>
         ) : null}
         {finalsRaceQuery.data && !race ? (
           <p className="error">Finals Race source does not match the Saved Calendar Viewer Branch.</p>

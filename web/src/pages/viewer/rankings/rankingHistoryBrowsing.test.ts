@@ -35,7 +35,7 @@ describe('legacy Viewer ranking history helpers', () => {
       { ...valid, publication_count: 1 },
       { ...valid, public_head_ordinal: 0 },
       { ...valid, publications: [item(0), item(0)] },
-      { ...valid, publications: [item(0), { ...item(61), week: 1 }] },
+      { ...valid, publications: [item(0), { ...item(61), week: 2 }] },
       { ...valid, publications: [item(0), { ...item(61), best_n: 0 }] },
       { ...valid, publications: [item(0), { ...item(61), row_count: -1 }] },
       { ...valid, publications: [item(0), { ...item(61), snapshot_fingerprint: 'bad' }] },

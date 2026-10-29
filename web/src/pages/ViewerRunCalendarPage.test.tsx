@@ -515,6 +515,9 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expect(within(firstEntry).queryByText('PLAYER-77')).not.toBeInTheDocument()
     expect(within(secondEntry).getByText('PLAYER-77')).toBeInTheDocument()
     expect(within(secondEntry).queryByText('PLAYER-42')).not.toBeInTheDocument()
+    expect(within(firstEntry).queryByRole('link', {name: 'Open tournament detail'})).not.toBeInTheDocument()
+    expect(within(secondEntry).queryByRole('link', {name: 'Open tournament detail'})).not.toBeInTheDocument()
+    expect(within(firstEntry).getByText(/Tournament detail unavailable for a reused event ID/)).toBeInTheDocument()
     expect(within(firstEntry).getByRole('link', {name:'Open planned event'})).toHaveAttribute(
       'href', '/viewer/runs/viewer-run-2d/calendar/EVENT-COMPLETE?season=2028%2F2029&week=1'
     )
@@ -547,6 +550,8 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expect((await screen.findAllByText(name)).length).toBeGreaterThan(0)
     expect(screen.getByText(champion)).toBeInTheDocument()
     expect(screen.queryByText(unrelated)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', {name:'Tournament detail'})).not.toBeInTheDocument()
+    expect(screen.getByText(/Tournament detail unavailable for a reused event ID/)).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -563,6 +568,38 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
       expectNoForbiddenViewerActions()
     }
   )
+
+  it('preserves the selected season and safe links on the Week page when event IDs repeat', async () => {
+    await reusedEventIdAcrossSeasons()
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/1?season=2029%2F2030')
+
+    const events = await screen.findByRole('list', {name: 'Viewer week Saved Calendar events'})
+    const item = within(events).getByText('Second Season Opener').closest('li') as HTMLElement
+    expect(within(item).getByText('PLAYER-77')).toBeInTheDocument()
+    expect(within(item).queryByText('PLAYER-42')).not.toBeInTheDocument()
+    expect(within(item).queryByRole('link', {name: 'Open tournament detail'})).not.toBeInTheDocument()
+    expect(within(item).getByRole('link', {name: 'Open planned event'})).toHaveAttribute(
+      'href', '/viewer/runs/viewer-run-2d/calendar/EVENT-COMPLETE?season=2029%2F2030&week=1'
+    )
+  })
+
+  it('does not publish an indistinguishable duplicate calendar occurrence', async () => {
+    const calendar = await api.getViewerRunCalendar('viewer-run-2d')
+    api.getViewerRunCalendar.mockResolvedValue({
+      ...calendar,
+      seasons: [{
+        ...calendar.seasons[0],
+        events: [...calendar.seasons[0].events, {...calendar.seasons[0].events[0], event_name: 'Copied Opener'}]
+      }, ...calendar.seasons.slice(1)]
+    })
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    const season = await screen.findByRole('list', {name:'Viewer season calendar events 2028/2029'})
+    const original = within(season).getByText('Season Opener').closest('li') as HTMLElement
+    const copy = within(season).getByText('Copied Opener').closest('li') as HTMLElement
+    expect(within(original).queryByText('PLAYER-42')).not.toBeInTheDocument()
+    expect(within(copy).queryByText('PLAYER-42')).not.toBeInTheDocument()
+  })
 
   it('does not select one of two conflicting published history rows', async () => {
     const history = await api.getViewerTournamentHistory('viewer-run-2d')

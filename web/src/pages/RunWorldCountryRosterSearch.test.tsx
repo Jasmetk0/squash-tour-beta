@@ -5,6 +5,7 @@ import {useState} from 'react'
 import {beforeEach,describe,expect,it,vi} from 'vitest'
 import type {SavedInventoryPlayer,SavedPlayersInventory} from '../api/types'
 import {RunWorldCountrySavedPlayers} from './RunWorldCountrySavedPlayers'
+import {writeCountryRosterPermalink} from './countrySavedRosterPermalink'
 
 const api=vi.hoisted(()=>({getSavedPlayersInventory:vi.fn()}))
 vi.mock('../api/client',()=>api)
@@ -43,7 +44,7 @@ function response(run:string,branch:string,head:string,f:Filters):SavedPlayersIn
     offset:f.offset,limit:f.limit,total:rows.length,
     has_more:f.offset+f.limit<rows.length,players:rows.slice(f.offset,f.offset+f.limit)}
 }
-function mount(){
+function mount(entry='/admin/runs/run/world/countries/CZE?tab=players&year=2025'){
   function Harness(){
     const [head,setHead]=useState<string|null>('rev-a')
     const [branch,setBranch]=useState('branch-a')
@@ -60,7 +61,7 @@ function mount(){
   }
   render(<QueryClientProvider client={new QueryClient({
     defaultOptions:{queries:{retry:false,gcTime:0}},
-  })}><MemoryRouter><Harness/></MemoryRouter></QueryClientProvider>)
+  })}><MemoryRouter initialEntries={[entry]}><Harness/></MemoryRouter></QueryClientProvider>)
 }
 const calls=()=>api.getSavedPlayersInventory.mock.calls
 const apply=()=>fireEvent.click(screen.getByRole('button',{name:'Apply filters'}))
@@ -234,5 +235,46 @@ describe('Country Saved roster server-side filters (mock HTTP)',()=>{
     expect(screen.getByRole('textbox',{name:'Country roster page number'})).toHaveValue('1')
     expect(calls().filter(([,branch])=>branch==='branch-b')
       .every(([, , ,f])=>f.offset===0&&f.search==='')).toBe(true)
+  })
+
+  it('hydrates a bookmarked filtered 2nd page using the exact HEAD and allows a profile return',async()=>{
+    const scope=JSON.stringify(['run','branch-a','rev-a','CZE'])
+    const params=writeCountryRosterPermalink(
+      new URLSearchParams('tab=players&year=2025&q=some-country'),scope,{
+        search:'Alpha',status:'',includePrepared:false,page:1,
+      })
+    mount('/admin/runs/run/world/countries/CZE?'+params.toString())
+    expect(await screen.findByText('Page 2 / 2')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox',{name:'Country roster search'})).toHaveValue('Alpha')
+    expect(screen.getByRole('link',{name:'Alpha Player 030'})).toBeInTheDocument()
+    expect(calls().some(([,branch,rev,f])=>branch==='branch-a'&&rev==='rev-a'&&
+      f.search==='Alpha'&&f.offset===25)).toBe(true)
+    expect(calls().every(([, , ,f])=>f.offset===25)).toBe(true)
+    const href=screen.getByRole('link',{name:'Alpha Player 030'}).getAttribute('href')
+    const playerUrl=new URL(href!,'http://test.local')
+    const back=playerUrl.searchParams.get('fromCountry')
+    expect(playerUrl.pathname).toBe('/admin/runs/run/people/p-030')
+    expect(back).not.toBeNull()
+    const country=new URL(back!,'http://test.local')
+    expect(country.pathname).toBe('/admin/runs/run/world/countries/CZE')
+    expect(country.searchParams.get('spSearch')).toBe('Alpha')
+    expect(country.searchParams.get('spPage')).toBe('2')
+    expect(country.searchParams.get('year')).toBe('2025')
+    expect(country.searchParams.get('q')).toBe('some-country')
+  })
+
+  it('does not reuse a bookmarked filter, page or prospect opt-in from an old Saved HEAD',async()=>{
+    const oldScope=JSON.stringify(['run','branch-a','rev-old','CZE'])
+    const params=writeCountryRosterPermalink(
+      new URLSearchParams('tab=players&year=2025'),oldScope,{
+        search:'future',status:'prepared',includePrepared:true,page:8,
+      })
+    mount('/admin/runs/run/world/countries/CZE?'+params.toString())
+    expect(await screen.findByText('Page 1 / 3')).toBeInTheDocument()
+    expect(screen.getByRole('searchbox',{name:'Country roster search'})).toHaveValue('')
+    expect(screen.getByRole('textbox',{name:'Country roster status'})).toHaveValue('')
+    expect(screen.getByRole('checkbox')).not.toBeChecked()
+    expect(calls().every(([, , ,f])=>f.offset===0&&
+      f.search===''&&f.status_filter===''&&!f.include_prepared)).toBe(true)
   })
 })

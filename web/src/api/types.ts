@@ -8659,6 +8659,7 @@ export type SavedPlayersInventory = {
   search: string
   country_code: string
   status_filter: string
+  ranking_status_filter?: "" | "ranked" | "unranked" | "unpublished"
   include_prepared: boolean
   offset: number
   limit: number

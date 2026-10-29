@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -280,6 +280,7 @@ def get_saved_players_inventory(
     search: str = Query(default="", max_length=120),
     country_code: str = Query(default="", max_length=3),
     status_filter: str = Query(default="", max_length=80),
+    ranking_status_filter: Literal["", "unpublished", "ranked", "unranked"] = Query(default=""),
     include_prepared: bool = Query(default=False),
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=100),
@@ -309,6 +310,7 @@ def get_saved_players_inventory(
                 revision.payload, run_id=run_id, branch_id=branch_id,
             ),
             search=search, country_code=country_code, status_filter=status_filter,
+            ranking_status_filter=ranking_status_filter,
             include_prepared=include_prepared, offset=offset, limit=limit,
         )
     except (ValueError, KeyError, TypeError) as exc:

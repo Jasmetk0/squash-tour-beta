@@ -36,9 +36,18 @@ rewrite is introduced.
 - Run, Branch, Saved HEAD or country changes remount the scoped viewer: no
   draft, applied filter, prepared opt-in or page may cross from another source.
   The first query for the new source is unfiltered `offset=0`.
-- Switching CS/EN never re-fetches the same Saved source or loses filters.
-  An actual empty response shows **Page 0 / 0**. A no-longer-valid higher
-  page offers an explicit first-page recovery instead of a false empty state.
+- Saved-roster navigation includes **first / previous / next / last** and an
+  explicit **one-based numeric page jump**, not just two sequential buttons.
+  The input accepts only canonical integers 1..totalPages; invalid text,
+  zero, leading zeros and pages beyond the real count never issue an API GET.
+  Every accepted jump uses the same backend filters and exact Saved source.
+- The UI also shows the absolute visible row range (e.g. 51–55 of 55),
+  without claiming those are globally ranked players. Jump input and page
+  reset on a new applied search, prepared toggle or Run/Branch/HEAD/country.
+  Switching CS/EN never re-fetches the same Saved source or loses filters.
+  An actual empty response shows **Page 0 / 0**; navigation is unavailable.
+  A no-longer-valid higher page offers explicit first/last valid-page
+  recovery instead of a false empty state.
 - No UI read triggers Save, simulation, or a write endpoint.
 
 ## Verification and limits
@@ -47,7 +56,10 @@ rewrite is introduced.
 55 saved players, the second 25-row page, server-wide name/ID search, exact
 status with search, controlled submission, clear, prepared opt-in and future
 identity, loss of Saved HEAD, source changes, CS/EN and mismatched filter
-identity. Original `RunWorldCountrySavedPaging.test.tsx` remains unchanged,
+identity. Two further tests cover exact page 3 of 3 for 55 authentic-shaped
+Saved players, malformed and out-of-range page input without network GETs,
+first/last jumps and synchronous cursor resets across filters, prospect opt-in
+and immutable sources. Original `RunWorldCountrySavedPaging.test.tsx` remains unchanged,
 so its unrelated source-switch/standings tests also run.
 
 These are mocked frontend tests; they do not replace real production

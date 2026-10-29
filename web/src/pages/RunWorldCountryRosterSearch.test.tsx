@@ -186,4 +186,53 @@ describe('Country Saved roster server-side filters (mock HTTP)',()=>{
     expect(screen.getByRole('alert')).toHaveTextContent('No authoritative Saved Revision')
     expect(screen.queryByRole('table',{name:'Saved country roster'})).not.toBeInTheDocument()
   })
+
+  it('jumps to the actual global third page and rejects malformed or future pages',async()=>{
+    mount()
+    await screen.findByText('Page 1 / 3')
+    fireEvent.change(screen.getByRole('textbox',{name:'Country roster page number'}),
+      {target:{value:'3'}})
+    fireEvent.click(screen.getByRole('button',{name:'Go'}))
+    expect(await screen.findByText('Page 3 / 3')).toBeInTheDocument()
+    expect(screen.getByRole('link',{name:'Beta Player 055'})).toBeInTheDocument()
+    expect(calls()).toContainEqual(['run','branch-a','rev-a',
+      expect.objectContaining({offset:50,limit:25,search:''})])
+    const before=calls().length
+    for(const invalid of ['0','4','01',' 2','2.0','-1','10000000','']) {
+      fireEvent.change(screen.getByRole('textbox',{name:'Country roster page number'}),
+        {target:{value:invalid}})
+      expect(screen.getByRole('button',{name:'Go'})).toBeDisabled()
+    }
+    expect(calls()).toHaveLength(before)
+    fireEvent.click(screen.getByRole('button',{name:'First'}))
+    expect(await screen.findByText('Page 1 / 3')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Last'}))
+    expect(await screen.findByText('Page 3 / 3')).toBeInTheDocument()
+  })
+
+  it('resets a numeric jump on filtered search, explicit prepared toggle and new HEAD',async()=>{
+    mount()
+    await screen.findByText('Page 1 / 3')
+    fireEvent.change(screen.getByRole('textbox',{name:'Country roster page number'}),
+      {target:{value:'2'}})
+    fireEvent.click(screen.getByRole('button',{name:'Go'}))
+    await screen.findByText('Page 2 / 3')
+    fireEvent.change(screen.getByRole('searchbox',{name:'Country roster search'}),
+      {target:{value:'Alpha'}})
+    apply()
+    expect(await screen.findByText('Page 1 / 2')).toBeInTheDocument()
+    expect(screen.getByRole('textbox',{name:'Country roster page number'})).toHaveValue('1')
+    fireEvent.change(screen.getByRole('textbox',{name:'Country roster page number'}),
+      {target:{value:'2'}})
+    fireEvent.click(screen.getByRole('button',{name:'Go'}))
+    await screen.findByText('Page 2 / 2')
+    fireEvent.click(screen.getByRole('checkbox'))
+    expect(await screen.findByText('Page 1 / 2')).toBeInTheDocument()
+    expect(screen.getByRole('textbox',{name:'Country roster page number'})).toHaveValue('1')
+    fireEvent.click(screen.getByRole('button',{name:'Change source'}))
+    expect(await screen.findByText('Page 1 / 3')).toBeInTheDocument()
+    expect(screen.getByRole('textbox',{name:'Country roster page number'})).toHaveValue('1')
+    expect(calls().filter(([,branch])=>branch==='branch-b')
+      .every(([, , ,f])=>f.offset===0&&f.search==='')).toBe(true)
+  })
 })

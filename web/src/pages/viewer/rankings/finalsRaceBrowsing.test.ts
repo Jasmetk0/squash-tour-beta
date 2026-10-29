@@ -87,6 +87,17 @@ describe('saved Finals Race history source/legacy V1 guards', () => {
     p.rows[1].finals_seed = 1
     expect(validViewerRaceHistory(history([p]), 'run-a', 'branch-a')).toBe(false)
   })
+
+  it('does not invent an event-ID uniqueness rule absent from the public projection', () => {
+    const sample = row(1, 'a', 20)
+    const repeated = { ...sample.counted_results[0], event_id: 'same-event', race_points: 10 }
+    const p = publication(4, [{
+      ...sample,
+      tournaments_counted: 2,
+      counted_results: [{ ...repeated }, { ...repeated }]
+    }])
+    expect(validViewerRaceHistory(history([p]), 'run-a', 'branch-a')).toBe(true)
+  })
   it('searches across full saved standings and accepts only bounded page jumps', () => {
     const rows = [row(1, 'Alice', 40), row(2, 'bob', 25), row(3, 'ALICE-2', 10)]
     expect(filterRacePlayerRows(rows, ' alice ')).toEqual([rows[0], rows[2]])

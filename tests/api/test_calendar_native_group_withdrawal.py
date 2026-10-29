@@ -1,9 +1,9 @@
 """Actual seeded group results and non-played W/O through HTTP/SQLite."""
-import shutil
 
 import pytest
 
 from beta_engine.infrastructure.db.calendar_sporting_checkpoint import load_checkpoint
+from tests.api.test_calendar_global_slots import copy_database
 from tests.api.test_calendar_native_groups import ready_groups
 from tests.api.test_calendar_tour_flow import (
     command,
@@ -25,6 +25,8 @@ def withdrawal_source(tmp_path_factory):
         ready_groups(server, groups=1, hybrid=False, group_win_points=0)
         execute(server, command(inspect(server), 'next-slot', name='real-first-group-day'))
         save_tour(server)
+    # Clone this source with SQLite backup below: the latest committed Save
+    # can still be in WAL while a pooled connection keeps the source open.
     return path
 
 
@@ -37,7 +39,7 @@ def test_withdrawal_real_results_walkover_save_reopen_and_no_match_effects(
     tmp_path, withdrawal_source, monkeypatch,
 ):
     path = tmp_path / 'withdrawal.db'
-    shutil.copy2(withdrawal_source, path)
+    copy_database(withdrawal_source, path)
     with ApiServer(database_url=f'sqlite:///{path}') as server:
         view = inspect(server)
         # Pick the actual first-day loser, without editing any simulated result.
@@ -107,7 +109,7 @@ def test_withdrawal_real_results_walkover_save_reopen_and_no_match_effects(
 def test_nested_fork_retains_partial_walkover_without_reowning_source(tmp_path, withdrawal_source):
     from tests.api.test_native_fork_public_continuation import Tour, fork
     path = tmp_path / 'fork-withdrawal.db'
-    shutil.copy2(withdrawal_source, path)
+    copy_database(withdrawal_source, path)
     with ApiServer(database_url=f'sqlite:///{path}') as server:
         original = inspect(server)
         pid = checkpoint(server).played_continuations[-1].result.loser_player_id
@@ -139,7 +141,7 @@ def test_nested_fork_retains_partial_walkover_without_reowning_source(tmp_path, 
 def test_worker_uses_nonplayed_results_and_explicit_manual_saves(tmp_path, withdrawal_source):
     from tests.api.test_native_full_simulation_tasks import resume, reviewed, start
     path = tmp_path / 'worker-withdrawal.db'
-    shutil.copy2(withdrawal_source, path)
+    copy_database(withdrawal_source, path)
     with ApiServer(database_url=f'sqlite:///{path}') as server:
         pid = checkpoint(server).played_continuations[-1].result.loser_player_id
         execute(server, command(inspect(server), 'withdraw-group', edition_id='native-groups',
@@ -172,7 +174,7 @@ def test_withdrawal_rejects_stale_foreign_duplicate_and_rehashed_evidence(tmp_pa
         CalendarTourAuthorityModel,
     )
     path = tmp_path / 'negative-withdrawal.db'
-    shutil.copy2(withdrawal_source, path)
+    copy_database(withdrawal_source, path)
     with ApiServer(database_url=f'sqlite:///{path}') as server:
         original = inspect(server)
         pid = checkpoint(server).played_continuations[-1].result.loser_player_id
@@ -212,9 +214,8 @@ def test_withdrawal_rejects_stale_foreign_duplicate_and_rehashed_evidence(tmp_pa
 
 
 def test_walkover_and_actual_match_order_share_frozen_input_across_restart(tmp_path, withdrawal_source):
-    from tests.api.test_calendar_global_slots import copy_database
     common = tmp_path / 'common-withdrawn.db'
-    shutil.copy2(withdrawal_source,common)
+    copy_database(withdrawal_source,common)
     with ApiServer(database_url=f'sqlite:///{common}') as server:
         pid = checkpoint(server).played_continuations[-1].result.loser_player_id
         execute(server,command(inspect(server),'withdraw-group',edition_id='native-groups',

@@ -79,3 +79,28 @@ separate withdrawal browser matrix entry exercises this slice. Final-head
 W52/W61/W80 and applicable legacy/native/fork/browser acceptance must actually
 pass before owner merge. Draft skips are not passes. This is not full pre-alpha
 or 50-season release certification. Owner alone merges; no auto-merge.
+
+## Hosted candidate follow-up
+
+On candidate `dc1832330f`, both real group browser scenarios passed. The
+W52/W61/W80 HTTP jobs each passed all eight existing group cases, then rejected
+the withdrawal test's first review. The retained W52 source contains 12 Saved
+Revisions, but its filesystem-only test copy contains only 11: a pooled SQLite
+connection can retain the latest committed Save in WAL. All withdrawal fixture
+clones now use the existing SQLite backup helper so their snapshot includes
+committed WAL contents. The actual failed source, cloned with that helper,
+returns HTTP 200 for withdrawal preview; the old incomplete copy returns 409.
+Production Saved/source validation is preserved.
+
+The separate W80/1,000-player Tour browser reached Week 6 and completed both
+result confirmations, but exceeded its unchanged 18-minute deadline during
+final verification. This remains an unresolved acceptance failure, not a pass.
+A cold inspection of its retained database confirms a clean Saved Week 6;
+profiling attributes most inspection time to actual Saved-lineage verification.
+Neither fixture scale, validation gates nor deadlines have been reduced.
+
+After the backup correction, all five genuine withdrawal HTTP/SQLite cases
+passed together in 321.59 seconds with a fresh W52 fixture, including rollback,
+exact retry, nested forks, the real worker and reverse-order restart equality.
+All five focused withdrawal domain cases, scoped Ruff and whitespace checks
+also pass. New-head hosted acceptance is still required.

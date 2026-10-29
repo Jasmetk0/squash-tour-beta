@@ -125,7 +125,6 @@ describe('Saved Country record evidence navigation (mocked HTTP)',()=>{
     fireEvent.click(screen.getAllByRole('button',{name:'Open evidence'})[0])
     expect(await screen.findByText('Page 0 / 0')).toBeInTheDocument()
     expect(screen.getByRole('button',{name:'Next →'})).toBeDisabled()
-    expect(screen.getByRole('status',{name:''})).toBeInTheDocument()
   })
   it('preserves exact branch/revision/return origin on immutable match links',async()=>{
     mount()

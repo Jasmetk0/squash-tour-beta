@@ -45,6 +45,9 @@ Revision.
 - `RunWorldCountryMatchHighlights.test.tsx`: mocked-API interaction tests for
   25-row page navigation, real source changes, locale, invalid detail, empty
   evidence and exact return links. These **do not** prove SQLite persistence.
+- `tests/application/test_country_match_record_highlights.py` adds a real
+  application-level contract for unpaged record totals, correctly empty
+  beyond-end evidence and the actual last six rows of a 31-match source.
 - The existing `scripts/country_records_browser_checks.py` is extended to
   observe actual Chromium network writes while opening Saved Country match-record
   evidence and returning through historical results. Its mandatory
@@ -56,6 +59,7 @@ Revision.
 
 **Ownership and conflict boundary:** Only
 `RunWorldCountryMatchHighlights.tsx`, its own new test,
-`countryMatchEvidenceValidation.ts` and its new unit test, plus this document and the existing read-only Country browser check.
+`countryMatchEvidenceValidation.ts` and its new unit test, plus this document, the existing Country browser check and its dedicated
+Country match-record application test (no backend logic changes).
 No edits to player Career PR #1652, common API clients/types, historical
 read models, Player/Match Engine or Work's sporting/Save integration.

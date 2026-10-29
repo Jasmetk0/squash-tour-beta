@@ -91,7 +91,8 @@ def observers(mode, root):
         checkpoint_copies['calls'] += n
         whole_copies['calls'] += bool(n and isinstance(value, tuple) and len(value) == 3)
         evidence_copies['calls'] += sum(str(getattr(item, 'schema_version', '')).startswith(
-            ('calendar_opening_knockout.', 'calendar_standalone_match.', 'calendar_match.')) for item in values)
+            ('calendar_opening_knockout.', 'calendar_scored_opening_knockout.',
+             'calendar_standalone_match.', 'calendar_match.')) for item in values)
         return original_copy(value, *args, **kwargs)
 
     cache._copy_decoded_value = copied

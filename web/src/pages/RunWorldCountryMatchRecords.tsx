@@ -1,19 +1,27 @@
 /** Historical-safe national match table; filters are applied by the Saved API before paging. */
 import {useEffect,useState} from 'react'
 import {useQuery} from '@tanstack/react-query'
-import {Link} from 'react-router-dom'
+import {Link,useLocation} from 'react-router-dom'
 import {getCountrySavedMatchRecords} from '../api/client'
 import type {CountryMatchOutcome,CountryMatchResultKind,
   CountrySavedMatchRecords,CountrySavedMatch} from '../api/types'
 import {formatApiError} from '../utils/apiErrors'
+import {calendarSeasonIndex} from './runWorldCountryTournaments'
+import {COUNTRY_SAVED_MATCH_PAGE_SIZE as PAGE_SIZE,countrySavedMatchPageCount,validCountrySavedMatchPage} from './countrySavedMatchListGuard'
 
-const PAGE_SIZE=25
 type Props={runId:string;branchId:string;countryCode:string
   savedRevisionId:string|null;historical:boolean;cs:boolean}
 
-export function RunWorldCountryMatchRecords({
+/** Remount the local filter/cursor before reading a different Saved source. */
+export function RunWorldCountryMatchRecords(props:Props):JSX.Element {
+  const {runId,branchId,countryCode,savedRevisionId,historical}=props
+  return <ScopedCountrySavedMatches key={JSON.stringify([runId,branchId,countryCode,
+    savedRevisionId,historical])} {...props}/>
+}
+function ScopedCountrySavedMatches({
   runId,branchId,countryCode,savedRevisionId,historical,cs
 }:Props):JSX.Element{
+  const location=useLocation()
   const [season,setSeason]=useState('all')
   const [resultKind,setResultKind]=useState<CountryMatchResultKind>('all')
   const [outcome,setOutcome]=useState<CountryMatchOutcome>('all')
@@ -30,11 +38,13 @@ export function RunWorldCountryMatchRecords({
       {seasonIndex,resultKind,outcome,offset,limit:PAGE_SIZE}),
     enabled,retry:false
   })
-  const data:CountrySavedMatchRecords|null=q.data?.run_id===runId&&
-    q.data.branch_id===branchId&&q.data.saved_revision_id===savedRevisionId&&
-    q.data.country_code===countryCode&&q.data.season_index===seasonIndex&&
-    q.data.result_kind===resultKind&&q.data.outcome===outcome&&
-    q.data.offset===offset&&q.data.limit===PAGE_SIZE?q.data:null
+  const data:CountrySavedMatchRecords|null=q.isSuccess&&!q.isFetching&&savedRevisionId&&
+    validCountrySavedMatchPage(q.data,{
+      runId,branchId,countryCode,revision:savedRevisionId,
+      seasonIndex,resultKind,outcome,offset,
+    })?q.data:null
+  const pages=data?countrySavedMatchPageCount(data.filtered_match_count):0
+  const outOfRange=Boolean(data&&page>0&&offset>=data.filtered_match_count)
   useEffect(()=>{
     // Season choices must not disappear while a filtered page is loading.
     if(data)setAvailableSeasons(data.available_seasons)
@@ -45,7 +55,22 @@ export function RunWorldCountryMatchRecords({
     return <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/people/'+encodeURIComponent(id)}>{name}</Link>
   }
   const matchLink=(m:CountrySavedMatch)=>{
-    if(historical)return <code>{m.match_id}</code>
+    if(historical){
+      // Historical Country evidence never resolves through today's player profile.
+      const index=calendarSeasonIndex(m.season)
+      if(index===null||!savedRevisionId)return <code>{m.match_id}</code>
+      const origin=new URLSearchParams(location.search)
+      origin.set('tab','records')
+      origin.set('revision',savedRevisionId)
+      origin.set('branch',branchId)
+      const fromCountry='/admin/runs/'+encodeURIComponent(runId)+'/world/countries/'+
+        encodeURIComponent(countryCode)+'?'+origin.toString()
+      const query=new URLSearchParams({branch:branchId,revision:savedRevisionId,
+        season:String(index),tab:'results',fromCountry})
+      return <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'+
+        encodeURIComponent(m.event_id)+'/matches/'+encodeURIComponent(m.match_id)+
+        '?'+query.toString()}>{cs?'Uložený zápas':'Saved match'} {m.match_id}</Link>
+    }
     return <Link to={'/admin/runs/'+encodeURIComponent(runId)+'/people/'+
       encodeURIComponent(m.winner_player_id)+'/matches/'+
       encodeURIComponent(m.event_id)+'/'+encodeURIComponent(m.match_id)}>
@@ -87,9 +112,9 @@ export function RunWorldCountryMatchRecords({
         </select>
       </label>
     </div>
-    {enabled&&q.isPending&&<p role="status">{cs?'Načítám ověřené zápasy…':'Loading verified matches…'}</p>}
+    {enabled&&(q.isPending||q.isFetching)&&<p role="status">{cs?'Načítám ověřené zápasy…':'Loading verified matches…'}</p>}
     {enabled&&q.error&&<p role="alert">{formatApiError(q.error)}</p>}
-    {enabled&&q.isSuccess&&!data&&<p role="alert">{cs?
+    {enabled&&q.isSuccess&&!q.isFetching&&!data&&<p role="alert">{cs?
       'Odpověď zápasů nesouhlasí s požadovaným Runem, revizí nebo filtry.':
       'Match response does not match requested Run, revision or filters.'}</p>}
     {data&&<>
@@ -106,7 +131,12 @@ export function RunWorldCountryMatchRecords({
         {' '}· {cs?'Celkem zápasů hráčů země':'Total country player matches'}:
         {' '}{fmt(data.country_match_count)}
       </p>
-      {data.matches.length>0
+      {outOfRange&&<p role="alert">{cs?'Požadovaná stránka zápasů není v této revizi dostupná.':
+        'Requested match page does not exist in this revision.'}{' '}
+        <button type="button" onClick={()=>setPage(0)}>{cs?'První platná stránka':'First valid page'}</button>
+        {' '}<button type="button" onClick={()=>setPage(Math.max(0,pages-1))}>
+          {cs?'Poslední platná stránka':'Last valid page'}</button></p>}
+      {!outOfRange&&data.matches.length>0
         ? <div className="table-responsive"><table aria-label="Country canonical saved matches">
             <thead><tr>
               <th>{cs?'Sezóna / týden':'Season / week'}</th>
@@ -124,13 +154,13 @@ export function RunWorldCountryMatchRecords({
               <td>{m.completion==='walkover'?(cs?'Kontumace':'Walkover'):(cs?'Odehráno':'Played')}</td>
             </tr>)}</tbody>
           </table></div>
-        : <p role="status">{cs?'V této revizi nejsou zápasy odpovídající zvoleným filtrům.':
+        : !outOfRange&&<p role="status">{cs?'V této revizi nejsou zápasy odpovídající zvoleným filtrům.':
             'No saved matches match these filters in the selected revision.'}</p>}
       <div className="actions" aria-label="Country match pagination">
-        <button type="button" disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}>
+        <button type="button" disabled={page===0||q.isFetching||outOfRange} onClick={()=>setPage(p=>Math.max(0,p-1))}>
           {cs?'← Předchozí':'← Previous'}</button>
-        <span>{cs?'Strana':'Page'} {page+1} / {Math.max(1,Math.ceil(data.filtered_match_count/PAGE_SIZE))}</span>
-        <button type="button" disabled={!data.has_more} onClick={()=>setPage(p=>p+1)}>
+        <span>{cs?'Strana':'Page'} {pages===0?0:page+1} / {pages}</span>
+        <button type="button" disabled={!data.has_more||q.isFetching||outOfRange} onClick={()=>setPage(p=>p+1)}>
           {cs?'Další →':'Next →'}</button>
       </div>
     </>}

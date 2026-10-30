@@ -74,6 +74,7 @@ export const editionEntryTimingWords = {
   saveError: { cs: 'Uložení nelze bezpečně provést', en: 'Save could not be safely completed' },
   saved: { cs: 'Saved Revision byla uložena a potvrzena serverem.', en: 'Server confirmed the new Saved Revision.' },
   saveGuard: { cs: 'Před uložením znovu ověřím Run, Branch, původní Saved HEAD, verzi Draftu a fingerprint Package; bez souhlasu a ověření Save neproběhne.', en: 'Before Save, verify Run, Branch, previous Saved HEAD, Draft version and Package fingerprint again. Save requires separate consent.' },
+  refreshError: { cs: 'Potvrzení proběhlo, ale následné načtení stavu selhalo. Ověř aktuální Working Draft před Save.', en: 'Confirmation succeeded, but refreshing the state failed. Verify the current Working Draft before Save.' },
   refreshing: { cs: 'Obnovuji serverový stav…', en: 'Refreshing server state…' },
   retryCommandId: { cs: 'ID příkazu', en: 'Command ID' },
   nonWritable: { cs: 'Tento kontext není zapisovatelný; nejprve obnov příslušný aktivní Run/Branch a ověř Working Draft.', en: 'This context is not writable; return to the correct active Run/Branch and verify its Working Draft.' },

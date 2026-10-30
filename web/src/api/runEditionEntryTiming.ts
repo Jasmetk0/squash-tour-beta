@@ -178,6 +178,7 @@ export function validEntryTimingInspection(
     isHash(data.preview_fingerprint) && isHash(data.state_fingerprint) &&
     isHash(data.edition_fingerprint) &&
     validWeek(data.resolved.main_open, clock) &&
+    sameWeek(data.resolved.main_open, data.timing.main_open) &&
     validWeek(data.resolved.main_close, clock) &&
     validWeek(data.resolved.qualification_open, clock) &&
     validWeek(data.resolved.qualification_close, clock) &&

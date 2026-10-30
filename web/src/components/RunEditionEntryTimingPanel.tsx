@@ -146,7 +146,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   }, [inspection, scope])
 
   const update = (patch: Partial<Inputs>) => {
-    if (busy.current || loadingPreview || loadingConfirm) return
+    if (busy.current || loadingPreview || loadingConfirm || receipt || saving) return
     setForm(old => ({ ...old, ...patch }))
     setPreview(null)
     setRetryPayload(null)
@@ -162,10 +162,10 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     form.operator.trim().length > 0 && form.operator.length <= 160 &&
     form.reason.trim().length > 0 && form.reason.length <= 1000 &&
     !loadingConfirm && !loadingPreview && !busy.current
-  const editingBlocked = !enabled || loadingConfirm || loadingPreview || busy.current
+  const editingBlocked = !enabled || Boolean(receipt) || saving || loadingConfirm || loadingPreview || busy.current
 
   async function calculatePreview(): Promise<void> {
-    if (!enabled || !timing || busy.current || query.isError || query.isFetching) return
+    if (!enabled || !timing || receipt || saving || busy.current || query.isError || query.isFetching) return
     busy.current = true
     setLoadingPreview(true)
     setError('')
@@ -275,14 +275,20 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       setReceipt(null)
       setSaveApproved(false)
       setRefreshed(null)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+      // Save's authoritative receipt is final. A failed cache refresh cannot turn
+      // a persisted Saved Revision into an apparent failed Save.
+      try {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
         queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
         queryClient.invalidateQueries({ queryKey: ['package-working-draft', runId, branchId] }),
         queryClient.invalidateQueries({ queryKey: ['run-package-state', runId, branchId] }),
         queryClient.invalidateQueries({ queryKey: ['run-calendar', runId, branchId, packageId] }),
-        queryClient.invalidateQueries({ queryKey: ['edition-entry-timing', runId, branchId, packageId, eventId] })
-      ])
+          queryClient.invalidateQueries({ queryKey: ['edition-entry-timing', runId, branchId, packageId, eventId] })
+        ])
+      } catch (refreshCause) {
+        if (currentScope.current === origin) setSaveError(t.saveRefreshError + ': ' + formatApiError(refreshCause))
+      }
     } catch (cause) {
       if (currentScope.current === origin) setSaveError(t.saveError + ': ' + formatApiError(cause))
     } finally {
@@ -377,8 +383,8 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       {inspection && !timing && <p role="alert" className="error">{t.required} {t.durationError}</p>}
       {form.operator.length > 160 && <p role="alert" className="error">{t.operatorError}</p>}
       {form.reason.length > 1000 && <p role="alert" className="error">{t.reasonError}</p>}
-      <button type="button" disabled={!enabled || !inspection || !timing || query.isError || query.isFetching ||
-        loadingPreview || loadingConfirm || busy.current}
+      <button type="button" disabled={!enabled || !inspection || !timing || receipt !== null || saving ||
+        query.isError || query.isFetching || loadingPreview || loadingConfirm || busy.current}
         onClick={() => void calculatePreview()}>{loadingPreview ? t.previewing : t.previewButton}</button>
       {error && <p role="alert" className="error">{error}</p>}
 

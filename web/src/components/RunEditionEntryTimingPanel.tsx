@@ -195,7 +195,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   }
 
   async function calculatePreview(): Promise<void> {
-    if (!enabled || !timing || receipt || saving || busy.current || query.isError || query.isFetching) return
+    if (!enabled || !timing || receipt || retryPayload || saving || busy.current || query.isError || query.isFetching) return
     busy.current = true
     setLoadingPreview(true)
     setError('')
@@ -496,7 +496,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         }}>{t.restoreLocal}</button>
       {form.operator.length > 160 && <p role="alert" className="error">{t.operatorError}</p>}
       {form.reason.length > 1000 && <p role="alert" className="error">{t.reasonError}</p>}
-      <button type="button" disabled={!enabled || !inspection || !timing || receipt !== null || saving ||
+      <button type="button" disabled={!enabled || !inspection || !timing || receipt !== null || retryPayload !== null || saving ||
         query.isError || query.isFetching || loadingPreview || loadingConfirm || busy.current}
         onClick={() => void calculatePreview()}>{loadingPreview ? t.previewing : t.previewButton}</button>
       {error && <p role="alert" className="error">{error}</p>}

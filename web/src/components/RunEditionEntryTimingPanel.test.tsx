@@ -293,12 +293,19 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     await userEvent.click(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'}))
     await screen.findByText(/Odpověď na potvrzení je nejistá/)
     const prior = api.confirmRunEditionEntryTiming.mock.calls[0][4]
+    // The original request might have reached the backend. A new preview
+    // would discard the only safe idempotent retry payload.
+    expect(screen.getByRole('button',{name:'Spočítat serverový náhled'})).toBeDisabled()
+    expect(screen.getByLabelText('Otevření Main – týden')).toBeDisabled()
+    expect(api.previewRunEditionEntryTiming).toHaveBeenCalledTimes(1)
     await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(screen.getByRole('button',{name:'Calculate server preview'})).toBeDisabled()
     expect(screen.getByRole('button',{name:'Retry the exact same command'})).toBeEnabled()
     await userEvent.click(screen.getByRole('button',{name:'Retry the exact same command'}))
     await waitFor(() => expect(api.confirmRunEditionEntryTiming).toHaveBeenCalledTimes(2))
     expect(api.confirmRunEditionEntryTiming.mock.calls[1][4]).toEqual(prior)
     expect(api.confirmRunEditionEntryTiming.mock.calls[1][4].command_id).toBe(prior.command_id)
+    expect(api.previewRunEditionEntryTiming).toHaveBeenCalledTimes(1)
   })
 
   it('suppresses writes when parent context is historical, foreign or otherwise unverified', async () => {

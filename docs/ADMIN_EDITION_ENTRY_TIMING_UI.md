@@ -66,3 +66,7 @@ _Status is evidence-scoped: **Implemented/Improved** = frontend code added, **Re
 - Mocked tests in RunEditionEntryTimingPanel.test.tsx test local restore, CS/EN preview persistence, exact retry, server windows, optional explicit fields, guarded Save, changed-field display and real-shaped ranking list responses; they cannot prove a browser/database integration.
 - **Must not merge on stale results:** run latest-head frontend tests and TS/Vite build; check actual hosted status, Sonar new-code gate and focused real browser + HTTP/SQLite Save/reopen. Skipped Draft workflows do not count as acceptance.
 - Known limitation: older Runs without explicit v1 clock still fail closed, and the generic planned event page has unrelated legacy projection assumptions. This UI does not implement automatic Entry eligibility.
+
+## Exact retry safety regression
+
+An uncertain Confirm response freezes the form and the server Preview button until the original command is explicitly retried. A second preview must not clear the immutable `command_id` and payload, because the original Confirm may already have reached the server. The component regression verifies the preview remains disabled across CS/EN switch and that only the original payload is resubmitted. This is mocked frontend evidence, not a real connection-loss/SQLite test.

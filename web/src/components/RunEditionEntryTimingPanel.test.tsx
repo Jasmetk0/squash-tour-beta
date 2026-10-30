@@ -132,7 +132,7 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
   it('restores only local timing fields; retains audit without server writes', async () => {
     api.getRunEditionEntryTiming.mockResolvedValueOnce({...preview, preview_fingerprint: hash('a')})
     mount()
-    await screen.findByText(/Existující časování této Edition/)
+    await waitFor(() => expect(screen.getByLabelText('Otevření Main – týden')).toHaveValue(13))
     fireEvent.change(screen.getByLabelText('Otevření Main – týden'), {target:{value:'18'}})
     fireEvent.change(screen.getByLabelText('Délka Main (týdny)'), {target:{value:'4'}})
     fireEvent.change(screen.getByLabelText('Operátor potvrzení'), {target:{value:'Operator'}})
@@ -165,6 +165,20 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(screen.getByLabelText('Délka Main (týdny)')).toHaveValue(2)
     expect(screen.getByLabelText('Otevření Main – týden')).toHaveValue(81)
     expect(api.previewRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
+  it('shows a read-only diff from the frozen server before/after values', async () => {
+    const modified = {...timing, main_duration_weeks:3}
+    api.getRunEditionEntryTiming.mockResolvedValueOnce({...preview, timing})
+    api.previewRunEditionEntryTiming.mockResolvedValueOnce({...preview, timing:modified, before:timing})
+    mount()
+    await waitFor(() => expect(screen.getByLabelText('Délka Main (týdny)')).toHaveValue(2))
+    fireEvent.change(screen.getByLabelText('Délka Main (týdny)'), {target:{value:'3'}})
+    await requestPreview()
+    expect(screen.getByText('Co serverový náhled mění')).toBeInTheDocument()
+    expect(screen.getByText('Délka Main', {selector:'strong'})).toBeInTheDocument()
+    expect(screen.getByText('Zobrazit nezměněná pole')).toBeInTheDocument()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
   })
 
   it('does not infer the opening from play week; keeps only approved 2+1 defaults', async () => {

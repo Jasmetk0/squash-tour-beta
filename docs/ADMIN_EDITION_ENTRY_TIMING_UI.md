@@ -29,3 +29,5 @@ Known limitation: historical Run records without explicit v1 Run calendar metada
 - **Retained from existing PR:** #3–4 no-plan/existing-plan, #14–22 server-only ranking/window/readiness/blockers, #24 exact retry and #26 separate guarded Save. No additional backend or sporting authority.
 - **Still open for verified follow-up:** #12 selecting an actual ranking publication from an existing Run/Branch list, #13 compact changed-field diff, #18 explicit operation impacts of every blocker, #27 exact Saved Revision route (unverified), #30 final-head checks and real browser/HTTP/SQLite acceptance. These must not be marked done from mocked tests.
 - Added mocked React tests for restore, audit-only changes and exact field bounds; no real backend or browser is claimed. Last-head CI and Sonar gates must be checked independently. Keep Draft.
+
+- Follow-up: #13 frozen server before/after fields and disclosed unchanged values added. Accessible field error text is now outside labels. The actual execution, save and ranking boundaries remain unchanged.

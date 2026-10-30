@@ -9,7 +9,7 @@ import {
 } from '../api/client'
 import type { RunCalendarMetadata } from '../api/runCalendarCreation'
 import {
-  entryTimingScope, isHash, weekInClock, sameTiming, sameClock, verifiedRunCalendar,
+  entryTimingScope, isHash, weekInClock, sameTiming, sameWeek, sameClock, verifiedRunCalendar,
   type EditionEntryTiming, type EntryTimingConfirmPayload,
   type EntryTimingInspection, type EntryTimingPreview, type EntryTimingReceipt, type EntryWeek
 } from '../api/runEditionEntryTiming'
@@ -325,6 +325,19 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const previewStatus = previewCurrent ? preview : null
   const effectiveStatus = previewStatus ?? (inspection?.timing ? inspection : null)
   const blockers = previewStatus?.blockers ?? inspection?.blockers ?? []
+  // Compare frozen server fields only, never invent Main/Q windows in the client.
+  const fieldChanges = previewStatus?.before ? [
+    { label: t.diffMain, changed: !sameWeek(previewStatus.before.main_open, previewStatus.timing.main_open),
+      before: position(previewStatus.before.main_open), after: position(previewStatus.timing.main_open) },
+    { label: t.diffMainLength, changed: previewStatus.before.main_duration_weeks !== previewStatus.timing.main_duration_weeks,
+      before: String(previewStatus.before.main_duration_weeks), after: String(previewStatus.timing.main_duration_weeks) },
+    { label: t.diffQLength, changed: previewStatus.before.qualification_duration_weeks !== previewStatus.timing.qualification_duration_weeks,
+      before: String(previewStatus.before.qualification_duration_weeks), after: String(previewStatus.timing.qualification_duration_weeks) },
+    { label: t.diffCommitment, changed: !sameWeek(previewStatus.before.final_commitment, previewStatus.timing.final_commitment),
+      before: position(previewStatus.before.final_commitment), after: position(previewStatus.timing.final_commitment) },
+    { label: t.diffRanking, changed: !sameWeek(previewStatus.before.ranking_publication_override, previewStatus.timing.ranking_publication_override),
+      before: position(previewStatus.before.ranking_publication_override), after: position(previewStatus.timing.ranking_publication_override) }
+  ] : []
   const inputId = (field: string) => 'entry-timing-' + field
   const weekFields = (value: WeekFields, name: 'main' | 'commitment' | 'override', seasonLabel: string, weekLabel: string) => {
     const seasonInvalid = !/^\d+$/.test(value.season) ||
@@ -341,15 +354,15 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
             <option key={index} value={index}>{seasonLabelFor(index)} (S{index})</option>
           ))}
         </select>
-        {seasonInvalid && <span id={inputId(name + '-season-error')} className="error">{t.seasonRange} 0–{calendar.season_count - 1}.</span>}
       </label>
+      {seasonInvalid && <span id={inputId(name + '-season-error')} className="error">{t.seasonRange} 0–{calendar.season_count - 1}.</span>}
       <label htmlFor={inputId(name + '-week')}>{weekLabel}
         <input id={inputId(name + '-week')} type="number" min={1} max={calendar.weeks_per_year}
           step={1} value={value.week} disabled={editingBlocked} aria-invalid={weekInvalid}
           aria-describedby={weekInvalid ? inputId(name + '-week-error') : undefined}
           onChange={event => update({ [name]: { ...value, week: event.target.value } })} />
-        {weekInvalid && <span id={inputId(name + '-week-error')} className="error">{t.weekRange} 1–{calendar.weeks_per_year}.</span>}
       </label>
+      {weekInvalid && <span id={inputId(name + '-week-error')} className="error">{t.weekRange} 1–{calendar.weeks_per_year}.</span>}
     </div>
   }
 
@@ -396,15 +409,15 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
               aria-invalid={!durationValid(form.mainDuration)}
               aria-describedby={!durationValid(form.mainDuration) ? inputId('main-duration-error') : undefined}
               onChange={event => update({ mainDuration: event.target.value })} />
-            {!durationValid(form.mainDuration) && <span id={inputId('main-duration-error')} className="error">{t.durationError}</span>
           </label>
+          {!durationValid(form.mainDuration) && <span id={inputId('main-duration-error')} className="error">{t.durationError}</span>}
           <label htmlFor={inputId('q-duration')}>{t.qualificationDuration}
             <input id={inputId('q-duration')} type="number" min={1} step={1} value={form.qualificationDuration}
               aria-invalid={!durationValid(form.qualificationDuration)}
               aria-describedby={!durationValid(form.qualificationDuration) ? inputId('q-duration-error') : undefined}
               onChange={event => update({ qualificationDuration: event.target.value })} />
-            {!durationValid(form.qualificationDuration) && <span id={inputId('q-duration-error')} className="error">{t.durationError}</span>
           </label>
+          {!durationValid(form.qualificationDuration) && <span id={inputId('q-duration-error')} className="error">{t.durationError}</span>}
         </div>
         <p className="status">{t.durationHint}</p>
         <button type="button" disabled={form.mainDuration === '2' && form.qualificationDuration === '1'}
@@ -447,6 +460,20 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
 
       {effectiveStatus && <div className="grid" aria-live="polite">
         <h4>{previewStatus ? t.review : t.existing}</h4>
+        {previewStatus && <div>
+          <h5>{t.diffHeading}</h5>
+          {previewStatus.before === null ? <p>{t.diffNewPlan}</p> :
+            fieldChanges.some(item => item.changed)
+              ? <ul>{fieldChanges.filter(item => item.changed).map(item =>
+                <li key={item.label}><strong>{item.label}</strong>: {item.before} → {item.after}</li>
+              )}</ul> : <p>{t.diffNoChanges}</p>}
+          {previewStatus.before && fieldChanges.some(item => !item.changed) && <details>
+            <summary>{t.diffUnchanged}</summary>
+            <ul>{fieldChanges.filter(item => !item.changed).map(item =>
+              <li key={item.label}>{item.label}: {item.after}</li>
+            )}</ul>
+          </details>}
+        </div>}
         <dl className="kv-grid">
           <dt>{t.before}</dt><dd>{formatTiming(effectiveStatus.before)}</dd>
           <dt>{t.after}</dt><dd>{formatTiming(effectiveStatus.timing)}</dd>

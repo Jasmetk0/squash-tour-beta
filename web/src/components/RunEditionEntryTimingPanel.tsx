@@ -154,7 +154,8 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     setError('')
   }
   const timing = makeTiming(form, calendar)
-  const previewCurrent = Boolean(preview && timing && enabled &&
+  // An unsuccessful refetch is not proof that an older cached inspection is current.
+  const previewCurrent = Boolean(preview && timing && enabled && !query.isError && !query.isFetching &&
     entryTimingScope(preview, runId, branchId, packageId, eventId) &&
     sameTiming(preview.timing, timing) && isHash(preview.preview_fingerprint))
   const canConfirm = previewCurrent && preview?.can_confirm_configuration === true &&
@@ -164,7 +165,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const editingBlocked = !enabled || loadingConfirm || loadingPreview || busy.current
 
   async function calculatePreview(): Promise<void> {
-    if (!enabled || !timing || busy.current) return
+    if (!enabled || !timing || busy.current || query.isError || query.isFetching) return
     busy.current = true
     setLoadingPreview(true)
     setError('')
@@ -328,7 +329,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       <p>{t.clock}: {calendar.weeks_per_year} W · {calendar.start_year} · {calendar.season_count} seasons · offset {calendar.season_start_year_week}</p>
       <p className="status">{t.indexNote}</p>
       {query.isLoading && !inspection && <p role="status">{t.loading}</p>}
-      {query.error && !inspection && <p role="alert" className="error">{t.failed}: {formatApiError(query.error)}</p>}
+      {query.error && <p role="alert" className="error">{t.failed}: {formatApiError(query.error)}</p>}
       <button type="button" disabled={query.isFetching || busy.current}
         onClick={() => { setRefreshed(null); void query.refetch() }}>{t.retryRead}</button>
       {!inspection && !query.isLoading && !query.error && <p role="status">{t.loading}</p>}
@@ -368,7 +369,8 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       {inspection && !timing && <p role="alert" className="error">{t.required} {t.durationError}</p>}
       {form.operator.length > 160 && <p role="alert" className="error">{t.operatorError}</p>}
       {form.reason.length > 1000 && <p role="alert" className="error">{t.reasonError}</p>}
-      <button type="button" disabled={!enabled || !inspection || !timing || loadingPreview || loadingConfirm || busy.current}
+      <button type="button" disabled={!enabled || !inspection || !timing || query.isError || query.isFetching ||
+        loadingPreview || loadingConfirm || busy.current}
         onClick={() => void calculatePreview()}>{loadingPreview ? t.previewing : t.previewButton}</button>
       {error && <p role="alert" className="error">{error}</p>}
 

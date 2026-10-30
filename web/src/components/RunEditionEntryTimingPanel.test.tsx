@@ -519,6 +519,26 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
   })
 
+  it('freezes timing and audit inputs until a delayed explicit GET finishes', async () => {
+    let finish!: (data: typeof missing) => void
+    api.getRunEditionEntryTiming.mockResolvedValueOnce(missing)
+      .mockImplementationOnce(() => new Promise(resolve => {finish = resolve}))
+    mount(); await fill()
+    const input = screen.getByLabelText('Otevření Main – týden')
+    expect(input).toHaveValue(13)
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst ze serveru'}))
+    await waitFor(() => expect(input).toBeDisabled())
+    expect(screen.getByLabelText('Důvod potvrzení (audit)')).toBeDisabled()
+    fireEvent.change(input,{target:{value:'20'}})
+    expect(input).toHaveValue(13)
+    await act(async () => finish(missing))
+    await waitFor(() => expect(input).toBeEnabled())
+    expect(input).toHaveValue(null)
+    expect(screen.getByLabelText('Důvod potvrzení (audit)')).toHaveValue('Reviewed')
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+  })
+
   it('disables explicit re-read while retaining uncertain Confirm exact retry', async () => {
     api.confirmRunEditionEntryTiming.mockRejectedValueOnce(new TypeError('network lost'))
     mount(); await fill(); await requestPreview()

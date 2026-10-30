@@ -174,7 +174,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
 
   const update = (patch: Partial<Inputs>, changesTiming = true) => {
     // An uncertain confirm must preserve both its original ID and immutable payload.
-    if (busy.current || loadingPreview || loadingConfirm || receipt || retryPayload ||
+    if (busy.current || query.isFetching || loadingPreview || loadingConfirm || receipt || retryPayload ||
       saving || saveOutcomeUncertain || savedRevision) return
     setForm(old => ({ ...old, ...patch }))
     if (changesTiming) setPreview(null)
@@ -202,7 +202,8 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     form.reason.trim().length > 0 && form.reason.length <= 1000 &&
     !loadingConfirm && !loadingPreview && !busy.current
   const editingBlocked = !enabled || Boolean(receipt) || Boolean(retryPayload) ||
-    Boolean(savedRevision) || saveOutcomeUncertain || saving || loadingConfirm || loadingPreview || busy.current
+    Boolean(savedRevision) || saveOutcomeUncertain || saving || loadingConfirm ||
+    loadingPreview || query.isFetching || busy.current
   const durationValid = (raw: string) => /^[1-9]\d*$/.test(raw) && Number.isSafeInteger(Number(raw))
   // Matches the established Run calendar projection, not a universal YYYY/YY label.
   const seasonLabelFor = (index: number) => {

@@ -106,3 +106,7 @@ A user-triggered successful inspection GET now replaces the local timing form wi
 ## Avoid stale preflight interpretation while locally editing
 
 If timing inputs differ from the last inspected plan and there is no matching server Preview, prior GET blockers remain visible for provenance but are explicitly labelled as referring to the **previous** plan; the existing can-confirm status is suppressed until a fresh server Preview is accepted. This prevents stale readiness from being misread as permission for the locally edited timing. CS/EN mocked regression checks initial edits, preview restoration and subsequent invalidation.
+
+## Pending GET read fence
+
+While a manual or automatically triggered inspection GET is in flight, the Entry timing and audit form stays disabled, and updates are rejected at their event handler too. This prevents a delayed server GET from overwriting edits made after refresh started. On success the form uses the freshly inspected timing; on failure the existing fail-closed read path applies. A deferred-GET mocked regression covers disabled controls, attempted edits, empty server response and retained audit. No write is initiated.

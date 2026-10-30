@@ -138,3 +138,7 @@ The read-only review now displays the backend's `current_window` directly, with 
 ## Fail closed on foreign Run clock and stale readiness panels
 
 An otherwise internally valid, in-scope server inspection that embeds a different Run calendar from the verified parent must not populate an editable Entry form. The component now rejects it, shows a dedicated bilingual mismatch warning, and disables Preview/Confirm. It still permits explicit re-read for recovery. When the operator changes any timing field without a fresh matching Preview, it also suppresses the previous plan's before/after windows, ready-to-bind message and Working Draft readiness claims, retaining only accurately labelled previous-plan blockers. Mocked React regressions cover a genuinely different W52/W80 clock and the stale-ready display after a local edit. This changes no backend contract or sporting computation.
+
+## Monotonic read-epoch proof for server Preview
+
+React Query's `dataUpdatedAt` is a millisecond timestamp, not a unique read revision. Two very fast inspections can resolve in the same millisecond and mistakenly leave an old Preview eligible for a new Confirm. The form now increments an explicit local GET epoch at the start of each authoritative inspection request; a Preview is accepted and usable only against that exact epoch. A mocked React regression freezes `Date.now()` across multiple real query refetch calls and proves an older Preview cannot regain confirm authority. The immutable original Confirm retry remains independent of new GET epochs.

@@ -214,6 +214,24 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
   })
 
+  it('invalidates a reviewed Preview even when two server reads have identical millisecond timestamps', async () => {
+    vi.spyOn(Date,'now').mockReturnValue(1_700_000_000_000)
+    render(<Frame>
+      <RunEditionEntryTimingPanel runId="run" branchId="branch"
+        packageId="calendar-package" eventId="edition" calendar={calendar} enabled />
+      <BackgroundEntryRefresh />
+    </Frame>)
+    await fill(); await requestPreview()
+    expect(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'})).toBeEnabled()
+    await userEvent.click(screen.getByRole('button',{name:'Background Entry refresh'}))
+    await waitFor(() => expect(api.getRunEditionEntryTiming).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.queryByRole('button',{
+      name:'Výslovně potvrdit do Working Draftu'
+    })).not.toBeInTheDocument())
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+    expect(api.previewRunEditionEntryTiming).toHaveBeenCalledTimes(1)
+  })
+
   it('invalidates existing preview after a fresh background inspection without reusing its fingerprint', async () => {
     api.getRunEditionEntryTiming.mockResolvedValueOnce(missing)
       .mockResolvedValueOnce({...preview, timing})

@@ -1,0 +1,445 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
+
+import { confirmRunEditionEntryTiming, getRunEditionEntryTiming, previewRunEditionEntryTiming } from '../api/client'
+import type { RunCalendarMetadata } from '../api/runCalendarCreation'
+import {
+  entryTimingScope, isHash, weekInClock,
+  type EditionEntryTiming, type EntryTimingConfirmPayload,
+  type EntryTimingInspection, type EntryTimingPreview, type EntryTimingReceipt, type EntryWeek
+} from '../api/runEditionEntryTiming'
+import { useLanguage } from '../i18n/LanguageContext'
+import { formatApiError } from '../utils/apiErrors'
+import { SectionCard } from './RunScopedUi'
+
+type WeekFields = { season: string; week: string }
+type Inputs = {
+  main: WeekFields
+  mainDuration: string
+  qualificationDuration: string
+  commitmentEnabled: boolean
+  commitment: WeekFields
+  overrideEnabled: boolean
+  override: WeekFields
+  operator: string
+  reason: string
+}
+const emptyWeek = (): WeekFields => ({ season: '', week: '' })
+const emptyInputs = (): Inputs => ({
+  main: emptyWeek(), mainDuration: '2', qualificationDuration: '1',
+  commitmentEnabled: false, commitment: emptyWeek(),
+  overrideEnabled: false, override: emptyWeek(), operator: '', reason: ''
+})
+const T = {
+  cs: {
+    heading: 'Časování přihlášek Edition (Working Draft)',
+    intro: 'Pouze příprava časových oken této Edition. Náhled nic nemění, potvrzení připraví změnu ve Working Draftu a uložení Saved Revision je samostatné.',
+    noScope: 'Pro úpravu je nutný ověřený aktivní Run, Branch, správný Run-owned Calendar a aktuální Working Draft.',
+    loading: 'Načítám Entry časování…', failed: 'Čtení časování selhalo', retryRead: 'Znovu načíst ze serveru',
+    noPlan: 'Pro tuto Edition zatím není uložený plán. Začátek Main zvol ručně; nelze jej odhadnout z týdne turnaje.',
+    existing: 'Existující časování této Edition', newPlan: 'Nový plán časování',
+    clock: 'Kalendář Runu', indexNote: 'Index sezony začíná nulou; týden je 1 až W podle skutečného Run kalendáře.',
+    mainSeason: 'Otevření Main – sezona', mainWeek: 'Otevření Main – týden',
+    mainDuration: 'Délka Main (týdny)', qualificationDuration: 'Délka kvalifikace Q (týdny)',
+    commitmentSwitch: 'Zadat vlastní Final Commitment', commitmentSeason: 'Final Commitment – sezona',
+    commitmentWeek: 'Final Commitment – týden', overrideSwitch: 'Použít explicitní publikaci Official Ranking',
+    overrideSeason: 'Publikace rankingu – sezona', overrideWeek: 'Publikace rankingu – týden',
+    defaultRanking: 'Bez override server použije přesnou publikaci pro Main Closing; nevybírá poslední dostupný žebříček.',
+    operator: 'Operátor potvrzení', reason: 'Důvod potvrzení (audit)',
+    required: 'Vyplň platnou sezonu a týden skutečného Run kalendáře.',
+    durationError: 'Délka musí být kladné celé číslo.',
+    operatorError: 'Jméno operátora je povinné (max. 160 znaků).',
+    reasonError: 'Důvod je povinný (max. 1000 znaků).',
+    previewButton: 'Spočítat serverový náhled', previewing: 'Počítám náhled…',
+    previewError: 'Náhled selhal', review: 'Serverový náhled – bez zápisu',
+    before: 'Původní plán', after: 'Navrhovaný plán', absent: 'není',
+    mainWindow: 'Main okno', qualificationWindow: 'Q okno',
+    commitment: 'Final Commitment', dataWeek: 'Ranking – data po dokončeném týdnu',
+    publishedWeek: 'Ranking – označení publikace', rankingSource: 'Zdroj rankingu',
+    sourceDefault: 'Serverový Main Closing − 1 → publikace Main Closing',
+    sourceOverride: 'Explicitně vybraná publikace', rankingFingerprint: 'Otisk přesného Official Ranking',
+    rankingBinding: 'Navázání rankingu', rankingWillBind: 'Při potvrzení se naváže tento ověřený snapshot.',
+    noRanking: 'Přesná publikace není k dispozici. Budoucí plán lze potvrdit pouze pokud server povolí konfiguraci; ranking se nenahradí.',
+    status: 'Preflight', configState: 'Stav konfigurace', currentWeek: 'Aktuální týden Runu',
+    eligibility: 'Automatická validace způsobilosti hráčů není implementována. Připravené časování a ranking NEZNAMENAJÍ schválené přihlášky.',
+    missing_prerequisite: 'Chybí předpoklady pro navázání rankingu',
+    ready_for_explicit_confirmation: 'Připraveno k výslovnému navázání rankingu',
+    bound: 'Ranking Snapshot je již navázaný',
+    working_draft: 'Working Draft (zatím není Saved)',
+    ready: 'Připraveno', missing_content: 'Chybějící podklad', blocked: 'Blokováno',
+    unsupported_execution: 'Sportovní provedení zde není podporováno',
+    blockers: 'Serverové překážky a jejich dopady', noBlockers: 'Server nevrátil překážky.',
+    confirmButton: 'Výslovně potvrdit do Working Draftu', confirming: 'Potvrzuji…',
+    retryConfirm: 'Zopakovat přesně stejný příkaz', confirmError: 'Odpověď na potvrzení je nejistá nebo chybová.',
+    retryHint: 'Pro bezpečný exact retry zůstává zachováno stejné command ID i celý payload. Nový příkaz se nevytváří.',
+    confirmed: 'Potvrzeno pouze do Working Draftu. Saved Revision ještě nebyla vytvořena.',
+    savedLink: 'Přejít k samostatnému Working Draft Save v Adminu Runu',
+    refreshing: 'Obnovuji serverový stav…', retryCommandId: 'ID příkazu',
+    nonWritable: 'Tento kontext není zapisovatelný; nejprve obnov příslušný aktivní Run/Branch a ověř Working Draft.',
+    stalePreview: 'Po úpravě je nutný nový náhled. Starý otisk nesmí být znovu použit.',
+    blockedConfirm: 'Server nyní zakazuje potvrzení konfigurace.',
+    statusMissing: 'Chybějící plán není potvrzený ani uložený.',
+    timingReady: 'Časování a ranking jsou připravené pouze v aktuálním Working Draftu; nejde o Saved ani Entry validaci.'
+  },
+  en: {
+    heading: 'Edition Entry timing (Working Draft)',
+    intro: 'Edition timing preparation only. Preview makes no changes; confirm stages the Working Draft. Saving a Saved Revision is a separate action.',
+    noScope: 'A verified active Run, Branch, correct Run-owned Calendar and current Working Draft are required.',
+    loading: 'Loading Entry timing…', failed: 'Failed to read Entry timing', retryRead: 'Retry server read',
+    noPlan: 'This Edition has no configured Entry plan. Choose Main opening explicitly; the play week is not a default.',
+    existing: 'Existing Edition timing', newPlan: 'New timing plan',
+    clock: 'Run calendar', indexNote: 'Season indices are zero-based; weeks run from 1 to W on this Run calendar.',
+    mainSeason: 'Main opening – season', mainWeek: 'Main opening – week',
+    mainDuration: 'Main duration (weeks)', qualificationDuration: 'Qualification Q duration (weeks)',
+    commitmentSwitch: 'Set explicit Final Commitment', commitmentSeason: 'Final Commitment – season',
+    commitmentWeek: 'Final Commitment – week', overrideSwitch: 'Override with explicit Official Ranking publication',
+    overrideSeason: 'Ranking publication – season', overrideWeek: 'Ranking publication – week',
+    defaultRanking: 'Without an override, the server uses the exact Main Closing publication, never the latest available ranking.',
+    operator: 'Confirmation operator', reason: 'Confirmation reason (audit)',
+    required: 'Enter a valid season and week on this Run calendar.',
+    durationError: 'Duration must be a positive integer.',
+    operatorError: 'Operator label is required (max 160 characters).',
+    reasonError: 'Audit reason is required (max 1000 characters).',
+    previewButton: 'Calculate server preview', previewing: 'Calculating preview…',
+    previewError: 'Preview failed', review: 'Server preview – no write',
+    before: 'Previous plan', after: 'Proposed plan', absent: 'none',
+    mainWindow: 'Main window', qualificationWindow: 'Q window',
+    commitment: 'Final Commitment', dataWeek: 'Ranking – completed-data week',
+    publishedWeek: 'Ranking – publication label', rankingSource: 'Ranking source',
+    sourceDefault: 'Server Main Closing − 1 → Main Closing publication',
+    sourceOverride: 'Explicit publication override', rankingFingerprint: 'Exact Official Ranking fingerprint',
+    rankingBinding: 'Ranking binding', rankingWillBind: 'This verified snapshot will be bound at confirmation.',
+    noRanking: 'The exact publication is absent. Only a server-permitted future configuration can be confirmed; no substitute ranking is selected.',
+    status: 'Preflight', configState: 'Configuration state', currentWeek: 'Current Run week',
+    eligibility: 'Automatic player eligibility validation is NOT implemented. Prepared timing and ranking do NOT mean approved applications.',
+    missing_prerequisite: 'Ranking binding prerequisites are missing',
+    ready_for_explicit_confirmation: 'Ranking binding requires explicit confirmation',
+    bound: 'Ranking Snapshot already bound',
+    working_draft: 'Working Draft (not Saved)',
+    ready: 'Ready', missing_content: 'Missing content', blocked: 'Blocked',
+    unsupported_execution: 'Sporting execution unsupported in this context',
+    blockers: 'Server blockers and impact', noBlockers: 'No blockers returned.',
+    confirmButton: 'Explicitly confirm into Working Draft', confirming: 'Confirming…',
+    retryConfirm: 'Retry the exact same command', confirmError: 'Confirmation response failed or is uncertain.',
+    retryHint: 'For safe exact retry, the original command ID and complete payload are retained. No new command is generated.',
+    confirmed: 'Confirmed in Working Draft only. No Saved Revision has been created.',
+    savedLink: 'Open the separate Working Draft Save in Run Admin',
+    refreshing: 'Refreshing server state…', retryCommandId: 'Command ID',
+    nonWritable: 'This context is not writable; return to the correct active Run/Branch and verify its Working Draft.',
+    stalePreview: 'After edits a new preview is required. The previous fingerprint must not be reused.',
+    blockedConfirm: 'The server currently prohibits configuration confirmation.',
+    statusMissing: 'Missing plan is neither confirmed nor saved.',
+    timingReady: 'Timing and ranking are ready only in the current Working Draft, not Saved or player Entry validation.'
+  }
+} as const
+
+const blockerText: Record<string, {cs: string; en: string}> = {
+  entry_timing_missing: {cs: 'Chybí explicitní otevření Main; ze začátku turnaje nelze čas odvodit.', en: 'An explicit Main opening is missing; play week cannot supply a default.'},
+  scope_not_writable: {cs: 'Run/Branch nebo uložená autorita nejsou zapisovatelné. Potvrzení je blokováno.', en: 'Run/Branch or saved authority is not writable; confirmation blocked.'},
+  unsupported_execution: {cs: 'Kalendář lze plánovat, ale tento Run nemá povolené legacy ranking/sportovní provedení.', en: 'Planning is possible, but legacy ranking/sporting execution is unsupported for this Run.'},
+  entry_timing_locked: {cs: 'Entry už bylo otevřeno; časování nelze změnit tímto příkazem.', en: 'Entry has opened; retiming is prohibited by this command.'},
+  pre_start_ranking_required: {cs: 'Před Main Closing neexistuje předchozí Run týden. Vyber existující publikaci explicitně.', en: 'No prior Run week exists before Main Closing; choose an existing publication explicitly.'},
+  ranking_publication_missing: {cs: 'Přesná povinná publikace neexistuje. Server nepoužije poslední dostupnou.', en: 'The exact required publication is missing; no latest-ranking fallback.'},
+  ranking_binding_conflict: {cs: 'Edition už má jiný neměnný ranking. Konfiguraci nelze potvrdit.', en: 'A different immutable ranking is already bound. Configuration blocked.'},
+  ranking_not_yet_current: {cs: 'Publikace je až za aktuálním týdnem Runu; ranking zatím nelze navázat.', en: 'Publication is after the current Run week, so ranking cannot yet be bound.'}
+}
+
+function fieldsFromWeek(value: EntryWeek | null): WeekFields {
+  return value ? { season: String(value.season_index), week: String(value.week) } : emptyWeek()
+}
+function inputsFromTiming(value: EditionEntryTiming): Inputs {
+  return {
+    ...emptyInputs(), main: fieldsFromWeek(value.main_open),
+    mainDuration: String(value.main_duration_weeks),
+    qualificationDuration: String(value.qualification_duration_weeks),
+    commitmentEnabled: value.final_commitment !== null,
+    commitment: fieldsFromWeek(value.final_commitment),
+    overrideEnabled: value.ranking_publication_override !== null,
+    override: fieldsFromWeek(value.ranking_publication_override)
+  }
+}
+function makeTiming(form: Inputs, calendar: RunCalendarMetadata): EditionEntryTiming | null {
+  const week = (value: WeekFields): EntryWeek | null => {
+    if (!/^\d+$/.test(value.season) || !/^\d+$/.test(value.week)) return null
+    const candidate: EntryWeek = { calendar, season_index: Number(value.season), week: Number(value.week) }
+    return weekInClock(candidate, calendar) ? candidate : null
+  }
+  const main = week(form.main)
+  const commitment = form.commitmentEnabled ? week(form.commitment) : null
+  const publication = form.overrideEnabled ? week(form.override) : null
+  const mainDuration = Number(form.mainDuration)
+  const qualificationDuration = Number(form.qualificationDuration)
+  if (!main || (form.commitmentEnabled && !commitment) || (form.overrideEnabled && !publication) ||
+    !/^[1-9]\d*$/.test(form.mainDuration) || !/^[1-9]\d*$/.test(form.qualificationDuration) ||
+    !Number.isSafeInteger(mainDuration) || !Number.isSafeInteger(qualificationDuration)) return null
+  return {
+    schema_version: 'edition_entry_timing.v1',
+    main_open: main, main_duration_weeks: mainDuration,
+    qualification_duration_weeks: qualificationDuration,
+    final_commitment: commitment, ranking_publication_override: publication
+  }
+}
+
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
+const nonce = () => 'admin-entry-timing-' +
+  (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID() : String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000000)))
+
+export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId, calendar, enabled }: {
+  runId: string; branchId: string; packageId: string; eventId: string
+  calendar: RunCalendarMetadata; enabled: boolean
+}): JSX.Element {
+  const { language } = useLanguage()
+  const t = T[language]
+  const queryClient = useQueryClient()
+  const scope = JSON.stringify([runId, branchId, packageId, eventId])
+  const currentScope = useRef(scope)
+  currentScope.current = scope
+  const busy = useRef(false)
+  const initialised = useRef('')
+  const [form, setForm] = useState<Inputs>(emptyInputs)
+  const [preview, setPreview] = useState<EntryTimingPreview | null>(null)
+  const [retryPayload, setRetryPayload] = useState<EntryTimingConfirmPayload | null>(null)
+  const [receipt, setReceipt] = useState<EntryTimingReceipt | null>(null)
+  const [error, setError] = useState('')
+  const [loadingPreview, setLoadingPreview] = useState(false)
+  const [loadingConfirm, setLoadingConfirm] = useState(false)
+  const [refreshed, setRefreshed] = useState<EntryTimingInspection | null>(null)
+  const readable = Boolean(runId && branchId && packageId && eventId && calendar)
+  const query = useQuery({
+    queryKey: ['edition-entry-timing', runId, branchId, packageId, eventId],
+    queryFn: () => getRunEditionEntryTiming(runId, branchId, packageId, eventId),
+    enabled: readable, retry: false
+  })
+  const inspection = refreshed && entryTimingScope(refreshed, runId, branchId, packageId, eventId)
+    ? refreshed : query.data && entryTimingScope(query.data, runId, branchId, packageId, eventId)
+      ? query.data : null
+
+  useEffect(() => {
+    initialised.current = ''
+    setForm(emptyInputs())
+    setPreview(null)
+    setRetryPayload(null)
+    setReceipt(null)
+    setRefreshed(null)
+    setError('')
+    busy.current = false
+  }, [scope])
+  useEffect(() => {
+    if (inspection && initialised.current !== scope) {
+      initialised.current = scope
+      if (inspection.timing) setForm(old => ({ ...inputsFromTiming(inspection.timing!), operator: old.operator, reason: old.reason }))
+    }
+  }, [inspection, scope])
+
+  const update = (patch: Partial<Inputs>) => {
+    if (busy.current || loadingPreview || loadingConfirm) return
+    setForm(old => ({ ...old, ...patch }))
+    setPreview(null)
+    setRetryPayload(null)
+    setReceipt(null)
+    setError('')
+  }
+  const timing = makeTiming(form, calendar)
+  const previewCurrent = Boolean(preview && timing && enabled &&
+    entryTimingScope(preview, runId, branchId, packageId, eventId) &&
+    same(preview.timing, timing) && isHash(preview.preview_fingerprint))
+  const canConfirm = previewCurrent && preview?.can_confirm_configuration === true &&
+    form.operator.trim().length > 0 && form.operator.length <= 160 &&
+    form.reason.trim().length > 0 && form.reason.length <= 1000 &&
+    !loadingConfirm && !loadingPreview && !busy.current
+  const editingBlocked = !enabled || loadingConfirm || loadingPreview || busy.current
+
+  async function calculatePreview(): Promise<void> {
+    if (!enabled || !timing || busy.current) return
+    busy.current = true
+    setLoadingPreview(true)
+    setError('')
+    setPreview(null)
+    setRetryPayload(null)
+    const origin = scope
+    try {
+      const result = await previewRunEditionEntryTiming(runId, branchId, packageId, eventId, timing)
+      if (currentScope.current !== origin) return
+      if (!weekInClock(result.timing.main_open, calendar) || !same(result.timing, timing))
+        throw new Error('Preview calendar or exact configuration did not match.')
+      setPreview(result)
+    } catch (cause) {
+      if (currentScope.current === origin) setError(t.previewError + ': ' + formatApiError(cause))
+    } finally {
+      if (currentScope.current === origin) { busy.current = false; setLoadingPreview(false) }
+    }
+  }
+
+  async function submitConfirm(): Promise<void> {
+    if (!canConfirm && !retryPayload) return
+    if (busy.current || !previewCurrent || !timing || !enabled) return
+    const payload: EntryTimingConfirmPayload = retryPayload ?? {
+      timing, command_id: nonce(),
+      expected_preview_fingerprint: preview!.preview_fingerprint,
+      operator_label: form.operator.trim(), audit_reason: form.reason.trim()
+    }
+    if (!same(payload.timing, timing) || payload.expected_preview_fingerprint !== preview!.preview_fingerprint ||
+      payload.operator_label !== form.operator.trim() || payload.audit_reason !== form.reason.trim()) return
+    setRetryPayload(payload) // Hold the EXACT request even if the response is lost.
+    busy.current = true
+    setLoadingConfirm(true)
+    setError('')
+    const origin = scope
+    try {
+      const result = await confirmRunEditionEntryTiming(runId, branchId, packageId, eventId, payload)
+      if (currentScope.current !== origin) return
+      setReceipt(result)
+      setRetryPayload(null)
+      setPreview(null)
+      setRefreshed(null)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['edition-entry-timing', runId, branchId, packageId, eventId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-package-state', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['package-working-draft', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-calendar', runId, branchId, packageId] })
+      ])
+      if (currentScope.current !== origin) return
+      const latest = await getRunEditionEntryTiming(runId, branchId, packageId, eventId)
+      if (currentScope.current === origin) setRefreshed(latest)
+    } catch (cause) {
+      if (currentScope.current === origin) setError(t.confirmError + ' ' + formatApiError(cause))
+    } finally {
+      if (currentScope.current === origin) { busy.current = false; setLoadingConfirm(false) }
+    }
+  }
+
+  const position = (p: EntryWeek | null) =>
+    p ? (String(p.calendar.start_year + p.season_index) + ' / S' + p.season_index +
+      ' W' + p.week) : '—'
+  const formatTiming = (value: EditionEntryTiming | null) =>
+    value ? position(value.main_open) + ' · Main ' + value.main_duration_weeks +
+      'w · Q ' + value.qualification_duration_weeks + 'w · Final ' +
+      position(value.final_commitment) + ' · Ranking override ' +
+      position(value.ranking_publication_override) : t.absent
+  const previewStatus = previewCurrent ? preview : null
+  const effectiveStatus = previewStatus ?? (inspection?.timing ? inspection : null)
+  const blockers = previewStatus?.blockers ?? inspection?.blockers ?? []
+  const inputId = (field: string) => 'entry-timing-' + field
+  const weekFields = (value: WeekFields, name: 'main' | 'commitment' | 'override', seasonLabel: string, weekLabel: string) => (
+    <div className="grid" key={name}>
+      <label htmlFor={inputId(name + '-season')}>{seasonLabel}
+        <select id={inputId(name + '-season')} value={value.season} disabled={editingBlocked}
+          onChange={event => update({ [name]: { ...value, season: event.target.value } })}>
+          <option value="">—</option>
+          {Array.from({ length: calendar.season_count }, (_, index) => (
+            <option key={index} value={index}>{calendar.start_year + index} (S{index})</option>
+          ))}
+        </select>
+      </label>
+      <label htmlFor={inputId(name + '-week')}>{weekLabel}
+        <input id={inputId(name + '-week')} type="number" min={1} max={calendar.weeks_per_year}
+          step={1} value={value.week} disabled={editingBlocked} aria-invalid={value.week !== '' &&
+            (!/^\d+$/.test(value.week) || Number(value.week) < 1 ||
+              Number(value.week) > calendar.weeks_per_year)}
+          onChange={event => update({ [name]: { ...value, week: event.target.value } })} />
+      </label>
+    </div>
+  )
+
+  return <SectionCard title={t.heading}>
+    <div id="run-edition-entry-timing" className="grid" aria-label={t.heading}>
+      <p className="status">{t.intro}</p>
+      <p>{t.clock}: {calendar.weeks_per_year} W · {calendar.start_year} · {calendar.season_count} seasons · offset {calendar.season_start_year_week}</p>
+      <p className="status">{t.indexNote}</p>
+      {query.isLoading && !inspection && <p role="status">{t.loading}</p>}
+      {query.error && !inspection && <p role="alert" className="error">{t.failed}: {formatApiError(query.error)}</p>}
+      <button type="button" disabled={query.isFetching || busy.current}
+        onClick={() => { setRefreshed(null); void query.refetch() }}>{t.retryRead}</button>
+      {!inspection && !query.isLoading && !query.error && <p role="status">{t.loading}</p>}
+      {inspection && <p role="status">{inspection.timing ? t.existing : t.noPlan}</p>}
+      {!enabled && <p role="alert" className="error">{t.nonWritable}</p>}
+
+      <fieldset disabled={editingBlocked || !inspection}>
+        <legend>{inspection?.timing ? t.existing : t.newPlan}</legend>
+        {weekFields(form.main, 'main', t.mainSeason, t.mainWeek)}
+        <div className="grid">
+          <label htmlFor={inputId('main-duration')}>{t.mainDuration}
+            <input id={inputId('main-duration')} type="number" min={1} step={1} value={form.mainDuration}
+              onChange={event => update({ mainDuration: event.target.value })} />
+          </label>
+          <label htmlFor={inputId('q-duration')}>{t.qualificationDuration}
+            <input id={inputId('q-duration')} type="number" min={1} step={1} value={form.qualificationDuration}
+              onChange={event => update({ qualificationDuration: event.target.value })} />
+          </label>
+        </div>
+        <label><input type="checkbox" checked={form.commitmentEnabled}
+          onChange={event => update({ commitmentEnabled: event.target.checked })} /> {t.commitmentSwitch}</label>
+        {form.commitmentEnabled && weekFields(form.commitment, 'commitment', t.commitmentSeason, t.commitmentWeek)}
+        <label><input type="checkbox" checked={form.overrideEnabled}
+          onChange={event => update({ overrideEnabled: event.target.checked })} /> {t.overrideSwitch}</label>
+        {form.overrideEnabled
+          ? weekFields(form.override, 'override', t.overrideSeason, t.overrideWeek)
+          : <p className="status">{t.defaultRanking}</p>}
+        <label htmlFor={inputId('operator')}>{t.operator}
+          <input id={inputId('operator')} maxLength={160} value={form.operator} autoComplete="off"
+            onChange={event => update({ operator: event.target.value })} />
+        </label>
+        <label htmlFor={inputId('reason')}>{t.reason}
+          <textarea id={inputId('reason')} maxLength={1000} value={form.reason}
+            onChange={event => update({ reason: event.target.value })} />
+        </label>
+      </fieldset>
+      {inspection && !timing && <p role="alert" className="error">{t.required} {t.durationError}</p>}
+      {form.operator.length > 160 && <p role="alert" className="error">{t.operatorError}</p>}
+      {form.reason.length > 1000 && <p role="alert" className="error">{t.reasonError}</p>}
+      <button type="button" disabled={!enabled || !inspection || !timing || loadingPreview || loadingConfirm || busy.current}
+        onClick={() => void calculatePreview()}>{loadingPreview ? t.previewing : t.previewButton}</button>
+      {error && <p role="alert" className="error">{error}</p>}
+
+      {effectiveStatus && <div className="grid" aria-live="polite">
+        <h4>{previewStatus ? t.review : t.existing}</h4>
+        <dl className="kv-grid">
+          <dt>{t.before}</dt><dd>{formatTiming(effectiveStatus.before)}</dd>
+          <dt>{t.after}</dt><dd>{formatTiming(effectiveStatus.timing)}</dd>
+          <dt>{t.mainWindow}</dt><dd>{position(effectiveStatus.resolved.main_open)} – {position(effectiveStatus.resolved.main_close)}</dd>
+          <dt>{t.qualificationWindow}</dt><dd>{position(effectiveStatus.resolved.qualification_open)} – {position(effectiveStatus.resolved.qualification_close)}</dd>
+          <dt>{t.commitment}</dt><dd>{position(effectiveStatus.resolved.final_commitment)}</dd>
+          <dt>{t.dataWeek}</dt><dd>{position(effectiveStatus.resolved.default_ranking_completed_week)}</dd>
+          <dt>{t.publishedWeek}</dt><dd>{position(effectiveStatus.resolved.ranking_publication_week)}</dd>
+          <dt>{t.rankingSource}</dt><dd>{effectiveStatus.resolved.ranking_source === 'explicit_publication_override' ? t.sourceOverride : t.sourceDefault}</dd>
+          <dt>{t.rankingFingerprint}</dt><dd>{effectiveStatus.ranking_snapshot_fingerprint ?? t.absent}</dd>
+          <dt>{t.rankingBinding}</dt><dd>{t[effectiveStatus.ranking_binding_status]}</dd>
+          <dt>{t.status}</dt><dd>{t[effectiveStatus.preflight_status]}</dd>
+          <dt>{t.configState}</dt><dd>{t.working_draft}</dd>
+          <dt>{t.currentWeek}</dt><dd>{position(effectiveStatus.current_week)}</dd>
+        </dl>
+        {effectiveStatus.ranking_will_be_bound && <p role="status">{t.rankingWillBind}</p>}
+        {effectiveStatus.ranking_snapshot_fingerprint === null && <p role="status">{t.noRanking}</p>}
+        {effectiveStatus.timing_and_ranking_ready && <p role="status">{t.timingReady}</p>}
+      </div>}
+      <p role="status" className="status">{t.eligibility}</p>
+      {inspection && <div aria-live="polite">
+        <h4>{t.blockers}</h4>
+        {blockers.length ? <ul>{blockers.map((blocker, index) =>
+          <li key={blocker.code + '-' + index}><strong>{blocker.code}</strong>: {
+            blockerText[blocker.code]?.[language] ?? blocker.detail
+          }</li>)}</ul> : <p>{t.noBlockers}</p>}
+      </div>}
+
+      {previewStatus && <div className="grid">
+        {!previewStatus.can_confirm_configuration && <p role="alert">{t.blockedConfirm}</p>}
+        {retryPayload && <p role="alert">{t.retryHint} {t.retryCommandId}: {retryPayload.command_id}</p>}
+        {!form.operator.trim() && <p role="status">{t.operatorError}</p>}
+        {!form.reason.trim() && <p role="status">{t.reasonError}</p>}
+        <button type="button" disabled={!canConfirm}
+          onClick={() => void submitConfirm()}>
+          {loadingConfirm ? t.confirming : retryPayload ? t.retryConfirm : t.confirmButton}
+        </button>
+      </div>}
+      {receipt && <div aria-live="polite">
+        <p role="status">{t.confirmed} {t.retryCommandId}: {receipt.command_id}</p>
+        <p>{t.working_draft} (v{receipt.draft_version})</p>
+        <Link to={'/admin/runs/' + encodeURIComponent(runId) + '/manage?branch=' + encodeURIComponent(branchId)}>
+          {t.savedLink}
+        </Link>
+      </div>}
+    </div>
+  </SectionCard>
+}

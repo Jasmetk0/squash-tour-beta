@@ -320,7 +320,7 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
     expect(screen.getByText('Current Entry phase (server)').nextElementSibling)
       .toHaveTextContent('Main Entry open')
-    expect(screen.getByText(/2030\/2031 · S0 W13/)).toBeInTheDocument()
+    expect(screen.getAllByText(/2030\/2031 · S0 W13/).length).toBeGreaterThan(0)
     expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
   })
 

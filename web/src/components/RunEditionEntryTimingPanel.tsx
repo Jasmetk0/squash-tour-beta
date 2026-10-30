@@ -331,7 +331,14 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       {query.isLoading && !inspection && <p role="status">{t.loading}</p>}
       {query.error && <p role="alert" className="error">{t.failed}: {formatApiError(query.error)}</p>}
       <button type="button" disabled={query.isFetching || busy.current}
-        onClick={() => { setRefreshed(null); void query.refetch() }}>{t.retryRead}</button>
+        onClick={() => {
+          setRefreshed(null)
+          // A fresh inspection invalidates an ordinary review. Retain only an
+          // uncertain exact-command retry so the operator cannot lose its ID.
+          if (!retryPayload) setPreview(null)
+          setError('')
+          void query.refetch()
+        }}>{t.retryRead}</button>
       {!inspection && !query.isLoading && !query.error && <p role="status">{t.loading}</p>}
       {inspection && <p role="status">{inspection.timing ? t.existing : t.noPlan}</p>}
       {!enabled && <p role="alert" className="error">{t.nonWritable}</p>}

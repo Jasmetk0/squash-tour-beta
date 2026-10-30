@@ -11,12 +11,17 @@ import json
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
+from sqlalchemy import select
 
 from beta_engine.application.calendar_package_run_adapter import (
     CalendarPackageRunAdapter,
 )
 from beta_engine.infrastructure.db.initial_world_state import get_initial_world
-from beta_engine.infrastructure.db.models import RunBranchModel, RunContainerModel
+from beta_engine.infrastructure.db.models import (
+    BranchWorkingDraftModel,
+    RunBranchModel,
+    RunContainerModel,
+)
 from beta_engine.infrastructure.db.run_package_state import get_run_package_state
 
 FAX_ACCEPTANCE_START_SEASON = 2000
@@ -107,6 +112,25 @@ class PreAlphaFaxAcceptanceProfileService:
                 raise KeyError(
                     f"Branch {branch_id!r} was not found in Run {run_id!r}"
                 )
+
+            if branch.read_only:
+                issues.append(PreAlphaFaxAcceptanceIssue(
+                    severity="error", code="FAX_ACCEPTANCE_BRANCH_READ_ONLY",
+                    message="The release-test Branch must be writable.",
+                ))
+            draft = session.scalar(select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == branch_id,
+            ))
+            if (
+                not branch.saved_head_revision_id or draft is None
+                or draft.run_id != run_id or draft.status != "clean"
+                or draft.change_count != 0
+                or draft.base_revision_id != branch.saved_head_revision_id
+            ):
+                issues.append(PreAlphaFaxAcceptanceIssue(
+                    severity="error", code="FAX_ACCEPTANCE_SAVED_DRAFT_REQUIRED",
+                    message="Save a clean Working Draft based on this Branch's Saved HEAD before acceptance.",
+                ))
 
             editable_run = not bool(run.read_only)
             active_branch = branch.status == "active"

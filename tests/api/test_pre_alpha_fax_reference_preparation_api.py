@@ -101,6 +101,39 @@ def test_real_fax_reference_prepares_entry_and_reopens_at_unresolved_policy(tmp_
         assert _request("PUT", points_url + "/PLATINUM", {"ranking_points_table": {"champion": 99999}})[0] == 200
         assert _request("GET", pre_alpha + "/fax-acceptance-profile") == (200, profile)
 
+        # Deliberately damaged disposable contexts must never be advertised ready.
+        from sqlalchemy import select
+
+        from beta_engine.infrastructure.db.models import (
+            BranchWorkingDraftModel,
+            RunBranchModel,
+        )
+        from tests.api.test_player_generation_calendar_gate import _dump
+        for damage in ("read_only", "dirty", "stale"):
+            with repo._session_factory.begin() as session:
+                branch = session.get(RunBranchModel, branch_id)
+                draft = session.scalar(select(BranchWorkingDraftModel).where(BranchWorkingDraftModel.branch_id == branch_id))
+                if damage == "read_only": branch.read_only = True
+                elif damage == "dirty": draft.status = "dirty"
+                else: draft.base_revision_id = "stale-reference"
+            before = _dump(tmp_path / "fax-reference.db")
+            code, blocked = _request("GET", pre_alpha + "/fax-acceptance-profile")
+            assert code == 200 and not blocked["ready_for_long_acceptance"], blocked
+            assert blocked["initial_player_count"] == 1000 and blocked["world_tour_edition_count"] == 80
+            expected = "FAX_ACCEPTANCE_BRANCH_READ_ONLY" if damage == "read_only" else "FAX_ACCEPTANCE_SAVED_DRAFT_REQUIRED"
+            assert expected in {issue["code"] for issue in blocked["issues"]}
+            code, denied = _request("POST", pre_alpha + "/fax-long-acceptance/probe", {
+                "command_id": "blocked-context", "operator_label": "Admin", "audit_reason": "Reject unsaved or protected input.",
+            })
+            assert code == 409 and expected in denied["detail"]["message"], denied
+            assert _dump(tmp_path / "fax-reference.db") == before
+            with repo._session_factory.begin() as session:
+                session.get(RunBranchModel, branch_id).read_only = False
+                draft = session.scalar(select(BranchWorkingDraftModel).where(BranchWorkingDraftModel.branch_id == branch_id))
+                draft.status = "clean"
+                draft.base_revision_id = saved_id
+            assert _request("GET", pre_alpha + "/fax-acceptance-profile") == (200, profile)
+
         ranking_url = pre_alpha + "/fax-current-week/ranking-snapshots"
         code, ranking = _request("GET", ranking_url + "/preview")
         assert code == 200, ranking

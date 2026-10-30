@@ -73,3 +73,13 @@ reference migration, Save/replay of tournament results, historical intake realis
 lower-Tour aggregation, the mandatory 50-season acceptance or release readiness.
 The next dependent sporting slice needs the owner's actual policy decision.
 No unrelated Viewer work or pending PR #1662/#1670 files are changed.
+
+### Saved-context readiness follow-up
+
+Input readiness also rejects a read-only Branch and a missing/dirty/foreign Working
+Draft, pending changes or a base that differs from the Branch Saved HEAD. Counts
+alone cannot advertise an unsaved context as executable. The real API scenario
+injects read-only, dirty and stale-base states into its disposable SQLite fixture,
+verifies both the read-only profile and probe rejection without database mutation,
+then restores the fixture for the remaining preparation assertions. This deliberate
+negative test is not evidence of a manually repaired 50-season acceptance.

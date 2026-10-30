@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { confirmRunEditionEntryTiming, getRunEditionEntryTiming, previewRunEditionEntryTiming } from '../api/client'
 import type { RunCalendarMetadata } from '../api/runCalendarCreation'
 import {
-  entryTimingScope, isHash, weekInClock,
+  entryTimingScope, isHash, weekInClock, sameTiming,
   type EditionEntryTiming, type EntryTimingConfirmPayload,
   type EntryTimingInspection, type EntryTimingPreview, type EntryTimingReceipt, type EntryWeek
 } from '../api/runEditionEntryTiming'
@@ -181,7 +181,6 @@ function makeTiming(form: Inputs, calendar: RunCalendarMetadata): EditionEntryTi
   }
 }
 
-const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 const nonce = () => 'admin-entry-timing-' +
   (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
     ? crypto.randomUUID() : String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000000)))
@@ -244,7 +243,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const timing = makeTiming(form, calendar)
   const previewCurrent = Boolean(preview && timing && enabled &&
     entryTimingScope(preview, runId, branchId, packageId, eventId) &&
-    same(preview.timing, timing) && isHash(preview.preview_fingerprint))
+    sameTiming(preview.timing, timing) && isHash(preview.preview_fingerprint))
   const canConfirm = previewCurrent && preview?.can_confirm_configuration === true &&
     form.operator.trim().length > 0 && form.operator.length <= 160 &&
     form.reason.trim().length > 0 && form.reason.length <= 1000 &&
@@ -262,7 +261,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     try {
       const result = await previewRunEditionEntryTiming(runId, branchId, packageId, eventId, timing)
       if (currentScope.current !== origin) return
-      if (!weekInClock(result.timing.main_open, calendar) || !same(result.timing, timing))
+      if (!weekInClock(result.timing.main_open, calendar) || !sameTiming(result.timing, timing))
         throw new Error('Preview calendar or exact configuration did not match.')
       setPreview(result)
     } catch (cause) {
@@ -280,7 +279,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       expected_preview_fingerprint: preview!.preview_fingerprint,
       operator_label: form.operator.trim(), audit_reason: form.reason.trim()
     }
-    if (!same(payload.timing, timing) || payload.expected_preview_fingerprint !== preview!.preview_fingerprint ||
+    if (!sameTiming(payload.timing, timing) || payload.expected_preview_fingerprint !== preview!.preview_fingerprint ||
       payload.operator_label !== form.operator.trim() || payload.audit_reason !== form.reason.trim()) return
     setRetryPayload(payload) // Hold the EXACT request even if the response is lost.
     busy.current = true

@@ -323,4 +323,14 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.confirmRunEditionEntryTiming).toHaveBeenCalledTimes(1)
     expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
   })
+
+  it('does not hide a failed explicit re-read behind cached data or reuse the old preview', async () => {
+    mount(); await fill(); await requestPreview()
+    api.getRunEditionEntryTiming.mockRejectedValueOnce(new Error('server unavailable'))
+    await userEvent.click(screen.getByRole('button', { name: 'Znovu načíst ze serveru' }))
+    expect(await screen.findByText(/Čtení časování selhalo: server unavailable/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', {name:'Výslovně potvrdit do Working Draftu'})).not.toBeInTheDocument()
+    expect(screen.getByRole('button', {name:'Spočítat serverový náhled'})).toBeDisabled()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
 })

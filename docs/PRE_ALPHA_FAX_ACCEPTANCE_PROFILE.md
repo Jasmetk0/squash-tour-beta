@@ -27,7 +27,9 @@ A Run/Branch is ready to start the long acceptance only when:
 - the timeline is exactly 2000–2049 / 50 seasons,
 - an Initial World exists with at least 1,000 players,
 - the first-season Run-owned Calendar Package exists and validates,
-- the first-season calendar contains exactly 80 `WORLD_TOUR` Editions.
+- the first-season calendar contains exactly 80 `WORLD_TOUR` Editions,
+- those Editions pass their existing ranking-points completeness contract; missing
+  awards produce `FAX_ACCEPTANCE_RANKING_POINTS_INCOMPLETE`, never implicit zeros.
 
 Non-World-Tour Editions are counted and reported as informational evidence because Master v72 permits lower Tours to remain abstract in the release test.
 
@@ -38,3 +40,5 @@ The profile is exposed below the canonical Authoritative Simulation boundary and
 ## Next
 
 Build the copied-FAX release fixture at the decided scale and add the long-running acceptance harness/report that executes all 50 seasons, persists/reopens required checkpoints, records history growth and fails on any manual-repair requirement.
+
+Current real preparation evidence and limitations: [copied-FAX preparation](PRE_ALPHA_FAX_REFERENCE_PREPARATION.md).

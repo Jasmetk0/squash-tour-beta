@@ -16,7 +16,10 @@ from beta_engine.application.calendar_package_run_adapter import (
     CALENDAR_SCOPE,
     CalendarPackageRunAdapter,
 )
-from beta_engine.application.season_calendar_service import SeasonCalendarService
+from beta_engine.application.season_calendar_service import (
+    SeasonCalendarService,
+    SeasonCategoryPointsPrerequisiteError,
+)
 from beta_engine.application.tournament_templates_service import (
     TournamentTemplatesConfigService,
 )
@@ -75,6 +78,7 @@ class PreAlphaFaxAcceptanceCalendarSource:
         season: str,
         index: int,
         template: TournamentTemplate,
+        ranking_points_table: dict[str, int],
     ) -> SeasonCalendarEvent:
         season_week = PreAlphaFaxAcceptanceCalendarSource._season_week(index)
         duration = max(1, template.duration_in_season_weeks)
@@ -113,7 +117,7 @@ class PreAlphaFaxAcceptanceCalendarSource:
             point_distribution_ref=template.point_distribution_ref,
             point_distribution=template.point_distribution,
             ranking_status="ranked",
-            ranking_points_table={},
+            ranking_points_table=dict(ranking_points_table),
             ranking_configuration_legacy=False,
             prize_money=template.prize_money,
             prize_money_currency=template.prize_money_currency,
@@ -140,11 +144,25 @@ class PreAlphaFaxAcceptanceCalendarSource:
                 "Pre-alpha FAX acceptance calendar V1 is defined only for 2000/2001"
             )
         templates = self._world_tour_templates()
+        points_service = self.calendar_validation_service.category_points_service
+        if points_service is None:
+            raise SeasonCategoryPointsPrerequisiteError(
+                "Season Category Points authority is unavailable for the copied-FAX calendar."
+            )
+        # Use the same read-only initialization candidate as an ordinary calendar
+        # preview. Missing stages remain missing; never invent qualification awards.
+        points = points_service.preview_initialization(season)
+        category_points = {
+            row.category: dict(row.ranking_points_table) for row in points.categories
+        }
         events = [
             self._event(
                 season=season,
                 index=index,
                 template=templates[index % len(templates)],
+                ranking_points_table=category_points.get(
+                    templates[index % len(templates)].category, {}
+                ),
             )
             for index in range(PRE_ALPHA_FAX_ACCEPTANCE_EDITION_COUNT)
         ]

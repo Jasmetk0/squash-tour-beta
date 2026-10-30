@@ -4,7 +4,7 @@
 
 Create one disposable editable Product Run from reviewed FAX source inputs using only existing production Run, Package, InitialWorld and Working Draft boundaries.
 
-The workflow is explicit **Preview → Materialize**. Preview is read-only and freezes the source fingerprints plus the acceptance-scale counts. Materialization rejects a stale preview before creating a Run.
+The workflow is explicit **Preview → Materialize**. Preview is read-only and freezes the source fingerprints, acceptance-scale counts and incomplete-points Edition IDs. Materialization rejects a stale preview before creating a Run.
 
 ## Materialization sequence
 
@@ -19,7 +19,7 @@ Each durable component uses the ordinary Saved Revision path; the bootstrap does
 
 ## Content boundary
 
-The materializer requires exactly 80 first-season `WORLD_TOUR` Calendar Editions before it mutates anything. It does **not** define their eventual FAX names, locations, categories or format canon. Those remain explicit source/template content.
+The materializer requires exactly 80 first-season `WORLD_TOUR` Calendar Editions, with complete tables under the existing Edition points contract, before it mutates anything. It does **not** define their eventual FAX names, locations, categories or format canon. Those remain explicit source/template content.
 
 The current integration test therefore uses an explicit provisional 80-Edition test Calendar only to prove persistence and scale. It must not be cited as final FAX sporting content.
 
@@ -32,4 +32,4 @@ The materialize request includes the exact preview fingerprint.
 
 ## Next
 
-Author the reviewed 80-Edition copied-FAX Calendar source, use this bootstrap to create the persisted 1,000-player release fixture, then start the mandatory 50-season acceptance harness and fix the first canonical preparation blocker encountered.
+The real 1,000-player/80-Edition preparation and SQLite reopen now reach the explicit automatic Entry-validation policy boundary when supplied complete disposable test points. The source snapshots Season Category Points; missing qualification awards are never invented. See [current preparation evidence](PRE_ALPHA_FAX_REFERENCE_PREPARATION.md). The full season/50-season acceptance remains outstanding.

@@ -11,12 +11,28 @@ import json
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
+from sqlalchemy import select, text
 
-from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
-from beta_engine.infrastructure.db.initial_world_state import get_initial_world
-from beta_engine.infrastructure.db.models import RunBranchModel, RunContainerModel
-from beta_engine.infrastructure.db.run_package_state import get_run_package_state
-
+from beta_engine.application.calendar_package_run_adapter import (
+    CalendarPackageRunAdapter,
+)
+from beta_engine.application.run_calendar_read_authority import (
+    resolve_saved_run_calendar,
+)
+from beta_engine.infrastructure.db.initial_world_state import (
+    get_initial_world,
+    load_saved_initial_world,
+)
+from beta_engine.infrastructure.db.models import (
+    BranchSavedRevisionModel,
+    BranchWorkingDraftModel,
+    RunBranchModel,
+    RunContainerModel,
+)
+from beta_engine.infrastructure.db.run_package_state import (
+    get_run_package_state,
+    load_saved_run_package_state,
+)
 
 FAX_ACCEPTANCE_START_SEASON = 2000
 FAX_ACCEPTANCE_END_SEASON = 2049
@@ -85,6 +101,22 @@ class PreAlphaFaxAcceptanceProfile(BaseModel):
         return self.fingerprint
 
 
+def _saved_inputs_match(session, *, run_id, branch_id, world, package_state):
+    # Authenticate the ORIGINAL entire Saved payload/hash and its Run clock via
+    # the existing authority. No reconstructed hash or trusted client token.
+    resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id)
+    branch = session.get(RunBranchModel, branch_id)
+    head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
+    if head is None:
+        return False
+    payload = json.loads(head.payload_json)
+    if not isinstance(payload.get("content"), dict):
+        raise ValueError("Saved acceptance inputs require an object content component")  # noqa: TRY004 - persisted corruption uses the API ValueError contract
+    saved_world = load_saved_initial_world(payload, run_id=run_id, branch_id=head.branch_id)
+    saved_packages = load_saved_run_package_state(payload, run_id=run_id, branch_id=head.branch_id)
+    return saved_world == world and saved_packages == package_state
+
+
 class PreAlphaFaxAcceptanceProfileService:
     """Inspect only canonical Run-owned state; never use live source registries."""
 
@@ -98,6 +130,8 @@ class PreAlphaFaxAcceptanceProfileService:
         )
 
         with self._session_factory() as session:
+            # SQLite SELECT alone does not establish a repeatable read snapshot.
+            session.execute(text("BEGIN"))
             run = session.get(RunContainerModel, run_id)
             branch = session.get(RunBranchModel, branch_id)
             if run is None:
@@ -106,6 +140,25 @@ class PreAlphaFaxAcceptanceProfileService:
                 raise KeyError(
                     f"Branch {branch_id!r} was not found in Run {run_id!r}"
                 )
+
+            if branch.read_only:
+                issues.append(PreAlphaFaxAcceptanceIssue(
+                    severity="error", code="FAX_ACCEPTANCE_BRANCH_READ_ONLY",
+                    message="The release-test Branch must be writable.",
+                ))
+            draft = session.scalar(select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == branch_id,
+            ))
+            if (
+                not branch.saved_head_revision_id or draft is None
+                or draft.run_id != run_id or draft.status != "clean"
+                or draft.change_count != 0
+                or draft.base_revision_id != branch.saved_head_revision_id
+            ):
+                issues.append(PreAlphaFaxAcceptanceIssue(
+                    severity="error", code="FAX_ACCEPTANCE_SAVED_DRAFT_REQUIRED",
+                    message="Save a clean Working Draft based on this Branch's Saved HEAD before acceptance.",
+                ))
 
             editable_run = not bool(run.read_only)
             active_branch = branch.status == "active"
@@ -172,6 +225,14 @@ class PreAlphaFaxAcceptanceProfileService:
             package_state = get_run_package_state(
                 session, run_id=run_id, branch_id=branch_id
             )
+            if world is not None and package_state is not None and not _saved_inputs_match(
+                session, run_id=run_id, branch_id=branch_id,
+                world=world, package_state=package_state,
+            ):
+                issues.append(PreAlphaFaxAcceptanceIssue(
+                    severity="error", code="FAX_ACCEPTANCE_INPUTS_NOT_SAVED",
+                    message="Live Initial World or Package inputs differ from the authenticated Saved HEAD.",
+                ))
             calendar = None
             if package_state is None:
                 issues.append(
@@ -213,6 +274,22 @@ class PreAlphaFaxAcceptanceProfileService:
                             f"First-season Calendar has {len(world_tour)} World Tour Editions; "
                             f"the reference release-test template requires "
                             f"{FAX_ACCEPTANCE_WORLD_TOUR_EDITIONS}."
+                        ),
+                    )
+                )
+
+            incomplete_points = tuple(
+                event for event in world_tour if not event.points_table_complete
+            )
+            if incomplete_points:
+                issues.append(
+                    PreAlphaFaxAcceptanceIssue(
+                        severity="error",
+                        code="FAX_ACCEPTANCE_RANKING_POINTS_INCOMPLETE",
+                        message=(
+                            f"{len(incomplete_points)} World Tour Editions have incomplete "
+                            "ranking points tables; review the missing stages before "
+                            "starting acceptance. Missing points are not zero awards."
                         ),
                     )
                 )

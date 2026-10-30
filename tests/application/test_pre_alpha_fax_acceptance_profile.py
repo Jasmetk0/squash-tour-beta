@@ -11,10 +11,23 @@ from beta_engine.application.pre_alpha_fax_acceptance_profile import (
 )
 
 
+@pytest.fixture(autouse=True)
+def isolate_saved_authority_for_profile_decision_contracts(monkeypatch):
+    # This module mocks persistence; actual Saved proof is exercised by API tests.
+    monkeypatch.setattr("beta_engine.application.pre_alpha_fax_acceptance_profile._saved_inputs_match", lambda *a, **kw: True)
+
+
 class _Session:
     def __init__(self, run, branch):
         self.run = run
         self.branch = branch
+        self.draft = SimpleNamespace(run_id="run", status="clean", change_count=0, base_revision_id="saved")
+
+    def execute(self, statement):
+        pass
+
+    def scalar(self, statement):
+        return self.draft
 
     def get(self, model, key):
         name = model.__name__
@@ -43,7 +56,7 @@ def _service():
         timeline_start_season=2000,
         timeline_end_season=2049,
     )
-    branch = SimpleNamespace(branch_id="branch", run_id="run", status="active")
+    branch = SimpleNamespace(branch_id="branch", run_id="run", status="active", read_only=False, saved_head_revision_id="saved")
     return PreAlphaFaxAcceptanceProfileService(
         lambda: _SessionContext(_Session(run, branch))
     )
@@ -51,7 +64,7 @@ def _service():
 
 def _calendar(world_count: int, lower_count: int = 0):
     events = [
-        SimpleNamespace(tour_level="WORLD_TOUR")
+        SimpleNamespace(tour_level="WORLD_TOUR", points_table_complete=True)
         for _ in range(world_count)
     ] + [
         SimpleNamespace(tour_level="ELITE_TOUR")
@@ -140,3 +153,47 @@ def test_fax_acceptance_profile_requires_run_owned_calendar(monkeypatch) -> None
         "FAX_ACCEPTANCE_INITIAL_WORLD_MISSING",
         "FAX_ACCEPTANCE_CALENDAR_PACKAGE_MISSING",
     }
+
+
+def test_fax_scale_does_not_hide_incomplete_ranking_points(monkeypatch):
+    import beta_engine.application.pre_alpha_fax_acceptance_profile as module
+
+    world = SimpleNamespace(
+        players=tuple(object() for _ in range(1000)), fingerprint="c" * 64,
+        world_package_id="official_fax_world",
+    )
+    calendar = _calendar(80)
+    calendar.calendar.events[0].points_table_complete = False
+    monkeypatch.setattr(module, "get_initial_world", lambda *a, **kw: world)
+    monkeypatch.setattr(module, "get_run_package_state", lambda *a, **kw: object())
+    monkeypatch.setattr(module.CalendarPackageRunAdapter, "project_calendar", staticmethod(lambda *a, **kw: calendar))
+
+    profile = _service().inspect(run_id="run", branch_id="branch")
+    assert profile.initial_player_count == 1000
+    assert profile.world_tour_edition_count == 80
+    assert not profile.ready_for_long_acceptance
+    assert [issue.code for issue in profile.issues if issue.severity == "error"] == [
+        "FAX_ACCEPTANCE_RANKING_POINTS_INCOMPLETE"
+    ]
+
+
+@pytest.mark.parametrize("damage", ["read_only", "dirty", "stale", "missing", "foreign", "pending_changes"])
+def test_prepared_scale_requires_writable_saved_context(monkeypatch, damage):
+    import beta_engine.application.pre_alpha_fax_acceptance_profile as module
+    service = _service()
+    session = service._session_factory().session
+    service._session_factory = lambda: _SessionContext(session)
+    if damage == "read_only": session.branch.read_only = True
+    elif damage == "dirty": session.draft.status = "dirty"
+    elif damage == "stale": session.draft.base_revision_id = "old"
+    elif damage == "missing": session.draft = None
+    elif damage == "foreign": session.draft.run_id = "foreign"
+    else: session.draft.change_count = 1
+    monkeypatch.setattr(module, "get_initial_world", lambda *a, **kw: SimpleNamespace(players=tuple(range(1000)), fingerprint="c"*64, world_package_id="fax"))
+    monkeypatch.setattr(module, "get_run_package_state", lambda *a, **kw: object())
+    monkeypatch.setattr(module.CalendarPackageRunAdapter, "project_calendar", staticmethod(lambda *a, **kw: _calendar(80)))
+    profile = service.inspect(run_id="run", branch_id="branch")
+    assert not profile.ready_for_long_acceptance
+    assert [i.code for i in profile.issues if i.severity == "error"] == [
+        "FAX_ACCEPTANCE_BRANCH_READ_ONLY" if damage == "read_only" else "FAX_ACCEPTANCE_SAVED_DRAFT_REQUIRED"
+    ]

@@ -1,0 +1,64 @@
+name: Pre-alpha FAX Reference Preparation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'src/beta_engine/application/pre_alpha_fax_*.py'
+      - 'src/beta_engine/application/season_category_points_service.py'
+      - 'src/beta_engine/application/calendar_package_run_adapter.py'
+      - 'src/beta_engine/application/run_world_initial_world_service.py'
+      - 'src/beta_engine/application/initial_official_ranking_publication.py'
+      - 'tests/application/test_pre_alpha_fax_*.py'
+      - 'tests/api/test_pre_alpha_fax_reference_*.py'
+      - 'tests/api/fax_saved_input_proof.py'
+      - 'config/tournament_templates/**'
+      - 'config/points/**'
+      - '.github/workflows/prealpha-fax-reference-preparation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fax-reference-preparation-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  reference-preparation:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: FAX 1000 players / 80 Editions / actual Entry / SQLite reopen
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install -e . pytest
+      - name: Source and reviewed-input contracts
+        run: >-
+          GITHUB_EVENT_NAME=fax_reference_preparation python -m pytest
+          tests/application/test_pre_alpha_fax_acceptance_calendar_source.py
+          tests/application/test_pre_alpha_fax_acceptance_profile.py
+          tests/application/test_pre_alpha_fax_reference_materialization.py
+          tests/application/test_pre_alpha_fax_current_entry_decisions.py
+          tests/application/test_pre_alpha_fax_long_acceptance_probe.py
+          --maxfail=1 --durations=10
+      - name: Real copied reference through explicit unresolved-policy boundary
+        run: >-
+          GITHUB_EVENT_NAME=fax_reference_preparation python -m pytest
+          tests/api/test_pre_alpha_fax_reference_preview_api.py
+          tests/api/test_pre_alpha_fax_reference_preparation_api.py
+          --basetemp "${{ runner.temp }}/fax-reference-preparation"
+          --maxfail=1 --durations=10
+      - name: Preserve actual reference and SQLite evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fax-reference-preparation-${{ github.run_id }}
+          path: ${{ runner.temp }}/fax-reference-preparation/
+          if-no-files-found: warn
+          retention-days: 7

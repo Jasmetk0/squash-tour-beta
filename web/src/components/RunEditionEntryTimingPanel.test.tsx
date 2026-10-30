@@ -195,7 +195,7 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.confirmRunEditionEntryTiming.mock.calls[0][4].timing.ranking_publication_override).toBeNull()
     expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
     expect(await screen.findByText(/Potvrzeno pouze do Working Draftu/)).toBeInTheDocument()
-    expect(screen.getByRole('link',{name:/samostatnému Working Draft Save/})).toHaveAttribute('href', expect.stringContaining('/admin/runs/run'))
+    expect(screen.getByRole('link',{name:/Run Management a uložené revize/})).toHaveAttribute('href', expect.stringContaining('/admin/runs/run'))
   })
 
   it('keeps exact command ID and full payload for explicit retry after an uncertain response', async () => {

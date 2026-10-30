@@ -96,7 +96,7 @@ async function fill(): Promise<void> {
 }
 async function requestPreview() {
   await userEvent.click(screen.getByRole('button', {name: /Spočítat serverový náhled|Calculate server preview/}))
-  await screen.findByText(/Serverový náhled|Server preview/)
+  await screen.findByRole('heading', { name: /Serverový náhled – bez zápisu|Server preview – no write/ })
 }
 afterEach(() => vi.restoreAllMocks())
 beforeEach(() => {

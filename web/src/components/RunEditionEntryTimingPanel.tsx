@@ -117,6 +117,9 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const [receipt, setReceipt] = useState<EntryTimingReceipt | null>(null)
   const [saveApproved, setSaveApproved] = useState(false)
   const [saving, setSaving] = useState(false)
+  // The Save request has no frontend idempotency key. A lost reply may mean
+  // the Saved Revision already exists: never offer a blind second POST.
+  const [saveOutcomeUncertain, setSaveOutcomeUncertain] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [savedRevision, setSavedRevision] = useState('')
   const [error, setError] = useState('')
@@ -154,6 +157,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     setRefreshed(null)
     setSaveApproved(false)
     setSaving(false)
+    setSaveOutcomeUncertain(false)
     setSaveError('')
     setSavedRevision('')
     setError('')
@@ -170,7 +174,8 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
 
   const update = (patch: Partial<Inputs>, changesTiming = true) => {
     // An uncertain confirm must preserve both its original ID and immutable payload.
-    if (busy.current || loadingPreview || loadingConfirm || receipt || retryPayload || saving) return
+    if (busy.current || loadingPreview || loadingConfirm || receipt || retryPayload ||
+      saving || saveOutcomeUncertain || savedRevision) return
     setForm(old => ({ ...old, ...patch }))
     if (changesTiming) setPreview(null)
     setError('')
@@ -197,7 +202,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     form.reason.trim().length > 0 && form.reason.length <= 1000 &&
     !loadingConfirm && !loadingPreview && !busy.current
   const editingBlocked = !enabled || Boolean(receipt) || Boolean(retryPayload) ||
-    Boolean(savedRevision) || saving || loadingConfirm || loadingPreview || busy.current
+    Boolean(savedRevision) || saveOutcomeUncertain || saving || loadingConfirm || loadingPreview || busy.current
   const durationValid = (raw: string) => /^[1-9]\d*$/.test(raw) && Number.isSafeInteger(Number(raw))
   // Matches the established Run calendar projection, not a universal YYYY/YY label.
   const seasonLabelFor = (index: number) => {
@@ -206,7 +211,8 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   }
 
   async function calculatePreview(): Promise<void> {
-    if (!enabled || !timing || receipt || retryPayload || savedRevision || saving || busy.current || query.isError || query.isFetching) return
+    if (!enabled || !timing || receipt || retryPayload || savedRevision || saveOutcomeUncertain ||
+      saving || busy.current || query.isError || query.isFetching) return
     busy.current = true
     setLoadingPreview(true)
     setError('')
@@ -274,12 +280,13 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
 
   async function saveReviewedDraft(): Promise<void> {
     const staged = receipt
-    if (!staged || !saveApproved || busy.current || saving ||
+    if (!staged || !saveApproved || busy.current || saving || saveOutcomeUncertain || savedRevision ||
       !entryTimingScope(staged.preview, runId, branchId, packageId, eventId)) return
     busy.current = true
     setSaving(true)
     setSaveError('')
     const origin = scope
+    let savePosted = false
     try {
       // Fresh authoritative reads: the Manage page's source-copy Save button only
       // handles its own source-copy receipt, so this is a separate reviewed Save.
@@ -303,6 +310,10 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         state.fingerprint !== staged.state_fingerprint) {
         throw new Error('Saved head, Working Draft or Package changed since Entry confirmation.')
       }
+      // From this point onwards even an error might follow a committed Save.
+      // Do not allow another write without an independent Saved history review.
+      setSaveOutcomeUncertain(true)
+      savePosted = true
       const result = await saveRunPackageWorkingDraft(runId, branchId, staged.draft_version)
       if (currentScope.current !== origin) return
       if (result.run_id !== runId || result.branch_id !== branchId ||
@@ -313,6 +324,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         throw new Error('Saved Revision receipt identity or Draft state is invalid.')
       }
       setSavedRevision(result.saved_revision.revision_id)
+      setSaveOutcomeUncertain(false)
       setReceipt(null)
       setSaveApproved(false)
       setRefreshed(null)
@@ -331,7 +343,9 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         if (currentScope.current === origin) setSaveError(t.saveRefreshError + ': ' + formatApiError(refreshCause))
       }
     } catch (cause) {
-      if (currentScope.current === origin) setSaveError(t.saveError + ': ' + formatApiError(cause))
+      if (currentScope.current === origin) setSaveError(
+        (savePosted ? t.saveUncertain : t.saveError) + ': ' + formatApiError(cause)
+      )
     } finally {
       if (currentScope.current === origin) { busy.current = false; setSaving(false) }
     }
@@ -402,6 +416,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     <div id="run-edition-entry-timing" className="grid" aria-label={t.heading}>
       <p className="status">{t.intro}</p>
       <p role="status">{t.progress}: {savedRevision ? t.progressSaved :
+        saveOutcomeUncertain ? t.progressSaveUncertain :
         receipt ? t.progressDraft : previewStatus ? t.progressPreview :
         localChanged ? t.progressEdited : t.progressLocal}</p>
       <details>
@@ -417,7 +432,8 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       <p className="status">{t.indexNote}</p>
       {query.isLoading && !inspection && <p role="status">{t.loading}</p>}
       {query.error && <p role="alert" className="error">{t.failed}: {formatApiError(query.error)}</p>}
-      <button type="button" disabled={query.isFetching || busy.current || Boolean(savedRevision)}
+      <button type="button" disabled={query.isFetching || busy.current || Boolean(savedRevision) ||
+        saveOutcomeUncertain}
         onClick={() => {
           setRefreshed(null)
           // A fresh inspection invalidates an ordinary review. Retain only an
@@ -517,7 +533,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       {form.operator.length > 160 && <p role="alert" className="error">{t.operatorError}</p>}
       {form.reason.length > 1000 && <p role="alert" className="error">{t.reasonError}</p>}
       <button type="button" disabled={!enabled || !inspection || !timing || receipt !== null || retryPayload !== null ||
-        Boolean(savedRevision) || saving || query.isError || query.isFetching ||
+        Boolean(savedRevision) || saveOutcomeUncertain || saving || query.isError || query.isFetching ||
         loadingPreview || loadingConfirm || busy.current}
         onClick={() => void calculatePreview()}>{loadingPreview ? t.previewing : t.previewButton}</button>
       {error && <p role="alert" className="error">{error}</p>}
@@ -596,15 +612,17 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         </details>
         <p>{t.working_draft} (v{receipt.draft_version})</p>
         <p className="status">{t.saveGuard}</p>
-        <label><input type="checkbox" checked={saveApproved} disabled={saving || busy.current}
+        <label><input type="checkbox" checked={saveApproved}
+          disabled={saving || busy.current || saveOutcomeUncertain}
           onChange={event => setSaveApproved(event.target.checked)} /> {t.saveConsent}</label>
-        <button type="button" disabled={!saveApproved || saving || busy.current}
+        <button type="button" disabled={!saveApproved || saving || busy.current || saveOutcomeUncertain}
           onClick={() => void saveReviewedDraft()}>{saving ? t.saving : t.saveButton}</button>
         <Link to={'/admin/runs/' + encodeURIComponent(runId) + '/manage?branch=' + encodeURIComponent(branchId)}>
           {t.savedLink}
         </Link>
       </div>}
       {saveError && <p role="alert" className="error">{saveError}</p>}
+      {saveOutcomeUncertain && <p role="alert" className="error">{t.saveUncertainAdvice}</p>}
       {savedRevision && <div role="status">
         <p>{t.saved}</p>
         <p style={{overflowWrap: 'anywhere'}}>{t.savedRevisionId}: {savedRevision}</p>

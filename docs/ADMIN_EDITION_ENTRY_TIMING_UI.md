@@ -90,3 +90,7 @@ Client rejects a Confirm receipt if the returned Working Draft version is not a 
 ## Post-Save stale-form lock
 
 Once a Saved Revision receipt is accepted, keep the Entry form, new Preview and in-place re-read locked for that mounted editor, even if query cache still holds the pre-save state. The Run Management link remains available; entering a new context starts another verified editing session. The mocked Save test asserts the lock and absence of another preview call. Successful Save still cannot be undone by a cache refresh failure.
+
+## Uncertain Save: no blind second write
+
+The Working Draft Save route does not accept this UI's immutable Entry command ID. Once the Save POST has been attempted, a timeout, lost reply, or malformed success receipt might mean an actual immutable Saved Revision already exists. The panel now conservatively locks a repeated Save, keeps the existing Run Management/history link visible, does **not** claim a successful revision, and prompts inspection of Saved HEAD/history before a new editing session. A failure during preflight *before* POST remains an ordinary recoverable error. Mocked React regressions cover the lost reply, malformed receipt, CS/EN switch and preflight failure. Real HTTP/SQLite uncertainty must still be accepted independently.

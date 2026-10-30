@@ -415,6 +415,42 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.previewRunEditionEntryTiming).toHaveBeenCalledTimes(1)
   })
 
+  it('locks all repeated Save writes after a lost response, without claiming a Saved Revision', async () => {
+    api.saveRunPackageWorkingDraft.mockRejectedValueOnce(new TypeError('network lost'))
+    mount(); await fill(); await requestPreview()
+    await userEvent.click(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'}))
+    await screen.findByText(/Potvrzeno pouze do Working Draftu/)
+    await userEvent.click(screen.getByLabelText(/Samostatně schvaluji uložení/))
+    await userEvent.click(screen.getByRole('button',{name:'Samostatně uložit Working Draft'}))
+    expect(await screen.findByText(/Výsledek Save je nejistý/)).toBeInTheDocument()
+    expect(screen.getByText(/Save už mohl vytvořit Saved Revision/)).toBeInTheDocument()
+    expect(screen.queryByText('Saved Revision byla uložena a potvrzena serverem.')).not.toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Samostatně uložit Working Draft'})).toBeDisabled()
+    expect(screen.getByLabelText(/Samostatně schvaluji uložení/)).toBeDisabled()
+    expect(screen.getByRole('button',{name:'Znovu načíst ze serveru'})).toBeDisabled()
+    expect(screen.getByRole('link',{name:/Run Management a uložené revize/})).toHaveAttribute(
+      'href', expect.stringContaining('/admin/runs/run'))
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(screen.getByText(/Save outcome is uncertain/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Save Working Draft separately'})).toBeDisabled()
+    expect(api.saveRunPackageWorkingDraft).toHaveBeenCalledTimes(1)
+  })
+
+  it('fails closed on malformed Save receipt and never resends the unverified write', async () => {
+    api.saveRunPackageWorkingDraft.mockResolvedValueOnce({
+      run_id:'run',branch_id:'branch',saved_revision:{revision_id:'revision-new'},
+      working_draft:{run_id:'run',branch_id:'foreign',base_saved_revision_id:'revision-new',status:'clean'}
+    })
+    mount(); await fill(); await requestPreview()
+    await userEvent.click(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'}))
+    await screen.findByText(/Potvrzeno pouze do Working Draftu/)
+    await userEvent.click(screen.getByLabelText(/Samostatně schvaluji uložení/))
+    await userEvent.click(screen.getByRole('button',{name:'Samostatně uložit Working Draft'}))
+    expect(await screen.findByText(/Výsledek Save je nejistý/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Samostatně uložit Working Draft'})).toBeDisabled()
+    expect(api.saveRunPackageWorkingDraft).toHaveBeenCalledTimes(1)
+  })
+
   it('fails closed on stale Draft version without making Save call', async () => {
     api.getBranchWorkingDraft.mockResolvedValue({
       run_id:'run',branch_id:'branch',status:'dirty',
@@ -427,6 +463,8 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     await userEvent.click(screen.getByRole('button',{name:'Samostatně uložit Working Draft'}))
     expect(await screen.findByText(/Uložení nelze bezpečně provést/)).toBeInTheDocument()
     expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+    expect(screen.queryByText(/Výsledek Save je nejistý/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Samostatně uložit Working Draft'})).toBeEnabled()
   })
 
   it('keeps successful confirm receipt authoritative even when subsequent GET refresh fails', async () => {

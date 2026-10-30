@@ -583,7 +583,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         <Link to={'/admin/runs/' + encodeURIComponent(runId) + '/manage?branch=' + encodeURIComponent(branchId)}>
           {t.savedLink}
         </Link>
-      </div>
+      </div>}
     </div>
   </SectionCard>
 }

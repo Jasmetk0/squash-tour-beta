@@ -181,7 +181,9 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     api.getRunEditionEntryTiming.mockResolvedValueOnce({...preview, timing})
     api.previewRunEditionEntryTiming.mockResolvedValueOnce({...preview, timing:modified, before:timing})
     mount()
-    await waitFor(() => expect(screen.getByLabelText('Délka Main (týdny)')).toHaveValue(2))
+    // The numeric duration starts at 2 even before GET initializes the saved plan.
+    // Wait for server-provided Main opening instead of assuming initial load finished.
+    await waitFor(() => expect(screen.getByLabelText('Otevření Main – týden')).toHaveValue(13))
     fireEvent.change(screen.getByLabelText('Délka Main (týdny)'), {target:{value:'3'}})
     await requestPreview()
     expect(screen.getByText('Co serverový náhled mění')).toBeInTheDocument()

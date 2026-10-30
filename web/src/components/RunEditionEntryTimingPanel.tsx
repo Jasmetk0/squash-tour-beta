@@ -14,6 +14,7 @@ import {
   type EntryTimingInspection, type EntryTimingPreview, type EntryTimingReceipt, type EntryWeek
 } from '../api/runEditionEntryTiming'
 import { useLanguage } from '../i18n/LanguageContext'
+import { editionEntryTimingText } from '../i18n/editionEntryTimingText'
 import { formatApiError } from '../utils/apiErrors'
 import { SectionCard } from './RunScopedUi'
 
@@ -35,120 +36,7 @@ const emptyInputs = (): Inputs => ({
   commitmentEnabled: false, commitment: emptyWeek(),
   overrideEnabled: false, override: emptyWeek(), operator: '', reason: ''
 })
-const T = {
-  cs: {
-    heading: 'Časování přihlášek Edition (Working Draft)',
-    intro: 'Pouze příprava časových oken této Edition. Náhled nic nemění, potvrzení připraví změnu ve Working Draftu a uložení Saved Revision je samostatné.',
-    noScope: 'Pro úpravu je nutný ověřený aktivní Run, Branch, správný Run-owned Calendar a aktuální Working Draft.',
-    loading: 'Načítám Entry časování…', failed: 'Čtení časování selhalo', retryRead: 'Znovu načíst ze serveru',
-    noPlan: 'Pro tuto Edition zatím není uložený plán. Začátek Main zvol ručně; nelze jej odhadnout z týdne turnaje.',
-    existing: 'Existující časování této Edition', newPlan: 'Nový plán časování',
-    clock: 'Kalendář Runu', indexNote: 'Index sezony začíná nulou; týden je 1 až W podle skutečného Run kalendáře.',
-    mainSeason: 'Otevření Main – sezona', mainWeek: 'Otevření Main – týden',
-    mainDuration: 'Délka Main (týdny)', qualificationDuration: 'Délka kvalifikace Q (týdny)',
-    commitmentSwitch: 'Zadat vlastní Final Commitment', commitmentSeason: 'Final Commitment – sezona',
-    commitmentWeek: 'Final Commitment – týden', overrideSwitch: 'Použít explicitní publikaci Official Ranking',
-    overrideSeason: 'Publikace rankingu – sezona', overrideWeek: 'Publikace rankingu – týden',
-    defaultRanking: 'Bez override server použije přesnou publikaci pro Main Closing; nevybírá poslední dostupný žebříček.',
-    operator: 'Operátor potvrzení', reason: 'Důvod potvrzení (audit)',
-    required: 'Vyplň platnou sezonu a týden skutečného Run kalendáře.',
-    durationError: 'Délka musí být kladné celé číslo.',
-    operatorError: 'Jméno operátora je povinné (max. 160 znaků).',
-    reasonError: 'Důvod je povinný (max. 1000 znaků).',
-    previewButton: 'Spočítat serverový náhled', previewing: 'Počítám náhled…',
-    previewError: 'Náhled selhal', review: 'Serverový náhled – bez zápisu',
-    before: 'Původní plán', after: 'Navrhovaný plán', absent: 'není',
-    mainWindow: 'Main okno', qualificationWindow: 'Q okno',
-    commitment: 'Final Commitment', dataWeek: 'Ranking – data po dokončeném týdnu',
-    publishedWeek: 'Ranking – označení publikace', rankingSource: 'Zdroj rankingu',
-    sourceDefault: 'Serverový Main Closing − 1 → publikace Main Closing',
-    sourceOverride: 'Explicitně vybraná publikace', rankingFingerprint: 'Otisk přesného Official Ranking',
-    rankingBinding: 'Navázání rankingu', rankingWillBind: 'Při potvrzení se naváže tento ověřený snapshot.',
-    noRanking: 'Přesná publikace není k dispozici. Budoucí plán lze potvrdit pouze pokud server povolí konfiguraci; ranking se nenahradí.',
-    status: 'Preflight', configState: 'Stav konfigurace', currentWeek: 'Aktuální týden Runu',
-    eligibility: 'Automatická validace způsobilosti hráčů není implementována. Připravené časování a ranking NEZNAMENAJÍ schválené přihlášky.',
-    missing_prerequisite: 'Chybí předpoklady pro navázání rankingu',
-    ready_for_explicit_confirmation: 'Připraveno k výslovnému navázání rankingu',
-    bound: 'Ranking Snapshot je již navázaný',
-    working_draft: 'Working Draft (zatím není Saved)',
-    ready: 'Připraveno', missing_content: 'Chybějící podklad', blocked: 'Blokováno',
-    unsupported_execution: 'Sportovní provedení zde není podporováno',
-    blockers: 'Serverové překážky a jejich dopady', noBlockers: 'Server nevrátil překážky.',
-    confirmButton: 'Výslovně potvrdit do Working Draftu', confirming: 'Potvrzuji…',
-    retryConfirm: 'Zopakovat přesně stejný příkaz', confirmError: 'Odpověď na potvrzení je nejistá nebo chybová.',
-    retryHint: 'Pro bezpečný exact retry zůstává zachováno stejné command ID i celý payload. Nový příkaz se nevytváří.',
-    confirmed: 'Potvrzeno pouze do Working Draftu. Saved Revision ještě nebyla vytvořena.',
-    savedLink: 'Otevřít Run Management a uložené revize',
-    saveConsent: 'Samostatně schvaluji uložení aktuálního ověřeného Working Draftu jako nové Saved Revision.',
-    saveButton: 'Samostatně uložit Working Draft',
-    saving: 'Ukládám Saved Revision…',
-    saveError: 'Uložení nelze bezpečně provést',
-    saved: 'Saved Revision byla uložena a potvrzena serverem.',
-    saveGuard: 'Před uložením znovu ověřím Run, Branch, původní Saved HEAD, verzi Draftu a fingerprint Package; bez souhlasu a ověření Save neproběhne.',
-    refreshing: 'Obnovuji serverový stav…', retryCommandId: 'ID příkazu',
-    nonWritable: 'Tento kontext není zapisovatelný; nejprve obnov příslušný aktivní Run/Branch a ověř Working Draft.',
-    stalePreview: 'Po úpravě je nutný nový náhled. Starý otisk nesmí být znovu použit.',
-    blockedConfirm: 'Server nyní zakazuje potvrzení konfigurace.',
-    statusMissing: 'Chybějící plán není potvrzený ani uložený.',
-    timingReady: 'Časování a ranking jsou připravené pouze v aktuálním Working Draftu; nejde o Saved ani Entry validaci.'
-  },
-  en: {
-    heading: 'Edition Entry timing (Working Draft)',
-    intro: 'Edition timing preparation only. Preview makes no changes; confirm stages the Working Draft. Saving a Saved Revision is a separate action.',
-    noScope: 'A verified active Run, Branch, correct Run-owned Calendar and current Working Draft are required.',
-    loading: 'Loading Entry timing…', failed: 'Failed to read Entry timing', retryRead: 'Retry server read',
-    noPlan: 'This Edition has no configured Entry plan. Choose Main opening explicitly; the play week is not a default.',
-    existing: 'Existing Edition timing', newPlan: 'New timing plan',
-    clock: 'Run calendar', indexNote: 'Season indices are zero-based; weeks run from 1 to W on this Run calendar.',
-    mainSeason: 'Main opening – season', mainWeek: 'Main opening – week',
-    mainDuration: 'Main duration (weeks)', qualificationDuration: 'Qualification Q duration (weeks)',
-    commitmentSwitch: 'Set explicit Final Commitment', commitmentSeason: 'Final Commitment – season',
-    commitmentWeek: 'Final Commitment – week', overrideSwitch: 'Override with explicit Official Ranking publication',
-    overrideSeason: 'Ranking publication – season', overrideWeek: 'Ranking publication – week',
-    defaultRanking: 'Without an override, the server uses the exact Main Closing publication, never the latest available ranking.',
-    operator: 'Confirmation operator', reason: 'Confirmation reason (audit)',
-    required: 'Enter a valid season and week on this Run calendar.',
-    durationError: 'Duration must be a positive integer.',
-    operatorError: 'Operator label is required (max 160 characters).',
-    reasonError: 'Audit reason is required (max 1000 characters).',
-    previewButton: 'Calculate server preview', previewing: 'Calculating preview…',
-    previewError: 'Preview failed', review: 'Server preview – no write',
-    before: 'Previous plan', after: 'Proposed plan', absent: 'none',
-    mainWindow: 'Main window', qualificationWindow: 'Q window',
-    commitment: 'Final Commitment', dataWeek: 'Ranking – completed-data week',
-    publishedWeek: 'Ranking – publication label', rankingSource: 'Ranking source',
-    sourceDefault: 'Server Main Closing − 1 → Main Closing publication',
-    sourceOverride: 'Explicit publication override', rankingFingerprint: 'Exact Official Ranking fingerprint',
-    rankingBinding: 'Ranking binding', rankingWillBind: 'This verified snapshot will be bound at confirmation.',
-    noRanking: 'The exact publication is absent. Only a server-permitted future configuration can be confirmed; no substitute ranking is selected.',
-    status: 'Preflight', configState: 'Configuration state', currentWeek: 'Current Run week',
-    eligibility: 'Automatic player eligibility validation is NOT implemented. Prepared timing and ranking do NOT mean approved applications.',
-    missing_prerequisite: 'Ranking binding prerequisites are missing',
-    ready_for_explicit_confirmation: 'Ranking binding requires explicit confirmation',
-    bound: 'Ranking Snapshot already bound',
-    working_draft: 'Working Draft (not Saved)',
-    ready: 'Ready', missing_content: 'Missing content', blocked: 'Blocked',
-    unsupported_execution: 'Sporting execution unsupported in this context',
-    blockers: 'Server blockers and impact', noBlockers: 'No blockers returned.',
-    confirmButton: 'Explicitly confirm into Working Draft', confirming: 'Confirming…',
-    retryConfirm: 'Retry the exact same command', confirmError: 'Confirmation response failed or is uncertain.',
-    retryHint: 'For safe exact retry, the original command ID and complete payload are retained. No new command is generated.',
-    confirmed: 'Confirmed in Working Draft only. No Saved Revision has been created.',
-    savedLink: 'Open Run Management and revision history',
-    saveConsent: 'I separately authorize saving the currently verified Working Draft as a new Saved Revision.',
-    saveButton: 'Save Working Draft separately',
-    saving: 'Saving Saved Revision…',
-    saveError: 'Save could not be safely completed',
-    saved: 'Server confirmed the new Saved Revision.',
-    saveGuard: 'Before Save, verify Run, Branch, previous Saved HEAD, Draft version and Package fingerprint again. Save requires separate consent.',
-    refreshing: 'Refreshing server state…', retryCommandId: 'Command ID',
-    nonWritable: 'This context is not writable; return to the correct active Run/Branch and verify its Working Draft.',
-    stalePreview: 'After edits a new preview is required. The previous fingerprint must not be reused.',
-    blockedConfirm: 'The server currently prohibits configuration confirmation.',
-    statusMissing: 'Missing plan is neither confirmed nor saved.',
-    timingReady: 'Timing and ranking are ready only in the current Working Draft, not Saved or player Entry validation.'
-  }
-} as const
+
 
 const blockerText: Record<string, {cs: string; en: string}> = {
   entry_timing_missing: {cs: 'Chybí explicitní otevření Main; ze začátku turnaje nelze čas odvodit.', en: 'An explicit Main opening is missing; play week cannot supply a default.'},
@@ -205,7 +93,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   calendar: RunCalendarMetadata; enabled: boolean
 }): JSX.Element {
   const { language } = useLanguage()
-  const t = T[language]
+  const t = editionEntryTimingText(language)
   const queryClient = useQueryClient()
   const scope = JSON.stringify([runId, branchId, packageId, eventId])
   const currentScope = useRef(scope)

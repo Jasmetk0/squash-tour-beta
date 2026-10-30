@@ -1,6 +1,6 @@
 /** Mocked React/API-boundary tests: NOT real browser, HTTP or SQLite acceptance. */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -213,5 +213,49 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(sameTiming(timing,another)).toBe(true)
     expect(verifiedRunCalendar({metadata_json:{run_calendar:calendar}} as never)).toEqual(calendar)
     expect(verifiedRunCalendar({metadata_json:{run_calendar:null}} as never)).toBeNull()
+  })
+
+  it('does not accept a delayed preview from another Run/Branch/Edition context', async () => {
+    let finish!: (value: EntryTimingPreview) => void
+    api.previewRunEditionEntryTiming.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    api.getRunEditionEntryTiming.mockImplementation(
+      async (_run: string, branch: string) => ({ ...missing, branch_id: branch }))
+    const view = mount()
+    await fill()
+    await userEvent.click(screen.getByRole('button',{name:'Spočítat serverový náhled'}))
+    view.rerender(<Frame><RunEditionEntryTimingPanel runId="run" branchId="other"
+      packageId="calendar-package" eventId="edition" calendar={calendar} enabled /></Frame>)
+    await screen.findByText(/Pro tuto Edition zatím není uložený plán/)
+    await act(async () => finish(preview))
+    expect(screen.queryByText('Serverový náhled – bez zápisu')).not.toBeInTheDocument()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
+  it('sends an explicit final commitment and override, then removes the override as null', async () => {
+    const updated: EditionEntryTiming = {
+      ...timing, final_commitment: at(15), ranking_publication_override: at(14)
+    }
+    api.previewRunEditionEntryTiming.mockImplementation(async (
+      _run: string, _branch: string, _pkg: string, _edition: string, input: EditionEntryTiming
+    ) => ({ ...preview, timing:input, resolved:{
+      ...preview.resolved, ranking_source: input.ranking_publication_override ?
+        'explicit_publication_override' : 'after_main_closing_minus_one'
+    }}))
+    mount()
+    await fill()
+    await userEvent.click(screen.getByLabelText('Zadat vlastní Final Commitment'))
+    fireEvent.change(screen.getByLabelText('Final Commitment – sezona'),{target:{value:'0'}})
+    fireEvent.change(screen.getByLabelText('Final Commitment – týden'),{target:{value:'15'}})
+    await userEvent.click(screen.getByLabelText('Použít explicitní publikaci Official Ranking'))
+    fireEvent.change(screen.getByLabelText('Publikace rankingu – sezona'),{target:{value:'0'}})
+    fireEvent.change(screen.getByLabelText('Publikace rankingu – týden'),{target:{value:'14'}})
+    await userEvent.click(screen.getByRole('button',{name:'Spočítat serverový náhled'}))
+    await waitFor(() => expect(api.previewRunEditionEntryTiming).toHaveBeenCalledWith(
+      'run','branch','calendar-package','edition',updated
+    ))
+    await userEvent.click(screen.getByLabelText('Použít explicitní publikaci Official Ranking'))
+    await userEvent.click(screen.getByRole('button',{name:'Spočítat serverový náhled'}))
+    await waitFor(() => expect(api.previewRunEditionEntryTiming).toHaveBeenCalledTimes(2))
+    expect(api.previewRunEditionEntryTiming.mock.calls[1][4].ranking_publication_override).toBeNull()
   })
 })

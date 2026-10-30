@@ -151,3 +151,185 @@ def test_global_checkpoint_decode_shares_existing_budget_and_bypasses_oversize(m
     cache.decoded_global_checkpoint_component(repo, component,
         run_id='run', branch_id='branch', decode=decode)
     assert retained == before
+
+
+def test_whole_dto_adapter_retains_one_checkpoint_and_preserves_complete_reuse(monkeypatch):
+    from copy import deepcopy
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    body = {'schema_version': 'calendar_sporting_checkpoint.v13', 'nested': {'values': [1]}}
+    component = {'state': body, 'fingerprint': canonical_hash(body)}
+    cp = SimpleNamespace(schema_version='calendar_sporting_checkpoint.v13', run_id='run',
+        branch_id='branch', fingerprint=component['fingerprint'], body=deepcopy(body))
+    src = source()
+    src.payload = {'run': {'name': 'saved'}, 'content': {
+        'calendar_player_sporting_checkpoint': component,
+        'calendar_tour_authority': {'state': {'schema_version': 'calendar_tour_authority.v5'}},
+    }}
+    captured = (SimpleNamespace(nested=[{'evidence': 1}]), cp,
+                SimpleNamespace(schema_version='legacy-test-value', nested=[{'tour': 2}]))
+    repo = repository()
+    copies = []
+    original_copy = cache._copy_decoded_value
+
+    def observe(value, *args):
+        copies.append(value)
+        return original_copy(value, *args)
+
+    monkeypatch.setattr(cache, '_copy_decoded_value', observe)
+    assert cache.decoded_global_tour_source(repo, src, lambda _: captured,
+        _retain_miss=False) == captured
+    assert copies == [] and not hasattr(repo, '_global_tour_projection_cache')
+    cache.remember_committed_global_sources(repo, src, captured)
+    assert copies == [cp, (captured[0], captured[2])]
+    retained = repo._global_tour_projection_cache
+    assert len(retained) == 2
+    assert sum(v[0] for v in retained.values()) == len(cache.canonical_json(src.payload).encode())
+
+    def forbidden(_):
+        pytest.fail('complete DTO or component was needlessly decoded again')
+
+    expected = deepcopy(captured)
+    cp.body['nested']['values'].append('capturing caller')
+    captured[0].nested[0]['evidence'] = 'capturing caller'
+    first = cache.decoded_global_tour_source(repo, deepcopy(src), forbidden)
+    assert first == expected
+    first[1].body['nested']['values'].clear()
+    first[0].nested.clear()
+    first[2].nested[0]['tour'] = 'reading caller'
+    assert cache.decoded_global_tour_source(repo, src, forbidden) == expected
+    assert cache.decoded_global_checkpoint_component(repo, component,
+        run_id='run', branch_id='branch', decode=forbidden) == expected[1]
+
+    # A declared component fingerprint cannot substitute for the model guard
+    # on a new complete key. This also leaves the previous entries intact.
+    mismatched = deepcopy(src)
+    mismatched.payload['run']['name'] = 'another Saved'
+    bad = deepcopy(expected)
+    bad[1].fingerprint = '0' * 64
+    before = dict(retained)
+    with pytest.raises(ValueError, match='scope/hash'):
+        cache.remember_committed_global_sources(repo, mismatched, bad)
+    assert retained == before
+
+    # Same component, different COMPLETE Saved content: no whole-tuple reuse.
+    changed = deepcopy(src)
+    changed.payload['run']['name'] = 'rehashed changed source'
+    with pytest.raises(LookupError):
+        cache.decoded_global_tour_source(repo, changed, lambda _: (_ for _ in ()).throw(LookupError()))
+    foreign = deepcopy(src)
+    foreign.branch_id = 'foreign'
+    with pytest.raises(LookupError):
+        cache.decoded_global_tour_source(repo, foreign, lambda _: (_ for _ in ()).throw(LookupError()))
+
+    # Evict the component via the ordinary shared budget. Its adapter must not
+    # keep that model alive, and a later whole read must use the strict fallback.
+    monkeypatch.setattr(cache, 'MAX_GLOBAL_TOUR_BYTES', 300)
+    for i in range(4):
+        state = {'i': i}
+        raw = {'state': state, 'fingerprint': canonical_hash(state)}
+        cache.decoded_global_checkpoint_component(repo, raw, run_id='run', branch_id='branch',
+            decode=lambda r: SimpleNamespace(schema_version='calendar_sporting_checkpoint.v13',
+                run_id='run', branch_id='branch', fingerprint=r['fingerprint']))
+    assert not any(isinstance(v[1], cache._GlobalTourValue) for v in retained.values())
+    assert sum(v[0] for v in retained.values()) <= 300
+    with pytest.raises(LookupError):
+        cache.decoded_global_tour_source(repo, src, lambda _: (_ for _ in ()).throw(LookupError()))
+
+
+def test_two_complete_native_sources_keep_the_original_whole_dto_reuse_contract():
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    repo, calls = repository(), []
+    sources = []
+    for index in range(2):
+        body = {'schema_version': 'calendar_sporting_checkpoint.v13', 'index': index}
+        current = source()
+        current.payload = {'content': {
+            'calendar_player_sporting_checkpoint': {'state': body, 'fingerprint': canonical_hash(body)},
+            'calendar_tour_authority': {'state': {'schema_version': 'calendar_tour_authority.v5'}},
+        }}
+        sources.append(current)
+
+    def decode(current):
+        calls.append(current)
+        component = current.payload['content']['calendar_player_sporting_checkpoint']
+        return (None, SimpleNamespace(schema_version='calendar_sporting_checkpoint.v13',
+            run_id='run', branch_id='branch', fingerprint=component['fingerprint']), None)
+
+    expected = [cache.decoded_global_tour_source(repo, current, decode) for current in sources]
+    for _ in range(2):
+        for current, value in zip(sources, expected):
+            assert cache.decoded_global_tour_source(repo, current, decode) == value
+    assert len(calls) == 2, 'Alternating full DTO readers must not silently return to repeated parse'
+    assert len(repo._global_tour_projection_cache) <= 4
+
+
+def test_equal_evidence_is_shared_privately_without_sharing_caller_mutations():
+    from beta_engine.domain.rankings.official import FrozenInput
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    class Evidence(FrozenInput):
+        data: dict[str, list[int]]
+
+    repo = repository()
+    sources = []
+    for index in range(2):
+        current = source()
+        body = {'schema_version': 'calendar_sporting_checkpoint.v13', 'index': index}
+        evidence = {'data': {'nested': [1, 2]}}
+        current.payload = {'content': {
+            'calendar_player_sporting_checkpoint': {'state': body, 'fingerprint': canonical_hash(body)},
+            'calendar_standalone_match': {'state': evidence, 'fingerprint': canonical_hash(evidence)},
+            'calendar_tour_authority': {'state': {'schema_version': 'calendar_tour_authority.v5'}},
+        }}
+        sources.append(current)
+
+    def decode(current):
+        content = current.payload['content']
+        return (Evidence.model_validate(content['calendar_standalone_match']['state']),
+            SimpleNamespace(schema_version='calendar_sporting_checkpoint.v13', run_id='run',
+                branch_id=current.branch_id, fingerprint=content['calendar_player_sporting_checkpoint']['fingerprint']), None)
+
+    expected = [cache.decoded_global_tour_source(repo, current, decode) for current in sources]
+    adapters = [entry[1] for entry in repo._global_tour_projection_cache.values()
+        if isinstance(entry[1], cache._GlobalTourValue)]
+    assert len(adapters) == 2 and adapters[0].other[0] is adapters[1].other[0]
+    expected[0][0].data['nested'].clear()
+    expected[1][0].data['nested'].append(3)
+    for current in sources:
+        value = cache.decoded_global_tour_source(repo, current, lambda _: pytest.fail('unexpected decode'))
+        assert value[0].data == {'nested': [1, 2]}
+        value[0].data['nested'].append(99)
+
+    from copy import deepcopy
+    changed = deepcopy(sources[-1])
+    changed.payload['content']['calendar_standalone_match']['state']['data']['nested'].append(4)
+    changed.payload['content']['calendar_standalone_match']['fingerprint'] = canonical_hash(
+        changed.payload['content']['calendar_standalone_match']['state'])
+    assert cache.decoded_global_tour_source(repo, changed, decode)[0].data == {'nested': [1, 2, 4]}
+    assert len(repo._global_tour_projection_cache) <= 4
+
+
+def test_model_hash_reuse_requires_type_exact_values_and_handles_unknown_types():
+    from beta_engine.domain.rankings.official import FrozenInput
+    from beta_engine.infrastructure.db.native_fork_source_projection import _same_model_value
+
+    class Value(FrozenInput):
+        data: dict[str, list[int]]
+
+    original = Value(data={'nested': [1]})
+    for replacement in (True, 1.0):
+        changed = original.model_copy(deep=True)
+        changed.data['nested'][0] = replacement
+        assert original == changed  # Ordinary Pydantic/Python equality is insufficient.
+        assert not _same_model_value(original, changed)
+    assert _same_model_value(original, original.model_copy(deep=True))
+    assert 0.0 == -0.0
+    assert not _same_model_value({'value': 0.0}, {'value': -0.0})
+    assert not _same_model_value(float('nan'), float('nan'))
+    assert _same_model_value(float('inf'), float('inf'))
+    assert not _same_model_value({'value': object()}, {'value': object()})

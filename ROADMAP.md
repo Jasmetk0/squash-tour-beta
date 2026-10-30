@@ -1,3 +1,20 @@
+# Native Save performance candidate — 29 October 2026
+
+Audited base: `buuk` `edd237b7a2d5e1d69cf96aafce13799bf428253b`, with #1660
+and #1659 merged. Older candidate labels below do not describe the current
+open-PR inventory. Backend PR #1662 removes measured duplicate checkpoint
+retention through one bounded representation and a full-DTO adapter, preserving
+all physical integrity and sporting contracts. Its deterministic HTTP/SQLite
+measurement script separates ordinary timing from call/profiling/memory runs.
+See `docs/NATIVE_SAVE_PERFORMANCE.md` for measured dispersion and limits.
+
+The native API/fork/group/worker/season/browser gates, including the full
+W80/1,000 Chromium case, must actually pass on the final head before owner
+handoff. No skipped Draft job is an executed pass; no release is certified.
+Independent Viewer PR #1661 and all `web/` files remain untouched.
+
+---
+
 # Native Save decode continuity candidate — 29 October 2026
 
 Verified `buuk`: `fbe8e00c346b1de6de6d3144509a92592dec38d0`, owner merge of #1657.

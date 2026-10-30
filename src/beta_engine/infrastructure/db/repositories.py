@@ -6720,21 +6720,8 @@ class SimulationPersistenceRepository:
             # the inserted row matched it before successful commit. Retain only
             # an isolated DTO copy, keyed by the complete authenticated payload;
             # subsequent independent readers still authenticate physical sources.
-            from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_tour_source
-            decoded_global_tour_source(self, verified_native_save_receipt, lambda _source: captured_sources)
-            if getattr(captured_sources[1], 'schema_version', None) == 'calendar_sporting_checkpoint.v13':
-                # The native command reader keys this strict decode by the
-                # complete component, independently of Tour-only Saved metadata.
-                # Seed that SAME representation only after successful commit.
-                # It shares the existing byte budget and defensive copies; no
-                # physical/source/math proof is created or transferred here.
-                from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_checkpoint_component
-                decoded_global_checkpoint_component(
-                    self,
-                    verified_native_save_receipt.payload['content']['calendar_player_sporting_checkpoint'],
-                    run_id=run_id, branch_id=branch_id,
-                    decode=lambda _component: captured_sources[1],
-                )
+            from beta_engine.infrastructure.db.native_fork_source_projection import remember_committed_global_sources
+            remember_committed_global_sources(self, verified_native_save_receipt, captured_sources)
             # Publish only immutable JSON values after the complete Save
             # transaction succeeds. No typed source/math proofs survive it.
             from beta_engine.infrastructure.db.calendar_tour import (

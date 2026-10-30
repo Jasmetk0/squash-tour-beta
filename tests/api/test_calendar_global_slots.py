@@ -21,9 +21,9 @@ from tests.api.test_saved_revision_history_api import ApiServer, _request
 pytestmark = pytest.mark.smoke
 
 
-def ready(server, width=52, *, seasons=2):
+def ready(server, width=52, *, seasons=2, population=8):
     offset = 37 if width == 61 else 80 if width == 80 else 1
-    repo, _ = setup(server, RunCalendar(width, offset, 2030, seasons), 8)
+    repo, _ = setup(server, RunCalendar(width, offset, 2030, seasons), population)
     for eid in ("parallel-a", "parallel-b"):
         view = inspect(server)
         week = view["state"]["week"]
@@ -1539,5 +1539,40 @@ def test_successful_global_save_seeds_next_checkpoint_decode(tmp_path, prepared_
         first = read()
         assert first.model_dump(mode='json') == component['state']
         first.__dict__['branch_id'] = 'mutated-caller'
+        first.week.__dict__['week'] = -1
         assert read().branch_id == 'branch'
+        assert read().model_dump(mode='json') == component['state']
         assert sum(v[0] for v in repository._global_tour_projection_cache.values()) <= cache.MAX_GLOBAL_TOUR_BYTES
+        if not limited_budget:
+            from beta_engine.infrastructure.db.calendar_standalone_match_state import decode_prevalidated_calendar_sources
+            record = repository.get_branch_saved_revision(revision_id=receipt['saved_revision']['revision_id'])
+            expected = decode_prevalidated_calendar_sources(record.payload, run_id='run', branch_id='branch')
+            whole = cache.decoded_global_tour_source(repository, record, unexpected_decode)
+            assert whole == expected
+            whole[1].week.__dict__['week'] = -1
+            assert cache.decoded_global_tour_source(repository, record, unexpected_decode) == expected
+        saved_view = inspect(server)
+        if not limited_budget:
+            # Two real committed Saves, then deterministically reverse their
+            # handoff completion order. A delayed older publisher may evict
+            # decode data; it must never select or authorize the older HEAD.
+            execute(server, command(saved_view, 'next-match', name='later-committed-save'))
+            newer = save_tour(server)
+            saved_view = inspect(server)
+            assert saved_view['saved_head_revision_id'] == newer['revision_id']
+            cache.remember_committed_global_sources(repository, record, expected)
+            assert inspect(server) == saved_view
+            from tests.api.test_calendar_tour_flow import create_edition
+            checkpoint_before_tour_save = saved_view['checkpoint_fingerprint']
+            before_tour_save = repository.get_branch_saved_revision(revision_id=saved_view['saved_head_revision_id'])
+            checkpoint_values = canonical_json(before_tour_save.payload['content']['calendar_player_sporting_checkpoint']['state'])
+            create_edition(server, 'performance-future-edition', size=4)
+            saved_view = inspect(server)
+            assert saved_view['checkpoint_fingerprint'] == checkpoint_before_tour_save
+            latest = repository.get_branch_saved_revision(revision_id=saved_view['saved_head_revision_id'])
+            assert canonical_json(latest.payload['content']['calendar_player_sporting_checkpoint']['state']) == checkpoint_values
+            assert cache.decoded_global_tour_source(repository, latest, unexpected_decode) == decode_prevalidated_calendar_sources(
+                latest.payload, run_id='run', branch_id='branch')
+    # A new server/repository and new SQLite connections have no decode cache.
+    with ApiServer(database_url=f'sqlite:///{path}') as restarted:
+        assert inspect(restarted) == saved_view

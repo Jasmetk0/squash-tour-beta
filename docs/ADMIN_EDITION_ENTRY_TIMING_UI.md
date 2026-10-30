@@ -114,3 +114,7 @@ While a manual or automatically triggered inspection GET is in flight, the Entry
 ## Canonical Run context identity
 
 The frontend editing scope uses the actual Run calendar values in a fixed order rather than raw JSON object serialization. A caller that reorders an otherwise identical persisted clock object must not wipe a valid preview or operator/audit text. Changing any real clock field still creates a different editor scope and invalidates reviewed state. A mocked React rerender regression covers reordered metadata without a Confirm or Save write.
+
+## Direct Saved Revision history navigation
+
+The existing `/admin/runs/:runId/branches` route renders `SavedRevisionHistoryPanel` and allows an operator to select the intended Branch. After confirmed Draft and Saved/uncertain Save, the Entry UI now offers a direct CS/EN link to that real history page in addition to its original Run Management link. It does **not** fake support for direct per-revision navigation or assume that the first Branch is the requested one; the operator selects the Branch in history. Mocked component regressions verify the exact route after Confirm, successful Save and ambiguous Save.

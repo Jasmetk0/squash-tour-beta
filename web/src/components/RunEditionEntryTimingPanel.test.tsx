@@ -337,6 +337,7 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
     expect(await screen.findByText(/Potvrzeno pouze do Working Draftu/)).toBeInTheDocument()
     expect(screen.getByRole('link',{name:/Run Management a uložené revize/})).toHaveAttribute('href', expect.stringContaining('/admin/runs/run'))
+    expect(screen.getByRole('link',{name:/skutečnou historii Saved Revisions/})).toHaveAttribute('href','/admin/runs/run/branches')
   })
 
   it('keeps exact command ID and full payload for explicit retry after an uncertain response', async () => {
@@ -445,6 +446,8 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.getBranchWorkingDraft).toHaveBeenCalledWith('run','branch')
     expect(api.getRunPackageState).toHaveBeenCalledWith('run','branch')
     expect(await screen.findByText(/Saved Revision byla uložena/)).toBeInTheDocument()
+    expect(screen.getByRole('link',{name:/skutečnou historii Saved Revisions/})).toHaveAttribute(
+      'href','/admin/runs/run/branches')
     expect(screen.getByLabelText('Otevření Main – týden')).toBeDisabled()
     expect(screen.getByRole('button',{name:'Spočítat serverový náhled'})).toBeDisabled()
     expect(screen.getByRole('button',{name:'Znovu načíst ze serveru'})).toBeDisabled()
@@ -462,6 +465,8 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(screen.getByText(/Save už mohl vytvořit Saved Revision/)).toBeInTheDocument()
     expect(screen.queryByText('Saved Revision byla uložena a potvrzena serverem.')).not.toBeInTheDocument()
     expect(screen.getByRole('button',{name:'Samostatně uložit Working Draft'})).toBeDisabled()
+    expect(screen.getByRole('link',{name:/skutečnou historii Saved Revisions/})).toHaveAttribute(
+      'href','/admin/runs/run/branches')
     expect(screen.getByLabelText(/Samostatně schvaluji uložení/)).toBeDisabled()
     expect(screen.getByRole('button',{name:'Znovu načíst ze serveru'})).toBeDisabled()
     expect(screen.getByRole('link',{name:/Run Management a uložené revize/})).toHaveAttribute(

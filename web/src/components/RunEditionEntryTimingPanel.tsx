@@ -643,6 +643,9 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         <Link to={'/admin/runs/' + encodeURIComponent(runId) + '/manage?branch=' + encodeURIComponent(branchId)}>
           {t.savedLink}
         </Link>
+        <Link to={'/admin/runs/' + encodeURIComponent(runId) + '/branches'}>
+          {t.historyLink}
+        </Link>
       </div>}
       {saveError && <p role="alert" className="error">{saveError}</p>}
       {saveOutcomeUncertain && <p role="alert" className="error">{t.saveUncertainAdvice}</p>}
@@ -651,6 +654,9 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         <p style={{overflowWrap: 'anywhere'}}>{t.savedRevisionId}: {savedRevision}</p>
         <Link to={'/admin/runs/' + encodeURIComponent(runId) + '/manage?branch=' + encodeURIComponent(branchId)}>
           {t.savedLink}
+        </Link>
+        <Link to={'/admin/runs/' + encodeURIComponent(runId) + '/branches'}>
+          {t.historyLink}
         </Link>
       </div>}
     </div>

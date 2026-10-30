@@ -74,6 +74,7 @@ export const editionEntryTimingWords = {
   retryHint: { cs: 'Pro bezpečný exact retry zůstává zachováno stejné command ID i celý payload. Nový příkaz se nevytváří.', en: 'For safe exact retry, the original command ID and complete payload are retained. No new command is generated.' },
   confirmed: { cs: 'Potvrzeno pouze do Working Draftu. Saved Revision ještě nebyla vytvořena.', en: 'Confirmed in Working Draft only. No Saved Revision has been created.' },
   savedLink: { cs: 'Otevřít Run Management a uložené revize', en: 'Open Run Management and revision history' },
+  historyLink: { cs: 'Otevřít skutečnou historii Saved Revisions (vyber Branch)', en: 'Open Saved Revision history (select Branch)' },
   saveConsent: { cs: 'Samostatně schvaluji uložení aktuálního ověřeného Working Draftu jako nové Saved Revision.', en: 'I separately authorize saving the currently verified Working Draft as a new Saved Revision.' },
   saveButton: { cs: 'Samostatně uložit Working Draft', en: 'Save Working Draft separately' },
   saving: { cs: 'Ukládám Saved Revision…', en: 'Saving Saved Revision…' },

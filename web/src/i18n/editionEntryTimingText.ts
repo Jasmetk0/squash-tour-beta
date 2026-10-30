@@ -71,6 +71,7 @@ export const editionEntryTimingWords = {
   saveConsent: { cs: 'Samostatně schvaluji uložení aktuálního ověřeného Working Draftu jako nové Saved Revision.', en: 'I separately authorize saving the currently verified Working Draft as a new Saved Revision.' },
   saveButton: { cs: 'Samostatně uložit Working Draft', en: 'Save Working Draft separately' },
   saving: { cs: 'Ukládám Saved Revision…', en: 'Saving Saved Revision…' },
+  saveRefreshError: { cs: 'Saved Revision byla vytvořena, ale obnovení náhledu selhalo. Otevři Run Management a ověř uloženou revizi.', en: 'Saved Revision was created, but refreshing its view failed. Open Run Management to verify the persisted revision.' },
   saveError: { cs: 'Uložení nelze bezpečně provést', en: 'Save could not be safely completed' },
   saved: { cs: 'Saved Revision byla uložena a potvrzena serverem.', en: 'Server confirmed the new Saved Revision.' },
   saveGuard: { cs: 'Před uložením znovu ověřím Run, Branch, původní Saved HEAD, verzi Draftu a fingerprint Package; bez souhlasu a ověření Save neproběhne.', en: 'Before Save, verify Run, Branch, previous Saved HEAD, Draft version and Package fingerprint again. Save requires separate consent.' },

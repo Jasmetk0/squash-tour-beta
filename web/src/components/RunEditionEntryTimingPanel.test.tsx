@@ -19,7 +19,11 @@ const api = vi.hoisted(() => ({
   getRunEditionEntryTiming: vi.fn(),
   previewRunEditionEntryTiming: vi.fn(),
   confirmRunEditionEntryTiming: vi.fn(),
-  saveRunPackageWorkingDraft: vi.fn()
+  saveRunPackageWorkingDraft: vi.fn(),
+  getRunContainer: vi.fn(),
+  listRunBranches: vi.fn(),
+  getBranchWorkingDraft: vi.fn(),
+  getRunPackageState: vi.fn()
 }))
 vi.mock('../api/client', () => api)
 const hash = (letter: string) => letter.repeat(64)
@@ -98,6 +102,26 @@ beforeEach(() => {
   localStorage.setItem('squash-engine-language-v1', 'cs')
   api.getRunEditionEntryTiming.mockResolvedValue(missing)
   api.previewRunEditionEntryTiming.mockResolvedValue(preview)
+  api.getRunContainer.mockResolvedValue({
+    run_id:'run', storage_kind:'custom_local', read_only:false,
+    metadata_json:{run_calendar:calendar}
+  })
+  api.listRunBranches.mockResolvedValue({run_branches:[{
+    run_id:'run',branch_id:'branch',status:'active',read_only:false,
+    saved_head_revision_id:'head'
+  }]})
+  api.getBranchWorkingDraft.mockResolvedValue({
+    run_id:'run',branch_id:'branch',status:'dirty',
+    base_saved_revision_id:'head',draft_version:2
+  })
+  api.getRunPackageState.mockResolvedValue({
+    state:{run_id:'run',branch_id:'branch'},fingerprint:hash('e')
+  })
+  api.saveRunPackageWorkingDraft.mockResolvedValue({
+    run_id:'run',branch_id:'branch',saved_revision:{revision_id:'revision-new'},
+    working_draft:{run_id:'run',branch_id:'branch',
+      base_saved_revision_id:'revision-new',status:'clean'}
+  })
   api.confirmRunEditionEntryTiming.mockImplementation(async (
     _run: string, _branch: string, _pkg: string, _edition: string, payload: { command_id: string }) =>
     ({ ...receipt, command_id: payload.command_id }))
@@ -258,5 +282,34 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     await userEvent.click(screen.getByRole('button',{name:'Spočítat serverový náhled'}))
     await waitFor(() => expect(api.previewRunEditionEntryTiming).toHaveBeenCalledTimes(2))
     expect(api.previewRunEditionEntryTiming.mock.calls[1][4].ranking_publication_override).toBeNull()
+  })
+
+  it('requires separate Save consent and fresh real scope/version/fingerprint verification', async () => {
+    mount(); await fill(); await requestPreview()
+    await userEvent.click(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'}))
+    await screen.findByText(/Potvrzeno pouze do Working Draftu/)
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+    expect(screen.getByRole('button',{name:'Samostatně uložit Working Draft'})).toBeDisabled()
+    await userEvent.click(screen.getByLabelText(/Samostatně schvaluji uložení/))
+    await userEvent.click(screen.getByRole('button',{name:'Samostatně uložit Working Draft'}))
+    await waitFor(() => expect(api.saveRunPackageWorkingDraft).toHaveBeenCalledWith('run','branch',2))
+    expect(api.getRunContainer).toHaveBeenCalledWith('run')
+    expect(api.getBranchWorkingDraft).toHaveBeenCalledWith('run','branch')
+    expect(api.getRunPackageState).toHaveBeenCalledWith('run','branch')
+    expect(await screen.findByText(/Saved Revision byla uložena/)).toBeInTheDocument()
+  })
+
+  it('fails closed on stale Draft version without making Save call', async () => {
+    api.getBranchWorkingDraft.mockResolvedValue({
+      run_id:'run',branch_id:'branch',status:'dirty',
+      base_saved_revision_id:'head',draft_version:7
+    })
+    mount(); await fill(); await requestPreview()
+    await userEvent.click(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'}))
+    await screen.findByText(/Potvrzeno pouze do Working Draftu/)
+    await userEvent.click(screen.getByLabelText(/Samostatně schvaluji uložení/))
+    await userEvent.click(screen.getByRole('button',{name:'Samostatně uložit Working Draft'}))
+    expect(await screen.findByText(/Uložení nelze bezpečně provést/)).toBeInTheDocument()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
   })
 })

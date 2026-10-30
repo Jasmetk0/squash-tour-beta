@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
 
 import { RunEditionEntryTimingPanel } from './RunEditionEntryTimingPanel'
@@ -97,6 +97,7 @@ async function requestPreview() {
   await userEvent.click(screen.getByRole('button', {name: /Spočítat serverový náhled|Calculate server preview/}))
   await screen.findByText(/Serverový náhled|Server preview/)
 }
+afterEach(() => vi.restoreAllMocks())
 beforeEach(() => {
   vi.clearAllMocks()
   localStorage.setItem('squash-engine-language-v1', 'cs')
@@ -340,5 +341,29 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     await userEvent.click(screen.getByRole('button', {name:'Znovu načíst ze serveru'}))
     expect(screen.queryByRole('button',{name:'Výslovně potvrdit do Working Draftu'})).not.toBeInTheDocument()
     expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
+  it('locks reviewed inputs after confirm so an unsaved Working Draft cannot be accidentally discarded', async () => {
+    mount(); await fill(); await requestPreview()
+    await userEvent.click(screen.getByRole('button', {name:'Výslovně potvrdit do Working Draftu'}))
+    expect(await screen.findByText(/Potvrzeno pouze do Working Draftu/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Otevření Main – týden')).toBeDisabled()
+    expect(screen.getByRole('button', {name:'Spočítat serverový náhled'})).toBeDisabled()
+    await userEvent.click(screen.getByLabelText(/Samostatně schvaluji uložení/))
+    expect(screen.getByRole('button', {name:'Samostatně uložit Working Draft'})).toBeEnabled()
+  })
+
+  it('does not undo a Saved Revision or claim Save failed if subsequent cache invalidation fails', async () => {
+    mount(); await fill(); await requestPreview()
+    await userEvent.click(screen.getByRole('button', {name:'Výslovně potvrdit do Working Draftu'}))
+    expect(await screen.findByText(/Potvrzeno pouze do Working Draftu/)).toBeInTheDocument()
+    await waitFor(() => expect(api.getRunEditionEntryTiming.mock.calls.length).toBeGreaterThan(1))
+    vi.spyOn(QueryClient.prototype, 'invalidateQueries').mockRejectedValue(new Error('cache unavailable'))
+    await userEvent.click(screen.getByLabelText(/Samostatně schvaluji uložení/))
+    await userEvent.click(screen.getByRole('button', {name:'Samostatně uložit Working Draft'}))
+    expect(await screen.findByText(/Saved Revision byla uložena/)).toBeInTheDocument()
+    expect(await screen.findByText(/Saved Revision byla vytvořena, ale obnovení náhledu selhalo/)).toBeInTheDocument()
+    expect(api.saveRunPackageWorkingDraft).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button',{name:'Samostatně uložit Working Draft'})).not.toBeInTheDocument()
   })
 })

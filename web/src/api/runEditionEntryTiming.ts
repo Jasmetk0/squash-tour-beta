@@ -142,8 +142,9 @@ export function entryTimingScope(
 }
 /** Check network DTOs before passing nested timing/window values to React. */
 function validTiming(value: EditionEntryTiming | null | undefined): value is EditionEntryTiming {
-  const clock = value?.main_open?.calendar
-  if (!clock || !isValidRunCalendarMetadata(clock) || value?.schema_version !== 'edition_entry_timing.v1') return false
+  if (!value || !isValidRunCalendarMetadata(value.main_open?.calendar) ||
+    value.schema_version !== 'edition_entry_timing.v1') return false
+  const clock = value.main_open.calendar
   const optionalWeek = (week: EntryWeek | null | undefined) =>
     week === null || (week !== undefined && validWeek(week, clock))
   return validWeek(value.main_open, clock) &&
@@ -162,7 +163,7 @@ export function validEntryTimingInspection(
 ): boolean {
   if (!entryTimingScope(value, run, branch, pkg, edition) ||
     !Array.isArray(value.blockers) ||
-    !value.blockers.every(b => b !== null && typeof b.code === 'string' && typeof b.detail === 'string') ||
+    !value.blockers.every(b => b != null && typeof b.code === 'string' && typeof b.detail === 'string') ||
     value.automatic_eligibility_status !== 'not_implemented') return false
   if (value.timing === null) return value.preflight_status === 'missing_content'
   const data = value as EntryTimingPreview

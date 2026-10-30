@@ -31,3 +31,6 @@ Known limitation: historical Run records without explicit v1 Run calendar metada
 - Added mocked React tests for restore, audit-only changes and exact field bounds; no real backend or browser is claimed. Last-head CI and Sonar gates must be checked independently. Keep Draft.
 
 - Follow-up: #13 frozen server before/after fields and disclosed unchanged values added. Accessible field error text is now outside labels. The actual execution, save and ranking boundaries remain unchanged.
+
+- #12 integrated existing Run/Branch/Edition published Official Ranking options API as an optional dropdown, loaded only when override is enabled. Displays pending/empty/error separately; selection changes local week only and never binds, confirms or Saves. Mocked UI tests cover real-shaped options and empty history.
+- #18/#20 now distinguish server-permitted preparation from blocked confirmation and from unsupported sporting execution. No new authority is inferred.

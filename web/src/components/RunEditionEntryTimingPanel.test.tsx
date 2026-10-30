@@ -23,7 +23,8 @@ const api = vi.hoisted(() => ({
   getRunContainer: vi.fn(),
   listRunBranches: vi.fn(),
   getBranchWorkingDraft: vi.fn(),
-  getRunPackageState: vi.fn()
+  getRunPackageState: vi.fn(),
+  listTournamentRankingPublicationOptions: vi.fn()
 }))
 vi.mock('../api/client', () => api)
 const hash = (letter: string) => letter.repeat(64)
@@ -102,6 +103,14 @@ beforeEach(() => {
   vi.clearAllMocks()
   localStorage.setItem('squash-engine-language-v1', 'cs')
   api.getRunEditionEntryTiming.mockResolvedValue(missing)
+  api.listTournamentRankingPublicationOptions.mockResolvedValue({
+    run_id:'run', branch_id:'branch', event_id:'edition',
+    source:'published_official_rankings.v1', publication_count:1,
+    publications:[{
+      ranking_week:{season_index:0,week:14},snapshot_fingerprint:hash('f'),
+      ranked_row_count:50,policy_id:'policy',best_n:15
+    }]
+  })
   api.previewRunEditionEntryTiming.mockResolvedValue(preview)
   api.getRunContainer.mockResolvedValue({
     run_id:'run', storage_kind:'custom_local', read_only:false,
@@ -178,6 +187,31 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(screen.getByText('Co serverový náhled mění')).toBeInTheDocument()
     expect(screen.getByText('Délka Main', {selector:'strong'})).toBeInTheDocument()
     expect(screen.getByText('Zobrazit nezměněná pole')).toBeInTheDocument()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
+  it('loads real publication options only when override is enabled and does not bind by selection', async () => {
+    mount(); await fill()
+    expect(api.listTournamentRankingPublicationOptions).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByLabelText('Použít explicitní publikaci Official Ranking'))
+    await waitFor(() => expect(api.listTournamentRankingPublicationOptions).toHaveBeenCalledWith(
+      'run','branch','edition'
+    ))
+    await userEvent.selectOptions(screen.getByLabelText('Vybrat existující publikaci Official Ranking'),'0:14')
+    expect(screen.getByLabelText('Publikace rankingu – týden')).toHaveValue(14)
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+  })
+
+  it('distinguishes missing publication history without selecting a fictional ranking', async () => {
+    api.listTournamentRankingPublicationOptions.mockResolvedValueOnce({
+      run_id:'run',branch_id:'branch',event_id:'edition',
+      source:'published_official_rankings.v1',publication_count:0,publications:[]
+    })
+    mount(); await fill()
+    await userEvent.click(screen.getByLabelText('Použít explicitní publikaci Official Ranking'))
+    expect(await screen.findByText(/nebyla nalezena použitelná publikace/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Publikace rankingu – týden')).toHaveValue(null)
     expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
   })
 

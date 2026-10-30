@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import {
   confirmRunEditionEntryTiming, getRunEditionEntryTiming, previewRunEditionEntryTiming,
   getRunContainer, listRunBranches, getBranchWorkingDraft, getRunPackageState,
-  saveRunPackageWorkingDraft
+  saveRunPackageWorkingDraft, listTournamentRankingPublicationOptions
 } from '../api/client'
 import type { RunCalendarMetadata } from '../api/runCalendarCreation'
 import {
@@ -121,6 +121,18 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const inspection = refreshed && entryTimingScope(refreshed, runId, branchId, packageId, eventId)
     ? refreshed : query.data && entryTimingScope(query.data, runId, branchId, packageId, eventId)
       ? query.data : null
+  // Only request authentic Run/Branch-specific publications while the operator
+  // explicitly edits the override; the list never binds a ranking by itself.
+  const rankingOptionsQuery = useQuery({
+    queryKey: ['tournament-ranking-publications', runId, branchId, eventId],
+    queryFn: () => listTournamentRankingPublicationOptions(runId, branchId, eventId),
+    enabled: Boolean(readable && enabled && inspection && form.overrideEnabled && !receipt && !retryPayload),
+    retry: false
+  })
+  const validPublications = rankingOptionsQuery.data?.publications.filter(item =>
+    item && isHash(item.snapshot_fingerprint) &&
+    weekInClock({calendar, season_index: item.ranking_week?.season_index, week: item.ranking_week?.week}, calendar)
+  ) ?? []
 
   useEffect(() => {
     initialised.current = ''
@@ -430,9 +442,40 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         {form.commitmentEnabled && weekFields(form.commitment, 'commitment', t.commitmentSeason, t.commitmentWeek)}
         <label><input type="checkbox" checked={form.overrideEnabled}
           onChange={event => update({ overrideEnabled: event.target.checked })} /> {t.overrideSwitch}</label>
-        {form.overrideEnabled
-          ? weekFields(form.override, 'override', t.overrideSeason, t.overrideWeek)
-          : <p className="status">{t.defaultRanking}</p>}
+        {form.overrideEnabled && <div className="grid">
+          <label htmlFor={inputId('publication-picker')}>{t.publicationsPicker}
+            <select id={inputId('publication-picker')} disabled={editingBlocked || rankingOptionsQuery.isFetching}
+              value={validPublications.some(row =>
+                String(row.ranking_week.season_index) === form.override.season &&
+                String(row.ranking_week.week) === form.override.week)
+                ? form.override.season + ':' + form.override.week : ''}
+              onChange={event => {
+                const selected = validPublications.find(row =>
+                  row.ranking_week.season_index + ':' + row.ranking_week.week === event.target.value)
+                if (selected) update({override: {
+                  season: String(selected.ranking_week.season_index),
+                  week: String(selected.ranking_week.week)
+                }})
+              }}>
+              <option value="">{t.publicationsPlaceholder}</option>
+              {validPublications.map(row => <option
+                key={row.ranking_week.season_index + ':' + row.ranking_week.week}
+                value={row.ranking_week.season_index + ':' + row.ranking_week.week}>
+                {seasonLabelFor(row.ranking_week.season_index)} · W{row.ranking_week.week}
+                {' · '}{row.ranked_row_count} {t.rankingRows}
+              </option>)}
+            </select>
+          </label>
+          {rankingOptionsQuery.isPending && <p role="status">{t.publicationsLoading}</p>}
+          {rankingOptionsQuery.isError && <p role="alert" className="error">
+            {t.publicationsError}: {formatApiError(rankingOptionsQuery.error)}
+          </p>}
+          {rankingOptionsQuery.isSuccess && validPublications.length === 0 &&
+            <p role="status">{t.publicationsEmpty}</p>}
+          <p className="status">{t.publicationsHint}</p>
+          {weekFields(form.override, 'override', t.overrideSeason, t.overrideWeek)}
+        </div>}
+        {!form.overrideEnabled && <p className="status">{t.defaultRanking}</p>}
         </details>
         <label htmlFor={inputId('operator')}>{t.operator}
           <input id={inputId('operator')} maxLength={160} value={form.operator} autoComplete="off"
@@ -492,10 +535,15 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         {effectiveStatus.ranking_will_be_bound && <p role="status">{t.rankingWillBind}</p>}
         {effectiveStatus.ranking_snapshot_fingerprint === null && <p role="status">{t.noRanking}</p>}
         {effectiveStatus.timing_and_ranking_ready && <p role="status">{t.timingReady}</p>}
+        {effectiveStatus.preflight_status === 'unsupported_execution' &&
+          <p role="status">{t.executionDenied}</p>}
       </div>}
       <p role="status" className="status">{t.eligibility}</p>
       {inspection && <div aria-live="polite">
         <h4>{t.blockers}</h4>
+        {effectiveStatus && <p role="status">{
+          effectiveStatus.can_confirm_configuration ? t.preparationPermitted : t.preparationBlocked
+        }</p>}
         {blockers.length ? <ul>{blockers.map((blocker, index) =>
           <li key={blocker.code + '-' + index}><strong>{blocker.code}</strong>: {
             blockerText[blocker.code]?.[language] ?? blocker.detail

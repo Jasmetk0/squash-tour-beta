@@ -175,6 +175,7 @@ export function validEntryTimingInspection(
     data.configuration_state === 'working_draft' &&
     Number.isSafeInteger(data.draft_version) && data.draft_version >= 0 &&
     typeof data.saved_head_revision_id === 'string' &&
+    data.saved_head_revision_id.trim().length > 0 &&
     isHash(data.preview_fingerprint) && isHash(data.state_fingerprint) &&
     isHash(data.edition_fingerprint) &&
     validWeek(data.resolved.main_open, clock) &&
@@ -186,7 +187,12 @@ export function validEntryTimingInspection(
     nullableWeek(data.resolved.default_ranking_completed_week) &&
     nullableWeek(data.resolved.ranking_publication_week) &&
     nullableWeek(data.current_week) &&
-    (data.before === null || validTiming(data.before)) &&
+    (data.current_window === null ||
+      ['not_open', 'main', 'qualification', 'all_entries_closed'].includes(data.current_window)) &&
+    (data.before === null ||
+      (validTiming(data.before) && sameClock(data.before.main_open.calendar, clock))) &&
+    typeof data.ranking_will_be_bound === 'boolean' &&
+    typeof data.timing_and_ranking_ready === 'boolean' &&
     (data.ranking_snapshot_fingerprint === null || isHash(data.ranking_snapshot_fingerprint)) &&
     (data.ranking_authority_fingerprint === null || isHash(data.ranking_authority_fingerprint)) &&
     ['missing_prerequisite', 'ready_for_explicit_confirmation', 'bound'].includes(data.ranking_binding_status) &&

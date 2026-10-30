@@ -119,6 +119,22 @@ describe('Run Edition Entry timing HTTP client — mocked transport', () => {
     expect(spy).toHaveBeenCalledTimes(3)
   })
 
+  it('rejects malformed status flags, foreign previous Run clocks and invalid window kinds', async () => {
+    const foreignClock = {...calendar, start_year: 2040}
+    const spy = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(ok({...preview, ranking_will_be_bound: 'yes'}))
+      .mockResolvedValueOnce(ok({...preview, timing_and_ranking_ready: null}))
+      .mockResolvedValueOnce(ok({...preview, current_window: 'future_tournament'}))
+      .mockResolvedValueOnce(ok({...preview, before:{
+        ...timing, main_open:{calendar:foreignClock, season_index:0, week:13}
+      }}))
+      .mockResolvedValueOnce(ok({...preview, saved_head_revision_id:'  '}))
+    for (let index = 0; index < 5; index += 1) {
+      await expect(getRunEditionEntryTiming(...args)).rejects.toThrow(/invalid contract/)
+    }
+    expect(spy).toHaveBeenCalledTimes(5)
+  })
+
   it('rejects preview with a malformed Run clock rather than using an inferred fallback', async () => {
     const spy = vi.spyOn(globalThis,'fetch').mockResolvedValue(
       ok({...preview,timing:{...timing,main_open:{...timing.main_open,

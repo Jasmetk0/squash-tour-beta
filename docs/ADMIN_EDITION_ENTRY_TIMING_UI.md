@@ -78,3 +78,7 @@ Season option keys use stable calendar-derived season labels. Server blockers re
 ## Preserving backend blocker diagnostics
 
 Known blocker codes now show a CS/EN next action alongside the existing translated explanation. Their original, unmodified server detail is retained behind disclosure rather than silently replaced; unknown blockers continue to display their exact server text. This is explanatory UI only. It never recalculates server readiness, bypasses can_confirm_configuration, or enables sporting execution.
+
+## Nested API-contract hardening (follow-up)
+
+On the HTTP read boundary, reject non-boolean ranking binding/readiness flags, unknown current-window values, a blank Saved HEAD identity and any existing `before` timing whose Run clock disagrees with the proposed timing. These fields are backend-owned; the UI must not reinterpret them or silently fabricate a fallback. Five malformed mocked responses are asserted to fail closed before rendering.

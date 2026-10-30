@@ -5413,3 +5413,59 @@ export function importPlayerLabHistory(payload: {product_run_id: string; branch_
 export function runPlayerLabSession(id: string, fingerprint: string): Promise<import('./types').PlayerLabResult> {
   return request(`/admin/labs/player/sessions/${encodeURIComponent(id)}/run`, {method: 'POST', body: JSON.stringify({expected_session_fingerprint: fingerprint})})
 }
+
+
+/** Run-owned Edition Entry preparation; preview and confirm NEVER call Working Draft Save. */
+function editionEntryTimingRoot(run: string, branch: string, pkg: string, edition: string): string {
+  return '/admin/runs/' + encodeURIComponent(run) +
+    '/branches/' + encodeURIComponent(branch) +
+    '/packages/calendar/' + encodeURIComponent(pkg) +
+    '/editions/' + encodeURIComponent(edition) + '/entry-timing'
+}
+
+export async function getRunEditionEntryTiming(
+  run: string, branch: string, pkg: string, edition: string
+): Promise<import('./runEditionEntryTiming').EntryTimingInspection> {
+  const data = await request<import('./runEditionEntryTiming').EntryTimingInspection>(
+    editionEntryTimingRoot(run, branch, pkg, edition))
+  const { validEntryTimingInspection } = await import('./runEditionEntryTiming')
+  if (!validEntryTimingInspection(data, run, branch, pkg, edition))
+    throw new Error('Edition Entry timing inspection has a foreign scope or invalid contract.')
+  return data
+}
+
+export async function previewRunEditionEntryTiming(
+  run: string, branch: string, pkg: string, edition: string,
+  timing: import('./runEditionEntryTiming').EditionEntryTiming
+): Promise<import('./runEditionEntryTiming').EntryTimingPreview> {
+  const data = await request<import('./runEditionEntryTiming').EntryTimingPreview>(
+    editionEntryTimingRoot(run, branch, pkg, edition) + '/preview',
+    { method: 'POST', body: JSON.stringify({ timing }) })
+  const { validEntryTimingInspection } = await import('./runEditionEntryTiming')
+  if (!validEntryTimingInspection(data, run, branch, pkg, edition) || !data.preview_fingerprint ||
+    JSON.stringify(data.timing) !== JSON.stringify(timing))
+    throw new Error('Edition Entry timing preview does not match the reviewed configuration and scope.')
+  return data
+}
+
+export async function confirmRunEditionEntryTiming(
+  run: string, branch: string, pkg: string, edition: string,
+  payload: import('./runEditionEntryTiming').EntryTimingConfirmPayload
+): Promise<import('./runEditionEntryTiming').EntryTimingReceipt> {
+  const data = await request<import('./runEditionEntryTiming').EntryTimingReceipt>(
+    editionEntryTimingRoot(run, branch, pkg, edition) + '/confirm',
+    { method: 'POST', body: JSON.stringify(payload) })
+  const { entryTimingScope, isHash } = await import('./runEditionEntryTiming')
+  if (!data || data.command_id !== payload.command_id || !isHash(data.receipt_fingerprint) ||
+    !isHash(data.state_fingerprint) || !isHash(data.request_fingerprint) ||
+    !entryTimingScope(data.request, run, branch, pkg, edition) ||
+    data.request.expected_preview_fingerprint !== payload.expected_preview_fingerprint ||
+    data.request.operator_label !== payload.operator_label ||
+    data.request.audit_reason !== payload.audit_reason ||
+    JSON.stringify(data.request.timing) !== JSON.stringify(payload.timing) ||
+    !entryTimingScope(data.preview, run, branch, pkg, edition) ||
+    data.preview.preview_fingerprint !== payload.expected_preview_fingerprint ||
+    data.state.run_id !== run || data.state.branch_id !== branch)
+    throw new Error('Edition Entry timing receipt does not match the exact confirmed command.')
+  return data
+}

@@ -10,6 +10,7 @@ from beta_engine.application.calendar_tour_season_summary import (
 )
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+from beta_engine.domain.tournaments.calendar_tour import CalendarTourEdition
 
 pytestmark = pytest.mark.pr_critical
 
@@ -53,8 +54,16 @@ def fixture(*, closing=1, tamper=None):
             {"player_id":"player-d","reached_stage":"semifinal","main_points":30},
         ]
         editions.append(NS(
-            edition=NS(edition_id=eid,name=eid,week=RunWeekPosition(calendar=clock,season_index=i,week=2),
-                       main_entrant_count=4),
+            edition=CalendarTourEdition(
+                edition_id=eid,
+                name=eid,
+                week=RunWeekPosition(calendar=clock,season_index=i,week=2),
+                announcement_week=RunWeekPosition(calendar=clock,season_index=i,week=1),
+                start_slot=1,
+                main_entrant_count=4,
+                point_table={a["reached_stage"]:a["main_points"] for a in awards},
+                validity_weeks=clock.weeks_per_year,
+            ),
             result_confirmed=True,tournament_fingerprint="f"*64,
         ))
         receipts.append(NS(
@@ -104,10 +113,14 @@ def test_compare_any_two_finished_seasons_with_absolute_national_deltas():
     assert compare_completed_seasons(state,world,0)["comparison"] is None
 
 
-@pytest.mark.parametrize("tamper",["winner","field","scope"])
-def test_forged_play_placements_or_unknown_players_fail_closed(tamper):
+@pytest.mark.parametrize("tamper,error",[
+    ("winner","champion differs from signed MatchEngine"),
+    ("field","player awards differ from recorded field"),
+    ("scope","unknown national identity"),
+])
+def test_forged_play_placements_or_unknown_players_fail_closed(tamper,error):
     state,world=fixture(tamper=tamper)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError,match=error):
         native_tour_season_summary(state,world,0)
 
 

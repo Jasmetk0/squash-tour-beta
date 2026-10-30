@@ -118,7 +118,7 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     mount()
     await fill()
     await requestPreview()
-    expect(screen.getAllByText(/2030 \/ S0 W13/)).toBeInTheDocument()
+    expect(screen.getAllByText(/2030 \/ S0 W13/).length).toBeGreaterThan(0)
     await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
     expect(screen.getByLabelText('Main opening – week')).toHaveValue(13)
     expect(screen.getByLabelText('Confirmation operator')).toHaveValue('Operator')

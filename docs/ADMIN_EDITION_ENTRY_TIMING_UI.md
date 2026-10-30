@@ -20,6 +20,6 @@ missing_prerequisite is not confirmation. A valid future plan may still be confi
 
 ## Test boundary
 
-web/src/components/RunEditionEntryTimingPanel.test.tsx contains mocked React/API-boundary tests for empty plan, CS/EN, preview invalidation, blockers, missing future ranking, explicit confirm/exact retry, no auto-Save and disabled/foreign context. These are not real Chromium, production HTTP or SQLite integration evidence. #1675 separately has backend HTTP/SQLite tests. The final head needs TypeScript/Vite and relevant hosted checks; skipped Draft acceptance is not a pass.
+Mocked tests in web/src/components/RunEditionEntryTimingPanel.test.tsx verify empty/existing review, CS/EN persistence, preview invalidation, blockers, future missing ranking, exact confirm/retry, Save safeguards and delayed/foreign contexts. web/src/api/runEditionEntryTiming.test.ts verifies the exact encoded HTTP request/response boundary; web/src/pages/PlannedEventDetailPage.test.tsx exercises verified Admin wiring. These are not real Chromium, production HTTP or SQLite integration evidence. #1675 separately has backend HTTP/SQLite tests. The final head needs TypeScript/Vite and relevant hosted checks; skipped Draft acceptance is not a pass.
 
 Known limitation: historical Run records without explicit v1 Run calendar metadata intentionally fail closed. The existing general planned-event page still has separate legacy-only projection assumptions. Automatic sporting Entry validator and real browser Save/reopen acceptance remain outside this slice.

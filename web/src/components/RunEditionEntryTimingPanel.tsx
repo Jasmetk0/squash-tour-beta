@@ -341,7 +341,8 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         }}>{t.retryRead}</button>
       {!inspection && !query.isLoading && !query.error && <p role="status">{t.loading}</p>}
       {inspection && <p role="status">{inspection.timing ? t.existing : t.noPlan}</p>}
-      {!enabled && <p role="alert" className="error">{t.nonWritable}</p>}
+      {!enabled && !receipt && <p role="alert" className="error">{t.nonWritable}</p>}
+      {!enabled && receipt && <p role="status">{t.awaitingSave}</p>}
 
       <fieldset disabled={editingBlocked || !inspection}>
         <legend>{inspection?.timing ? t.existing : t.newPlan}</legend>

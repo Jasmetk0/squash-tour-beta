@@ -83,3 +83,23 @@ injects read-only, dirty and stale-base states into its disposable SQLite fixtur
 verifies both the read-only profile and probe rejection without database mutation,
 then restores the fixture for the remaining preparation assertions. This deliberate
 negative test is not evidence of a manually repaired 50-season acceptance.
+
+### Authenticated inputs and concurrent reads
+
+A clean draft flag is not Saved evidence. The profile now uses the existing Run
+calendar read authority to authenticate the ORIGINAL entire Saved payload/hash
+and clock, then loads its typed InitialWorld and Package components and compares
+them with the typed live inputs. Independently rehashed unsaved replacements
+produce `FAX_ACCEPTANCE_INPUTS_NOT_SAVED`; damaged Saved bytes fail closed.
+
+An explicit SQLite read transaction anchors all profile reads to one snapshot.
+The actual HTTP test commits a dirty draft and a rehashed changed InitialWorld
+from another connection after the reader has selected its draft. The in-flight
+reader returns its consistent pre-write snapshot; a fresh read sees both changed
+inputs and blocks. No locks, writes or cached readiness token are introduced by
+the profile. A profile is point-in-time evidence; execution retains its existing
+transactional writer guards and cannot treat an earlier profile as authority.
+
+The new helper runs deliberate corruption/concurrency checks only on disposable
+SQLite data. It restores those test inputs before the ordinary preparation flow;
+this does not certify a manually repaired release run or a 50-season test.

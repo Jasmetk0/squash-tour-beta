@@ -11,6 +11,7 @@ on:
       - 'src/beta_engine/application/initial_official_ranking_publication.py'
       - 'tests/application/test_pre_alpha_fax_*.py'
       - 'tests/api/test_pre_alpha_fax_reference_*.py'
+      - 'tests/api/fax_saved_input_proof.py'
       - 'config/tournament_templates/**'
       - 'config/points/**'
       - '.github/workflows/prealpha-fax-reference-preparation.yml'

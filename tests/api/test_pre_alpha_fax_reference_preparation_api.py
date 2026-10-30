@@ -134,6 +134,9 @@ def test_real_fax_reference_prepares_entry_and_reopens_at_unresolved_policy(tmp_
                 draft.base_revision_id = saved_id
             assert _request("GET", pre_alpha + "/fax-acceptance-profile") == (200, profile)
 
+        from tests.api.fax_saved_input_proof import verify_saved_inputs
+        verify_saved_inputs(repo, run_id, branch_id, saved_id, profile, tmp_path / "fax-reference.db", pre_alpha)
+
         ranking_url = pre_alpha + "/fax-current-week/ranking-snapshots"
         code, ranking = _request("GET", ranking_url + "/preview")
         assert code == 200, ranking

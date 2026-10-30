@@ -11,11 +11,20 @@ from beta_engine.application.pre_alpha_fax_acceptance_profile import (
 )
 
 
+@pytest.fixture(autouse=True)
+def isolate_saved_authority_for_profile_decision_contracts(monkeypatch):
+    # This module mocks persistence; actual Saved proof is exercised by API tests.
+    monkeypatch.setattr("beta_engine.application.pre_alpha_fax_acceptance_profile._saved_inputs_match", lambda *a, **kw: True)
+
+
 class _Session:
     def __init__(self, run, branch):
         self.run = run
         self.branch = branch
         self.draft = SimpleNamespace(run_id="run", status="clean", change_count=0, base_revision_id="saved")
+
+    def execute(self, statement):
+        pass
 
     def scalar(self, statement):
         return self.draft

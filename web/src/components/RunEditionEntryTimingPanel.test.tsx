@@ -276,6 +276,20 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'})).toBeDisabled()
   })
 
+  it('preserves every identical server blocker without React duplicate-key warnings', async () => {
+    api.previewRunEditionEntryTiming.mockResolvedValueOnce({
+      ...preview, can_confirm_configuration:false, blockers:[
+        {code:'entry_timing_locked',detail:'Already opened'},
+        {code:'entry_timing_locked',detail:'Already opened'}
+      ]
+    })
+    const spy = vi.spyOn(console, 'error')
+    mount(); await fill(); await requestPreview()
+    expect(screen.getAllByText(/Entry už bylo otevřeno/)).toHaveLength(2)
+    expect(spy.mock.calls.join(' ')).not.toMatch(/same key|unique key/i)
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
   it('confirms a future plan without a ranking only with server permission; never Saves or adopts itself', async () => {
     mount(); await fill(); await requestPreview()
     await userEvent.click(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'}))

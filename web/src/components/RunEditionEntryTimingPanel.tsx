@@ -337,6 +337,15 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const previewStatus = previewCurrent ? preview : null
   const effectiveStatus = previewStatus ?? (inspection?.timing ? inspection : null)
   const blockers = previewStatus?.blockers ?? inspection?.blockers ?? []
+  // Stable, unique keys include the occurrence of an *identical* server blocker,
+  // not its overall position. Reordering distinct blockers preserves identity.
+  const blockerOccurrences = new Map<string, number>()
+  const keyedBlockers = blockers.map(blocker => {
+    const identity = JSON.stringify([blocker.code, blocker.detail])
+    const occurrence = blockerOccurrences.get(identity) ?? 0
+    blockerOccurrences.set(identity, occurrence + 1)
+    return { ...blocker, key: identity + ':' + occurrence }
+  })
   // Compare frozen server fields only, never invent Main/Q windows in the client.
   const fieldChanges = previewStatus?.before ? [
     { label: t.diffMain, changed: !sameWeek(previewStatus.before.main_open, previewStatus.timing.main_open),
@@ -363,7 +372,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
           onChange={event => update({ [name]: { ...value, season: event.target.value } })}>
           <option value="">—</option>
           {Array.from({ length: calendar.season_count }, (_, index) => (
-            <option key={index} value={index}>{seasonLabelFor(index)} (S{index})</option>
+            <option key={seasonLabelFor(index)} value={index}>{seasonLabelFor(index)} (S{index})</option>
           ))}
         </select>
       </label>
@@ -544,8 +553,8 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         {effectiveStatus && <p role="status">{
           effectiveStatus.can_confirm_configuration ? t.preparationPermitted : t.preparationBlocked
         }</p>}
-        {blockers.length ? <ul>{blockers.map((blocker, index) =>
-          <li key={blocker.code + '-' + index}><strong>{blocker.code}</strong>: {
+        {keyedBlockers.length ? <ul>{keyedBlockers.map(blocker =>
+          <li key={blocker.key}><strong>{blocker.code}</strong>: {
             blockerText[blocker.code]?.[language] ?? blocker.detail
           }</li>)}</ul> : <p>{t.noBlockers}</p>}
       </div>}

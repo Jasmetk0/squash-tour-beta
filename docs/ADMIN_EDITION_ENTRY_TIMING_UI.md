@@ -70,3 +70,7 @@ _Status is evidence-scoped: **Implemented/Improved** = frontend code added, **Re
 ## Exact retry safety regression
 
 An uncertain Confirm response freezes the form and the server Preview button until the original command is explicitly retried. A second preview must not clear the immutable `command_id` and payload, because the original Confirm may already have reached the server. The component regression verifies the preview remains disabled across CS/EN switch and that only the original payload is resubmitted. This is mocked frontend evidence, not a real connection-loss/SQLite test.
+
+## Stable list identity regression
+
+Season option keys use stable calendar-derived season labels. Server blockers retain all entries even when their code and explanation are identical: keys are based on each content identity plus occurrence within that identity rather than list position. A mocked React test checks duplicate blockers render without duplicate-key warnings or premature confirm.

@@ -27,6 +27,7 @@ from beta_engine.infrastructure.db.models import (
     BranchSavedRevisionModel, RunBranchModel,
 )
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import TournamentRankingSnapshotAuthorityStore
+from beta_engine.infrastructure.db.saved_revision_rankings import load_saved_ranking_component
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
 
 pytestmark = pytest.mark.pr_critical
@@ -148,8 +149,12 @@ def test_plan_and_exact_historical_ranking_save_reopen_retry(tmp_path):
         assert code == 200, revision
         content = revision["payload"]["content"]
         assert content["run_package_state"]["fingerprint"] == bound["state_fingerprint"]
-        serialized = json.dumps(content)
-        assert bound["ranking_authority_fingerprint"] in serialized or snapshots[14].fingerprint in serialized
+        saved_ranking = load_saved_ranking_component(revision["payload"], run_id=rid, branch_id=bid)
+        assert saved_ranking is not None
+        assert len(saved_ranking.tournament_ranking_snapshot_authorities) == 1
+        saved_authority = saved_ranking.tournament_ranking_snapshot_authorities[0]
+        assert saved_authority.fingerprint == bound["ranking_authority_fingerprint"]
+        assert saved_authority.ranking_snapshot == snapshots[14]
         view = _request("GET", entry)
 
     with ApiServer(database_url=db) as reopened:

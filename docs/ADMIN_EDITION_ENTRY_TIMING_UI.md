@@ -74,3 +74,7 @@ An uncertain Confirm response freezes the form and the server Preview button unt
 ## Stable list identity regression
 
 Season option keys use stable calendar-derived season labels. Server blockers retain all entries even when their code and explanation are identical: keys are based on each content identity plus occurrence within that identity rather than list position. A mocked React test checks duplicate blockers render without duplicate-key warnings or premature confirm.
+
+## Preserving backend blocker diagnostics
+
+Known blocker codes now show a CS/EN next action alongside the existing translated explanation. Their original, unmodified server detail is retained behind disclosure rather than silently replaced; unknown blockers continue to display their exact server text. This is explanatory UI only. It never recalculates server readiness, bypasses can_confirm_configuration, or enables sporting execution.

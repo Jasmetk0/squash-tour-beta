@@ -59,6 +59,8 @@ export const editionEntryTimingWords = {
   missing_content: { cs: 'Chybějící podklad', en: 'Missing content' },
   blocked: { cs: 'Blokováno', en: 'Blocked' },
   unsupported_execution: { cs: 'Sportovní provedení zde není podporováno', en: 'Sporting execution unsupported in this context' },
+  blockerNext: { cs: 'Další krok', en: 'Next step' },
+  blockerServerDetail: { cs: 'Původní vysvětlení serveru', en: 'Original server explanation' },
   blockers: { cs: 'Serverové překážky a jejich dopady', en: 'Server blockers and impact' },
   noBlockers: { cs: 'Server nevrátil překážky.', en: 'No blockers returned.' },
   confirmButton: { cs: 'Výslovně potvrdit do Working Draftu', en: 'Explicitly confirm into Working Draft' },

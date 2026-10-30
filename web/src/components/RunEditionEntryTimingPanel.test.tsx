@@ -272,7 +272,9 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     mount(); await fill(); await requestPreview()
     expect(screen.getByText(/Kalendář lze plánovat/)).toBeInTheDocument()
     expect(screen.getByText(/Entry už bylo otevřeno/)).toBeInTheDocument()
+    expect(screen.getByText(/Časování po otevření Entry neupravuj/)).toBeInTheDocument()
     expect(screen.getByText(/Edition už má jiný neměnný ranking/)).toBeInTheDocument()
+    expect(screen.getAllByText('already open').length).toBe(1)
     expect(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'})).toBeDisabled()
   })
 

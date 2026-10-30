@@ -49,6 +49,17 @@ const blockerText: Record<string, {cs: string; en: string}> = {
   ranking_not_yet_current: {cs: 'Publikace je až za aktuálním týdnem Runu; ranking zatím nelze navázat.', en: 'Publication is after the current Run week, so ranking cannot yet be bound.'}
 }
 
+const blockerNextStep: Record<string, {cs: string; en: string}> = {
+  entry_timing_missing: {cs:'Doplň Main opening a pak vypočítej serverový náhled.',en:'Set Main opening, then request a server preview.'},
+  scope_not_writable: {cs:'Vrať se do přítomného zapisovatelného Runu a aktivní Branche.',en:'Return to the present writable Run and active Branch.'},
+  unsupported_execution: {cs:'Časování lze připravit, ale sportovní spuštění tím nepovolíš.',en:'Timing can be prepared, but this does not enable sporting execution.'},
+  entry_timing_locked: {cs:'Časování po otevření Entry neupravuj tímto formulářem; vyžaduje zvláštní historický proces.',en:'Do not retime an opened Entry here; a separate historical process is needed.'},
+  pre_start_ranking_required: {cs:'Zvol skutečně dostupnou publikaci; týden nula se nevytváří.',en:'Select a real existing publication; Week 0 is not synthesized.'},
+  ranking_publication_missing: {cs:'Budoucí plán lze potvrdit pouze se souhlasem serveru; přesný ranking se naváže později samostatným potvrzením.',en:'Only the server may permit a future plan now; bind its exact ranking later by a separate confirmation.'},
+  ranking_binding_conflict: {cs:'Neměnný již navázaný ranking zde nepřepisuj.',en:'Do not overwrite the already bound immutable ranking here.'},
+  ranking_not_yet_current: {cs:'Ranking zatím nenavazuj. Po skutečné publikaci znovu ověř serverový náhled.',en:'Do not bind yet. Check a fresh server preview after actual publication.'}
+}
+
 function fieldsFromWeek(value: EntryWeek | null): WeekFields {
   return value ? { season: String(value.season_index), week: String(value.week) } : emptyWeek()
 }
@@ -554,9 +565,16 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
           effectiveStatus.can_confirm_configuration ? t.preparationPermitted : t.preparationBlocked
         }</p>}
         {keyedBlockers.length ? <ul>{keyedBlockers.map(blocker =>
-          <li key={blocker.key}><strong>{blocker.code}</strong>: {
-            blockerText[blocker.code]?.[language] ?? blocker.detail
-          }</li>)}</ul> : <p>{t.noBlockers}</p>}
+          <li key={blocker.key}>
+            <strong>{blocker.code}</strong>: {blockerText[blocker.code]?.[language] ?? blocker.detail}
+            {blockerNextStep[blocker.code] && <p className="status">
+              {t.blockerNext}: {blockerNextStep[blocker.code][language]}
+            </p>}
+            {blockerText[blocker.code] && blocker.detail.trim() && <details>
+              <summary>{t.blockerServerDetail}</summary>
+              <p style={{overflowWrap:'anywhere'}}>{blocker.detail}</p>
+            </details>}
+          </li>)}</ul> : <p>{t.noBlockers}</p>}
       </div>}
 
       {previewStatus && <div className="grid">

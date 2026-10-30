@@ -224,6 +224,8 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     setRefreshed(null)
     setError('')
     busy.current = false
+    setLoadingPreview(false)
+    setLoadingConfirm(false)
   }, [scope])
   useEffect(() => {
     if (inspection && initialised.current !== scope) {

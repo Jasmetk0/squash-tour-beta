@@ -17,10 +17,12 @@ owner decisions; implementation evidence never changes a sporting rule.
 - Viewer #1661 and #1663–#1668 are open with successful applicable final-head
   tests/build/static checks at this audit snapshot. They are read-only legacy
   projection improvements, not new native sporting capabilities.
-- Viewer #1669 remains Draft at `6119781fb16e8d83d753d582d4056ec7ba7b1c05`.
+- Viewer #1669 is reviewed/Ready at `6119781fb16e8d83d753d582d4056ec7ba7b1c05`.
   Fast CI and CodeQL passed; Sonar reports D new-code reliability. The report's
   issue details were unavailable in this review environment. No specific runtime
   defect was independently confirmed; the advisory is unresolved, not dismissed.
+  Under the owner's advisory-only Sonar policy it is disclosed rather than counted
+  as a pass or used alone to block this PR. No enforced repository rule is bypassed.
 - Refresh GitHub before acting: PR state and candidate heads can change after this
   snapshot. Only the owner merges. No auto-merge.
 

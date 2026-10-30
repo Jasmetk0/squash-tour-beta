@@ -210,6 +210,24 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     return calendar.season_start_year_week === 1 ? String(year) : year + '/' + (year + 1)
   }
 
+  async function reReadInspection(): Promise<void> {
+    // Explicit GET means the newly fetched server plan, not stale local timing.
+    // Never replace an exact uncertain command or an accepted Draft/Save receipt.
+    if (busy.current || retryPayload || receipt || savedRevision || saveOutcomeUncertain ||
+      query.isFetching || !readable) return
+    const origin = scope
+    setRefreshed(null)
+    setPreview(null)
+    setError('')
+    const result = await query.refetch()
+    if (currentScope.current !== origin || result.isError || !result.data ||
+      !entryTimingScope(result.data, runId, branchId, packageId, eventId)) return
+    // Rehydrate only timing; the operator's written audit remains untouched.
+    const latestInputs = result.data.timing ? inputsFromTiming(result.data.timing) : emptyInputs()
+    initialised.current = scope
+    setForm(old => ({ ...latestInputs, operator: old.operator, reason: old.reason }))
+  }
+
   async function calculatePreview(): Promise<void> {
     if (!enabled || !timing || receipt || retryPayload || savedRevision || saveOutcomeUncertain ||
       saving || busy.current || query.isError || query.isFetching) return
@@ -432,16 +450,10 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       <p className="status">{t.indexNote}</p>
       {query.isLoading && !inspection && <p role="status">{t.loading}</p>}
       {query.error && <p role="alert" className="error">{t.failed}: {formatApiError(query.error)}</p>}
-      <button type="button" disabled={query.isFetching || busy.current || Boolean(savedRevision) ||
+      <button type="button" disabled={query.isFetching || busy.current || !readable ||
+        Boolean(retryPayload) || Boolean(receipt) || Boolean(savedRevision) ||
         saveOutcomeUncertain}
-        onClick={() => {
-          setRefreshed(null)
-          // A fresh inspection invalidates an ordinary review. Retain only an
-          // uncertain exact-command retry so the operator cannot lose its ID.
-          if (!retryPayload) setPreview(null)
-          setError('')
-          void query.refetch()
-        }}>{t.retryRead}</button>
+        onClick={() => void reReadInspection()}>{t.retryRead}</button>
       {!inspection && !query.isLoading && !query.error && <p role="status">{t.loading}</p>}
       {inspection && <p role="status">{inspection.timing ? t.existing : t.noPlan}</p>}
       {!enabled && !receipt && <p role="alert" className="error">{t.nonWritable}</p>}

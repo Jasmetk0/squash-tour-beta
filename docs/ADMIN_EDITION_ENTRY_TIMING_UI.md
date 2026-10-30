@@ -98,3 +98,7 @@ The Working Draft Save route does not accept this UI's immutable Entry command I
 ## Published ranking picker input integrity
 
 The shared HTTP client now validates every published ranking option before exposing it to the Entry override picker: exact Run/Branch/Edition identity and source, nonnegative safe count matching a real array, strictly valid publication week, SHA-256 fingerprint, nonnegative ranked count, positive Best N, nonempty policy ID, and no duplicate season/week key. Invalid/missing nested rows fail the read closed rather than producing a malformed or ambiguous select. The client mock suite covers valid response and nine corrupt response cases. No publication is automatically adopted by selecting it.
+
+## Explicit re-read rehydration (31 October continuation)
+
+A user-triggered successful inspection GET now replaces the local timing form with the newly fetched server plan (including new/removed plan and main/Q lengths), preserving manually written operator and audit reason. It invalidates an ordinary preview but never submits Confirm/Save. A stale scope, failed GET or foreign response cannot rehydrate. Re-read is disabled while the exact Confirm retry, confirmed Draft, uncertain Save, or Saved receipt is active, so those write decisions cannot be silently displaced. Mocked component regressions cover fresh server rehydration, audit retention, no automatic writes and retry preservation.

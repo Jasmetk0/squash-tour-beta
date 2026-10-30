@@ -488,6 +488,33 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
   })
 
+  it('rehydrates a changed server plan on explicit re-read without losing user audit or sending writes', async () => {
+    mount(); await fill(); await requestPreview()
+    const serverChanged = {...preview, timing:{...timing, main_open:at(18),
+      main_duration_weeks:3, qualification_duration_weeks:2}}
+    api.getRunEditionEntryTiming.mockResolvedValueOnce(serverChanged)
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst ze serveru'}))
+    await waitFor(() => expect(screen.getByLabelText('Otevření Main – týden')).toHaveValue(18))
+    expect(screen.getByLabelText('Délka Main (týdny)')).toHaveValue(3)
+    expect(screen.getByLabelText('Délka kvalifikace Q (týdny)')).toHaveValue(2)
+    expect(screen.getByLabelText('Operátor potvrzení')).toHaveValue('Operator')
+    expect(screen.getByLabelText('Důvod potvrzení (audit)')).toHaveValue('Reviewed')
+    expect(screen.queryByRole('button',{name:'Výslovně potvrdit do Working Draftu'})).not.toBeInTheDocument()
+    expect(api.previewRunEditionEntryTiming).toHaveBeenCalledTimes(1)
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+  })
+
+  it('disables explicit re-read while retaining uncertain Confirm exact retry', async () => {
+    api.confirmRunEditionEntryTiming.mockRejectedValueOnce(new TypeError('network lost'))
+    mount(); await fill(); await requestPreview()
+    await userEvent.click(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'}))
+    await screen.findByText(/Odpověď na potvrzení je nejistá/)
+    expect(screen.getByRole('button',{name:'Znovu načíst ze serveru'})).toBeDisabled()
+    expect(screen.getByRole('button',{name:'Zopakovat přesně stejný příkaz'})).toBeEnabled()
+    expect(api.getRunEditionEntryTiming).toHaveBeenCalledTimes(1)
+  })
+
   it('discards an ordinary review on explicit re-read even if the GET is successful', async () => {
     mount(); await fill(); await requestPreview()
     expect(screen.getByRole('button', {name:'Výslovně potvrdit do Working Draftu'})).toBeEnabled()

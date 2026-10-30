@@ -77,6 +77,7 @@ export const editionEntryTimingWords = {
   refreshError: { cs: 'Potvrzení proběhlo, ale následné načtení stavu selhalo. Ověř aktuální Working Draft před Save.', en: 'Confirmation succeeded, but refreshing the state failed. Verify the current Working Draft before Save.' },
   refreshing: { cs: 'Obnovuji serverový stav…', en: 'Refreshing server state…' },
   retryCommandId: { cs: 'ID příkazu', en: 'Command ID' },
+  awaitingSave: { cs: 'Editace skončila potvrzením. Ověřený Working Draft čeká na samostatné rozhodnutí Save.', en: 'Editing ended with confirmation. The verified Working Draft awaits a separate Save decision.' },
   nonWritable: { cs: 'Tento kontext není zapisovatelný; nejprve obnov příslušný aktivní Run/Branch a ověř Working Draft.', en: 'This context is not writable; return to the correct active Run/Branch and verify its Working Draft.' },
   stalePreview: { cs: 'Po úpravě je nutný nový náhled. Starý otisk nesmí být znovu použit.', en: 'After edits a new preview is required. The previous fingerprint must not be reused.' },
   blockedConfirm: { cs: 'Server nyní zakazuje potvrzení konfigurace.', en: 'The server currently prohibits configuration confirmation.' },

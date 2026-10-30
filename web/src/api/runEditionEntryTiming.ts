@@ -100,12 +100,30 @@ export function verifiedRunCalendar(run: RunContainer | null | undefined): RunCa
     (c.season_start_year_week as number) < 1 || (c.season_start_year_week as number) > (c.weeks_per_year as number) ||
     !Number.isSafeInteger(c.start_year) || (c.start_year as number) < 0 ||
     !Number.isSafeInteger(c.season_count) || (c.season_count as number) < 1) return null
-  return c as RunCalendarMetadata
+  return c as unknown as RunCalendarMetadata
 }
 
+export function sameClock(a: RunCalendarMetadata, b: RunCalendarMetadata): boolean {
+  return a.schema_version === b.schema_version && a.weeks_per_year === b.weeks_per_year &&
+    a.season_start_year_week === b.season_start_year_week &&
+    a.start_year === b.start_year && a.season_count === b.season_count
+}
+export function sameWeek(a: EntryWeek | null, b: EntryWeek | null): boolean {
+  return a === null || b === null ? a === b :
+    a.season_index === b.season_index && a.week === b.week && sameClock(a.calendar, b.calendar)
+}
+export function sameTiming(a: EditionEntryTiming | null, b: EditionEntryTiming | null): boolean {
+  return a === null || b === null ? a === b :
+    a.schema_version === b.schema_version &&
+    sameWeek(a.main_open, b.main_open) &&
+    a.main_duration_weeks === b.main_duration_weeks &&
+    a.qualification_duration_weeks === b.qualification_duration_weeks &&
+    sameWeek(a.final_commitment, b.final_commitment) &&
+    sameWeek(a.ranking_publication_override, b.ranking_publication_override)
+}
 export function weekInClock(position: EntryWeek | null, clock: RunCalendarMetadata): boolean {
   return position !== null &&
-    JSON.stringify(position.calendar) === JSON.stringify(clock) &&
+    sameClock(position.calendar, clock) &&
     Number.isSafeInteger(position.season_index) &&
     position.season_index >= 0 && position.season_index < clock.season_count &&
     Number.isSafeInteger(position.week) && position.week >= 1 && position.week <= clock.weeks_per_year

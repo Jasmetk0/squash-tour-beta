@@ -155,6 +155,20 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
   })
 
+  it('does not report previous server blockers as readiness for unreviewed local edits', async () => {
+    mount(); await fill()
+    expect(screen.getByText(/Zobrazené serverové překážky se vztahují k poslednímu načtenému plánu/)).toBeInTheDocument()
+    expect(screen.queryByText(/Server dovoluje potvrdit konfiguraci/)).not.toBeInTheDocument()
+    await requestPreview()
+    expect(screen.queryByText(/Zobrazené serverové překážky se vztahují/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Server dovoluje potvrdit konfiguraci/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(screen.queryByText(/These server blockers describe the last loaded plan/)).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Main opening – week'), {target:{value:'18'}})
+    expect(screen.getByText(/These server blockers describe the last loaded plan/)).toBeInTheDocument()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
   it('keeps reviewed preview on audit edits; timing edit invalidates it', async () => {
     mount(); await fill(); await requestPreview()
     fireEvent.change(screen.getByLabelText('Důvod potvrzení (audit)'), {target:{value:'New reason'}})

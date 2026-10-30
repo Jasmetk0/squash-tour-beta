@@ -62,6 +62,10 @@ export const editionEntryTimingWords = {
   blockerNext: { cs: 'Další krok', en: 'Next step' },
   blockerServerDetail: { cs: 'Původní vysvětlení serveru', en: 'Original server explanation' },
   blockers: { cs: 'Serverové překážky a jejich dopady', en: 'Server blockers and impact' },
+  unreviewedServerState: {
+    cs: 'Zobrazené serverové překážky se vztahují k poslednímu načtenému plánu, nikoli k aktuálně rozepsaným polím. Pro nové posouzení vypočítej serverový náhled.',
+    en: 'These server blockers describe the last loaded plan, not your current local edits. Request a new server preview before interpreting readiness.'
+  },
   noBlockers: { cs: 'Server nevrátil překážky.', en: 'No blockers returned.' },
   confirmButton: { cs: 'Výslovně potvrdit do Working Draftu', en: 'Explicitly confirm into Working Draft' },
   confirming: { cs: 'Potvrzuji…', en: 'Confirming…' },

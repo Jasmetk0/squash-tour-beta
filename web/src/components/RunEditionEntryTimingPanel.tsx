@@ -380,6 +380,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const previewStatus = previewCurrent ? preview : null
   const effectiveStatus = previewStatus ?? (inspection?.timing ? inspection : null)
   const blockers = previewStatus?.blockers ?? inspection?.blockers ?? []
+  const blockersReferToEarlierPlan = Boolean(inspection && localChanged && !previewStatus)
   // Stable, unique keys include the occurrence of an *identical* server blocker,
   // not its overall position. Reordering distinct blockers preserves identity.
   const blockerOccurrences = new Map<string, number>()
@@ -590,7 +591,10 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       <p role="status" className="status">{t.eligibility}</p>
       {inspection && <div aria-live="polite">
         <h4>{t.blockers}</h4>
-        {effectiveStatus && <p role="status">{
+        {blockersReferToEarlierPlan && <p role="status" className="status">
+          {t.unreviewedServerState}
+        </p>}
+        {effectiveStatus && !blockersReferToEarlierPlan && <p role="status">{
           effectiveStatus.can_confirm_configuration ? t.preparationPermitted : t.preparationBlocked
         }</p>}
         {keyedBlockers.length ? <ul>{keyedBlockers.map(blocker =>

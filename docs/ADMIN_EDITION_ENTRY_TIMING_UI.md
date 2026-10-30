@@ -102,3 +102,7 @@ The shared HTTP client now validates every published ranking option before expos
 ## Explicit re-read rehydration (31 October continuation)
 
 A user-triggered successful inspection GET now replaces the local timing form with the newly fetched server plan (including new/removed plan and main/Q lengths), preserving manually written operator and audit reason. It invalidates an ordinary preview but never submits Confirm/Save. A stale scope, failed GET or foreign response cannot rehydrate. Re-read is disabled while the exact Confirm retry, confirmed Draft, uncertain Save, or Saved receipt is active, so those write decisions cannot be silently displaced. Mocked component regressions cover fresh server rehydration, audit retention, no automatic writes and retry preservation.
+
+## Avoid stale preflight interpretation while locally editing
+
+If timing inputs differ from the last inspected plan and there is no matching server Preview, prior GET blockers remain visible for provenance but are explicitly labelled as referring to the **previous** plan; the existing can-confirm status is suppressed until a fresh server Preview is accepted. This prevents stale readiness from being misread as permission for the locally edited timing. CS/EN mocked regression checks initial edits, preview restoration and subsequent invalidation.

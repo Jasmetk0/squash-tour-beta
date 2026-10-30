@@ -126,4 +126,17 @@ describe('Run Edition Entry timing HTTP client — mocked transport', () => {
     await expect(previewRunEditionEntryTiming(...args,timing)).rejects.toThrow(/preview does not match/)
     expect(spy).toHaveBeenCalledTimes(1)
   })
+
+  it('does not accept a forged confirm receipt kind, missing nested preview, or retargeted Main week', async () => {
+    const spy=vi.spyOn(globalThis,'fetch')
+      .mockResolvedValueOnce(ok({...receipt,request:{...receipt.request,kind:'other'}}))
+      .mockResolvedValueOnce(ok({...receipt,preview:{...preview,resolved:undefined}}))
+      .mockResolvedValueOnce(ok({...receipt,preview:{...preview,resolved:{
+        ...preview.resolved,main_open:at(12)
+      }}}))
+    await expect(confirmRunEditionEntryTiming(...args,payload)).rejects.toThrow(/receipt does not match/)
+    await expect(confirmRunEditionEntryTiming(...args,payload)).rejects.toThrow(/receipt does not match/)
+    await expect(confirmRunEditionEntryTiming(...args,payload)).rejects.toThrow(/receipt does not match/)
+    expect(spy).toHaveBeenCalledTimes(3)
+  })
 })

@@ -405,9 +405,13 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     }
   }
 
-  const position = (p: EntryWeek | null) =>
-    p ? (String(p.calendar.start_year + p.season_index) + ' / S' + p.season_index +
-      ' W' + p.week) : '—'
+  const position = (p: EntryWeek | null) => {
+    if (!p) return '—'
+    const year = p.calendar.start_year + p.season_index
+    const season = p.calendar.season_start_year_week === 1
+      ? String(year) : year + '/' + (year + 1)
+    return season + ' · S' + p.season_index + ' W' + p.week
+  }
   const formatTiming = (value: EditionEntryTiming | null) =>
     value ? position(value.main_open) + ' · Main ' + value.main_duration_weeks +
       'w · Q ' + value.qualification_duration_weeks + 'w · Final ' +
@@ -417,6 +421,14 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     ? (exactRetryReady ? preview : null)
     : (previewCurrent ? preview : null)
   const effectiveStatus = previewStatus ?? (inspection?.timing ? inspection : null)
+  // Display only the backend-owned current Entry phase. Never infer it from
+  // timing windows or equate it with player eligibility.
+  const windowLabels: Record<NonNullable<EntryTimingPreview['current_window']>, string> = {
+    not_open: t.windowNotOpen,
+    main: t.windowMain,
+    qualification: t.windowQualification,
+    all_entries_closed: t.windowClosed
+  }
   const blockers = previewStatus?.blockers ?? inspection?.blockers ?? []
   const blockersReferToEarlierPlan = Boolean(inspection && localChanged && !previewStatus)
   // Stable, unique keys include the occurrence of an *identical* server blocker,
@@ -619,6 +631,10 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
           <dt>{t.status}</dt><dd>{t[effectiveStatus.preflight_status]}</dd>
           <dt>{t.configState}</dt><dd>{t.working_draft}</dd>
           <dt>{t.currentWeek}</dt><dd>{position(effectiveStatus.current_week)}</dd>
+          <dt>{t.currentWindow}</dt><dd>{
+            effectiveStatus.current_window === null ? t.currentWindowUnknown :
+              windowLabels[effectiveStatus.current_window]
+          }</dd>
         </dl>
         {effectiveStatus.ranking_will_be_bound && <p role="status">{t.rankingWillBind}</p>}
         {effectiveStatus.ranking_snapshot_fingerprint === null && <p role="status">{t.noRanking}</p>}

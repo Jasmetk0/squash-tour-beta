@@ -293,13 +293,34 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     mount()
     await fill()
     await requestPreview()
-    expect(screen.getAllByText(/2030 \/ S0 W13/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/2030\/2031 · S0 W13/).length).toBeGreaterThan(0)
     await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
     expect(screen.getByLabelText('Main opening – week')).toHaveValue(13)
     expect(screen.getByLabelText('Confirmation operator')).toHaveValue('Operator')
     expect(screen.getByLabelText('Confirmation reason (audit)')).toHaveValue('Reviewed')
     expect(screen.getByText(/Server preview – no write/)).toBeInTheDocument()
     expect(screen.getByRole('button',{name:'Explicitly confirm into Working Draft'})).toBeEnabled()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
+  it('shows the server-owned current Entry phase without inventing one for unknown Run time', async () => {
+    mount(); await fill(); await requestPreview()
+    expect(screen.getByText('Aktuální fáze přihlášek (podle serveru)').nextElementSibling)
+      .toHaveTextContent('Server aktuální fázi neurčil')
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
+  it('localizes an explicitly known server Entry phase without calculating it from weeks', async () => {
+    api.previewRunEditionEntryTiming.mockResolvedValueOnce({
+      ...preview, current_week:at(13), current_window:'main'
+    })
+    mount(); await fill(); await requestPreview()
+    expect(screen.getByText('Aktuální fáze přihlášek (podle serveru)').nextElementSibling)
+      .toHaveTextContent('Main přihlášky jsou otevřené')
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(screen.getByText('Current Entry phase (server)').nextElementSibling)
+      .toHaveTextContent('Main Entry open')
+    expect(screen.getByText(/2030\/2031 · S0 W13/)).toBeInTheDocument()
     expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
   })
 

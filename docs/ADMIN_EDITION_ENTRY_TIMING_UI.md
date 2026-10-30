@@ -130,3 +130,7 @@ An ordinary server Preview is now attached to the React Query inspection's `data
 ## Saved Revision receipt identity must be a real string
 
 The successful Save UI now requires a nonblank string revision ID and a matching clean Working Draft base in the server response; null/missing or non-string identity must not be rendered as a definitive Saved success. Such a response remains an ambiguous post-write result and the second Save stays locked. A mocked HTTP-boundary component regression rejects numeric revision IDs rather than coercing them into apparently valid saved history.
+
+## Display authenticated Entry phase and correct season labels
+
+The read-only review now displays the backend's `current_window` directly, with distinct CS/EN labels for not opened, Main, Qualification and all closed. A null server window is shown explicitly as **unknown**, not as a fictitious active or closed phase. The reviewed date labels use the actual Run clock's season-start offset: for a cross-year 2030/2031 season they show `2030/2031 · S0 W13`, not the incomplete `2030 / S0 W13`. Server-resolved weeks still are never recomputed as sporting rules. Added mocked React checks for known/null phases, locale switch, and cross-year labels.

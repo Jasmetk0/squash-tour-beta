@@ -11,7 +11,6 @@ from beta_engine.application.initial_official_ranking_publication import (
     InitialOfficialRankingPublicationService,
 )
 from beta_engine.application.initial_world import derive_initial_ranking_inputs
-from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     FAX_ACCEPTANCE_FIRST_SEASON,
     FAX_ACCEPTANCE_MIN_INITIAL_PLAYERS,
@@ -19,7 +18,10 @@ from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     PreAlphaFaxAcceptanceProfile,
     PreAlphaFaxAcceptanceProfileService,
 )
-from beta_engine.application.run_container_creation_service import RunContainerCreationService
+from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
+from beta_engine.application.run_container_creation_service import (
+    RunContainerCreationService,
+)
 from beta_engine.application.run_package_service import RunPackageService
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.application.run_world_initial_pool_preview_service import (
@@ -33,6 +35,7 @@ from beta_engine.application.world_package_run_adapter import WorldPackageRunAda
 from beta_engine.domain.players.lifecycle import PlayerLifecyclePolicy
 from beta_engine.domain.rankings.command_audit import RankingCommandAudit
 from beta_engine.domain.run_packages import CanonicalPackageDocument, canonical_hash
+from beta_engine.domain.tournaments.models import SeasonCalendarEvent
 
 
 class CalendarDocumentSource(Protocol):
@@ -56,7 +59,7 @@ class PreAlphaFaxReferenceRequest(BaseModel):
     automatic_retirement_age: int = Field(default=46, ge=16, le=120)
 
     @model_validator(mode="after")
-    def validate_release_scale(self) -> "PreAlphaFaxReferenceRequest":
+    def validate_release_scale(self) -> PreAlphaFaxReferenceRequest:
         if self.target_pool_size < FAX_ACCEPTANCE_MIN_INITIAL_PLAYERS:
             raise ValueError(
                 f"Copied-FAX release reference requires at least "
@@ -79,6 +82,7 @@ class PreAlphaFaxReferencePreview(BaseModel):
     world_tour_edition_count: int = Field(ge=0)
     lower_tour_edition_count: int = Field(ge=0)
     required_world_tour_edition_count: int = FAX_ACCEPTANCE_WORLD_TOUR_EDITIONS
+    incomplete_points_event_ids: tuple[str, ...] = ()
     ready_to_materialize: bool
 
     @property
@@ -150,7 +154,22 @@ class PreAlphaFaxReferenceMaterializationService:
         self, request: PreAlphaFaxReferenceRequest
     ) -> PreAlphaFaxReferencePreview:
         world, calendar = self._documents(request)
+        return self._preview_from_documents(request, world, calendar)
+
+    def _preview_from_documents(
+        self,
+        request: PreAlphaFaxReferenceRequest,
+        world: CanonicalPackageDocument,
+        calendar: CanonicalPackageDocument,
+    ) -> PreAlphaFaxReferencePreview:
         event_count, world_tour, lower = self._calendar_counts(calendar)
+        incomplete_points = tuple(sorted(
+            entity.source_entity_id
+            for entity in calendar.entities
+            if entity.entity_kind == "calendar.event.v1"
+            and entity.payload.get("tour_level") == "WORLD_TOUR"
+            and not SeasonCalendarEvent.model_validate(entity.payload).points_table_complete
+        ))
         return PreAlphaFaxReferencePreview(
             request=request,
             world_source_fingerprint=world.source_fingerprint,
@@ -159,24 +178,33 @@ class PreAlphaFaxReferenceMaterializationService:
             calendar_event_count=event_count,
             world_tour_edition_count=world_tour,
             lower_tour_edition_count=lower,
+            incomplete_points_event_ids=incomplete_points,
             ready_to_materialize=(
                 len(world.entities) > 0
                 and world_tour == FAX_ACCEPTANCE_WORLD_TOUR_EDITIONS
                 and request.target_pool_size >= FAX_ACCEPTANCE_MIN_INITIAL_PLAYERS
+                and not incomplete_points
             ),
         )
 
     def materialize(
         self, command: PreAlphaFaxReferenceMaterializeCommand
     ) -> PreAlphaFaxReferenceMaterializationResult:
-        preview = self.preview(command.request)
+        # Review and install the SAME captured documents. Re-reading a live source
+        # after creating the Run could otherwise install unreviewed changed bytes.
+        world_document, calendar_document = self._documents(command.request)
+        preview = self._preview_from_documents(
+            command.request, world_document, calendar_document
+        )
         if preview.preview_fingerprint != command.expected_preview_fingerprint:
             raise ValueError("Copied-FAX reference preview changed since review")
         if not preview.ready_to_materialize:
             raise ValueError(
                 "Copied-FAX source is not ready: the reviewed World Package must be "
                 "non-empty and the calendar must contain exactly "
-                f"{FAX_ACCEPTANCE_WORLD_TOUR_EDITIONS} World Tour Editions"
+                f"{FAX_ACCEPTANCE_WORLD_TOUR_EDITIONS} World Tour Editions with "
+                "complete authored ranking points tables. Incomplete Editions: "
+                + ", ".join(preview.incomplete_points_event_ids)
             )
 
         create = RunContainerCreationService(
@@ -193,7 +221,6 @@ class PreAlphaFaxReferenceMaterializationService:
             repository=self.repository,
             id_factory=self.id_factory,
         )
-        world_document, calendar_document = self._documents(command.request)
 
         world_preview = package_service.preview(
             run_id=run.run_id,
@@ -269,7 +296,7 @@ class PreAlphaFaxReferenceMaterializationService:
             ),
         )
         state = self.repository.get_branch_revision_state(branch_id=branch_id)
-        saved_initial = draft_service.save_initial_world(
+        draft_service.save_initial_world(
             run_id=run.run_id,
             branch_id=branch_id,
             expected_draft_version=state.working_draft.draft_version,

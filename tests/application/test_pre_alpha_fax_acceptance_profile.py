@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import pytest
-
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     FAX_ACCEPTANCE_MIN_INITIAL_PLAYERS,
     FAX_ACCEPTANCE_WORLD_TOUR_EDITIONS,
@@ -51,7 +49,7 @@ def _service():
 
 def _calendar(world_count: int, lower_count: int = 0):
     events = [
-        SimpleNamespace(tour_level="WORLD_TOUR")
+        SimpleNamespace(tour_level="WORLD_TOUR", points_table_complete=True)
         for _ in range(world_count)
     ] + [
         SimpleNamespace(tour_level="ELITE_TOUR")
@@ -140,3 +138,25 @@ def test_fax_acceptance_profile_requires_run_owned_calendar(monkeypatch) -> None
         "FAX_ACCEPTANCE_INITIAL_WORLD_MISSING",
         "FAX_ACCEPTANCE_CALENDAR_PACKAGE_MISSING",
     }
+
+
+def test_fax_scale_does_not_hide_incomplete_ranking_points(monkeypatch):
+    import beta_engine.application.pre_alpha_fax_acceptance_profile as module
+
+    world = SimpleNamespace(
+        players=tuple(object() for _ in range(1000)), fingerprint="c" * 64,
+        world_package_id="official_fax_world",
+    )
+    calendar = _calendar(80)
+    calendar.calendar.events[0].points_table_complete = False
+    monkeypatch.setattr(module, "get_initial_world", lambda *a, **kw: world)
+    monkeypatch.setattr(module, "get_run_package_state", lambda *a, **kw: object())
+    monkeypatch.setattr(module.CalendarPackageRunAdapter, "project_calendar", staticmethod(lambda *a, **kw: calendar))
+
+    profile = _service().inspect(run_id="run", branch_id="branch")
+    assert profile.initial_player_count == 1000
+    assert profile.world_tour_edition_count == 80
+    assert not profile.ready_for_long_acceptance
+    assert [issue.code for issue in profile.issues if issue.severity == "error"] == [
+        "FAX_ACCEPTANCE_RANKING_POINTS_INCOMPLETE"
+    ]

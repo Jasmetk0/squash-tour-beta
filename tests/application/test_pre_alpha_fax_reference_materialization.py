@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 import pytest
 
 from beta_engine.application.initial_world import InitialWorldState
@@ -14,6 +12,10 @@ from beta_engine.application.pre_alpha_fax_reference_materialization import (
     PreAlphaFaxReferenceMaterializeCommand,
     PreAlphaFaxReferenceRequest,
 )
+from beta_engine.application.run_container_creation_service import (
+    RunContainerCreationService,
+)
+from beta_engine.application.run_package_service import RunPackageService
 from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer
 from beta_engine.domain.players.initial_pool import GeneratedPlayerAttributes
 from beta_engine.domain.players.models import HiddenCareerTraits
@@ -24,15 +26,15 @@ from beta_engine.domain.run_packages import (
     PackageType,
 )
 from beta_engine.domain.tournaments.models import SeasonCalendarEvent
-from beta_engine.infrastructure.db.models import (
-    AuthoritativeWorldStateModel,
-    PublishedOfficialRankingModel,
-)
 from beta_engine.infrastructure.db import (
     DatabaseSettings,
     SimulationPersistenceRepository,
     create_session_factory,
     create_sqlite_engine,
+)
+from beta_engine.infrastructure.db.models import (
+    AuthoritativeWorldStateModel,
+    PublishedOfficialRankingModel,
 )
 
 
@@ -350,4 +352,67 @@ def test_preview_rejects_non_reference_world_tour_count_without_creating_run(tmp
                 expected_preview_fingerprint=preview.preview_fingerprint,
             )
         )
+    assert repository.list_run_containers() == []
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize("changed_source", ["world", "calendar"])
+def test_materialization_installs_reviewed_documents_even_if_source_changes_during_creation(
+    tmp_path, monkeypatch, changed_source,
+):
+    repository = _repository(f"sqlite:///{tmp_path / 'source-race.db'}")
+    world = _WorldAdapter()
+    calendar = _CalendarAdapter()
+    original_builder = (world if changed_source == "world" else calendar).build_document
+    changed = False
+
+    def document_after_source_change(*args, **kwargs):
+        document = original_builder(*args, **kwargs)
+        return document.model_copy(update={"provenance": {"source": "changed after review"}}) if changed else document
+
+    monkeypatch.setattr(world if changed_source == "world" else calendar, "build_document", document_after_source_change)
+    create = RunContainerCreationService.create_empty_run
+
+    def create_and_change_source(self, **kwargs):
+        nonlocal changed
+        run = create(self, **kwargs)
+        changed = True
+        return run
+
+    monkeypatch.setattr(RunContainerCreationService, "create_empty_run", create_and_change_source)
+    service = PreAlphaFaxReferenceMaterializationService(
+        repository, _ids(), world, calendar, _InitialWorldService(),
+    )
+    request = PreAlphaFaxReferenceRequest(display_name="Reviewed source race", world_package_id="official_fax_world")
+    preview = service.preview(request)
+    result = service.materialize(PreAlphaFaxReferenceMaterializeCommand(
+        request=request, expected_preview_fingerprint=preview.preview_fingerprint,
+    ))
+    installed = RunPackageService(repository).get(run_id=result.run_id, branch_id=result.branch_id)
+    fingerprints = {row.package_id: row.source_fingerprint for row in installed.package_versions}
+    assert fingerprints[request.world_package_id] == preview.world_source_fingerprint
+    assert fingerprints["calendar-2000-2001"] == preview.calendar_source_fingerprint
+    changed_document = document_after_source_change(request.world_package_id if changed_source == "world" else request.season)
+    assert changed_document.source_fingerprint not in fingerprints.values()
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize("changed_source", ["world", "calendar"])
+def test_changed_source_before_materialization_rejects_preview_without_creating_run(
+    tmp_path, monkeypatch, changed_source,
+):
+    repository = _repository(f"sqlite:///{tmp_path / 'stale-source.db'}")
+    world, calendar = _WorldAdapter(), _CalendarAdapter()
+    service = PreAlphaFaxReferenceMaterializationService(
+        repository, _ids(), world, calendar, _InitialWorldService(),
+    )
+    request = PreAlphaFaxReferenceRequest(display_name="Stale source", world_package_id="official_fax_world")
+    preview = service.preview(request)
+    adapter = world if changed_source == "world" else calendar
+    original = adapter.build_document
+    monkeypatch.setattr(adapter, "build_document", lambda *a, **kw: original(*a, **kw).model_copy(update={"provenance": {"source": "new source version"}}))
+    with pytest.raises(ValueError, match="changed since review"):
+        service.materialize(PreAlphaFaxReferenceMaterializeCommand(
+            request=request, expected_preview_fingerprint=preview.preview_fingerprint,
+        ))
     assert repository.list_run_containers() == []

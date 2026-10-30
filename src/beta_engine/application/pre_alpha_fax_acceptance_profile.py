@@ -12,11 +12,12 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
-from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
+from beta_engine.application.calendar_package_run_adapter import (
+    CalendarPackageRunAdapter,
+)
 from beta_engine.infrastructure.db.initial_world_state import get_initial_world
 from beta_engine.infrastructure.db.models import RunBranchModel, RunContainerModel
 from beta_engine.infrastructure.db.run_package_state import get_run_package_state
-
 
 FAX_ACCEPTANCE_START_SEASON = 2000
 FAX_ACCEPTANCE_END_SEASON = 2049
@@ -213,6 +214,22 @@ class PreAlphaFaxAcceptanceProfileService:
                             f"First-season Calendar has {len(world_tour)} World Tour Editions; "
                             f"the reference release-test template requires "
                             f"{FAX_ACCEPTANCE_WORLD_TOUR_EDITIONS}."
+                        ),
+                    )
+                )
+
+            incomplete_points = tuple(
+                event for event in world_tour if not event.points_table_complete
+            )
+            if incomplete_points:
+                issues.append(
+                    PreAlphaFaxAcceptanceIssue(
+                        severity="error",
+                        code="FAX_ACCEPTANCE_RANKING_POINTS_INCOMPLETE",
+                        message=(
+                            f"{len(incomplete_points)} World Tour Editions have incomplete "
+                            "ranking points tables; review the missing stages before "
+                            "starting acceptance. Missing points are not zero awards."
                         ),
                     )
                 )

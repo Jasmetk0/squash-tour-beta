@@ -33,6 +33,15 @@ This candidate is not merged or release-certified. Parallel PRs #1652–#1656 an
 
 ---
 
+## Current audited checkpoint — 30 October 2026
+
+The active state, full pre-alpha evidence map and next dependency are maintained
+in [the current integration checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
+Earlier dated candidate notes in this file are historical evidence, not the
+current open-PR inventory. Product authority remains the complete Master.
+
+---
+
 # Native pure-group withdrawal candidate — 29 October 2026
 
 Owner merges #1647 and #1651 are present on `buuk` at

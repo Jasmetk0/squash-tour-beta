@@ -1,3 +1,23 @@
+# Season-summary test fixture repair candidate — 30 October 2026
+
+Verified base `buuk`: `abe8fa307a08ccb25e2209c1abc8610d7b41bff9`, owner merge
+of #1673. The post-merge requirement map below remains the active scope/evidence
+index; its four summary failures describe the audited baseline, not a new runtime
+defect. This candidate replaces only the obsolete unit-test Edition namespace
+with the real `CalendarTourEdition` model and checks each forged input's specific
+rejection reason. Production schema/group guards and sporting behavior are intact.
+
+The six summary contracts now pass. Together with nine existing calendar-domain
+contracts and three actual HTTP/SQLite terminal-summary scenarios, all 18 focused
+tests pass locally. These are scoped results, not a full regression or release.
+Final-head hosted checks must pass before merge; this candidate is not yet merged.
+
+Next feature task remains the Saved Edition Entry timing/preflight and historical
+ranking-source binding described in the existing checkpoint. No new product
+decision, Master edit, Viewer expansion or automatic application approval is made.
+
+---
+
 # Current merged baseline — 30 October 2026
 
 Audited `buuk`: `d45b7d3b3aa7e585e3c777cb166c6c5f2bb2f81d` (Master v86).

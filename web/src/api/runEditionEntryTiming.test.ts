@@ -105,4 +105,25 @@ describe('Run Edition Entry timing HTTP client — mocked transport', () => {
     await expect(confirmRunEditionEntryTiming(...args,payload)).rejects.toThrow(/receipt does not match/)
     expect(spy).toHaveBeenCalledTimes(3)
   })
+
+  it('rejects corrupt nested preview windows, impossible weeks and invalid blockers before React rendering', async () => {
+    const spy = vi.spyOn(globalThis,'fetch')
+      .mockResolvedValueOnce(ok({...preview, resolved:undefined}))
+      .mockResolvedValueOnce(ok({...preview, resolved:{
+        ...preview.resolved,main_close:at(81)
+      }}))
+      .mockResolvedValueOnce(ok({...preview,blockers:[undefined]}))
+    await expect(getRunEditionEntryTiming(...args)).rejects.toThrow(/invalid contract/)
+    await expect(getRunEditionEntryTiming(...args)).rejects.toThrow(/invalid contract/)
+    await expect(getRunEditionEntryTiming(...args)).rejects.toThrow(/invalid contract/)
+    expect(spy).toHaveBeenCalledTimes(3)
+  })
+
+  it('rejects preview with a malformed Run clock rather than using an inferred fallback', async () => {
+    const spy = vi.spyOn(globalThis,'fetch').mockResolvedValue(
+      ok({...preview,timing:{...timing,main_open:{...timing.main_open,
+        calendar:{...calendar,weeks_per_year:0}}}}))
+    await expect(previewRunEditionEntryTiming(...args,timing)).rejects.toThrow(/preview does not match/)
+    expect(spy).toHaveBeenCalledTimes(1)
+  })
 })

@@ -126,7 +126,7 @@ class BranchSpec(Closed):
     branch_id: ID
     display_name: Annotated[str, Field(min_length=1, max_length=256)]
     status: Literal["active"] = "active"
-    branch_seed: int | None
+    branch_seed: Annotated[int, Field(ge=-(2**63), le=2**63 - 1)] | None
     forked_from_branch_id: ID | None
     forked_from_saved_revision_id: ID | None
     saved_head_revision_id: ID
@@ -252,7 +252,7 @@ class CheckpointSpec(Closed):
     restore_saved_revision_id: ID
     kind: Literal["pre_restore_saved_revision"]
     draft_id: ID
-    draft_version: Annotated[int, Field(ge=0)]
+    draft_version: Annotated[int, Field(ge=0, le=2**63 - 1)]
     viewer_branch_id: ID
     content_hash_algorithm: Literal["sha256"]
     content_hash: Digest

@@ -312,6 +312,7 @@ def install_prospects(session, *, run_id, records):
         )
         session.add(row)
         session.flush()
+        session.refresh(row)
         if encode(_record_payload(row)) != encode(record):
             fail(
                 "invalid_prospect_installation",

@@ -584,3 +584,19 @@ def test_forged_review_cannot_skip_complete_validation_before_target_writes(
             event.remove(repo._engine, "before_cursor_execute", observe_writes)
         assert writes == []
         assert _dump(target) == before
+
+
+def test_archive_sqlite_integer_overflow_is_a_concrete_prewrite_rejection(
+    tmp_path, manual_archive
+):
+    invalid = rewrite(
+        manual_archive,
+        "branches",
+        lambda branches: branches[0].update(branch_seed=2**100),
+    )
+    target = tmp_path / "unrepresentable-number.db"
+    with ApiServer(database_url=f"sqlite:///{target}") as server:
+        before = _dump(target)
+        code, body = raw_request(archive_root(server) + "/import/preview", invalid)
+        assert code == 409, body[:1000]
+        assert _dump(target) == before

@@ -7,6 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from sqlalchemy import String, Text, select, text
+from sqlalchemy.exc import StatementError
 from sqlalchemy.orm import Mapped, mapped_column
 
 from beta_engine.domain.run_branch_archive import (
@@ -723,6 +724,12 @@ def validate_in_isolated_database(archive):
             with repository._session_factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
                 install_archive(repository, session, archive)
+        except (OverflowError, StatementError) as exc:
+            reason = str(exc.orig) if isinstance(exc, StatementError) else str(exc)
+            fail(
+                "invalid_archive_persistence",
+                "Archive cannot satisfy the supported SQLite schema: " + reason,
+            )
         finally:
             engine.dispose()
 

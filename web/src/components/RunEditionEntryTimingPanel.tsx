@@ -197,9 +197,8 @@ function makeTiming(form: Inputs, calendar: RunCalendarMetadata): EditionEntryTi
   }
 }
 
-const nonce = () => 'admin-entry-timing-' +
-  (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-    ? crypto.randomUUID() : String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000000)))
+// A confirmation command ID must never fall back to predictable pseudo-randomness.
+const nonce = () => 'admin-entry-timing-' + crypto.randomUUID()
 
 export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId, calendar, enabled }: {
   runId: string; branchId: string; packageId: string; eventId: string

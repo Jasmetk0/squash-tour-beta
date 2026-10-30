@@ -5455,15 +5455,17 @@ export async function confirmRunEditionEntryTiming(
   const data = await request<import('./runEditionEntryTiming').EntryTimingReceipt>(
     editionEntryTimingRoot(run, branch, pkg, edition) + '/confirm',
     { method: 'POST', body: JSON.stringify(payload) })
-  const { entryTimingScope, isHash, sameTiming } = await import('./runEditionEntryTiming')
+  const { entryTimingScope, isHash, sameTiming, validEntryTimingInspection } = await import('./runEditionEntryTiming')
   if (!data || data.command_id !== payload.command_id || !isHash(data.receipt_fingerprint) ||
     !isHash(data.state_fingerprint) || !isHash(data.request_fingerprint) ||
     !entryTimingScope(data.request, run, branch, pkg, edition) ||
+    data.request.kind !== 'run_edition_entry_timing.v1' ||
     data.request.expected_preview_fingerprint !== payload.expected_preview_fingerprint ||
     data.request.operator_label !== payload.operator_label ||
     data.request.audit_reason !== payload.audit_reason ||
     !sameTiming(data.request.timing, payload.timing) ||
-    !entryTimingScope(data.preview, run, branch, pkg, edition) ||
+    !validEntryTimingInspection(data.preview, run, branch, pkg, edition) ||
+    !sameTiming(data.preview.timing, payload.timing) ||
     data.preview.preview_fingerprint !== payload.expected_preview_fingerprint ||
     data.state.run_id !== run || data.state.branch_id !== branch)
     throw new Error('Edition Entry timing receipt does not match the exact confirmed command.')

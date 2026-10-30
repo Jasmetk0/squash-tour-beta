@@ -1,3 +1,201 @@
+# Post-merge pre-alpha evidence map — 30 October 2026
+
+## Audited baseline and authority
+
+Merged `buuk`: **`d45b7d3b3aa7e585e3c777cb166c6c5f2bb2f81d`**, tree
+`307c44b66b503c1b2c27a7ed83c0eab2f7c995a2`. All twelve PRs #1661–#1672,
+including the final documentation head ce6395b8, are merged. No PR was open when
+this audit began. Reconstructing those exact heads produced the identical tree;
+no merge content was lost. Refresh GitHub before beginning later work.
+
+Master **v86** and newer explicit owner decisions remain product authority. This
+map is implementation/evidence indexing in the EXISTING checkpoint document,
+not a second Master or PAQ registry. No product status/count/ID is changed. The
+section ranges below account for all **157** original PAQ IDs once; later §31.25–40
+consolidations override older summaries and are covered separately below.
+
+**Evidence legend:** E = a named scenario actually executed (scope stated);
+I = implementation/contract inspected or located, not an execution claim;
+U = requirement not established by this audit, not proof that every implementation
+is absent. D = explicit Master deferral/exclusion only. An E within a grouped row
+never closes every question in that row. RESOLVED describes a product answer;
+merged code and passing scoped tests are separate axes. No completion percentage
+is calculated from PR/test/PAQ counts.
+
+## Current integration evidence and limits
+
+- The pre-merge disposable combination of these exact candidate contents passed
+  113 frontend component/value tests across 16 files, TypeScript/Vite build and
+  92 selected backend/domain/cache/profile tests, including actual copied-FAX
+  HTTP/SQLite source/Entry/continuation/reopen scenarios. These are historical
+  execution results for contents reconstructed above, not a full release suite.
+- #1662's final head e1f7c578 passed 56 hosted checks, including 49 actual native
+  acceptance jobs. All-week W52/W61/W80, sparse competition, native Save/fork,
+  worker and browser scopes remain distinct. They were not rerun for this docs PR.
+- #1671's final head b36eed8e passed actual 1,000-player/80-Edition preparation,
+  source/hash/concurrent-read guards and restart. #1672 d2fc8c86 passed actual
+  pending-command continuation, audit/retarget rejection, Pause/Resume and restart.
+- Sonar is advisory per owner: merged #1669 has D Reliability, #1671 C Security/D
+  Reliability with unavailable issue details. Findings are unclassified, not
+  declared fixed/false-positive. Do not convert green functional checks into a
+  security clearance. No branch protection was changed.
+- The post-merge spot-check results are recorded below after execution. A docs
+  audit is NOT an official internal release: the complete backend/frontend suite,
+  assigned browser/recovery flows and full reference season/50 seasons remain
+  required at the explicit release gate (`docs/PRE_ALPHA_TEST_POLICY.md`).
+
+## Coverage of the original PAQ gate
+
+Product statuses remain exactly those of the linked Master sections, including
+partial, testing, deferred and excluded parts. The rows describe runtime/evidence
+boundaries, not replacements for those statuses. Paths are repository-relative.
+
+| PAQ IDs | Authority / requirement | Implementation / evidence entry point | Remaining blocker or uncertainty | Priority / next action |
+| --- | --- | --- | --- | --- |
+| 001–006 | §31.3; two Admin flows, 1,000/80 reference, 50-season acceptance | E: `tests/application/test_standalone_match_acceptance.py`; real copied-FAX preparation in #1671/#1672 | Full reference season and 50-season completion NOT proven. Four-player legacy season is not reference scale. | Release gate; progressive integration |
+| 007–013 | §31.4; stable identities, provenance, effective versions, missing values, migration | I/E: typed Run/Package models, `src/beta_engine/application/run_calendar_read_authority.py`; #1671 authenticates original Saved hash | Scoped integrity is implemented; comprehensive schema/migration/entity matrix not re-certified. | Preserve; release recovery audit |
+| 014–021 | §31.5; drafts, Saved histories, forks, Undo/recovery, Compare | I/E: `src/beta_engine/application/run_working_draft_service.py`, `src/beta_engine/application/run_saved_revision_history_service.py`; native final-head gates in #1662 | Saved/fork evidence does not close all retention, candidate-future or cross-Run Compare requirements. | Preserve; audit remaining UX/history |
+| 022–029 | §31.6; partial Packages, dependencies, divergent versions, export/Setup | I: `src/beta_engine/application/run_package_service.py`, `tests/api/test_run_package_api.py` | Partial apply/review exists. Complete portable Run/Package archive, migration and own partial export not demonstrated by this audit. Player/Hybrid schema still follows its Master status. | Release blocker until round-trip located/proven |
+| 030–037 | §31.7; simultaneous slots, Week/Season transitions, tasks, terminal closure | E: #1662 unchanged native API/browser/worker matrices; `src/beta_engine/application/native_full_simulation.py`; #1672 actual continuation/pause/retarget rejection | Sparse sporting schedules with all-week transitions are not a full 80-Edition World Tour season. | Integration prerequisite |
+| 038–044 | §31.8 plus §31.38; pool, intake, identities and historical regeneration | I/E: `src/beta_engine/application/native_calendar_cohort_service.py`; 1,000 actual generated players in #1671 | 15-year native intake exists; full initial historical-cohort survival/development and regeneration/locks contract not established by roster count. | Required initial-population audit |
+| 045–053 | §31.9; 57 attributes/0–200, potential, OVR, development/Form/training | I/E: `src/beta_engine/domain/players/sporting.py`, native sporting tests in #1662 | Canonical records/selected transitions exist. Do not certify all formula/default/training/gameplan requirements from attributes being stored. No new calibration requested. | Preserve provisional versioned defaults; verify contract coverage |
+| 054–062 | §31.10 plus §31.28; fatigue/stamina/mental/health/travel | I: `src/beta_engine/domain/players/health.py`, `tests/domain/test_match_stamina.py`, `tests/domain/test_calendar_native_health_preparation.py` | Required health consequences and source continuity exceed a fresh-health baseline. Full travel/mental/recovery and return-risk coverage not re-certified. | Required sporting coverage; no realism campaign now |
+| 063–073 | §31.11; authoritative rally engine, format, timing, replay | I/E: `src/beta_engine/domain/matches/match_engine.py`; actual native MatchEngine and replay gates; Reconstruction test below | Actual match kernel exists. Entire incident/config inheritance/timing matrix is separate from one completed match. | Preserve; match-level regression at release |
+| 074–082 | §31.12; Edition hierarchy/lifecycle, public knowledge and schedules | I/E: `src/beta_engine/domain/tournaments/calendar_tour.py`; native groups/global-slot gates | PAQ-080 historical RESOLVED is superseded for first-release scope by §31.28: extraordinary tournament lifecycle excluded; individual RET/W/O/DQ retained. Full inherited-plan/public-stage coverage unverified. | Core required; excluded extraordinary lifecycle stays excluded |
+| 083–094 | §31.13 plus §15.1/31.26/31.29; Entry, Q, WC/LL, draws | I/E: `src/beta_engine/domain/tournaments/application_validation_authority.py`, `src/beta_engine/application/pre_alpha_fax_current_week_ranking_snapshots.py`; #1671 real shared-snapshot Entry | Validity outcome DTO is not an automatic validator. Main 2 + Q 1 weeks and ranking Main Closing Week − 1 already decided. Saved timing/eligibility/source binding missing from the proven reference flow; some cut-offs genuinely remain open. | NEXT: bounded Saved Entry timing/preflight slice |
+| 095–102 | §31.14 plus §18.4/31.29; Official/Closing ranking, points, PR, discipline | I/E: `src/beta_engine/application/season_category_points_service.py`; #1671 preserves authored zero vs missing points | Reference baseline lacks complete qualification awards; disposable zero awards are not chosen canon. Full PR-case consumption/qualification composition/discipline coverage not certified. PAQ-101 prize money and separate Live Ranking are not required. | Content/policy dependencies; do not invent awards |
+| 103–110 | §31.15 plus §31.27; minimum Reconstruction, isolated candidates, explicit selection | E: `tests/application/test_match_reconstruction_run_save_restart.py` actually selects a genuine match and verifies Saved/reopen/replay | Single knockout match does not prove full constraints catalog, group ties or no-candidate UX. Forcing and advanced naturalness remain deferred/testing per Master, not newly required. | Retain minimum; scoped recovery/constraint review |
+| 111–118 | §31.16; AI knowledge, portfolio, health/retirement, Admin override | I/E: shared-snapshot Entry in #1671; `src/beta_engine/application/season_entry_batch_service.py` | AI proposal is not validated participation. Full knowledge/retirement/health/gameplan coverage unverified; simple versioned AI is allowed, exact weights are later calibration. | Supports Entry path; no global perfect-AI prerequisite |
+| 119–126 | §31.17 and §31.30–36; usable CS/EN Admin, historical context, errors | I/E: `src/beta_engine/application/run_home_readiness.py`; existing scoped Admin and Lab browser gates | Readiness currently covers World/Calendar/population/health/ranking/draft; not every required setup/export step. PAQ-120/121 Viewer pages/counterparts not first-release gates. New Viewer PRs do not close Admin coverage. | Admin flow before further Viewer |
+| 127–134 | §31.18; determinism, seed, rollback, audits, golden fixtures, performance/recovery | E: #1662 source/physical/Save gates and paired measurements; #1671 real rehash/concurrent-read rejection; #1672 exact retry/control/reopen | No owner-hardware SLA selected; 64 MiB is input-byte budget, not heap cap. Two timing samples are not a stable speedup. Full release regression, backup/import recovery still outstanding. | Preserve invariants; release gate |
+| 135–142 | §31.19 plus §31.26/28; FAX content, World Tour, Finals, lower Tours | I/E: `src/beta_engine/application/pre_alpha_fax_acceptance_calendar_source.py`; FAX source hash + 1,000/80 preparation in #1671 | 80 fixture Editions are not 80 played Editions. Finals qualification/selection/full competition and lower-Tour aggregate consequences not proven by native groups or Viewer Race. Final content/hierarchy/awards not selected by tests. | Blocking reference-season content/integration |
+| 143–150 | §31.20 plus §31.25–28; representation/history/events/H2H/Labs/concurrency/import | I/E: `src/beta_engine/application/historical_lab_source.py`, `tests/api/test_historical_lab_copies.py`; 3 Lab services/workflow exist | Three Lab minimum retained. Full notifications, watchlists, event producer/history and import boundary still require evidence. PAQ-150 Viewer reveal not required; public-knowledge invariants remain. | Required cross-cutting closure; no fourth mandatory Lab |
+| 151–157 | §31.23; experience/sharpness/preparation/health/financial/branch naming | I/E: `src/beta_engine/domain/players/sporting.py`; native cohort/health records and existing Run creation | Stored sporting state is not proof of all formula/Financial Level/Match Preparation behavior. PAQ-154 advanced historical search has later/testing limits; branch naming product answer is not a new release pass. | Verify specific contracts; no new calibration constants |
+
+## Later decided requirements that the original question list does not replace
+
+| Master authority | Required behavior and inspected evidence | Remaining boundary / next action |
+| --- | --- | --- |
+| §31.25–27 | Global three Labs, cross-Run Compare, branch map, logical/selective Save/export, tray continuation, notes, Saved Views, watchlists, compact branch export, storage size, basic Records/holder history and rivalries are required, subject to their stated limits. Run/Branch Saved APIs and scoped Lab workflows exist. | No full portable Run archive/compact branch export/tray/watchlist/Saved Views delivery was established in the inspected application/router/UI paths. This is U, not a claim of repository-wide absence. Locate and exercise the real producer/persistence/consumer or implement the missing requirement before release. Do not silently defer the entire set. |
+| §31.28 | Three Labs use shared models; permanent health consequences and return-risk history retained. Extra Talent Lab, team/junior/Olympic events, doping, prize money, detailed medical treatment and extraordinary tournament lifecycle are excluded from first release. | Keep required health/Player Lab proof separate from excluded mechanics; RET/W/O/DQ and ordinary discipline remain required. |
+| §31.29 | Final Commitment defaults to end of Q Entry Window; PR consumption/continuing cases/non-stacking cases, RWC ordering, explicit identity restore backup and future-rally effort/gameplan edits already decided. | These are not all new questions for the owner. Verify each path and its original policy snapshot; exact calibration and remaining boundary cut-offs stay open. |
+| §31.30–36 | Functional CS/EN Admin, historical objects, Saved notes, safe running console, task ownership, stop rules/notifications and nonblocking summaries. `src/beta_engine/application/full_simulation_summary.py` explicitly lists `ranking_changes`, `watched_events`, `notifications` as unavailable. | Concrete partial producer output, not a complete v81/v85 summary/notification implementation. Preserve the true scope in UI; close required sections later through their real data producers. |
+| §31.37 | Fixed positive Run W/offset/year/horizon, one-way extension, original historical clocks and elapsed-year development. Native W52/W61/W80 gates provide scoped evidence. | Reference 50 seasons is a particular FAX acceptance configuration, not a universal limit or an invented full 50-season Cartesian test across all calendars. |
+| §31.38 | Historical initial 15-year cohort model with pre-start development/retirement filtering; resumable preparation, operation-scoped readiness and selected content export. `run_home_readiness.py` explicitly exposes six item codes. | A 1,000-player generated roster and six readiness items do not certify the complete historical model or export/setup workflow. Preserve ordinary manual Save and existing owners. |
+| §31.39 | Automatic total with exact partial quotas preserves unaffected players; extensible world/country/tournament records, holder history, leaderboards, combined filters and fixed/rolling Saved Views. Country Saved match record projections exist. | Record highlights are not a complete record-event ledger/Saved Views implementation. Full quota/identity-preservation and record-history contract needs separate evidence. |
+| §31.40 | Personal milestones/career/retirement summary, followed-player and country notices, grouped alerts retaining individual history, national season comparisons. `calendar_tour_season_summary.py` has signed completed-season/national comparison projection. | Its pure tests use constructed summaries; this audit found 4 failures/2 passes because their Edition mock lacks schema_version. Repair that fixture/negative coverage before treating it as valid evidence. This does not establish a production summary defect or full milestone/notification producers. Existing projection is partial evidence, not a duplicate summary authority. |
+| Newer explicit owner scope (FIFA/ATP Earth) | Both Earth Packages remain in pre-alpha scope. `src/beta_engine/application/earth_package_builder.py` and Package directories exist. | No new full country/year/attribute-content audit was performed here. Reconcile the owner's confirmed coverage with manifests/observations and actual copied-Run acceptance; file presence is not completeness. |
+
+## §36.5 progressive integration ladder
+
+| Stage | Actual boundary | Next proof required |
+| --- | --- | --- |
+| Empty Run → two manual players → Saved match/reopen | Existing actual acceptance; spot check below | Retain as independent release flow, not a substitute for World Tour |
+| One actual sporting user flow | Native Tour/global slots API/browser evidence from reviewed feature heads | Reference content/Entry must participate in the same supported owner; no legacy/native state mixing |
+| Complete week; Week N → N+1; several weeks | Native all-week matrices and sparse multi-tournament cases | Multiple real reference Editions, shared slot/entry state, manual Save/reopen without fixture repair |
+| Whole reference season → Season Transition | Legacy whole-season test explicitly asserts four participants; sparse native season evidence separate | 1,000 initial players, all 80 actual World Tour Editions, Finals and abstract lower-Tour consequences on the same valid reference path |
+| Multiple seasons → full 50-season FAX Run | Structured long probe currently stops; no complete required reference run verified | Only after prior stages: deterministic long-run, intake/lifecycle/history growth, recovery and original source protection |
+
+The ladder orders evidence; it does not remove other decided release requirements.
+A complete release needs the required side capabilities above as well as the two
+main flows. Already excluded functions are not reinstated by this audit.
+
+## Selected next vertical slice (technical recommendation, not new canon)
+
+**Immediate maintenance PR:** restore the obsolete Edition fixture in
+`tests/application/test_calendar_tour_season_summary.py` against the supported
+typed Edition contract and rerun its positive/comparison/forged-input checks.
+The production function now reads `item.schema_version` for v3 group semantics;
+the mock Edition omits that required discriminator. Do not add a permissive
+production fallback or weaken negative assertions merely to make the mock pass.
+This is a bounded confirmed test-evidence defect, not an invented sporting rule.
+
+**Following feature slice:** persisted per-Edition Entry timing/preflight and
+ranking-source binding.
+
+Why this first: the real 1,000-player/80-Edition probe has reached shared-snapshot
+Entry proposals, but its generic hard-coded unresolved-policy label cannot say
+which stored prerequisite is missing. The validity authority explicitly freezes
+valid/invalid outcomes and says it does NOT implement eligibility/deadlines.
+The current copied-FAX ranking helper picks the latest publication at/before the
+current week; that bounded bootstrap is not proof of the canonical per-Edition
+snapshot rule. Timing/source authority must exist before unattended validation
+can safely resolve applications and feed a field/draw. This is a tighter technical
+slice than inventing one global eligibility policy or jumping to a 50-season run.
+
+Confirmed inputs to reuse (Master §15.1/31.26/31.29):
+
+- Main Entry Window defaults to two weeks, followed by one Q week; Edition values
+  can be explicitly overridden. Lengths do not specify a universal start lead.
+- Default ranking is the existing Official snapshot after Main Closing Week − 1;
+  explicit Edition selection may choose another existing snapshot. Do not silently
+  substitute current ranking or synthesize pre-start history.
+- Shared-snapshot/atomic slot publication, canonical identities and NR tokens,
+  one historical application object, existing manual Save and original policy
+  provenance remain; voluntary conflicts are not globally banned by week number.
+- Exact extra decision-slot count, remaining late movement cut-offs, thresholds,
+  future-start/pre-start fixture bootstrap and final FAX content are not silently
+  chosen from the illustrative schedule. Missing inputs must be operation-scoped.
+
+Implementation-ready boundary for the following runtime PR:
+
+1. Inspect existing Edition/Calendar ownership and migrations before adding any
+   field. Reuse normal Package/Working Draft Preview → explicit confirmation →
+   Save and the Run calendar. Keep legacy/native command schemas separate.
+2. Represent reviewed Edition window/closing/Final Commitment inputs with a
+   historically effective snapshot. Apply decided duration defaults only where
+   the required timing inputs are known; validate configured overrides/ranges.
+3. Resolve the exact historical ranking source (or explicit reviewed override),
+   then provide a read-only operation preflight: ready / missing content /
+   unsupported execution / genuinely open policy, with a concrete reason/action.
+4. Keep missing points/identity/lifecycle/timing/format checks separate. Do not
+   auto-approve all proposals or import legacy Entry truth into native sporting
+   state. Unsupported pre-start geometry must explain its gap, not clamp/modulo.
+5. Verify actual HTTP/SQLite Preview non-mutation, stale reviews, exact retry,
+   Save/reopen, source independence, Main/Q/closed boundaries and historical
+   ranking selection, including missing predecessor and explicit override.
+6. Stop only at a concrete remaining PRODUCT choice. Bring that one bounded
+   choice to the owner with a recommendation; do not re-ask the decided 2+1 rule.
+
+This slice should enable an Admin to inspect/save real Entry timing and receive
+an honest validation prerequisite report. It does not itself promise all eligible
+outcomes, final fields/draws, awards or a played season. Subsequent slices consume
+that authority through existing validation → field → draw → actual MatchEngine →
+points/Save/restart, then advance the integration ladder.
+
+Priority comparison: portable archives/recovery, initial historical cohorts,
+Records/notifications and other required side capabilities remain release blockers
+or U until proven. They are retained in the map rather than discarded because
+Entry was selected first. More Viewer polish and a realism/benchmark campaign
+have lower immediate dependency value.
+
+## Audit execution record
+
+Baseline for the following fresh spot checks: d45b7d3b3aa7e585e3c777cb166c6c5f2bb2f81d.
+Command: `PYTHONPATH=src:tests/application GITHUB_EVENT_NAME=workflow_dispatch python -m pytest`
+with `tests/application/test_standalone_match_acceptance.py`,
+`tests/application/test_match_reconstruction_run_save_restart.py`,
+`tests/domain/test_application_validation_authority.py`, and
+`tests/application/test_calendar_tour_season_summary.py --maxfail=1`.
+Result: **8 passed, 1 failed in 15.14s**. The two production HTTP/SQLite flows
+passed (2.98s empty-Run match; 5.73s Reconstruction Save/reopen); six typed
+validation-outcome unit contracts passed, without claiming an automatic policy.
+The summary module failed before completing; an isolated full-module run then
+reported **4 failed, 2 passed in 0.11s**, all four failures at the missing
+`schema_version` on its constructed Edition. Both failing runs are retained as
+negative evidence, not renamed integration passes. No tests, timeout or runtime
+code were changed in this documentation PR. No full regression or real browser
+was run for this audit. These failures must be resolved in the follow-up
+maintenance slice before summary evidence/release certification.
+
+---
+
+# Historical pre-merge checkpoint (superseded implementation snapshot)
+
+The text below is preserved dated evidence. Its open/candidate labels describe
+the earlier edd237b7 baseline; the current merged state and next task are above.
+It must not be used as the current task queue.
+
 # Current verified integration — 30 October 2026
 
 This is the active implementation snapshot. Earlier notes in CURRENT_STATE.md and ROADMAP.md are dated provenance, not an instruction to repeat

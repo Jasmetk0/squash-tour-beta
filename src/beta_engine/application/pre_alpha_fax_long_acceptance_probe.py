@@ -13,16 +13,17 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from beta_engine.application.authoritative_run_simulation_driver import (
+    FINAL_WEEK,
     AuthoritativeFullSimulationCommand,
     AuthoritativeFullSimulationPreviewRequest,
     AuthoritativeRunSimulationDriver,
 )
-from beta_engine.application.pre_alpha_fax_entry_validation_policy_gate import (
-    PreAlphaFaxEntryValidationPolicyGateService,
-)
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     PreAlphaFaxAcceptanceProfile,
     PreAlphaFaxAcceptanceProfileService,
+)
+from beta_engine.application.pre_alpha_fax_entry_validation_policy_gate import (
+    PreAlphaFaxEntryValidationPolicyGateService,
 )
 from beta_engine.domain.simulation_slots import fingerprint
 
@@ -74,6 +75,41 @@ class PreAlphaFaxLongAcceptanceProbeService:
     driver: AuthoritativeRunSimulationDriver
     profile_service: PreAlphaFaxAcceptanceProfileService
 
+    def _pending_command(
+        self, request: AuthoritativeFullSimulationPreviewRequest,
+    ) -> AuthoritativeFullSimulationCommand | None:
+        # The driver validates persisted scope, command hash and reviewed inputs.
+        # Never recreate a reviewed command from today's position after progress.
+        pending = self.driver.inspect_pending_full_simulations(
+            run_id=request.run_id, branch_id=request.branch_id,
+        )
+        for operation in pending["operations"]:
+            command = AuthoritativeFullSimulationCommand.model_validate(operation["command"])
+            if command.command_id != request.command_id:
+                continue
+            original_request = {
+                name: getattr(command, name)
+                for name in AuthoritativeFullSimulationPreviewRequest.model_fields
+            }
+            if original_request != request.model_dump(mode="python"):
+                raise ValueError("Copied-FAX probe command ID already has a different request")
+            review = operation["review"]
+            if fingerprint({k: v for k, v in review.items() if k != "preview_fingerprint"}) != command.expected_preview_fingerprint:
+                raise ValueError("Copied-FAX probe's original Full Simulation review is corrupt")
+            if (
+                type(operation["target_revision"]) is not int
+                or operation["target_revision"] != 0
+                or operation["effective_boundary_target"] is not None
+                or operation["effective_target_week"] != FINAL_WEEK.model_dump(mode="json")
+                or review["final_week"] != operation["effective_target_week"]
+            ):
+                raise ValueError(
+                    "Copied-FAX probe cannot continue a retargeted parent; "
+                    "use its original Full Simulation controls."
+                )
+            return command
+        return None
+
     def run(
         self,
         *,
@@ -101,8 +137,12 @@ class PreAlphaFaxLongAcceptanceProbeService:
             operator_label=request.operator_label,
             audit_reason=request.audit_reason,
         )
+        command = self._pending_command(preview_request)
         try:
-            preview = self.driver.preview_full_simulation(preview_request)
+            preview = (
+                self.driver.preview_full_simulation(preview_request)
+                if command is None else None
+            )
         except ValueError as exc:
             return PreAlphaFaxLongAcceptanceProbeReport(
                 run_id=run_id,
@@ -120,15 +160,14 @@ class PreAlphaFaxLongAcceptanceProbeService:
                 detail=str(exc),
                 execution_fingerprint=None,
             )
-        command = AuthoritativeFullSimulationCommand(
-            **preview_request.model_dump(mode="json"),
-            expected_start_week=preview["start_week"],
-            expected_position_fingerprint=preview[
-                "expected_position_fingerprint"
-            ],
-            expected_revision_id=preview["expected_revision_id"],
-            expected_preview_fingerprint=preview["preview_fingerprint"],
-        )
+        if command is None:
+            command = AuthoritativeFullSimulationCommand(
+                **preview_request.model_dump(mode="json"),
+                expected_start_week=preview["start_week"],
+                expected_position_fingerprint=preview["expected_position_fingerprint"],
+                expected_revision_id=preview["expected_revision_id"],
+                expected_preview_fingerprint=preview["preview_fingerprint"],
+            )
         execution = self.driver.simulate_full_simulation(command)
         schema = str(execution.get("schema_version", ""))
         status = str(execution.get("status", ""))
@@ -152,7 +191,7 @@ class PreAlphaFaxLongAcceptanceProbeService:
             branch_id=branch_id,
             acceptance_profile_fingerprint=profile.profile_fingerprint,
             input_ready=True,
-            full_simulation_preview_fingerprint=preview["preview_fingerprint"],
+            full_simulation_preview_fingerprint=command.expected_preview_fingerprint,
             full_simulation_command_id=request.command_id,
             execution_schema_version=schema,
             execution_status=status,

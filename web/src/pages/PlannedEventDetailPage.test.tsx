@@ -59,6 +59,10 @@ const api = vi.hoisted(() => ({
   previewCanonicalFrozenMainReplacement: vi.fn(),
   commitCanonicalFrozenMainReplacement: vi.fn(),
 }))
+const entryTimingChild = vi.hoisted(() => ({ render: vi.fn() }))
+vi.mock('../components/RunEditionEntryTimingPanel', () => ({
+  RunEditionEntryTimingPanel: (props: unknown) => { entryTimingChild.render(props); return null }
+}))
 const adminTime = vi.hoisted(() => ({ viewed: vi.fn() }))
 const locale = vi.hoisted(() => ({ current: 'en' as 'en' | 'cs' }))
 vi.mock('../i18n/LanguageContext', () => ({
@@ -562,6 +566,13 @@ describe('PlannedEventDetailPage', () => {
       historical: false, seasonState: null, unavailable: false, failed: false,
       query: { isLoading: false }, time: { runId: 'run-a', branchId: 'branch-a' }
     })
+    api.getRunContainer.mockResolvedValue({
+      run_id: 'run-a', storage_kind: 'custom_local', read_only: false, status: 'working',
+      metadata_json: { run_calendar: {
+        schema_version: 'run_calendar.v1', weeks_per_year: 80,
+        season_start_year_week: 37, start_year: 2000, season_count: 50
+      }}
+    })
     api.getRun.mockRejectedValue(new api.ApiError('Legacy Run not found', 404))
     api.listEvents.mockRejectedValue(new api.ApiError('Legacy event history not found', 404))
     api.getBranchWorkingDraft.mockResolvedValue({
@@ -587,6 +598,12 @@ describe('PlannedEventDetailPage', () => {
     expect(await screen.findByText(/Canonical tournament preparation/)).toBeInTheDocument()
     expect(api.getCanonicalTournamentPreparation).toHaveBeenCalledWith('run-a','branch-a','E1')
     expect(screen.queryByText(/Failed to load run season state/)).not.toBeInTheDocument()
+    await waitFor(() => expect(entryTimingChild.render).toHaveBeenCalled())
+    expect(entryTimingChild.render.mock.calls.some(([properties]) => (
+      properties.runId === 'run-a' && properties.branchId === 'branch-a' &&
+      properties.packageId === 'calendar-2000-2001' && properties.eventId === 'E1' &&
+      properties.calendar.weeks_per_year === 80 && properties.enabled === true
+    ))).toBe(true)
   })
 
   it('refuses canonical Calendar deep links whose clean Draft is based on an old Saved Head', async () => {
@@ -611,6 +628,7 @@ describe('PlannedEventDetailPage', () => {
     expect(api.getRunPackageState).not.toHaveBeenCalled()
     expect(api.getRunOwnedCalendar).not.toHaveBeenCalled()
     expect(screen.queryByText(/Using the validated Run-owned Calendar snapshot/)).not.toBeInTheDocument()
+    expect(entryTimingChild.render).not.toHaveBeenCalled()
     expect(screen.queryByRole('heading',{name:'First knockout Draw — reviewed authority'})).not.toBeInTheDocument()
   })
 
@@ -675,6 +693,7 @@ describe('PlannedEventDetailPage', () => {
     for (const name of ['Canonical WC/RWC review', 'Wildcard action history', 'Commissioner pre-draw withdrawal replacement', 'Legacy pre-draw withdrawal history', 'Commissioner late replacement lucky loser', 'Legacy late-replacement history']) expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument()
     for (const method of ['getRun', 'listEvents', 'getCanonicalWildCardState', 'previewCanonicalWildCardAssignment', 'commitCanonicalWildCardAssignment', 'getCanonicalTournamentEntryFieldState', 'commitCanonicalPreDrawWithdrawal', 'getCanonicalTournamentDrawState', 'getCanonicalTournamentDrawAuthority', 'getCanonicalTournamentEffectiveDrawAuthority', 'getCanonicalTournamentDrawRevisionHistory', 'getCanonicalTournamentDrawProcessState', 'configureCanonicalTournamentDrawProcess', 'commitCanonicalTournamentDrawInput', 'generateCanonicalTournamentDraw'] as const) expect(api[method]).not.toHaveBeenCalled()
     expect(screen.queryByRole('link', { name: /Inspect persisted event detail/ })).not.toBeInTheDocument()
+    expect(entryTimingChild.render).not.toHaveBeenCalled()
   })
 
   it('re-enables current and commissioner queries after Past changes to Present', async () => {

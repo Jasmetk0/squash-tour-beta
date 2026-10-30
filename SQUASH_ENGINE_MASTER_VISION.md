@@ -2,8 +2,12 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 85
-**Aktualizováno:** 17. 10. 2026 – osobní milníky, kariérní časová osa/souhrn, sledování zemí, sezonní přehledy a porovnání; audit #1521–1525 a návazná oprava sporting horizon flow.
+**Verze dokumentu:** 86
+**Aktualizováno:** 30. 10. 2026 – organizační sjednocení přednosti a návaznosti na implementační checkpoint; bez nových produktových nebo sportovních rozhodnutí.
+
+**Rozsah v86:** Novější pracovní protokol kapitoly 36 je promítnut do úvodního pravidla přednosti. Aktuální stav a mapa důkazů jsou v CURRENT_STATE.md a ROADMAP.md; historické audity a všechny PAQ/statusy zůstávají zachované. Nejde o nový úplný audit všech požadavků, merge otevřených PR ani certifikaci pre-alphy.
+
+**Historická aktualizace v85:** 17. 10. 2026 – osobní milníky, kariérní časová osa/souhrn, sledování zemí, sezonní přehledy a porovnání; audit #1521–1525 a návazná oprava sporting horizon flow.
 
 **Nová produktová rozhodnutí v85:** osobní milníky ze skutečné historie, kariérní časová osa a automatický kariérní souhrn při retirementu; běžná osobní upozornění jen u sledovaných hráčů. Sledování země zahrnuje společné úspěchy, významné úspěchy automaticky vybrané domácí špičky a mimořádné individuální události ostatních. Související upozornění se seskupují bez ztráty jednotlivých milníků v historii. Sezonní souhrn má stručný světový i relevantní zemský/hráčský přehled, detaily a porovnání s předchozí či jinou evidovanou sezonou; vzniká i při dlouhé simulaci a sám ji nezastaví. Detaily 21.5, 25.6.1, 27.25 a 31.40. Prahy významnosti a kritéria výběru/analytických označení se doladí na funkčním enginu; nejde o nový bodový koeficient zemí nebo novou sportovní autoritu. Implementace je odděleně v 35.42.
 
@@ -216,14 +220,29 @@ Následující mapa určuje rozsah i tam, kde se značka neopakuje u každé jed
 
 ### Pravidlo přednosti
 
-Při rozporu platí toto pořadí:
+**[AKTUÁLNÍ PRACOVNÍ PRAVIDLO — sjednoceno s kapitolou 36 ve v86]**
+Při rozporu platí novější výslovné rozhodnutí vlastníka projektu → tento
+kanonický Master → podřízená technická konstituce → relevantní specifikace.
+Starší chaty, předání, dokumenty a kód jsou historická provenance nebo důkaz
+implementace, nikoliv konkurenční produktová autorita. Nedostupnost původního
+chatu nebrání pokračování podle konsolidovaného Masteru. Návrh jiného chatu
+ani existující implementační default sám nevytváří schválené sportovní pravidlo.
 
-1. **výslovná rozhodnutí učiněná v tomto konkrétním chatu,**
-2. tento master dokument jako průběžný zápis rozhodnutí z tohoto konkrétního chatu,
-3. prozatímní pravidla a směry dohodnuté v tomto konkrétním chatu,
-4. obsah z jiných chatů, starších dokumentů, handoffů nebo kódu pouze jako návrh či inspirace.
+Toto zpřesnění pouze používá již platný protokol §36.1/36.2; nemění rozsah
+pre-alphy ani žádné PRODUCT/PAQ rozhodnutí. Produktová rozhodnutí a merge
+zůstávají vlastníku. Technické vedení a koordinace se řídí kapitolou 36.
 
-**Absolutní pravidlo:** pokud se tento dokument nebo jakýkoliv jiný podklad liší od toho, co bylo řečeno v tomto konkrétním chatu, platí tento konkrétní chat. Nic převzatého z jiného chatu se nepovažuje za rozhodnuté, dokud to uživatel výslovně nepotvrdí také zde.
+**Historické původní znění — nahrazeno výše uvedeným pravidlem a kapitolou 36:**
+
+> Při rozporu platí toto pořadí:
+>
+> 1. **výslovná rozhodnutí učiněná v tomto konkrétním chatu,**
+> 2. tento master dokument jako průběžný zápis rozhodnutí z tohoto konkrétního chatu,
+> 3. prozatímní pravidla a směry dohodnuté v tomto konkrétním chatu,
+> 4. obsah z jiných chatů, starších dokumentů, handoffů nebo kódu pouze jako návrh či inspirace.
+>
+> **Absolutní pravidlo:** pokud se tento dokument nebo jakýkoliv jiný podklad liší od toho, co bylo řečeno v tomto konkrétním chatu, platí tento konkrétní chat. Nic převzatého z jiného chatu se nepovažuje za rozhodnuté, dokud to uživatel výslovně nepotvrdí také zde.
+>
 
 Slova jako „asi“, „zatím“, „možná“ a „ještě upřesníme“ se nesmějí převádět na pevné rozhodnutí.
 

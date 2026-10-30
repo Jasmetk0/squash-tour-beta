@@ -1,3 +1,93 @@
+# Current verified integration — 30 October 2026
+
+This is the active implementation snapshot. Everything under **Historical
+checkpoint evidence** below is dated provenance, not an instruction to repeat
+completed work. Product authority remains the complete Master and newer explicit
+owner decisions; implementation evidence never changes a sporting rule.
+
+## Baseline and review boundary
+
+- Verified merged `buuk`: `edd237b7a2d5e1d69cf96aafce13799bf428253b`.
+  Owner merges #1652–#1659 and #1660 are present. This is not a release.
+- Backend #1662 remains **open, not merged** at
+  `e1f7c578032c5064aa1f2eb6a90a5f1fda9af332`. Its latest hosted inventory
+  is 56 successful checks and three unrelated skips, including 49 actual native
+  acceptance jobs across seven workflows. No failed/pending functional check.
+  These are candidate-head results, not tests of the merged base.
+- Viewer #1661 and #1663–#1668 are open with successful applicable final-head
+  tests/build/static checks at this audit snapshot. They are read-only legacy
+  projection improvements, not new native sporting capabilities.
+- Viewer #1669 remains Draft at `6119781fb16e8d83d753d582d4056ec7ba7b1c05`.
+  Fast CI and CodeQL passed; Sonar reports D new-code reliability. The report's
+  issue details were unavailable in this review environment. No specific runtime
+  defect was independently confirmed; the advisory is unresolved, not dismissed.
+- Refresh GitHub before acting: PR state and candidate heads can change after this
+  snapshot. Only the owner merges. No auto-merge.
+
+## Independently executed integration evidence
+
+All nine candidate file sets merged without conflict in a disposable local
+checkout based on the merged SHA above. No integration commit was published.
+
+- 113 focused frontend tests across 16 files passed; they use mocked GET data.
+- TypeScript and the production Vite build passed.
+- 56 focused backend cache/dependency/domain/profiling tests passed.
+- Three actual HTTP/SQLite Save, limited-budget, rollback/handoff and reopen
+  cases passed using production services.
+- Seven release-map checks passed: actual empty Run/two manual players/Saved
+  standalone match, four deterministic 80-Edition calendar-source tests and two
+  actual HTTP rejection checks for missing FAX release inputs.
+- The 80-Edition tests establish a deterministic fixture, **not** successful
+  execution of those Editions. Missing-input rejection does not prove readiness
+  of a fully prepared native FAX Run. No new real Viewer browser run, whole
+  reference season, 50-season release or full-suite certification is claimed.
+
+## Native Save performance candidate
+
+#1662 demonstrably removes repeated checkpoint copies and evidence parses while
+preserving complete-content/Run/Branch keys, isolated callers, bounded retention,
+physical/source/ancestry/dependency/math/post-write gates, legacy behavior,
+manual Save and immutable history. Independent review found no confirmed
+user-facing defect in its patch.
+
+The same 64 MiB limit accounts for serialized input bytes; it is **not** a Python
+heap or RSS cap. The paired measurements and raw samples are in #1662 and
+`docs/NATIVE_SAVE_PERFORMANCE.md` on that branch. Two ordinary samples per version
+do not establish a stable end-to-end speedup; cold restart is slower in the final
+sample. Its unchanged W80/1,000 Chromium and every-week/Season Transition gates
+passed on the final candidate head, without a timeout or population relaxation.
+
+## Next development priority
+
+Finish the bounded open work without adding more Viewer features. Then verify
+the existing copied-FAX acceptance profile/probe against the actual canonical
+native Saved owner, through production APIs. Inspect
+`pre_alpha_fax_acceptance_profile.py`,
+`pre_alpha_fax_reference_materialization.py`,
+`pre_alpha_fax_long_acceptance_probe.py` and the native Full Simulation driver
+dispatch before changing them. These existing services are not permission to
+create a parallel sporting owner or to declare their legacy input shape sufficient.
+
+The next runtime slice should expose the **first real integration blocker** on
+a disposable editable FAX reference copy, with original provenance, 1,000-player
+minimum and the real 80-Edition fixture. Continue through the ordinary supported
+commands, manual Save and reopen; stop truthfully at unsupported or unresolved
+policy. Do not automate an open PRODUCT decision or repair the database by hand.
+A bounded diagnostic is not a 50-season acceptance pass.
+
+See the active evidence map at the beginning of `ROADMAP.md`. It separates
+decided scope, implemented pieces, tested integration and release evidence.
+No PAQ/PRODUCT question is closed by this document. In particular W80 (weeks per
+year), 80 Editions per season, 1,000 players and 50 seasons are separate axes.
+
+---
+
+# Historical checkpoint evidence
+
+The complete earlier implementation notes follow unchanged. Their embedded
+candidate/unmerged/incomplete labels describe their original date only.
+
+
 # Native Save decode continuity candidate — 29 October 2026
 
 Verified `buuk`: `fbe8e00c346b1de6de6d3144509a92592dec38d0`, owner merge of #1657.

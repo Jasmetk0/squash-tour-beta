@@ -15,6 +15,7 @@ import {
 import type { RunCalendarMetadata } from '../api/runCalendarCreation'
 
 const api = vi.hoisted(() => ({
+  ApiError: class ApiError extends Error { constructor(message: string, public status = 409) { super(message) } },
   getRunEditionEntryTiming: vi.fn(),
   previewRunEditionEntryTiming: vi.fn(),
   confirmRunEditionEntryTiming: vi.fn(),

@@ -242,6 +242,28 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
   })
 
+  it('does not lose local input or preview when equivalent Run calendar keys are reordered', async () => {
+    const view = mount()
+    await fill(); await requestPreview()
+    const reorderedClock: RunCalendarMetadata = {
+      start_year: calendar.start_year, season_count: calendar.season_count,
+      schema_version: calendar.schema_version,
+      season_start_year_week: calendar.season_start_year_week,
+      weeks_per_year: calendar.weeks_per_year
+    }
+    view.rerender(<Frame><RunEditionEntryTimingPanel
+      runId="run" branchId="branch" packageId="calendar-package"
+      eventId="edition" calendar={reorderedClock} enabled /></Frame>)
+    await waitFor(() => expect(screen.getByRole('button',{
+      name:'Výslovně potvrdit do Working Draftu'
+    })).toBeEnabled())
+    expect(screen.getByLabelText('Otevření Main – týden')).toHaveValue(13)
+    expect(screen.getByLabelText('Operátor potvrzení')).toHaveValue('Operator')
+    expect(screen.getByLabelText('Důvod potvrzení (audit)')).toHaveValue('Reviewed')
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+  })
+
   it('keeps input, audit and valid server preview on CS/EN language switch', async () => {
     mount()
     await fill()

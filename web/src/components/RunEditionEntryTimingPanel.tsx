@@ -106,7 +106,13 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const { language } = useLanguage()
   const t = editionEntryTimingText(language)
   const queryClient = useQueryClient()
-  const scope = JSON.stringify([runId, branchId, packageId, eventId, calendar])
+  // Scope identity follows canonical Run clock values, not incoming JSON key
+  // order. Reordering equivalent metadata must not discard a reviewed preview.
+  const scope = JSON.stringify([
+    runId, branchId, packageId, eventId,
+    calendar.schema_version, calendar.weeks_per_year,
+    calendar.season_start_year_week, calendar.start_year, calendar.season_count
+  ])
   const currentScope = useRef(scope)
   currentScope.current = scope
   const busy = useRef(false)

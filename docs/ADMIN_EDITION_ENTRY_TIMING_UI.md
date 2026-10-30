@@ -110,3 +110,7 @@ If timing inputs differ from the last inspected plan and there is no matching se
 ## Pending GET read fence
 
 While a manual or automatically triggered inspection GET is in flight, the Entry timing and audit form stays disabled, and updates are rejected at their event handler too. This prevents a delayed server GET from overwriting edits made after refresh started. On success the form uses the freshly inspected timing; on failure the existing fail-closed read path applies. A deferred-GET mocked regression covers disabled controls, attempted edits, empty server response and retained audit. No write is initiated.
+
+## Canonical Run context identity
+
+The frontend editing scope uses the actual Run calendar values in a fixed order rather than raw JSON object serialization. A caller that reorders an otherwise identical persisted clock object must not wipe a valid preview or operator/audit text. Changing any real clock field still creates a different editor scope and invalidates reviewed state. A mocked React rerender regression covers reordered metadata without a Confirm or Save write.

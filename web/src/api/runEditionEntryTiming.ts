@@ -87,20 +87,24 @@ export const isHash = (value: unknown): value is string =>
   typeof value === 'string' && /^[0-9a-f]{64}$/.test(value)
 
 /** Never synthesize a FAX/61 calendar when persisted metadata is missing or corrupt. */
+function isValidRunCalendarMetadata(value: unknown): value is RunCalendarMetadata {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  const c = value as Record<string, unknown>
+  return Object.keys(c).sort().join(',') ===
+    ['schema_version', 'weeks_per_year', 'season_start_year_week', 'start_year', 'season_count'].sort().join(',') &&
+    c.schema_version === 'run_calendar.v1' &&
+    Number.isSafeInteger(c.weeks_per_year) && (c.weeks_per_year as number) >= 1 &&
+    Number.isSafeInteger(c.season_start_year_week) &&
+    (c.season_start_year_week as number) >= 1 &&
+    (c.season_start_year_week as number) <= (c.weeks_per_year as number) &&
+    Number.isSafeInteger(c.start_year) && (c.start_year as number) >= 0 &&
+    Number.isSafeInteger(c.season_count) && (c.season_count as number) >= 1
+}
+
 export function verifiedRunCalendar(run: RunContainer | null | undefined): RunCalendarMetadata | null {
   if (!run || !run.metadata_json || !Object.prototype.hasOwnProperty.call(run.metadata_json, 'run_calendar')) return null
   const value = run.metadata_json.run_calendar
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
-  const c = value as Record<string, unknown>
-  if (Object.keys(c).sort().join(',') !==
-    ['schema_version', 'weeks_per_year', 'season_start_year_week', 'start_year', 'season_count'].sort().join(',') ||
-    c.schema_version !== 'run_calendar.v1' ||
-    !Number.isSafeInteger(c.weeks_per_year) || (c.weeks_per_year as number) < 1 ||
-    !Number.isSafeInteger(c.season_start_year_week) ||
-    (c.season_start_year_week as number) < 1 || (c.season_start_year_week as number) > (c.weeks_per_year as number) ||
-    !Number.isSafeInteger(c.start_year) || (c.start_year as number) < 0 ||
-    !Number.isSafeInteger(c.season_count) || (c.season_count as number) < 1) return null
-  return c as unknown as RunCalendarMetadata
+  return isValidRunCalendarMetadata(value) ? value : null
 }
 
 export function sameClock(a: RunCalendarMetadata, b: RunCalendarMetadata): boolean {
@@ -136,15 +140,55 @@ export function entryTimingScope(
   return value?.run_id === run && value.branch_id === branch &&
     value.package_id === pkg && value.event_id === edition
 }
+/** Check network DTOs before passing nested timing/window values to React. */
+function validTiming(value: EditionEntryTiming | null | undefined): value is EditionEntryTiming {
+  const clock = value?.main_open?.calendar
+  if (!clock || !isValidRunCalendarMetadata(clock) || value?.schema_version !== 'edition_entry_timing.v1') return false
+  const optionalWeek = (week: EntryWeek | null | undefined) =>
+    week === null || (week !== undefined && validWeek(week, clock))
+  return validWeek(value.main_open, clock) &&
+    Number.isSafeInteger(value.main_duration_weeks) && value.main_duration_weeks > 0 &&
+    Number.isSafeInteger(value.qualification_duration_weeks) && value.qualification_duration_weeks > 0 &&
+    optionalWeek(value.final_commitment) && optionalWeek(value.ranking_publication_override)
+}
+
+function validWeek(value: EntryWeek | null | undefined, clock: RunCalendarMetadata): boolean {
+  return Boolean(value && typeof value === 'object' &&
+    isValidRunCalendarMetadata(value.calendar) && weekInClock(value, clock))
+}
+
 export function validEntryTimingInspection(
   value: EntryTimingInspection, run: string, branch: string, pkg: string, edition: string
 ): boolean {
   if (!entryTimingScope(value, run, branch, pkg, edition) ||
-    !Array.isArray(value.blockers) || value.automatic_eligibility_status !== 'not_implemented') return false
+    !Array.isArray(value.blockers) ||
+    !value.blockers.every(b => b !== null && typeof b.code === 'string' && typeof b.detail === 'string') ||
+    value.automatic_eligibility_status !== 'not_implemented') return false
   if (value.timing === null) return value.preflight_status === 'missing_content'
-  return value.schema_version === 'run_edition_entry_timing_preview.v1' &&
-    value.configuration_state === 'working_draft' &&
-    isHash(value.preview_fingerprint) && isHash(value.state_fingerprint) &&
-    isHash(value.edition_fingerprint) &&
-    typeof value.can_confirm_configuration === 'boolean'
+  const data = value as EntryTimingPreview
+  if (!validTiming(data.timing) || !data.resolved || typeof data.resolved !== 'object') return false
+  const clock = data.timing.main_open.calendar
+  const nullableWeek = (week: EntryWeek | null | undefined) =>
+    week === null || (week !== undefined && validWeek(week, clock))
+  return data.schema_version === 'run_edition_entry_timing_preview.v1' &&
+    data.configuration_state === 'working_draft' &&
+    Number.isSafeInteger(data.draft_version) && data.draft_version >= 0 &&
+    typeof data.saved_head_revision_id === 'string' &&
+    isHash(data.preview_fingerprint) && isHash(data.state_fingerprint) &&
+    isHash(data.edition_fingerprint) &&
+    validWeek(data.resolved.main_open, clock) &&
+    validWeek(data.resolved.main_close, clock) &&
+    validWeek(data.resolved.qualification_open, clock) &&
+    validWeek(data.resolved.qualification_close, clock) &&
+    validWeek(data.resolved.final_commitment, clock) &&
+    nullableWeek(data.resolved.default_ranking_completed_week) &&
+    nullableWeek(data.resolved.ranking_publication_week) &&
+    nullableWeek(data.current_week) &&
+    (data.before === null || validTiming(data.before)) &&
+    (data.ranking_snapshot_fingerprint === null || isHash(data.ranking_snapshot_fingerprint)) &&
+    (data.ranking_authority_fingerprint === null || isHash(data.ranking_authority_fingerprint)) &&
+    ['missing_prerequisite', 'ready_for_explicit_confirmation', 'bound'].includes(data.ranking_binding_status) &&
+    ['missing_content', 'blocked', 'ready', 'unsupported_execution'].includes(data.preflight_status) &&
+    ['after_main_closing_minus_one', 'explicit_publication_override'].includes(data.resolved.ranking_source) &&
+    typeof data.can_confirm_configuration === 'boolean'
 }

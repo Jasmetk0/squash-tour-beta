@@ -3176,9 +3176,32 @@ export async function listTournamentRankingPublicationOptions(
   const data = await request<TournamentRankingPublicationOptions>(
     canonicalTournamentRankingSnapshotRoot(runId, branchId, eventId) + '/available'
   )
+  const publications = data?.publications
+  // The published list is server-owned input. Validate nested records before
+  // the Admin picker creates select options or their stable week identities.
+  const publicationWeeks = Array.isArray(publications) ? publications.map(item =>
+    item?.ranking_week && Number.isSafeInteger(item.ranking_week.season_index) &&
+    Number.isSafeInteger(item.ranking_week.week) &&
+    item.ranking_week.season_index >= 0 && item.ranking_week.week >= 1
+      ? item.ranking_week.season_index + ':' + item.ranking_week.week : null
+  ) : []
   if (
-    data.run_id !== runId || data.branch_id !== branchId || data.event_id !== eventId ||
-    data.source !== 'published_official_rankings.v1' || data.publication_count !== data.publications.length
+    !data || data.run_id !== runId || data.branch_id !== branchId || data.event_id !== eventId ||
+    data.source !== 'published_official_rankings.v1' ||
+    !Number.isSafeInteger(data.publication_count) || data.publication_count < 0 ||
+    !Array.isArray(publications) || data.publication_count !== publications.length ||
+    publications.some(item =>
+      !item || !item.ranking_week ||
+      typeof item.snapshot_fingerprint !== 'string' ||
+      !/^[0-9a-f]{64}$/.test(item.snapshot_fingerprint) ||
+      !Number.isSafeInteger(item.ranking_week.season_index) ||
+      !Number.isSafeInteger(item.ranking_week.week) ||
+      item.ranking_week.season_index < 0 || item.ranking_week.week < 1 ||
+      !Number.isSafeInteger(item.ranked_row_count) || item.ranked_row_count < 0 ||
+      !Number.isSafeInteger(item.best_n) || item.best_n < 1 ||
+      typeof item.policy_id !== 'string' || !item.policy_id.trim()) ||
+    publicationWeeks.includes(null) ||
+    new Set(publicationWeeks).size !== publicationWeeks.length
   ) {
     throw new Error('Published Official Ranking options do not match the requested tournament scope.')
   }

@@ -94,3 +94,7 @@ Once a Saved Revision receipt is accepted, keep the Entry form, new Preview and 
 ## Uncertain Save: no blind second write
 
 The Working Draft Save route does not accept this UI's immutable Entry command ID. Once the Save POST has been attempted, a timeout, lost reply, or malformed success receipt might mean an actual immutable Saved Revision already exists. The panel now conservatively locks a repeated Save, keeps the existing Run Management/history link visible, does **not** claim a successful revision, and prompts inspection of Saved HEAD/history before a new editing session. A failure during preflight *before* POST remains an ordinary recoverable error. Mocked React regressions cover the lost reply, malformed receipt, CS/EN switch and preflight failure. Real HTTP/SQLite uncertainty must still be accepted independently.
+
+## Published ranking picker input integrity
+
+The shared HTTP client now validates every published ranking option before exposing it to the Entry override picker: exact Run/Branch/Edition identity and source, nonnegative safe count matching a real array, strictly valid publication week, SHA-256 fingerprint, nonnegative ranked count, positive Best N, nonempty policy ID, and no duplicate season/week key. Invalid/missing nested rows fail the read closed rather than producing a malformed or ambiguous select. The client mock suite covers valid response and nine corrupt response cases. No publication is automatically adopted by selecting it.

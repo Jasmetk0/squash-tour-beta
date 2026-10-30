@@ -1,7 +1,8 @@
 /** Mocked HTTP-transport tests, not a production browser/SQLite round-trip. */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
-  getRunEditionEntryTiming, previewRunEditionEntryTiming, confirmRunEditionEntryTiming
+  getRunEditionEntryTiming, previewRunEditionEntryTiming, confirmRunEditionEntryTiming,
+  listTournamentRankingPublicationOptions
 } from './client'
 import type {
   EditionEntryTiming, EntryTimingPreview, EntryTimingReceipt
@@ -154,6 +155,43 @@ describe('Run Edition Entry timing HTTP client — mocked transport', () => {
         calendar:{...calendar,weeks_per_year:0}}}}))
     await expect(previewRunEditionEntryTiming(...args,timing)).rejects.toThrow(/preview does not match/)
     expect(spy).toHaveBeenCalledTimes(1)
+  })
+
+  it('accepts authentic published ranking options only for the exact Run, Branch and Edition', async () => {
+    const options = {run_id:'run/a',branch_id:'branch/b',event_id:'edition/d',
+      source:'published_official_rankings.v1',publication_count:1,publications:[{
+        ranking_week:{season_index:0,week:14},
+        snapshot_fingerprint:hash('f'),ranked_row_count:50,policy_id:'policy',best_n:15
+      }]}
+    const spy = vi.spyOn(globalThis,'fetch').mockResolvedValue(ok(options))
+    await expect(listTournamentRankingPublicationOptions(args[0],args[1],args[3]))
+      .resolves.toEqual(options)
+    expect(spy).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/admin/runs/run%2Fa/branches/branch%2Fb/tournaments/edition%2Fd/ranking-snapshot-authority/available',
+      {headers:{'Content-Type':'application/json'}}
+    )
+  })
+
+  it('rejects corrupt and duplicated published ranking options before rendering a picker', async () => {
+    const item = {ranking_week:{season_index:0,week:14},
+      snapshot_fingerprint:hash('f'),ranked_row_count:50,policy_id:'policy',best_n:15}
+    const original = {run_id:'run/a',branch_id:'branch/b',event_id:'edition/d',
+      source:'published_official_rankings.v1',publication_count:1,publications:[item]}
+    const spy = vi.spyOn(globalThis,'fetch')
+      .mockResolvedValueOnce(ok({...original,publications:null}))
+      .mockResolvedValueOnce(ok({...original,publications:[null]}))
+      .mockResolvedValueOnce(ok({...original,publications:[{...item,ranking_week:null}]}))
+      .mockResolvedValueOnce(ok({...original,publications:[{...item,snapshot_fingerprint:'bad'}]}))
+      .mockResolvedValueOnce(ok({...original,publications:[{...item,ranked_row_count:-1}]}))
+      .mockResolvedValueOnce(ok({...original,publications:[{...item,best_n:0}]}))
+      .mockResolvedValueOnce(ok({...original,publications:[{...item,policy_id:''}]}))
+      .mockResolvedValueOnce(ok({...original,publication_count:2,publications:[item,item]}))
+      .mockResolvedValueOnce(ok({...original,branch_id:'foreign'}))
+    for (let index = 0; index < 9; index += 1) {
+      await expect(listTournamentRankingPublicationOptions(args[0],args[1],args[3]))
+        .rejects.toThrow(/do not match the requested tournament scope/)
+    }
+    expect(spy).toHaveBeenCalledTimes(9)
   })
 
   it('does not accept a forged confirm receipt kind, missing nested preview, or retargeted Main week', async () => {

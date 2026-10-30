@@ -431,7 +431,7 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(screen.getByRole('link',{name:/Run Management a uložené revize/})).toHaveAttribute(
       'href', expect.stringContaining('/admin/runs/run'))
     await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
-    expect(screen.getByText(/Save outcome is uncertain/)).toBeInTheDocument()
+    expect(screen.getByText(/Uncertain Save outcome/)).toBeInTheDocument()
     expect(screen.getByRole('button',{name:'Save Working Draft separately'})).toBeDisabled()
     expect(api.saveRunPackageWorkingDraft).toHaveBeenCalledTimes(1)
   })

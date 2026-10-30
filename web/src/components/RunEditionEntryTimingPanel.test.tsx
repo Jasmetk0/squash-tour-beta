@@ -537,6 +537,23 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.saveRunPackageWorkingDraft).toHaveBeenCalledTimes(1)
   })
 
+  it('does not accept a non-string Saved Revision ID as proof of an actual Save', async () => {
+    api.saveRunPackageWorkingDraft.mockResolvedValueOnce({
+      run_id:'run',branch_id:'branch',saved_revision:{revision_id:12345},
+      working_draft:{run_id:'run',branch_id:'branch',
+        base_saved_revision_id:12345,status:'clean'}
+    })
+    mount(); await fill(); await requestPreview()
+    await userEvent.click(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'}))
+    await screen.findByText(/Potvrzeno pouze do Working Draftu/)
+    await userEvent.click(screen.getByLabelText(/Samostatně schvaluji uložení/))
+    await userEvent.click(screen.getByRole('button',{name:'Samostatně uložit Working Draft'}))
+    expect(await screen.findByText(/Výsledek Save je nejistý/)).toBeInTheDocument()
+    expect(screen.queryByText(/Saved Revision byla uložena a potvrzena serverem/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Samostatně uložit Working Draft'})).toBeDisabled()
+    expect(api.saveRunPackageWorkingDraft).toHaveBeenCalledTimes(1)
+  })
+
   it('fails closed on stale Draft version without making Save call', async () => {
     api.getBranchWorkingDraft.mockResolvedValue({
       run_id:'run',branch_id:'branch',status:'dirty',

@@ -368,14 +368,16 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       savePosted = true
       const result = await saveRunPackageWorkingDraft(runId, branchId, staged.draft_version)
       if (currentScope.current !== origin) return
-      if (result.run_id !== runId || result.branch_id !== branchId ||
+      const savedId = result?.saved_revision?.revision_id
+      if (!result || result.run_id !== runId || result.branch_id !== branchId ||
+        typeof savedId !== 'string' || !savedId.trim() ||
+        !result.working_draft ||
         result.working_draft.run_id !== runId || result.working_draft.branch_id !== branchId ||
         result.working_draft.status !== 'clean' ||
-        result.working_draft.base_saved_revision_id !== result.saved_revision.revision_id ||
-        !result.saved_revision.revision_id) {
+        result.working_draft.base_saved_revision_id !== savedId) {
         throw new Error('Saved Revision receipt identity or Draft state is invalid.')
       }
-      setSavedRevision(result.saved_revision.revision_id)
+      setSavedRevision(savedId)
       setSaveOutcomeUncertain(false)
       setReceipt(null)
       setSaveApproved(false)

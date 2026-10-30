@@ -126,3 +126,7 @@ A lost Confirm response may mean the server already staged the local Calendar ed
 ## Background inspection refresh invalidates ordinary review
 
 An ordinary server Preview is now attached to the React Query inspection's `dataUpdatedAt` version. If a subsequent background GET delivers a newer inspected state, the prior Preview no longer grants Confirm, even when local text and timing have not changed; a new server Preview is needed. A GET that races an in-flight Preview also prevents that older response from being accepted after the read version changes. The immutable already-attempted Confirm retry is a separate recovery path and does **not** depend on this fresh-read check. Mocked background-refetch regression asserts the prior Confirm action disappears without creating another write.
+
+## Saved Revision receipt identity must be a real string
+
+The successful Save UI now requires a nonblank string revision ID and a matching clean Working Draft base in the server response; null/missing or non-string identity must not be rendered as a definitive Saved success. Such a response remains an ambiguous post-write result and the second Save stays locked. A mocked HTTP-boundary component regression rejects numeric revision IDs rather than coercing them into apparently valid saved history.

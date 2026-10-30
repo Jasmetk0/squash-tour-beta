@@ -1,6 +1,6 @@
 /** Mocked React/API-boundary tests: NOT real browser, HTTP or SQLite acceptance. */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -82,7 +82,7 @@ function mount(props: Partial<Parameters<typeof RunEditionEntryTimingPanel>[0]> 
     eventId="edition" calendar={calendar} enabled {...props} /></Frame>)
 }
 async function fill(): Promise<void> {
-  await screen.findByText(/nemá uložený plán|has no configured Entry plan/i)
+  await screen.findByText(/není uložený plán|has no configured Entry plan/i)
   fireEvent.change(screen.getByLabelText(/Main opening – season|Otevření Main – sezona/), { target: { value: '0' } })
   fireEvent.change(screen.getByLabelText(/Main opening – week|Otevření Main – týden/), { target: { value: '13' } })
   fireEvent.change(screen.getByLabelText(/Confirmation operator|Operátor potvrzení/), { target: { value: 'Operator' } })
@@ -118,7 +118,7 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     mount()
     await fill()
     await requestPreview()
-    expect(screen.getByText(/2030 \/ S0 W13/)).toBeInTheDocument()
+    expect(screen.getAllByText(/2030 \/ S0 W13/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
     expect(screen.getByLabelText('Main opening – week')).toHaveValue(13)
     expect(screen.getByLabelText('Confirmation operator')).toHaveValue('Operator')

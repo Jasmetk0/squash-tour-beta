@@ -10,6 +10,10 @@ export const editionEntryTimingWords = {
   existing: { cs: 'Existující časování této Edition', en: 'Existing Edition timing' },
   newPlan: { cs: 'Nový plán časování', en: 'New timing plan' },
   clock: { cs: 'Kalendář Runu', en: 'Run calendar' },
+  clockMismatch: {
+    cs: 'Načtený plán používá jiný kalendář Runu než tento formulář. Úprava i potvrzení jsou zablokované; otevři aktuální Edition znovu.',
+    en: 'The loaded plan uses a different Run calendar than this editor. Editing and confirmation are blocked; reopen the current Edition.'
+  },
   indexNote: { cs: 'Index sezony začíná nulou; týden je 1 až W podle skutečného Run kalendáře.', en: 'Season indices are zero-based; weeks run from 1 to W on this Run calendar.' },
   mainSeason: { cs: 'Otevření Main – sezona', en: 'Main opening – season' },
   mainWeek: { cs: 'Otevření Main – týden', en: 'Main opening – week' },

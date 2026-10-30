@@ -134,3 +134,7 @@ The successful Save UI now requires a nonblank string revision ID and a matching
 ## Display authenticated Entry phase and correct season labels
 
 The read-only review now displays the backend's `current_window` directly, with distinct CS/EN labels for not opened, Main, Qualification and all closed. A null server window is shown explicitly as **unknown**, not as a fictitious active or closed phase. The reviewed date labels use the actual Run clock's season-start offset: for a cross-year 2030/2031 season they show `2030/2031 · S0 W13`, not the incomplete `2030 / S0 W13`. Server-resolved weeks still are never recomputed as sporting rules. Added mocked React checks for known/null phases, locale switch, and cross-year labels.
+
+## Fail closed on foreign Run clock and stale readiness panels
+
+An otherwise internally valid, in-scope server inspection that embeds a different Run calendar from the verified parent must not populate an editable Entry form. The component now rejects it, shows a dedicated bilingual mismatch warning, and disables Preview/Confirm. It still permits explicit re-read for recovery. When the operator changes any timing field without a fresh matching Preview, it also suppresses the previous plan's before/after windows, ready-to-bind message and Working Draft readiness claims, retaining only accurately labelled previous-plan blockers. Mocked React regressions cover a genuinely different W52/W80 clock and the stale-ready display after a local edit. This changes no backend contract or sporting computation.

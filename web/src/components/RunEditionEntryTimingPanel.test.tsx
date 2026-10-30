@@ -161,6 +161,45 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
   })
 
+  it('does not show obsolete windows or ready-to-bind claims after unreviewed local edits', async () => {
+    api.getRunEditionEntryTiming.mockResolvedValueOnce({
+      ...preview, timing_and_ranking_ready:true, ranking_will_be_bound:true
+    })
+    mount()
+    await waitFor(() => expect(screen.getByLabelText('Otevření Main – týden')).toHaveValue(13))
+    expect(screen.getByText('Main okno')).toBeInTheDocument()
+    expect(screen.getByText(/Při potvrzení se naváže tento ověřený snapshot/)).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Otevření Main – týden'), {target:{value:'18'}})
+    expect(screen.queryByText('Main okno')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Při potvrzení se naváže tento ověřený snapshot/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Časování a ranking jsou připravené pouze/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Zobrazené serverové překážky se vztahují k poslednímu načtenému plánu/)).toBeInTheDocument()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
+  it('rejects a self-consistent server plan whose calendar differs from the present Run clock', async () => {
+    const foreignClock = {...calendar, weeks_per_year:52}
+    const foreignWeek = (week: number) => ({calendar:foreignClock,season_index:0,week})
+    api.getRunEditionEntryTiming.mockResolvedValueOnce({
+      ...preview,
+      timing:{...timing,main_open:foreignWeek(13)},
+      resolved:{
+        ...preview.resolved,
+        main_open:foreignWeek(13),main_close:foreignWeek(14),
+        qualification_open:foreignWeek(15),qualification_close:foreignWeek(15),
+        final_commitment:foreignWeek(15),
+        default_ranking_completed_week:foreignWeek(13),
+        ranking_publication_week:foreignWeek(14)
+      }
+    })
+    mount()
+    expect(await screen.findByText(/Načtený plán používá jiný kalendář Runu/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Spočítat serverový náhled'})).toBeDisabled()
+    expect(screen.queryByText('Main okno')).not.toBeInTheDocument()
+    expect(api.previewRunEditionEntryTiming).not.toHaveBeenCalled()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
   it('does not report previous server blockers as readiness for unreviewed local edits', async () => {
     mount(); await fill()
     expect(screen.getByText(/Zobrazené serverové překážky se vztahují k poslednímu načtenému plánu/)).toBeInTheDocument()

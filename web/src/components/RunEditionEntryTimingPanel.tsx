@@ -141,9 +141,15 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   })
   const latestReadVersion = useRef(query.dataUpdatedAt)
   latestReadVersion.current = query.dataUpdatedAt
-  const inspection = refreshed && entryTimingScope(refreshed, runId, branchId, packageId, eventId)
-    ? refreshed : query.data && entryTimingScope(query.data, runId, branchId, packageId, eventId)
-      ? query.data : null
+  const inspectionCandidate = refreshed ?? query.data
+  // The HTTP DTO can be internally consistent yet belong to an obsolete Run
+  // clock. A matching Run/Branch/Edition ID alone cannot establish this editor.
+  const clockMismatch = Boolean(inspectionCandidate?.timing &&
+    entryTimingScope(inspectionCandidate, runId, branchId, packageId, eventId) &&
+    !sameClock(inspectionCandidate.timing.main_open.calendar, calendar))
+  const inspection = inspectionCandidate &&
+    entryTimingScope(inspectionCandidate, runId, branchId, packageId, eventId) &&
+    !clockMismatch ? inspectionCandidate : null
   // Only request authentic Run/Branch-specific publications while the operator
   // explicitly edits the override; the list never binds a ranking by itself.
   const rankingOptionsQuery = useQuery({
@@ -420,7 +426,9 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const previewStatus = retryPayload
     ? (exactRetryReady ? preview : null)
     : (previewCurrent ? preview : null)
-  const effectiveStatus = previewStatus ?? (inspection?.timing ? inspection : null)
+  // An unreviewed local timing edit must not inherit the previous plan's
+  // windows, ranking binding or ready status. Only a fresh preview describes it.
+  const effectiveStatus = previewStatus ?? (inspection?.timing && !localChanged ? inspection : null)
   // Display only the backend-owned current Entry phase. Never infer it from
   // timing windows or equate it with player eligibility.
   const windowLabels: Record<NonNullable<EntryTimingPreview['current_window']>, string> = {
@@ -501,11 +509,12 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       <p className="status">{t.indexNote}</p>
       {query.isLoading && !inspection && <p role="status">{t.loading}</p>}
       {query.error && <p role="alert" className="error">{t.failed}: {formatApiError(query.error)}</p>}
+      {clockMismatch && <p role="alert" className="error">{t.clockMismatch}</p>}
       <button type="button" disabled={query.isFetching || busy.current || !readable ||
         Boolean(retryPayload) || Boolean(receipt) || Boolean(savedRevision) ||
         saveOutcomeUncertain}
         onClick={() => void reReadInspection()}>{t.retryRead}</button>
-      {!inspection && !query.isLoading && !query.error && <p role="status">{t.loading}</p>}
+      {!inspection && !query.isLoading && !query.error && !clockMismatch && <p role="status">{t.loading}</p>}
       {inspection && <p role="status">{inspection.timing ? t.existing : t.noPlan}</p>}
       {!enabled && !receipt && !retryPayload && <p role="alert" className="error">{t.nonWritable}</p>}
       {!enabled && receipt && <p role="status">{t.awaitingSave}</p>}

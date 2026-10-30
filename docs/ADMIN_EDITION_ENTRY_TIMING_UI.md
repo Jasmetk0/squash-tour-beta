@@ -142,3 +142,7 @@ An otherwise internally valid, in-scope server inspection that embeds a differen
 ## Monotonic read-epoch proof for server Preview
 
 React Query's `dataUpdatedAt` is a millisecond timestamp, not a unique read revision. Two very fast inspections can resolve in the same millisecond and mistakenly leave an old Preview eligible for a new Confirm. The form now increments an explicit local GET epoch at the start of each authoritative inspection request; a Preview is accepted and usable only against that exact epoch. A mocked React regression freezes `Date.now()` across multiple real query refetch calls and proves an older Preview cannot regain confirm authority. The immutable original Confirm retry remains independent of new GET epochs.
+
+## Explicit GET recovery rejects different Run clock before rehydrating
+
+Manual re-read now checks the inspected plan's embedded Run clock before replacing any local timing fields. A self-consistent W52 server record cannot overwrite the operator's W80 edit merely because the Run/Branch/Package/Edition IDs match. The clock mismatch warning remains visible and Preview/Confirm are blocked until a truly matching inspection is obtained. A mocked component regression preserves the local Main opening after a foreign-clock GET response.

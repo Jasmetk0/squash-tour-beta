@@ -262,16 +262,17 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     setError('')
     const result = await query.refetch()
     if (currentScope.current !== origin || result.isError || !result.data ||
-      !entryTimingScope(result.data, runId, branchId, packageId, eventId)) return
-    // Rehydrate only timing; the operator's written audit remains untouched.
+      !entryTimingScope(result.data, runId, branchId, packageId, eventId) ||
+      (result.data.timing && !sameClock(result.data.timing.main_open.calendar, calendar))) return
+    // Rehydrate only matching-clock timing; the written audit remains untouched.
     const latestInputs = result.data.timing ? inputsFromTiming(result.data.timing) : emptyInputs()
     initialised.current = scope
     setForm(old => ({ ...latestInputs, operator: old.operator, reason: old.reason }))
   }
 
   async function calculatePreview(): Promise<void> {
-    if (!enabled || !timing || receipt || retryPayload || savedRevision || saveOutcomeUncertain ||
-      saving || busy.current || query.isError || query.isFetching) return
+    if (!enabled || !inspection || !timing || receipt || retryPayload || savedRevision ||
+      saveOutcomeUncertain || saving || busy.current || query.isError || query.isFetching) return
     busy.current = true
     setLoadingPreview(true)
     setError('')

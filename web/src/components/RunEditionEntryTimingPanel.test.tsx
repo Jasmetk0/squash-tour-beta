@@ -686,6 +686,30 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
   })
 
+  it('does not overwrite local timing from an explicit GET with a foreign Run clock', async () => {
+    mount(); await fill()
+    fireEvent.change(screen.getByLabelText('Otevření Main – týden'), {target:{value:'18'}})
+    const foreignClock = {...calendar,weeks_per_year:52}
+    const foreignWeek = (week:number) => ({calendar:foreignClock,season_index:0,week})
+    api.getRunEditionEntryTiming.mockResolvedValueOnce({
+      ...preview,
+      timing:{...timing,main_open:foreignWeek(24)},
+      resolved:{
+        ...preview.resolved,
+        main_open:foreignWeek(24),main_close:foreignWeek(25),
+        qualification_open:foreignWeek(26),qualification_close:foreignWeek(26),
+        final_commitment:foreignWeek(26),
+        default_ranking_completed_week:foreignWeek(24),
+        ranking_publication_week:foreignWeek(25)
+      }
+    })
+    await userEvent.click(screen.getByRole('button',{name:'Znovu načíst ze serveru'}))
+    expect(await screen.findByText(/Načtený plán používá jiný kalendář Runu/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Otevření Main – týden')).toHaveValue(18)
+    expect(screen.getByRole('button',{name:'Spočítat serverový náhled'})).toBeDisabled()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
   it('freezes timing and audit inputs until a delayed explicit GET finishes', async () => {
     let finish!: (data: typeof missing) => void
     api.getRunEditionEntryTiming.mockResolvedValueOnce(missing)

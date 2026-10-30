@@ -5458,6 +5458,10 @@ export async function confirmRunEditionEntryTiming(
   const { entryTimingScope, isHash, sameTiming, validEntryTimingInspection } = await import('./runEditionEntryTiming')
   if (!data || data.command_id !== payload.command_id || !isHash(data.receipt_fingerprint) ||
     !isHash(data.state_fingerprint) || !isHash(data.request_fingerprint) ||
+    !Number.isSafeInteger(data.draft_version) || data.draft_version < 1 ||
+    typeof data.already_applied !== 'boolean' ||
+    (data.ranking_authority_fingerprint !== null && !isHash(data.ranking_authority_fingerprint)) ||
+    !data.state || typeof data.state !== 'object' || Array.isArray(data.state) ||
     !entryTimingScope(data.request, run, branch, pkg, edition) ||
     data.request.kind !== 'run_edition_entry_timing.v1' ||
     data.request.expected_preview_fingerprint !== payload.expected_preview_fingerprint ||

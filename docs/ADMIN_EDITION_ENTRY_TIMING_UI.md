@@ -82,3 +82,7 @@ Known blocker codes now show a CS/EN next action alongside the existing translat
 ## Nested API-contract hardening (follow-up)
 
 On the HTTP read boundary, reject non-boolean ranking binding/readiness flags, unknown current-window values, a blank Saved HEAD identity and any existing `before` timing whose Run clock disagrees with the proposed timing. These fields are backend-owned; the UI must not reinterpret them or silently fabricate a fallback. Five malformed mocked responses are asserted to fail closed before rendering.
+
+## Confirm receipt type hardening
+
+Client rejects a Confirm receipt if the returned Working Draft version is not a positive safe integer, `already_applied` is not boolean, the optional ranking authority fingerprint is malformed, or the returned state is absent/not an object/foreign Branch. These checks are independent of the immutable command and preview fingerprint checks and cannot infer Save success. Five mocked HTTP regressions cover malformed receipt metadata.

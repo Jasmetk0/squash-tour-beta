@@ -106,6 +106,19 @@ describe('Run Edition Entry timing HTTP client — mocked transport', () => {
     expect(spy).toHaveBeenCalledTimes(3)
   })
 
+  it('rejects malformed Confirm receipt metadata without claiming a completed Draft', async () => {
+    const spy = vi.spyOn(globalThis,'fetch')
+      .mockResolvedValueOnce(ok({...receipt, draft_version:-1}))
+      .mockResolvedValueOnce(ok({...receipt, already_applied:'false'}))
+      .mockResolvedValueOnce(ok({...receipt, ranking_authority_fingerprint:'not-a-hash'}))
+      .mockResolvedValueOnce(ok({...receipt, state:null}))
+      .mockResolvedValueOnce(ok({...receipt, state:{...receipt.state,branch_id:'foreign'}}))
+    for (let index = 0; index < 5; index += 1) {
+      await expect(confirmRunEditionEntryTiming(...args,payload)).rejects.toThrow(/receipt does not match/)
+    }
+    expect(spy).toHaveBeenCalledTimes(5)
+  })
+
   it('rejects corrupt nested preview windows, impossible weeks and invalid blockers before React rendering', async () => {
     const spy = vi.spyOn(globalThis,'fetch')
       .mockResolvedValueOnce(ok({...preview, resolved:undefined}))

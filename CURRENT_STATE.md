@@ -1,3 +1,35 @@
+# Current merged baseline — 30 October 2026
+
+Audited `buuk`: `d45b7d3b3aa7e585e3c777cb166c6c5f2bb2f81d` (Master v86).
+All PRs #1661–#1672 are merged; none was open at this audit. Reconstructing all
+reviewed heads gives the identical tree `307c44b66b503c1b2c27a7ed83c0eab2f7c995a2`.
+This is an implementation checkpoint, not an official pre-alpha release.
+
+The active requirement/evidence/blocker map is
+[the post-merge checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md). It accounts
+for PAQ-001–157 and the later §31.25–40 scope without changing product statuses.
+RESOLVED, implemented, integration-tested and release-proven remain separate.
+
+**Immediate next:** repair the stale Edition mock behind four season-summary unit
+failures found by this audit; retain the production schema guard and negative
+assertions. **Following feature slice:** persisted per-Edition Entry timing/preflight and historical
+ranking-source binding. Main 2 + Q 1 weeks and Main Closing Week − 1 ranking already
+have product answers. The code's blanket unresolved-policy label is not a reason
+to re-ask those rules or to approve all applications. Exact implementation boundary,
+acceptance checks, real remaining unknowns and alternative release gaps are in
+the checkpoint. No additional Viewer expansion is selected.
+
+Saved/source/concurrency/retry and native W52/W61/W80 evidence is scoped; the full
+1,000-player/80-played-Edition season, 50 seasons, full regression and side-capability
+closure remain outstanding. Sonar advisories from #1669/#1671 are not declared fixed.
+
+---
+
+# Historical state notes
+
+Earlier entries below retain their original date and candidate language. For the
+current merged inventory and next task use the active checkpoint above.
+
 # Native Save performance candidate — 29 October 2026
 
 Verified base `buuk`: `edd237b7a2d5e1d69cf96aafce13799bf428253b`.

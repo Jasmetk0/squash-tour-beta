@@ -1,3 +1,35 @@
+# Current pre-alpha dependency path — 30 October 2026
+
+Baseline: `buuk` `d45b7d3b3aa7e585e3c777cb166c6c5f2bb2f81d`; #1661–#1672
+merged, no open PRs at audit start. The single active requirement/evidence matrix
+is [the post-merge checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md), including
+all original PAQ ranges and later scope. This short list is not another registry.
+
+1. Finish this evidence checkpoint, then repair the confirmed stale Edition fixture
+   (4 failed/2 passed in the summary unit module), preserving negative assertions.
+   The two actual Run/Save/restart spot checks passed. Do not claim release.
+2. Implement the selected Saved Edition Entry timing/preflight/ranking-source slice
+   using already decided 2+1-week defaults and explicit Edition inputs/overrides.
+3. Resolve only concrete remaining policy/data prerequisites, then use existing
+   validation → field → draw → matches → points → manual Save/reopen boundaries.
+4. Progress §36.5: complete week, N/N+1, multiple weeks without repairs, complete
+   reference season/Finals/Season Transition, multiple seasons, required 50 seasons.
+5. Close all retained side requirements (historical initial cohort/intake, portable
+   archives/recovery, minimum Reconstruction/three Labs, Records/notifications,
+   CS/EN Admin, Earth Package scope) and run the complete assigned release gate.
+
+Do not substitute W80 for 80 Editions or 1,000 players for initial historical-cohort
+behavior. Unknown coverage is not an approved deferral. Team/doping/extraordinary
+Edition lifecycle, complete Viewer and other explicit exclusions remain excluded.
+Detailed tuning and new Viewer work do not outrank the supported Admin flow.
+
+---
+
+# Historical roadmap notes
+
+Older candidate labels below are dated evidence; they do not undo the current
+merged inventory or task order linked above.
+
 # Native Save performance candidate — 29 October 2026
 
 Audited base: `buuk` `edd237b7a2d5e1d69cf96aafce13799bf428253b`, with #1660

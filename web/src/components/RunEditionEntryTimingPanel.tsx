@@ -95,7 +95,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const { language } = useLanguage()
   const t = editionEntryTimingText(language)
   const queryClient = useQueryClient()
-  const scope = JSON.stringify([runId, branchId, packageId, eventId])
+  const scope = JSON.stringify([runId, branchId, packageId, eventId, calendar])
   const currentScope = useRef(scope)
   currentScope.current = scope
   const busy = useRef(false)
@@ -114,7 +114,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const [refreshed, setRefreshed] = useState<EntryTimingInspection | null>(null)
   const readable = Boolean(runId && branchId && packageId && eventId && calendar)
   const query = useQuery({
-    queryKey: ['edition-entry-timing', runId, branchId, packageId, eventId],
+    queryKey: ['edition-entry-timing', runId, branchId, packageId, eventId, calendar],
     queryFn: () => getRunEditionEntryTiming(runId, branchId, packageId, eventId),
     enabled: readable, retry: false
   })
@@ -145,14 +145,25 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     }
   }, [inspection, scope])
 
-  const update = (patch: Partial<Inputs>) => {
-    if (busy.current || loadingPreview || loadingConfirm || receipt || saving) return
+  const update = (patch: Partial<Inputs>, changesTiming = true) => {
+    // An uncertain confirm must preserve both its original ID and immutable payload.
+    if (busy.current || loadingPreview || loadingConfirm || receipt || retryPayload || saving) return
     setForm(old => ({ ...old, ...patch }))
-    setPreview(null)
-    setRetryPayload(null)
-    setReceipt(null)
+    if (changesTiming) setPreview(null)
     setError('')
   }
+  const baseline = inspection?.timing ? inputsFromTiming(inspection.timing) : emptyInputs()
+  const localChanged = Boolean(inspection && (
+    form.main.season !== baseline.main.season || form.main.week !== baseline.main.week ||
+    form.mainDuration !== baseline.mainDuration ||
+    form.qualificationDuration !== baseline.qualificationDuration ||
+    form.commitmentEnabled !== baseline.commitmentEnabled ||
+    (form.commitmentEnabled && (form.commitment.season !== baseline.commitment.season ||
+      form.commitment.week !== baseline.commitment.week)) ||
+    form.overrideEnabled !== baseline.overrideEnabled ||
+    (form.overrideEnabled && (form.override.season !== baseline.override.season ||
+      form.override.week !== baseline.override.week))
+  ))
   const timing = makeTiming(form, calendar)
   // An unsuccessful refetch is not proof that an older cached inspection is current.
   const previewCurrent = Boolean(preview && timing && enabled && !query.isError && !query.isFetching &&
@@ -162,7 +173,14 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     form.operator.trim().length > 0 && form.operator.length <= 160 &&
     form.reason.trim().length > 0 && form.reason.length <= 1000 &&
     !loadingConfirm && !loadingPreview && !busy.current
-  const editingBlocked = !enabled || Boolean(receipt) || saving || loadingConfirm || loadingPreview || busy.current
+  const editingBlocked = !enabled || Boolean(receipt) || Boolean(retryPayload) ||
+    saving || loadingConfirm || loadingPreview || busy.current
+  const durationValid = (raw: string) => /^[1-9]\d*$/.test(raw) && Number.isSafeInteger(Number(raw))
+  // Matches the established Run calendar projection, not a universal YYYY/YY label.
+  const seasonLabelFor = (index: number) => {
+    const year = calendar.start_year + index
+    return calendar.season_start_year_week === 1 ? String(year) : year + '/' + (year + 1)
+  }
 
   async function calculatePreview(): Promise<void> {
     if (!enabled || !timing || receipt || saving || busy.current || query.isError || query.isFetching) return
@@ -308,30 +326,48 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const effectiveStatus = previewStatus ?? (inspection?.timing ? inspection : null)
   const blockers = previewStatus?.blockers ?? inspection?.blockers ?? []
   const inputId = (field: string) => 'entry-timing-' + field
-  const weekFields = (value: WeekFields, name: 'main' | 'commitment' | 'override', seasonLabel: string, weekLabel: string) => (
-    <div className="grid" key={name}>
+  const weekFields = (value: WeekFields, name: 'main' | 'commitment' | 'override', seasonLabel: string, weekLabel: string) => {
+    const seasonInvalid = !/^\d+$/.test(value.season) ||
+      Number(value.season) >= calendar.season_count
+    const weekInvalid = !/^\d+$/.test(value.week) || Number(value.week) < 1 ||
+      Number(value.week) > calendar.weeks_per_year
+    return <div className="grid" key={name}>
       <label htmlFor={inputId(name + '-season')}>{seasonLabel}
         <select id={inputId(name + '-season')} value={value.season} disabled={editingBlocked}
+          aria-invalid={seasonInvalid} aria-describedby={seasonInvalid ? inputId(name + '-season-error') : undefined}
           onChange={event => update({ [name]: { ...value, season: event.target.value } })}>
           <option value="">—</option>
           {Array.from({ length: calendar.season_count }, (_, index) => (
-            <option key={index} value={index}>{calendar.start_year + index} (S{index})</option>
+            <option key={index} value={index}>{seasonLabelFor(index)} (S{index})</option>
           ))}
         </select>
+        {seasonInvalid && <span id={inputId(name + '-season-error')} className="error">{t.seasonRange} 0–{calendar.season_count - 1}.</span>}
       </label>
       <label htmlFor={inputId(name + '-week')}>{weekLabel}
         <input id={inputId(name + '-week')} type="number" min={1} max={calendar.weeks_per_year}
-          step={1} value={value.week} disabled={editingBlocked} aria-invalid={value.week !== '' &&
-            (!/^\d+$/.test(value.week) || Number(value.week) < 1 ||
-              Number(value.week) > calendar.weeks_per_year)}
+          step={1} value={value.week} disabled={editingBlocked} aria-invalid={weekInvalid}
+          aria-describedby={weekInvalid ? inputId(name + '-week-error') : undefined}
           onChange={event => update({ [name]: { ...value, week: event.target.value } })} />
+        {weekInvalid && <span id={inputId(name + '-week-error')} className="error">{t.weekRange} 1–{calendar.weeks_per_year}.</span>}
       </label>
     </div>
-  )
+  }
 
   return <SectionCard title={t.heading}>
     <div id="run-edition-entry-timing" className="grid" aria-label={t.heading}>
       <p className="status">{t.intro}</p>
+      <p role="status">{t.progress}: {savedRevision ? t.progressSaved :
+        receipt ? t.progressDraft : previewStatus ? t.progressPreview :
+        localChanged ? t.progressEdited : t.progressLocal}</p>
+      <details>
+        <summary>{t.contextDetails}</summary>
+        <dl className="kv-grid">
+          <dt>Run</dt><dd style={{overflowWrap: 'anywhere'}}>{runId}</dd>
+          <dt>Branch</dt><dd style={{overflowWrap: 'anywhere'}}>{branchId}</dd>
+          <dt>Edition</dt><dd style={{overflowWrap: 'anywhere'}}>{eventId}</dd>
+          <dt>Calendar Package</dt><dd style={{overflowWrap: 'anywhere'}}>{packageId}</dd>
+        </dl>
+      </details>
       <p>{t.clock}: {calendar.weeks_per_year} W · {calendar.start_year} · {calendar.season_count} seasons · offset {calendar.season_start_year_week}</p>
       <p className="status">{t.indexNote}</p>
       {query.isLoading && !inspection && <p role="status">{t.loading}</p>}
@@ -352,17 +388,30 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
 
       <fieldset disabled={editingBlocked || !inspection}>
         <legend>{inspection?.timing ? t.existing : t.newPlan}</legend>
+        <p className="status">{t.mainHint}</p>
         {weekFields(form.main, 'main', t.mainSeason, t.mainWeek)}
         <div className="grid">
           <label htmlFor={inputId('main-duration')}>{t.mainDuration}
             <input id={inputId('main-duration')} type="number" min={1} step={1} value={form.mainDuration}
+              aria-invalid={!durationValid(form.mainDuration)}
+              aria-describedby={!durationValid(form.mainDuration) ? inputId('main-duration-error') : undefined}
               onChange={event => update({ mainDuration: event.target.value })} />
+            {!durationValid(form.mainDuration) && <span id={inputId('main-duration-error')} className="error">{t.durationError}</span>
           </label>
           <label htmlFor={inputId('q-duration')}>{t.qualificationDuration}
             <input id={inputId('q-duration')} type="number" min={1} step={1} value={form.qualificationDuration}
+              aria-invalid={!durationValid(form.qualificationDuration)}
+              aria-describedby={!durationValid(form.qualificationDuration) ? inputId('q-duration-error') : undefined}
               onChange={event => update({ qualificationDuration: event.target.value })} />
+            {!durationValid(form.qualificationDuration) && <span id={inputId('q-duration-error')} className="error">{t.durationError}</span>
           </label>
         </div>
+        <p className="status">{t.durationHint}</p>
+        <button type="button" disabled={form.mainDuration === '2' && form.qualificationDuration === '1'}
+          onClick={() => update({ mainDuration: '2', qualificationDuration: '1' })}>{t.restoreDurations}</button>
+        <details open>
+          <summary>{t.advancedSettings}</summary>
+          <p className="status">{t.advancedHint}</p>
         <label><input type="checkbox" checked={form.commitmentEnabled}
           onChange={event => update({ commitmentEnabled: event.target.checked })} /> {t.commitmentSwitch}</label>
         {form.commitmentEnabled && weekFields(form.commitment, 'commitment', t.commitmentSeason, t.commitmentWeek)}
@@ -371,16 +420,24 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         {form.overrideEnabled
           ? weekFields(form.override, 'override', t.overrideSeason, t.overrideWeek)
           : <p className="status">{t.defaultRanking}</p>}
+        </details>
         <label htmlFor={inputId('operator')}>{t.operator}
           <input id={inputId('operator')} maxLength={160} value={form.operator} autoComplete="off"
-            onChange={event => update({ operator: event.target.value })} />
+            onChange={event => update({ operator: event.target.value }, false)} />
         </label>
         <label htmlFor={inputId('reason')}>{t.reason}
           <textarea id={inputId('reason')} maxLength={1000} value={form.reason}
-            onChange={event => update({ reason: event.target.value })} />
+            onChange={event => update({ reason: event.target.value }, false)} />
         </label>
       </fieldset>
-      {inspection && !timing && <p role="alert" className="error">{t.required} {t.durationError}</p>}
+      {inspection && !timing && <p role="status" className="error">{t.required}</p>}
+      <button type="button" disabled={!enabled || !inspection || !localChanged || editingBlocked ||
+        query.isError || query.isFetching}
+        onClick={() => {
+          setForm(old => ({ ...baseline, operator: old.operator, reason: old.reason }))
+          setPreview(null)
+          setError('')
+        }}>{t.restoreLocal}</button>
       {form.operator.length > 160 && <p role="alert" className="error">{t.operatorError}</p>}
       {form.reason.length > 1000 && <p role="alert" className="error">{t.reasonError}</p>}
       <button type="button" disabled={!enabled || !inspection || !timing || receipt !== null || saving ||
@@ -429,7 +486,11 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         </button>
       </div>}
       {receipt && <div className="grid" aria-live="polite">
-        <p role="status">{t.confirmed} {t.retryCommandId}: {receipt.command_id}</p>
+        <p role="status">{t.confirmed}</p>
+        <details><summary>{t.technicalDetails}</summary>
+          <p style={{overflowWrap: 'anywhere'}}>{t.retryCommandId}: {receipt.command_id}</p>
+          <p style={{overflowWrap: 'anywhere'}}>Preview: {receipt.preview.preview_fingerprint}</p>
+        </details>
         <p>{t.working_draft} (v{receipt.draft_version})</p>
         <p className="status">{t.saveGuard}</p>
         <label><input type="checkbox" checked={saveApproved} disabled={saving || busy.current}
@@ -441,7 +502,13 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         </Link>
       </div>}
       {saveError && <p role="alert" className="error">{saveError}</p>}
-      {savedRevision && <p role="status">{t.saved} {savedRevision}</p>}
+      {savedRevision && <div role="status">
+        <p>{t.saved}</p>
+        <p style={{overflowWrap: 'anywhere'}}>{t.savedRevisionId}: {savedRevision}</p>
+        <Link to={'/admin/runs/' + encodeURIComponent(runId) + '/manage?branch=' + encodeURIComponent(branchId)}>
+          {t.savedLink}
+        </Link>
+      </div>
     </div>
   </SectionCard>
 }

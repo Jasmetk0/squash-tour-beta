@@ -129,6 +129,44 @@ beforeEach(() => {
 })
 
 describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
+  it('restores only local timing fields; retains audit without server writes', async () => {
+    api.getRunEditionEntryTiming.mockResolvedValueOnce({...preview, preview_fingerprint: hash('a')})
+    mount()
+    await screen.findByText(/Existující časování této Edition/)
+    fireEvent.change(screen.getByLabelText('Otevření Main – týden'), {target:{value:'18'}})
+    fireEvent.change(screen.getByLabelText('Délka Main (týdny)'), {target:{value:'4'}})
+    fireEvent.change(screen.getByLabelText('Operátor potvrzení'), {target:{value:'Operator'}})
+    expect(screen.getByText(/Rozepsané lokální změny/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Obnovit lokální pole z načteného plánu'}))
+    expect(screen.getByLabelText('Otevření Main – týden')).toHaveValue(13)
+    expect(screen.getByLabelText('Délka Main (týdny)')).toHaveValue(2)
+    expect(screen.getByLabelText('Operátor potvrzení')).toHaveValue('Operator')
+    expect(api.previewRunEditionEntryTiming).not.toHaveBeenCalled()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+  })
+
+  it('keeps reviewed preview on audit edits; timing edit invalidates it', async () => {
+    mount(); await fill(); await requestPreview()
+    fireEvent.change(screen.getByLabelText('Důvod potvrzení (audit)'), {target:{value:'New reason'}})
+    expect(screen.getByText('Serverový náhled – bez zápisu')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'})).toBeEnabled()
+    fireEvent.change(screen.getByLabelText('Délka Main (týdny)'), {target:{value:'3'}})
+    expect(screen.queryByText('Serverový náhled – bez zápisu')).not.toBeInTheDocument()
+  })
+
+  it('shows week errors and can restore only the approved durations explicitly', async () => {
+    mount(); await fill()
+    fireEvent.change(screen.getByLabelText('Otevření Main – týden'), {target:{value:'81'}})
+    expect(screen.getByText(/Týden musí být v rozsahu 1–80/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Otevření Main – týden')).toHaveAttribute('aria-invalid','true')
+    fireEvent.change(screen.getByLabelText('Délka Main (týdny)'), {target:{value:'4'}})
+    await userEvent.click(screen.getByRole('button',{name:'Nastavit délky Main 2 / Q 1'}))
+    expect(screen.getByLabelText('Délka Main (týdny)')).toHaveValue(2)
+    expect(screen.getByLabelText('Otevření Main – týden')).toHaveValue(81)
+    expect(api.previewRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
   it('does not infer the opening from play week; keeps only approved 2+1 defaults', async () => {
     mount()
     await screen.findByText(/zatím není uložený plán/)

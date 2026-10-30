@@ -409,6 +409,10 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.getBranchWorkingDraft).toHaveBeenCalledWith('run','branch')
     expect(api.getRunPackageState).toHaveBeenCalledWith('run','branch')
     expect(await screen.findByText(/Saved Revision byla uložena/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Otevření Main – týden')).toBeDisabled()
+    expect(screen.getByRole('button',{name:'Spočítat serverový náhled'})).toBeDisabled()
+    expect(screen.getByRole('button',{name:'Znovu načíst ze serveru'})).toBeDisabled()
+    expect(api.previewRunEditionEntryTiming).toHaveBeenCalledTimes(1)
   })
 
   it('fails closed on stale Draft version without making Save call', async () => {

@@ -197,7 +197,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     form.reason.trim().length > 0 && form.reason.length <= 1000 &&
     !loadingConfirm && !loadingPreview && !busy.current
   const editingBlocked = !enabled || Boolean(receipt) || Boolean(retryPayload) ||
-    saving || loadingConfirm || loadingPreview || busy.current
+    Boolean(savedRevision) || saving || loadingConfirm || loadingPreview || busy.current
   const durationValid = (raw: string) => /^[1-9]\d*$/.test(raw) && Number.isSafeInteger(Number(raw))
   // Matches the established Run calendar projection, not a universal YYYY/YY label.
   const seasonLabelFor = (index: number) => {
@@ -206,7 +206,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   }
 
   async function calculatePreview(): Promise<void> {
-    if (!enabled || !timing || receipt || retryPayload || saving || busy.current || query.isError || query.isFetching) return
+    if (!enabled || !timing || receipt || retryPayload || savedRevision || saving || busy.current || query.isError || query.isFetching) return
     busy.current = true
     setLoadingPreview(true)
     setError('')
@@ -417,7 +417,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       <p className="status">{t.indexNote}</p>
       {query.isLoading && !inspection && <p role="status">{t.loading}</p>}
       {query.error && <p role="alert" className="error">{t.failed}: {formatApiError(query.error)}</p>}
-      <button type="button" disabled={query.isFetching || busy.current}
+      <button type="button" disabled={query.isFetching || busy.current || Boolean(savedRevision)}
         onClick={() => {
           setRefreshed(null)
           // A fresh inspection invalidates an ordinary review. Retain only an
@@ -516,8 +516,9 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         }}>{t.restoreLocal}</button>
       {form.operator.length > 160 && <p role="alert" className="error">{t.operatorError}</p>}
       {form.reason.length > 1000 && <p role="alert" className="error">{t.reasonError}</p>}
-      <button type="button" disabled={!enabled || !inspection || !timing || receipt !== null || retryPayload !== null || saving ||
-        query.isError || query.isFetching || loadingPreview || loadingConfirm || busy.current}
+      <button type="button" disabled={!enabled || !inspection || !timing || receipt !== null || retryPayload !== null ||
+        Boolean(savedRevision) || saving || query.isError || query.isFetching ||
+        loadingPreview || loadingConfirm || busy.current}
         onClick={() => void calculatePreview()}>{loadingPreview ? t.previewing : t.previewButton}</button>
       {error && <p role="alert" className="error">{error}</p>}
 

@@ -86,3 +86,7 @@ On the HTTP read boundary, reject non-boolean ranking binding/readiness flags, u
 ## Confirm receipt type hardening
 
 Client rejects a Confirm receipt if the returned Working Draft version is not a positive safe integer, `already_applied` is not boolean, the optional ranking authority fingerprint is malformed, or the returned state is absent/not an object/foreign Branch. These checks are independent of the immutable command and preview fingerprint checks and cannot infer Save success. Five mocked HTTP regressions cover malformed receipt metadata.
+
+## Post-Save stale-form lock
+
+Once a Saved Revision receipt is accepted, keep the Entry form, new Preview and in-place re-read locked for that mounted editor, even if query cache still holds the pre-save state. The Run Management link remains available; entering a new context starts another verified editing session. The mocked Save test asserts the lock and absence of another preview call. Successful Save still cannot be undone by a cache refresh failure.

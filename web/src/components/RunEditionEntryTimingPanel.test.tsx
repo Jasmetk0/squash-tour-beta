@@ -312,4 +312,15 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(await screen.findByText(/Uložení nelze bezpečně provést/)).toBeInTheDocument()
     expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
   })
+
+  it('keeps successful confirm receipt authoritative even when subsequent GET refresh fails', async () => {
+    mount(); await fill(); await requestPreview()
+    api.getRunEditionEntryTiming.mockRejectedValue(new Error('read unavailable'))
+    await userEvent.click(screen.getByRole('button', { name: 'Výslovně potvrdit do Working Draftu' }))
+    expect(await screen.findByText(/Potvrzeno pouze do Working Draftu/)).toBeInTheDocument()
+    expect(await screen.findByText(/Potvrzení proběhlo, ale následné načtení stavu selhalo/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', {name: /Zopakovat přesně stejný příkaz/})).not.toBeInTheDocument()
+    expect(api.confirmRunEditionEntryTiming).toHaveBeenCalledTimes(1)
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+  })
 })

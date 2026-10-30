@@ -1,0 +1,217 @@
+/** Mocked React/API-boundary tests: NOT real browser, HTTP or SQLite acceptance. */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ReactNode } from 'react'
+
+import { RunEditionEntryTimingPanel } from './RunEditionEntryTimingPanel'
+import { LanguageProvider, useLanguage } from '../i18n/LanguageContext'
+import {
+  sameTiming, verifiedRunCalendar, validEntryTimingInspection,
+  type EditionEntryTiming, type EntryTimingPreview
+} from '../api/runEditionEntryTiming'
+import type { RunCalendarMetadata } from '../api/runCalendarCreation'
+
+const api = vi.hoisted(() => ({
+  getRunEditionEntryTiming: vi.fn(),
+  previewRunEditionEntryTiming: vi.fn(),
+  confirmRunEditionEntryTiming: vi.fn(),
+  saveRunPackageWorkingDraft: vi.fn()
+}))
+vi.mock('../api/client', () => api)
+const hash = (letter: string) => letter.repeat(64)
+const calendar: RunCalendarMetadata = {
+  schema_version: 'run_calendar.v1', weeks_per_year: 80,
+  season_start_year_week: 37, start_year: 2030, season_count: 5
+}
+const at = (week: number, season_index = 0) => ({ calendar, season_index, week })
+const timing: EditionEntryTiming = {
+  schema_version: 'edition_entry_timing.v1',
+  main_open: at(13), main_duration_weeks: 2, qualification_duration_weeks: 1,
+  final_commitment: null, ranking_publication_override: null
+}
+const missing = {
+  run_id: 'run', branch_id: 'branch', package_id: 'calendar-package', event_id: 'edition',
+  timing: null, preflight_status: 'missing_content' as const,
+  blockers: [{ code: 'entry_timing_missing', detail: 'Choose opening' }],
+  automatic_eligibility_status: 'not_implemented' as const
+}
+const preview: EntryTimingPreview = {
+  schema_version: 'run_edition_entry_timing_preview.v1',
+  run_id: 'run', branch_id: 'branch', package_id: 'calendar-package', event_id: 'edition',
+  saved_head_revision_id: 'head', draft_version: 1, state_fingerprint: hash('a'),
+  edition_fingerprint: hash('b'), timing, before: null,
+  resolved: {
+    main_open: at(13), main_close: at(14),
+    qualification_open: at(15), qualification_close: at(15),
+    final_commitment: at(15), default_ranking_completed_week: at(13),
+    ranking_publication_week: at(14), ranking_source: 'after_main_closing_minus_one'
+  },
+  current_week: null, current_window: null,
+  ranking_snapshot_fingerprint: null, ranking_authority_fingerprint: null,
+  ranking_will_be_bound: false, ranking_binding_status: 'missing_prerequisite',
+  configuration_state: 'working_draft', timing_and_ranking_ready: false,
+  preflight_status: 'missing_content', automatic_eligibility_status: 'not_implemented',
+  can_confirm_configuration: true, blockers: [
+    { code: 'ranking_publication_missing', detail: 'Missing exact Official publication' }
+  ],
+  preview_fingerprint: hash('c')
+}
+const receipt = {
+  command_id: 'placeholder', request_fingerprint: hash('d'),
+  request: { kind: 'run_edition_entry_timing.v1', ...missing, timing,
+    expected_preview_fingerprint: hash('c'), operator_label: 'Operator', audit_reason: 'Reviewed' },
+  preview, draft_version: 2, state_fingerprint: hash('e'),
+  state: { run_id: 'run', branch_id: 'branch' },
+  ranking_authority_fingerprint: null, already_applied: false, receipt_fingerprint: hash('f')
+}
+function Toggle() {
+  const { setLanguage, language } = useLanguage()
+  return <button onClick={() => setLanguage(language === 'en' ? 'cs' : 'en')}>Switch language</button>
+}
+function Frame({ children }: { children: ReactNode }) {
+  return <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <MemoryRouter><LanguageProvider><Toggle />{children}</LanguageProvider></MemoryRouter>
+  </QueryClientProvider>
+}
+function mount(props: Partial<Parameters<typeof RunEditionEntryTimingPanel>[0]> = {}) {
+  return render(<Frame><RunEditionEntryTimingPanel
+    runId="run" branchId="branch" packageId="calendar-package"
+    eventId="edition" calendar={calendar} enabled {...props} /></Frame>)
+}
+async function fill(): Promise<void> {
+  await screen.findByText(/nemá uložený plán|has no configured Entry plan/i)
+  fireEvent.change(screen.getByLabelText(/Main opening – season|Otevření Main – sezona/), { target: { value: '0' } })
+  fireEvent.change(screen.getByLabelText(/Main opening – week|Otevření Main – týden/), { target: { value: '13' } })
+  fireEvent.change(screen.getByLabelText(/Confirmation operator|Operátor potvrzení/), { target: { value: 'Operator' } })
+  fireEvent.change(screen.getByLabelText(/Confirmation reason|Důvod potvrzení/), { target: { value: 'Reviewed' } })
+}
+async function requestPreview() {
+  await userEvent.click(screen.getByRole('button', {name: /Spočítat serverový náhled|Calculate server preview/}))
+  await screen.findByText(/Serverový náhled|Server preview/)
+}
+beforeEach(() => {
+  vi.clearAllMocks()
+  localStorage.setItem('squash-engine-language-v1', 'cs')
+  api.getRunEditionEntryTiming.mockResolvedValue(missing)
+  api.previewRunEditionEntryTiming.mockResolvedValue(preview)
+  api.confirmRunEditionEntryTiming.mockImplementation(async (
+    _run: string, _branch: string, _pkg: string, _edition: string, payload: { command_id: string }) =>
+    ({ ...receipt, command_id: payload.command_id }))
+})
+
+describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
+  it('does not infer the opening from play week; keeps only approved 2+1 defaults', async () => {
+    mount()
+    await screen.findByText(/zatím není uložený plán/)
+    expect(screen.getByLabelText('Otevření Main – týden')).toHaveValue(null)
+    expect(screen.getByLabelText('Délka Main (týdny)')).toHaveValue(2)
+    expect(screen.getByLabelText('Délka kvalifikace Q (týdny)')).toHaveValue(1)
+    expect(screen.getByRole('button',{name:'Spočítat serverový náhled'})).toBeDisabled()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+  })
+
+  it('keeps input, audit and valid server preview on CS/EN language switch', async () => {
+    mount()
+    await fill()
+    await requestPreview()
+    expect(screen.getByText(/2030 \/ S0 W13/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(screen.getByLabelText('Main opening – week')).toHaveValue(13)
+    expect(screen.getByLabelText('Confirmation operator')).toHaveValue('Operator')
+    expect(screen.getByLabelText('Confirmation reason (audit)')).toHaveValue('Reviewed')
+    expect(screen.getByText(/Server preview – no write/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Explicitly confirm into Working Draft'})).toBeEnabled()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
+  it('shows the exact completed-data 13 and publication 14 server values, not recalculated in UI', async () => {
+    mount()
+    await fill(); await requestPreview()
+    const dataLabel = screen.getByText('Ranking – data po dokončeném týdnu')
+    const publishedLabel = screen.getByText('Ranking – označení publikace')
+    expect(dataLabel.nextElementSibling?.textContent).toContain('W13')
+    expect(publishedLabel.nextElementSibling?.textContent).toContain('W14')
+    expect(screen.getByText(/Přesná publikace není k dispozici/)).toBeInTheDocument()
+    expect(screen.getByText(/automatická validace/i)).toBeInTheDocument()
+  })
+
+  it('invalidates preview immediately after changing Main duration', async () => {
+    mount()
+    await fill(); await requestPreview()
+    expect(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'})).toBeEnabled()
+    fireEvent.change(screen.getByLabelText('Délka Main (týdny)'), { target: {value:'3'} })
+    expect(screen.queryByText('Serverový náhled – bez zápisu')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Výslovně potvrdit do Working Draftu'})).not.toBeInTheDocument()
+  })
+
+  it('shows all real blockers, denies blocked configurations, distinguishes unsupported sporting execution', async () => {
+    api.previewRunEditionEntryTiming.mockResolvedValueOnce({
+      ...preview, can_confirm_configuration: false, preflight_status:'unsupported_execution',
+      blockers:[{code:'unsupported_execution',detail:'wrong clock'},
+        {code:'entry_timing_locked',detail:'already open'},
+        {code:'ranking_binding_conflict',detail:'immutable'}]
+    })
+    mount(); await fill(); await requestPreview()
+    expect(screen.getByText(/Kalendář lze plánovat/)).toBeInTheDocument()
+    expect(screen.getByText(/Entry už bylo otevřeno/)).toBeInTheDocument()
+    expect(screen.getByText(/Edition už má jiný neměnný ranking/)).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'})).toBeDisabled()
+  })
+
+  it('confirms a future plan without a ranking only with server permission; never Saves or adopts itself', async () => {
+    mount(); await fill(); await requestPreview()
+    await userEvent.click(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'}))
+    await waitFor(() => expect(api.confirmRunEditionEntryTiming).toHaveBeenCalledTimes(1))
+    expect(api.confirmRunEditionEntryTiming.mock.calls[0][4].expected_preview_fingerprint).toBe(hash('c'))
+    expect(api.confirmRunEditionEntryTiming.mock.calls[0][4].timing.ranking_publication_override).toBeNull()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+    expect(await screen.findByText(/Potvrzeno pouze do Working Draftu/)).toBeInTheDocument()
+    expect(screen.getByRole('link',{name:/samostatnému Working Draft Save/})).toHaveAttribute('href', expect.stringContaining('/admin/runs/run'))
+  })
+
+  it('keeps exact command ID and full payload for explicit retry after an uncertain response', async () => {
+    api.confirmRunEditionEntryTiming.mockRejectedValueOnce(new TypeError('network lost'))
+    mount(); await fill(); await requestPreview()
+    await userEvent.click(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'}))
+    await screen.findByText(/Odpověď na potvrzení je nejistá/)
+    const prior = api.confirmRunEditionEntryTiming.mock.calls[0][4]
+    await userEvent.click(screen.getByRole('button',{name:'Switch language'}))
+    expect(screen.getByRole('button',{name:'Retry the exact same command'})).toBeEnabled()
+    await userEvent.click(screen.getByRole('button',{name:'Retry the exact same command'}))
+    await waitFor(() => expect(api.confirmRunEditionEntryTiming).toHaveBeenCalledTimes(2))
+    expect(api.confirmRunEditionEntryTiming.mock.calls[1][4]).toEqual(prior)
+    expect(api.confirmRunEditionEntryTiming.mock.calls[1][4].command_id).toBe(prior.command_id)
+  })
+
+  it('suppresses writes when parent context is historical, foreign or otherwise unverified', async () => {
+    mount({enabled:false})
+    await screen.findByText(/není zapisovatelný/)
+    expect(screen.getByRole('button',{name:'Spočítat serverový náhled'})).toBeDisabled()
+    expect(api.previewRunEditionEntryTiming).not.toHaveBeenCalled()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
+  it('rejects foreign scope inspection and does not expose the editor', async () => {
+    api.getRunEditionEntryTiming.mockRejectedValueOnce(new Error('Foreign Edition scope'))
+    mount()
+    await screen.findByText(/Čtení časování selhalo/)
+    expect(screen.getByRole('button',{name:'Spočítat serverový náhled'})).toBeDisabled()
+    expect(validEntryTimingInspection({...missing, branch_id:'other'},'run','branch','calendar-package','edition')).toBe(false)
+  })
+
+  it('does not equate JSON key ordering with an altered Run week or timing', () => {
+    const reordered = {...calendar, schema_version:calendar.schema_version}
+    const another: EditionEntryTiming = {...timing, main_open: {calendar: {
+      start_year:reordered.start_year, weeks_per_year:reordered.weeks_per_year,
+      season_count:reordered.season_count, season_start_year_week:reordered.season_start_year_week,
+      schema_version:reordered.schema_version
+    }, season_index:0,week:13}}
+    expect(sameTiming(timing,another)).toBe(true)
+    expect(verifiedRunCalendar({metadata_json:{run_calendar:calendar}} as never)).toEqual(calendar)
+    expect(verifiedRunCalendar({metadata_json:{run_calendar:null}} as never)).toBeNull()
+  })
+})

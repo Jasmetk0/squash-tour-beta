@@ -707,51 +707,67 @@ class RunPackageService:
     ) -> RunPackageState:
         with self.repository._session_factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
-            run, branch, draft = self._context(session, run_id, branch_id)
-            state = get_run_package_state(session, run_id=run_id, branch_id=branch_id)
-            if (
-                state is None
-                or state.fingerprint != expected_state_fingerprint
-                or draft.draft_version != expected_draft_version
-            ):
-                raise RunPackageConflictError("Run Package edit is stale")
-            _require_writable(run, branch)
-            _require_component_authority(session, branch)
-            found = False
-            entities = []
-            for entity in state.entities:
-                if entity.run_local_id == run_local_id:
-                    entity = entity.model_copy(
-                        update={"payload": payload, "provenance": "manual"}
-                    )
-                    found = True
-                entities.append(entity)
-            if not found:
-                raise RunPackageNotFoundError("Run-local Package entity was not found")
-            updated = state.model_copy(update={"entities": tuple(entities)})
-            put_run_package_state(session, updated)
-            session.execute(
-                update(BranchWorkingDraftModel)
-                .where(
-                    BranchWorkingDraftModel.draft_id == draft.draft_id,
-                    BranchWorkingDraftModel.draft_version == expected_draft_version,
-                )
-                .values(
-                    status=DIRTY_WORKING_DRAFT_STATUS,
-                    change_count=draft.change_count + 1,
-                    draft_version=expected_draft_version + 1,
-                    draft_schema_version=RUN_WORKING_DRAFT_SCHEMA_VERSION,
-                    changes_json=json.dumps(
-                        json.loads(draft.changes_json)
-                        + [
-                            {
-                                "kind": "run_package_state",
-                                "fingerprint": updated.fingerprint,
-                            }
-                        ],
-                        sort_keys=True,
-                        separators=(",", ":"),
-                    ),
-                )
+            return self._edit_entity_in_session(
+                session, run_id=run_id, branch_id=branch_id,
+                run_local_id=run_local_id, payload=payload,
+                expected_draft_version=expected_draft_version,
+                expected_state_fingerprint=expected_state_fingerprint,
             )
-            return updated
+
+    def _edit_entity_in_session(
+        self, session, *, run_id: str, branch_id: str, run_local_id: int,
+        payload: dict, expected_draft_version: int, expected_state_fingerprint: str,
+    ) -> RunPackageState:
+        """Stage a local edit inside the caller's existing IMMEDIATE transaction.
+
+        Keeps typed component commands on the same Package/Draft write boundary.
+        The caller owns commit/rollback and any accompanying immutable authority.
+        """
+        run, branch, draft = self._context(session, run_id, branch_id)
+        state = get_run_package_state(session, run_id=run_id, branch_id=branch_id)
+        if (
+            state is None
+            or state.fingerprint != expected_state_fingerprint
+            or draft.draft_version != expected_draft_version
+        ):
+            raise RunPackageConflictError("Run Package edit is stale")
+        _require_writable(run, branch)
+        _require_component_authority(session, branch)
+        found = False
+        entities = []
+        for entity in state.entities:
+            if entity.run_local_id == run_local_id:
+                entity = entity.model_copy(
+                    update={"payload": payload, "provenance": "manual"}
+                )
+                found = True
+            entities.append(entity)
+        if not found:
+            raise RunPackageNotFoundError("Run-local Package entity was not found")
+        updated = state.model_copy(update={"entities": tuple(entities)})
+        put_run_package_state(session, updated)
+        session.execute(
+            update(BranchWorkingDraftModel)
+            .where(
+                BranchWorkingDraftModel.draft_id == draft.draft_id,
+                BranchWorkingDraftModel.draft_version == expected_draft_version,
+            )
+            .values(
+                status=DIRTY_WORKING_DRAFT_STATUS,
+                change_count=draft.change_count + 1,
+                draft_version=expected_draft_version + 1,
+                draft_schema_version=RUN_WORKING_DRAFT_SCHEMA_VERSION,
+                changes_json=json.dumps(
+                    json.loads(draft.changes_json)
+                    + [
+                        {
+                            "kind": "run_package_state",
+                            "fingerprint": updated.fingerprint,
+                        }
+                    ],
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ),
+            )
+        )
+        return updated

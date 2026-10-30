@@ -119,6 +119,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const initialised = useRef('')
   const [form, setForm] = useState<Inputs>(emptyInputs)
   const [preview, setPreview] = useState<EntryTimingPreview | null>(null)
+  const [previewReadVersion, setPreviewReadVersion] = useState<number | null>(null)
   const [retryPayload, setRetryPayload] = useState<EntryTimingConfirmPayload | null>(null)
   const [receipt, setReceipt] = useState<EntryTimingReceipt | null>(null)
   const [saveApproved, setSaveApproved] = useState(false)
@@ -138,6 +139,8 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     queryFn: () => getRunEditionEntryTiming(runId, branchId, packageId, eventId),
     enabled: readable, retry: false
   })
+  const latestReadVersion = useRef(query.dataUpdatedAt)
+  latestReadVersion.current = query.dataUpdatedAt
   const inspection = refreshed && entryTimingScope(refreshed, runId, branchId, packageId, eventId)
     ? refreshed : query.data && entryTimingScope(query.data, runId, branchId, packageId, eventId)
       ? query.data : null
@@ -158,6 +161,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     initialised.current = ''
     setForm(emptyInputs())
     setPreview(null)
+    setPreviewReadVersion(null)
     setRetryPayload(null)
     setReceipt(null)
     setRefreshed(null)
@@ -183,7 +187,10 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     if (busy.current || query.isFetching || loadingPreview || loadingConfirm || receipt || retryPayload ||
       saving || saveOutcomeUncertain || savedRevision) return
     setForm(old => ({ ...old, ...patch }))
-    if (changesTiming) setPreview(null)
+    if (changesTiming) {
+      setPreview(null)
+      setPreviewReadVersion(null)
+    }
     setError('')
   }
   const baseline = inspection?.timing ? inputsFromTiming(inspection.timing) : emptyInputs()
@@ -201,6 +208,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const timing = makeTiming(form, calendar)
   // An unsuccessful refetch is not proof that an older cached inspection is current.
   const previewCurrent = Boolean(preview && timing && enabled && !query.isError && !query.isFetching &&
+    previewReadVersion === query.dataUpdatedAt &&
     entryTimingScope(preview, runId, branchId, packageId, eventId) &&
     sameTiming(preview.timing, timing) && isHash(preview.preview_fingerprint))
   // An original Confirm may have committed before its response was lost.
@@ -240,6 +248,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     const origin = scope
     setRefreshed(null)
     setPreview(null)
+    setPreviewReadVersion(null)
     setError('')
     const result = await query.refetch()
     if (currentScope.current !== origin || result.isError || !result.data ||
@@ -257,13 +266,17 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     setLoadingPreview(true)
     setError('')
     setPreview(null)
+    setPreviewReadVersion(null)
     setRetryPayload(null)
+    const expectedReadVersion = query.dataUpdatedAt
     const origin = scope
     try {
       const result = await previewRunEditionEntryTiming(runId, branchId, packageId, eventId, timing)
-      if (currentScope.current !== origin) return
+      if (currentScope.current !== origin ||
+        latestReadVersion.current !== expectedReadVersion) return
       if (!weekInClock(result.timing.main_open, calendar) || !sameTiming(result.timing, timing))
         throw new Error('Preview calendar or exact configuration did not match.')
+      setPreviewReadVersion(expectedReadVersion)
       setPreview(result)
     } catch (cause) {
       if (currentScope.current === origin) setError(t.previewError + ': ' + formatApiError(cause))

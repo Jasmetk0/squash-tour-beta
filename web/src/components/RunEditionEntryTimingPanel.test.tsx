@@ -1,5 +1,5 @@
 /** Mocked React/API-boundary tests: NOT real browser, HTTP or SQLite acceptance. */
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
@@ -76,6 +76,12 @@ const receipt = {
 function Toggle() {
   const { setLanguage, language } = useLanguage()
   return <button onClick={() => setLanguage(language === 'en' ? 'cs' : 'en')}>Switch language</button>
+}
+function BackgroundEntryRefresh() {
+  const client = useQueryClient()
+  return <button onClick={() => {void client.refetchQueries({queryKey:['edition-entry-timing']})}}>
+    Background Entry refresh
+  </button>
 }
 function Frame({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -166,6 +172,25 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(screen.queryByText(/These server blockers describe the last loaded plan/)).not.toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('Main opening – week'), {target:{value:'18'}})
     expect(screen.getByText(/These server blockers describe the last loaded plan/)).toBeInTheDocument()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
+
+  it('invalidates existing preview after a fresh background inspection without reusing its fingerprint', async () => {
+    api.getRunEditionEntryTiming.mockResolvedValueOnce(missing)
+      .mockResolvedValueOnce({...preview, timing})
+    render(<Frame>
+      <RunEditionEntryTimingPanel runId="run" branchId="branch"
+        packageId="calendar-package" eventId="edition" calendar={calendar} enabled />
+      <BackgroundEntryRefresh />
+    </Frame>)
+    await fill(); await requestPreview()
+    expect(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'})).toBeEnabled()
+    await userEvent.click(screen.getByRole('button',{name:'Background Entry refresh'}))
+    await waitFor(() => expect(api.getRunEditionEntryTiming).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.queryByRole('button',{
+      name:'Výslovně potvrdit do Working Draftu'
+    })).not.toBeInTheDocument())
+    expect(api.previewRunEditionEntryTiming).toHaveBeenCalledTimes(1)
     expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
   })
 

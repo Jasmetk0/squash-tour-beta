@@ -333,4 +333,12 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(screen.getByRole('button', {name:'Spočítat serverový náhled'})).toBeDisabled()
     expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
   })
+
+  it('discards an ordinary review on explicit re-read even if the GET is successful', async () => {
+    mount(); await fill(); await requestPreview()
+    expect(screen.getByRole('button', {name:'Výslovně potvrdit do Working Draftu'})).toBeEnabled()
+    await userEvent.click(screen.getByRole('button', {name:'Znovu načíst ze serveru'}))
+    expect(screen.queryByRole('button',{name:'Výslovně potvrdit do Working Draftu'})).not.toBeInTheDocument()
+    expect(api.confirmRunEditionEntryTiming).not.toHaveBeenCalled()
+  })
 })

@@ -1,8 +1,9 @@
 """Narrow Run/Branch Package inspection, preview, and confirm API."""
 
 from typing import Literal
+import json
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from beta_engine.api.deps import (
     get_calendar_package_run_adapter,
@@ -17,11 +18,68 @@ from beta_engine.application.run_package_service import (
 )
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.domain.run_packages import CanonicalPackageDocument, canonical_hash, entity_content_fingerprint
+from beta_engine.application.run_edition_entry_timing import RunEditionEntryTimingService
+from beta_engine.domain.tournaments.edition_entry_timing import EditionEntryTiming
 
 router = APIRouter(
     prefix="/admin/runs/{run_id}/branches/{branch_id}/packages",
     tags=["admin-run-packages"],
 )
+
+
+class EntryTimingPreviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    timing: dict
+
+
+class EntryTimingConfirmRequest(EntryTimingPreviewRequest):
+    command_id: str = Field(min_length=1, max_length=128)
+    expected_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    operator_label: str = Field(min_length=1, max_length=160)
+    audit_reason: str = Field(min_length=1, max_length=1000)
+
+
+@router.get("/calendar/{package_id}/editions/{event_id}/entry-timing")
+def inspect_entry_timing(run_id: str, branch_id: str, package_id: str, event_id: str,
+                        service: RunPackageService = Depends(get_run_package_service)):
+    try:
+        return RunEditionEntryTimingService(service).inspect(
+            run_id=run_id, branch_id=branch_id, package_id=package_id, event_id=event_id)
+    except RunPackageNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
+@router.post("/calendar/{package_id}/editions/{event_id}/entry-timing/preview")
+def preview_entry_timing(run_id: str, branch_id: str, package_id: str, event_id: str,
+                         request: EntryTimingPreviewRequest,
+                         service: RunPackageService = Depends(get_run_package_service)):
+    try:
+        timing = EditionEntryTiming.model_validate_json(json.dumps(request.timing))
+        return RunEditionEntryTimingService(service).preview(
+            run_id=run_id, branch_id=branch_id, package_id=package_id, event_id=event_id, timing=timing)
+    except RunPackageNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
+@router.post("/calendar/{package_id}/editions/{event_id}/entry-timing/confirm")
+def confirm_entry_timing(run_id: str, branch_id: str, package_id: str, event_id: str,
+                         request: EntryTimingConfirmRequest,
+                         service: RunPackageService = Depends(get_run_package_service)):
+    try:
+        timing = EditionEntryTiming.model_validate_json(json.dumps(request.timing))
+        return RunEditionEntryTimingService(service).confirm(
+            run_id=run_id, branch_id=branch_id, package_id=package_id, event_id=event_id,
+            timing=timing, command_id=request.command_id,
+            expected_preview_fingerprint=request.expected_preview_fingerprint,
+            operator_label=request.operator_label, audit_reason=request.audit_reason)
+    except RunPackageNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
 
 
 class PreviewRequest(BaseModel):

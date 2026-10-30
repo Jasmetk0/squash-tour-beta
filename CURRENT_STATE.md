@@ -1,3 +1,30 @@
+# Edition Entry timing preparation candidate — 30 October 2026
+
+Verified `buuk`: `57d07a1c52c48bd5460519f2e837829ce7770de2`; owner merges
+#1673 (requirement map) and #1674 (summary test repair) are present. Earlier
+candidate labels below are historical evidence, not the active merge queue.
+
+This candidate adds backend/API preparation of explicit per-Edition Entry windows
+inside the existing Run Calendar Package/Working Draft, plus optional adoption of
+the exact already-published Tournament Ranking Snapshot in the same transaction.
+Ordinary Save captures both owners; source Packages and sporting execution remain
+unchanged. See [contract and validation](docs/EDITION_ENTRY_TIMING.md).
+
+Master §15.1's data through Main Closing Week−1 maps via §18 to the publication
+labelled Main Closing Week (13–14 Main selects data through 13, publication 14).
+No latest-ranking fallback, pre-start history or play-to-opening lead is invented.
+Missing sources and unsupported clocks remain explicit; a future plan can Save
+without claiming a ready binding or automatic eligibility. Existing immutable
+binding and native/legacy ownership protections remain.
+
+The API is not yet an Admin form or an automatic eligibility validator. The next
+consumer should expose this exact review/Save boundary, then resolve the concrete
+remaining validation/content prerequisites before fields/draws and actual matches.
+The full requirement map and progressive integration ladder remain in
+`docs/PRE_ALPHA_INTEGRATION_2026_10_30.md`; no release or Master change is claimed.
+
+---
+
 # Season-summary test fixture repair candidate — 30 October 2026
 
 Verified base `buuk`: `abe8fa307a08ccb25e2209c1abc8610d7b41bff9`, owner merge

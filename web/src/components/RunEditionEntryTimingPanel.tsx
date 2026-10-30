@@ -208,15 +208,21 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       setRetryPayload(null)
       setPreview(null)
       setRefreshed(null)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['edition-entry-timing', runId, branchId, packageId, eventId] }),
-        queryClient.invalidateQueries({ queryKey: ['run-package-state', runId, branchId] }),
-        queryClient.invalidateQueries({ queryKey: ['package-working-draft', runId, branchId] }),
-        queryClient.invalidateQueries({ queryKey: ['run-calendar', runId, branchId, packageId] })
-      ])
-      if (currentScope.current !== origin) return
-      const latest = await getRunEditionEntryTiming(runId, branchId, packageId, eventId)
-      if (currentScope.current === origin) setRefreshed(latest)
+      // A successful confirm receipt is definitive: later read failures must
+      // never be mislabelled as an uncertain write or solicit a second command.
+      try {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['edition-entry-timing', runId, branchId, packageId, eventId] }),
+          queryClient.invalidateQueries({ queryKey: ['run-package-state', runId, branchId] }),
+          queryClient.invalidateQueries({ queryKey: ['package-working-draft', runId, branchId] }),
+          queryClient.invalidateQueries({ queryKey: ['run-calendar', runId, branchId, packageId] })
+        ])
+        if (currentScope.current !== origin) return
+        const latest = await getRunEditionEntryTiming(runId, branchId, packageId, eventId)
+        if (currentScope.current === origin) setRefreshed(latest)
+      } catch (refreshCause) {
+        if (currentScope.current === origin) setError(t.refreshError + ': ' + formatApiError(refreshCause))
+      }
     } catch (cause) {
       if (currentScope.current === origin) setError(t.confirmError + ' ' + formatApiError(cause))
     } finally {

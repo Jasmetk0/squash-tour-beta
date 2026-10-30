@@ -203,10 +203,25 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const previewCurrent = Boolean(preview && timing && enabled && !query.isError && !query.isFetching &&
     entryTimingScope(preview, runId, branchId, packageId, eventId) &&
     sameTiming(preview.timing, timing) && isHash(preview.preview_fingerprint))
-  const canConfirm = previewCurrent && preview?.can_confirm_configuration === true &&
-    form.operator.trim().length > 0 && form.operator.length <= 160 &&
-    form.reason.trim().length > 0 && form.reason.length <= 1000 &&
+  // An original Confirm may have committed before its response was lost.
+  // Exact idempotent retry is valid even when the parent has since marked the
+  // Draft non-writable (because that original Confirm actually made it dirty).
+  // Never create a second command or let a stale preview authorize a new one.
+  const exactRetryReady = Boolean(retryPayload && preview && timing &&
+    entryTimingScope(preview, runId, branchId, packageId, eventId) &&
+    isHash(preview.preview_fingerprint) &&
+    preview.can_confirm_configuration === true &&
+    sameTiming(retryPayload.timing, timing) &&
+    sameTiming(preview.timing, timing) &&
+    retryPayload.expected_preview_fingerprint === preview.preview_fingerprint &&
+    retryPayload.operator_label === form.operator.trim() &&
+    retryPayload.audit_reason === form.reason.trim())
+  const canConfirm = Boolean(
+    (retryPayload ? exactRetryReady : previewCurrent && preview?.can_confirm_configuration === true &&
+      form.operator.trim().length > 0 && form.operator.length <= 160 &&
+      form.reason.trim().length > 0 && form.reason.length <= 1000) &&
     !loadingConfirm && !loadingPreview && !busy.current
+  )
   const editingBlocked = !enabled || Boolean(receipt) || Boolean(retryPayload) ||
     Boolean(savedRevision) || saveOutcomeUncertain || saving || loadingConfirm ||
     loadingPreview || query.isFetching || busy.current
@@ -258,8 +273,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   }
 
   async function submitConfirm(): Promise<void> {
-    if (!canConfirm && !retryPayload) return
-    if (busy.current || !previewCurrent || !timing || !enabled) return
+    if (!canConfirm || busy.current || !timing) return
     const payload: EntryTimingConfirmPayload = retryPayload ?? {
       timing, command_id: nonce(),
       expected_preview_fingerprint: preview!.preview_fingerprint,
@@ -384,7 +398,9 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       'w · Q ' + value.qualification_duration_weeks + 'w · Final ' +
       position(value.final_commitment) + ' · Ranking override ' +
       position(value.ranking_publication_override) : t.absent
-  const previewStatus = previewCurrent ? preview : null
+  const previewStatus = retryPayload
+    ? (exactRetryReady ? preview : null)
+    : (previewCurrent ? preview : null)
   const effectiveStatus = previewStatus ?? (inspection?.timing ? inspection : null)
   const blockers = previewStatus?.blockers ?? inspection?.blockers ?? []
   const blockersReferToEarlierPlan = Boolean(inspection && localChanged && !previewStatus)
@@ -464,7 +480,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         onClick={() => void reReadInspection()}>{t.retryRead}</button>
       {!inspection && !query.isLoading && !query.error && <p role="status">{t.loading}</p>}
       {inspection && <p role="status">{inspection.timing ? t.existing : t.noPlan}</p>}
-      {!enabled && !receipt && <p role="alert" className="error">{t.nonWritable}</p>}
+      {!enabled && !receipt && !retryPayload && <p role="alert" className="error">{t.nonWritable}</p>}
       {!enabled && receipt && <p role="status">{t.awaitingSave}</p>}
 
       <fieldset disabled={editingBlocked || !inspection}>

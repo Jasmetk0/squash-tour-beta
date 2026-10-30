@@ -118,3 +118,7 @@ The frontend editing scope uses the actual Run calendar values in a fixed order 
 ## Direct Saved Revision history navigation
 
 The existing `/admin/runs/:runId/branches` route renders `SavedRevisionHistoryPanel` and allows an operator to select the intended Branch. After confirmed Draft and Saved/uncertain Save, the Entry UI now offers a direct CS/EN link to that real history page in addition to its original Run Management link. It does **not** fake support for direct per-revision navigation or assume that the first Branch is the requested one; the operator selects the Branch in history. Mocked component regressions verify the exact route after Confirm, successful Save and ambiguous Save.
+
+## Immutable Confirm recovery after parent becomes non-writable
+
+A lost Confirm response may mean the server already staged the local Calendar edit, making the parent page mark the current Working Draft read-only for *new* Entry modifications. The original exact command retry must still be allowed so the backend idempotent receipt can be recovered without creating a different command or forcing another preview. The UI separates a fresh Confirm (requires verified writable scope, current preview, audit inputs) from the frozen exact retry (requires the original timing, fingerprint, command ID, and audit to be unchanged in the same Run/Branch/Package/Edition/clock). No new Preview or Save is triggered. A mocked React rerender regression simulates the parent flipping `enabled` to false between the first lost response and the exact retry.

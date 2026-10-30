@@ -361,6 +361,26 @@ describe('Edition Entry timing Admin panel (mocked component boundary)', () => {
     expect(api.previewRunEditionEntryTiming).toHaveBeenCalledTimes(1)
   })
 
+  it('allows only the original immutable Confirm retry when the parent becomes read-only after lost response', async () => {
+    api.confirmRunEditionEntryTiming.mockRejectedValueOnce(new TypeError('network lost'))
+    const view = mount(); await fill(); await requestPreview()
+    await userEvent.click(screen.getByRole('button',{name:'Výslovně potvrdit do Working Draftu'}))
+    await screen.findByText(/Odpověď na potvrzení je nejistá/)
+    const original = api.confirmRunEditionEntryTiming.mock.calls[0][4]
+    view.rerender(<Frame><RunEditionEntryTimingPanel runId="run"
+      branchId="branch" packageId="calendar-package" eventId="edition"
+      calendar={calendar} enabled={false} /></Frame>)
+    expect(screen.getByRole('button',{name:'Spočítat serverový náhled'})).toBeDisabled()
+    expect(screen.getByLabelText('Otevření Main – týden')).toBeDisabled()
+    expect(screen.getByRole('button',{name:'Zopakovat přesně stejný příkaz'})).toBeEnabled()
+    await userEvent.click(screen.getByRole('button',{name:'Zopakovat přesně stejný příkaz'}))
+    expect(await screen.findByText(/Potvrzeno pouze do Working Draftu/)).toBeInTheDocument()
+    expect(api.confirmRunEditionEntryTiming).toHaveBeenCalledTimes(2)
+    expect(api.confirmRunEditionEntryTiming.mock.calls[1][4]).toEqual(original)
+    expect(api.previewRunEditionEntryTiming).toHaveBeenCalledTimes(1)
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+  })
+
   it('suppresses writes when parent context is historical, foreign or otherwise unverified', async () => {
     mount({enabled:false})
     await screen.findByText(/není zapisovatelný/)

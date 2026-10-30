@@ -22,11 +22,17 @@ class _ProfileService:
 
 
 class _BlockedDriver:
+    def inspect_pending_full_simulations(self, **kwargs):
+        return {"operations": []}
+
     def preview_full_simulation(self, request):
         raise ValueError("authoritative sporting week state is missing")
 
 
 class _ProgressDriver:
+    def inspect_pending_full_simulations(self, **kwargs):
+        return {"operations": []}
+
     def preview_full_simulation(self, request):
         return {
             "start_week": {"season_index": 0, "week": 1},
@@ -143,3 +149,89 @@ def test_probe_classifies_unresolved_application_validation_policy() -> None:
     assert report.release_policy_blocker == "application_validation_policy_unresolved"
     assert report.release_policy_gate_fingerprint is not None
 
+
+
+class _PendingDriver(_ProgressDriver):
+    def __init__(self):
+        from beta_engine.application.authoritative_run_simulation_driver import (
+            AuthoritativeFullSimulationCommand,
+        )
+        from beta_engine.domain.simulation_slots import fingerprint
+        self.review = {
+            "schema_version": "authoritative_full_simulation_preview.v1",
+            "run_id": "run-a", "branch_id": "branch-a",
+            "start_week": {"season_index": 0, "week": 1},
+            "final_week": {"season_index": 49, "week": 61},
+            "expected_position_fingerprint": "b" * 64,
+            "expected_revision_id": "revision-1",
+        }
+        self.review["preview_fingerprint"] = fingerprint(self.review)
+        request = _request()
+        self.command = AuthoritativeFullSimulationCommand(
+            **request.model_dump(), run_id="run-a", branch_id="branch-a",
+            expected_start_week=self.review["start_week"],
+            expected_position_fingerprint="b" * 64, expected_revision_id="revision-1",
+            expected_preview_fingerprint=self.review["preview_fingerprint"],
+        )
+        self.operation = {
+            "command": self.command.model_dump(mode="json"), "review": self.review,
+            "target_revision": 0, "effective_boundary_target": None,
+            "effective_target_week": {"season_index": 49, "week": 61},
+        }
+        self.executed = []
+
+    def inspect_pending_full_simulations(self, **kwargs):
+        return {"operations": [self.operation]}
+
+    def preview_full_simulation(self, request):
+        raise AssertionError("An existing parent must reuse its original reviewed command")
+
+    def simulate_full_simulation(self, command):
+        self.executed.append(command)
+        return super().simulate_full_simulation(command)
+
+
+def test_probe_continuation_reuses_the_full_original_command():
+    driver = _PendingDriver()
+    report = PreAlphaFaxLongAcceptanceProbeService(driver, _ProfileService()).run(
+        run_id="run-a", branch_id="branch-a", request=_request(),
+    )
+    assert driver.executed == [driver.command]
+    assert report.full_simulation_preview_fingerprint == driver.command.expected_preview_fingerprint
+    assert report.execution_fingerprint is not None
+
+
+@pytest.mark.parametrize("field", ["operator_label", "audit_reason"])
+def test_probe_continuation_rejects_command_id_reuse_with_changed_audit(field):
+    driver = _PendingDriver()
+    from beta_engine.application.pre_alpha_fax_long_acceptance_probe import (
+        PreAlphaFaxLongAcceptanceProbeRequest,
+    )
+    request = PreAlphaFaxLongAcceptanceProbeRequest(**{**_request().model_dump(), field: "Changed audit"})
+    with pytest.raises(ValueError, match="different request"):
+        PreAlphaFaxLongAcceptanceProbeService(driver, _ProfileService()).run(
+            run_id="run-a", branch_id="branch-a", request=request,
+        )
+    assert driver.executed == []
+
+
+@pytest.mark.parametrize("damage", ["review", "target_revision", "boundary", "week", "final_week", "scope"])
+def test_probe_does_not_reinterpret_corrupt_or_retargeted_parent(damage):
+    driver = _PendingDriver()
+    if damage == "review":
+        driver.operation["review"]["expected_revision_id"] = "unreviewed"
+    elif damage == "target_revision":
+        driver.operation["target_revision"] = 1
+    elif damage == "boundary":
+        driver.operation["effective_boundary_target"] = {"kind": "week_end"}
+    elif damage == "week":
+        driver.operation["effective_target_week"] = {"season_index": 0, "week": 2}
+    elif damage == "final_week":
+        driver.operation["review"]["final_week"] = {"season_index": 0, "week": 2}
+    else:
+        driver.operation["command"]["branch_id"] = "foreign"
+    with pytest.raises(ValueError, match="corrupt|retargeted|different request"):
+        PreAlphaFaxLongAcceptanceProbeService(driver, _ProfileService()).run(
+            run_id="run-a", branch_id="branch-a", request=_request(),
+        )
+    assert driver.executed == []

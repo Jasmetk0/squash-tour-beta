@@ -2,10 +2,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { confirmRunEditionEntryTiming, getRunEditionEntryTiming, previewRunEditionEntryTiming } from '../api/client'
+import {
+  confirmRunEditionEntryTiming, getRunEditionEntryTiming, previewRunEditionEntryTiming,
+  getRunContainer, listRunBranches, getBranchWorkingDraft, getRunPackageState,
+  saveRunPackageWorkingDraft
+} from '../api/client'
 import type { RunCalendarMetadata } from '../api/runCalendarCreation'
 import {
-  entryTimingScope, isHash, weekInClock, sameTiming,
+  entryTimingScope, isHash, weekInClock, sameTiming, sameClock, verifiedRunCalendar,
   type EditionEntryTiming, type EntryTimingConfirmPayload,
   type EntryTimingInspection, type EntryTimingPreview, type EntryTimingReceipt, type EntryWeek
 } from '../api/runEditionEntryTiming'
@@ -74,7 +78,13 @@ const T = {
     retryConfirm: 'Zopakovat přesně stejný příkaz', confirmError: 'Odpověď na potvrzení je nejistá nebo chybová.',
     retryHint: 'Pro bezpečný exact retry zůstává zachováno stejné command ID i celý payload. Nový příkaz se nevytváří.',
     confirmed: 'Potvrzeno pouze do Working Draftu. Saved Revision ještě nebyla vytvořena.',
-    savedLink: 'Přejít k samostatnému Working Draft Save v Adminu Runu',
+    savedLink: 'Otevřít Run Management a uložené revize',
+    saveConsent: 'Samostatně schvaluji uložení aktuálního ověřeného Working Draftu jako nové Saved Revision.',
+    saveButton: 'Samostatně uložit Working Draft',
+    saving: 'Ukládám Saved Revision…',
+    saveError: 'Uložení nelze bezpečně provést',
+    saved: 'Saved Revision byla uložena a potvrzena serverem.',
+    saveGuard: 'Před uložením znovu ověřím Run, Branch, původní Saved HEAD, verzi Draftu a fingerprint Package; bez souhlasu a ověření Save neproběhne.',
     refreshing: 'Obnovuji serverový stav…', retryCommandId: 'ID příkazu',
     nonWritable: 'Tento kontext není zapisovatelný; nejprve obnov příslušný aktivní Run/Branch a ověř Working Draft.',
     stalePreview: 'Po úpravě je nutný nový náhled. Starý otisk nesmí být znovu použit.',
@@ -124,7 +134,13 @@ const T = {
     retryConfirm: 'Retry the exact same command', confirmError: 'Confirmation response failed or is uncertain.',
     retryHint: 'For safe exact retry, the original command ID and complete payload are retained. No new command is generated.',
     confirmed: 'Confirmed in Working Draft only. No Saved Revision has been created.',
-    savedLink: 'Open the separate Working Draft Save in Run Admin',
+    savedLink: 'Open Run Management and revision history',
+    saveConsent: 'I separately authorize saving the currently verified Working Draft as a new Saved Revision.',
+    saveButton: 'Save Working Draft separately',
+    saving: 'Saving Saved Revision…',
+    saveError: 'Save could not be safely completed',
+    saved: 'Server confirmed the new Saved Revision.',
+    saveGuard: 'Before Save, verify Run, Branch, previous Saved HEAD, Draft version and Package fingerprint again. Save requires separate consent.',
     refreshing: 'Refreshing server state…', retryCommandId: 'Command ID',
     nonWritable: 'This context is not writable; return to the correct active Run/Branch and verify its Working Draft.',
     stalePreview: 'After edits a new preview is required. The previous fingerprint must not be reused.',
@@ -201,6 +217,10 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
   const [preview, setPreview] = useState<EntryTimingPreview | null>(null)
   const [retryPayload, setRetryPayload] = useState<EntryTimingConfirmPayload | null>(null)
   const [receipt, setReceipt] = useState<EntryTimingReceipt | null>(null)
+  const [saveApproved, setSaveApproved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [savedRevision, setSavedRevision] = useState('')
   const [error, setError] = useState('')
   const [loadingPreview, setLoadingPreview] = useState(false)
   const [loadingConfirm, setLoadingConfirm] = useState(false)
@@ -222,6 +242,10 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     setRetryPayload(null)
     setReceipt(null)
     setRefreshed(null)
+    setSaveApproved(false)
+    setSaving(false)
+    setSaveError('')
+    setSavedRevision('')
     setError('')
     busy.current = false
     setLoadingPreview(false)
@@ -292,6 +316,8 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       const result = await confirmRunEditionEntryTiming(runId, branchId, packageId, eventId, payload)
       if (currentScope.current !== origin) return
       setReceipt(result)
+      setSaveApproved(false)
+      setSaveError('')
       setRetryPayload(null)
       setPreview(null)
       setRefreshed(null)
@@ -308,6 +334,65 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
       if (currentScope.current === origin) setError(t.confirmError + ' ' + formatApiError(cause))
     } finally {
       if (currentScope.current === origin) { busy.current = false; setLoadingConfirm(false) }
+    }
+  }
+
+  async function saveReviewedDraft(): Promise<void> {
+    const staged = receipt
+    if (!staged || !saveApproved || busy.current || saving ||
+      !entryTimingScope(staged.preview, runId, branchId, packageId, eventId)) return
+    busy.current = true
+    setSaving(true)
+    setSaveError('')
+    const origin = scope
+    try {
+      // Fresh authoritative reads: the Manage page's source-copy Save button only
+      // handles its own source-copy receipt, so this is a separate reviewed Save.
+      const [run, branches, draft, state] = await Promise.all([
+        getRunContainer(runId), listRunBranches(runId),
+        getBranchWorkingDraft(runId, branchId), getRunPackageState(runId, branchId)
+      ])
+      if (currentScope.current !== origin) return
+      const branch = branches.run_branches.find(row =>
+        row.run_id === runId && row.branch_id === branchId)
+      const checkedClock = verifiedRunCalendar(run)
+      if (!checkedClock || !sameClock(checkedClock, calendar) ||
+        run.run_id !== runId || run.storage_kind !== 'custom_local' || run.read_only ||
+        !branch || branch.status !== 'active' || branch.read_only ||
+        branch.saved_head_revision_id !== staged.preview.saved_head_revision_id ||
+        draft.run_id !== runId || draft.branch_id !== branchId ||
+        draft.status !== 'dirty' ||
+        draft.base_saved_revision_id !== branch.saved_head_revision_id ||
+        draft.draft_version !== staged.draft_version ||
+        state.state?.run_id !== runId || state.state.branch_id !== branchId ||
+        state.fingerprint !== staged.state_fingerprint) {
+        throw new Error('Saved head, Working Draft or Package changed since Entry confirmation.')
+      }
+      const result = await saveRunPackageWorkingDraft(runId, branchId, staged.draft_version)
+      if (currentScope.current !== origin) return
+      if (result.run_id !== runId || result.branch_id !== branchId ||
+        result.working_draft.run_id !== runId || result.working_draft.branch_id !== branchId ||
+        result.working_draft.status !== 'clean' ||
+        result.working_draft.base_saved_revision_id !== result.saved_revision.revision_id ||
+        !result.saved_revision.revision_id) {
+        throw new Error('Saved Revision receipt identity or Draft state is invalid.')
+      }
+      setSavedRevision(result.saved_revision.revision_id)
+      setReceipt(null)
+      setSaveApproved(false)
+      setRefreshed(null)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['package-working-draft', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-package-state', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-calendar', runId, branchId, packageId] }),
+        queryClient.invalidateQueries({ queryKey: ['edition-entry-timing', runId, branchId, packageId, eventId] })
+      ])
+    } catch (cause) {
+      if (currentScope.current === origin) setSaveError(t.saveError + ': ' + formatApiError(cause))
+    } finally {
+      if (currentScope.current === origin) { busy.current = false; setSaving(false) }
     }
   }
 
@@ -434,13 +519,20 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
           {loadingConfirm ? t.confirming : retryPayload ? t.retryConfirm : t.confirmButton}
         </button>
       </div>}
-      {receipt && <div aria-live="polite">
+      {receipt && <div className="grid" aria-live="polite">
         <p role="status">{t.confirmed} {t.retryCommandId}: {receipt.command_id}</p>
         <p>{t.working_draft} (v{receipt.draft_version})</p>
+        <p className="status">{t.saveGuard}</p>
+        <label><input type="checkbox" checked={saveApproved} disabled={saving || busy.current}
+          onChange={event => setSaveApproved(event.target.checked)} /> {t.saveConsent}</label>
+        <button type="button" disabled={!saveApproved || saving || busy.current}
+          onClick={() => void saveReviewedDraft()}>{saving ? t.saving : t.saveButton}</button>
         <Link to={'/admin/runs/' + encodeURIComponent(runId) + '/manage?branch=' + encodeURIComponent(branchId)}>
           {t.savedLink}
         </Link>
       </div>}
+      {saveError && <p role="alert" className="error">{saveError}</p>}
+      {savedRevision && <p role="status">{t.saved} {savedRevision}</p>}
     </div>
   </SectionCard>
 }

@@ -25,7 +25,14 @@ export function SavedBranchArchiveExportPanel({
 }: { run: RunContainer; branch: RunBranch | null }): JSX.Element {
   const { language } = useLanguage()
   const l = savedBranchArchiveText[language]
-  const scope = JSON.stringify([run.run_id, branch?.branch_id ?? null, branch?.saved_head_revision_id ?? null])
+  // Consent also depends on live eligibility; a parent refresh that changes
+  // editability/status must invalidate and abort the old reviewed download.
+  const scope = JSON.stringify([
+    run.run_id, run.storage_kind, run.status, run.read_only, run.display_name,
+    branch?.run_id ?? null, branch?.branch_id ?? null,
+    branch?.saved_head_revision_id ?? null, branch?.status ?? null,
+    branch?.read_only ?? null
+  ])
   const currentScope = useRef(scope)
   currentScope.current = scope
   const generation = useRef(0)
@@ -124,7 +131,7 @@ export function SavedBranchArchiveExportPanel({
   }
 
   async function download(): Promise<void> {
-    if (!active || !selected?.saved_head_revision_id || busy) return
+    if (!allowed || !active || !selected?.saved_head_revision_id || busy) return
     const token = ++generation.current
     const key = scope
     const requestController = new AbortController()

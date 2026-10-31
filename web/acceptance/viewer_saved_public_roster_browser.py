@@ -43,7 +43,6 @@ def main() -> None:
     from scripts.native_tour_browser_acceptance import stop_process, wait_http
     from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
     from tests.application.test_viewer_people_read_model import _world, _lifecycle, _sporting
-    from beta_engine.application.run_working_draft_service import RunWorkingDraftService
     from beta_engine.infrastructure.db.initial_world_state import put_initial_world
     from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
     from beta_engine.infrastructure.db.player_sporting_state import put_sporting
@@ -71,17 +70,19 @@ def main() -> None:
             put_initial_world(session, world)
             put_lifecycle(session, lifecycle)
             put_sporting(session, sporting)
-        service = RunWorkingDraftService(
-            repo, lambda kind: "public-roster-browser-" + kind
+        # The initial-world component has its own exact reviewed Save gate.
+        # Do not manufacture a dirty Working Draft or bypass its protection.
+        save_root = (
+            source.base_url + "/admin/players/runs/" + quote(run_id, safe="")
+            + "/branches/" + quote(branch_id, safe="") + "/initial-world/save"
         )
-        draft = service.get_viewer_branch_draft(
-            run_id=run_id, branch_id=branch_id
-        )
-        saved = service.save(
-            run_id=run_id, branch_id=branch_id,
-            expected_draft_version=draft.draft_version,
-        )
-        assert saved.saved_revision.revision_id
+        status, reviewed = _request("GET", save_root + "/preview")
+        assert status == 200 and reviewed["can_save"], (status, reviewed)
+        status, saved = _request("POST", save_root, {
+            "expected_draft_version": reviewed["draft_version"],
+            "expected_initial_world_fingerprint": reviewed["initial_world_fingerprint"],
+        })
+        assert status == 201 and saved["saved_revision"]["revision_id"], (status, saved)
         endpoint = f"/viewer/runs/{quote(run_id, safe='')}/players"
         status, actual = _request("GET", source.base_url + endpoint)
         assert status == 200, (status, actual)

@@ -169,4 +169,30 @@ describe('global Full Simulation Task Center', () => {
   expect(within(alpha).getByText('Dokončené sezony:')).toBeVisible()
  })
 
+ it('detects ambiguous duplicate bindings and refuses to emit fabricated task identifiers', async () => {
+  linkedServerTasks.data = [
+    { run_id: 'run/alpha', branch_id: 'branch with space', parent_command_id: 'first-command', task_id: 'task-1' },
+    { run_id: 'run/alpha', branch_id: 'branch with space', parent_command_id: 'first-command', task_id: 'task-2' },
+    { run_id: 'run-beta', branch_id: 'b-two', parent_command_id: 'first-command', task_id: 'task-3' } // same command_id but different run/branch (must be ignored)
+  ]
+  renderPage()
+  const list = await screen.findByRole('list', {name: 'Centrum simulací'})
+  const alpha = within(list).getByText('Alfa svět / A timeline').closest('li')!
+
+  // Verify error message is shown for ambiguous link
+  expect(within(alpha).getByText('Tento příkaz je nejednoznačně spojen s více serverovými úlohami a nelze jej bezpečně propojit.')).toBeInTheDocument()
+
+  // Verify it doesn't try to link any task
+  expect(within(alpha).queryByText(/Tento původní příkaz už patří/)).toBeNull()
+
+  // Verify the URL lacks the task ID completely
+  expect(within(alpha).getByRole('link', {name: 'Otevřít detail a ovládání'}))
+    .toHaveAttribute('href', '/admin/runs/run%2Falpha/simulate?branch=branch%20with%20space')
+
+  // Verify missing server task for other command
+  const gamma = within(list).getByText('Gamma world / C timeline').closest('li')!
+  expect(within(gamma).queryByText(/Tento příkaz je nejednoznačně spojen/)).toBeNull()
+  expect(within(gamma).getByRole('link', {name: 'Otevřít detail a ovládání'}))
+    .toHaveAttribute('href', '/admin/runs/run-gamma/simulate?branch=c-three')
+ })
 })

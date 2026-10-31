@@ -166,16 +166,17 @@ def main() -> None:
                 review_button.click()
             first = actual_review.value
             assert first.status == 200, first.text()[:2000]
-            result = first.json()
-            assert result["can_restore"] and not result["conflicts"], result
-            assert result["archive_digest"] == hashlib.sha256(raw).hexdigest()
-            assert result["archive_size_bytes"] == len(raw)
-            assert result["selected_branch_id"] == branch_id
-            assert result["selected_head_revision_id"] == saved_head
+            # Large archive histories can be evicted from Chromium's DevTools
+            # response cache after the application has consumed the body.
+            # Verify the actual rendered, SHA-256-bound result rather than
+            # calling response.json() after the fact.
             expect(page.get_by_text(
                 "The archive is verified and currently has no target identity conflicts."
             )).to_be_visible(timeout=20000)
             expect(page.get_by_text(run_id, exact=True)).to_be_visible()
+            expect(page.get_by_text(branch_id, exact=True).first).to_be_visible()
+            expect(page.get_by_text(saved_head, exact=True)).to_be_visible()
+            expect(page.get_by_text(hashlib.sha256(raw).hexdigest(), exact=True)).to_be_visible()
             assert _dump(target_path) == baseline, "Import preview wrote to the cold SQLite target"
             assert len(requests) == 1 and requests[0].endswith("/import/preview"), requests
             page.screenshot(path=str(root / "import-clean-en.png"), full_page=True)
@@ -224,13 +225,11 @@ def main() -> None:
                 page.get_by_role("button", name="Ověřit archiv a konflikty").click()
             response = collision_review.value
             assert response.status == 200, response.text()[:2000]
-            result = response.json()
-            assert not result["can_restore"], result
-            assert any(x["code"] == "run_name_exists" for x in result["conflicts"]), result
             expect(page.get_by_text(
                 "Import není možný: cílová databáze již obsahuje kolidující identity."
             )).to_be_visible()
             expect(page.get_by_text("run_name_exists", exact=False)).to_be_visible()
+            expect(page.get_by_text(archive.run.display_name, exact=False).first).to_be_visible()
             assert _dump(target_path) == colliding_state
             assert all(x.endswith("/import/preview") for x in requests), requests
             page.screenshot(path=str(root / "import-collision-cs.png"), full_page=True)
@@ -254,7 +253,8 @@ def main() -> None:
             ) as reopened_review:
                 page.get_by_role("button", name="Ověřit archiv a konflikty").click()
             assert reopened_review.value.status == 200
-            assert not reopened_review.value.json()["can_restore"]
+            # Reopened evidence must be displayed by the actual application,
+            # not pulled back out of the browser's short-lived network cache.
             expect(page.get_by_text(
                 "Import není možný: cílová databáze již obsahuje kolidující identity."
             )).to_be_visible()

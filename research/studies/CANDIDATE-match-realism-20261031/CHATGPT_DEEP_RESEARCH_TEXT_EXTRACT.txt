@@ -1,0 +1,1007 @@
+# Match realism research — original ChatGPT Deep Research text archive
+
+Source: user-provided 25-page DOCX, "Squash Engine — nezávislý výzkum realističnosti profesionálních mužských zápasů.docx" (2026-10-31).
+Status: RESEARCHED / UNVERIFIED. Provisional research subject, ID **not yet assigned** pending coordination.
+**Fidelity warning:** Searchable text-only extraction. Embedded Word equations and table/page layout may be lost or garbled. The original DOCX is **not committed**; use the uploaded source for mathematical or layout-level verification.
+**Authority warning:** This report is an AI-generated, non-authoritative research input, not a Master change, implementation requirement or proof of current engine behavior.
+
+---- BEGIN FULL AVAILABLE TEXT EXTRACTION ----
+
+<PARSED TEXT FOR PAGE: 1 / 25>
+Squash Engine — nezávislý výzkum
+realističnosti profesionálních mužských zápasů
+Executive Summary
+Nejdůležitější závěr výzkumu je, že realistický rally-by-rally Squash Engine
+nemusí být matematicky složitý, ale musí správně reprodukovat několik
+empirických vlastností současně: nerovnoměrné rozložení síly soupeřů, velmi
+malou výhodu podání, silnou nelineární amplifikaci malých rozdílů v
+pravděpodobnosti výměny přes skórování do 11, velkou variabilitu délky výměn,
+postupně rostoucí fyzickou cenu dlouhých výměn a zápasů a přetrvávající, ale
+omezenou krátkodobou variabilitu výkonu. Největším rizikem není příliš
+jednoduchý model, ale model, který se snaží každou empirickou vlastnost
+vyrobit samostatným bonusem — například zvláštním „momentum“, „clutch“,
+upset či comeback bonusem. Pro squash pro takové nezávislé efekty není dost
+kvalitních důkazů. [1]
+
+Produktová dokumentace, kterou bylo možné ověřit, potvrzuje správný základ:
+Squash Engine je deterministický, používá injektovanou hierarchickou
+náhodnost, první Match Engine je rally-by-rally, standardní individuální zápas je
+BO5 do 11 s rozdílem dvou bodů a fyzický stav, Form i další stavové veličiny mají
+být historicky reprodukovatelné. Aktuální veřejný stav repozitáře navíc uvádí, že
+skutečné zápasy už používají rally/timeline/stamina evidence, přenášejí Form,
+sharpness a fatigue a novější turnajové řezy vstupují přes projekci plných 57
+atributů do Match Engine. Přesné numerické váhy rally modelu jsem ale z
+veřejně načtené dokumentace bezpečně neověřil, takže tato zpráva je kalibrační
+a validační základ, nikoli audit konkrétních koeficientů. [2]
+
+Nejsilnější dostupný historický benchmark pro délku zápasů ukazuje, že mužský
+profesionální squash má typický zápas kolem 42–43 minut. Squash Stats dnes
+uvádí analýzu 67 034 časovaných zápasů od roku 2005 do 27. října 2026 a typický
+mužský profesionální zápas 42 minut; jeho starší detailní analýza dat SquashInfo
+2000–2020 dávala průměr 43 minut a modus 38 minut. U mužských zápasů 2018–
+2020 skončilo přibližně 50 % všech zápasů 3:0 a u samotného World Tour asi 45
+% 3:0; v mužském Last 16 bylo zveřejněno 54 % výsledků 3:0, 30 % 3:1 a 16 % 3:2.
+Jde však o sekundární analýzu databáze SquashInfo, nikoli recenzovanou studii,
+a publikovaná stránka obsahuje u jednoho popisu procent zjevnou textovou
+<PARSED TEXT FOR PAGE: 2 / 25>
+nekonzistenci, proto je vhodné kalibrovat z exportovaných zápasových dat, nikoli
+mechanicky převzít každý agregát z článku. [3]
+
+Recenzovaná notational-analysis data podporují vysokou variabilitu délky
+výměny. U elitních mužů pod PAR-11 bylo zaznamenáno mediánově 13,2 s na
+výměnu, 21 výměn na game a 11 min 37 s na game; 25., 75. a 95. percentil délky
+rally byly přibližně 7,0 s, 22,7 s a 46,4 s, přičemž maximum v analyzovaném
+souboru bylo 146,5 s. Jiná fyziologická práce u elitních hráčů uváděla průměr
+18,6 ± 4,6 s, 34,6 % výměn kratších než 10 s a 32,6 % delších než 21 s. Novější
+analýza PSA videa z let 2017–2020 našla u mužů průměr 25,1 ± 3,5 s, což ukazuje,
+že jediný fixní „správný průměr rally“ neexistuje; liší se definice, vzorek, éra a
+soupeři. Engine proto musí kalibrovat celé rozdělení, ne pouze průměr. [4]
+
+Fyziologické důkazy jsou dost silné na to, aby ospravedlnily fyzický stav měnící
+se během zápasu, ale ne natolik silné, aby ospravedlnily libovolně složitý „fatigue
+debuff“. Girard et al. u elitních hráčů naměřili při squashovém výkonu průměrně
+86 ± 9 % VO₂max, 92 ± 3 % HRmax a 8,3 ± 3,4 mmol/l laktátu; jiná studie po
+hodinovém zápase zjistila pokles maximální volní síly extenzorů kolena o 16 %.
+Současně systematický přehled z roku 2024 upozorňuje, že squashová literatura
+je malá, mnoho studií je metodologicky slabých nebo starších než současná
+pravidla a jen 14 z 35 zahrnutých studií pracovalo s elitními či world-class hráči.
+Fyzika únavy je tedy dobře doložená kvalitativně, ale přesná funkce „X minut → Y
+% horší rally probability“ doložená není. [5]
+
+Pro pre-alphu proto doporučuji jako základ logistickou rally pravděpodobnost
+odvozenou ze stabilního rozdílu schopností hráčů, s malým serve termem,
+aktuálním fyzickým stavem a jedním omezeným krátkodobým
+performance/form termem. Rally probability by neměla obsahovat bonus za
+předchozí vyhranou výměnu. Stavová závislost může vznikat přirozeně přes
+fyzickou práci, délku předchozí výměny, přestávku, stávající Form a případně
+gameplan/control stav, který Master už předpokládá. Tento model je dost bohatý,
+aby produkoval realistické 3:0/3:1/3:2 výsledky, ale zůstává kalibrovatelný,
+auditovatelný a deterministicky reprodukovatelný. [6]
+
+Dostupná produktová specifikace a hranice auditu
+Veřejný repozitář byl při výzkumu dostupný na větvi buuk. README výslovně
+říká, že repozitář je beta v migraci a že target behaviour a aktuální implementace
+se nesmějí zaměňovat. Dokumentační autorita je nastavena tak, že novější
+explicitní rozhodnutí mají přednost před SQUASH_ENGINE_MASTER_VISION.md,
+následovaným technickou constitution a podřízenými dokumenty. AGENTS.md
+<PARSED TEXT FOR PAGE: 3 / 25>
+tuto hierarchii znovu potvrzuje a přímo požaduje rozlišovat stavy DECIDED,
+PROVISIONAL, TARGET, OPEN, DEFERRED a LATER. [7]
+
+Z hlediska této studie jsou závazné zejména následující ověřitelné body. První
+verze Match Engine je rally-by-rally, ne shot-by-shot; standard je BO5, game do
+11, win-by-two; používá explicitní rally/time logging; předpokládá tři fyzické
+stamina dimenze odvozené z lehčího atributového/state modelu; hráč má jedinou
+aktuální Form, která se aktualizuje podle výkonu a regresuje k dlouhodobému
+individuálnímu normálu. Engine má být deterministický při stejné kombinaci
+world-state snapshotu, historicky účinné konfigurace, RNG seed hierarchy a
+commandu. [8]
+
+README zároveň dokumentuje aktivní pre-alpha gameplan se složkami Risk,
+Tempo, Court Positioning a Variation, který má působit kauzálně přes hidden
+control, pace, closure pressure a workload a nikoli jako přímý point bonus. To
+je z vědeckého hlediska velmi dobré konstrukční omezení: empirický výzkum
+skutečně ukazuje taktické rozdíly v dominanci T a v tlaku vznikajícím z
+kombinace kvality úderu a pozice obou hráčů, ale nepodporuje jednoduchou
+mechaniku typu „aggressive plan = +4 % chance vyhrát rally“. [9]
+
+Současný audited state popisuje již reálně hrající turnajové řezy. Semifinále mění
+Form, sharpness a long-term fatigue finalistů; finále poté spotřebuje jejich post-
+semifinal state. Novější iterace používají uložené 57atributové hráčské záznamy a
+stávající verzi projekce 57 → engine; pozdější exhibice a knockouty přenášejí stav
+mezi zápasy a weekly preparation používá existující weekly
+Form/sharpness/fatigue updates. Současně dokumentace výslovně přiznává, že
+například numerické Health efekty, plná historická development integrace a
+některé recoveries ještě nejsou kompletní. [10]
+
+Úplný Master má přes 7 000 řádků a více než 1 MB. Webový GitHub renderer mi
+při tomto výzkumu poskytl metadata a autoritativní shrnutí, ale ne celý jeho text;
+přímé raw načtení bylo nástrojem odmítnuto. Proto nemohu tvrdit, že jsem
+ověřil každý match-related odstavec Masteru ani přesné aktuální koeficienty
+implementace. Totéž platí pro detailní zdrojový kód rally probability: z
+veřejných auditních dokumentů lze potvrdit architekturu a stavové toky, nikoli
+kompletní numerickou kalibraci. [11]
+<PARSED TEXT FOR PAGE: 4 / 25>
+Empirická realita profesionálního mužského squashe
+Výsledky zápasů a rozdíl výkonnosti
+Historická data silně ukazují, že profesionální squash není populace zápasů mezi
+stejně silnými hráči. V datech 2018–2020 skončilo 50 % všech mužských zápasů
+3:0 a u World Tour přibližně 45 %; v Last 16 byl poměr 54 % 3:0, 30 % 3:1 a 16 %
+3:2. Pozdější kola měla méně 3:0 a více čtyř- a pětigamových zápasů. Toto je
+zásadní pro kalibraci: engine nemá mít jeden „typický match p“, ale rozdělení
+matchup strength differences, které se s kolem turnaje mění. [12]
+
+Murray et al. zjistili u world-ranked mužů korelaci mezi rozdílem světového
+pořadí a délkou zápasu přibližně r = −0,65; velké rozdíly v rankingu produkovaly
+výrazně kratší zápasy. U podobně postavených hráčů s rozdílem pod 40 míst
+studie uváděla kolem 80 výměn, přibližně 23 minut ball-in-play času a medián
+rally kolem 17 s. Squash Stats v datech 2018–2020 uváděl mužský průměr 56
+minut při ranking gap <5 a 51 minut při rozdílu 10–25 míst. Ranking je
+samozřejmě hlučný proxy skutečné síly, ale obě datové rodiny podporují stejný
+směr. [13]
+
+Z toho plyne důležitý modelovací závěr: upset rate se má vynořit z překryvu
+distribution of performances kolem dlouhodobé síly, ne z explicitního
+„upset eventu“. Ve veřejně dostupných squashových zdrojích jsem nenašel
+dostatečně transparentní, tour-wide moderní tabulku skutečné pravděpodobnosti
+upsetu jako funkce ranking/skill gapu, která by umožnila poctivě uvést jedno
+číslo. SquashInfo ale zjevně obsahuje player ranking, opponent, result, games a
+match time a balíček squashinformr umí získávat tournament matches, games i
+head-to-head data, takže přesná empirical upset curve je vhodný následný datový
+artefakt pro kalibraci. [14]
+
+Pravděpodobnost výměny a její amplifikace skórováním
+Mužský elitní squash nevykazuje tenisový typ dominance serveru. Carboch a
+Strnad analyzovali 1 072+ podání a u nejběžnějších forehand a backhand
+sidewall servisů zaznamenali přibližně 40–41 % případů končících bodem pro
+server, přibližně stejný podíl pro receiver a zhruba 18 % letů. Autoři uzavřeli, že
+výhoda podání je ve squashi malá. Vzhledem k tomu, že „let“ není konečná výhra
+výměny, data nejsou přímo odhadem finální P(server wins rally), ale velmi jasně
+odmítají velký serve bonus. Omezením studie je jeden elitní mužský vzorek a
+notational coding, nikoli kompletní PSA tour. [15]
+<PARSED TEXT FOR PAGE: 5 / 25>
+U PAR-11 je i malá rally výhoda velmi silně zesílena skórováním. Pokud označíme
+konstantní pravděpodobnost, že hráč A vyhraje libovolnou bodovanou rally,
+jako , jeho pravděpodobnost získat game do 11 s rozdílem dvou je
+
+
+
+Pro BO5 je pak při konstantní game probability
+
+
+
+Toto je čistý důsledek aktuálního win-by-two scoring mechanismu, nikoli
+empirická hypotéza. PSA používá point-a-rally do 11 a při 10:10 je nutný rozdíl
+dvou bodů. [16]
+
+Prakticky to znamená, že p = 0,52 už odpovídá přibližně P(game)=0,577 a
+P(match)=0,642; p = 0,55 vede přibližně k P(game)=0,687 a P(match)=0,819. Engine
+tedy nepotřebuje rozdíly typu 65:35 na úrovni rally, aby vyprodukoval dominanci
+3:0. Naopak příliš široké rally probability budou generovat nereálně mnoho
+squashových „blowoutů“. Tento matematický fakt je jeden z nejdůležitějších
+kalibračních bodů celé zprávy.
+
+Délka rally, game a zápasu
+Nejkvalitnější moderní notational data dávají spíše silně pravostranně
+vychýlené rozdělení než normální variaci kolem průměru. Murray et al. při
+současném PAR-11 našli medián 13,2 s, 25. percentil přibližně 7,0 s, 75. percentil
+22,7 s a 95. percentil 46,4 s; nejdelší sledovaná rally trvala 146,5 s. Medián game
+byl 11:37 a medián 21 rally na game. Ball-in-play podíl byl přibližně 51,4 %. [17]
+
+Girard et al. v malé fyziologické studii sedmi velmi dobrých hráčů naměřili
+průměrnou rally 18,6 ± 4,6 s, 34,6 % výměn pod 10 s a 32,6 % nad 21 s; effective
+playing time byl 69,7 ± 4,7 %. Rozdíl oproti Murrayovým hodnotám není důvod
+některé číslo zahodit: Girardova studie používala tři kompetici simulující games a
+velmi malý fyziologický vzorek, zatímco Murray analyzoval soutěžní utkání a
+jinou definici časové struktury. [18]
+
+Novější práce na 14 mužských PSA zápasech z let 2017–2020 našla ještě delší
+průměr, 25,1 ± 3,5 s. Jejím silným bodem je novější soutěžní video, slabinou pouze
+14 zápasů a výběr konkrétních elitních utkání. Společně tyto studie říkají více o
+variabilitě než o jednom „pravém“ průměru. [19]
+
+Pro celý zápas poskytuje širší databáze lepší kalibrační cíl. Squash Stats uvádí
+nyní 67 034 časovaných profesionálních zápasů od roku 2005 a typický mužský
+<PARSED TEXT FOR PAGE: 6 / 25>
+zápas 42 minut. Starší rozbor 2000–2020 dával průměr 43 minut, modus 38 minut
+a u mužských pětigamových zápasů průměr 71 minut. Rozsah může být
+extrémní; stejný dataset dokumentuje 170minutový mužský zápas 3:2. Takové
+extrémy by engine měl být schopen vytvořit, ale jen velmi zřídka. [3]
+
+Těsné koncovky, obraty a překvapení
+Pro tour-wide četnost 12:10+, comebacků z 0:2 nebo 1:2 ani upsetů podle
+skill/rank gapu jsem nenašel transparentní moderní PSA agregát, který by
+splňoval požadovanou vědeckou úroveň. squashinformr výslovně umí vracet
+game scores, počet tiebreak wins i procento games jdoucích do tiebreaku pro
+head-to-head, takže tato data jsou dostupná k odvození, ale bylo by metodicky
+chybné převést několik rivalit na tour-wide kalibraci. [20]
+
+To je důležitá absence, ne selhání výzkumu. Engine by zatím neměl mít
+explicitní target typu „8 % games musí být 12:10+“ nebo „X % zápasů se musí
+otočit z 0:2“, dokud tento target nebude spočítán z dobře definovaného období a
+tour segmentu. Správný validační test lze připravit nyní a target doplnit později z
+exportu reálných game-by-game výsledků.
+
+Únava, výdrž, regenerace a krátkodobá variabilita výkonu
+Squash je z fyziologického hlediska vysoce intenzivní intermitentní sport s
+významným aerobním i anaerobním příspěvkem. Girard et al. naměřili u sedmi
+elitních hráčů při match-like squashi průměr 86 ± 9 % VO₂max, 92 ± 3 % HRmax,
+8,3 ± 3,4 mmol/l krevního laktátu a přibližně 24 % času nad 90 % VO₂max. Studie
+je z roku 2007 a malá, ale jde o přímé fyziologické měření, nikoli extrapolaci z
+jiného sportu. [18]
+
+Dlouhý zápas vytváří měřitelnou neuromuskulární únavu. Girard et al. po
+zhruba hodině squashe u deseti trénovaných mužů zjistili pokles maximální
+volní kontrakce extenzorů kolena o 16 %, voluntary activation o 7 %, twitch peak
+torque o 20 % a rate of tension development o 23 %. Vzorek nebyl world-class a
+výsledek nelze převést na „rally win probability minus 16 %“, ale podporuje
+existenci rychlé fyzické složky únavy, která může zhoršovat opakované změny
+směru, dosažení míče a následnou schopnost držet tlak. [21]
+
+U elitnějších hráčů nejsou nejdůležitější pouze VO₂max rozdíly. Studie 31 hráčů
+našla, že lépe hodnocení hráči byli lepší ve squash-specific final-lap testu, 4
+mmol/l lactate-turnpoint výkonu a change-of-direction rychlosti; samotný
+VO₂max v předchozí literatuře nebyl konzistentně korelován se světovým
+rankingem. To podporuje model, kde fyzická kvalita není jedna univerzální
+<PARSED TEXT FOR PAGE: 7 / 25>
+stamina statistika a kde dva hráči se stejnou aerobní kapacitou mohou mít
+rozdílnou repeated-effort a COD schopnost. [22]
+
+Hydratace přidává další relevantní, ale pomalejší vrstvu. U 14 elite/world-class
+hráčů byla při tréninku průměrná sweat rate 1,11 ± 0,56 l/h a fluid balance −1,22
+± 1,22 %. Hráči s dalším tréninkem ještě tentýž den nedokázali mezi jednotkami
+doplnit tekutinu a sodík stejně jako hráči s regenerací do následujícího dne.
+Mechanismus je dost dobře doložen pro workload/recovery systém, ale studie
+měřila trénink, ne přímo PSA turnajové výsledky. [23]
+
+Nutriční dostupnost může ovlivnit výkon v dlouhém zatížení. Randomizovaný
+crossover u devíti squashistů zjistil po 48hodinové high-carbohydrate dietě
+rychlejší absolvování simulovaného pětigamového squash protokolu než po
+nízkosacharidové dietě. Jde o přímý squashový důkaz, ale malý vzorek a
+simulovaný výkon; pro pre-alphu není důvod modelovat sacharidy explicitně.
+Výsledek je spíše podporou obecné „recovery resources“ logiky v budoucích
+verzích. [24]
+
+Vícedenní profesionální turnaje jsou vědecky největší mezera. Systematický
+přehled uvádí, že elitní turnaje mohou mít zápasy přibližně 8–48 hodin od sebe a
+během několika dnů lze odehrát více zápasů, ale zároveň výslovně konstatuje, že
+kumulativní competition load u elite squash nebyl dostatečně kvantifikován a
+požaduje další výzkum. Starší studie deseti veteránů nad 45 let během tří zápasů
+za 36 hodin zjistila, že akutní metabolické reakce v dalších zápasech neklesaly a
+někdy byly větší, ale tento vzorek nelze používat jako kvantitativní model pro
+profesionální dvacátníky. [25]
+
+Novější crossover na jedenácti soutěžních squashistech během tří dnů
+simulovaných zápasů našel po 45minutovém zápase spíše mírnou únavu a návrat
+sledovaných markerů zhruba do 24 hodin; použité recovery techniky nebyly lepší
+než pasivní regenerace. Věk souboru byl velmi heterogenní a průměrně mladý,
+takže jde pouze o podpůrný důkaz pro relativně rychlou obnovu po normálním
+zápase, nikoli definitivní PSA recovery curve. [26]
+
+Výsledkem pro engine by měla být dvourychlostní fyziologie. Krátkodobý stav
+během zápasu má rychle klesat při náročných rally a částečně se obnovovat mezi
+rally a games. Pomalejší accumulated-load stav má reagovat na celkovou práci
+zápasu a regenerovat mezi zápasy v hodinách až dnech. Není vědecký důvod, aby
+dlouhodobý fatigue state lineárně rostl s každou odehranou minutou nebo aby
+byl každé ráno resetován na nulu. [27]
+<PARSED TEXT FOR PAGE: 8 / 25>
+Krátkodobá výkonová variabilita je realistická, ale nesmí se zaměnit s
+psychologickým momentum. Studie pressure/control profilů ukazuje, že stejní
+elitní hráči vytvářejí v různých zápasech odlišné performance profiles a že jejich
+chování závisí na konkrétním soupeři. Starší Markov model rovněž zjistil, že
+shot-response chování nebylo stabilní napříč různými soupeři. To podporuje per-
+match deviation nebo Form, nikoli nezávislý bonus za sérii vyhraných bodů. [28]
+
+Existuje práce, která přímo používá pojem „momentum profiles“, ale momentum
+v ní bylo definováno ex post jako série winnerů či errors. To není důkaz
+kauzálního procesu, jen popis sekvence pozorovaných akcí. Implementovat po
+třech vyhraných rally například +3 % by proto bylo kruhové: engine by nejprve
+vytvořil streak náhodou a potom by stejný streak sám posiloval bez doloženého
+mechanismu. [29]
+
+Matematické přístupy pro deterministický rally engine
+Nejjednodušší použitelný model je nezávislý Bernoulli model
+
+
+
+kde je logistická funkce a rozdíl efektivní kvality hráčů. Je extrémně levný,
+snadno kalibrovatelný a umožňuje analyticky ověřovat game/match
+probabilities. Jeho slabina je, že při konstantním nedokáže sám vytvářet
+realistickou korelaci mezi dlouhými rally, fyzickou prací a pozdější výkonností;
+navíc předpokládá podmíněnou nezávislost rally. Pro první kalibrační baseline je
+však ideální, protože ukáže, kolik realismu vzniká už ze samotného scoringu.
+
+Prakticky vhodnější pre-alpha model je state-dependent logistic Bernoulli:
+
+
+
+Skill představuje stabilní rozdíl, Form pomalejší stav již existující v Masteru,
+Physical_t stav uvnitř zápasu, Variability_match malou pre-match odchylku
+generovanou deterministicky ze seedu, Serve pouze slabý term a GameplanState
+důsledky hidden control/pressure/workload, nikoli přímý taktický bonus. Taková
+struktura odpovídá současnému designovému směru projektu a je stále
+jednoduše identifikovatelná z velkého množství simulací. [30]
+
+Další úroveň je latent-state Markov model, například stavy neutral / A pressure / B
+pressure nebo několik control-pressure tříd. Je sportovně obhajitelný, protože
+studie Murray et al. skutečně našly diskrétní klastry situation pressure založené
+na poloze hráčů, míči a následné reakci. Pro rally-by-rally engine by latent state
+mohl ovlivnit rally duration, workload a konečný outcome. Výhodou je lepší
+<PARSED TEXT FOR PAGE: 9 / 25>
+sekvenční struktura bez psychologického momentum; nevýhodou jsou další
+transition parameters a nebezpečí, že se z nepozorovatelného control modelu
+stane neidentifikovatelný „vysavač“, který vysvětlí cokoliv. [31]
+
+Shot-by-shot Markov nebo semi-Markov model je vědecky zajímavý, ale pro
+současný engine nedává nejlepší poměr informace a nákladů. Historická
+squashová práce shot-by-shot Markov model vytvořila, ale sama zjistila
+omezenou predikční stabilitu napříč soupeři. Squash Engine má navíc explicitní
+produktové rozhodnutí zůstat v první verzi rally-by-rally. Přechod na shot model
+by dramaticky zvýšil počet parametrů, datový požadavek, testovací prostor i
+riziko overfittingu, aniž by byl pro dosažení realistických scoreline distributions
+nezbytný. [32]
+
+Nejlepší kompromis je proto rally outcome + rally-duration/workload model,
+nikoli shot simulator. Nejprve se podle matchup a state parametrů vytvoří
+latentní charakter rally — například krátká/standardní/dlouhá/velmi dlouhá
+nebo kontinuální duration — a poté outcome a workload se společnou závislostí
+na control a fyzických vlastnostech. Empirické percentily 7,0 / 22,7 / 46,4 s
+poskytují konkrétní kalibrační body pro duration distribution, zatímco z 95.+
+percentilu lze konstruovat přirozeně vzácný dlouhý ocas. [33]
+
+Pro determinismus není problém používat pravděpodobnosti. AGENTS.md
+správně definuje determinismus jako identický výsledek při stejném snapshotu,
+konfiguraci, seed hierarchy a commandu. „Deterministický engine“ tedy nemusí
+mít outcome vždy určený pouze vyšší ratingovou hodnotou; může používat
+pseudonáhodný sample z explicitně seedované distribuce. To je přesně to, co
+umožní realistické upsets a zároveň přesný replay. [8]
+
+Doporučené mechanismy, rizika a hranice pre-alphy
+Mechanismus      Doporučení        Důvod             Hlavní riziko
+Stabilní skill   Ano, základ       Ranking gap a     Příliš široké
+difference       systému           zápasová délka    rally p vytvoří
+                                   spolu výrazně     příliš mnoho
+                                   souvisejí;        3:0.
+                                   scoring silně
+                                   amplifikuje
+                                   malé rally
+                                   rozdíly. [33]
+Per-match        Ano, malý a       Performance       Pokud bude
+performance      regresivní        profile           variance velká,
+<PARSED TEXT FOR PAGE: 10 / 25>
+Mechanismus       Doporučení      Důvod            Hlavní riziko
+deviation                         stejného hráče   upset rate
+                                  se mezi          exploduje a
+                                  soupeři a        skill přestane
+                                  zápasy mění.     být důležitý.
+                                  [28]
+Aktuální Form     Ano, ponechat Produktový         Nedovolit dvojí
+                                model ji již       započtení
+                                vyžaduje a         téhož efektu
+                                krátkodobá         přes Form i
+                                performance        match
+                                variabilita je     deviation.
+                                obhajitelná. [8]
+Weak serve        Ano, velmi      Elitní mužský    Pár
+effect            malý            serve            procentních
+                                  nevykazuje       bodů navíc na
+                                  tenisovou        každé rally
+                                  výhodu. [15]     může přes
+                                                   scoring silně
+                                                   zkreslit
+                                                   výsledky.
+Rally-duration    Ano             Reálné rally     Kalibrace jen
+distribution                      mají silně       na průměr
+                                  pravostranný     schová chybný
+                                  ocas a velkou    ocas.
+                                  variabilitu.
+                                  [34]
+Rally workload    Ano             Dlouhé           Nepřevádět
+podle                             vysokointenziv   laboratorní
+délky/intenzity                   ní zatížení má   procenta
+                                  skutečné         přímo na win
+                                  energetické a    probability.
+                                  neuromuskulá
+                                  rní náklady.
+                                  [35]
+Between-rally     Ano             Squash má        Příliš rychlá
+recovery                          krátké           regenerace
+                                  pracovní a       vynuluje
+<PARSED TEXT FOR PAGE: 11 / 25>
+Mechanismus       Doporučení      Důvod             Hlavní riziko
+                                  odpočinkové       význam
+                                  intervaly;        dlouhých rally.
+                                  recovery mezi
+                                  rally je
+                                  fyziologicky
+                                  důležitá. [36]
+Between-game      Ano             Mezi games je     Zápas nesmí
+recovery                          podle             po každé game
+                                  profesionálníc    začínat z
+                                  h pravidel        fyzicky čistého
+                                  delší přestávka   stavu.
+                                  než mezi rally.
+                                  [16]
+Long-term         Ano, ale      Existuje            Falešná
+tournament        konzervativně fyziologická        přesnost.
+load                            plausibilita a
+                                data o
+                                omezené
+                                recovery;
+                                přesná elite
+                                competition
+                                curve chybí.
+                                [37]
+Control/          Ano, pokud již Elitní squash      Nesprávně jej
+pressure latent   existuje       lze popsat přes    nepřejmenovat
+state                            pressure/contr     na
+                                 ol profily. [31]   psychologické
+                                                    momentum.
+Momentum          Ne              Streaky jsou      Self-
+bonus za                          popisovány,       reinforcing
+streak                            ale kauzální      výsledky a
+                                  bonus není        příliš mnoho
+                                  doložen. [29]     comebacků/col
+                                                    lapse.
+Clutch bonus      Zatím ne        Nebyl nalezen     Overfitting na
+při 9:9/10:10                     robustní tour-    příběhy a malé
+                                  wide důkaz        vzorky.
+<PARSED TEXT FOR PAGE: 12 / 25>
+Mechanismus      Doporučení        Důvod             Hlavní riziko
+                                   stabilního
+                                   univerzálního
+                                   clutch efektu.
+Explicit upset   Ne                Upset má          Umělé
+event                              vznikat z         zdvojení
+                                   performance       variance.
+                                   uncertainty a
+                                   scoringu.
+„Tactical        Ne v pre-         Existují          Snadno vytvoří
+forfeiting“      alphě             komentáře o       karikaturu
+game                               strategickém      místo
+                                   šetření, ale      realismu.
+                                   chybí čistý
+                                   kvantitativní
+                                   parametr. [12]
+
+Pro současnou pre-alphu bych tedy neměnil počet hlavních mechanismů, ale
+soustředil se na jejich kalibraci a observabilitu. Současný směr — rally-by-rally,
+Form, fyzický state, gameplan přes control/workload, seedovaná náhodnost a
+authoritative logs — již obsahuje téměř vše, co je potřeba k realistickému
+prvnímu modelu. [7]
+
+Do budoucí verze patří jemnější odlišení anaerobní/repeated-effort a dlouhodobé
+recovery, individualizovaná rally-duration charakteristika, event-level
+court/environment effects a možná latentní pressure transition matrix. Explicitní
+nutriční, hydratační nebo psychologické mikro-mechaniky bych odložil; důkazy
+ukazují, že tyto faktory existují, ale neposkytují zatím spolehlivou parametrizaci
+pro profesionální tour simulaci. [38]
+
+Validační plán a měřitelné experimenty
+Největší přidaná hodnota pro Squash Engine nyní není další mechanismus, ale
+realism benchmark suite, která oddělí lokální správnost mechaniky od celkové
+podobnosti reálnému sportu. Každý experiment má být spuštěn nad velkým
+pevným gridem matchupů a seedů a výsledky mají být archivovány podle
+engine/calibration verze. Reálné targety je vhodné dělit podle období, tour levelu
+a rozdílu síly; jinak lze kalibraci „splnit“ správným celkovým průměrem a
+současně mít špatné jednotlivé segmenty.
+<PARSED TEXT FOR PAGE: 13 / 25>
+            Diagnostický         Měřitelný výstup a
+Typ testu   experiment           očekávání
+Mechanika   Rally-probability    Fixovat vše kromě
+            monotonicity         skill difference.
+                                 P(win rally), P(win
+                                 game) a P(win match)
+                                 musí být monotónní;
+                                 žádné lokální
+                                 reversal.
+Mechanika   Analytický scoring   Vypnout
+            oracle               fatigue/Form
+                                 dynamics a držet
+                                 konstantní rally p.
+                                 Simulovaný game a
+                                 BO5 win rate musí
+                                 konvergovat k
+                                 analytickým PAR-11
+                                 formulím výše.
+Mechanika   Serve neutrality     Dva identičtí hráči,
+            test                 pouze alternace
+                                 serveru. Server-win
+                                 final rally share má
+                                 být blízko
+                                 kalibrované malé
+                                 výhodě, nikoli
+                                 tenisovým
+                                 hodnotám; ověřovat
+                                 samostatně lets.
+                                 Empirický serve
+                                 evidence: Carboch &
+                                 Strnad 2017. [15]
+Mechanika   Fatigue dose–        Stejní hráči po
+            response             krátké vs. 50s+ rally.
+                                 Následný fyzický
+                                 stav má být horší po
+                                 dlouhé rally, ale část
+                                 rozdílu se musí
+                                 regenerovat; nesmí
+<PARSED TEXT FOR PAGE: 14 / 25>
+                    Diagnostický        Měřitelný výstup a
+Typ testu           experiment          očekávání
+                                        vzniknout okamžitý
+                                        „death spiral“.
+Mechanika           Recovery ordering   Stejný workload,
+                                        různé rest intervals.
+                                        Delší legitimní rest
+                                        nesmí dát horší
+                                        fyzický stav než
+                                        kratší rest.
+Mechanika           No-momentum null    Po conditioning na
+                    test                posledních N
+                                        vyhraných/prohraný
+                                        ch rally porovnat
+                                        další rally při
+                                        shodném
+                                        physical/control
+                                        state. Pokud není
+                                        mechanika
+                                        explicitně doložena,
+                                        streak sám nesmí
+                                        měnit
+                                        pravděpodobnost.
+Celkový realismus   Scoreline           Porovnat 3:0 / 3:1 /
+                    distribution        3:2 celkově i po
+                                        skill/rank-gap bins.
+                                        Benchmark: mužský
+                                        World Tour 2018–
+                                        2020 měl zhruba 45
+                                        % 3:0; L16 54/30/16.
+                                        [12]
+Celkový realismus   Match-duration      Nejen mean:
+                    distribution        median/mode,
+                                        P10/P50/P90/P99 a
+                                        right tail. Široký
+                                        reálný benchmark:
+                                        mužský
+                                        profesionální typ
+<PARSED TEXT FOR PAGE: 15 / 25>
+                    Diagnostický         Měřitelný výstup a
+Typ testu           experiment           očekávání
+                                         ~42–43 min;
+                                         historické 3:2
+                                         průměrně kolem 71
+                                         min. [3]
+Celkový realismus   Rally-duration       Porovnat 25/50/75/95
+                    quantiles            percentile a >60s tail.
+                                         Empirický PAR-11
+                                         benchmark 7,0 / 13,2
+                                         / 22,7 / 46,4 s;
+                                         nejdelší pozorované
+                                         rally ve vzorku 146,5
+                                         s. [33]
+Celkový realismus   Rallies per game /   Kontrolovat joint
+                    game time            distribution, ne
+                                         každý metriku
+                                         zvlášť. Benchmark
+                                         Murray: medián 21
+                                         rally/game a 11:37
+                                         game při PAR-11.
+                                         [33]
+Celkový realismus   Close-game/          Z game-score dat
+                    tiebreak test        spočítat podíl games
+                                         dosahujících 10:10,
+                                         12:10+, 15:13+ a
+                                         porovnat se
+                                         simulací. Target
+                                         zatím nevyplňovat
+                                         odhadem; získat ze
+                                         SquashInfo/game
+                                         datasetu. [39]
+Celkový realismus   Comeback             Měřit P(match win |
+                    transition matrix    0:1), P(win | 0:2),
+                                         P(win | 1:2), game-by-
+                                         game reversal rate a
+                                         deciding-game
+                                         frequency. Reálný
+<PARSED TEXT FOR PAGE: 16 / 25>
+                    Diagnostický        Měřitelný výstup a
+Typ testu           experiment          očekávání
+                                        target odvodit z
+                                        historických game
+                                        sequences, nikoli
+                                        ručně nastavit.
+Celkový realismus   Upset calibration   Pro bins podle pre-
+                    curve               match skill/rank
+                                        difference srovnat
+                                        observed vs
+                                        simulated underdog
+                                        win probability a
+                                        Brier/log-loss. Reálná
+                                        data mohou
+                                        obsahovat ranking,
+                                        result a games. [40]
+Turnaje             Winner-load         Identický finalista po
+                    propagation         krátkém 3:0 a po
+                                        dlouhém 3:2 SF.
+                                        Druhá varianta má v
+                                        průměru horší pre-
+                                        final physical state,
+                                        ale ne nutně
+                                        automaticky
+                                        prohrát.
+                                        Fyziologický základ
+                                        je reálný, přesná
+                                        velikost efektu musí
+                                        být kalibrována. [41]
+Turnaje             Rest-window curve   Simulovat stejné dva
+                                        workloady při 8 h,
+                                        24 h a 48 h recovery.
+                                        Stav musí být
+                                        monotónně lepší s
+                                        delší recovery;
+                                        velikost rozdílu musí
+                                        zůstat konzervativní
+                                        kvůli nedostatku
+<PARSED TEXT FOR PAGE: 17 / 25>
+                Diagnostický          Měřitelný výstup a
+Typ testu       experiment            očekávání
+                                      elite competition dat.
+                                      [42]
+Turnaje         Deep-run bias audit   V mnoha turnajích
+                                      porovnat finálovou
+                                      win probability po
+                                      různě těžkých
+                                      cestách pavoukem
+                                      při stejné
+                                      předturnajové síle.
+                                      Zjistit, zda fatigue
+                                      nepřehnaně trestá
+                                      hráče za jediný
+                                      pětigamový zápas.
+Determinismus   Exact replay hash     Identický world
+                                      snapshot + config +
+                                      hierarchical seed +
+                                      command musí
+                                      produkovat
+                                      byte/semantic-
+                                      equivalent rally log,
+                                      skóre, physical states
+                                      a winner. Toto je
+                                      přímo projektový
+                                      non-negotiable. [8]
+Determinismus   Seed locality /       Změna seedu
+                hierarchy test        jednoho zápasu
+                                      nesmí měnit
+                                      předchozí historii
+                                      ani simultánní
+                                      nesouvisející zápasy;
+                                      opakování stejného
+                                      seedu musí být
+                                      přesné. [8]
+Determinismus   Serialization/        Match rozehraný či
+                restart replay        uložený před
+                                      restartem musí při
+<PARSED TEXT FOR PAGE: 18 / 25>
+                      Diagnostický           Měřitelný výstup a
+Typ testu             experiment             očekávání
+                                             stejném
+                                             authoritative state a
+                                             seedu pokračovat
+                                             stejně. Aktuální
+                                             repozitář už staví na
+                                             Saved
+                                             replay/restart/restor
+                                             e, takže realism
+                                             benchmark musí
+                                             tuto vlastnost
+                                             zachovat. [10]
+
+Pro hlavního koordinátora ChatGPT Work je nejvhodnější postup nepřepisovat
+Match Engine, ale zavést oddělenou kalibrační vrstvu práce. Nejprve zmrazit
+současnou implementaci jako baseline a získat machine-readable mužský
+PSA/SquashInfo dataset minimálně se sloupci datum, round, player identities,
+pre-match rankings, game scores a match duration. squashinformr ukazuje, že
+taková struktura je technicky dosažitelná; jeho historické veřejné tournament
+helpers jsou ale omezené zejména na roky 2021–2022, takže pro plný moderní
+corpus je nutné jasně dokumentovat zdroj a licensing/access režim. [43]
+
+Poté bych kalibraci prováděl hierarchicky: nejprve scoring oracle a neutral-
+player symetrie; potom mapping skill gap → rally probability; potom 3/4/5-game
+distributions a upset curve; potom rally duration a match time; teprve následně
+fatigue/recovery. Tím se zabrání tomu, aby se například chybný skill spread
+„opravil“ silnější únavou nebo aby se chybná rally variance maskovala Form
+parametrem.
+
+Za klíčové acceptance dashboard metriky bych považoval distribution 3:0/3:1/3:2,
+matchup-gap conditional match win probability, upset calibration, game score
+margin, tiebreak rate, rally-duration percentiles, match-duration percentiles,
+rallies per game, comeback transition probabilities a finalist workload. Žádná
+jednotlivá metrika nesmí být release gate sama o sobě. Model může mít
+správných 43 minut průměrného zápasu a současně dramaticky špatnou
+kombinaci 3:0 a 3:2.
+
+Statisticky je vhodnější porovnávat distribuce a calibration curves než jediná
+procenta. U kontinuálních veličin lze používat například Wasserstein distance
+<PARSED TEXT FOR PAGE: 19 / 25>
+nebo KS-type distance jako diagnostiku, u binárních výsledků
+reliability/calibration plot a Brier score a u kategoriálních scoreline výsledků
+multinomial discrepancy. Přesné acceptance thresholds však musí být stanoveny
+až po velikosti a kvalitě reálného validačního souboru; jejich vymyšlení předem
+by odporovalo požadavku této studie nevytvářet falešné intervaly.
+
+Co použít nyní a co ponechat do budoucna
+Do současné pre-alphy patří: stávající rally-by-rally architektura; stabilní skill
+difference; jedna Form; malá deterministicky seedovaná per-match performance
+deviation; slabý serve effect; pravostranná rally-duration distribuce; physical
+load podle trvání/intenzity rally; částečná regenerace mezi rally a games;
+kumulace state během zápasu; konzervativní přenos zátěže do dalšího zápasu; a
+validace proti reálným distribucím. To vše je slučitelné se současným Master
+směrem a nevyžaduje nový psychologický subsystém. [44]
+
+Do budoucna patří: individualizované fatigue/recovery profily, sofistikovanější
+anaerobic/repeated-effort state, hydration/nutrition model, environment/court
+effects, detailní latent pressure transitions a případně hlubší taktické archetypy.
+Jejich existence je biologicky nebo takticko-analyticky obhajitelná, ale současná
+squashová literatura neposkytuje dost robustní kvantifikaci, aby byly bezpečně
+implementovány jako nové závazné herní mechaniky. [45]
+
+Nyní bych explicitně nezaváděl: momentum meter ovlivňující rally outcome,
+clutch bonus, comeback assistance, upset dice, fatigue podle prosté délky času bez
+workloadu, velký serve bonus ani automatické „tactical game sacrifice“. Všechny
+mohou krátkodobě pomoci dosáhnout požadovaných agregátů, ale zároveň
+skrývají chybnou základní pravděpodobnostní strukturu a některé z nich nemají
+odpovídající vědecký důkaz.
+
+Nejdůležitější doporučení pro koordinátora je tedy zacházet s realismem jako s
+kalibrací emergentního systému, ne jako s katalogem speciálních pravidel.
+Pokud správně fungují skill, rally probability, scoring, duration/workload,
+recovery a malá performance variance, velká část jevů, které divák nazývá
+dominancí, upsetem, comebackem, dlouhou bitvou nebo kolapsem, vznikne sama
+bez jejich pojmenování v kódu.
+
+Přesné vědecké a datové prameny
+Girard, O., Chevalier, R., Habrard, M., Sciberras, P., Hot, P. & Millet, G. P. (2007),
+Game analysis and energy requirements of elite squash, Journal of Strength
+and Conditioning Research. Sedm elitních hráčů; přímé VO₂, HR a laktátové
+<PARSED TEXT FOR PAGE: 20 / 25>
+měření; průměr rally 18,6 s. Silný fyziologický design, ale velmi malý vzorek a
+simulované kompetiční games. [18]
+
+Murray, S. et al. (2016), Effects of rule changes on physical demands and shot
+characteristics of elite-standard men's squash and implications for training,
+Journal of Sports Sciences, DOI 10.1080/02640414.2016.1216155. Analyzováno 14
+zápasů z roku 2010 a 27 z roku 2011; PAR-11 medián rally 13,2 s, game 11:37 a 21
+rally/game. Silná moderní notational reference, ale pouze jeden konkrétní
+turnajový kontext. [46]
+
+Carboch, J. & Strnad, J. (2017), Analysis of the serve and the serve return in
+Squash at the men’s elite level, Journal of Physical Education and Sport, DOI
+10.7752/jpes.2017.04268. Ukazuje přibližně neutrální efekt nejběžnějších servisů a
+vysokou četnost letů; vhodné jako constraint na serve modifier. [15]
+
+Carboch et al. / Charles University group (2022–2023), Gender differences in
+squash performance and strategy at the elite level: a notational analysis.
+Čtrnáct elitních mužských zápasů, 18 425 mužských úderů; rally duration 25,1 ±
+3,5 s a rally pace 1,34 ± 0,05 s. Moderní PSA footage, ale malý a selektovaný match
+sample. [19]
+
+Girard et al. (2009/2010), Alteration of neuromuscular function in squash.
+Deset trénovaných mužů; po hodině hry −16 % MVC a evidence centrální i
+periferní únavy. Přímá mechanistická podpora intra-match fatigue, nikoli přímý
+model elitní PSA performance loss. [21]
+
+James et al. (2022), Physiological and Performance Correlates of Squash
+Physical Performance. 31 hráčů, z toho 21 mužů; vyšší úroveň souvisela s lepším
+squash-specific endurance/lactate-turnpoint a COD výkonem. Pomáhá oddělit
+„fitness“ od jediného VO₂max atributu. [47]
+
+Jones, T. W. et al. (2018), A review of the performance requirements of squash.
+Souhrn pohybových, fyziologických a technicko-taktických nároků; upozorňuje
+na omezené množství squash-specific evidence. [48]
+
+Physiological and Nutritional Considerations for Elite Squash: A Systematic
+Review (2024). První systematický přehled zaměřený na fyziologii a výživu
+squashistů; 35 zahrnutých studií, pouze 14 na elite/world-class hráčích a mnoho
+studií metodologicky fair/poor. Zásadní zdroj pro míru jistoty a identifikaci
+mezery v cumulative tournament-load research. [49]
+
+James et al. / elite hydration study (2023), Fluid Balance, Sodium Losses and
+Hydration Practices of Elite Squash Players during Training. Čtrnáct
+<PARSED TEXT FOR PAGE: 21 / 25>
+elite/world-class hráčů; sweat rate 1,11 ± 0,56 l/h a důkaz obtížnější úplné
+rehydratace mezi dvěma session téhož dne. [23]
+
+Hughes et al. / Murray et al. (2009), Tactical use of the T area in squash by
+players of differing standard. Winners obecně trávili větší podíl času v T area
+než losers, s výjimkou velmi těsných games; podporuje control/positioning jako
+latentní kauzální veličinu. [50]
+
+Murray et al. (2019), Using a Situation Awareness Approach to Identify
+Differences in the Performance Profiles of the World’s Top Two Squash
+Players and Their Opponents, Frontiers in Psychology. Devět zápasů;
+pressure/control clusters a důkaz silné opponent-dependence performance
+profile. Vhodné jako teoretický základ hidden-control modelu, nikoli jako hotová
+transition matrix. [31]
+
+Hughes et al. (1997), Development, application, and limitation of a stochastic
+Markov model in explaining championship squash performance. Historický
+shot-level Markov model; už samotná studie zdůraznila omezenou stabilitu
+chování napříč soupeři. Důležitý argument proti předčasnému shot-by-shot
+overengineeringu. [51]
+
+Hughes & Fenwick (2006), Expanding normative profiles of elite squash
+players using momentum of winners and errors. Momentum zde
+operacionalizováno z po sobě jdoucích winnerů/errors; užitečný deskriptivní
+koncept, nikoli kauzální důkaz momentum bonusu. [29]
+
+Morrissey / Squash Stats, A Statistical Study of Match Durations Over 20 Years
+a aktualizovaný 2026 přehled How Long Is a Squash Match?. Data primárně ze
+SquashInfo; aktuální souhrn pracuje s 67 034 časovanými zápasy od 2005 do 27.
+října 2026. Velmi užitečný široký benchmark skutečného tour chování, ale nejde
+o recenzovanou studii a část staršího textu obsahuje redakční nekonzistenci,
+takže surová data mají mít přednost před opisem jednotlivých procent. [52]
+
+MacDonald, squashinformr. Transparentní R rozhraní pro SquashInfo se
+strukturami tournament matches, games, rankings a head-to-head metrik;
+důležitý kandidát pro vytvoření nezávislého calibration corpus. Veřejné
+tournament helpers dokumentované v balíčku mají historická omezení, proto je
+nutné přesně evidovat coverage. [14]
+
+Squash Engine veřejná dokumentace, větev buuk, stav načtený 31. října 2026:
+README.md, AGENTS.md, CURRENT_STATE.md a metadata
+SQUASH_ENGINE_MASTER_VISION.md. Tyto zdroje určují determinismus, rally-by-
+<PARSED TEXT FOR PAGE: 22 / 25>
+rally rozsah, Form/fatigue stav, BO5/PAR-11 pravidla, gameplan princip a hranice
+aktuální implementace; kompletní Master nebyl v dostupném webovém rozhraní
+načten celý, takže tato zpráva nepředstírá úplný audit všech jeho 7 219 řádků.
+[53]
+
+
+
+[1] [32] [51] Development, application, and limitation of a stochastic Markov
+model in explaining championship squash performance.
+
+https://pubmed.ncbi.nlm.nih.gov/9016482/?utm_source=chatgpt.com
+
+[2] [7] [9] [30] [53] GitHub - Jasmetk0/squash-tour-beta · GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta
+
+[3] PSA – SQUASH STATS
+
+https://squashstats.com/category/psa/?utm_source=chatgpt.com
+
+[4] [13] [17] [33] [34] (PDF) Effects of rule changes on physical demands and shot
+characteristics of elite-standard men’s squash and implications for training
+
+https://www.researchgate.net/publication/
+305923523_Effects_of_rule_changes_on_physical_demands_and_shot_characteristi
+cs_of_elite-standard_men%27s_squash_and_implications_for_training?
+utm_source=chatgpt.com
+
+[5] [18] [35] [36] Game analysis and energy requirements of elite squash -
+PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/17685699/?utm_source=chatgpt.com
+
+[6] [8] [44] squash-tour-beta/AGENTS.md at buuk · Jasmetk0/squash-tour-beta ·
+GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta/blob/buuk/AGENTS.md
+
+[10] squash-tour-beta/CURRENT_STATE.md at buuk · Jasmetk0/squash-tour-beta ·
+GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta/blob/buuk/CURRENT_STATE.md
+
+[11] squash-tour-beta/SQUASH_ENGINE_MASTER_VISION.md at buuk ·
+Jasmetk0/squash-tour-beta · GitHub
+<PARSED TEXT FOR PAGE: 23 / 25>
+https://github.com/Jasmetk0/squash-tour-beta/blob/buuk/
+SQUASH_ENGINE_MASTER_VISION.md
+
+[12] [52] A Statistical Study of Match Durations Over 20 Years – SQUASH STATS
+
+https://squashstats.com/2021/02/07/match-durations/
+
+[14] [20] [40] GitHub - HaydenMacDonald/squashinformr: Politely web scrape
+data from SquashInfo in R · GitHub
+
+https://github.com/HaydenMacDonald/squashinformr?utm_source=chatgpt.com
+
+[15] Original Article Analysis of the serve and the serve return in Squash at the
+men’s elite level JAN CARBOCH
+
+https://1library.net/document/zw5d90n0-original-article-analysis-serve-serve-
+return-squash-carboch.html?utm_source=chatgpt.com
+
+[16] Squash Info | New PSA Scoring System To Debut At Hong Kong Open |
+Squash
+
+https://www.squashinfo.com/latest-news/76-new-psa-scoring-system-to-debut-at-
+hong-kong-open?utm_source=chatgpt.com
+
+[19] Gender differences in squash performance and strategy at the elite level: a
+notational analysis | Charles Explorer
+
+https://nomos.is.cuni.cz/publication/631819?lang=en&utm_source=chatgpt.com
+
+[21] [27] [41] Alteration of neuromuscular function in squash.
+
+https://pubmed.ncbi.nlm.nih.gov/19231287/?utm_source=chatgpt.com
+
+[22] [47] Physiological and Performance Correlates of Squash Physical
+Performance - PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/35250337/?utm_source=chatgpt.com
+
+[23] [37] [45] Fluid Balance, Sodium Losses and Hydration Practices of Elite
+Squash Players during Training - PMC
+
+https://pmc.ncbi.nlm.nih.gov/articles/PMC10096645/?utm_source=chatgpt.com
+
+[24] [38] The effects of carbohydrate loading 48 hours before a simulated squash
+match.
+
+https://pubmed.ncbi.nlm.nih.gov/24092769/?utm_source=chatgpt.com
+<PARSED TEXT FOR PAGE: 24 / 25>
+[25] [42] [49] Physiological and Nutritional Considerations for Elite Squash: A
+Systematic Review | Journal of Science in Sport and Exercise | Springer Nature
+Link
+
+https://link.springer.com/article/10.1007/s42978-024-00313-9?
+utm_source=chatgpt.com
+
+[26] Effectiveness of combined techniques vs passive recovery in competitive
+squash players: A crossover study | Retos
+
+https://revistaretos.org/index.php/retos/article/view/111645?
+utm_source=chatgpt.com
+
+[28] Using a Situation Awareness Approach to Identify Differences in the
+Performance Profiles of the World's Top Two Squash Players and Their
+Opponents.
+
+https://pubmed.ncbi.nlm.nih.gov/31139113/?utm_source=chatgpt.com
+
+[29] Expanding normative profiles of elite squash players using momentum of
+winners and errors
+
+https://ideas.repec.org/a/taf/rpanxx/v6y2006i1p161-171.html?
+utm_source=chatgpt.com
+
+[31] Frontiers | Using a Situation Awareness Approach to Identify Differences in
+the Performance Profiles of the World’s Top Two Squash Players and Their
+Opponents
+
+https://www.frontiersin.org/journals/psychology/articles/10.3389/
+fpsyg.2019.01036/full?utm_source=chatgpt.com
+
+[39] get_tournament_games: Get a tournament's games from SquashInfo in
+squashinformr: Politely Web Scrape Data from SquashInfo
+
+https://rdrr.io/cran/squashinformr/man/get_tournament_games.html?
+utm_source=chatgpt.com
+
+[43] get_tournament_matches: Get a tournament's matches from SquashInfo in
+squashinformr: Politely Web Scrape Data from SquashInfo
+
+https://rdrr.io/cran/squashinformr/man/get_tournament_matches.html?
+utm_source=chatgpt.com
+<PARSED TEXT FOR PAGE: 25 / 25>
+[46] Effects of rule changes on physical demands and shot characteristics of elite-
+standard men's squash and implications for training - PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/27494689/?utm_source=chatgpt.com
+
+[48] A review of the performance requirements of squash - Thomas W Jones,
+Benjamin K Williams, Conor Kilgallen, Cosmin Horobeanu, Barry C Shillabeer,
+Andrew Murray, Marco Cardinale, 2018
+
+https://journals.sagepub.com/doi/10.1177/1747954118792492?
+utm_source=chatgpt.com
+
+[50] Tactical use of the T area in squash by players of differing standard.
+
+https://pubmed.ncbi.nlm.nih.gov/19551552/?utm_source=chatgpt.com
+
+---- END FULL AVAILABLE TEXT EXTRACTION ----

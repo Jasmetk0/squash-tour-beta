@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""
-Diagnostic command-line tool to profile SQLite Run storage.
-"""
+"""Read-only, point-in-time storage observations; not a Saved integrity validator."""
+
+from __future__ import annotations
 
 import argparse
 import json
@@ -9,231 +9,221 @@ import platform
 import sqlite3
 import sys
 import time
-import urllib.parse
 from datetime import UTC, datetime
 from pathlib import Path
 
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "run_storage_profile.v1"
+# Deliberately bounded inventory, not arbitrary schema/view/virtual-table SQL.
+KNOWN_TABLES = (
+    "runs", "run_branches", "branch_saved_revisions", "branch_working_drafts",
+    "branch_revision_audit_events", "branch_saved_revision_checkpoints",
+    "branch_checkpoints", "run_package_states", "full_simulation_tasks",
+)
+REQUIRED_COLUMNS = {
+    "runs": {"run_id"},
+    "run_branches": {"run_id", "branch_id", "saved_head_revision_id"},
+    "branch_saved_revisions": {
+        "run_id", "branch_id", "revision_id", "payload_json", "change_summary_json",
+    },
+}
+PAYLOAD_SIZE = "length(cast(payload_json AS BLOB))"
+SUMMARY_SIZE = "length(cast(change_summary_json AS BLOB))"
 
-def get_file_size(path: Path) -> int | None:
+
+def _size(path: Path) -> dict:
     try:
-        if path.exists() and path.is_file():
-            return path.stat().st_size
-        return None
-    except OSError:
-        return None
+        return {"bytes": path.stat().st_size, "status": "observed"}
+    except FileNotFoundError:
+        return {"bytes": None, "status": "absent"}
+    except OSError as exc:
+        return {"bytes": None, "status": "unavailable", "reason": str(exc)}
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Profile a Squash Engine SQLite database to report Run storage usage."
-    )
-    parser.add_argument("--database", required=True, type=str, help="Path to the SQLite database")
-    parser.add_argument("--run-id", type=str, help="Optional specific Run ID to filter scoped tables")
-    parser.add_argument("--label", type=str, help="Optional label to include in the output JSON")
-    parser.add_argument("--output", type=str, help="Optional path to output the JSON report. Overwrites the file if it exists, but will fail if it targets the DB or its sidecars.")
 
-    args = parser.parse_args()
+def _schema(connection: sqlite3.Connection) -> dict[str, set[str]]:
+    objects = {
+        row[0]: row[1:] for row in connection.execute(
+            "SELECT name, type, sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'"
+        )
+    }
+    tables = {}
+    for name in KNOWN_TABLES:
+        entry = objects.get(name)
+        if entry is None:
+            continue
+        kind, sql = entry
+        if kind != "table" or not sql or "CREATE VIRTUAL TABLE" in sql.upper():
+            raise ValueError(f"Expected a persisted table, not a view/virtual table: {name}")
+        columns = {row[1] for row in connection.execute(f'PRAGMA table_info("{name}")')}
+        missing = REQUIRED_COLUMNS.get(name, set()) - columns
+        if missing:
+            raise ValueError(f"Incompatible {name} schema; missing: {', '.join(sorted(missing))}")
+        tables[name] = columns
+    if not tables:
+        raise ValueError("No supported Run tables found; this is not a supported Run database")
+    return tables
 
-    db_path = Path(args.database).resolve()
-    if not db_path.exists() or not db_path.is_file():
-        print(f"Error: Database file does not exist or is not a file: {db_path}", file=sys.stderr)
-        return 1
 
-    wal_path = db_path.with_name(db_path.name + "-wal")
-    shm_path = db_path.with_name(db_path.name + "-shm")
+def _aggregates(connection: sqlite3.Connection, run_id: str | None) -> tuple[dict, dict]:
+    where = " WHERE run_id = ?" if run_id is not None else ""
+    params = (run_id,) if run_id is not None else ()
+    metrics = f"COUNT(*), SUM({PAYLOAD_SIZE}), SUM({SUMMARY_SIZE}), MAX({PAYLOAD_SIZE}), AVG({PAYLOAD_SIZE})"
 
-    output_path = None
-    if args.output:
-        output_path = Path(args.output).resolve()
-        if output_path in (db_path, wal_path, shm_path):
-            print("Error: Output path cannot overwrite the database or its sidecar files.", file=sys.stderr)
-            return 1
-        if output_path.exists():
-            print("Error: Output file already exists.", file=sys.stderr)
-            return 1
-            print("Error: Output path cannot overwrite the database or its sidecar files.", file=sys.stderr)
-            return 1
+    def value(row):
+        return dict(zip(
+            ("count", "payload_bytes_sum", "change_summary_bytes_sum",
+             "payload_bytes_max", "payload_bytes_mean"),
+            (row[0], row[1] or 0, row[2] or 0, row[3] or 0, row[4] or 0.0),
+        ))
 
-    start_time = time.time()
-    observation_start_utc = datetime.now(UTC).isoformat()
+    totals = value(connection.execute(
+        f"SELECT {metrics} FROM branch_saved_revisions{where}", params
+    ).fetchone())
+    owners = {
+        branch: value(row) for branch, *row in connection.execute(
+            f"SELECT branch_id, {metrics} FROM branch_saved_revisions{where} GROUP BY branch_id",
+            params,
+        )
+    }
+    return totals, owners
 
-    # 1. Connect safely using mode=ro URI to prevent creation or mutation
-    uri_path = urllib.parse.quote(db_path.as_posix())
-    db_uri = f"file:{uri_path}?mode=ro"
 
+def _heads(connection: sqlite3.Connection, run_id: str | None) -> dict:
+    # Read the actual persisted Branch pointer, NEVER a mutable draft's base.
+    query = """
+        SELECT b.branch_id, b.run_id, b.saved_head_revision_id,
+               r.run_id, r.branch_id, length(cast(r.payload_json AS BLOB))
+        FROM run_branches b
+        LEFT JOIN branch_saved_revisions r ON r.revision_id = b.saved_head_revision_id
+    """
+    params = ()
+    if run_id is not None:
+        query += " WHERE b.run_id = ?"
+        params = (run_id,)
+    result = {}
+    for branch, owner_run, revision, saved_run, saved_owner, size in connection.execute(query, params):
+        if revision is not None and (saved_run is None or saved_run != owner_run):
+            raise ValueError(f"Branch {branch} has a missing or foreign-Run HEAD reference")
+        result[branch] = {
+            "run_id": owner_run, "revision_id": revision,
+            "original_owner_branch_id": saved_owner, "payload_bytes": size,
+            "status": "referenced_not_integrity_validated" if revision else "no_head",
+        }
+    return result
+
+
+def collect(database: Path, run_id: str | None = None, label: str | None = None) -> dict:
+    database = database.resolve(strict=True)
+    if not database.is_file() or database.stat().st_size == 0:
+        raise ValueError("Database must be an existing nonempty SQLite file")
+    started = datetime.now(UTC).isoformat()
+    clock = time.perf_counter()
+    # as_uri escapes spaces, #, ?, %, and Windows drive paths correctly.
+    connection = sqlite3.connect(database.as_uri() + "?mode=ro", uri=True, timeout=2.0)
     try:
-        conn = sqlite3.connect(db_uri, uri=True, timeout=10.0)
-    except sqlite3.Error as e:
-        print(f"Error: Failed to connect to database: {e}", file=sys.stderr)
-        return 1
-
-    try:
-        # Bounded lock timeout (10 seconds)
-        conn.execute("PRAGMA busy_timeout = 10000;")
-        conn.execute("PRAGMA query_only = ON;")
-
-        # Start read transaction
-        conn.execute("BEGIN DEFERRED;")
-
-        cursor = conn.cursor()
-
-        # 2. Gather DB metrics
-        cursor.execute("PRAGMA page_size;")
-        page_size = cursor.fetchone()[0]
-
-        cursor.execute("PRAGMA page_count;")
-        page_count = cursor.fetchone()[0]
-
-        cursor.execute("PRAGMA freelist_count;")
-        freelist_count = cursor.fetchone()[0]
-
-        allocated_bytes = (page_count - freelist_count) * page_size
-        free_bytes = freelist_count * page_size
-
-        # Optional dbstat support
-        dbstat_supported = False
-        try:
-            cursor.execute("SELECT 1 FROM dbstat LIMIT 1;")
-            dbstat_supported = True
-        except sqlite3.Error:
-            pass
-
-
-        # 3. Gather table stats using ONLY explicitly known ORM schema persistent tables
-        explicit_known_tables = ["ranking_restore_checkpoints", "official_ranking_commands", "official_ranking_candidates", "season_closing_rankings", "official_ranking_result_versions", "official_ranking_zero_versions", "staged_calendar_ranking_result_versions", "staged_calendar_ranking_zero_versions", "owned_tournament_ranking_sources", "ranking_transition_authorities", "authoritative_world_states", "published_official_rankings", "tournament_ranking_snapshot_authorities", "tournament_wild_card_authorities", "tournament_group_rules_policies", "tournament_format_authorities", "tournament_topology_authorities", "tournament_group_match_schedule_authorities", "tournament_group_tie_resolution_authorities", "tournament_group_standings_authorities", "tournament_hybrid_knockout_entrants_authorities", "tournament_hybrid_knockout_bracket_authorities", "tournament_hybrid_ranking_policy_authorities", "tournament_pure_groups_ranking_policy_authorities", "tournament_draw_input_authorities", "tournament_draw_authorities", "tournament_draw_revisions", "tournament_draw_process_authorities", "authoritative_week_transition_receipts", "authoritative_world_events", "initial_world_states", "run_generation_proposals", "player_lifecycle_week_states", "player_tour_entry_triggers", "tournament_application_submission_authorities", "run_entry_decision_slot_authorities", "resolved_application_validation_slots", "week_tournament_lock_authorities", "definitive_wild_card_assignment_authorities", "player_health_week_states", "player_health_admin_edit_receipts", "player_sporting_week_states", "completed_week_sporting_contexts", "tournament_entry_field_versions", "match_lab_sessions", "player_lab_sessions", "player_lab_population_sessions", "tournament_lab_sessions", "run_tournament_lab_drafts", "run_tournament_lab_draft_application_receipts", "standalone_match_workspaces", "simulation_slots", "simulation_event_groups", "authoritative_live_matches", "live_match_working_states", "live_match_return_points", "live_match_alternative_paths", "live_match_completed_alternatives", "live_match_rally_commands", "authoritative_simulation_commands", "full_simulation_execution_leases", "adopted_tournament_authorities", "week_simulation_schedules", "simulation_runs", "runs", "run_calendar_extension_receipts", "legacy_simulation_run_mappings", "run_branches", "branch_saved_revisions", "run_package_states", "run_package_identity_allocators", "run_package_application_receipts", "branch_working_drafts", "branch_revision_audit_events", "branch_saved_revision_checkpoints", "branch_states", "branch_checkpoints", "saved_revision_branch_commands", "branch_fork_commands", "branch_simulation_commands", "official_branch_selection_commands", "season_state", "completed_events", "completed_event_metadata", "completed_tournament_inputs", "ranking_snapshots", "race_snapshots", "world_tour_finals_race_configurations", "world_tour_finals_race_snapshots", "world_tour_finals_participant_selection_configurations", "world_tour_finals_participant_selection_snapshots", "world_tour_finals_effective_participant_states", "world_tour_finals_replacement_authorities", "finals_qualification", "finals_results", "season_rollovers", "player_season_transitions", "next_season_players", "admin_actions", "run_talent_plans", "run_talent_country_allocations", "run_prospects", "run_generated_player_provenance", "full_simulation_tasks", "calendar_standalone_matches"]
-
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
-        db_tables = [row[0] for row in cursor.fetchall()]
-
-        tables_report = {}
-
-        for table in db_tables:
-            if table not in explicit_known_tables:
+        connection.execute("PRAGMA query_only = ON")
+        connection.execute("BEGIN")
+        tables = _schema(connection)  # establishes the logical read snapshot
+        encoding = connection.execute("PRAGMA encoding").fetchone()[0]
+        if encoding.upper().replace("-", "") != "UTF8":
+            raise ValueError(f"Unsupported text encoding {encoding}; no UTF-8 byte report produced")
+        if (run_id is not None and "runs" in tables
+                and connection.execute("SELECT 1 FROM runs WHERE run_id = ?", (run_id,)).fetchone() is None):
+            raise ValueError(f"Unknown Run ID: {run_id}")
+        page_size = connection.execute("PRAGMA page_size").fetchone()[0]
+        page_count = connection.execute("PRAGMA page_count").fetchone()[0]
+        free = connection.execute("PRAGMA freelist_count").fetchone()[0]
+        table_metrics = {}
+        for name in KNOWN_TABLES:
+            if name not in tables:
+                table_metrics[name] = {"status": "unavailable", "reason": "table_absent"}
                 continue
-
-            cursor.execute(f"PRAGMA table_info({table})")
-            columns = [col[1] for col in cursor.fetchall()]
-
-            has_run_id_col = 'run_id' in columns
-
-            if args.run_id and has_run_id_col:
-                cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE run_id = ?", (args.run_id,))
-                count = cursor.fetchone()[0]
-            else:
-                cursor.execute(f"SELECT COUNT(*) FROM {table}")
-                count = cursor.fetchone()[0]
-
-            tables_report[table] = {"row_count": count}
-
-            if dbstat_supported:
-                # Get physical bytes used by this table from dbstat
-                cursor.execute("SELECT SUM(pgsize) FROM dbstat WHERE name = ?", (table,))
-                pg_sum = cursor.fetchone()[0]
-                if pg_sum is not None:
-                    tables_report[table]["physical_bytes"] = pg_sum
-
-        # 4. Gather Branch Saved Revisions stats
-        branch_stats = {}
-        if "branch_saved_revisions" in db_tables:
-            query = """
-                SELECT
-                    branch_id,
-                    COUNT(*),
-                    SUM(length(cast(payload_json AS BLOB))),
-                    SUM(length(cast(change_summary_json AS BLOB))),
-                    MAX(length(cast(payload_json AS BLOB))),
-                    AVG(length(cast(payload_json AS BLOB)))
-                FROM branch_saved_revisions
-            """
-            params = ()
-            if args.run_id:
-                query += " WHERE run_id = ? "
-                params = (args.run_id,)
-
-            query += " GROUP BY branch_id;"
-
-            cursor.execute(query, params)
-            for row in cursor.fetchall():
-                b_id, count, p_sum, c_sum, p_max, p_avg = row
-                branch_stats[b_id] = {
-                    "count": count,
-                    "payload_bytes_sum": p_sum or 0,
-                    "change_summary_bytes_sum": c_sum or 0,
-                    "payload_bytes_max": p_max or 0,
-                    "payload_bytes_mean": p_avg or 0.0,
-                    "head_payload_bytes": None
-                }
-
-            # Compute current HEAD payload bytes
-            if "branch_working_drafts" in db_tables:
-                # Find active saved revision based on draft
-                head_query = """
-                    SELECT d.branch_id, length(cast(r.payload_json AS BLOB))
-                    FROM branch_working_drafts d
-                    JOIN branch_saved_revisions r ON d.based_on_revision_id = r.revision_id
-                """
-                head_params = ()
-                if args.run_id:
-                    head_query += " WHERE d.run_id = ?"
-                    head_params = (args.run_id,)
-
-                cursor.execute(head_query, head_params)
-                for row in cursor.fetchall():
-                    b_id, payload_bytes = row
-                    if b_id in branch_stats:
-                        branch_stats[b_id]["head_payload_bytes"] = payload_bytes
-
-
-        conn.commit()
-
-    except sqlite3.Error as e:
-        print(f"Error: Database read failed: {e}", file=sys.stderr)
-        conn.rollback()
-        return 1
+            scoped = run_id is not None and "run_id" in tables[name]
+            where = " WHERE run_id = ?" if scoped else ""
+            params = (run_id,) if scoped else ()
+            table_metrics[name] = {
+                "status": "observed",
+                "scope": "selected_run" if scoped else "whole_database",
+                "row_count": connection.execute(f'SELECT COUNT(*) FROM "{name}"{where}', params).fetchone()[0],
+            }
+        totals, owners, heads = None, {}, {}
+        if "branch_saved_revisions" in tables:
+            totals, owners = _aggregates(connection, run_id)
+            if "run_branches" in tables:
+                heads = _heads(connection, run_id)
+        logical_end = datetime.now(UTC).isoformat()
     finally:
-        conn.close()
-
-    observation_end_utc = datetime.now(UTC).isoformat()
-    elapsed_seconds = time.time() - start_time
-
-    report = {
+        # sqlite3 connection context managers do not close the connection.
+        connection.close()
+    physical_start = datetime.now(UTC).isoformat()
+    sizes = {
+        "db": _size(database),
+        "wal": _size(database.with_name(database.name + "-wal")),
+        "shm": _size(database.with_name(database.name + "-shm")),
+    }
+    ended = datetime.now(UTC).isoformat()
+    return {
         "schema_version": SCHEMA_VERSION,
-        "observation_start_utc": observation_start_utc,
-        "observation_end_utc": observation_end_utc,
-        "elapsed_seconds": round(elapsed_seconds, 4),
-        "python_version": platform.python_version(),
-        "sqlite_version": sqlite3.sqlite_version,
-        "database_path": str(db_path),
-        "label": args.label,
-        "run_id_scope": args.run_id,
-        "physical_sizes": {
-            "db_bytes": get_file_size(db_path),
-            "wal_bytes": get_file_size(wal_path),
-            "shm_bytes": get_file_size(shm_path)
-        },
+        "observation_start_utc": started, "logical_snapshot_end_utc": logical_end,
+        "physical_observation_start_utc": physical_start, "observation_end_utc": ended,
+        "elapsed_seconds": time.perf_counter() - clock,
+        "python_version": platform.python_version(), "sqlite_version": sqlite3.sqlite_version,
+        "database_path": str(database), "label": label, "run_id_scope": run_id,
+        "text_encoding": encoding, "physical_sizes": sizes,
         "page_metrics": {
-            "page_size": page_size,
-            "page_count": page_count,
-            "freelist_count": freelist_count,
-            "allocated_bytes": allocated_bytes,
-            "free_bytes": free_bytes
+            "scope": "whole_database", "page_size": page_size, "page_count": page_count,
+            "freelist_count": free, "allocated_bytes": page_count * page_size,
+            "nonfreelist_page_bytes": (page_count - free) * page_size,
+            "free_page_bytes": free * page_size,
         },
-        "dbstat_supported": dbstat_supported,
-        "tables": tables_report,
-        "branch_saved_revisions": branch_stats
+        "dbstat": {"status": "not_collected", "reason": "No per-table/index physical attribution in v1"},
+        "tables": table_metrics, "saved_revision_totals": totals,
+        "branch_saved_revisions": owners, "branch_heads": heads,
+        "limitations": [
+            "File sizes are whole-database observations after the logical snapshot, not a simultaneous snapshot.",
+            "Counts group persisted revision owners once; HEAD references do not add duplicated ancestry rows.",
+            "HEAD references are not a reachability, hash, source or sporting replay proof.",
+            "No temporary-directory, archive-size, RAM/RSS or growth-complexity measurement is made.",
+            "SQLite WAL readers can update normal shared-memory coordination; application data is never written.",
+        ],
     }
 
-    if args.output:
-        try:
-            with open(output_path, "x", encoding="utf-8") as f:
-                json.dump(report, f, indent=2)
-        except OSError as e:
-            print(f"Error writing to output file: {e}", file=sys.stderr)
-            return 1
-    else:
-        print(json.dumps(report, indent=2))
 
-    return 0
+def _output_path(raw: str | None, database: Path) -> Path | None:
+    if raw is None:
+        return None
+    output = Path(raw).absolute()
+    protected = {database, database.with_name(database.name + "-wal"),
+                 database.with_name(database.name + "-shm")}
+    if output.resolve() in protected:
+        raise ValueError("Output path cannot overwrite the database or its sidecar files")
+    # lexists catches a dangling symlink; exclusive open also guards races/hard links.
+    if output.exists() or output.is_symlink():
+        raise ValueError("Output file already exists")
+    return output
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--database", required=True)
+    parser.add_argument("--run-id")
+    parser.add_argument("--label")
+    parser.add_argument("--output", help="Create a NEW JSON report; existing files are never overwritten")
+    args = parser.parse_args()
+    try:
+        database = Path(args.database).resolve(strict=True)
+        output = _output_path(args.output, database)
+        report = collect(database, args.run_id, args.label)
+        encoded = json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
+        if output is None:
+            print(encoded, end="")
+        else:
+            with output.open("x", encoding="utf-8") as stream:
+                stream.write(encoded)
+        return 0
+    except (OSError, sqlite3.Error, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

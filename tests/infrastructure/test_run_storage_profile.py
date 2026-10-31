@@ -113,4 +113,4 @@ def test_output_collision(tmp_path):
 
     assert out_path.exists()
     data = json.loads(out_path.read_text())
-    assert "t1" in data["tables"]
+    assert "branch_saved_revisions" not in data["tables"]

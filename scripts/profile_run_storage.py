@@ -184,29 +184,6 @@ def main() -> int:
                         branch_stats[b_id]["head_payload_bytes"] = payload_bytes
 
 
-        for table in db_tables:
-            cursor.execute(f"PRAGMA table_info({table})")
-            columns = [col[1] for col in cursor.fetchall()]
-
-            has_run_id_col = 'run_id' in columns
-
-            if args.run_id and has_run_id_col:
-                cursor.execute(f"SELECT COUNT(*) FROM {table} WHERE run_id = ?", (args.run_id,))
-                count = cursor.fetchone()[0]
-            else:
-                cursor.execute(f"SELECT COUNT(*) FROM {table}")
-                count = cursor.fetchone()[0]
-
-            tables_report[table] = {"row_count": count}
-
-            if dbstat_supported:
-                # Get physical bytes used by this table from dbstat
-                cursor.execute("SELECT SUM(pgsize) FROM dbstat WHERE name = ?", (table,))
-                pg_sum = cursor.fetchone()[0]
-                if pg_sum is not None:
-                    tables_report[table]["physical_bytes"] = pg_sum
-
-
         conn.commit()
 
     except sqlite3.Error as e:

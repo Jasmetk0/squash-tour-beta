@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { getRunContainer } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { RunPackageSetupPanel } from '../components/RunPackageSetupPanel'
+import { SavedBranchArchiveExportPanel } from '../components/SavedBranchArchiveExportPanel'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -47,8 +48,12 @@ export function RunManagementPage(): JSX.Element {
       <article className="home-entry"><h3>{language === 'cs' ? 'Revize a obnova' : 'Revisions & recovery'}</h3>
         <Link to={base + '/branches'}>{language === 'cs' ? 'Historie uložených revizí' : 'Saved revision history'} →</Link>
       </article>
-      <article className="home-entry"><h3>{language === 'cs' ? 'Centrální nastavení, import/export, zálohy a úložiště' : 'Central overrides, import/export, backups & storage'}</h3>
-        <p className="status">{t('Not implemented')} — {language === 'cs' ? 'nepředstíráme existenci správy, která zatím nemá ověřený workflow.' : 'no completed workflow is claimed.'}</p>
+      <article className="home-entry"><h3>{language === 'cs' ? 'Přenosný export Saved Branch' : 'Portable Saved Branch export'}</h3>
+        {run ? <SavedBranchArchiveExportPanel run={run} branch={activeBranch} /> :
+          <p className="status">{t('Unavailable')}</p>}
+        <p className="status">{t('Not implemented')} — {language === 'cs'
+          ? 'UI importu, přepisu Runu a ostatních režimů záloh zde zatím není.'
+          : 'Import, Run replacement and other backup-mode UI are not available here yet.'}</p>
       </article>
     </div>
   </section>

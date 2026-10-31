@@ -145,28 +145,55 @@ describe('global Full Simulation Task Center', () => {
     expect(screen.queryByText('Nejsou uložené žádné obnovitelné Full Simulation.')).not.toBeInTheDocument()
     expect(screen.getByRole('link', {name: 'Otevřít seznam Runů'})).toHaveAttribute('href', '/admin/runs')
   })
- it('links an original pending receipt to its single server task and collapses duplicate metadata',async()=>{
-  linkedServerTasks.data=[{
-   run_id:'run-beta',branch_id:'b-two',parent_command_id:'other-command',task_id:'server-task-42'
-  }]
+ it('does not link a task from a different tuple whose IDs contain the key separator', async () => {
+  api.getGlobalFullSimulationOperations.mockResolvedValue({
+   ...example, pending_count: 1,
+   operations: [{...example.operations[0], run_id: 'run', branch_id: 'scope::branch', command_id: 'command'}]
+  })
+  linkedServerTasks.data = [{run_id: 'run::scope', branch_id: 'branch', parent_command_id: 'command', task_id: 'foreign-task'}]
   renderPage()
-  const list=await screen.findByRole('list',{name:'Centrum simulací'})
-  const beta=within(list).getByText('Beta world / B timeline').closest('li')!
-  expect(within(beta).getByText(/Tento původní příkaz už patří serverové úloze/)).toHaveTextContent('server-task-42')
-  const receipt=within(beta).getByText('Zobrazit původní pending receipt').closest('details')
-  expect(receipt).not.toHaveAttribute('open')
-  expect(receipt).toHaveTextContent('other-command')
-  expect(within(beta).getAllByRole('link',{name:'Otevřít detail a ovládání'})).toHaveLength(1)
-  expect(within(beta).getByRole('link',{name:'Otevřít detail a ovládání'}))
-    .toHaveAttribute('href','/admin/runs/run-beta/simulate?branch=b-two&task=server-task-42')
-  // Receipts without a known task must not contain a fabricated task identity.
-  const alphaLink=within(list).getByText('Alfa svět / A timeline').closest('li')!
-  expect(within(alphaLink).getByRole('link',{name:'Otevřít detail a ovládání'}))
-    .toHaveAttribute('href','/admin/runs/run%2Falpha/simulate?branch=branch%20with%20space')
-
-  const alpha=within(list).getByText('Alfa svět / A timeline').closest('li')!
-  expect(within(alpha).queryByText(/Tento původní příkaz už patří/)).toBeNull()
-  expect(within(alpha).getByText('Dokončené sezony:')).toBeVisible()
+  const list = await screen.findByRole('list', {name: 'Centrum simulací'})
+  expect(within(list).queryByText(/Tento původní příkaz už patří/)).not.toBeInTheDocument()
+  expect(within(list).queryByText('foreign-task')).not.toBeInTheDocument()
  })
 
+ it('links original pending receipts safely and collapses metadata', async () => {
+  linkedServerTasks.data = [
+   { run_id:'run-beta', branch_id:'b-two', parent_command_id:'other-command', task_id:'server-task-42' },
+   { run_id: 'run/alpha', branch_id: 'branch with space', parent_command_id: 'first-command', task_id: 'task-1' },
+   { run_id: 'run/alpha', branch_id: 'branch with space', parent_command_id: 'first-command', task_id: 'task-2' },
+   { run_id: 'run-beta', branch_id: 'b-two', parent_command_id: 'first-command', task_id: 'task-3' }
+  ]
+  renderPage()
+  const list = await screen.findByRole('list', {name: 'Centrum simulací'})
+  const beta = within(list).getByText('Beta world / B timeline').closest('li')!
+  expect(within(beta).getByText(/Tento původní příkaz už patří serverové úloze/)).toHaveTextContent('server-task-42')
+  const receipt = within(beta).getByText('Zobrazit původní pending receipt').closest('details')
+  expect(receipt).not.toHaveAttribute('open')
+  expect(receipt).toHaveTextContent('other-command')
+  expect(within(beta).getAllByRole('link', {name: 'Otevřít detail a ovládání'})).toHaveLength(1)
+  expect(within(beta).getByRole('link', {name: 'Otevřít detail a ovládání'}))
+    .toHaveAttribute('href', '/admin/runs/run-beta/simulate?branch=b-two&task=server-task-42')
+
+  // Receipts without a known task or with ambiguous tasks must not contain a fabricated task identity.
+  const alpha = within(list).getByText('Alfa svět / A timeline').closest('li')!
+
+  // Verify error message is shown for ambiguous link
+  expect(within(alpha).getByText('Tento příkaz je nejednoznačně spojen s více serverovými úlohami a nelze jej bezpečně propojit.')).toBeInTheDocument()
+
+  // Verify it doesn't try to link any task
+  expect(within(alpha).queryByText(/Tento původní příkaz už patří/)).toBeNull()
+
+  // Verify the URL lacks the task ID completely
+  expect(within(alpha).getByRole('link', {name: 'Otevřít detail a ovládání'}))
+    .toHaveAttribute('href', '/admin/runs/run%2Falpha/simulate?branch=branch%20with%20space')
+
+  expect(within(alpha).getByText('Dokončené sezony:')).toBeVisible()
+
+  // Verify missing server task for other command
+  const gamma = within(list).getByText('Gamma world / C timeline').closest('li')!
+  expect(within(gamma).queryByText(/Tento příkaz je nejednoznačně spojen/)).toBeNull()
+  expect(within(gamma).getByRole('link', {name: 'Otevřít detail a ovládání'}))
+    .toHaveAttribute('href', '/admin/runs/run-gamma/simulate?branch=c-three')
+ })
 })

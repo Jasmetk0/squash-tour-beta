@@ -56,7 +56,8 @@ const copy = {
     receiptsTitle: 'Starší pending receipts · neznamenají další běžící workery',
     linked: 'Tento původní příkaz už patří serverové úloze uvedené výše:',
     linkedDetail: 'Zobrazit původní pending receipt',
-    distinction: 'Serverové úlohy mají vlastní stav, heartbeat a explicitní obnovu. Níže jsou samostatně uchované historické příkazy; záznam propojený s úlohou není další simulace.'
+    distinction: 'Serverové úlohy mají vlastní stav, heartbeat a explicitní obnovu. Níže jsou samostatně uchované historické příkazy; záznam propojený s úlohou není další simulace.',
+    ambiguousLink: 'Tento příkaz je nejednoznačně spojen s více serverovými úlohami a nelze jej bezpečně propojit.'
   },
   en: {
     title: 'Simulation Task Center',
@@ -100,7 +101,8 @@ const copy = {
     receiptsTitle: 'Older pending receipts · not additional running workers',
     linked: 'This original command already belongs to the server task above:',
     linkedDetail: 'Show original pending receipt',
-    distinction: 'Server tasks have their own status, heartbeat and explicit recovery. The separately persisted original commands below are historical evidence; a linked receipt is not a second simulation.'
+    distinction: 'Server tasks have their own status, heartbeat and explicit recovery. The separately persisted original commands below are historical evidence; a linked receipt is not a second simulation.',
+    ambiguousLink: 'This command is ambiguously linked to multiple server tasks and cannot be safely connected.'
   }
 } as const
 
@@ -125,15 +127,32 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
     refetchInterval: 10000
   })
   const normalized = search.trim().toLocaleLowerCase()
-  const operations = useMemo(() => (
-    (inventory.isSuccess ? inventory.data.operations : [])
-      .filter(operation => state === 'all' || operation.control_state === state)
-      .filter(operation => matchingOperation(operation, normalized))
+
+  const serverTaskIndex = useMemo(() => {
+    const index = new Map<string, typeof serverTasks.data>()
+    if (serverTasks.isSuccess) {
+      for (const task of serverTasks.data) {
+        const key = JSON.stringify([task.run_id, task.branch_id, task.parent_command_id])
+        const existing = index.get(key)
+        if (existing) {
+          existing.push(task)
+        } else {
+          index.set(key, [task])
+        }
+      }
+    }
+    return index
+  }, [serverTasks.isSuccess, serverTasks.data])
+
+  const operations = useMemo(() => {
+    if (!inventory.isSuccess) return []
+    return inventory.data.operations
+      .filter(op => (state === 'all' || op.control_state === state) && matchingOperation(op, normalized))
       .sort((a, b) =>
         a.run_name.localeCompare(b.run_name) ||
         a.branch_name.localeCompare(b.branch_name) ||
         a.command_id.localeCompare(b.command_id))
-  ), [inventory.isSuccess, inventory.data, state, normalized])
+  }, [inventory.isSuccess, inventory.data, state, normalized])
 
   return <section className="panel simulation-task-center">
     <div className="page-intro">
@@ -169,9 +188,11 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
         : operations.length === 0 ? <p className="status">{text.noMatches}</p>
           : <ul className="simulation-task-center__list" aria-label={text.title}>
             {operations.map(operation => {
-              const linkedTask = serverTasks.isSuccess ? serverTasks.data.find(task =>
-                task.run_id===operation.run_id && task.branch_id===operation.branch_id &&
-                task.parent_command_id===operation.command_id) : undefined
+              const taskKey = JSON.stringify([operation.run_id, operation.branch_id, operation.command_id])
+              const linkedTasks = serverTaskIndex.get(taskKey)
+              const isAmbiguous = linkedTasks && linkedTasks.length > 1
+              const linkedTask = linkedTasks && linkedTasks.length === 1 ? linkedTasks[0] : undefined
+
               const receiptMetadata = <div className="simulation-task-center__metadata">
                 <span><b>{text.run}:</b> {operation.run_id}</span>
                 <span><b>{text.branch}:</b> {operation.branch_id}</span>
@@ -187,6 +208,7 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
                   <strong>{operation.run_name} / {operation.branch_name}</strong>
                   <span className="status">{text.state[operation.control_state]}</span>
                 </div>
+                {isAmbiguous && <p className="status error">{text.ambiguousLink}</p>}
                 {linkedTask && <p className="status">{text.linked} <code>{linkedTask.task_id}</code></p>}
                 {linkedTask?<details><summary>{text.linkedDetail}</summary>{receiptMetadata}</details>:receiptMetadata}
                 <p className="status">{text.worker} · {text.lease[operation.lease_state]}</p>

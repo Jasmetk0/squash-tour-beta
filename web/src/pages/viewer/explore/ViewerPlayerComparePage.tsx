@@ -96,6 +96,8 @@ function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerCompari
     })
   }
   const clear = () => {
+    setDraftA('')
+    setDraftB('')
     setSearchParams(previous => {
       const next = new URLSearchParams(previous)
       for (const key of ['playerA', 'playerB', 'player_a', 'player_b', 'a', 'b']) next.delete(key)

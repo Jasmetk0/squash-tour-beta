@@ -142,6 +142,26 @@ describe('Saved Branch export-only HTTP boundary', () => {
     expect(JSON.parse(init.body as string)).toEqual({run_id: 'run', branch_id: 'branch'})
   })
 
+  it('rejects non-JSON preview content even when the response contains valid JSON', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(original), {
+      status: 200, headers: {'Content-Type': 'text/html'}
+    }))
+    await expect(previewSavedBranchArchive('run', 'branch')).rejects.toThrow(/non-JSON/)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects declared oversized preview bodies before buffering JSON', async () => {
+    const cancelled = vi.fn()
+    fetchMock.mockResolvedValueOnce(new Response(new ReadableStream({
+      cancel: cancelled
+    }), {
+      status: 200,
+      headers: {'Content-Type': 'application/json', 'Content-Length': String(128 * 1024 * 1024 + 1)}
+    }))
+    await expect(previewSavedBranchArchive('run', 'branch')).rejects.toThrow(/preview exceeds the safe size limit/)
+    expect(cancelled).toHaveBeenCalledTimes(1)
+  })
+
   it('sends exact HEAD/digest and rejects changed content before allowing a download', async () => {
     fetchMock.mockResolvedValueOnce(new Response('wrong content', {
       status: 200, headers: {'Content-Type': 'application/vnd.squash.saved-branch+json'}

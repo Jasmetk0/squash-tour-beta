@@ -144,15 +144,15 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
     return index
   }, [serverTasks.isSuccess, serverTasks.data])
 
-  const operations = useMemo(() => (
-    (inventory.isSuccess ? inventory.data.operations : [])
-      .filter(operation => state === 'all' || operation.control_state === state)
-      .filter(operation => matchingOperation(operation, normalized))
+  const operations = useMemo(() => {
+    if (!inventory.isSuccess) return []
+    return inventory.data.operations
+      .filter(op => (state === 'all' || op.control_state === state) && matchingOperation(op, normalized))
       .sort((a, b) =>
         a.run_name.localeCompare(b.run_name) ||
         a.branch_name.localeCompare(b.branch_name) ||
         a.command_id.localeCompare(b.command_id))
-  ), [inventory.isSuccess, inventory.data, state, normalized])
+  }, [inventory.isSuccess, inventory.data, state, normalized])
 
   return <section className="panel simulation-task-center">
     <div className="page-intro">

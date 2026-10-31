@@ -174,3 +174,21 @@ owners, independently bound native original hashes, lost confirmation/retry,
 third-Branch Viewer selection and concurrent writers. It led to the pre-write
 independent confirmation gate, explicit activation witness, complete conflict
 reservation, own-HEAD context checks and fail-closed Task-history boundary.
+
+## Independent merge preparation — 31 October 2026
+
+A distinct review reproduced a corrupt exact-retry receipt: changing only its
+stored Saved HEAD caused the old code to report a foreign successful result.
+The service now compares the complete stored response with the deterministic
+result of the original archive and audited command, including separate receipt
+columns. A mismatch fails closed with `invalid_import_receipt`, without writes;
+normal retries after restart and later continuation still return the original
+result. No Saved schema, archive format or database migration changed.
+
+The reviewed candidate passed 31 archive tests, including the real manual pair
+and native fork cold-target/restart proofs. An earlier run had 29 passes and a
+15-second independent target startup failure under concurrent browser installation;
+the original startup bound was retained, and the unchanged standalone cold-target
+case subsequently passed. The new receipt regression failed before the repair
+and passed afterwards. These observations are separate from final-head hosted CI
+and from the prior native full-Tour regression evidence recorded in the PR.

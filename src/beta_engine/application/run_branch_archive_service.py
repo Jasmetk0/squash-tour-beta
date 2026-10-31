@@ -124,7 +124,23 @@ def reviewed_import(session, archive):
     return result
 
 
-def _prior_result(session, command_id, fingerprint):
+def _restore_result(archive, command_id, preview_fingerprint):
+    return {
+        "schema_version": "run_branch_archive_restore_receipt.v1",
+        "command_id": command_id,
+        "archive_digest": archive.raw_digest,
+        "preview_fingerprint": preview_fingerprint,
+        "run_id": archive.run.run_id,
+        "display_name": archive.run.display_name,
+        "selected_branch_id": archive.envelope.selected_branch_id,
+        "saved_head_revision_id": archive.envelope.selected_head_revision_id,
+        "viewer_branch_id": archive.run.viewer_branch_id,
+        "restored_branch_ids": [b.branch_id for b in archive.branches],
+        "restored_revision_ids": [r.revision_id for r in archive.revisions],
+    }
+
+
+def _prior_result(session, command_id, fingerprint, archive, request):
     prior = session.get(RunBranchArchiveReceiptModel, command_id)
     if prior is None:
         return None
@@ -133,7 +149,19 @@ def _prior_result(session, command_id, fingerprint):
             "command_id_reused",
             "Import command ID was already used with different archive/review/audit bytes",
         )
-    return decode(prior.result_json)
+    result = decode(prior.result_json)
+    if (
+        result != _restore_result(archive, command_id, request["preview_fingerprint"])
+        or prior.archive_digest != request["archive_digest"]
+        or prior.preview_fingerprint != request["preview_fingerprint"]
+        or prior.operator_label != request["operator_label"]
+        or prior.audit_reason != request["audit_reason"]
+    ):
+        fail(
+            "invalid_import_receipt",
+            "Stored restore receipt does not match its original archive and audited command",
+        )
+    return result
 
 
 def _guard_review(session, archive, expected):
@@ -241,7 +269,9 @@ class RunBranchArchiveService:
         try:
             with self.repository._session_factory() as session:
                 session.execute(text("BEGIN"))
-                prior = _prior_result(session, command_id, fingerprint)
+                prior = _prior_result(
+                    session, command_id, fingerprint, archive, request
+                )
                 if prior is not None:
                     return prior
                 _guard_review(session, archive, expected_preview_fingerprint)
@@ -251,7 +281,9 @@ class RunBranchArchiveService:
             validate_in_isolated_database(archive)
             with self.repository._session_factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
-                prior = _prior_result(session, command_id, fingerprint)
+                prior = _prior_result(
+                    session, command_id, fingerprint, archive, request
+                )
                 if prior is not None:
                     return prior
                 _guard_review(session, archive, expected_preview_fingerprint)
@@ -269,19 +301,9 @@ class RunBranchArchiveService:
                 # Same independent validation/activation kernel used in preview,
                 # repeated against the actual target's production transaction.
                 install_archive(self.repository, session, archive)
-                result = {
-                    "schema_version": "run_branch_archive_restore_receipt.v1",
-                    "command_id": command_id,
-                    "archive_digest": archive.raw_digest,
-                    "preview_fingerprint": expected_preview_fingerprint,
-                    "run_id": archive.run.run_id,
-                    "display_name": archive.run.display_name,
-                    "selected_branch_id": archive.envelope.selected_branch_id,
-                    "saved_head_revision_id": archive.envelope.selected_head_revision_id,
-                    "viewer_branch_id": archive.run.viewer_branch_id,
-                    "restored_branch_ids": [b.branch_id for b in archive.branches],
-                    "restored_revision_ids": [r.revision_id for r in archive.revisions],
-                }
+                result = _restore_result(
+                    archive, command_id, expected_preview_fingerprint
+                )
                 session.add(
                     RunBranchArchiveReceiptModel(
                         command_id=command_id,

@@ -173,6 +173,33 @@ def test_late_receipt_failure_rolls_back_every_row_and_retry_survives_restart(
         assert _dump(target) == before
 
 
+def test_exact_retry_rejects_a_corrupt_stored_restore_receipt(tmp_path):
+    from beta_engine.infrastructure.db.run_branch_archive import (
+        RunBranchArchiveReceiptModel,
+    )
+
+    with ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'receipt-source.db'}"
+    ) as source:
+        rid, bid, _ = _create_run(source, display_name="Receipt corruption source")
+        raw, _ = export(source, rid, bid)
+    target = tmp_path / "receipt-target.db"
+    with ApiServer(database_url=f"sqlite:///{target}") as server:
+        review = upload_preview(server, raw)
+        code, receipt = confirm(server, raw, review)
+        assert code == 201, receipt
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            row = session.get(RunBranchArchiveReceiptModel, "cold-restore")
+            result = decode(row.result_json)
+            result["saved_head_revision_id"] = "foreign-saved-head"
+            row.result_json = encode(result).decode()
+        before = _dump(target)
+        code, result = confirm(server, raw, review)
+        assert code == 409, result
+        assert result["detail"]["code"] == "invalid_import_receipt"
+        assert _dump(target) == before
+
+
 def test_two_http_confirmations_cannot_bypass_identity_conflicts(
     tmp_path, manual_archive
 ):

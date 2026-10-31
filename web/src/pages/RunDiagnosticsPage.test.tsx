@@ -668,9 +668,16 @@ describe('RunDiagnosticsPage', () => {
     expect(screen.queryByRole('link', {name: /Inspect current week detail/})).not.toBeInTheDocument()
     expect(screen.queryByRole('link', {name: 'Week Detail (current week)'})).not.toBeInTheDocument()
     expect(screen.queryByText(/STALE_EVENT/)).not.toBeInTheDocument()
-    expect(screen.getByText('Conflicting progress values are hidden until the run reads agree.')).toBeInTheDocument()
     const summary = screen.getByRole('heading', { name: 'Run diagnostics summary' }).closest('article')!
-    expect(within(summary).getAllByText('—').length).toBeGreaterThan(1)
+    if (stateSeason !== 2028 || stateIndex !== runIndex) {
+      // The two sampled progress sources disagree, so they cannot be combined.
+      expect(screen.getByText('Conflicting progress values are hidden until the run reads agree.')).toBeInTheDocument()
+      expect(within(summary).getAllByText('—').length).toBeGreaterThan(1)
+    } else {
+      // Only the next event has a foreign season: Run progress itself is still coherent.
+      expect(screen.queryByText('Conflicting progress values are hidden until the run reads agree.')).not.toBeInTheDocument()
+      expect(within(summary).getByText(`${runIndex} / 24`)).toBeInTheDocument()
+    }
     expect(screen.getByRole('link', {name: 'Inspect latest completed event (E5)'}))
       .toHaveAttribute('href', '/runs/run-a/events/E5')
   })

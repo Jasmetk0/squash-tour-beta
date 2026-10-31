@@ -4,7 +4,7 @@ This index covers research for the entire project, including **future** versions
 
 | ID | Topic | Scope | Status | Study |
 | --- | --- | --- | --- | --- |
-| R001 | Global squash participation, talent discovery and professional conversion | Cross-version foundation; immediate design review and later calibration | PLANNED | [Brief](studies/R001-global-talent-pipeline/BRIEF.md) |
+| R001 | Global squash participation, talent discovery and professional conversion | Cross-version foundation; candidates C1–C4, not yet verified or approved | RESEARCHED | [Brief](studies/R001-global-talent-pipeline/BRIEF.md) · [Synthesis / Work handoff](studies/R001-global-talent-pipeline/REVIEW_AND_HANDOFF.md) · [Source manifest](studies/R001-global-talent-pipeline/SOURCE_MANIFEST.md) |
 
 ## Suggested future subjects (not commissioned)
 

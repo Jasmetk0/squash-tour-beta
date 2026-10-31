@@ -137,8 +137,8 @@ def main() -> None:
                     route.abort()
             context.route("**/*", local_only)
             context.add_init_script(
-                "(id) => localStorage.setItem('beta_engine:viewer_active_run_id', id)",
-                run_id
+                "localStorage.setItem('beta_engine:viewer_active_run_id', "
+                + json.dumps(run_id) + ")"
             )
             context.add_init_script(
                 "localStorage.setItem('squash-engine-language-v1', 'en')"

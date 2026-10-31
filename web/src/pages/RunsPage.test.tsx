@@ -101,6 +101,18 @@ describe('canonical Runs inventory', () => {
     expect(api.listRunBranches).not.toHaveBeenCalled()
   })
 
+  it.each([null, {}, [null], [{run_id: 'run-one', branch_id: ' '}], [{run_id: 'run-one'}]])(
+    'rejects malformed Branch inventory without crashing or claiming no Branches: %j', async run_branches => {
+      api.listRunBranches.mockResolvedValueOnce({run_branches})
+      renderPage()
+      const row = (await screen.findByText('Sandbox One')).closest('li')!
+      await userEvent.click(within(row).getByRole('button', {name: 'Větve +'}))
+      expect(await within(row).findByRole('alert')).toHaveTextContent('Nekonzistentní identita inventáře')
+      expect(within(row).queryByText('Run nemá dostupné větve.')).not.toBeInTheDocument()
+      expect(within(row).queryByText('Alternative')).not.toBeInTheDocument()
+    }
+  )
+
   it('links the chosen actual Branch, preserving unavailable time and Viewer selection', async () => {
     renderPage()
     const row = (await screen.findByText('Sandbox One')).closest('li')!

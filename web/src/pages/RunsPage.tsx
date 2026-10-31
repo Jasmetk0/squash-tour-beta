@@ -77,18 +77,16 @@ function BranchList({ run }: { run: RunContainer }): JSX.Element {
     queryFn: () => listBranchStates({ run_id: run.run_id }),
     retry: false
   })
-  const rawBranches = branchesQuery.data?.run_branches ?? []
-  const hasBranchMismatch = rawBranches.some(b => b.run_id !== run.run_id)
-  const branchIds = rawBranches.map(b => b.branch_id)
-  const hasDuplicateBranches = new Set(branchIds).size !== branchIds.length
-  const branchesValid = !hasBranchMismatch && !hasDuplicateBranches
+  const rawBranches = branchesQuery.data?.run_branches
+  const branchesValid = Array.isArray(rawBranches) && rawBranches.every(b =>
+    b && b.run_id === run.run_id && typeof b.branch_id === 'string' && Boolean(b.branch_id.trim())
+  ) && new Set(rawBranches.map(b => b.branch_id)).size === rawBranches.length
   const branches = branchesValid ? rawBranches : []
 
-  const rawStates = statesQuery.data?.branch_states ?? []
-  const hasStateMismatch = rawStates.some(s => s.run_id !== run.run_id)
-  const stateBranchIds = rawStates.map(s => s.branch_id)
-  const hasDuplicateStates = new Set(stateBranchIds).size !== stateBranchIds.length
-  const statesValid = !hasStateMismatch && !hasDuplicateStates
+  const rawStates = statesQuery.data?.branch_states
+  const statesValid = Array.isArray(rawStates) && rawStates.every(s =>
+    s && s.run_id === run.run_id && typeof s.branch_id === 'string' && Boolean(s.branch_id.trim())
+  ) && new Set(rawStates.map(s => s.branch_id)).size === rawStates.length
   const states = statesValid ? rawStates : []
 
   const viewerBranchId = run.viewer_branch_id ?? run.official_branch_id

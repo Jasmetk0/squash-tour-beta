@@ -156,6 +156,11 @@ describe('Saved Branch archive Admin export panel', () => {
     expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
   })
 
+  it('allows the canonical newly created working Run status (archive v1 supported)', () => {
+    mount({run: {...run, status: 'working'}})
+    expect(screen.getByRole('button', {name: 'Načíst exportní náhled'})).toBeEnabled()
+  })
+
   it('does not allow unsupported, read-only or foreign Run/Branch exports', () => {
     mount({run: {...run, read_only: true}})
     expect(screen.getByRole('button', {name: 'Načíst exportní náhled'})).toBeDisabled()

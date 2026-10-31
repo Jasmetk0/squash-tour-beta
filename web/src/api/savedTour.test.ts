@@ -248,11 +248,18 @@ describe('strict Saved Tour response identity',()=>{
     expect(valid(wire({result_published:true,champion_player_id:23}))).toBe(false)
     expect(valid(wire({result_published:true,finalist_player_id:''}))).toBe(false)
     expect(valid(wire({result_published:true,champion_player_id:'A',finalist_player_id:'A'}))).toBe(false)
+    expect(valid(wire({result_published:true,champion_player_id:null,finalist_player_id:null}))).toBe(false)
+    expect(valid(wire({result_published:true,champion_player_id:'A',finalist_player_id:null}))).toBe(false)
+    expect(valid(wire({result_published:true,champion_player_id:null,finalist_player_id:'B'}))).toBe(false)
     expect(valid(wire({result_published:true,champion_player_id:'A',finalist_player_id:'B'}))).toBe(true)
     expect(valid(wire({result_published:false,champion_player_id:'stale'}))).toBe(true)
     expect(validSavedTourCalendar({...calendar,calendar_status:'absent' as 'ready'},'r','b','rev',2)).toBe(false)
     expect(validSavedTourCalendar({...calendar,calendar_status:'empty'},'r','b','rev',2)).toBe(false)
     expect(validSavedTourCalendar({...calendar,editions:[null as unknown as SavedTourEvent]},'r','b','rev',2)).toBe(false)
+    expect(valid(wire({event_id:23}))).toBe(false)
+    expect(valid(wire({event_id:' '}))).toBe(false)
+    expect(valid(wire({season_week:1.5}))).toBe(false)
+    expect(valid(wire({season_week:Number.MAX_SAFE_INTEGER+1}))).toBe(false)
   })
   it('refuses inconsistent published winners between Edition label and canonical result',()=>{
     const winner={...event,result_published:true,champion_player_id:'P1',finalist_player_id:'P2'}
@@ -265,6 +272,20 @@ describe('strict Saved Tour response identity',()=>{
     const valid=(e:SavedTourEdition)=>
       validSavedTourEdition(e,'r','b','rev',2,'open')
     expect(valid({...edition,edition:winner,published_result:result})).toBe(true)
+    // An Edition's own recorded time must match the selected historical season,
+    // even if its published result was forged to agree with that wrong week.
+    expect(valid({...edition,edition:{...event,season:'2003/2004'}})).toBe(false)
+    expect(valid({...edition,edition:{...event,season:'2002/03'}})).toBe(true)
+    expect(valid({...edition,edition:{...event,season_week:0}})).toBe(false)
+    expect(valid({...edition,edition:{...event,season_week:62}})).toBe(false)
+    expect(valid({...edition,edition:{...event,season_week:1.5}})).toBe(false)
+    expect(valid({...edition,edition:{...event,season_week:Number.MAX_SAFE_INTEGER+1}})).toBe(false)
+    expect(valid({...edition,edition:{...event,event_id:17 as unknown as string}})).toBe(false)
+    expect(valid({...edition,edition:{...winner,season:'2001/02'},published_result:result})).toBe(false)
+    expect(valid({...edition,edition:{...winner,season_week:13},published_result:result})).toBe(false)
+    expect(valid({...edition,edition:{...winner,champion_player_id:null},published_result:{
+      ...result,champion_player_id:null as unknown as string
+    }})).toBe(false)
     expect(valid({...edition,edition:winner,published_result:{...result,champion_player_id:'P3'}})).toBe(false)
     expect(valid({...edition,edition:winner,published_result:{...result,finalist_player_id:'P3'}})).toBe(false)
     expect(valid({...edition,edition:winner,published_result:{

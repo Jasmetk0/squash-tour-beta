@@ -617,6 +617,13 @@ describe('RunDiagnosticsPage', () => {
         'Run detail and status summary disagree on season or progress. Current-week links are hidden.'
       )
       expect(screen.getByText('Conflicting progress values are hidden until the run reads agree.')).toBeInTheDocument()
+      // Both summary surfaces must remain explicitly unverified, not a mix of reads.
+      const context = screen.getByRole('list', { name: 'Current context' })
+      expect(within(context).getAllByText('—')).toHaveLength(3)
+      const summary = screen.getByRole('heading', { name: 'Run diagnostics summary' }).closest('article')
+      expect(summary).not.toBeNull()
+      expect(Array.from(summary!.querySelectorAll('.compact-summary-card__value')).map((node) => node.textContent))
+        .toEqual(['run-a', '—', '—', '—', '—'])
       // Neither independently sampled value may masquerade as verified progress.
       expect(screen.queryByText(`${statusIndex}/${statusTotal}`)).not.toBeInTheDocument()
       expect(screen.queryByText(`${statusIndex} / ${statusTotal}`)).not.toBeInTheDocument()

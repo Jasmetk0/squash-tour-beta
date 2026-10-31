@@ -196,6 +196,7 @@ export function SavedBranchArchiveExportPanel({
       <p className="status">{l.confirmed}</p>
       <dl>
         <dt>{l.revisionCount}</dt><dd>{active.history.length}</dd>
+        <dt>{l.activationRevision}</dt><dd><code style={{overflowWrap: 'anywhere'}}>{active.run_activation_revision_id}</code></dd>
         <dt>{l.branches}</dt><dd>{active.branches.length}</dd>
         <dt>{l.dependencies}</dt><dd>{active.branches.filter(b => b.role === 'dependency').length}</dd>
         <dt>{l.size}</dt><dd>{active.archive_size_bytes.toLocaleString()} B ({bytes(active.archive_size_bytes)})</dd>

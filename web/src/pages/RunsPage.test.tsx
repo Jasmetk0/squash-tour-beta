@@ -213,7 +213,7 @@ describe('canonical Runs inventory', () => {
     await userEvent.click(within(row).getByRole('button', { name: 'Větve +' }))
     const target = await within(row).findByText('Alternative')
     expect(target).toBeInTheDocument()
-    const container = target.closest('.runs-canonical-branch')!
+    const container = target.closest('.runs-canonical-branch') as HTMLElement
     expect(within(container).getByText('2028/29 · W27')).toBeInTheDocument()
     expect(within(row).queryByRole('alert')).not.toBeInTheDocument()
     expect(within(row).queryByText('Nekonzistentní identita inventáře')).not.toBeInTheDocument()

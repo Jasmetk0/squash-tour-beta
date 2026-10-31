@@ -71,10 +71,13 @@ def main() -> None:
             put_initial_world(session, world)
             put_lifecycle(session, lifecycle)
             put_sporting(session, sporting)
-        draft = RunWorkingDraftService(repo).get_viewer_branch_draft(
+        service = RunWorkingDraftService(
+            repo, lambda kind: "public-roster-browser-" + kind
+        )
+        draft = service.get_viewer_branch_draft(
             run_id=run_id, branch_id=branch_id
         )
-        saved = RunWorkingDraftService(repo).save(
+        saved = service.save(
             run_id=run_id, branch_id=branch_id,
             expected_draft_version=draft.draft_version,
         )

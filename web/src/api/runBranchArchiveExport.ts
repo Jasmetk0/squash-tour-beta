@@ -36,6 +36,7 @@ export type SavedBranchArchivePreview = {
   selected_branch_id: string
   selected_head_revision_id: string
   viewer_branch_id: string | null
+  run_activation_revision_id: string
   branches: IncludedArchiveBranch[]
   history: ArchiveHistoryRevision[]
   included_components: string[]
@@ -76,7 +77,8 @@ export function assertSavedBranchArchivePreview(
     !Array.isArray(value.unresolved_package_references) ||
     !Number.isSafeInteger(value.audit_event_count) || (value.audit_event_count as number) < 0 ||
     !Number.isSafeInteger(value.checkpoint_count) || (value.checkpoint_count as number) < 0 ||
-    !(value.viewer_branch_id === null || typeof value.viewer_branch_id === 'string')) {
+    !(value.viewer_branch_id === null || typeof value.viewer_branch_id === 'string') ||
+    typeof value.run_activation_revision_id !== 'string' || !value.run_activation_revision_id) {
     throw new Error('Saved Branch archive preview has an invalid or foreign scope.')
   }
   const branches = value.branches as unknown[]
@@ -114,6 +116,7 @@ export function assertSavedBranchArchivePreview(
         (revision.parent_revision_id !== null && !revisionIds.has(revision.parent_revision_id))
     }) ||
     (value.viewer_branch_id !== null && !includedBranchIds.has(value.viewer_branch_id)) ||
+    !revisionIds.has(value.run_activation_revision_id) ||
     new Set(value.omitted_branch_ids).size !== value.omitted_branch_ids.length ||
     value.omitted_branch_ids.some(id => includedBranchIds.has(id))) {
     throw new Error('Saved Branch archive preview contains incomplete or foreign dependency links.')

@@ -1,0 +1,1237 @@
+SQUASH ENGINE — INDEPENDENT RESEARCH AUDIT R001
+SOURCE ARCHIVE — SEARCHABLE TEXT EXTRACTION (not authoritative)
+Origin: user-provided 31-page DOCX, ChatGPT Deep Research independent review, received 2026-10-31.
+Status: research evidence for review, NOT product-approved nor fully externally verified.
+Fidelity: text extracted from DOCX. Page markers, equations, table layout, typography and URLs may be altered; consult original DOCX for original mathematical notation.
+
+---- SOURCE REPORT TEXT ----
+
+<PARSED TEXT FOR PAGE: 1 / 31>
+SQUASH ENGINE — INDEPENDENT RESEARCH
+AUDIT R001
+Executive Summary
+Tento audit dochází k závěru, že základní architektura Country Attributes V1
+je vědecky obhajitelnější než velká část matematické nadstavby původní
+studie Gemini. Master správně odděluje vrozený potenciál od prostředí země a
+chápe národní systém jako filtr mezi populací, účastí, rozvojem a profesionální
+konverzí. To odpovídá tomu, co lze z dostupné sportovní literatury skutečně hájit:
+větší relevantní sportovní základna zvyšuje počet příležitostí k nalezení
+mimořádného jedince, zatímco trenéři, soutěžní prostředí, infrastruktura a
+podpora ovlivňují, jak často se potenciál promění ve vrcholový výkon. Literatura
+však neposkytuje spolehlivé univerzální koeficienty pro jednotlivé faktory a
+většina důkazů na úrovni sportovních systémů je observační, nikoli kauzální. [1]
+
+Zároveň je třeba velmi důsledně oddělit vědecký poznatek od designového
+axiomu hry. Pravidlo Squash Engine, že národnost nemění pravděpodobnost
+vrozené kvalitativní úrovně a že všechny země čerpají z globálně stejné
+distribuce innate potential, je legitimní a konzistentní produktový princip. Není
+to ale empiricky prokázaný genetický zákon. COUNTRY_ATTRIBUTES_V1 jej
+výslovně stanovuje jako pravidlo enginu a zároveň říká, že silné země mají
+produkovat více elitních hráčů díky většímu sportovnímu poolu a lepší konverzi,
+nikoli díky „lepší genetice“. [2]
+
+Největší vědecký problém původního Gemini reportu není jeho obecný
+systémový pohled, nýbrž přechod od plausibilních konceptů k příliš přesným
+matematickým tvrzením. Report například přisuzuje nevysvětlenou část
+makroekonomického modelu účinku sportovní politiky, konstruuje CES funkci
+jako údajné přímé vyjádření „weakest-link“ teorie, používá GPD jako
+mechanismus pro malé země produkující výjimečné šampiony a vyvozuje
+konkrétní historické mechanismy egyptské dominance z převážně narativních
+zdrojů. Jeho vlastní následný audit už některé z těchto chyb správně
+identifikoval. [3]
+
+Z matematického hlediska je nejdůležitější korekce tato: změna tvaru distribuce
+talentu neodstraňuje výhodu většího vzorku. Pokud mají jednotlivci ve všech
+zemích stejnou nezávislou distribuci vrozeného potenciálu , pak maximum ze
+lidí má distribuční funkci
+<PARSED TEXT FOR PAGE: 2 / 31>
+S rostoucím tedy roste pravděpodobnost vyššího maxima pro libovolnou spojitou
+distribuci, ať už je normální, beta, GPD nebo jiná. Heavy tail může změnit velikost
+rozdílů a frekvenci extrémů, ale nemůže zrušit sample-size effect. To přímo
+vyvrací použití GPD jako „řešení“ pro národní velikostní asymetrii. Standardní
+GPD je navíc metodou pro překročení vysokého prahu, nikoli automaticky
+vhodným rozdělením celé latentní schopnosti; při záporném shape parametru
+má konečný horní endpoint, zatímco kladný parametr vytváří neomezený heavy
+tail. [4]
+
+Z pohledu vývoje hráčů je nejsilnější nezávislý poznatek pro Squash Engine
+možná jiný, než na co se Gemini soustředil: elitní juniorská populace a elitní
+seniorská populace jsou překvapivě málo totožné. Systematická syntéza 38 383
+juniorů a 22 961 seniorů zjistila, že 89,2 % mezinárodních U17/U18 juniorů se
+později nedostalo na mezinárodní seniorskou úroveň a 82,0 % mezinárodních
+seniorů naopak v U17/U18 mezinárodní úrovně nedosahovalo. Novější
+metaanalýza talentových programů navíc uvádí vysokou každoroční obměnu
+jejich účastníků. Pro simulaci je proto velmi důležité, aby vývoj nebyl
+deterministický trychtýř „nejlepší junior → nejlepší profesionál“ a aby engine
+umožňoval pozdní růst, stagnaci, dropout i side-entry. [5]
+
+Čtyři hlavní návrhy hodnotím následovně:
+
+Návrh            Verdikt             Síla evidence Hlavní důvod
+Complementa      Přijmout k           střední pro   prostředí
+rity             experimentál          interakce,   skutečně
+                 nímu ověření           nízká pro   funguje jako
+                                    konkrétní CES   systém, ale
+                                                    literatura
+                                                    nepotvrzuje
+                                                    univerzální
+                                                    „weakest-link“
+                                                    funkci
+Competitive      Přijmout k               nízká až kvalitní peers
+Depth            omezenému                 střední a elite-athlete
+                 experimentál                      environment
+                 nímu ověření                      mohou
+                                                   pomáhat, ale
+                                                   „silní krajané“
+<PARSED TEXT FOR PAGE: 3 / 31>
+Návrh           Verdikt            Síla evidence Hlavní důvod
+                                                  nejsou totéž co
+                                                  skutečný
+                                                  přístup ke
+                                                  kvalitnímu
+                                                  tréninku
+Professional    Odložit / dále             nízká omezení
+Conversion      zkoumat                          podpůrné
+Congestion                                       kapacity je
+                                                 plausibilní, ale
+                                                 nyní chybí
+                                                 přímý
+                                                 empirický
+                                                 základ i
+                                                 explicitní
+                                                 kapacitní
+                                                 proměnná v
+                                                 Masteru
+International   Přijmout k              nízká až mezinárodní
+Exposure        experimentál             střední migrace a
+                nímu ověření                     kvalitnější
+                na úrovni                        prostředí
+                hráče                            mohou kariéře
+                                                 pomoci, ale
+                                                 účinek je
+                                                 heterogenní a
+                                                 nemá být
+                                                 automatickým
+                                                 bonusem země
+
+Tyto verdikty jsou návrhy pro testování, ne produktová rozhodnutí. PR #1695
+samo R001 označuje jako RESEARCHED, nikoli VERIFIED, neobsahuje
+implementaci ani kalibraci a výslovně uvádí, že C1–C4 nejsou schválené
+mechaniky. [6]
+
+Důležitá procesní poznámka: v tomto nezávislém auditu byl celý současný
+Master v86 dostupný a přečten jako zdroj, stejně jako
+COUNTRY_ATTRIBUTES_V1, AGENTS.md, CURRENT_STATE.md, archivovaný
+Gemini report a jeho auditní materiály. Nebyl však proveden kompletní řádek-
+<PARSED TEXT FOR PAGE: 4 / 31>
+po-řádku audit veškerého runtime kódu. CURRENT_STATE navíc k 30. říjnu 2026
+výslovně uvádí, že úplná sezóna 1 000 hráčů / 80 odehraných edic, 50sezónní
+průchod, plná regrese a některé integrační oblasti stále nejsou uzavřené. Z
+existence pravidla v Masteru proto nelze vyvozovat jeho plně ověřenou
+implementaci. [7]
+
+Evidence Audit
+Níže hodnotím zásadní empirická tvrzení nikoli podle toho, zda znějí intuitivně,
+ale podle toho, zda jsou podpořena nezávislými daty a zda důkaz odpovídá síle
+formulovaného závěru.
+
+Tvrzení
+relevantní pro    Nezávislý                         Co lze skutečně
+R001              důkaz             Stav            tvrdit
+Větší             Bernard &        Potvrzeno s      Větší efektivní
+relevantní        Busse            omezením         sportovní pool
+populace          nacházejí                         dává více
+zvyšuje           vztah                             pokusů o
+pravděpodob       populační                         extrémní
+nost vzniku       velikosti a                       výsledek. Nelze
+elitního          olympijských                      z toho odvodit
+sportovce.        medailí;                          lineární vztah
+                  základní order-                   mezi celkovou
+                  statistics navíc                  populací a
+                  dávají sample-                    počtem
+                  size efekt                        squashových
+                  matematicky.                      šampionů.
+                  [8]
+Samotná           Mezinárodní       Vyvráceno v     Populace je
+velikost          sportovní         silné podobě    jeden vstup.
+obyvatelstva      úspěch souvisí                    Participace,
+vysvětluje        také s                            dostupnost,
+národní           ekonomickými                      místo rozvoje a
+sportovní sílu.   a                                 systém
+                  institucionální                   konverze
+                  mi                                zásadně mění
+                  podmínkami;                       výslednou
+                  regionální                        efektivní
+                  prostředí a
+<PARSED TEXT FOR PAGE: 5 / 31>
+Tvrzení
+relevantní pro   Nezávislý                          Co lze skutečně
+R001             důkaz              Stav            tvrdit
+                 blízkost                           základnu.
+                 talentových
+                 klubů mění
+                 šance
+                 jednotlivců. [9]
+Infrastruktur    Šestizemní         Částečně        Asociace je
+a, trenéři a     SPLISS pilot       potvrzeno       věrohodná;
+podpora jsou     uvádí jako                         přesný
+spojeny s        možné klíčové                      kauzální
+úspěšnými        prvky finance,                     příspěvek
+elitními         podporu                            jednotlivých
+systémy.         sportovců,                         faktorů není
+                 zařízení a                         identifikován.
+                 rozvoj trenérů;
+                 autoři sami
+                 označují
+                 výsledky jako
+                 nejednoznačné
+                 . [10]
+Více             Systémová          Nepodloženo    Finance
+financování      literatura         v silné podobě mohou
+automaticky      financování jej                   odstranit
+způsobí vyšší    uvádí jako                        omezení, ale
+sportovní        důležitý vstup,                   účinnost závisí
+úspěch.          ne jako                           na způsobu
+                 izolovaný                         použití a
+                 univerzální                       dalších částech
+                 kauzální                          systému.
+                 faktor. De
+                 Bosscher et al.
+                 výslovně
+                 popisují
+                 výsledky jako
+                 inconclusive.
+                 [11]
+<PARSED TEXT FOR PAGE: 6 / 31>
+Tvrzení
+relevantní pro   Nezávislý                           Co lze skutečně
+R001             důkaz              Stav             tvrdit
+Nevysvětlená     Původní            Vyvráceno        není kauzální
+část             Bernard–Busse                       odhad
+makroregrese     model zkoumá                        mezopolitiky.
+může být         populaci a                          Původní
+označena za      ekonomické                          procenta
+vliv sportovní   zdroje;                             Gemini
+politiky.        nevysvětlená                        nesmějí být
+                 variance                            použita jako
+                 obsahuje                            váhy Squash
+                 veškeré další                       Engine.
+                 nezachycené
+                 vlivy i šum.
+                 Gemini později
+                 sám chybu
+                 přiznal. [12]
+Nejlepší         Systematická       Vyvráceno        Juniorská
+junioři jsou     syntéza zjistila                    výkonnost je
+převážně         velmi malý                          informace,
+budoucí          překryv                             nikoli
+nejlepší         juniorských a                       deterministick
+senioři.         seniorských                         á předpověď.
+                 elitních                            Model
+                 populací. [13]                      potřebuje
+                                                     vysokou
+                                                     nejistotu
+                                                     vývoje a
+                                                     možnost
+                                                     pozdních
+                                                     vstupů.
+Silný            U top-20 ITF       Potvrzeno, ale   Velmi silný
+juniorský        juniorů se 91      slabší než       junior je častěji
+ranking má       % chlapců          intuitivně       budoucí
+určitou          dostalo do         očekáváno        profesionál, ale
+predikční        profesionálníh                      přesná
+hodnotu pro      o rankingu, ale                     budoucí
+<PARSED TEXT FOR PAGE: 7 / 31>
+Tvrzení
+relevantní pro   Nezávislý                    Co lze skutečně
+R001             důkaz            Stav        tvrdit
+profesionální    junior ranking               úroveň z
+přechod.         vysvětloval                  juniorské
+                 pouze                        pozice
+                 budoucího                    predikovat
+                 rankingu; u                  nelze
+                 dívek . [14]                 spolehlivě.
+Talent je        Přehled        Potvrzeno     Latentní
+multidimenzi     raketových                   potential by
+onální a nelze   sportů                       neměl být
+jej bezpečně     zahrnující                   mechanicky
+určit jedním     squash, tenis,               ztotožněn s
+fyzickým         badminton a                  jedním
+testem.          stolní tenis                 pozorovaným
+                 zjistil                      atributem ani
+                 omezenou                     momentálním
+                 prediktivní                  juniorským
+                 validitu mnoha               výkonem.
+                 testů a
+                 doporučuje
+                 multidimenzio
+                 nální
+                 longitudinální
+                 přístup. [15]
+Rozvojové        Prospektivní     Částečně    Interakce mezi
+faktory se       studie 105       potvrzeno   faktory jsou
+mohou            švýcarských                  realistické.
+vzájemně         elitních                     Neexistuje
+kompenzovat      mladých                      důkaz pro
+či doplňovat.    fotbalistů našla             univerzální
+                 kombinované                  čistě
+                 a kompenzační                multiplikativní
+                 efekty                       funkci nebo
+                 rodičovského a               absolutní
+                 trenérského                  weakest-link
+                 prostředí. [16]              pravidlo.
+<PARSED TEXT FOR PAGE: 8 / 31>
+Tvrzení
+relevantní pro   Nezávislý                      Co lze skutečně
+R001             důkaz            Stav          tvrdit
+Jeden slabý      Environmentál    Nepodloženo   Bottleneck je
+faktor vždy      ní a talent-                   možný v
+výrazně          development                    určitých
+omezuje celý     literatura                     režimech, ale
+rozvojový        podporuje                      musí
+systém.          systémový                      vzniknout z
+                 pohled, nikoli                 konkrétní
+                 obecný                         mechaniky
+                 matematický                    nebo dat,
+                 zákon                          nikoli být
+                 „minimum                       vložen jako
+                 rozhoduje“.                    univerzální
+                 Některé                        axiom.
+                 faktory se
+                 mohou
+                 kompenzovat.
+                 [17]
+Přítomnost       Detailní         Částečně      Existuje
+elitních         případová        potvrzeno     plausibilní
+sportovců        studie                         peer/role-
+může             úspěšného                      model/training
+prospívat        atletického                    mechanismus,
+mladším          prostředí IFK                  ale nikoli
+sportovcům.      Växjö popsala                  důkaz, že počet
+                 důležitou roli                 domácích
+                 elitních                       Top-50 hráčů
+                 sportovců,                     lze přímo
+                 týmovou                        převést na
+                 soudržnost a                   procentní
+                 kulturu                        development
+                 spolupráce.                    bonus.
+                 [18]
+Aktivní          Studie           Nepodloženo   Relevantní
+profesionálov    talentových                    proměnnou je
+é stejné         prostředí                      dostupný
+<PARSED TEXT FOR PAGE: 9 / 31>
+Tvrzení
+relevantní pro   Nezávislý                        Co lze skutečně
+R001             důkaz            Stav            tvrdit
+národnosti       zdůrazňují                       kvalitní
+automaticky      skutečné                         sparring,
+zvyšují rozvoj   prostředí,                       trenérský
+všech            skupiny a                        kontakt a
+domácích         kontakt;                         soutěž, nikoli
+juniorů.         národnost                        vlajka hráče.
+                 sama není
+                 mechanismem.
+                 [19]
+Kapacitní        Literatura       Plausibilní,    Mechanismus
+omezení          juniorsko-       ale             lze testovat,
+podpory může     seniorského      nepodložené     avšak nelze
+omezit           přechodu         kvantitativně   tvrdit, že počet
+přechod          ukazuje                          talentů nad
+juniorů mezi     vysokou                          určitou hranici
+profesionály.    ztrátovost a                     musí způsobit
+                 význam                           konkrétní
+                 systémové                        pokles
+                 podpory, ale                     konverze.
+                 neposkytuje
+                 obecnou
+                 národní
+                 congestion
+                 křivku. [20]
+Mezinárodní      Longitudinální   Částečně        Exposure je
+migrace/expo     studie           potvrzeno       příležitost,
+sure může        slovinských a                    nikoli
+sportovcům z     švýcarských                      automatický
+menších          házenkářek                       boost. Efekt má
+systémů          ukázala, že                      být
+pomoci.          migrace z                        individuální a
+                 menšího                          záviset na tom,
+                 systému může                     zda hráč
+                 být                              skutečně získá
+                 strategickou                     přístup k
+<PARSED TEXT FOR PAGE: 10 / 31>
+Tvrzení
+relevantní pro   Nezávislý                        Co lze skutečně
+R001             důkaz             Stav           tvrdit
+                 cestou k                         lepšímu
+                 profesionální                    prostředí.
+                 kariéře, ale
+                 úspěch závisí
+                 na podpoře,
+                 adaptaci a
+                 dual-career
+                 podmínkách.
+                 [21]
+Mezinárodní      Migrační          Vyvráceno v    Přínos je
+exposure je      literatura        absolutní      heterogenní a
+vždy             popisuje          podobě         může být
+pozitivní.       akulturační,                     nulový nebo
+                 rodinné,                         negativní.
+                 psychologické
+                 a organizační
+                 náklady. [22]
+Evidence z       Systematické      Pouze          Cross-sport
+tenisu a         přehledy          částečně       evidence je
+badmintonu       raketových        přenositelné   vhodná pro
+lze přímo        sportů                           mechanismy a
+převést na       dokazují                         hypotézy,
+squash.          některé                          nikoli pro
+                 společné                         přímé
+                 problémy                         koeficienty
+                 talent                           nebo
+                 identification,                  kalibrační
+                 ale studie se                    hodnoty.
+                 liší sportem,
+                 věkem a
+                 měřenými
+                 determinanta
+                 mi. [15]
+GPD je           To je             Potvrzeno      GPD je
+vhodný           standardní                       legitimní pro
+<PARSED TEXT FOR PAGE: 11 / 31>
+Tvrzení
+relevantní pro   Nezávislý                         Co lze skutečně
+R001             důkaz              Stav           tvrdit
+nástroj pro      výsledek                          empiricky
+modelování       EVT/POT.                          podložené
+překročení       Znaménko                          threshold
+vysokého         shape                             exceedances.
+prahu.           parametru
+                 určuje typ
+                 tailu;
+                 znamená
+                 konečný horní
+                 endpoint. [23]
+Heavy-tail       Order-statistics   Vyvráceno      Small-country
+GPD odstraní     ukazuje, že                       champions
+výhodu           maximum                           musí vznikat
+velkých zemí     většího i.i.d.                    jako vzácný,
+při produkci     vzorku                            ale nenulový
+extrémů.         stochasticky                      výsledek; nelze
+                 roste bez                         matematicky
+                 ohledu na                         „vypnout“
+                 tvar .                            velikost vzorku
+                 Geminiho self-                    změnou tailu.
+                 audit tento
+                 problém
+                 správně
+                 zachytil. [24]
+Globálně         Toto pravidlo      Není vědecké   Je to designový
+stejná           pochází z          tvrzení        princip hry a
+distribuce       produktové                        měl by být
+innate talent    specifikace                       takto
+podle            Squash Engine,                    označován.
+národnosti je    nikoli ze studie
+vědecky          dokazující
+doložený fakt.   biologickou
+                 identitu všech
+                 zemí. [2]
+<PARSED TEXT FOR PAGE: 12 / 31>
+Nezávislý audit tedy potvrzuje směr, že elitní výsledek vzniká z kombinace
+velikosti dostupného poolu a kvality konverzního prostředí. Nepotvrzuje však
+Geminiho přesné exponenty, procenta, CES parametry, GPD konfiguraci ani
+historické kauzální příběhy. [25]
+
+Historické velmoci a neobvyklí šampioni
+Historické příklady jsou pro simulaci užitečné jako existence proof, nikoli jako
+identifikace kauzálního mechanismu. Moderní squash měl období výrazné
+pákistánské dominance a později egyptské dominance; světová historie zároveň
+obsahuje šampiony pocházející z méně dominantních squashových systémů.
+Takové případy ukazují, že vysoká národní koncentrace i jednotlivé výjimky jsou
+slučitelné s realitou. Samy ale neříkají, zda příčinou byla infrastruktura,
+trenérská linie, klubová koncentrace, migrace, jeden mimořádný hráč nebo
+kombinace faktorů. Proto nejsou historické epochy vhodné k přímému
+odvozování jednotlivých simulačních vah. [26]
+
+U Egypta je Geminiho popis klubového prostředí, role Wadi Degla, silných
+tréninkových skupin a inspiračního efektu Ahmeda Barady plausibilní narativní
+hypotézou. Archivovaný report jej ale prezentuje mnohem jistěji, než dovolují
+použité zdroje, a označuje Egypt za „nejlepší empirický důkaz“ dané kauzální
+architektury. Pro tak silný závěr jsem nenalezl odpovídající longitudinální nebo
+kvaziexperimentální squashovou studii, která by izolovala vliv jednotlivých
+faktorů. [27]
+
+Totéž platí pro úpadek Pákistánu. Výpovědi bývalých šampionů a federací o
+managementu, infrastruktuře nebo tréninkové kultuře jsou hodnotné jako
+expertní hypotézy, nikoli jako kauzální identifikace. Squash Engine by proto
+neměl z jedné historické epizody vyvozovat univerzální „decay rule“.
+
+Gemini vs. nezávislý výzkum
+Gemini správně identifikoval několik klíčových směrů. První je rozdíl mezi
+vrozeným potenciálem a rozvinutou výkonností. To je v souladu s moderní
+talent-development literaturou a současně velmi dobře odpovídá Masteru. Druhý
+je význam prostředí: kvalitní trenéři, soutěže, infrastruktura a podpora skutečně
+patří k opakovaně uváděným faktorům úspěšných rozvojových systémů. Třetí je
+odmítnutí čistě populačního determinismu. Čtvrtý je myšlenka, že mezinárodní
+exposure může pomoci výjimečnému hráči z menšího systému. Tyto koncepty
+mají dost opory pro experimentální modelování. [28]
+<PARSED TEXT FOR PAGE: 13 / 31>
+Gemini však v původním textu často zaměnil teoretický rámec za empiricky
+identifikovanou funkci. Například z existence více environmentálních
+katalyzátorů neplyne, že jejich agregace má být CES. Z existence kvalitních peer
+groups neplyne, že počet národních elitních profesionálů má určitou
+matematickou prémii. A z existence resource constraints neplyne konkrétní
+congestion curve. Tyto přechody jsou modelářské volby a mají být testovány jako
+hypotézy, nikoli označeny za vědecky odvozená pravidla. [29]
+
+Závažná je rovněž práce s makroekonomickou evidencí. Původní report tvrdil, že
+makroekonomické a demografické proměnné vysvětlují specifická procenta
+úspěchu různých typů zemí a že „zbývající část“ připadá na sportovní politiku. To
+je metodologicky neplatné: reziduum regresního modelu není samostatně
+identifikovaný kauzální efekt. Geminiho následný self-audit tuto chybu správně
+opravil. [30]
+
+Původní report také nadhodnocoval jistotu historických squashových příběhů.
+Tvrzení typu „egyptský systém funguje právě díky vertikální kompresi klubů“
+může být velmi dobrá pracovní hypotéza, ale bez komparativních dat s
+kontrafaktuálními systémy nelze určit, jaký podíl dominance způsobil tento
+faktor oproti velikosti účastnické základny, ekonomické koncentraci klubů,
+trenérské tradici, selection effects nebo historické náhodě. [27]
+
+Naopak Geminiho vlastní následný audit je v několika bodech podstatně
+kvalitnější než originál. Správně upozorňuje na neplatné zacházení s , časově
+nesourodé rankingové údaje, problémy citací, sign convention u GPD a sample-
+size fallacy. PR handoff pak správně redukuje původní velkou architekturu na
+čtyři candidate hypotheses, které nejsou schválené. Tento pozdější framing je
+mnohem bližší tomu, co dovoluje nezávislá evidence. [31]
+
+Další důležitá korekce se týká talent pipeline. Původní Gemini text používá
+poměrně klasickou metaforu vývojového trychtýře. Modernější longitudinální
+evidence však ukazuje velmi vysokou obměnu a nízký překryv juniorských a
+seniorských elit. Vývojový systém je tedy vhodnější chápat jako dynamickou
+populaci s vstupy, výstupy, pozdními vstupy a různými trajektoriemi, nikoli
+jako pevné pořadí stejných talentů od dětství do světové špičky. [5]
+
+Tento bod má přímý důsledek pro Squash Engine: velmi vysoký latentní potential
+nemusí znamenat časný juniorský dominance signal a velmi úspěšný junior
+nemusí mít nejvyšší seniorské maximum. To je podle dostupných studií
+realističtější než jednoduchá monotónní konverze junior rank → senior rank. [32]
+<PARSED TEXT FOR PAGE: 14 / 31>
+Verdikt pro čtyři hlavní návrhy
+Complementarity
+Verdikt: přijmout k experimentálnímu ověření, ale ne přijmout CES jako
+výchozí pravdu.
+
+Empirická opora pro myšlenku, že rozvojové faktory nejsou čistě nezávislé, je
+střední. Talent-development literatura opakovaně popisuje prostředí jako
+propojený systém a prospektivní studie rodič–trenér ukazuje kompenzační i
+komplementární vzorce. To je skutečná evidence pro interakce. Není to ale
+důkaz, že všechny čtyři Country Attributes mají fungovat multiplikativně nebo že
+minimum jednoho faktoru téměř vynuluje ostatní. [17]
+
+Alternativním vysvětlením je, že různé faktory působí na různé fáze pipeline.
+development_quality může ovlivňovat tempo technického růstu, competition_quality
+množství kvalitních zápasů a adaptaci, elite_support pravděpodobnost, že vysoce
+kvalitní junior zvládne profesionální přechod, a squash_tradition může ovlivňovat
+know-how nebo nábor. V takovém případě nemusí existovat jediná společná
+„development production function“. To je navíc lépe slučitelné se současným
+Masterem, který jednotlivým atributům přisuzuje odlišné významy. [2]
+
+Přínosem komplementarity je omezení nerealistické situace, kdy například
+vynikající coaching zcela vykompenzuje téměř neexistující soutěžní prostředí.
+Rizikem je opačný extrém: příliš multiplikativní funkce může trestat každou
+slabou složku dvakrát, vytvořit velmi nízké hodnoty a zredukovat různorodé
+země na několik identických „balanced systems“.
+
+Jednodušší alternativa je additive baseline plus omezené interakce: nejprve
+samostatné účinky atributů a teprve potom jedna či dvě empiricky odůvodnitelné
+vazby, například mezi development a competition nebo mezi development a elite
+support. Druhou variantou je blend aritmetického a geometrického průměru s
+parametrem, který lze v experimentu plynule měnit od nulové komplementarity
+po silnou komplementaritu.
+
+Hypotéza by se měla testovat proti scénářům, kde země mají stejné celkové
+„množství kvality“, ale rozdílně vyvážené atributy. Měřit je třeba nejen počet
+Top-10 hráčů, ale i konverzní poměr talentů, variance kariér a citlivost výsledků
+na jediný slabý atribut.
+
+Competitive Depth
+Verdikt: přijmout k omezenému experimentálnímu ověření.
+<PARSED TEXT FOR PAGE: 15 / 31>
+Evidence je nízká až střední. Existují ekologické studie úspěšných talentových
+prostředí, v nichž jsou důležité kvalitní skupiny, cohesion a přítomnost elitních
+sportovců. Blízkost kvalitních talentových klubů je také spojena s vyšší
+pravděpodobností dostat se na elitní mládežnickou úroveň. To podporuje
+mechanismus „kvalita dostupného prostředí a peers může pomoci“. [19]
+
+Neexistuje ale dostatečný důkaz pro jednoduchý vztah „čím více aktivních
+národních Top-50 profesionálů, tím rychlejší vývoj všech juniorů stejné země“.
+Hráč může mít stejnou národnost a nikdy s daným profesionálem netrénovat;
+naopak může pravidelně trénovat s cizinci. Nationality-based competitive depth
+by proto byl proxy s významnou measurement error.
+
+Pro simulaci je kandidát hodnotný, protože může vytvářet endogenní sportovní
+centra a generační vlny. Současný Master navíc Competitive Depth výslovně
+definuje jako derived value založenou na skutečně existujících silných
+hráčích, nikoli jako statický country rating. [2]
+
+Největší riziko je pozitivní zpětná vazba:
+
+
+
+Pokud je smyčka příliš silná, počáteční náhoda se může během desítek sezon
+změnit v prakticky nevratnou hegemonii. To není samo o sobě nerealistické;
+problém nastává, pokud systém ztrácí schopnost spontánně vytvářet nové
+mocnosti.
+
+Jednodušší a věrohodnější mechanika je proto access to strong opposition,
+nikoli národní počet elitních hráčů. Pokud pre-alpha nemá explicitní tréninkové
+lokace, lze Competitive Depth použít jen jako slabý proxy signál a efekt silně
+ohraničit. Pozdější model může používat skutečné soutěžní zápasy, training base
+nebo fyzický kontakt.
+
+Experiment musí porovnat nulový, slabý a silnější feedback při identických
+random seeds a počátečních světech. Hlavním ukazatelem nemá být „kolik zemí
+je v Top 100“, ale persistence dominance, rychlost jejího rozpadu, autokorelace
+country strength a četnost vzniku nových elitních zemí.
+
+Professional Conversion Congestion
+Verdikt: odložit jako produktovou mechaniku; dál zkoumat jako hypotézu.
+
+Tento návrh má ze čtyř nejslabší přímou empirickou oporu. Je rozumné
+předpokládat, že finance, travel support, fyzioterapie, trenéři a další podpůrné
+<PARSED TEXT FOR PAGE: 16 / 31>
+zdroje nejsou nekonečné. Literaturou je rovněž dobře doloženo, že juniorsko-
+seniorský přechod má vysoké ztráty a že kariérní a organizační podpora je
+důležitá. To však ještě neprokazuje jednoduchou saturaci ve smyslu „více eligible
+prospects v jedné zemi → nižší conversion rate každého z nich“. [33]
+
+Alternativní vysvětlení vysokého dropoutu zahrnuje chyby talent identification,
+biologickou maturaci, změnu motivace, zranění, vzdělání, rozdílné finanční
+možnosti rodiny a skutečnost, že juniorské pořadí samo o sobě špatně predikuje
+seniorský strop. [34]
+
+Riziko pro Squash Engine je zásadní: congestion se může velmi snadno stát
+skrytým anti-large-country rubber bandem. Velká země vytvoří více talentů,
+systém je následně penalizuje jen proto, že jich je mnoho, a výsledek uměle
+vyrovná geografické rozložení. To by bylo v rozporu s požadavkem, aby
+dominance i výjimky vznikaly emergentně, nikoli kvótou.
+
+Navíc aktuální Country V1 neobsahuje explicitní počet stipendijních míst, elite-
+support budget ani jinou skutečnou kapacitu. elite_support je kvalitativní rating
+schopnosti podpory. Z tohoto ratingu lze odvodit vyšší či nižší šanci na úspěšný
+přechod, ale „congestion“ vyžaduje další předpoklad o kapacitě, který nyní není
+vědecky ani kanonicky identifikován. [2]
+
+Jednodušší alternativa je nechat elite_support působit přímo na individuální
+probability of conversion bez závislosti na počtu jiných talentů. Congestion zavést
+až tehdy, pokud bude engine explicitně modelovat omezený zdroj nebo pokud
+simulace bez tohoto mechanismu vykáže reprodukovatelný nerealistický
+artefakt.
+
+International Exposure
+Verdikt: přijmout k experimentálnímu ověření, ale pouze jako individuální
+mechanismus.
+
+Evidence je nízká až střední, ale koncepčně poměrně přesvědčivá. Migrace
+sportovců z menších systémů může poskytnout přístup k profesionálním klubům,
+soutěžím a tréninku, přičemž longitudinální studie malých evropských
+házenkářských zemí tento mechanismus popisuje jako důležitou kariérní
+strategii. Zároveň ale ukazuje, že výsledek závisí na adaptaci, podpoře, osobních
+cílech a dual-career prostředí. [21]
+
+To znamená, že International Exposure není „malá země +10 % development“.
+Mechanismus má patřit hráči: absolvoval dostatečně kvalitní mezinárodní
+<PARSED TEXT FOR PAGE: 17 / 31>
+soutěže? Trénoval v lepším prostředí? Má na cestování a podporu? Dokázal nové
+podmínky využít?
+
+Přínos pro Squash Engine je značný, protože tato mechanika může přirozeně
+vysvětlit, proč výjimečný talent ze slabé domácí země není odsouzen ke stropu
+svého národního systému. Zároveň respektuje základní Country V1 princip, že
+země neurčuje innate potential. [2]
+
+Rizikem je dvojí započtení: elite_support už podle Masteru zahrnuje funding,
+travel, physio a international opportunities. Pokud by samostatný Exposure
+systém znovu poskytoval bonus za tytéž věci, jedna příčina by byla započtena
+dvakrát. [2]
+
+Nejjednodušší testovatelná varianta proto není nový country rating, ale hráčská
+accumulated exposure variable, odvozená ze skutečné účasti na kvalitních
+soutěžích nebo z jiných již simulovaných událostí. Pokud taková data engine v
+dané fázi ještě nemá, je vědecky čistší funkci odložit než ji aproximovat volným
+bonusem.
+
+Matematická revize a dlouhodobá simulace
+Distribuce vrozeného potenciálu
+GPD není chybný nástroj; je chybný důvod jeho navržení. Generalized Pareto
+Distribution má pevné místo v Extreme Value Theory pro modelování rozdělení
+překročení dostatečně vysokého prahu. Při standardní parametrizaci znamená
+heavy unbounded tail, exponenciální limit a konečný horní endpoint. [23]
+
+Pro Squash Engine však latentní innate potential není pozorovaná sada
+extrémních sportovních výkonů. Neexistuje empirický soubor „skutečných
+vrozených potenciálů“, z něhož by bylo možné threshold, scale a shape GPD
+odhadnout. Přidání EVT tedy nevytváří evidenci tam, kde nejsou data; pouze
+přidává parametry.
+
+Pokud je potential z designových důvodů konečně omezený, je jednodušší začít s
+omezeným rozdělením, například Beta distribucí na intervalu , případně s
+transformovaným normálním/logit-normal modelem. Beta distribuce není
+„vědecky správná“ sama o sobě; její výhodou je, že je omezená, flexibilní a má
+málo parametrů. Teprve pokud pozdější kalibrace ukáže systematickou
+neschopnost takového modelu reprodukovat frekvenci extrémů, má smysl
+testovat složitější tail model.
+<PARSED TEXT FOR PAGE: 18 / 31>
+Sample-size effect
+Pro stejnou individuální distribuční funkci platí:
+
+
+
+Je-li , pak pro větší je menší. Větší pool má tedy vyšší šanci překročit libovolný
+pevný vysoký práh. Tento výsledek je strukturální, nikoli specialita normální
+distribuce.
+
+Z toho plyne zásadní interpretační pravidlo pro FAX: small-country champion
+má být možný, ne stejně pravděpodobný. Pokud má země velmi malý Effective
+Squash Pool, extrémní talent se tam stále může objevit, ale v opakovaných
+světech bude méně častý než ve velkém poolu. Vynucovat stejné frekvence by
+odporovalo samotné logice stejné per-person distribuce.
+
+Diminishing returns na velikost Effective Squash Poolu mohou být legitimní, ale
+musí reprezentovat participation/access/organizational frictions, ne umělou
+změnu individuálního talentu. To přesně odpovídá současnému Country V1,
+který už počítá s diminishing-return weighting velkých populací při alokaci fixní
+globální kohorty. [2]
+
+Nelineární development
+Nelinearita vývoje je realistická, ale konkrétní tvar není z literatury
+identifikován. Longitudinální sportovní data ukazují, že vývoj není prostá
+lineární extrapolace a že časné výsledky nepředpovídají spolehlivě seniorské
+výsledky. [35]
+
+Pro simulaci je proto vhodnější oddělit alespoň tři věci:
+
+
+
+Rozumná rodina funkcí by měla mít vlastnost diminishing returns, tedy že hráč
+blízko svého realizovatelného stropu roste pomaleji než hráč daleko od něj.
+Nemusí jít o jednu konkrétní logistickou nebo Gompertzovu funkci; tyto tvary
+mají být kandidáty porovnávanými experimentálně.
+
+Důležité je rovněž zachovat heterogenitu. Pokud všichni hráči se stejnými vstupy
+mají stejnou růstovou trajektorii, vytvoří simulace příliš deterministickou
+populaci. Přitom reálná evidence ukazuje vysokou nejistotu mezi juniorským a
+seniorským statusem. [13]
+<PARSED TEXT FOR PAGE: 19 / 31>
+Pozitivní zpětné vazby
+Největší systémové riziko není numerický overflow, ale dynamická nestabilita:
+
+
+
+Taková smyčka může být realistickou součástí historické tradice a sportovní
+kultury. Pokud je ale její gain příliš vysoký, engine přejde od emergentní
+dominance k téměř absorbujícímu stavu. C2 je proto třeba testovat především z
+hlediska stability smyčky.
+
+Další potenciální smyčka vzniká mezi úspěchem, tradicí a popularitou. V
+současném pre-alpha je to méně akutní, protože country ratings nemají
+automaticky libovolně přepisovat samy sebe; Master striktně rozlišuje authored
+attributes a derived world state. [36]
+
+Numerická stabilita
+Pokud se použije čistě multiplikativní environment score,
+
+
+
+hodnoty blízké nule mohou způsobit velmi silný collapse a multiplikace mnoha
+faktorů může ztížit interpretaci. Matematicky stabilnější je výpočet přes
+logaritmy,
+
+
+
+ale to řeší pouze numeriku, nikoli vědeckou otázku, zda je geometrická agregace
+správná.
+
+Každý stavový parametr by měl mít jasnou doménu a jednotku. Rating 1–10 není
+pravděpodobnost a neměl by být bez definované transformace použit přímo jako
+procento. Master sám správně uvádí, že přesná kalibrace Country V1 je otevřená
+a že numerické váhy nejsou canon. [2]
+
+Realističnost po desítkách sezon
+Realismus dlouhodobé simulace nelze ověřovat jedním číslem. Současný Master
+zachovává referenční 50sezónní acceptance test, ale CURRENT_STATE uvádí, že
+plný 50sezónní průchod ještě není uzavřen jako release evidence. [7]
+
+Zvlášť důležité je nepovažovat za automatickou chybu dlouhou dominanci
+jednoho hráče, dlouhou kariéru, silnou generaci jedné země nebo ojedinělého
+šampiona z malé země. Takové výsledky mohou být legitimní tail events. Chyba je
+<PARSED TEXT FOR PAGE: 20 / 31>
+až strukturální opakování: například pokud téměř všechny světy zamrznou do
+stejné jedné hegemonie nebo pokud malé země nikdy za stovky replikací
+neprodukují výjimku, přestože model deklaruje nenulovou šanci.
+
+Správná dlouhodobá validace proto musí analyzovat rozdělení výsledků mezi
+mnoha deterministickými seedy, nikoli pouze jednu 100sezónní historii.
+
+Návrhy konkrétních experimentů
+Níže navrhuji experimenty, které mohou odlišit mechaniky, aniž by předem
+určovaly, která má „vyhrát“. Neuvádím žádné pevné target procento, protože
+taková hranice by bez kalibračních dat byla pouze vymyšlená.
+
+                                                      Co by
+                                    Primární          zpochybnilo
+Experiment       Změna              měření            hypotézu
+Pool-size        stejné country     distribuce        menší i.i.d.
+monotonicity     prostředí,         maxima innate     pool
+test             různé Effective    potential a       systematicky
+                 Squash Pool        počet high-       generuje více
+                                    potential         extrémů než
+                                    draws             větší bez jiné
+                                                      příčiny
+Environment      stejný prospect    realizovaný       atribut nemá
+isolation test   pool a             skill, pro        žádný
+                 potential, mění    conversion,       interpretovatel
+                 se pouze jeden     dropout           ný efekt nebo
+                 Country                              ovlivňuje
+                 Attribute                            nesouvisející
+                                                      fázi pipeline
+Complementa      stejné             distribution of   multiplikativní
+rity factorial   průměrné           development       varianta
+test             ratingy, ale       outcomes          vytváří
+                 balanced vs.                         extrémní
+                 one-weak-link                        collapse nebo
+                 profily                              nepřináší nic
+                                                      nad additive
+                                                      baseline
+Competitive      C2 = 0 vs. slabý   country-          i slabý C2
+Depth                               strength          způsobí
+<PARSED TEXT FOR PAGE: 21 / 31>
+                                                      Co by
+                                  Primární            zpochybnilo
+Experiment      Změna             měření              hypotézu
+feedback test   vs. vyšší efekt   autocorrelatio      prakticky
+                                  n, duration of      nevratné lock-
+                                  dominance,          in stavy
+                                  emergence of
+                                  new powers
+Locality        stejní elitní     junior              efekt zůstává
+falsification   profesionálové    development         stejný pouze
+test            , ale různé                           kvůli
+                skutečné                              národnosti; to
+                exposure/train                        by znamenalo
+                ing                                   špatně
+                opportunities                         definovaný
+                                                      mechanismus
+Congestion      stejný Elite      conversion          model
+counterfactua   Support, různý    probability per     automaticky
+l               počet eligible    equivalent          penalizuje
+                prospects         prospect            velký pool bez
+                                                      explicitního
+                                                      resource
+                                                      constraint
+Exposure      podobní hráči,      trajectory          exposure
+matched-pairs s/bez               divergence          bonus funguje
+test          skutečného                              i bez
+              international                           kvalitnější
+              exposure                                konkurence/tr
+                                                      éninku
+Junior–senior   sledování         překryv elite       téměř všichni
+turnover test   kohort            juniors vs. elite   top juniors
+                                  seniors, side-      deterministick
+                                  entry, dropout      y zůstávají top
+                                                      seniors
+Tail            Beta /            čekací doba na      složitější GPD
+robustness      bounded-          mimořádné           model
+test            normal /          hráče,              nepřináší lepší
+                threshold-tail    maxima,             reprodukci
+<PARSED TEXT FOR PAGE: 22 / 31>
+                                                   Co by
+                                  Primární         zpochybnilo
+Experiment       Změna            měření           hypotézu
+                 variant          dominance        behaviorálních
+                                                   kritérií než
+                                                   jednodušší
+                                                   model
+Seed-            mnoho seedů,     mezi-seed        výsledky jsou
+ensemble         stejný svět a    variance všech   téměř
+stability test   parametry        hlavních         identické, nebo
+                                  metrik           naopak
+                                                   chaoticky
+                                                   citlivé na
+                                                   mikroskopické
+                                                   změny
+Long-horizon     50–100 sezon     průměr/          globální skill
+drift test                        variance         systematicky
+                                  ability, age     inflatuje/deflat
+                                  distribution,    uje nebo
+                                  country          diverzita
+                                  concentration,   monotónně
+                                  career lengths   kolabuje
+Historical-      model bez        výskyt           model
+pattern sanity   hard-coded       hegemonních      potřebuje
+test             národní          epoch, nástup    explicitní
+                 historie         nových zemí,     národní
+                                  small-country    caps/bonuses,
+                                  exceptions       aby vůbec
+                                                   vytvořil
+                                                   podobné typy
+                                                   jevů
+
+Pro dlouhodobé hodnocení doporučuji sledovat zejména country HHI nebo jinou
+koncentraci, entropii geografického rozložení, počet unikátních zemí v
+Top-10/Top-50 v čase, délku hegemonních sérií, turnover světové jedničky,
+kariérní délky, věk peak performance, podíl juniorsko-seniorských konverzí,
+survival curves profesionálních kariér, waiting time na extrémní hráče a korelaci
+<PARSED TEXT FOR PAGE: 23 / 31>
+mezi initial country state a výsledkem po několika dekádách. Tyto metriky mají
+být diagnostické; samy o sobě nemají předem stanovenou „správnou“ hodnotu.
+
+Zvlášť cenný by byl ablation design. Nejprve baseline pouze s již rozhodnutým
+pipeline principem. Potom přidat C1 samostatně, C2 samostatně, C3 samostatně a
+C4 samostatně. Teprve poté testovat kombinace. Jinak nebude možné poznat,
+která mechanika způsobila změnu.
+
+Validace by měla mít dvě různé vrstvy. Mechanistic validity ověřuje, zda každá
+funkce dělá právě to, co má. Emergent validity zkoumá, zda celek po desítkách
+sezon vytváří rozumné typy světů. Ani dobrá emergentní statistika
+neospravedlňuje špatný mechanismus, pokud je výsledek dosažen skrytým
+rubber-bandingem.
+
+Pro FAX navíc nedoporučuji kalibrovat přímo na dnešní národní podíly PSA.
+Samotný R001 handoff správně připomíná, že Squash Engine simuluje
+alternativní svět, kde je squash globálně významnější sport; historické PSA
+rozložení proto není povinným cílovým histogramem. [26]
+
+Nové objevy
+Nejdůležitější dodatečný poznatek je turnover talentového systému. Velká
+systematická studie juniorů a seniorů a novější metaanalýza talent-promotion
+programs naznačují, že výběrové systémy jsou mnohem méně stabilní, než
+implicitně předpokládá klasický model „najdi talenty a dlouhodobě je rozvíjej“. V
+metaanalýze z roku 2026 dosahoval průměrný roční turnover talentových
+programů 36,3 %, což znamená rozsáhlé deselection a side-entry. [37]
+
+Pro Squash Engine z toho neplyne, že musí kopírovat tuto konkrétní hodnotu.
+Plyne z toho však silnější obecný požadavek: pipeline by měla podporovat
+přeskupování kandidátů v čase. Development není pouze změna ratingu stejné
+předem vybrané skupiny.
+
+Druhým novým poznatkem je, že Competitive Depth by mohl být oddělen na
+exposure a concentration. Z dostupné literatury totiž vychází, že není důležitá
+existence elitních hráčů „někde v zemi“, ale jejich dostupnost v konkrétním
+prostředí: talentový klub, kvalitní skupina, soutěž nebo migrační cesta. Studie
+proximity k talent clubs a ekologická studie IFK Växjö obě směřují spíše k
+lokálnímu kontaktu než k národnímu aggregate count. [38]
+
+Třetí poznatek je metodologický: více dat o výsledcích nemusí identifikovat
+latentní innate potential. Pokud engine používá nepozorovaný „potential“ jako
+<PARSED TEXT FOR PAGE: 24 / 31>
+designový konstrukt, nelze jej přímo kalibrovat z profesionálního rankingu bez
+modelu selection bias. Profesionální vzorek je už několikanásobně selektovaný
+přes popularitu sportu, access, coaching, finance, dropout a conversion. Proto by
+distribuce potential měla být považována za latentní designovou vrstvu, jejíž
+plausibilita se ověřuje nepřímo přes výslednou populaci, nikoli za empiricky
+změřenou biologickou veličinu. Tento závěr je inferencí ze silného juniorsko-
+seniorského turnoveru a nízké prediktivní validity talentových testů. [39]
+
+Čtvrtý poznatek se týká trade-offu mezi realismem a identifikovatelností. Čím
+více se současně přidá latentních mechanismů — CES, GPD, competitive feedback,
+congestion, migration bonus, historical tradition feedback — tím více různých
+parametrických kombinací může produkovat podobné rankingové statistiky.
+Model pak může „sedět“ na výsledcích, aniž by bylo možné zjistit proč. Pro R001
+je proto vědecky lepší minimal model + postupné ablace než komplexní
+architektura před první validací.
+
+Doporučení pro ChatGPT Work a kvalitní zdroje
+ChatGPT Work by měl při návazném technickém auditu nejprve zkontrolovat,
+zda skutečná implementace stále respektuje hierarchii autorit. AGENTS.md
+výslovně říká, že novější owner decisions a Master mají přednost, implementace
+sama nevytváří canon a statusy [DECIDED], [PROVISIONAL], [TARGET], [OPEN] a
+[DEFERRED] se nesmějí zaměňovat. [40]
+
+Konkrétně je třeba ověřit, zda runtime nepoužívá country development ratings k
+modifikaci innate quality-band probability, zda současná intake matematika
+skutečně používá population + popularity + access v souladu s
+COUNTRY_ATTRIBUTES_V1, zda jsou diminishing returns implementovány jen ve
+volume layer, zda Competitive Depth skutečně vzniká jako derived state ze
+simulovaných hráčů a nikoli jako skrytý statický rating a zda elite_support už
+nezahrnuje mechanismus, který by nový International Exposure zdvojoval.
+COUNTRY_ATTRIBUTES_V1 stanovuje všechny tyto hranice poměrně jasně, ale
+zároveň upozorňuje, že některá runtime migrace zůstává oddělenou
+implementační otázkou. [2]
+
+Work by měl také identifikovat všechny současné rovnice, kde se Country
+Attributes převádějí na pravděpodobnosti nebo růst. U každé je potřeba určit:
+zdroj autority, jednotku, normalizaci, doménu, případné clipping/clamping
+chování, interakce s jinými faktory a zda hodnota představuje canon nebo jen
+dočasnou kalibraci. To je důležité, protože Master výslovně označuje přesné váhy
+a kalibraci za otevřené. [2]
+<PARSED TEXT FOR PAGE: 25 / 31>
+Další auditní bod je determinismus versus variabilita. Squash Engine může být
+deterministický pro daný seed a současně statisticky variabilní mezi seedy. Work
+by měl ověřit, že přidání C1–C4 neporuší deterministický replay a že experimenty
+lze opakovat na shodných seeds, aby bylo možné dělat paired comparisons.
+
+PR #1695 nemá být považován za implementační specifikaci. Jeho vlastní Purpose
+říká, že archivuje Gemini R001 bez změny canon či simulation behaviour a že
+nebyly spuštěny runtime testy. Archivovaný text reportu navíc není matematicky
+věrnou kopií původního DOCX — vložené rovnice a obrázky mohou být
+poškozené nebo chybět. Pokud by Work auditoval konkrétní Gemini rovnici,
+musí ji porovnat s původním DOCX, nikoli rekonstruovat z textové extrakce. [41]
+
+Současný Master v86 je pro tento audit dostupný celý, takže zde není omezení
+typu „Master nebyl dostupný“. Kompletní runtime implementace však nebyla
+v rámci tohoto vědeckého auditu přečtena řádek po řádku. CURRENT_STATE
+navíc stále uvádí otevřené plné integrační a 50sezónní testy, proto není možné
+tvrdit, že dlouhodobá stabilita je v kódu již empiricky prokázána. [7]
+
+Kvalitní zdroje a jejich omezení
+   1. Bernard, A. B., & Busse, M. R. — Who Wins the Olympic Games:
+      Economic Resources and Medal Totals. Review of Economics and
+      Statistics, 86(1), 2004. DOI: https://doi.org/10.1162/003465304774201824.
+      Silný ekonometrický základ pro vztah populace/zdrojů a olympijských
+      výsledků; omezení: agregované olympijské medaile nejsou squash a studie
+      neidentifikuje individuální talent mechanismus. [8]
+
+   2. De Bosscher, V. et al. — Explaining international sporting success: An
+      international comparison of elite sport systems and policies in six
+      countries. Sport Management Review, 12(3), 2009. DOI:
+      https://doi.org/10.1016/j.smr.2009.01.001. Důležitý primární SPLISS
+      předchůdce; autoři výslovně označují výsledky jako inconclusive, takže
+      není vhodný k přímému převodu na koeficienty. [10]
+
+   3. Rossing, N. N. et al. — Influence of population size, density, and
+      proximity to talent clubs on the likelihood of becoming elite youth
+      athlete. Scandinavian Journal of Medicine & Science in Sports, 2018. DOI:
+      https://doi.org/10.1111/sms.13009. Silný důkaz, že spatial/proximity effects
+      komplikují čisté population scaling; omezení: fotbal a házená, nikoli
+      squash. [42]
+<PARSED TEXT FOR PAGE: 26 / 31>
+4. Güllich et al. — Quantifying the Extent to Which Successful Juniors and
+   Successful Seniors are Two Disparate Populations: A Systematic
+   Review and Synthesis of Findings. PubMed:
+   https://pubmed.ncbi.nlm.nih.gov/37022588/. Velmi rozsáhlá syntéza s 38 383
+   juniory a 22 961 seniory; mimořádně relevantní pro pipeline a dropout.
+   Omezení: multisport agregace může skrývat sport-specifické rozdíly. [13]
+
+5. Annual Athlete Turnover of 36% in Olympic Talent Promotion
+   Programs: A Meta-analysis. PubMed:
+   https://pubmed.ncbi.nlm.nih.gov/42380538/. Novější rozsáhlá metaanalýza
+   talentových programů ve 42 zemích; vhodná pro koncept
+   side-entry/deselection. Omezení: konkrétní procento není kalibrační údaj
+   pro squash. [43]
+
+6. Assessing personal talent determinants in young racquet sport
+   players: a systematic review. PubMed:
+   https://pubmed.ncbi.nlm.nih.gov/26109450/. Zahrnuje tenis, stolní tenis,
+   badminton i squash; relevantní pro omezenou predictive validity talent
+   tests. Omezení: málo longitudinálních squashových studií. [44]
+
+7. Multidimensional and Longitudinal Approaches in Talent
+   Identification and Development in Racket Sports: A Systematic Review.
+   PubMed: https://pubmed.ncbi.nlm.nih.gov/38185790/. Aktuálnější přehled
+   32 studií; podporuje multidimenzionální přístup. Omezení: heterogenní
+   metodiky a omezená možnost určit přesné váhy faktorů. [45]
+
+8. The importance of the International Tennis Federation's junior boys'
+   circuit in the development of professional tennis players. PubMed:
+   https://pubmed.ncbi.nlm.nih.gov/17454534/. Užitečný příklad vysoké
+   profesionální konverze elitních juniorů, ale nízkého vysvětleného rozptylu
+   budoucí rankingové úrovně. Omezení: tenis a vysoce selektovaný top-20
+   junior sample. [46]
+
+9. Importance of the ITF Junior Girls' Circuit in the development of
+   women professional tennis players. PubMed:
+   https://pubmed.ncbi.nlm.nih.gov/19735036/. Podobný nezávislý důkaz u
+   žen; omezení: tenis a ženská populace, nikoli mužský squash. [47]
+
+10. The 'good' environment in talent development: A person-oriented
+    prospective study of the parent-coach system. PubMed:
+    https://pubmed.ncbi.nlm.nih.gov/41275385/. Prospektivní evidence pro
+<PARSED TEXT FOR PAGE: 27 / 31>
+   kompenzaci a komplementaritu environmentálních faktorů. Omezení: 105
+   švýcarských fotbalistů; nelze z ní odvodit univerzální CES funkci. [16]
+
+11. Henriksen et al. — Successful talent development in track and field:
+    considering the role of environment. PubMed:
+    https://pubmed.ncbi.nlm.nih.gov/20840570/. Detailní ekologická case study
+    podporující význam kvalitních skupin, kultury a elitních sportovců.
+    Omezení: jedna organizace, deskriptivní případová studie, bez kauzálního
+    odhadu velikosti efektu. [18]
+
+12. Transnational Migration and Dual Career of Slovenian and Swiss Elite
+    Female Handball Players — A Longitudinal Analysis. PubMed:
+    https://pubmed.ncbi.nlm.nih.gov/36136392/. Přímá evidence, že přechod do
+    silnějšího zahraničního prostředí může být kariérní cestou hráčů z
+    menších zemí. Omezení: malý kvalitativní vzorek 14 žen a jiný sport. [21]
+
+13. An examination of the migratory transition of elite young European
+    soccer players to the English Premier League. PubMed:
+    https://pubmed.ncbi.nlm.nih.gov/23098129/. Důležitá protiváha
+    jednoduchému „exposure bonusu“; ukazuje adaptační a psychosociální
+    náklady migrace. Omezení: pět fotbalistů, kvalitativní design. [48]
+
+14. Effects of Early Talent Promotion on Junior and Senior Performance: A
+    Systematic Review and Meta-Analysis. PubMed:
+    https://pubmed.ncbi.nlm.nih.gov/37921913/. Relevantní pro riziko early-
+    selection bias a nestabilitu talentových programů. Omezení: multisport, ne
+    specificky squash. [49]
+
+15. Generalized Pareto / Peaks-over-Threshold reference — Risk Analysis
+    via Generalized Pareto Distributions. Open-access:
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC9231421/. Spolehlivý matematický
+    popis znaménka shape parametru, endpointu a threshold exceedances.
+    Omezení: statistická metodologie, nikoli empirický model sportovního
+    talentu. [50]
+
+16. Squash Engine COUNTRY_ATTRIBUTES_V1.md.
+    https://github.com/Jasmetk0/squash-tour-beta/blob/buuk/docs/COUNTRY_AT
+    TRIBUTES_V1.md. Primární zdroj závazného V1 návrhu. Omezení:
+    produktová specifikace, nikoli vědecká evidence. [2]
+<PARSED TEXT FOR PAGE: 28 / 31>
+   17. Squash Engine AGENTS.md. https://github.com/Jasmetk0/squash-tour-
+       beta/blob/buuk/AGENTS.md. Primární zdroj hierarchie autorit a statusů.
+       Omezení: procesní dokument, ne empirická studie. [40]
+
+   18. Squash Engine Master v86. https://github.com/Jasmetk0/squash-tour-
+       beta/blob/buuk/SQUASH_ENGINE_MASTER_VISION.md. Kanonická
+       produktová specifikace dostupná při tomto auditu; aktualizovaná 30. října
+       2026. Omezení: obsahuje rozhodnutí a cíle, jejich přítomnost sama
+       nedokládá runtime implementaci. [51]
+
+   19. R001 PR #1695. https://github.com/Jasmetk0/squash-tour-beta/pull/1695.
+       Primární evidence o statusu výzkumu: archivace, nikoli implementace či
+       schválení. [52]
+
+   20. Gemini R001 text extraction a self-audit. Archivované v PR #1695;
+       původní extrakce výslovně není matematicky věrnou facsimilií DOCX. Je
+       užitečná k auditu tvrzení Gemini, nikoli jako nezávislá evidence. [53]
+
+Celkový vědecký verdikt R001 je tedy poměrně jasný: zachovat základní Master
+pipeline a globálně neutrální innate-potential princip jako designové
+rozhodnutí; experimentálně prověřit omezenou komplementaritu, skutečně
+odvozený Competitive Depth a hráčský International Exposure; Professional
+Conversion Congestion zatím neimplementovat bez explicitní kapacitní
+interpretace; GPD ani CES nepřijímat jako „vědecky správné“ výchozí řešení.
+Nejvyšší prioritu pro další výzkum by měla mít kvalitní modelace dynamického
+junior→senior přechodu a dlouhodobé testování zpětných vazeb, protože právě
+zde mají dostupná data největší potenciál odlišit realistický emergentní systém od
+mechaniky, která pouze produkuje hezky vypadající rankingy. [54]
+
+
+
+[1] [2] [36]
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/docs/
+COUNTRY_ATTRIBUTES_V1.md
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/docs/
+COUNTRY_ATTRIBUTES_V1.md
+
+[3] [25] [27] [29] [30] [53] https://raw.githubusercontent.com/Jasmetk0/squash-
+tour-beta/docs/research-program-foundation-20261031/research/studies/R001-
+global-talent-pipeline/GEMINI_ORIGINAL_REPORT_TEXT_EXTRACT.txt
+<PARSED TEXT FOR PAGE: 29 / 31>
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/docs/research-
+program-foundation-20261031/research/studies/R001-global-talent-pipeline/
+GEMINI_ORIGINAL_REPORT_TEXT_EXTRACT.txt
+
+[4] [50] https://pmc.ncbi.nlm.nih.gov/articles/PMC9231421/
+
+https://pmc.ncbi.nlm.nih.gov/articles/PMC9231421/
+
+[5] [13] [20] [33] [34] [35] [54] https://pubmed.ncbi.nlm.nih.gov/37022588/
+
+https://pubmed.ncbi.nlm.nih.gov/37022588/
+
+[6] [41] [52] https://github.com/Jasmetk0/squash-tour-beta/pull/1695
+
+https://github.com/Jasmetk0/squash-tour-beta/pull/1695
+
+[7] [51]
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/SQUASH_EN
+GINE_MASTER_VISION.md
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/
+SQUASH_ENGINE_MASTER_VISION.md
+
+[8] [9] [12]
+https://openurl.ebsco.com/contentitem/doi%3A10.1162/003465304774201824?
+id=ebsco%3Adoi%3A10.1162%2F003465304774201824&sid=ebsco%3Aplink%3Acr
+awler
+
+https://openurl.ebsco.com/contentitem/doi%3A10.1162/003465304774201824?
+id=ebsco%3Adoi%3A10.1162%2F003465304774201824&sid=ebsco%3Aplink%3Acr
+awler
+
+[10] [11] [28] https://www.tandfonline.com/doi/abs/10.1016/j.smr.2009.01.001
+
+https://www.tandfonline.com/doi/abs/10.1016/j.smr.2009.01.001
+
+[14] [32] [46] https://pubmed.ncbi.nlm.nih.gov/17454534/
+
+https://pubmed.ncbi.nlm.nih.gov/17454534/
+
+[15] [45] https://pubmed.ncbi.nlm.nih.gov/38185790/
+
+https://pubmed.ncbi.nlm.nih.gov/38185790/
+
+[16] [17] https://pubmed.ncbi.nlm.nih.gov/41275385/
+
+https://pubmed.ncbi.nlm.nih.gov/41275385/
+<PARSED TEXT FOR PAGE: 30 / 31>
+[18] [19] https://pubmed.ncbi.nlm.nih.gov/20840570/
+
+https://pubmed.ncbi.nlm.nih.gov/20840570/
+
+[21] [22] https://pubmed.ncbi.nlm.nih.gov/36136392/
+
+https://pubmed.ncbi.nlm.nih.gov/36136392/
+
+[23] https://mathworld.wolfram.com/GeneralizedParetoDistribution.html
+
+https://mathworld.wolfram.com/GeneralizedParetoDistribution.html
+
+[24] [31]
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/docs/research-
+program-foundation-20261031/research/studies/R001-global-talent-pipeline/
+GEMINI_SELF_AUDIT_01.txt
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/docs/research-
+program-foundation-20261031/research/studies/R001-global-talent-pipeline/
+GEMINI_SELF_AUDIT_01.txt
+
+[26] https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/docs/research-
+program-foundation-20261031/research/studies/R001-global-talent-pipeline/
+REVIEW_AND_HANDOFF.md
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/docs/research-
+program-foundation-20261031/research/studies/R001-global-talent-pipeline/
+REVIEW_AND_HANDOFF.md
+
+[37] [43] https://pubmed.ncbi.nlm.nih.gov/42380538/
+
+https://pubmed.ncbi.nlm.nih.gov/42380538/
+
+[38] [42] https://pubmed.ncbi.nlm.nih.gov/29117452/
+
+https://pubmed.ncbi.nlm.nih.gov/29117452/
+
+[39] [44] https://pubmed.ncbi.nlm.nih.gov/26109450/
+
+https://pubmed.ncbi.nlm.nih.gov/26109450/
+
+[40]
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/AGENTS.md
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/AGENTS.md
+
+[47] https://pubmed.ncbi.nlm.nih.gov/19735036/
+<PARSED TEXT FOR PAGE: 31 / 31>
+https://pubmed.ncbi.nlm.nih.gov/19735036/
+
+[48] https://pubmed.ncbi.nlm.nih.gov/23098129/
+
+https://pubmed.ncbi.nlm.nih.gov/23098129/
+
+[49] https://pubmed.ncbi.nlm.nih.gov/37921913/
+
+https://pubmed.ncbi.nlm.nih.gov/37921913/

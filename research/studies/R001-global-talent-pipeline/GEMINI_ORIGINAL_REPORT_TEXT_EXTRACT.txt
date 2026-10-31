@@ -1,0 +1,1562 @@
+SQUASH ENGINE — RESEARCH 01: ARCHIVED TEXT EXTRACTION
+Source: user-supplied Gemini Deep Research report 'Plán výzkumu talentů ve squashi.docx' (38 pages), received 2026-10-31.
+Status: RESEARCHED / UNVERIFIED; not authoritative, not implemented, not owner approved.
+IMPORTANT: Text extracted from DOCX for searchable archival reference only. Original DOCX contains embedded mathematical formula/page images. Some equations, figures and layout may be MISSING or DAMAGED in this text-only extraction. DO NOT treat blank formula spans as exact mathematical specifications. Retain original DOCX outside repository for faithful review.
+
+--- BEGIN EXTRACT ---
+
+<PARSED TEXT FOR PAGE: 1 / 38>
+SQUASH ENGINE — RESEARCH 01:
+Architektonický plán a teoretická
+specifikace vzniku a vývoje
+squashových talentů
+Protokol schválení výzkumného plánu a stavová
+izolace systému
+Předložený dokument naplňuje požadavek na vypracování podrobného plánu výzkumu ke
+schválení a současně poskytuje kompletní referenční teoretickou a matematickou specifikaci
+pro simulační jádro Squash Engine. V souladu s bezpečnostním příkazem projektu nebyla v
+hlavním dokumentu pravidel (Master) ani ve zdrojovém kódu programu provedena žádná
+změna. Veškeré níže uvedené modely, rovnice a systémové parametry fungují v režimu
+návrhového pískoviště (sandbox blueprint). Samotná exekuce simulačních skriptů, přepis
+databázových vah a integrace do produkčního kódu zůstávají pozastaveny až do formálního
+schválení tohoto výzkumného plánu a výběru jedné ze tří navržených matematických
+architektur.
+Protože přiložený referenční rámec stávajících pravidel Squash Engine není v tomto
+izolovaném kroku přímo modifikován, architektonický návrh předpokládá standardní diskrétní
+
+sezónní cyklus, v němž jedna sezóna odpovídá jednomu ročnímu kroku . V každém kroku
+dochází ke generování nových kohort juniorů, aktualizaci národních makroekonomických a
+sportovních indexů, přepočtu dovednostních atributů hráčů, simulaci turnajového kalendáře
+světového okruhu a aktualizaci žebříčků. Tento předpoklad zajišťuje plnou zpětnou i
+dopřednou kompatibilitu se současnou i budoucími verzemi enginu.
+Struktura výzkumného plánu ke schválení
+Výzkumný protokol je rozvržen do sedmi na sebe navazujících analytických bloků, přičemž
+každý blok striktně odděluje tři epistemické roviny poznání: ověřená fakta vycházející z
+empirických dat profesionálního squashe a recenzovaných sportovně-vědných studií, vědecké
+hypotézy představující teoretické extrapolace pro globální alternativní svět a kreativní herní
+návrhy obsahující algoritmické a systémové mechaniky pro Squash Engine.
+
+
+
+ Fáze výzkumu       Název              Klíčové            Výstupní           Stav
+                    výzkumného         teoretické         artefakt pro
+                    modulu             pilíře a           Squash
+                                       empirické
+<PARSED TEXT FOR PAGE: 2 / 38>
+                          zdroje             Engine
+
+
+                          Demografie,
+Modul 1   Makro-                             Rovnice          Připraveno ke
+                          ekonomika
+          determinanty                       efektivního      schválení
+                          (HDP/obyv.),
+          talentové                          talentového
+                          Bernard &
+          základny                           poolu
+                          Busse (2000),
+                          Stamm &                         a
+                          Lamprecht          nelineární
+                                             saturace kurtů
+                          (2001)1
+
+                          9 pilířů SPLISS    Multiplikátor
+Modul 2   Mezo-úroveň a                                       Připraveno ke
+                          2.0 (De            tréninkové
+          mikro-                                              schválení
+                          Bosscher et al.,   konverze a
+          choreografie
+                          2015)2, Gagné      model
+          rozvoje
+                          DMGT 2.0 (4 D      klubových
+                          obohacení)4        ekosystémů
+                                             (typ Wadi
+                                             Degla)6
+
+                          Teorie
+Modul 3   Modelování                         Generátor        Připraveno ke
+                          extrémních
+          extrémních a                       outlierů z       schválení
+                          hodnot (EVT),
+          vzácných                           malých i
+                          zobecněné
+          talentů                            velkých zemí
+                          Paretovo
+                                             přes prahové
+                          rozdělení
+                                             překročení
+                          (GPD)8             (POT)
+
+
+                          Kapacitní
+Modul 4   Emergentní                         Endogenní        Připraveno ke
+                          hrdla,
+          rozložení                          brzdy            schválení
+                          akademická
+          mezinárodní                        hegemonie
+                          migrace (US
+          síly                               bez umělého
+                          College
+                                             vyrovnávání
+                          Squash),
+                                             (rubber-
+                          přirozená
+                                             banding)
+                          fluktuace9
+
+                          Empirická
+Modul 5   Historické                         Dynamika         Připraveno ke
+                          analýza PSA
+          vzestupy a                         kulturních
+<PARSED TEXT FOR PAGE: 3 / 38>
+                                        (1975–2026):
+                     úpadky                                šoků, efektu       schválení
+                                        Pákistán,
+                     velmocí                               národního
+                                        Anglie/Austráli
+                                                           hrdiny a
+                                        e, Egypt10         institucionální
+                                                           entropie
+
+
+                                        Ornstein-
+ Modul 6             Dlouhodobá                            Ochrana proti      Připraveno ke
+                                        Uhlenbeckovy
+                     stabilita (50–                        inflaci/deflaci    schválení
+                     100 sezón)         procesy13,         atributů a
+                                        ergodické          zamrznutí
+                                        Markovovy          globální
+                                        řetězce15          hierarchie
+
+
+                                        HHI, Giniho
+ Modul 7             Srovnání 3                            Tři kompletní      Připraveno ke
+                     matematickýc       koeficient17,      sady rovnic        schválení
+                     h modelů a         přechodové         (Modely A, B,
+                     validace           matice Top 10      C) a sada 6
+                                           #110            automatizovan
+                                                           ých testů
+
+
+Modul 1: Populace, sportovní popularita a dostupnost
+při vzniku talentové základny
+Vznik surové talentové základny v jakémkoliv globálním sportu podléhá přísným
+demografickým, ekonomickým a prostorovým omezením. V reálném světě není squash plně
+globálním masovým sportem, avšak v alternativním světě Squash Engine, kde squash zaujímá
+pozici prvořadého globálního odvětví, je nutné přesně kvantifikovat, jak se celková populace
+státu transformuje do aktivní kohorty mladých hráčů.
+Empirické základy makro-úrovně a dostupnosti
+Výzkum faktorů vedoucích k mezinárodnímu sportovnímu úspěchu v rámci mezinárodního
+konsorcia SPLISS (Sports Policy factors Leading to International Sporting Success) rozděluje
+determinanty výkonnosti na makro-, mezo- a mikro-úroveň3. Makro-úroveň zahrnuje
+dynamické sociální a kulturní prostředí, v němž populace žije, tedy ekonomický výkon měřený
+HNP či HDP na obyvatele, demografickou strukturu, geografické a klimatické podmínky, míru
+urbanizace, kalorickou spotřebu, střední délku života, podíl negramotných soutěžících, hustotu
+dopravní sítě a národní kulturu1. Podle ekonometrických studií Bernarda a Busseho (2000) a
+Stamma s Lamprechtem (2000, 2001) vysvětlují samotné makroekonomické a demografické
+proměnné v rozvojových zemích až 94 % rozptylu mezinárodního sportovního úspěchu,
+<PARSED TEXT FOR PAGE: 4 / 38>
+zatímco v západních tržních ekonomikách tento podíl klesá na 64 % a v silně centralizovaných
+státně-plánovaných (historicky socialistických) systémech na pouhých 32 %1. Zbývající část
+rozptylu připadá na cílené sportovní politiky a investiční rozhodnutí na mezo-úrovni, které jako
+jediné mohou být ze strany tvůrců politik aktivně měněny a řízeny1.
+Zároveň empirické poznatky ze třetího pilíře SPLISS (Sportovní participace) prokazují, že široká
+základna rekreačních sportovců není vždy nutnou podmínkou pro jednorázový elitní úspěch,
+avšak zásadně ovlivňuje dlouhodobou udržitelnost úspěchu prostřednictvím nepřetržitého
+přísunu mladých talentů a vysoké kvality tréninkové konkurence2. Širší ekonomické podmínky
+přitom přímo formují míru participace tím, že určují celkovou dostupnost a distribuci příležitostí
+uvnitř sportovního systému21. V raketových sportech, a ve squashi obzvláště, naráží
+demografický potenciál na tvrdé infrastrukturní omezení, jelikož squash vyžaduje
+specializované uzavřené kurty. Zatímco běžecké disciplíny nebo fotbal mají nízkou bariéru
+vstupní dostupnosti, squashová participace je úzce svázána s hustotou městské zástavby a
+dostupností klubové či školní infrastruktury3.
+Matematická formulace efektivního talentového poolu
+Pro potřeby Squash Engine nelze velikost talentové základny počítat jako lineární násobek
+populace     . Pokud by platil lineární vztah, státy s miliardovou populací by v každé sezóně
+deterministicky generovaly desetinásobek šampionů oproti státům se sto miliony obyvatel, což
+odporuje sportovní realitě. Surová populace musí projít třemi nelineárními filtry: demograficko-
+urbanizačním filtrem, filtrem kulturní popularity a filtrem fyzické dostupnosti dané kapacitou
+kurtů.
+
+Nechť      je celková populace země v sezóně a                          je podíl mládežnické
+kohorty ve věku sportovní iniciace (typicky 6–12 let) žijící v dosahu urbanizovaných center.
+Kulturní popularita squashe v dané zemi je reprezentována indexem                , který
+vyjadřuje, jaká část sportovně aktivní mládeže preferuje squash před konkurenčními sporty.
+Fyzická dostupnost a ekonomická prostupnost systému je dána indexem dostupnosti
+               , který je funkcí HDP na obyvatele      , hustoty kurtů na 100 000 obyvatel
+a inkluzivity školního i neorganizovaného sportu :
+                                                 1
+
+
+
+
+V této specifikaci parametr            udává rychlost nasycení prostorové dostupnosti kurtů,
+   je poloviční saturační práh ekonomického bohatství společnosti a       určuje strmost
+ekonomické bariéry, jako je dostupnost raket, obuvi a členských poplatků. Efektivní talentová
+základna, definovaná jako počet vážně trénujících juniorů vstupujících do soutěžního síta v
+<PARSED TEXT FOR PAGE: 5 / 38>
+sezóně a označovaná jako               , je pak dána vztahem s klesajícími mezními výnosy z
+populační škály:
+
+
+
+
+Klíčovým stabilizačním prvkem této rovnice je populační exponent                            .
+Hodnota           odráží geografickou disperzi a organizační tření, neboť zdvojnásobení
+populace státu nezdvojnásobí počet hráčů, kteří se mohou reálně potkávat v národních
+juniorských turnajích. Naproti tomu exponent popularity                     má nadlineární
+charakter (         ), protože vysoká popularita sportu vytváří síťové efekty, spontánní zájem a
+společenskou prestiž, která přitahuje nejtalentovanější somatotypy napříč celou populací6.
+
+
+
+ Epistemická kategorie                           Specifikace tvrzení a mechanik v Modulu
+                                                 1
+
+
+                                                 Makroekonomické a demografické faktory
+ Ověřená fakta
+                                                 (populace, HNP na obyvatele, urbanizace,
+                                                 výživa) vysvětlují 94 % sportovního úspěchu
+                                                 v rozvojových zemích, 64 % v západních
+                                                 zemích a 32 % v centralizovaných
+                                                 systémech1. Široká participace zajišťuje
+                                                 kontinuální přísun talentů a kvalitu
+                                                 tréninku19.
+
+
+ Vědecké hypotézy                                Vztah mezi populací a efektivní základnou v
+                                                 prostorově omezeném raketovém sportu
+                                                 vykazuje sublineární škálování (
+                                                              ) kvůli lokální saturaci kurtů,
+                                                 zatímco kulturní popularita působí
+                                                 nadlineárně díky přetahování pohybově
+                                                 nadaných dětí z jiných sportovních odvětví.
+
+
+ Kreativní herní návrhy                          Zavedení dvoustupňového filtru
+                                                 dostupnosti       do Squash Engine, kde
+                                                 chudší, ale vysoce urbanizované země se
+<PARSED TEXT FOR PAGE: 6 / 38>
+                                                    silnou klubovou či školní kulturou mohou
+                                                    kompenzovat nižší HDP vysokou
+                                                    prostorovou koncentrací kurtů         .
+
+
+Modul 2: Trenéři, infrastruktura, konkurence, tradice a
+financování v rozvoji sportovců
+Samotný počet dětí v efektivní základně             určuje pouze počet losů v genetické a
+somatické loterii. To, zda se surový předpoklad promění ve světového hráče, závisí na
+transformační účinnosti národního a klubového prostředí. V odborné literatuře tento proces
+popisuje propojení mezo-úrovňového modelu SPLISS2 a mikro-úrovňového Diferencovaného
+modelu nadání a talentu (DMGT 2.0) profesora Françoyse Gagného4.
+Syntéza rámců SPLISS 2.0 a Gagného DMGT 2.0
+Model SPLISS 2.0 představuje systémově-teoretický rámec, který vychází z premisy, že
+mimořádné sportovní výkony na elitní úrovni jsou výsledkem kombinace fyzických,
+environmentálních a genetických faktorů formujících lidské životy23. Na mezo-úrovni
+identifikuje devět pilířů sportovní politiky, které jsou podloženy 96 kritickými faktory úspěchu
+(CSF) a měřeny pomocí 750 dílčích indikátorů na základě smíšených výzkumných protokolů a
+průzkumů elitního sportovního klimatu2. Tyto pilíře propojují makrosociální vstupy s
+každodenním tréninkovým prostředím: finanční podpora (Pilíř 1) a integrované řízení,
+organizace a struktura sportovních politik v čele s národními sportovními řediteli (Pilíř 2)
+vytvářejí institucionální rámec pro masovou i klubovou participaci (Pilíř 3) a systémy
+identifikace a rozvoje talentů (Pilíř 4)2. Na ně navazuje podpora sportovní kariéry a post-kariérní
+péče (Pilíř 5), síť specializovaných tréninkových zařízení (Pilíř 6), zajištění a vzdělávání trenérů
+(Pilíř 7), dostupnost národních a mezinárodních soutěží (Pilíř 8) a konečně podpora sportovní
+vědy, výzkumu a inovací (Pilíř 9)2. V kanadské a mezinárodní aplikaci SPLISS jsou tyto pilíře dále
+seskupovány do tří strategických témat: Lidé (holisticky podporovaní sportovci, trenéři a
+experti), Systém (cesty na pódium, denní tréninkové prostředí, soutěžní prostředí a sportovní
+věda) a Kultura (integrita, důvěra a inkluzivita napříč systémem)19.
+Na individuální mikro-úrovni Gagného model DMGT 2.0 (a jeho biologické rozšíření EMTD)
+striktně rozlišuje mezi vrozeným nadáním (Giftedness – ), což jsou přirozené, netrénované
+schopnosti v intelektuální, kreativní, sociální, percepční a fyzické doméně (definované jako
+horních 10 % vrstevníků), a rozvinutým talentem (Talent – ), což jsou systematicky
+vybudované dovednosti a kompetence ve specifickém oboru (rovněž horních 10 % aktivních
+sportovců v daném poli)4. Transformace               probíhá skrze dlouhodobý vývojový proces
+
+(   ), který je modulován dvěma skupinami katalyzátorů: intrapersonálními katalyzátory ( ),
+<PARSED TEXT FOR PAGE: 7 / 38>
+zahrnujícími motivaci, vytrvalost, mentální odolnost, autonomii a schopnost zotavit se z
+překážek, a environmentálními katalyzátory (    ), kam patří rodina, učitelé, trenéři, mentoři,
+tréninková skupina vrstevníků a klubová kultura4. Na tento koncept navazuje také Integrovaný
+model rozvoje talentu (IMTD), který ukazuje, jak silné stránky prostředí (například zapojení
+hráčů do rozhodování a poskytování zpětné vazby založené na kompetencích) fungují jako
+psychosociální katalyzátory pro vybudování vnitřního sebeurčení a psychologických
+předpokladů mladého sportovce27.
+Gagné dále definuje obohacování samotného tréninkového procesu pomocí „čtyř D“ (Four Ds
+of Enrichment): Hustota (Density), Obtížnost (Difficulty), Hloubka (Depth) a Rozmanitost
+(Diversity)4. Při analýze nejslabšího článku (Weakest Link) v této komplexní vývojové
+choreografii Gagné prokazuje, že kauzální síla vrozeného nadání  pro predikci výsledného
+talentu je během dlouhého vývoje snižována na střední úroveň právě tehdy, když některý z
+katalyzátorů            selhává4. Retrospektivní výzkum na vzorku 673 vrcholových sportovců
+(z nichž 64 % startovalo na mistrovství světa juniorů a 41 % pobíralo stipendium v individuálním
+sportu) pomocí dotazníku NADS (National Athlete Development Survey) postaveného na
+DMGT 2.0 navíc potvrdil, že budoucí šampioni vykazují v dětství pestrou sportovní participaci
+před specializací, obrovskou časovou investici, silnou podporu rodičů a mimořádnou
+psychickou odolnost při vzestupu po vývojovém trojúhelníku (Athlete Development Triangle)
+od lokální přes regionální a státní až po mezinárodní úroveň, kde počet soupeřů směrem k
+vrcholu proporcionálně klesá, zatímco soutěžní nároky prudce rostou24. Mezi výstupem tohoto
+vývojového trychtýře a mezo-úrovní přitom funguje uzavřená zpětnovazební smyčka:
+vyprodukovaný elitní talent ( ) se po skončení či v průběhu kariéry vrací zpět do systému v
+podobě trenérského kapitálu (Pilíř 7 SPLISS) a národních sportovních hrdinů, kteří zpětně
+posilují národní sportovní kulturu na makro-úrovni2.
+Specifika squashe a fenomén egyptského klubového ekosystému
+Aplikace těchto obecných rámců přímo na squash odhaluje zásadní oborová specifika. Z
+fyziologického hlediska vyžaduje elitní squash schopnost opakovaných vysoce intenzivních
+pohybů – prudkých akcelerací, decelerací a změn směru v omezeném prostoru
+kombinovaných s vysokou percepční rychlostí a koordinací ruka-oko28. Studie třiceti jedna
+elitních hráčů squashe (21 mužů na 42.–594. místě světového žebříčku a 10 žen) i systematické
+přehledy fyziologické přípravy potvrzují, že monitoring a silově-kondiční trénink musejí být
+přísně individualizovány31. Současné studie tréninkových režimů v elitním squashi (Mounter,
+Collins & Nash, 2024/2025) však upozorňují na hluboký rozpor mezi moderní teorií osvojování
+dovedností – zahrnující ekologickou dynamiku, reprezentativní design učení (Representative
+Learning Design) a rámec optimálního bodu výzvy (Challenge Point Framework) – a tradiční
+praxí28. V mnoha zemích zůstává squashový trénink svázán rigidní tradicí a subjektivními
+přístupy trenérů (izolované drily bez herního kontextu) namísto důkazně podloženého
+rozvoje34. Podobně výzkum nutričních znalostí elitních hráčů squashe pomocí dotazníku
+<PARSED TEXT FOR PAGE: 8 / 38>
+RNSKQ ukázal pouze průměrné skóre                         bodu (                           ) bez
+významného rozdílu mezi muži a ženami (             ) a se slabou pozitivní korelací se
+světovým žebříčkem, což dokládá značné rezervy v pilíři sportovní vědy (Pilíř 9 SPLISS) i na
+profesionální úrovni31. Také ve Skotsku či Británii historické analýzy (např. program Prospects
+Squash Management) zdůrazňovaly, že talent mládeže není stabilní vrozený rys, nýbrž se
+neustále transformuje během biologického zrání, takže může být snadno ztracen při
+nedostatku příležitostí35.
+Proč tedy některé národy dokážou tato omezení překonat a vybudovat drtivou hegemonii?
+Nejlepším empirickým důkazem v historii moderního sportu je vzestup Egypta6. Egyptská
+dominance nestojí na uzavřených státních laboratořích, ale na unikátním ekosystému velkých
+sportovních klubů, jako jsou Wadi Degla nebo Heliopolis v Káhiře a Alexandrii, kde osobnostní
+rysy, mezilidské vztahy a uspořádání tréninkového prostředí splývají do jednoho celku6. Tyto
+kluby fungují jako velkokapacitní továrny na talenty díky třem vzájemně provázaným
+mechanismům, které přesně naplňují Gagného 4 D obohacení a pilíře SPLISS. Prvním
+mechanismem je vertikální komprese a sdílený prostor: v klubech jako Wadi Degla trénují
+úřadující mistři světa na vedlejším kurtu hned vedle úplných začátečníků a juniorů, přičemž
+starší hráči a bývalí šampioni přímo radí mladším a předávají taktické i technické znalosti napříč
+generacemi bez informačních ztrát6. Druhým mechanismem je reprezentativní učení vysokou
+konkurencí (Density & Difficulty), kdy namísto izolovaných drilů s jedním trenérem hrají egyptští
+junioři denně ostré tréninkové zápasy s desítkami vrstevníků podobné či vyšší úrovně; tím
+přirozeně naplňují Challenge Point Framework a budují herní adaptabilitu, kreativitu a mentální
+odolnost, která podle studií retence sportovců vykazuje statisticky významný pozitivní vztah s
+udržením se ve vrcholovém sportu (                               , zatímco prostá obecná
+motivace má vztah nevýznamný,                    )21. Třetím mechanismem je mytologie a
+viditelnost (Pilíř 8 SPLISS): průlom Ahmeda Barady v 90. letech 20. století dal Egyptu národního
+hrdinu a umístění skleněného kurtu přímo před Gízské pyramidy proměnilo squash z
+uzavřeného klubového sportu v celonárodní spektákl a historický mýtus6.
+Matematický model transformačního prostředí ve Squash Engine
+Ve Squash Engine je proto nutné modelovat kvalitu rozvojového prostředí země         v sezóně ,
+označenou jako                 , nikoliv jako prostý průměr atributů, ale jako CES (Constant
+Elasticity of Substitution) produkční funkci s multiplikační synergií sparringu, která
+reflektuje Gagného princip „nejslabšího článku“4:
+<PARSED TEXT FOR PAGE: 9 / 38>
+Pět systémových vstupů                      v této rovnici agreguje devět pilířů SPLISS a mikro-
+ekologii klubů způsobem zachyceným v následující strukturní tabulce2.
+
+
+
+ Systémová               Název                     Mapování na pilíře        Funkční dopad na
+ proměnná                agregovaného              SPLISS 2.0 a              rozvoj hráče v
+                         vstupu ve Squash          DMGT 2.0                  simulaci
+                         Engine
+
+
+                                                   Pilíř 1 (Finanční         Dostupnost grantů,
+                         Financování a
+                                                   podpora) a Pilíř 5        prize money a
+                         podpora kariéry
+                                                   (Kariérní a post-         duální kariéry
+                                                   kariérní podpora)2        snižující riziko
+                                                                             předčasného
+                                                                             odchodu3.
+
+                                                   Pilíř 2 (Organizace a     Kvalita a
+                         Infrastruktura a
+                                                   řízení) a Pilíř 6         dostupnost elitních
+                         elitní centra
+                                                   (Tréninková               tréninkových kurtů,
+                                                   zařízení)2                národních center a
+                                                                             skleněných show-
+                                                                             courtů3.
+
+                                                   Pilíř 4 (Identifikace a   Počet elitních
+                         Trenérský kapitál a
+                                                   rozvoj), Pilíř 7          koučů a míra
+                         vědecká metodika
+                                                   (Trenéři) a Pilíř 9       integrace
+                                                   (Sportovní věda a         moderního
+                                                   inovace)2                 Representative
+                                                                             Learning Design a
+                                                                             výživy oproti
+                                                                             zastaralému
+                                                                             drilování31.
+
+                                                   Pilíř 8 (Národní a        Počet a úroveň
+                         Domácí a
+                                                   mezinárodní               domácích
+                         mezinárodní
+                                                   soutěže a události)2      juniorských a
+                         soutěžní síť
+                                                                             profesionálních
+                                                                             turnajů
+                                                                             umožňujících zisk
+                                                                             bodů bez drahého
+<PARSED TEXT FOR PAGE: 10 / 38>
+                                                                              cestování3.
+
+                                                    Pilíř 3 (Participace v    Endogenní
+                           Hustota elitního
+                                                    klubech) + DMGT           proměnná závislá
+                           sparringu (Wadi
+                                                    environmentální           na počtu aktivních
+                           Degla efekt)
+                                                    katalyzátor               hráčů dané země v
+                                                                              globální Top 100 a
+                                                    vrstevníků (   )2
+                                                                              Top 20 sdílejících
+                                                                              kurty s juniory6.
+
+Parametr substituce            (např.       ) zajišťuje, že vážný deficit v kterémkoliv ze
+základních pilířů – například špičkové kurty, ale žádní kvalitní trenéři ani sparring – stahuje
+celkovou účinnost prostředí dolů přesně podle Gagného teorie nejslabšího článku4. Člen
+              představuje akumulovanou národní tradici a mezigenerační paměť rozvedenou v
+Modulu 5.
+
+
+
+  Epistemická kategorie                             Specifikace tvrzení a mechanik v Modulu
+                                                    2
+
+
+                                                    Rámec SPLISS 2.0 definuje 9 pilířů a 96
+  Ověřená fakta
+                                                    kritických faktorů úspěchu2. Gagného
+                                                    DMGT 2.0 prokazuje, že vrozené nadání (
+                                                    ) je bez environmentálních (    )a
+                                                    intrapersonálních ( ) katalyzátorů a 4 D
+                                                    obohacení utlumeno nejslabším článkem
+                                                    řetězce4. V egyptských klubech (Wadi
+                                                    Degla, Heliopolis) trénují mistři světa vedle
+                                                    začátečníků a předávají know-how
+                                                    mezigeneračně6.
+
+                                                    Tradiční subjektivní tréninkové drily ve
+  Vědecké hypotézy
+                                                    squashi zastropovávají rozvoj taktické
+                                                    adaptability34; klubové ekosystémy s
+                                                    vysokou hustotou elitních vrstevníků tento
+                                                    strop prolomují díky neřízenému
+                                                    reprezentativnímu učení.
+<PARSED TEXT FOR PAGE: 11 / 38>
+ Kreativní herní návrhy                           Implementace CES produkční funkce
+                                                  prostředí s parametrem komplementarity
+                                                          a zavedení proměnné Klubová
+                                                  komprese (Wadi Degla Index), která
+                                                  uděluje juniorům bonus k rychlosti učení
+                                                  úměrný počtu aktivních hráčů Top 50 a
+                                                  penzionovaných šampionů působících v
+                                                  dané zemi.
+
+
+Modul 3: Realistické modelování mimořádně vzácných
+talentů z malých i velkých zemí
+Jednou z nejtěžších výzev pro sportovní simulace je současné zachycení dvou zdánlivě
+protichůdných jevů: na jedné straně masivní dominance systémových velmocí, kdy Egypt drží 5
+až 7 míst v mužské Top 1010, a na druhé straně pravidelného výskytu generačních géniů a
+světových jedniček ze zemí s malou populací či okrajovou squashovou základnou.
+Empirická evidence vzácných talentů (Outliers) v reálném squashi
+Historická i současná data PSA (Professional Squash Association) i širší výzkumy identifikace
+talentů v raketových sportech (tenis, stolní tenis, badminton a squash) dokazují, že světová
+špička nikdy není monolitem jedné velké země11. Následující tabulka shrnuje klíčové empirické
+případy hráčů a hráček mimo hlavní populační a systémová centra, kteří dosáhli na absolutní
+vrchol.
+
+
+
+ Země / Region (Kontext           Reprezentativní vzácný          Empirický důkaz elitní
+ základny)                        talent (Outlier)                výkonnosti v datech PSA
+
+
+                                                                  Dosáhl postu světové
+ Peru (malá squashová             Diego Elías
+                                                                  jedničky (duben 2023,
+ základna v Jižní Americe)
+                                                                  celkem 7 týdnů / 49 dní na
+                                                                  #1), v aktuálním žebříčku
+                                                                  světová dvojka (1 631
+                                                                  bodů), bývalý juniorský
+                                                                  lídr11.
+
+                                                                  Paul Coll se stal světovou
+ Nový Zéland (populace ~5         Paul Coll, Susan Devoy
+                                                                  jedničkou v březnu 2022
+ milionů)
+                                                                  (106 dní na #1) a drží 3.
+                                                                  místo na světě (1 153
+<PARSED TEXT FOR PAGE: 12 / 38>
+                                                               bodů)11; Susan Devoy
+                                                               získala 53 titulů PSA (4.
+                                                               místo v ženské historii)36.
+
+                                                               Ovládla ženský squash s
+Malajsie (střední populace,   Nicol David
+                                                               rekordními 177 měsíci v Top
+regionální systém)
+                                                               10 a historicky nejvyšším
+                                                               počtem 81 titulů PSA10.
+
+                                                               Velšan Joel Makin je
+Wales a Skotsko (malé         Joel Makin, Peter Nicol,
+                                                               světovou čtyřkou (1 096
+populační celky v UK)         John White
+                                                               bodů)11; Skot Peter Nicol
+                                                               (později ENG) strávil na #1
+                                                               celkem 60 měsíců (1 825
+                                                               dní) se ziskem 52 titulů11;
+                                                               Skot John White strávil 2
+                                                               měsíce (61 dní) na #111.
+
+                                                               Kanaďan Jonathon Power
+Kanada a Francie (mimo        Jonathon Power, Thierry
+                                                               strávil 14 měsíců (429 dní)
+anglo-egyptsko-               Lincou, Grégory Gaultier
+pákistánské jádro)                                             na #111; Francouzi Thierry
+                                                               Lincou (14 měsíců / 425 dní
+                                                               na #1) a Grégory Gaultier
+                                                               (20 měsíců / 606 dní na #1)
+                                                               prolomili hegemonii
+                                                               velmocí jako výrazní
+                                                               solitéři11.
+
+                                                               Švýcar Mueller (#18),
+Švýcarsko, Katar,             Nicolas Mueller, Abdulla
+                                                               Katařan Al Tamimi (#20),
+Španělsko, Belgie,            Mohd Al Tamimi, Iker
+                                                               Španěl Pajares (#19),
+Guyanská/Karibská oblast      Pajares, Nele Gilis, Nicolette
+                                                               Belgičanka Gilis a Nicolette
+                              Fernandes
+                                                               Fernandes (#28) dokládají
+                                                               průnik malých či
+                                                               netradičních zemí do elitní
+                                                               Top 20 a Top 3039.
+
+                                                               Ramy Ashour vstoupil do
+Časné věkové extrémy          Ramy Ashour, Nour El
+                                                               mužské Top 10 ve věku 19,1
+(mimořádná akcelerace)        Sherbini
+                                                               roku (#9 v listopadu 2006)
+<PARSED TEXT FOR PAGE: 13 / 38>
+                                                                     a Nour El Sherbini do
+                                                                     ženské Top 10 dokonce ve
+                                                                     věku 16,6 roku (#7 v červnu
+                                                                     2012)10.
+
+Pokud by simulační engine generoval potenciál hráčů ze standardního normálního (Gaussova)
+rozdělení                , pravděpodobnost výskytu hráče na úrovni       nebo     v malé zemi s
+                  by byla prakticky nulová, neboť chvost normálního rozdělení klesá exponenciálně
+kvadraticky (                      ). Aby malá země v Gaussově modelu vygenerovala světovou
+jedničku, musel by tvůrce hry uměle zvýšit její střední hodnotu   , což by však nerealisticky
+zvedlo průměrnou úroveň všech jejích hráčů.
+Aplikace teorie extrémních hodnot (EVT) a zobecněného Paretova
+rozdělení (GPD)
+Řešením tohoto paradoxu je využití Teorie extrémních hodnot (Extreme Value Theory –
+EVT) a metody překročení vysokého prahu (Peaks-Over-Threshold – POT), v níž je chvost
+rozdělení modelován pomocí Zobecněného Paretova rozdělení (Generalized Pareto
+Distribution – GPD) nebo jeho rozšířených a alfa-mocninných variant8. Podle Pickandsovy-
+Balkemovy-de Haanovy věty konverguje podmíněné rozdělení přebytků nad dostatečně
+vysokým prahem        pro téměř jakoukoliv výchozí distribuci právě ke GPD, které se v literatuře
+prokázalo jako ideální nástroj pro popis rozdělení talentu, bohatství i extrémních sportovních
+výkonů8.
+Kumulativní distribuční funkce (CDF) zobecněného Paretova rozdělení pro přebytek potenciálu
+         nad prahem       je definována následovně (ve značení dle Hoskinga a Wallise, 1987, a
+Brazy a Kleefelda, 2010, kde kladný tvarový parametr lze ekvivalentně zapsat pomocí
+            )8:
+
+
+
+
+V tomto vyjádření představuje        práh elitního nadání (např. Gagného horních 10 % nebo 1 %
+
+populace)4,            je měřítkový parametr (scale) a   (v některých pramenech značené jako
+    ) je tvarový parametr chvostu (tail index)8. Chování chvostu přitom závisí přímo na
+znaménku a velikosti tohoto parametru: pokud             , chvost klesá exponenciálně; pokud
+       (což odpovídá             ve formulaci                                   )8, dostáváme
+<PARSED TEXT FOR PAGE: 14 / 38>
+těžký Paretův chvost (heavy tail), který generuje občasné drastické odlehlé hodnoty (geniální
+jedince) i z malých vzorků; a konečně pokud            (odpovídá          , zejména                )8,
+rozdělení má konečný horní koncový bod                             , což reprezentuje absolutní
+
+biologicko-fyziologický limit lidského druhu. Parametry a lze v empirických datech
+robustně odhadovat metodou maximální věrohodnosti (MLE), párováním kvantilů (percentile-
+matching) nebo metodou oříznutých momentů (trimmed moments), které jsou odolné vůči
+extrémním odlehlým pozorováním8.
+Mechanismus vzniku solitéra v malé zemi vs. klastru ve velké zemi
+Zobecněné Paretovo rozdělení exaktně vysvětluje strukturální rozdíl mezi Peru (Diego Elías) a
+Egyptem (7 hráčů v Top 10) v interakci mezi talentem a náhodou10. Předpokládejme, že
+
+genetický a percepčně-motorický strop nadání          nad prahem        má globálně univerzální
+
+tvarový parametr      a měřítko    , protože biologický potenciál lidstva je napříč státy identický4.
+V zemi     s efektivní základnou            překročí práh      v každé sezóně náhodný počet
+jedinců                                          . Maximální vrozené nadání v dané kohortě
+země      je pak dáno statistikou maxima:
+
+
+
+
+Protože       má těžký (nebo mírně shora omezený sub-exponenciální) GPD chvost, kvantilová
+funkce pro náhodnou veličinu                               má tvar8:
+
+
+
+
+V malé zemi s nízkým počtem elitních prospektů (např.          nadaných juniorů za rok)
+bude většina sezón průměrných, ale jednou za 15–25 sezón padne náhodné číslo
+                 , což díky mocninnému členu         vystřelí hodnotu      do pásma absolutní
+světové extratřídy. Tento „osamělý vlk“ má natolik extrémní vrozené dispozice          a vnitřní
+
+pohon , že dokáže kompenzovat i slabší domácí prostředí       – zejména pokud v
+dorosteneckém věku využije mezinárodní tréninkovou migraci, například přesun do zahraniční
+akademie nebo na univerzitu v USA9. Naproti tomu velmoc s obrovským               (např.
+            ) losuje z této distribuce pětsetkrát v každé sezóně: nejenže má mnohem vyšší
+pravděpodobnost vygenerování absolutního génia, ale především každou sezónu spolehlivě
+<PARSED TEXT FOR PAGE: 15 / 38>
+generuje desítky hráčů v pásmu                 percentilu, které následně špičkové prostředí
+     kolektivně dotlačí do světové Top 50 a Top 106.
+
+
+
+ Epistemická kategorie                           Specifikace tvrzení a mechanik v Modulu
+                                                 3
+
+
+                                                 Zobecněné Paretovo rozdělení (GPD) je
+ Ověřená fakta
+                                                 matematicky optimální rodinou pro
+                                                 modelování překročení vysokého prahu v
+                                                 teorii extrémních hodnot8. V reálném
+                                                 squashi se na postu světové jedničky
+                                                 prosadili hráči z Peru (Elías), Nového
+                                                 Zélandu (Coll, Devoy), Malajsie (David) či
+                                                 Kanady (Power)11.
+
+
+ Vědecké hypotézy                                Biologicko-percepční nadání pro squash
+                                                 má napříč populacemi těžký pravý chvost s
+                                                 konečným fyziologickým stropem, díky
+                                                 čemuž rozptyl maximální hodnoty v malém
+                                                 vzorku neklesá k nule tak rychle jako u
+                                                 normálního rozdělení.
+
+
+                                                 Dvoufázový generátor juniorů ve Squash
+ Kreativní herní návrhy
+                                                 Engine (tzv. Full-Tail / GPD Hybrid)45: běžná
+                                                 populace klubu se generuje z rychlého
+                                                 zkráceného log-normálního rozdělení,
+                                                 zatímco horní 1 % prospektů každého státu
+                                                 se losuje exaktně z kvantilové funkce GPD,
+                                                 doplněné o mechaniku „Zahraniční
+                                                 stipendijní únik“ (Global Academy Bypass)
+                                                 pro supertalenty z malých zemí.
+
+Modul 4: Přirozené rozložení sportovní síly mezi státy
+bez umělého vyrovnávání
+Častou chybou herních simulací je snaha udržet napětí pomocí umělého vyrovnávání (tzv.
+rubber-banding nebo plošné handicapování vedoucí země, jaké se zkoumá v teoretických
+studiích handicapových systémů v tenisu či golfu pomocí Markovových rozhodovacích
+<PARSED TEXT FOR PAGE: 16 / 38>
+procesů)50. Zatímco ve studiích amatérského sportu či uzavřených severoamerických a
+evropských lig (fotbal, házená, basketbal, silniční cyklistika) je kompetitivní rovnováha a
+hypotéza nejistoty výsledku (Uncertainty of Outcome Hypothesis) klíčovým tématem kvůli
+divácké návštěvnosti a televizním právům15, v globální simulaci individuálního sportu by umělé
+zásahy do pravděpodobnosti výhry v zápase zničily vnitřní integritu světa. Reálné sportovní
+soutěže přitom přirozeně operují v blízkosti fázového rozhraní mezi náhodnými faktory a čistou
+dovedností s mírnou převahou dovednosti15. V reálném squashi vzniká kompetitivní rovnováha
+a přirozená stratifikace států z endogenních kapacitních omezení, ekonomických tření a
+strukturálních úniků talentů9.
+Empirické mechanismy omezující absolutní monopol
+Pohled na reálná data profesionálního squashe v letech 2000–2026 ukazuje silnou, avšak
+přirozeně ohraničenou koncentraci moci10. V období 2000–2020 prošlo mužskou Top 10
+celkem 50 hráčů (z nichž 15, tedy 30 %, dosáhlo na post #1) a ženskou Top 10 celkem 41
+hráček (z nichž 12, tedy 29 %, dosáhlo na post #1)10. Na vrcholu své dominance (v letech 2016–
+2018 u mužů v Egyptě v deseti samostatných měsících a v prosinci 2000 u žen v Anglii)
+dokázala jediná země obsadit maximálně 7 z 10 míst ve světové Top 1010. Dlouhodobý podíl
+nejdominantnější země na celkovém počtu „hráčo-měsíců“ v Top 10 (kde Egypt u mužů
+nasbíral 844 měsíců a Anglie u žen 786 měsíců, následovaná Egyptem s přibližně 55 %
+anglického objemu a dále Francií a Malajsií) konverguje k hranici ~50 % u mužů a ~40 % u žen,
+přičemž v éře vrcholné Anglie v roce 2000 i Egypta v září 2020 dosáhl krátkodobě ~60 %10.
+Nikdy v historii se nestalo, že by jedna země obsadila 10 z 10 míst v Top 10 nebo 45 z 50 míst v
+Top 50 po celé desetiletí.
+Důvod, proč se růst hegemona vždy zastaví kolem hranice 50–70 % špičky bez jakéhokoliv
+umělého zásahu federace, spočívá ve čtyřech přirozených samoregulačních mechanismech.
+Prvním a nejsilnějším je fenomén odlivu mozků do univerzitního systému (US College Squash
+Drain). Jak dokládají analýzy kariérních drah elitních juniorů, samotný přebytek talentů v Egyptě
+vede k tomu, že i mistři světa juniorů a vícenásobní vítězové či finalisté British Junior Open
+(například Marwan Tarek, Saadeldin Abouaish nebo Omar El Torkey) odcházejí v 18 letech na
+prestižní americké univerzity, jako jsou Harvard nebo University of Virginia, a po promoci
+nastupují do lukrativních běžných zaměstnání mimo profesionální squash9. V zemi s extrémní
+konkurencí na špičce totiž klesá mezní očekávaný zisk pro 15. nejlepšího juniora v zemi, zatímco
+hodnota akademického stipendia zůstává jistá.
+Druhým samoregulačním mechanismem je reprezentační a tréninková migrace (naturalizace).
+Hráči čelící domácímu přetlaku nebo nespokojenosti s financováním mění sportovní občanství.
+Výrazným příkladem v reálné Top 10 jsou bratři Mohamed Elshorbagy (bývalá světová jednička
+s 51 tituly a 1 521 dny na postu #1) a Marwan Elshorbagy, kteří přešli z Egypta pod vlajku
+Anglie11, stejně jako dříve Skot Peter Nicol přešel během kariéry pod reprezentaci Anglie12.
+Třetím mechanismem jsou klesající výnosy z kapacity elitních center a turnajových kvót:
+národní tréninková centra, čas špičkových trenérů a divoké karty na domácích turnajích mají
+<PARSED TEXT FOR PAGE: 17 / 38>
+konečnou fyzickou kapacitu, takže třicet špičkových juniorů v jedné zemi nemůže současně
+čerpat stoprocentní pozornost národního šéftrenéra (High Performance Director)3. Čtvrtým
+mechanismem je globální difúze know-how skrze export trenérů, kdy přebytek bývalých
+šampionů v dominantní zemi vede k tomu, že tito experti přijímají lukrativní nabídky národních
+federací či univerzit v USA, Malajsii, Francii nebo Kataru (kde vyrůstají či v USA trénují hráči jako
+Abdulla Mohd Al Tamimi, Ng Eain Yow či Joachim Chuah)40. Hegemon tak neúmyslně
+vyzbrojuje své globální konkurenty.
+<PARSED TEXT FOR PAGE: 19 / 38>
+Endogenní rovnice přirozeného nasycení ve Squash Engine
+Aby Squash Engine nepotřeboval žádné umělé vyrovnávání, zavádí se na přechodu mezi
+juniorskou (U19) a profesionální (PSA) kariérou Endogenní filtr oportunitních nákladů a
+kongesce (Congestion & Opportunity Cost Filter).
+
+Nechť jsou junioři země    v sezóně seřazeni sestupně podle své aktuální výkonnosti na prahu
+dospělosti (18 let):                                       . Efektivní podíl trenérské a systémové
+
+kapacity                , který -tý junior získá, a pravděpodobnost               , že
+skutečně vstoupí na profesionální dráhu namísto odchodu do akademické či civilní sféry, jsou
+dány vztahy:
+
+
+
+
+V těchto rovnicích               označuje počet domácích hráčů již přítomných v globální Top
+100,               je absorpční kapacita národní elity a                  je hodnota alternativní
+kariéry (vysokoškolské stipendium či kvalifikovaná práce v ekonomice s HDP na obyvatele
+)9. Pokud země produkuje nadbytek špičkových juniorů (jako Egypt), hráči na 6. až 15. místě
+národního juniorského žebříčku narážejí na silnou vnitrostátní konkurenci v boji o sponzory a
+turnajové karty, což zvyšuje pravděpodobnost jejich odchodu na univerzity (College Drain)
+nebo přijetí nabídky na reprezentaci jiné země s volnou kapacitou    9
+                                                                      . Tím vzniká zcela
+přirozená rovnováha bez jakéhokoliv zásahu do samotného herního či zápasového enginu.
+
+Modul 5: Historické vzestupy a úpadky sportovních
+velmocí
+Dlouhodobá simulace musí generovat uvěřitelnou makro-historii, v níž se rodí, vrcholí a
+následně upadají sportovní impéria, podobně jako v evropském klubovém fotbale dochází ke
+strukturálním přechodům mezi vyrovnanými a dvourychlostními ligami54. Analýza padesáti let
+oficiálních žebříčků PSA (od ledna 1975 do roku 2026) ukazuje, že historie světového squashe
+není statická, nýbrž prošla třemi velkými tektonickými epochami10.
+Empirická chronologie tří velkých epoch světového squashe
+<PARSED TEXT FOR PAGE: 20 / 38>
+Historická       Období      Hlavní        Klíčoví            Příčiny
+epocha                       hegemon(i)    představitelé      vzestupu a
+                                           a empirické        mechanismus
+                                           metriky            následného
+                                           dominance          úpadku
+
+
+                                           Qamar Zaman        Vzestup:
+I. Pákistánská   1975–1998   Pákistán
+                                           (25 měs. / 761     Rodinné klany
+(a raná                      (sekundárně
+                                           dní #1), Geoff     (dynastie
+australská)                  Austrálie)
+                                           Hunt (AUS, 59      Khanů),
+éra
+                                           měs. / 1 796 dní   extrémní
+                                           #1), Jahangir      fyzická
+                                           Khan (94           kondice a dril.
+                                           měs. / 2 861 dní   Úpadek:
+                                           #1, 61 titulů),    Uzavřenost
+                                           Jansher Khan       know-how do
+                                           (97 měs. / 2       úzkých
+                                           952 dní #1, 99     rodinných
+                                           titulů)11.         struktur,
+                                                              absence široké
+                                                              klubové
+                                                              infrastruktury
+                                                              pro mládež po
+                                                              odchodu
+                                                              Janshera
+                                                              Khana v lednu
+                                                              199812.
+
+                                           Peter Nicol        Vzestup:
+II. Anglo-       1998–2014   Anglie /
+                                           (60 měs. / 1       Profesionální
+australská a                 Skotsko,
+                                           825 dní #1, 52     státní podpora
+západní éra                  Austrálie
+                                           titulů), Nick      (UK Sport /
+                             (výpadově
+                                           Matthew (19        Australian
+                             Kanada,
+                                           měs. / 576 dní     Institute of
+                             Francie,
+                                           #1, 165 měs. v     Sport – model
+                             Malajsie)
+                                           Top 10),           SPLISS),
+                                           James              sportovní věda
+                                           Willstrop (11      a systémová
+                                           měs. / 337 dní     organizace3.
+<PARSED TEXT FOR PAGE: 21 / 38>
+                                               #1), Chris          Úpadek:
+                                               Dittmar (AUS,       Stárnutí
+                                               2 měs. #1),         generace
+                                               David Palmer        (náhlý propad
+                                               (AUS, 5 měs.        Austrálie v r.
+                                               #1), Lee            2007 po
+                                               Beachill (ENG,      vypadnutí A.
+                                               3 měs. #1),         Rickettse a J.
+                                               Sarah Fitz-         Whitea z Top
+                                               Gerald (AUS,        10), pokles
+                                               62 titulů),         dostupnosti
+                                               Michelle            kurtů v
+                                               Martin (AUS,        západních
+                                               56 titulů), Nicol   městech,
+                                               David (MAS, 81      rigidní
+                                               titulů)10.          tréninkové
+                                                                   drily10.
+
+                                               Amr Shabana         Vzestup: Efekt
+III. Egyptská   2006 / 2015–   Egypt (v obou
+                                               (33 měs. / 1        národního
+revoluce a      současnost     pohlavích)
+                                               006 dní #1 od       hrdiny (Ahmed
+moderní éra
+                                               2006), Karim        Barada v 90.
+                                               Darwish (11         letech + turnaj
+                                               měs. / 335 dní      u Pyramid),
+                                               #1), Ramy           exploze
+                                               Ashour (21          komerčně-
+                                               měs. / 638 dní      komunitních
+                                               #1), Mohamed        mega-klubů
+                                               El Shorbagy         (Wadi Degla,
+                                               (50 měs. / 1 521    Heliopolis),
+                                               dní #1), Karim      mezigenerační
+                                               Abdel Gawad         přenos uvnitř
+                                               (1 měs. #1), Ali    jednoho města
+                                               Farag (29 měs.      a totální
+                                               / 113 týdnů / 1     dominance v
+                                               671 dní #1, 80,5    africkém
+                                               % výher),           juniorském i
+                                               Mostafa Asal        seniorském
+                                               (94 týdnů / 658     měřítku6.
+                                               dní #1), Nour
+<PARSED TEXT FOR PAGE: 22 / 38>
+                                                            El Sherbini (44
+                                                            titulů), Nouran
+                                                            Gohar11. V
+                                                            roce 2015
+                                                            Egypt
+                                                            definitivně
+                                                            předstihl Anglii
+                                                            v podílu v Top
+                                                            1010.
+
+Z dat v tabulce a z analýzy Top 10 v letech 2000–2020 vyplývá zásadní dynamický poznatek:
+úpadek velmoci – jako byl pád Pákistánu po roce 1998, prudký pokles Austrálie v roce 2007 po
+odchodu generace Anthonyho Hilla, Johna Whitea, Davida Palmera, Paula Price, Stewarta
+Boswella a Anthonyho Rickettse z Top 10, případně postupný pokles Anglie mezi lety 2000 a
+2015 z 60% podílu v Top 1010 – má odlišnou časovou konstantu než její vzestup.
+Vzestup (Catalytic Ignition) bývá typicky odstartován průlomem jednoho charismatického
+šampiona (efekt Ahmeda Barady v Egyptě) spojeným s prestižní domácí událostí (turnaj před
+Gízskými pyramidami)6. Pokud v zemi existuje latentní klubová infrastruktura, tento jiskřivý
+moment vyvolá masivní vlnu dětské participace, která se v plné síle projeví na světovém
+žebříčku se zpožděním 8 až 12 let, což odpovídá době potřebné k výchově desetiletého dítěte
+ve dvacetiletého člena Top 10, jak ukazuje nástup generace Shabana, Darwish, Ashour, El
+Shorbagy, Gawad, Farag a Asal6.
+Naproti tomu úpadek (Institutional Sclerosis & Demographic Shift) nastává ze tří vzájemně
+odlišných příčin. První příčinou je křehkost úzké báze (Fragile Monopoly): pokud úspěch stojí na
+jedné rodině či malém elitním centru bez masové klubové základny (případ Pákistánu v 90.
+letech nebo ženské Malajsie po éře Nicol David), odchod jedné generace bez nástupců způsobí
+skokový kolaps během 2 až 4 sezón10. Druhou příčinou je metodická skleróza (Coaching
+Dogma), kdy úspěšná velmoc začne považovat své historické tréninkové postupy za neomylné
+dogma; jak upozorňují Mounter et al. (2024), squashová praxe pak ustrne v tradici a
+subjektivních drilech, zatímco hladovější vyzyvatel zavede dynamičtější herní pojetí28. Třetí
+příčinou je ekonomické vytěsnění kurtů (Real Estate Crowding-Out), kdy v bohatých západních
+metropolích (Anglie, Austrálie) rostou náklady na komerční nemovitosti, což vede k uzavírání
+tradičních squashových klubů a k přelivu rekreačních hráčů k novým trendovým sportům, čímž
+postupně vysychá spodní patro pyramidy (Pilíř 3 SPLISS)2.
+<PARSED TEXT FOR PAGE: 23 / 38>
+Dynamické rovnice vzestupu a úpadku pro Squash Engine
+Pro věrné zachycení těchto historických vln zavedeme dvě stavové proměnné pro každou
+zemi : Kulturní hybnost (Cultural Momentum –        ) a Metodickou rigiditu
+(Methodological Rigidity –              ).
+Kulturní popularita   se vyvíjí podle stochastické diferenční rovnice se zpožděným efektem
+<PARSED TEXT FOR PAGE: 24 / 38>
+národního hrdiny:
+
+
+
+
+V této dynamice      označuje dlouhodobou klidovou rovnováhu země,
+                           je indikátor průlomového titulu (světová jednička, vítěz World
+Championship nebo domácího Major turnaje typu Pyramid)6, který vyvolá skokový nárůst
+zájmu mládeže, a                 představuje ekonomicko-kulturní erozi (vytěsňování klubů a
+
+konkurence jiných forem zábavy). Protože nárůst        v sezóně ovlivňuje velikost kohorty 8–
+10letých dětí, projeví se na seniorském žebříčku PSA přirozeně až v sezóně        , kde
+              let.
+Současně u země, která dlouhodobě dominuje, narůstá metodická rigidita          reprezentující
+usnutí na vavřínech a konzervativní lpění na starých drilech :
+                                                           34
+
+
+
+
+Vysoká hodnota      snižuje efektivitu tréninkového pilíře   v rovnici prostředí z
+Modulu 2, dokud země neprojde výsledkovou krizí a následnou metodickou reformou,
+například obměnou šéftrenéra reprezentace a přechodem na moderní vědecké metody
+inspirované benchmarkingem SPLISS, jaký byl realizován například ve Vlámsku či Kanadě3.
+
+Modul 6: Zachování realističnosti simulace po 50 až
+100 sezónách
+Simulace běžící 50 až 100 sezón, což odpovídá přibližně pěti až deseti kompletním generacím
+hráčů, čelí v herním inženýrství třem zásadním systémovým rizikům. Prvním rizikem je inflace
+nebo deflace dovednostních atributů (Rating Drift), kdy průměrný nebo maximální rating hráčů
+ve sté sezóně postupně přeroste škálu (například ze 100 bodů na 180) nebo naopak klesne na
+60, čímž přestanou fungovat zápasové rovnice a prahy únavy. Druhým rizikem je absorpční
+stav (Hegemonic Lock-In), v němž pozitivní zpětná vazba – více šampionů přináší více peněz a
+prestiže, což generuje ještě více šampionů – způsobí, že nejpozději ve 40. sezóně jedna země
+trvale zmonopolizuje 100 % žebříčku a systém zamrzne v jednom bodě. Třetím rizikem je
+demografický šum a rozpad věkové struktury, kdy se průměrný věk v Top 10 vychýlí do
+extrémů (buď samí sedmnáctiletí teenageři, nebo samí osmatřicetiletí veteráni).
+Empirické kotvy dlouhodobé rovnováhy a stárnutí
+Pohled na reálná data PSA z let 1975–2026 poskytuje pevné invariance, které musejí platit v
+první i ve sté sezóně simulace. Z hlediska věkové dynamiky a vrcholu kariéry leží u mužů
+<PARSED TEXT FOR PAGE: 25 / 38>
+výkonnostní vrchol kolem 27 až 30 let, jak ukazují příklady hráčů jako Joel Makin, Tarek Momen
+či Marwan Elshorbagy udržujících se v Top 10 přes třicítku a porážejících hráče mimo Top 10 s
+mimořádnou konzistencí9. Naproti tomu u žen průměrný věk v Top 10 v čase mírně klesl, hráčky
+častěji ukončují kariéru v mladším věku (například Raneem El Welily) a v Top 10 tak současně
+nepůsobí tolik starších bývalých světových jedniček jako u mužů, kde v jedné dekádě
+figurovalo šest bývalých či budoucích jedniček současně; přesto však ty ženy, které v Top 10
+zůstanou, v ní vykazují v průměru delší celkovou dobu setrvání než muži (s výjimkou horního 90.
+percentilu, kde se obě pohlaví vyrovnávají)9. Historické maximum pobytu v Top 10 za
+dvacetileté sledované okno činí 165 měsíců u mužů (Nick Matthew, přičemž Mohamed El
+Shorbagy následně dosáhl 670 týdnů v Top 10) a 177 měsíců u žen (Nicol David)10. Absolutní
+světové jedničky přitom dosahují za celou kariéru míry vítězství (win rate) vysoko nad 70 % a u
+nejlepších kolem 80 %; například Ali Farag ukončil kariéru v roce 2025 s bilancí 445 výher z 553
+zápasů na PSA Tour, tedy 80,5 %, a se ziskem 46 titulů36.
+Stochastická stabilizace: Ornstein-Uhlenbeckovy procesy a
+ergodické řetězce
+V matematické teorii dynamických sportovních ratingů (Aldous, 2017; analýzy dynamické
+kompetitivní rovnováhy pomocí Markovových řetězců a MCMC metod) se pro zajištění
+dlouhodobé stacionarity využívají Ornstein-Uhlenbeckovy (OU) procesy vracející se ke
+střední hodnotě (mean-reverting stochastic processes) a ergodické Markovovy řetězce13.
+Aby v horizontu 100 sezón nedošlo k inflaci atributů ani k zamrznutí hegemonie, implementuje
+architektura Squash Engine tři matematické pojistky. První pojistkou je stacionární Ornstein-
+Uhlenbeckova dynamika národních faktorů, v níž se každý národní multiplikátor (ekonomická
+podpora, popularita, kvalita řízení federace) vyvíjí jako diskrétní OU proces tvaru13:
+
+
+
+
+Protože rychlost návratu ke střední hodnotě              , stacionární rozdělení procesu pro
+            je přísně gaussovské (nebo po logistické transformaci přísně omezené na interval
+      ) s konečným rozptylem      13
+                                    . Žádná makro- ani mezo-proměnná tak nemůže v čase
+divergovat.
+Druhou pojistkou je zákon zachování globálního dotačního a bodového fondu (Zero-Sum
+Global Normalization). Vliv prostředí       na posun průměrného herního hodnocení nesmí
+
+působit absolutně bez vazby na globální průměr. V každé sezóně se proto surový index
+prostředí        relativizuje vůči váženému celosvětovému průměru        :
+<PARSED TEXT FOR PAGE: 26 / 38>
+Pokud se celosvětově zlepší sportovní věda (Pilíř 9 SPLISS)2, zvedne se absolutní rychlost hry,
+ale relativní rozdělení herních ratingů (například na škále Elo 1500–2500 nebo 0–100) zůstane
+ukotveno ke stacionární střední hodnotě13. Třetí pojistkou je biologická stacionarita věkové
+křivky a zranění: fyziologické opotřebení ve squashi pramenící z vysokého excentrického
+přetížení při výpadech a změnách směru29 je modelováno pomocí Weibullova rizika zranění a
+asymetrické dvojité exponenciální věkové křivky (růst fyzických atributů do ~24 let, vrchol herní
+vyspělosti v 27–30 letech, zrychlující pokles výbušnosti po 32. roce života)9. Tím je zaručeno, že
+se generace kompletně obmění každých 12 až 15 sezón.
+
+Modul 7: Tři alternativní matematické modely a
+měřitelné testy realističnosti
+Na základě syntézy předchozích šesti modulů jsou níže zformulovány tři alternativní
+matematické modely pro generování a vývoj talentů ve Squash Engine. Každý model je
+navržen pro jinou míru výpočetní složitosti, transparentnosti a simulační granulity.
+Model A: Makro-parametrický GPD-CES model (Kvantilově-
+ekonometrická architektura)
+Model A je vysoce efektivní analytický model, který generuje pouze relevantní špičku
+juniorských kohort přímo z teorie extrémních hodnot (GPD)8 a jejich vývoj řídí spojitými
+diferenčními rovnicemi založenými na produkční funkci CES propojující rámce SPLISS a DMGT3.
+
+V tomto modelu probíhá generování kohorty ve věku 14 let tak, že v zemi       v sezóně vznikne
+počet elitních juniorských prospektů                                         , kde
+                                           . Pro každého prospekta                           je
+následně vrozený geneticko-percepční potenciál (Giftedness                           ) vylosován
+ze zobecněného Paretova rozdělení s mírně záporným tvarovým parametrem
+(nebo kladným                 se zastropováním na                   )8:
+
+
+
+
+Intrapersonální katalyzátor   , reprezentující mentální odolnost a vnitřní motivaci, se losuje z
+Beta rozdělení                         . Samotný sezónní rozvoj dovednosti (Talent
+                                       4
+                                                                                           ve
+<PARSED TEXT FOR PAGE: 27 / 38>
+věku ) pak roste směrem k efektivnímu stropu hráče rychlostí danou prostředím                 ,
+vnitrostátním sparringem a věkovým faktorem plasticity              :
+
+
+
+
+Funkce dosažitelného stropu                                                                       přitom
+vyjadřuje, že hráč s mimořádnou vnitřní motivací                a případným přechodem do
+mezinárodní akademie dokáže naplnit téměř 100 % svého genetického stropu                 i ze slabší
+země, což věrně reprodukuje případy Diega Elíase či Paula Colla .       4
+
+
+Model B: Víceúrovňový skrytý Markovův a režimový model (Multi-
+State HMM & Transition Pipeline)
+Model B opouští spojité deterministické křivky a modeluje kariéru každého hráče i vývoj
+národních systémů jako posloupnost přechodů mezi diskrétními výkonnostními patry (Tiers) a
+skrytými stavy formy či hybnosti (Hidden Markov Model – HMM)16. Tento přístup přímo
+navazuje na pokročilé studie modelování hybnosti (momentum) a strukturálních zlomů ve
+sportu využívající skryté Markovovy modely a kopulové struktury závislosti (Schultz, 2026;
+Ötting et al., 2023; Manasis & Ntzoufras, 2014)16 a na empirické přechodové tabulky PSA, podle
+nichž má například muž na 10. místě 32% šanci dosáhnout postu světové jedničky (žena 23 %) a
+muž na 5. místě má 52% šanci (žena 38 %)10.
+
+V architektuře Modelu B se každý hráč v sezóně nachází v jednom ze sedmi pozorovatelných
+stavů kariéry (Observable Tiers):     (Klubový junior),        (Národní špička U19),     (PSA
+Challenger / Top 200),     (PSA Top 50),      (PSA Top 20),         (PSA Top 10),      (Světová
+jednička / GOAT kandidát) a absorpční stav     (Konec kariéry nebo odchod na univerzitu)9.
+Současně se hráč i národní federace nacházejí v jednom ze tří nepozorovaných (skrytých)
+režimů vývojové hybnosti (Latent Momentum Regime)
+                                                                                                           1
+
+
+. Přechod mezi těmito skrytými režimy je řízen Markovovou maticí
+6
+                                                                                          , kde
+
+kvalitní tréninkové prostředí       a mentální odolnost        zvyšují pravděpodobnost přechodu
+do pozitivního průlomového režimu a jeho perzistenci .    16
+
+
+Pravděpodobnost přechodu hráče mezi pozorovatelnými patry žebříčku ze stavu                  do stavu
+    v následující sezóně je pak dána multinomickým logitem podmíněným latentním režimem
+    :
+<PARSED TEXT FOR PAGE: 28 / 38>
+V rámci daného stavu           a režimu     je aktuální herní síla hráče v zápasech losována z
+podmíněného rozdělení                                        16
+                                                               . Model B tak přirozeně generuje
+náhlé výkonnostní exploze (tzv. breakout seasons, jako byl raketový vzestup Mostafy Asala,
+průlom Baptiste Masottiho na 14. místo či návrat Karima Abdela Gawada po půlročním výpadku
+kvůli zranění paty zpět na 6. místo světa po triumfech na Grasshopper Cupu a ve finále
+Malaysia Cupu)40 i nečekané kariérní propady.
+Model C: Agentně orientovaný síťový a ekologický model (Micro-
+Simulation & Club Ecology ABM)
+Model C je nejhlubší simulační architekturou. Namísto agregace na úrovni celých států simuluje
+svět zdola nahoru (bottom-up) prostřednictvím konkrétních sportovních klubů a
+tréninkových akademií (například Káhira – Wadi Degla, Londýn/Pontefract, Kuala Lumpur,
+Lima, Praha) a přímých interakcí mezi agenty (hráči a trenéry) v duchu ekologické dynamiky6.
+
+Každý hráč je v Modelu C popsán nikoliv jedním skalárním číslem, ale pětirozměrným
+vektorem atributů odpovídajícím fyziologickým, technickým a psychologickým nárokům
+squashe28:
+
+
+
+
+Herní svět obsahuje     diskrétních klubů a akademií. Každý klub disponuje kapacitou kurtů
+
+, hlavním trenérem s vektorem odbornosti         a metodickým stylem                   (kde    značí
+
+zastaralý izolovaný dril a     moderní reprezentativní design učení)34 a množinou aktuálně
+
+přítomných hráčů        . V každém tréninkovém cyklu hráč               absolvuje tréninkové
+interakce s trenérem         a s náhodně vybranými spoluhráči                    . Přírůstek
+
+dovednosti v dimenzi     je přitom největší tehdy, když rozdíl úrovní mezi hráčem a
+sparringpartnerem      leží v pásmu optimální výzvy (Challenge Point             )7:
+<PARSED TEXT FOR PAGE: 29 / 38>
+Jádrová funkce optimální výzvy má tvar                                             pro
+             . Pokud v klubu trénují mistři světa vedle juniorů (         ), junioři zažívají masivní
+
+akceleraci v percepčních (       ) a taktických (  ) atributech6. Pokud naopak hráč v
+malém klubu v Peru, v Malajsii nebo v Česku přeroste své lokální spoluhráče (
+                                   ), jeho lokální přírůstek ze sparringu klesá k nule. Jakmile má
+dostatečné financování z rodiny, federace nebo prize money, agent autonomně migruje do
+elitního globálního klubu    v Anglii, USA nebo Egyptě, čímž přirozeně prolomí limit své rodné
+země .
+     11
+
+
+Strukturované porovnání navržených matematických modelů
+Pro rozhodnutí o implementaci do Squash Engine shrnuje následující srovnávací matice
+architektonické vlastnosti, silné stránky a slabiny všech tří modelů.
+
+
+
+ Kritérium                  Model A: Makro-         Model B:                 Model C: Agentní
+ hodnocení                  parametrický            Víceúrovňový             klubová ekologie
+                            GPD-CES                 skrytý Markovův          (ABM)
+                                                    (HMM)
+
+
+ Výpočetní                  Extrémně nízká (        Nízká až střední         Vysoká (
+ náročnost (100                           opera     (násobení                                   pár
+ sezón)                     cí za sezónu; 100       přechodových             ových interakcí v
+                            sezón proběhne za       matic a losování         klubech; vyžaduje
+                                                    stavů; 100 sezón za      optimalizaci sítí).
+                                 sekundu).          2–5 sekund).
+
+
+                                                    Střední až vysoká
+ Snadnost                   Vysoká –                                         Nízká (obtížná) –
+                                                    – přechodové
+ kalibrace                  parametry (                                      nelineární interakce
+                                                    pravděpodobnosti
+ parametrů                            ) mají                                 mezi agenty mohou
+                                                    lze přímo
+                            přímou analytickou                               vyvolat nečekané
+                                                    napasovat na
+                            interpretaci a                                   fázové přechody.
+                                                    historické matice
+                            hladký gradient.
+                                                    PSA10.
+<PARSED TEXT FOR PAGE: 30 / 38>
+                        Vynikající – exaktní     Dobrá – závisí na
+ Věrnost                                                                   Vynikající a
+                        GPD chvost               kalibraci
+ generování                                                                organická –
+                        garantuje                pravděpodobností
+ outlierů (malé                                                            kombinuje
+                        matematicky              přeskočení stavů v
+ země)                                                                     genetický los s
+                        přesnou frekvenci
+                                                 režimu             16
+                                                                       .   nutností migrace
+                        géniů .
+                              8
+                                                                           hráče do cizí
+                                                                           akademie.
+
+
+                                                                           Absolutní (nativní)
+ Zachycení efektu       Nepřímé                  Střední – vyšší
+                                                                           – přímo simuluje
+ Wadi Degla (kluby)     (agregované) –           počet hráčů v
+                                                                           trénink mistrů světa
+                        přes makro-                     zvyšuje            s juniory ve stejném
+                        proměnnou                pravděpodobnost
+                                                                           klubu7.
+                        na úrovni celého         přechodu juniorů
+                        státu.                                .
+
+
+                                                 Vysoká – skryté
+ Narativní a herní      Střední – generuje                                 Maximální –
+ hloubka                realistická čísla, ale   stavy     vytvářejí       umožňuje sledovat
+ (Storytelling)         příčiny zlomů v          dramatické                konkrétní
+                        kariéře jsou spíše       průlomy, krize            akademie,
+                        hladké.                  formy a velké             trenérské školy,
+                                                 návraty16.                rivalitu klubů a
+                                                                           migraci.
+
+
+ Hlavní slabina /       Hladké                   Vyžaduje pečlivé          Riziko lokálního
+ Riziko                 deterministické                                    přetrénování nebo
+                                                 nastavení matic ,
+                        křivky růstu mohou                                 zamrznutí menších
+                                                 jinak hrozí příliš
+                        působit                                            klubů bez pečlivě
+                                                 časté skoky mezi
+                        předvídatelně bez                                  vyladěné mobility
+                                                 patry žebříčku.
+                        přidaného šumu.                                    agentů.
+
+Pro okamžitou stabilitu a rychlé nasazení v jádru Squash Engine představuje optimální
+architektonickou volbu kombinace (hybrid) Modelu A pro makro-generování kohort přes GPD
+a Modelu B pro sezónní kariérní přechody a skrytou hybnost HMM, případně obohacená o
+zjednodušenou vrstvu elitních klubů z Modelu C zahrnující například 30 klíčových světových
+akademií namísto tisíců lokálních klubů.
+Měřitelné testy realističnosti (Validation Benchmark Suite pro 50–100
+sezón)
+<PARSED TEXT FOR PAGE: 31 / 38>
+Aby bylo možné objektivně ověřit, že vybraný model po 50 až 100 sezónách nesklouzává k
+nerealistickým extrémům, je navržena sada šesti kvantitativních validačních testů. Při
+testovacím běhu (Monte Carlo simulace 100 sezón           50 nezávislých běhů) musejí výstupy
+enginu spadat do níže definovaných konfidenčních pásem odvozených z reálných dat PSA10 a
+ekonomických indexů koncentrace, jimiž jsou Herfindahl-Hirschmanův index (HHI) a Giniho
+koeficient17.
+
+Zatímco Herfindahl-Hirschmanův index                                  (kde    je podíl země    na
+
+pozicích či bodech v Top 10 v sezóně , normalizovaný na interval              ) zdůrazňuje tržní či
+
+sportovní lídry na samotné špičce rozdělení, Giniho koeficient          vyhodnocuje nerovnost
+napříč všemi účastníky rovnoměrně . Doplňkovou transformací HHI je index diverzifikace
+                                     17
+
+
+                    , přičemž dekompozice změny HHI mezi koncovými body (
+                           ) umožňuje přesně měřit ústup jednoho hegemona a nástup
+vyzyvatelů bez zkreslení způsobeného logistickým či logaritmickým stlačením středního
+pásma18.
+
+
+
+  ID testu           Název                Matematická             Cílové            Empirické
+                     validační            definice                kalibrační        zdůvodnění
+                     metriky              měřené                  pásmo             ze zdrojových
+                                          veličiny                (Benchmark        dat
+                                                                  pro schválení)
+
+
+                                                                                    V reálném
+  TEST 1             Index národní                                Průměr za 100
+                                                                                    squashi
+                     koncentrace v        , kde      je           sezón:
+                                                                                    (2000–2026)
+                     Top 10 (             počet hráčů
+                                                                                    měl hegemon
+                                 )                                . Absolutní
+                                          země   v Top                              (Egypt/Anglie)
+                                                                  maximum v
+                                                                                    typicky 4–5
+                                          10 v sezóně    17
+                                                              .   jedné sezóně:
+                                                                                    hráčů v Top 10
+                                                                                    (
+                                                                  .
+
+                                                                                    )av
+                                                                                    historickém
+                                                                                    extrému 7
+                                                                                    hráčů z 10 (
+
+
+                                                                                    )10.
+<PARSED TEXT FOR PAGE: 32 / 38>
+                                                             Z 23 mužských
+TEST 2   Frekvence      Podíl sezón        15 % až 30 %
+                                                             #1 v historii
+         světových      (nebo              unikátních
+                                                             PSA pocházeli
+         jedniček z     unikátních         světových
+                                                             mimo Pákistán,
+         malých/netra   hráčů na postu     jedniček (a 8 %
+                                                             Anglii/Austrálii
+         dičních zemí   #1 za 100          až 22 %
+                                                             a Egypt hráči
+                        sezón), kteří      celkového
+                                                             jako Power
+                        pocházejí ze       času na postu
+                                                             (CAN), Lincou
+                        zemí mimo Top      #1).
+                                                             (FRA), Gaultier
+                        3 největší
+                                                             (FRA), Coll
+                        squashové
+                                                             (NZL), Elías
+                        velmoci dané
+                                                             (PER) – tedy 5
+                        éry.
+                                                             z 23 (21,7 %)11.
+
+                                                             Za 50 let
+TEST 3   Střídání       Počet různých      3 až 6 různých
+                                                             reálné historie
+         hegemona a     zemí, které v      národních
+                                                             PSA (1975–
+         poločas        průběhu 100        epoch za 100
+                                                             2025) proběhly
+         rozpadu        sezón drží         sezón; žádná
+                                                             3 velké éry
+         dominance      nejvyšší podíl v   země nesmí
+                                                             (Pákistán ~23
+         (Era           Top 10 po
+                                           držet             let,
+         Turnover)      dobu alespoň
+                                           podíl v Top 10    Anglie/Austráli
+                        5 po sobě
+                                           nepřetržitě       e ~16 let, Egypt
+                        jdoucích
+                                           déle než 30       ~15+ let)10.
+                        sezón.
+                                           sezón.
+
+
+                                                             Empirická
+TEST 4   Pravděpodob    Podmíněná          Ze všech hráčů
+                                                             analýza PSA
+         nost           pravděpodobn       Top 10
+                                                             (2000–2020):
+         přechodu z     ost                dosáhne na #1:
+                                                             na #1 dosáhlo
+         Top 10 na                         24 % – 35 %. Z
+                                                             30 % mužů a
+         post #1        a                  hráčů na #5
+                                                             29 % žen v Top
+         (Transition                       dosáhne na #1:
+                                                             10; z 5. místa
+         Calibration)   .                  38 % – 55 %.
+                                                             mělo šanci 52
+                                                             % mužů a 38 %
+                                                             žen10.
+
+                                                             Historická
+TEST 5   Strop          Maximální          Max. titulů: 60
+                                                             maxima PSA:
+         kariérních     počet titulů       až 110. Max.
+                                                             Jansher Khan
+         titulů a                          měsíců v Top
+<PARSED TEXT FOR PAGE: 33 / 38>
+                                                                              (99 titulů),
+                     dlouhověkosti                         10: 150 až 210
+                                                                              Nicol David (81
+                     (GOAT Tail         a maximální        měsíců (12,5–
+                                                                              titulů, 177 měs.
+                     Bound)             počet měsíců v     17,5 roku). Win
+                                                                              v Top 10), Nick
+                                        Top 10             rate #1: 75 % –
+                                                                              Matthew (165
+                                                           86 %.
+                                                                              měs.),
+                                        za 100 sezón.                         Mohamed El
+                                                                              Shorbagy (670
+                                                                              týdnů), Ali
+                                                                              Farag (80,5 %
+                                                                              výher)10.
+
+                                                                              Zajišťuje
+ TEST 6              Stacionarita       Dvouvýběrový
+                                                                              stacionaritu
+                     distribuce         KS test            (průměr
+                                                                              Ornstein-
+                     ratingu                               ratingu Top 10
+                                                                              Uhlenbeckova
+                     (Kolmogorov-       pro rozdělení      v sezóně 100
+                     Smirnovův                                                procesu13 a
+                                        herních ratingů    se nesmí lišit
+                     test driftu)                                             zabraňuje
+                                        Top 100 v 10. a    od sezóny 10 o
+                                                                              numerické
+                                        100. sezóně.       více než
+                                                                              inflaci či deflaci
+                                                                    ).        atributů při
+                                                                              dlouhém běhu
+                                                                              hry.
+
+Rozhodovací protokol pro schválení
+Výzkumný rámec a architektonický návrh pro SQUASH ENGINE — RESEARCH 01 jsou tímto
+kompletní a připravené k revizi. Pro přechod od tohoto plánu k samotné implementaci a
+parametrické kalibraci se vyžaduje formální rozhodnutí ve třech oblastech, které jsou shrnuty v
+závěrečné rozhodovací matici.
+
+ Rozhodovací bod         Předmět schválení       Možnosti volby          Doporučené
+                                                 pro produkční           výchozí nastavení
+                                                 specifikaci
+
+
+ 1. Volba                Primární simulační      Model A (GPD-           Hybrid A+B
+ matematické             model pro               CES), Model B           doplněný o síť 30
+ architektury            generování a vývoj      (Víceúrovňový           elitních světových
+                         hráčů (Modul 7).        HMM), Model C           akademií z Modelu
+                                                 (Agentní klubová        C.
+<PARSED TEXT FOR PAGE: 34 / 38>
+                                             ekologie), nebo
+                                             Hybrid A+B s
+                                             klubovými uzly.
+
+
+ 2. Režim historické   Mechanismus           Čistě endogenní        Čistě endogenní
+ volatility            střídání národních    dynamika               dynamika s
+                       hegemonií v           (metodická             volitelným
+                       horizontu 50–100      skleróza a             přepínačem makro-
+                       sezón (Modul 5).      ekonomické             událostí.
+                                             vytěsňování kurtů)
+                                             vs. Endogenní
+                                             dynamika +
+                                             vzácné exogenní
+                                             šoky.
+
+
+ 3. Kalibrace          Přípustné intervaly   Přísná historická      Přísná historická
+ validačních pásem     koncentrace HHI,      kalibrace PSA          kalibrace PSA dle
+                       četnosti outlierů a   (strop ~7 z 10 v Top   tabulky validačních
+                       kariérních stropů     10) vs. Volnější       testů.
+                       (Testy 1–6).          alternativně-
+                                             historická
+                                             kalibrace.
+
+
+
+Citovaná díla
+
+  1. A Conceptual Framework for Analysing Sports Policy Factors,
+       https://spliss.research.vub.be/sites/default/files/2022-10/methods-
+       A%20Conceptual%20Framework%20for%20Analysing%20Sports%20Policy%20
+       Factors%20Leading%20to%20International%20Sporting%20Success.pdf
+  2.   Successful Elite Sport Policies | Veerle de Bosscher | Simon Shibli,
+       https://www.inlibra.com/en/document/view/detail/uuid/8c2681ce-b590-3dab-
+       ac7f-d14119fcd69a
+  3.   SUCCESSFUL ELITE SPORT POLICIES,
+       https://ussa-my.com/assets/SPLISS_report.pdf
+  4.   Talent Development: Exposing the Weakest Link* - Dialnet,
+       https://dialnet.unirioja.es/descarga/articulo/2663014.pdf
+  5.   Building gifts into talents: Brief overview of the DMGT 2.0,
+       https://australiangiftedsupport.com/ccmword/wp-content/uploads/2014/12/
+<PARSED TEXT FOR PAGE: 35 / 38>
+    Gagne_DMGT_Model.pdf
+6. The Rise Of Egypt - Squash Player Magazine,
+    https://squashplayermag.com/pages/the-rise-of-egyptian-squash
+7. Why does Egypt dominate world squash in 2026? | Racket Trip, https://racket-
+    trip.com/en/blog/articles/the-unbeatable-kingdom-of-squash
+8. (PDF) Robust and efficient fitting of the generalized Pareto,
+    https://www.researchgate.net/publication/46489300_Robust_and_efficient_fittin
+    g_of_the_generalized_Pareto_distribution_with_actuarial_applications_in_view
+9. Oldest PSA Men's Top 10 ever? : r/squash - Reddit,
+    https://www.reddit.com/r/squash/comments/1ibtubx/oldest_psa_mens_top_10_e
+    ver/
+10. Analysis of the Top 10 PSA Ranks (2000 – 2020) - squash stats,
+    https://squashstats.com/2020/10/11/analysis-10-psa-ranks-00-20/
+11. Men's Squash World Rankings - Wikipedia,
+    https://en.wikipedia.org/wiki/Men%27s_Squash_World_Rankings
+12. List of PSA men's number 1 ranked players - Wikipedia,
+    https://en.wikipedia.org/wiki/List_of_PSA_men%27s_number_1_ranked_players
+13. Elo Ratings and the Sports Model: a Neglected Topic in Applied,
+    https://www.stat.berkeley.edu/~aldous/Papers/me-Elo-SS.pdf
+14. Statistical Inference for Stochastic Process Models in Sports Analytics,
+    https://pub.uni-bielefeld.de/download/2991039/2991289/Dissertation.pdf
+15. Competitive Balance in Sports Leagues: An Introduction,
+    https://www.researchgate.net/publication/277392040_Competitive_Balance_in_S
+    ports_Leagues_An_Introduction
+16. IJSA - IAEME Publication,
+    https://iaeme.com/MasterAdmin/Journal_uploads/IJSA/VOLUME_7_ISSUE_1/
+    IJSA_07_01_001.pdf
+17. Economies of Open Intelligence: Tracing Power & Participation in,
+    https://www.dataprovenance.org/economies-of-open-intelligence.pdf
+18. Structural Concentration and Diversification of Selected Crops in,
+    https://www.mdpi.com/2227-7099/14/10/454/pdf
+19. Sports Policy Leading to International Sporting Success - Sport for Life,
+    https://sportforlife.ca/wp-content/uploads/2020/03/04-NSO-Leads-
+    Day_Jan-2020_SPLISS-HP-Strategy.pdf
+20. The SPLISS Athletics Project: A Resource-Based Evaluation of Elite,
+    https://www.worldathletics.org/download/downloadnsa?filename=df8bc381-
+    2379-483a-b346-b35eaaa2dd33.pdf&urlslug=the-spliss-athletics-project-a-
+    resource-based
+21. (PDF) Successful elite sport policies: an international comparison in,
+    https://www.researchgate.net/publication/296635454_Successful_elite_sport_pol
+    icies_an_international_comparison_in_15_nations_SPLISS_20
+22. Differentiating Giftedness from Talent,
+    https://api.pageplace.de/preview/DT0400.9781000246223_A40053409/preview-
+<PARSED TEXT FOR PAGE: 36 / 38>
+    9781000246223_A40053409.pdf
+23. (PDF) A Conceptual Framework for Analysing Sports Policy Factors,
+    https://www.researchgate.net/publication/46681518_A_Conceptual_Framework_
+    for_Analysing_Sports_Policy_Factors_Leading_to_International_Sporting_Succes
+    s
+24. Developmental experiences and insights of high performance athletes,
+    https://www.researchgate.net/publication/285864365_A_look_through_the_rear_
+    view_mirror_Developmental_experiences_and_insights_of_high_performance_at
+    hletes
+25. Mapping MI to the DMGT: A theoretical framework - SciSpace,
+    https://scispace.com/pdf/mapping-mi-to-the-dmgt-a-theoretical-
+    framework-1gq7d4w928.pdf
+26. Talent development helps people exploit their potential,
+    https://talentfuldeunge.dk/interview_with_prof_gagne/
+27. Full article: Introducing an Integrated Model of Talent Development,
+    https://www.tandfonline.com/doi/full/10.1080/21520704.2022.2148798
+28. Practice Regimes in Squash – A Mismatch between Theory and,
+    https://jpesm.thebrpi.org/journals/jpesm/Vol_11_2025/4.pdf
+29. Physiological and Performance Correlates of Squash Physical,
+    https://www.jssm.org/jssm-21-82.xml-Fulltext
+30. Training characteristics of professional development activities in,
+    https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2026.1826
+    135/pdf
+31. Physical Preparation for Elite-Level Squash Players - ResearchGate,
+    https://www.researchgate.net/publication/330659077_Physical_Preparation_for_
+    Elite-
+    Level_Squash_Players_Monitoring_Assessment_and_Training_Practices_for_the_
+    Strength_and_Conditioning_Coach
+32. (PDF) Physiological and Nutritional Considerations for Elite Squash,
+    https://www.researchgate.net/publication/385821990_Physiological_and_Nutritio
+    nal_Considerations_for_Elite_Squash_A_Systematic_Review
+33. Physiological and Performance Correlates of Squash Physical,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC8851109/
+34. (PDF) Practice Regimes in Squash – A Mismatch between Theory,
+    https://www.researchgate.net/publication/400421290_Practice_Regimes_in_Squ
+    ash_-_A_Mismatch_between_Theory_and_Practice
+35. Talent Identification and Development: An Academic Review,
+    https://sportscotland.org.uk/media/c3glur3s/talent_identification_and_developm
+    ent_20070119.pdf
+36. Professional Squash Player Statistics and Records - SquashChamps,
+    https://squashchamps.com/article/professional-squash-player-statistics-and-
+    records
+37. analysis of the sports career of brazilian international elite squash,
+<PARSED TEXT FOR PAGE: 37 / 38>
+    https://www.scielo.br/j/jpe/a/ZKMkD6hXFPnVdJprkLW5VXf/?lang=en
+38. Assessing personal talent determinants in young racquet sport players,
+    https://pubmed.ncbi.nlm.nih.gov/26109450/
+39. Instant Update - World Squash,
+    https://www.worldsquash.sport/wp-content/uploads/2013/05/IU-44.pdf
+40. Latest Professional Squash Assocation (PSA) Men's World Rankings,
+    https://unsquashable.com/blogs/international-squash-magazine/professional-
+    squash-association-psa-mens-world-rankings-26th-june-2023
+41. El Sherbini stays on top of PSA Women's World Rankings,
+    https://dailynewsegypt.com/2018/07/06/el-sherbini-stays-on-top-of-psa-
+    womens-world-rankings-challenge-yourself-to-offer-best-you-can/
+42. Alpha-Power Pareto distribution: Its properties and applications - PMC,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC6561572/
+43. A New Extended Generalized Pareto Distribution,
+    https://www.xisdxjxsu.asia/V19I06-17.pdf
+44. Alpha-Power Pareto distribution: Its properties and applications - Scilit,
+    https://www.scilit.com/publications/a0af4f59ffe4c2273e562545489514a2
+45. A parametric model for distributions with flexible behavior in both tails,
+    https://www.researchgate.net/publication/344018987_A_parametric_model_for_
+    distributions_with_flexible_behavior_in_both_tails
+46. Income distribution and Tour de France - Freakonometrics,
+    https://freakonometrics.hypotheses.org/15920
+47. Power Laws, the Price Model, and the Pareto type-2 Distribution,
+    https://arxiv.org/html/2201.11456v3
+48. PARETO-S DISTRIBUTION | Journal of Basic Sciences,
+    https://journals.asmarya.edu.ly/jbs/index.php/jbs/user/setLocale/en?
+    source=%2Fjbs%2Findex.php%2Fjbs%2Farticle%2Fview%2F308%3FarticlesBySim
+    ilarityPage%3D6
+49. Joachim eyes top 50 after smashing career-best ranking - NST,
+    https://www.nst.com.my/sports/racquet-sports/2026/10/1559587/joachim-eyes-
+    top-50-after-smashing-career-best-ranking
+50. Tennis Handicap System via MDP Model | PDF | Markov Chain,
+    https://www.scribd.com/document/813602527/A-Markov-Decision-Process-
+    based-handicap
+51. A Markov Decision Process-based handicap system for tennis,
+    https://ideas.repec.org/a/bpj/jqsprt/v12y2016i4p179-188n2.html
+52. (PDF) Competitive balance measures and the uncertainty of,
+    https://www.researchgate.net/publication/279632665_Competitive_balance_mea
+    sures_and_the_uncertainty_of_outcome_hypothesis_in_European_football
+53. Top Clubs' Performance and the Competitive Situation in European, https://tim-
+    pawlowski.de/wp-content/uploads/2013/04/Pawlowski-T.-Breuer-C.-Hovemann-
+    A.-2010.pdf
+54. Assessing competitive balance in the English Premier League for,
+<PARSED TEXT FOR PAGE: 38 / 38>
+    https://academic.oup.com/jrsssa/article/186/3/530/7035692
+55. Assessing competitive balance in the English Premier League for,
+    https://arxiv.org/html/2107.08732v2
+56. SPLISS: Elite Sports Policy Insights | PDF | Competitiveness - Scribd,
+    https://www.scribd.com/document/328922139/About-Spliss
+57. How often does the best team win?A unified approach to ... - arXiv,
+    https://arxiv.org/html/1701.05976v3
+58. Decision-making and dynamic preferences: theory and numerical,
+    https://theses.hal.science/tel-04995916v1/file/2024LEMA1026.pdf
+59. Tracing Power & Participation in the Model Ecosystem - arXiv,
+    https://arxiv.org/html/2512.03073v1
+60. Anti-competitive Conduct and Agreements, https://competition-
+    bureau.canada.ca/en/how-we-foster-competition/consultations/anti-
+    competitive-conduct-and-agreements
+61. Assessing Classic Maya multi-scalar household inequality in,
+    https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0248169
+62. The Impact of VAT Reforms on Poverty in Malawi - Theses,
+    https://theses.cz/id/plr8i8/Chifundo_Mchowa_Final_Masters_Thesis_Archive.pdf?
+    lang=sk;zpet=%2Fvyhledavani%2F%3Fsearch%3DThe%20Impact%20of%20VAT
+    %20Reforms%20on%20Poverty%20in%20Malawi%26start%3D1
+63. Country Resilience Index - World Monitor,
+    https://www.worldmonitor.app/docs/methodology/country-resilience-index
+
+--- END EXTRACT ---

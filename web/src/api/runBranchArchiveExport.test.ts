@@ -67,6 +67,12 @@ describe('Saved Branch export-only HTTP boundary', () => {
       ...original, viewer_branch_id: 'foreign'
     }, 'run', 'branch')).toThrow(/dependency/)
     expect(() => assertSavedBranchArchivePreview({
+      ...original, viewer_branch_id: null
+    }, 'run', 'branch')).toThrow(/scope/)
+    expect(() => assertSavedBranchArchivePreview({
+      ...original, viewer_branch_id: ''
+    }, 'run', 'branch')).toThrow(/scope/)
+    expect(() => assertSavedBranchArchivePreview({
       ...original, omitted_branch_ids: ['branch']
     }, 'run', 'branch')).toThrow(/dependency/)
     expect(() => assertSavedBranchArchivePreview({

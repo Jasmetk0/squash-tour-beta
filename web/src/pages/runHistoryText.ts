@@ -8,6 +8,7 @@ const czech: Record<string, string> = {
   "Run details belong to another Run. Its progress and planned week are hidden.": "Detaily patří jinému Runu. Jeho postup a plánovaný týden se nezobrazují.",
   "Run calendar and progress disagree. Current-week links are hidden.": "Kalendář a postup Runu si odporují. Odkazy na aktuální týden jsou skryté.",
   "Run detail and status summary disagree on season or progress. Current-week links are hidden.": "Detail Runu a stavový souhrn se neshodují v sezoně nebo postupu. Odkazy na aktuální týden jsou skryté.",
+  "Conflicting progress values are hidden until the run reads agree.": "Sporné hodnoty postupu se nezobrazují, dokud se údaje o Runu neshodují.",
   "Status summary belongs to another Run. Its progress and counts are hidden.": "Stavový souhrn patří jinému Runu. Postup a počty jsou skryté.",
   "Finals summary contains mismatched Run or season data. Its status and inspection links are hidden.": "Souhrn Finals obsahuje odlišný Run nebo sezonu. Jeho stav a odkazy jsou skryté.",
   "Rollover summary belongs to another Run. Its result and inspection link are hidden.": "Souhrn přechodu sezony patří jinému Runu. Výsledek a odkaz jsou skryté.",

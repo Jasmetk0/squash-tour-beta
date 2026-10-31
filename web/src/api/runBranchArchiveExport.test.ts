@@ -46,6 +46,27 @@ describe('Saved Branch export-only HTTP boundary', () => {
     expect(() => assertSavedBranchArchivePreview({...original, history: []}, 'run', 'branch')).toThrow()
   })
 
+  it('refuses a foreign owner, missing parent, missing dependency HEAD or unknown archive format', () => {
+    expect(() => assertSavedBranchArchivePreview({
+      ...original, format: 'unknown-v999'
+    }, 'run', 'branch')).toThrow()
+    expect(() => assertSavedBranchArchivePreview({
+      ...original, history: [{...original.history[0], original_owner_branch_id: 'foreign'}]
+    }, 'run', 'branch')).toThrow(/dependency/)
+    expect(() => assertSavedBranchArchivePreview({
+      ...original, history: [{...original.history[0], parent_revision_id: 'missing-revision'}]
+    }, 'run', 'branch')).toThrow(/dependency/)
+    expect(() => assertSavedBranchArchivePreview({
+      ...original, viewer_branch_id: 'foreign'
+    }, 'run', 'branch')).toThrow(/dependency/)
+    expect(() => assertSavedBranchArchivePreview({
+      ...original, omitted_branch_ids: ['branch']
+    }, 'run', 'branch')).toThrow(/dependency/)
+    expect(() => assertSavedBranchArchivePreview({
+      ...original, branches: [{...original.branches[0], saved_head_revision_id: 'foreign-head'}]
+    }, 'run', 'branch')).toThrow()
+  })
+
   it('preview is a read-only, explicitly requested POST with no subsequent Save', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(original), {
       status: 200, headers: {'Content-Type': 'application/json'}

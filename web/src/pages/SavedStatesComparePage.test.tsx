@@ -27,7 +27,7 @@ const second={
 const history=(branch='fork',entries=[first,second],older=false)=>({
   run_id:'run-a',branch_id:branch,saved_head_revision_id:'new',
   total_count:older?3:entries.length,has_more_older:older,
-  next_before_sequence:older?1:null,saved_revisions:entries
+  next_before_sequence:older?entries[0]?.sequence??null:null,saved_revisions:entries
 })
 const diff=()=>({
   run_id:'run-a',branch_id:'fork',saved_head_revision_id:'new',
@@ -269,7 +269,7 @@ describe('Dedicated read-only Compare States A/B',()=>{
   it('can load an older ancestor before comparing the URL-selected A/B',async()=>{
     api.listSavedRevisionHistory.mockImplementation(async (_run:string,branch:string,options:{
       beforeSequence?:number})=>{
-      if(options.beforeSequence===1)return {...history(branch,[first]),total_count:2}
+      if(options.beforeSequence===2)return {...history(branch,[first]),total_count:2}
       return {...history(branch,[second],true),total_count:2}
     })
     open()
@@ -280,7 +280,7 @@ describe('Dedicated read-only Compare States A/B',()=>{
     expect(await screen.findByRole('table',{name:'Saved State A B comparison table'}))
       .toHaveTextContent('calendar')
     expect(api.listSavedRevisionHistory).toHaveBeenCalledWith('run-a','fork',{
-      limit:50,beforeSequence:1
+      limit:50,beforeSequence:2
     })
   })
   it('switches History/Compare headings, controls and accessible names to Czech without mutations',async()=>{

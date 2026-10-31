@@ -591,11 +591,12 @@ describe('RunDiagnosticsPage', () => {
   })
 
   it.each([
-    { issue: 'season', statusSeason: 2029, statusIndex: 0, statusTotal: 24 },
-    { issue: 'next-event cursor', statusSeason: 2028, statusIndex: 1, statusTotal: 24 },
-    { issue: 'total-event count', statusSeason: 2028, statusIndex: 0, statusTotal: 25 },
+    { issue: 'season', statusSeason: 2029, statusIndex: 0, statusTotal: 24, statusSeed: 11 },
+    { issue: 'next-event cursor', statusSeason: 2028, statusIndex: 1, statusTotal: 24, statusSeed: 11 },
+    { issue: 'total-event count', statusSeason: 2028, statusIndex: 0, statusTotal: 25, statusSeed: 11 },
+    { issue: 'seed', statusSeason: 2028, statusIndex: 0, statusTotal: 24, statusSeed: 991 },
   ])('hides current-week navigation when Run detail and status summary disagree on $issue',
-    async ({statusSeason, statusIndex, statusTotal}) => {
+    async ({statusSeason, statusIndex, statusTotal, statusSeed}) => {
       api.getRun.mockResolvedValueOnce({
         run: { run_id: 'run-a', season: 2028, seed: 11, next_event_index: 0,
           total_events: 24, completed_event_ids: [] },
@@ -604,7 +605,7 @@ describe('RunDiagnosticsPage', () => {
             tour: 'WORLD', category: 'GOLD', template_id: 'TMP-1' }] }
       })
       api.getRunStatusSummary.mockResolvedValueOnce({
-        run_id: 'run-a', season: statusSeason, seed: 11,
+        run_id: 'run-a', season: statusSeason, seed: statusSeed,
         progress: { next_event_index: statusIndex, total_events: statusTotal, completed_event_count: 5 },
         finals: { qualification_available: false, result_available: false },
         rollover: null, source: { source_type: 'new_run', parent_run_id: null },
@@ -614,7 +615,7 @@ describe('RunDiagnosticsPage', () => {
       renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
 
       expect(await screen.findByRole('alert')).toHaveTextContent(
-        'Run detail and status summary disagree on season or progress. Current-week links are hidden.'
+        'Run detail and status summary disagree on season, seed or progress. Current-week links are hidden.'
       )
       expect(screen.getByText('Conflicting progress values are hidden until the run reads agree.')).toBeInTheDocument()
       // Both summary surfaces must remain explicitly unverified, not a mix of reads.

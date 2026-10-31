@@ -28,6 +28,7 @@ const content = {
     description: "Tento přehled kontroluje pozici starší FAX simulace (50 sezón, 61 týdnů) a uloženou revizi každé branche. Chybějící pozice starší simulace neznamená, že nativní operace nad kalendářem Runu není dostupná. Každá operace vyžaduje vlastní kontrolu; zde se žádná simulace nespouští.",
     refresh: "Obnovit stav branchí",
     noBranches: "Tento Run zatím nemá žádné branche.",
+    invalidInventory: "Identita seznamu branchí je neplatná nebo nejednoznačná.",
     viewer: "Viewer Branch",
     season: "Sezóna",
     week: "Týden",
@@ -68,6 +69,7 @@ const content = {
     description: "This view checks the legacy FAX 50-season, 61-week simulation position and each Branch's Saved Revision. A missing legacy position does not prove that a native Run-calendar operation is unavailable. Every action needs its own Branch-specific preflight; this view never starts a simulation.",
     refresh: "Refresh Branch operating status",
     noBranches: "No Branches exist in this Run.",
+    invalidInventory: "Branch inventory identity is invalid or ambiguous.",
     viewer: "Viewer Branch",
     season: "Season",
     week: "Week",
@@ -123,17 +125,16 @@ function validPosition(
     value.current_week.season_index >= 0 && value.current_week.season_index < 50 &&
     Number.isInteger(value.current_week?.week) &&
     value.current_week.week >= 1 && value.current_week.week <= 61 &&
-    Array.isArray(value.transition_blockers) &&
+    Array.isArray(value.transition_blockers) && value.transition_blockers.every(item => typeof item === 'string') &&
     typeof value.week_ready_for_transition === 'boolean' &&
     typeof value.current_slot_complete === 'boolean' &&
     typeof value.supported_tournament_complete === 'boolean' &&
     (value.current_slot_kind === 'entry' || value.current_slot_kind === 'match' || value.current_slot_kind === null) &&
-    (value.slot_ordinal === null || (Number.isInteger(value.slot_ordinal) && value.slot_ordinal! >= 0)) &&
-    Array.isArray(value.unresolved_group_ids) &&
-    Array.isArray(value.eligible_match_ids) &&
-    Array.isArray(value.blocked_match_ids) &&
-    typeof value.position_fingerprint === 'string' && value.position_fingerprint.length === 64 &&
-    (value.terminal_sporting_fingerprint === null || (typeof value.terminal_sporting_fingerprint === 'string' && value.terminal_sporting_fingerprint.length === 64))
+    (value.slot_ordinal === null || (Number.isSafeInteger(value.slot_ordinal) && value.slot_ordinal! >= 0)) &&
+    [value.unresolved_group_ids, value.eligible_match_ids, value.blocked_match_ids]
+      .every(items => Array.isArray(items) && items.every(item => typeof item === 'string')) &&
+    typeof value.position_fingerprint === 'string' && /^[0-9a-f]{64}$/.test(value.position_fingerprint) &&
+    (value.terminal_sporting_fingerprint === null || (typeof value.terminal_sporting_fingerprint === 'string' && /^[0-9a-f]{64}$/.test(value.terminal_sporting_fingerprint)))
   )
 }
 
@@ -145,10 +146,12 @@ function validRevision(
 ): value is SavedRevisionHistoryDetail {
   return Boolean(
     value && value.run_id === runId && value.branch_id === branchId &&
-    value.revision_id === revisionId && value.revision_branch_id === branchId &&
-    value.is_branch_head &&
-    typeof value.content_hash === 'string' && value.content_hash.length === 64 &&
-    typeof value.content_hash_algorithm === 'string'
+    value.revision_id === revisionId &&
+    // The selected context can legitimately contain a source-owned fork HEAD.
+    typeof value.revision_branch_id === 'string' && Boolean(value.revision_branch_id.trim()) &&
+    value.is_branch_head === true &&
+    typeof value.content_hash === 'string' && /^[0-9a-f]{64}$/.test(value.content_hash) &&
+    value.content_hash_algorithm === 'sha256'
   )
 }
 
@@ -190,10 +193,10 @@ function readinessReason(run: RunContainer, branch: RunBranch, locale: 'cs' | 'e
 export function RunBranchReadinessPanel({ run, branches, locale = 'en' }: BranchReadinessPanelProps): JSX.Element {
   const l = content[locale]
   const client = useQueryClient()
-  const validBranches = branches.filter((branch, index, self) =>
-    typeof branch.branch_id === 'string' && branch.branch_id.length > 0 &&
-    index === self.findIndex(b => b.branch_id === branch.branch_id)
-  )
+  const inventoryValid = Array.isArray(branches) && branches.every(branch =>
+    branch && typeof branch.branch_id === 'string' && Boolean(branch.branch_id.trim())
+  ) && new Set(branches.map(branch => branch.branch_id)).size === branches.length
+  const validBranches = inventoryValid ? branches : []
   const positions = useQueries({
     queries: validBranches.map(branch => ({
       queryKey: positionKey(run.run_id, branch.branch_id),
@@ -233,7 +236,8 @@ export function RunBranchReadinessPanel({ run, branches, locale = 'en' }: Branch
           client.invalidateQueries({ queryKey: ['admin-branch-operational-entry-gate', run.run_id] })
         ])
       }}>{l.refresh}</button>
-      {validBranches.length === 0 && <EmptyState message={l.noBranches} />}
+      {!inventoryValid && <p role="alert" className="error">{l.invalidInventory}</p>}
+      {inventoryValid && validBranches.length === 0 && <EmptyState message={l.noBranches} />}
       {validBranches.map((branch, index) => {
         const positionQuery = positions[index]
         const revisionQuery = revisions[index]

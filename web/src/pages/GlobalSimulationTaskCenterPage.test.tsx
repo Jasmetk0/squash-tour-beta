@@ -160,13 +160,12 @@ describe('global Full Simulation Task Center', () => {
   expect(within(beta).getByRole('link',{name:'Otevřít detail a ovládání'}))
     .toHaveAttribute('href','/admin/runs/run-beta/simulate?branch=b-two&task=server-task-42')
   // Receipts without a known task must not contain a fabricated task identity.
-  const alphaLink=within(list).getByText('Alfa svět / A timeline').closest('li')!
-  expect(within(alphaLink).getByRole('link',{name:'Otevřít detail a ovládání'}))
-    .toHaveAttribute('href','/admin/runs/run%2Falpha/simulate?branch=branch%20with%20space')
-
   const alpha=within(list).getByText('Alfa svět / A timeline').closest('li')!
+  expect(within(alpha).getByRole('link',{name:'Otevřít detail a ovládání'}))
+    .toHaveAttribute('href','/admin/runs/run%2Falpha/simulate?branch=branch%20with%20space')
   expect(within(alpha).queryByText(/Tento původní příkaz už patří/)).toBeNull()
   expect(within(alpha).getByText('Dokončené sezony:')).toBeVisible()
+
  })
 
  it('detects ambiguous duplicate bindings and refuses to emit fabricated task identifiers', async () => {

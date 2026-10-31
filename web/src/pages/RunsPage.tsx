@@ -19,7 +19,7 @@ const messages = {
     empty: 'Zatím žádné uložené Runy.', noResults: 'Žádný Run neodpovídá hledání.',
     loading: 'Načítám uložené Runy…', error: 'Přehled Runů není dostupný',
     protected: 'Chráněný zdroj', editable: 'Upravitelný', branches: 'Větve',
-    open: 'Otevřít', history: 'Historie a větve', missing: 'Čas není dostupný',
+    open: 'Otevřít', history: 'Historie a větve', missing: 'Čas není dostupný', inventoryMismatch: 'Nekonzistentní identita inventáře',
     noBranches: 'Run nemá dostupné větve.', branchError: 'Větve nejsou dostupné',
     legacy: 'Starší diagnostika simulačních Runů', legacyNote: 'Legacy výsledky jsou oddělené a nejsou kanonickými Product Run daty.',
     viewer: 'Zobrazuje Viewer',
@@ -45,7 +45,7 @@ const messages = {
     empty: 'No saved Runs yet.', noResults: 'No Runs match your search.',
     loading: 'Loading saved Runs…', error: 'Runs inventory unavailable',
     protected: 'Protected source', editable: 'Editable', branches: 'Branches',
-    open: 'Open', history: 'History & Branches', missing: 'Time unavailable',
+    open: 'Open', history: 'History & Branches', missing: 'Time unavailable', inventoryMismatch: 'Inconsistent inventory identity',
     noBranches: 'No Branches available for this Run.', branchError: 'Branches unavailable',
     legacy: 'Legacy Simulation Run diagnostics', legacyNote: 'Legacy results are separate from canonical Product Run data.',
     viewer: 'Shown in Viewer',
@@ -77,20 +77,34 @@ function BranchList({ run }: { run: RunContainer }): JSX.Element {
     queryFn: () => listBranchStates({ run_id: run.run_id }),
     retry: false
   })
-  const branches = branchesQuery.data?.run_branches.filter(branch => branch.run_id === run.run_id) ?? []
-  const states = statesQuery.data?.branch_states.filter(state => state.run_id === run.run_id) ?? []
+  const rawBranches = branchesQuery.data?.run_branches ?? []
+  const hasBranchMismatch = rawBranches.some(b => b.run_id !== run.run_id)
+  const branchIds = rawBranches.map(b => b.branch_id)
+  const hasDuplicateBranches = new Set(branchIds).size !== branchIds.length
+  const branchesValid = !hasBranchMismatch && !hasDuplicateBranches
+  const branches = branchesValid ? rawBranches : []
+
+  const rawStates = statesQuery.data?.branch_states ?? []
+  const hasStateMismatch = rawStates.some(s => s.run_id !== run.run_id)
+  const stateBranchIds = rawStates.map(s => s.branch_id)
+  const hasDuplicateStates = new Set(stateBranchIds).size !== stateBranchIds.length
+  const statesValid = !hasStateMismatch && !hasDuplicateStates
+  const states = statesValid ? rawStates : []
+
   const viewerBranchId = run.viewer_branch_id ?? run.official_branch_id
 
   return <div className="runs-canonical-branches">
     {branchesQuery.isPending && <p role="status">{l.loading}</p>}
     {branchesQuery.isError && <p role="alert" className="error">{l.branchError}: {formatApiError(branchesQuery.error)}</p>}
-    {branchesQuery.isSuccess && branches.length === 0 && <p className="status">{l.noBranches}</p>}
+    {branchesQuery.isSuccess && !branchesValid && <p role="alert" className="error">{l.inventoryMismatch}</p>}
+    {branchesQuery.isSuccess && branchesValid && branches.length === 0 && <p className="status">{l.noBranches}</p>}
     {statesQuery.isError && <p role="alert" className="error">{l.missing}: {formatApiError(statesQuery.error)}</p>}
+    {statesQuery.isSuccess && !statesValid && <p role="alert" className="error">{l.missing}: {l.inventoryMismatch}</p>}
     {branches.map(branch => {
-      const state = states.find(item => item.branch_id === branch.branch_id)
-      const season = state && typeof state.current_season === 'number' && Number.isInteger(state.current_season)
+      const state = statesValid ? states.find(item => item.branch_id === branch.branch_id) : null
+      const season = state && typeof state.current_season === 'number' && Number.isSafeInteger(state.current_season) && state.current_season > 0
         ? `${state.current_season}/${String((state.current_season + 1) % 100).padStart(2, '0')}` : null
-      const week = state && typeof state.current_week === 'number' && Number.isInteger(state.current_week)
+      const week = state && typeof state.current_week === 'number' && Number.isSafeInteger(state.current_week) && state.current_week > 0
         ? `W${state.current_week}` : null
       const target = `/admin/runs/${encodeURIComponent(run.run_id)}?branch=${encodeURIComponent(branch.branch_id)}`
       return <div className="runs-canonical-branch" key={branch.branch_id}>

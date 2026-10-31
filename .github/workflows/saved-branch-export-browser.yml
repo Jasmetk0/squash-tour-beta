@@ -21,16 +21,22 @@ permissions:
   contents: read
 
 jobs:
-  # Temporary read-only diagnosis of the remaining Sonar issue.
-  sonar-diagnostics:
+  # One-off wheel digest audit. Remove once requirement hashes are recorded.
+  wheel-hash-diagnostics:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     steps:
-      - name: Show open Sonar issues for PR 1678
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Print SHA-256 of all locked Linux browser wheels
         run: |
-          curl -fsSL --connect-timeout 10 --max-time 30 \
-            "https://sonarcloud.io/api/issues/search?componentKeys=Jasmetk0_squash-tour-beta&pullRequest=1678&ps=100&issueStatuses=OPEN,CONFIRMED" \
-            | jq -c '{total, issues: [.issues[] | {key, rule, message, component, line, type, severity, status}]}'
+          mkdir -p /tmp/squash-browser-wheels
+          python -m pip download --only-binary=:all: --no-deps \
+            -r .github/requirements/saved-branch-browser.lock.txt \
+            -d /tmp/squash-browser-wheels >/dev/null
+          sha256sum /tmp/squash-browser-wheels/*.whl
   real-export:
     name: Saved Branch archive / real Chromium + SQLite
     runs-on: ubuntu-latest

@@ -1156,6 +1156,25 @@ export function listSavedRevisionHistory(
   )
 }
 
+export function compareCrossSavedRevisions(
+  runAId: string,
+  branchAId: string,
+  revisionAId: string,
+  runBId: string,
+  branchBId: string,
+  revisionBId: string
+): Promise<import('./types').CrossSavedRevisionComparison> {
+  const query = new URLSearchParams({
+    run_a_id: runAId,
+    branch_a_id: branchAId,
+    revision_a_id: revisionAId,
+    run_b_id: runBId,
+    branch_b_id: branchBId,
+    revision_b_id: revisionBId
+  })
+  return request(`/admin/cross-run-compare?${query.toString()}`)
+}
+
 export function compareSavedRevisions(
   runId: string,
   branchId: string,

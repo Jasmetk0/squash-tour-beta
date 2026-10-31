@@ -646,6 +646,21 @@ export type SavedRevisionComponentComparison = {
   after_fingerprint: string | null
 }
 
+export type CrossSavedRevisionComparisonSource = {
+  run_id: string
+  branch_id: string
+  saved_head_revision_id: string
+  revision: SavedRevisionHistoryEntry
+}
+
+export type CrossSavedRevisionComparison = {
+  from_source: CrossSavedRevisionComparisonSource
+  to_source: CrossSavedRevisionComparisonSource
+  run_changes: Record<string, { before: unknown; after: unknown }>
+  branch_changes: Record<string, { before: unknown; after: unknown }>
+  components: SavedRevisionComponentComparison[]
+}
+
 export type SavedRevisionComparison = {
   run_id: string
   branch_id: string

@@ -152,6 +152,15 @@ describe('SeasonCalendarPage', () => {
     expect(api.listEvents).toHaveBeenCalledWith('run x/y')
   })
 
+  it.each(['run%name', 'run%20name'])('preserves a literal percent in the decoded Run ID %s', async runId => {
+    renderWithRoute(<SeasonCalendarPage />, `/runs/${encodeURIComponent(runId)}/calendar`)
+    const list = await screen.findByRole('list', { name: 'Season calendar ordered list' })
+    expect(api.getRun).toHaveBeenCalledWith(runId)
+    expect(api.listEvents).toHaveBeenCalledWith(runId)
+    expect(within(list).getByRole('link', { name: 'history' }))
+      .toHaveAttribute('href', `/runs/${encodeURIComponent(runId)}/events/E2`)
+  })
+
   it('filters by week/category/text without re-sorting matching entries', async () => {
     renderWithRoute(<SeasonCalendarPage />, '/runs/run-a/calendar')
     const list = await screen.findByRole('list', { name: 'Season calendar ordered list' })

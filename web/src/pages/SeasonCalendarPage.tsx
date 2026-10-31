@@ -27,7 +27,8 @@ export function SeasonCalendarPage(): JSX.Element {
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) && !viewed.historical })
 
   const seasonState = viewed.historical ? viewed.seasonState : runQuery.data?.season_state
-  const isRunIdentityMismatch = !viewed.historical && runQuery.data && runQuery.data.run.run_id !== decodeURIComponent(runId)
+  // React Router already decoded the parameter; preserve literal '%' in IDs.
+  const isRunIdentityMismatch = !viewed.historical && runQuery.data && runQuery.data.run.run_id !== runId
   const runDataAvailable = seasonState && !isRunIdentityMismatch
   const orderedEvents = seasonState?.ordered_events ?? []
   const nextEventIndex = seasonState?.next_event_index ?? 0
@@ -36,7 +37,7 @@ export function SeasonCalendarPage(): JSX.Element {
     [seasonState?.completed_event_ids]
   )
   const validPersistedEvents = useMemo(() => {
-    if (eventsQuery.data && eventsQuery.data.run_id === decodeURIComponent(runId)) {
+    if (eventsQuery.data && eventsQuery.data.run_id === runId) {
       return eventsQuery.data.events
     }
     return []

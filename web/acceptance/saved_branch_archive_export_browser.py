@@ -189,7 +189,57 @@ def main():
             assert post_requests[1]["url"].endswith("/export")
             assert _dump(database) == original_state, "Export performed an implicit Save"
 
-            # Failure injection is limited to the second browser export response.
+            # The first export above is a real unmodified backend response.
+            # Now corrupt just one byte of the same-length, same-MIME payload:
+            # the browser must reject it by SHA-256, without offering a file.
+            extra_downloads = []
+            page.on("download", lambda item: extra_downloads.append(item.suggested_filename))
+            tampered = bytearray(raw)
+            tampered[-1] ^= 1
+            assert len(tampered) == reviewed["archive_size_bytes"]
+            assert hashlib.sha256(tampered).hexdigest() != reviewed["archive_digest"]
+            page.route(
+                "**/admin/run-archives/export",
+                lambda route: route.fulfill(
+                    status=200,
+                    content_type="application/vnd.squash.saved-branch+json",
+                    body=bytes(tampered),
+                ),
+                times=1,
+            )
+            with page.expect_response(
+                lambda response: (
+                    response.request.method == "POST"
+                    and response.url.endswith("/admin/run-archives/export")
+                    and response.status == 200
+                )
+            ):
+                panel.get_by_role(
+                    "button", name="Stáhnout ověřený soubor .sqbranch"
+                ).click()
+            expect(panel.get_by_role("alert")).to_contain_text(
+                "Export digest differs from reviewed preview."
+            )
+            expect(panel.get_by_role(
+                "button", name="Stáhnout ověřený soubor .sqbranch"
+            )).to_have_count(0)
+            assert not extra_downloads, extra_downloads
+            assert len(post_requests) == 3, post_requests
+            assert _dump(database) == original_state, "Digest failure performed a write"
+            with page.expect_response(
+                lambda response: (
+                    response.request.method == "POST"
+                    and response.url.endswith("/admin/run-archives/export/preview")
+                )
+            ) as integrity_refresh:
+                panel.get_by_role("button", name="Zkusit znovu").click()
+            assert integrity_refresh.value.status == 200
+            expect(panel.get_by_role(
+                "button", name="Stáhnout ověřený soubor .sqbranch"
+            )).to_be_enabled()
+            assert len(post_requests) == 4, "SHA failure must require a new explicit preview"
+
+            # Failure injection is limited to the next browser export response.
             # The initial preview and downloaded file above came from the real
             # production HTTP/SQLite backend; this 409 explicitly tests that a
             # stale export guard never falls through to an automatic download.
@@ -226,7 +276,8 @@ def main():
             expect(panel.get_by_role(
                 "button", name="Zkusit znovu"
             )).to_be_enabled()
-            assert len(post_requests) == 3, post_requests
+            assert len(post_requests) == 5, post_requests
+            assert not extra_downloads, extra_downloads
             assert _dump(database) == original_state, "Stale rejection performed a write"
             with page.expect_response(
                 lambda response: (
@@ -239,7 +290,7 @@ def main():
             expect(panel.get_by_role(
                 "button", name="Stáhnout ověřený soubor .sqbranch"
             )).to_be_enabled()
-            assert len(post_requests) == 4, "Preview must require an explicit new click"
+            assert len(post_requests) == 6, "Preview must require an explicit new click"
             assert _dump(database) == original_state
 
             code, draft = _request(
@@ -273,6 +324,9 @@ def main():
                         "languages": ["en", "cs"],
                         "physical_reopen": True,
                         "sqlite_unchanged": True,
+                        "tampered_payload_200_rejected_by_sha256": True,
+                        "tampered_payload_downloads": extra_downloads,
+                        "explicit_repreview_after_digest_failure": True,
                         "stale_409_failure_injected": True,
                         "stale_409_cleared_download": True,
                         "explicit_repreview_after_409": True,

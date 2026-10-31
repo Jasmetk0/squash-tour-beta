@@ -106,10 +106,11 @@ def main(argv=None):
 
             view = phase('restart_cold' if args.restart_child else 'cold', read)
             warm = phase('restart_warm' if args.restart_child else 'warm', read)
-            assert view == warm, 'Complete cold/warm inspection differs'
+            assert json.dumps(view, sort_keys=True) == json.dumps(warm, sort_keys=True), 'Complete cold/warm inspection differs'
             if args.restart_child:
-                expected = json.loads((args.root / 'expected.json').read_text())
-                assert view == expected, 'Complete inspection differs after physical process restart'
+                with open_artifact(args.root, 'restart-observed.json') as stream:
+                    json.dump(view, stream, sort_keys=True)
+                assert json.dumps(view, sort_keys=True) == (args.root / 'expected.json').read_text(), 'Complete inspection differs after physical process restart'
             else:
                 with open_artifact(args.root, 'before.json') as stream:
                     json.dump(view, stream, sort_keys=True)

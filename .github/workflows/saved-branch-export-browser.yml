@@ -20,6 +20,21 @@ permissions:
   contents: read
 
 jobs:
+  # One-off read-only diagnostic. Remove after inspecting the existing finding.
+  sonar-diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      checks: read
+    steps:
+      - name: Inspect latest Sonar check annotations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SONAR_CHECK_ID: "124552404484"
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/check-runs/${SONAR_CHECK_ID}/annotations?per_page=100" \
+            --jq '.[] | {path, start_line, end_line, title, message, annotation_level}'
   real-export:
     name: Saved Branch archive / real Chromium + SQLite
     runs-on: ubuntu-latest

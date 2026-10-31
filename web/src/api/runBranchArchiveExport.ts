@@ -159,6 +159,22 @@ export function assertSavedBranchArchivePreview(
   if (reached.size !== revisionIds.size) {
     throw new Error('Saved Branch archive preview contains unreachable history.')
   }
+  // A fork's historical source must belong to its declared source Branch
+  // lineage, not merely to some other included Branch in the same Run.
+  // Archived dependencies may stop at a historical prefix of their live HEAD.
+  for (const branch of branches as IncludedArchiveBranch[]) {
+    if (branch.forked_from_branch_id === null ||
+      branch.forked_from_saved_revision_id === null) continue
+    const source = branchById.get(branch.forked_from_branch_id)
+    let sourceRevision = source?.saved_head_revision_id ?? null
+    while (sourceRevision !== null &&
+      sourceRevision !== branch.forked_from_saved_revision_id) {
+      sourceRevision = revisionsById.get(sourceRevision)?.parent_revision_id ?? null
+    }
+    if (sourceRevision === null) {
+      throw new Error('Saved Branch archive preview has a foreign fork source revision.')
+    }
+  }
   return value as SavedBranchArchivePreview
 }
 

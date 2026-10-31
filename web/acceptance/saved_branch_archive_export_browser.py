@@ -17,12 +17,15 @@ from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+# Fixed loopback-only acceptance ports. Untrusted CLI port values must never
+# flow into subprocess arguments for the browser fixture.
+API_PORT = 8022
+WEB_PORT = 5173
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
-    parser.add_argument("--api-port", type=int, default=8022)
-    parser.add_argument("--web-port", type=int, default=5173)
     parser.add_argument("--serve", action="store_true")
     args = parser.parse_args()
     work = Path(__file__).resolve().parents[2] / "work"
@@ -46,7 +49,7 @@ def main():
         uvicorn.run(
             create_app(database_url=db),
             host="127.0.0.1",
-            port=args.api_port,
+            port=API_PORT,
             log_level="warning",
         )
         return
@@ -77,8 +80,8 @@ def main():
         original_state = _dump(database)
     fixture.app.state.runtime.repository._engine.dispose()
 
-    api = f"http://127.0.0.1:{args.api_port}"
-    web = f"http://127.0.0.1:{args.web_port}"
+    api = f"http://127.0.0.1:{API_PORT}"
+    web = f"http://127.0.0.1:{WEB_PORT}"
     errors = []
     post_requests = []
     blocked_external_requests = []
@@ -89,7 +92,7 @@ def main():
         process = subprocess.Popen(
             [
                 sys.executable, __file__, "--serve",
-                "--root", str(root), "--api-port", str(args.api_port),
+                "--root", str(root),
             ],
             stdout=backend_log,
             stderr=subprocess.STDOUT,
@@ -102,7 +105,7 @@ def main():
     frontend = subprocess.Popen(
         [
             "npm", "--prefix", "web", "run", "dev", "--",
-            "--host", "127.0.0.1", "--port", str(args.web_port), "--strictPort"
+            "--host", "127.0.0.1", "--port", "5173", "--strictPort"
         ],
         env={**os.environ, "VITE_API_BASE_URL": api},
         stdout=frontend_log,
@@ -126,7 +129,7 @@ def main():
                 if (
                     address.scheme == "http"
                     and address.hostname == "127.0.0.1"
-                    and address.port in {args.api_port, args.web_port}
+                    and address.port in {API_PORT, WEB_PORT}
                 ):
                     route.continue_()
                 else:
@@ -137,7 +140,7 @@ def main():
             # Negative control: prove an attempted external navigation is
             # intercepted and denied by this exact browser context. The
             # reserved .invalid host must never reach DNS or the network.
-            probe_url = "http://example.invalid/squash-archive-network-probe"
+            probe_url = "https://example.invalid/squash-archive-network-probe"
             probe = context.new_page()
             try:
                 try:

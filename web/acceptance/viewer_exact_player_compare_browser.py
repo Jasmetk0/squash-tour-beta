@@ -209,7 +209,13 @@ def main() -> None:
             expect(page.get_by_label("Player B comparison fields")).to_contain_text(
                 b["player_id"]
             )
-            page.get_by_label("Language / Jazyk").select_option("cs")
+            # Viewer shell may not expose Admin's Language combobox.
+            # The supported persisted language preference is the same CS/EN
+            # source consumed by LanguageContext on a real page reload.
+            page.evaluate(
+                "localStorage.setItem('squash-engine-language-v1', 'cs')"
+            )
+            page.reload()
             expect(page.get_by_text(
                 "Jde o atributy aktivního Runu, nikoliv o historické vzájemné zápasy ze Saved Branch."
             )).to_be_visible()

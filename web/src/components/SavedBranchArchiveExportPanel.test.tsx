@@ -163,6 +163,39 @@ describe('Saved Branch archive Admin export panel', () => {
     expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
   })
 
+  it('invalidates reviewed consent when a Run becomes read-only without changing its HEAD', async () => {
+    const view = mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    view.rerender(<MemoryRouter><LanguageProvider><Toggle />
+      <SavedBranchArchiveExportPanel run={{...run, read_only: true}} branch={branch} />
+    </LanguageProvider></MemoryRouter>)
+    await waitFor(() => expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument())
+    expect(screen.getByRole('button', {name: 'Načíst exportní náhled'})).toBeDisabled()
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+  })
+
+  it('aborts verified bytes when the selected Branch becomes read-only mid-download', async () => {
+    let complete!: (result: Blob) => void
+    mocks.downloadSavedBranchArchive.mockImplementationOnce(() =>
+      new Promise<Blob>(resolve => { complete = resolve }))
+    const objectUrl = vi.fn()
+    Object.defineProperty(URL, 'createObjectURL', {configurable: true, value: objectUrl})
+    const view = mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    fireEvent.click(await screen.findByRole('button', {name: /Stáhnout ověřený/}))
+    await waitFor(() => expect(mocks.downloadSavedBranchArchive).toHaveBeenCalledTimes(1))
+    const signal = mocks.downloadSavedBranchArchive.mock.calls[0][1] as AbortSignal
+    expect(signal.aborted).toBe(false)
+    view.rerender(<MemoryRouter><LanguageProvider><Toggle />
+      <SavedBranchArchiveExportPanel run={run} branch={{...branch, read_only: true}} />
+    </LanguageProvider></MemoryRouter>)
+    await waitFor(() => expect(signal.aborted).toBe(true))
+    await act(async () => complete(new Blob(['stale bytes'])))
+    expect(objectUrl).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument()
+  })
+
   it('downloads only after a second fresh context check and explicit click', async () => {
     const objectUrl = vi.fn(() => 'blob:test')
     const revoke = vi.fn()

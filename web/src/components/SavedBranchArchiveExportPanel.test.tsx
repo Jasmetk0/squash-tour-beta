@@ -34,6 +34,7 @@ const branch = {
 const archive = {
   schema_version: 'run_branch_archive_preview.v1', run_id: 'r',
   selected_branch_id: 'b', selected_head_revision_id: 'head',
+  run_activation_revision_id: 'head',
   archive_digest: 'a'.repeat(64), archive_size_bytes: 1024,
   scope: 'custom_selected_saved_branch_with_dependency_history',
   format: 'run_branch_archive.v1', minimum_engine: 'engine', display_name: 'Run',
@@ -90,6 +91,7 @@ describe('Saved Branch archive Admin export panel', () => {
     expect(await screen.findByText('Source')).toBeInTheDocument()
     expect(screen.getByText(/missing-package/)).toBeInTheDocument()
     expect(screen.getByText(/Počet revizí/)).toBeInTheDocument()
+    expect(screen.getByText(/Aktivační revize Runu/)).toBeInTheDocument()
     expect(screen.getByText(/working_drafts/)).toBeInTheDocument()
     expect(screen.getByText('Zahrnuté Saved komponenty (1)')).toBeInTheDocument()
     expect(screen.getByText('Komponenty vybraného HEAD (1)')).toBeInTheDocument()

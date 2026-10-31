@@ -47,11 +47,23 @@ export function verifiedViewerPlayers(payload: unknown, runId: string, branchId:
       (player.identity_source !== 'initial_world' && player.identity_source !== 'run_prospect') ||
       !nullableWhole(player.tour_entry_season_index, 0, Number.MAX_SAFE_INTEGER) ||
       !nullableWhole(player.tour_entry_week, 1, 61) ||
+      // The source lifecycle has one Tour-entry clock, not two independent
+      // optional values. Never render an already-entered player whose entry
+      // is dated after this immutable Saved Viewer week.
+      (player.tour_entry_season_index === null) !== (player.tour_entry_week === null) ||
+      (player.tour_entry_season_index !== null && player.tour_entry_week !== null &&
+        (player.tour_entry_season_index > data.season_index ||
+          (player.tour_entry_season_index === data.season_index &&
+            player.tour_entry_week > data.week))) ||
       !nullableWhole(player.current_ovr, 0, 200) ||
-      !nullableWhole(player.potential_ovr, 0, 200) ||
-      !nullableWhole(player.current_form, 0, 200) ||
-      !nullableWhole(player.match_sharpness, 0, 100) ||
-      !nullableWhole(player.long_term_fatigue, 0, 100)
+      // The current viewer_people projection always withholds these four
+      // private simulation fields. The old DTO still declares them nullable,
+      // but their accidental exposure must fail closed at the public roster
+      // boundary rather than silently trusting an unsupported response.
+      player.potential_ovr !== null ||
+      player.current_form !== null ||
+      player.match_sharpness !== null ||
+      player.long_term_fatigue !== null
     ) return null
     playerIds.add(player.player_id)
     if (player.status === 'active') active++

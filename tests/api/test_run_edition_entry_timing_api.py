@@ -322,3 +322,34 @@ def test_saved_clock_hash_is_verified_before_timing_or_ranking_reads(tmp_path):
             head.payload_json = json.dumps(payload)
         assert _request("GET", entry)[0] == 409
         assert _request("POST", entry + "/preview", {"timing":timing()})[0] == 409
+
+
+def test_lost_confirm_receipt_can_be_recovered_from_dirty_draft_without_another_write(tmp_path):
+    """The browser's recovery boundary uses the original production receipt."""
+    from tests.api.test_player_generation_calendar_gate import _dump
+
+    path = tmp_path / "lost-confirm.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        rid, bid, _, entry, save = setup(server)
+        draft_url = f"{server.base_url}/run-containers/{rid}/branches/{bid}/working-draft"
+        draft = _request("GET", draft_url)[1]
+        code, saved = _request("POST", save, {"expected_draft_version": draft["draft_version"]})
+        assert code == 201, saved
+        old_head = saved["saved_revision"]["revision_id"]
+        _, request = reviewed(server, entry, timing(), command="lost-confirm")
+        code, receipt = _request("POST", entry + "/confirm", request)
+        assert code == 200, receipt
+        dirty = _request("GET", draft_url)[1]
+        assert dirty["status"] == "dirty" and dirty["base_saved_revision_id"] == old_head
+        assert dirty["draft_version"] == receipt["draft_version"]
+        before = _dump(path)
+        # The caller lost that first reply. The parent now rejects NEW edits
+        # because the Draft is dirty; recovering the old command must still work.
+        assert _request("POST", entry + "/confirm", request) == (200, receipt | {"already_applied": True})
+        assert _request("GET", draft_url)[1] == dirty
+        assert _dump(path) == before
+        assert _request("POST", entry + "/confirm", request | {"audit_reason": "Changed request"})[0] == 409
+        assert _dump(path) == before
+        code, saved = _request("POST", save, {"expected_draft_version": receipt["draft_version"]})
+        assert code == 201 and saved["saved_revision"]["revision_id"] != old_head
+        assert saved["working_draft"]["status"] == "clean"

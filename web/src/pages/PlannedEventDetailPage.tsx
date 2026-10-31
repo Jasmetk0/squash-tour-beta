@@ -53,6 +53,8 @@ import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { isRunCalendarProjection } from '../api/runFirstTournament'
 import { verifiedRunCalendarHandoff } from '../api/runCalendarHandoff'
 import { RunTournamentEntryReviewPanel } from '../components/RunTournamentEntryReviewPanel'
+import { RunEditionEntryTimingPanel } from '../components/RunEditionEntryTimingPanel'
+import { verifiedRunCalendar } from '../api/runEditionEntryTiming'
 import { RunCurrentEntryFreezePanel } from '../components/RunCurrentEntryFreezePanel'
 import { RunReviewedEntryFieldPanel } from '../components/RunReviewedEntryFieldPanel'
 import { RunFirstDrawPanel } from '../components/RunFirstDrawPanel'
@@ -183,6 +185,35 @@ export function PlannedEventDetailPage(): JSX.Element {
     calendarPackageQuery.data?.state?.branch_id === activeBranchId &&
     canonicalCalendarQuery.data.run_package_state_fingerprint === calendarPackageQuery.data.fingerprint
     ? canonicalCalendarQuery.data : null
+  // A separate Run-clock-verified editing boundary: not the legacy 61-week
+  // planned-event fallback, and never a Viewer or historical editing route.
+  const entryTimingRunClock = verifiedRunCalendar(canonicalRunQuery.data)
+  const entryTimingEdition = canonicalCalendarQuery.data?.calendar?.events.filter(
+    event => event.event_id === eventId) ?? []
+  const entryTimingContext = Boolean(
+    canonicalCalendarRequested && !viewed.historical &&
+    canonicalSavedHeadScope && canonicalCalendarDraftQuery.data &&
+    canonicalCalendarDraftQuery.data.run_id === runId &&
+    canonicalCalendarDraftQuery.data.branch_id === activeBranchId &&
+    // Keep a mounted editor's confirmed/uncertain Save receipt during the
+    // separate Branch HEAD and Draft refreshes. Their temporary mismatch only
+    // disables new edits through verifiedCalendarScope below; unmounting here
+    // would lose the receipt immediately after a successful real Save.
+    entryTimingRunClock &&
+    canonicalCalendarQuery.data?.run_id === runId &&
+    canonicalCalendarQuery.data.branch_id === activeBranchId &&
+    canonicalCalendarQuery.data.package_id === requestedCalendarId &&
+    calendarPackageQuery.data?.state?.run_id === runId &&
+    calendarPackageQuery.data.state.branch_id === activeBranchId &&
+    entryTimingEdition.length === 1 &&
+    entryTimingEdition[0].season_week >= 1 &&
+    entryTimingEdition[0].season_week <= (entryTimingRunClock?.weeks_per_year ?? 0)
+  )
+  const entryTimingEditable = Boolean(
+    entryTimingContext && verifiedCalendarScope &&
+    canonicalCalendarDraftQuery.data?.status === 'clean' &&
+    canonicalCalendarQuery.data?.run_package_state_fingerprint === calendarPackageQuery.data?.fingerprint
+  )
   const canonicalPreparationQuery = useQuery({
     queryKey: ['canonical-tournament-preparation', runId, activeBranchId, eventId],
     queryFn: () => getCanonicalTournamentPreparation(runId, activeBranchId, eventId),
@@ -1187,6 +1218,15 @@ export function PlannedEventDetailPage(): JSX.Element {
       {canonicalSeasonState && plannedEvent ?
         <p role="status">Using the validated Run-owned Calendar snapshot for this canonical Product Run. Legacy Simulation Run history is absent; canonical tournament authorities below remain independent.</p> : null}
       {eventsQuery.error && !canonicalSeasonState ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
+
+      {entryTimingContext && entryTimingRunClock && requestedCalendarId && (
+        <RunEditionEntryTimingPanel
+          key={['entry-timing', runId, activeBranchId, requestedCalendarId, eventId].join(':')}
+          runId={runId} branchId={activeBranchId} packageId={requestedCalendarId}
+          eventId={eventId} calendar={entryTimingRunClock}
+          enabled={entryTimingEditable}
+        />
+      )}
 
       {plannedEvent && !viewed.historical && activeBranchId ? (
         <SectionCard title="Canonical tournament preparation">

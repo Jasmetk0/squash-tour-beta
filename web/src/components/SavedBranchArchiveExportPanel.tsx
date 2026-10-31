@@ -28,17 +28,27 @@ export function SavedBranchArchiveExportPanel({
   const currentScope = useRef(scope)
   currentScope.current = scope
   const generation = useRef(0)
+  const inFlight = useRef<AbortController | null>(null)
   const [reviewed, setReviewed] = useState<{scope: string; preview: SavedBranchArchivePreview} | null>(null)
   const [workingStatus, setWorkingStatus] = useState<'clean' | 'dirty' | null>(null)
   const [busy, setBusy] = useState<'preview' | 'download' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    // A changed Run/Branch/HEAD invalidates the old preview AND any in-flight
+    // transport. A cancelled request must never apply a late response.
     generation.current += 1
+    inFlight.current?.abort()
+    inFlight.current = null
     setReviewed(null)
     setWorkingStatus(null)
     setError(null)
     setBusy(null)
+    return () => {
+      generation.current += 1
+      inFlight.current?.abort()
+      inFlight.current = null
+    }
   }, [scope])
 
   const selected = branch?.run_id === run.run_id ? branch : null
@@ -50,7 +60,7 @@ export function SavedBranchArchiveExportPanel({
     ? reviewed.preview : null
 
   /** Re-read persisted owners directly, never trust cached React Query data for export consent. */
-  async function recheck(head: string, branchId: string): Promise<void> {
+  async function recheck(head: string, branchId: string, token: number, key: string): Promise<void> {
     const [liveRun, branchList, viewerDraft] = await Promise.all([
       getRunContainer(run.run_id), listRunBranches(run.run_id), getBranchWorkingDraft(run.run_id, branchId)
     ])
@@ -67,25 +77,27 @@ export function SavedBranchArchiveExportPanel({
       throw new Error(l.invalidSelection)
     }
     if (viewerDraft.status === 'dirty' || viewerDraft.change_count !== 0) {
-      setWorkingStatus('dirty')
+      if (generation.current === token && currentScope.current === key) setWorkingStatus('dirty')
       throw new UnsavedBranchChanges(l.manualSave)
     }
     if (viewerDraft.status !== 'clean') throw new Error(l.unknownDraft)
-    setWorkingStatus('clean')
+    if (generation.current === token && currentScope.current === key) setWorkingStatus('clean')
   }
 
   async function preview(): Promise<void> {
     if (!allowed || !selected?.saved_head_revision_id || busy) return
     const token = ++generation.current
     const key = scope
+    const requestController = new AbortController()
+    inFlight.current = requestController
     setBusy('preview')
     setError(null)
     setReviewed(null)
     setWorkingStatus(null)
     try {
-      await recheck(selected.saved_head_revision_id, selected.branch_id)
+      await recheck(selected.saved_head_revision_id, selected.branch_id, token, key)
       if (generation.current !== token || currentScope.current !== key) return
-      const data = await previewSavedBranchArchive(run.run_id, selected.branch_id)
+      const data = await previewSavedBranchArchive(run.run_id, selected.branch_id, requestController.signal)
       if (generation.current !== token || currentScope.current !== key) return
       if (data.selected_head_revision_id !== selected.saved_head_revision_id) {
         throw new Error(l.invalidSelection)
@@ -96,6 +108,7 @@ export function SavedBranchArchiveExportPanel({
         setError(formatApiError(cause))
       }
     } finally {
+      if (inFlight.current === requestController) inFlight.current = null
       if (generation.current === token && currentScope.current === key) setBusy(null)
     }
   }
@@ -104,12 +117,14 @@ export function SavedBranchArchiveExportPanel({
     if (!active || !selected?.saved_head_revision_id || busy) return
     const token = ++generation.current
     const key = scope
+    const requestController = new AbortController()
+    inFlight.current = requestController
     setBusy('download')
     setError(null)
     try {
-      await recheck(active.selected_head_revision_id, selected.branch_id)
+      await recheck(active.selected_head_revision_id, selected.branch_id, token, key)
       if (generation.current !== token || currentScope.current !== key) return
-      const blob = await downloadSavedBranchArchive(active)
+      const blob = await downloadSavedBranchArchive(active, requestController.signal)
       if (generation.current !== token || currentScope.current !== key) return
       const url = URL.createObjectURL(blob)
       try {
@@ -129,12 +144,15 @@ export function SavedBranchArchiveExportPanel({
         setReviewed(null)
       }
     } finally {
+      if (inFlight.current === requestController) inFlight.current = null
       if (generation.current === token && currentScope.current === key) setBusy(null)
     }
   }
 
   function cancel(): void {
     generation.current += 1
+    inFlight.current?.abort()
+    inFlight.current = null
     setReviewed(null)
     setError(null)
     setWorkingStatus(null)

@@ -163,20 +163,21 @@ export function RunDiagnosticsPage(): JSX.Element {
   ))
   const candidateNextEvent = safeRun?.season_state.ordered_events[safeRun.season_state.next_event_index] ?? null
   const nextEventSeasonMismatch = Boolean(candidateNextEvent && candidateNextEvent.season !== safeRun?.run.season)
-  // Different read times can leave the detail and status-summary endpoints at
-  // different seasons or progress cursors, even though their Run IDs match.
-  const runStatusProgressMismatch = Boolean(safeRun && safeStatus && (
+  // Independent reads can disagree on season/progress or an immutable Run seed.
+  // Even with the same Run ID, do not combine their stale/corrupted values.
+  const runStatusMismatch = Boolean(safeRun && safeStatus && (
     safeRun.run.season !== safeStatus.season ||
+    safeRun.run.seed !== safeStatus.seed ||
     safeRun.run.next_event_index !== safeStatus.progress.next_event_index ||
     safeRun.run.total_events !== safeStatus.progress.total_events
   ))
   // A status and run-detail read can race across a real command. Neither
   // progress source is authoritative for a combined summary when they disagree.
   // Independent history queries and identity-safe inspection links remain usable.
-  const progressSourcesDisagree = seasonStateMismatch || runStatusProgressMismatch
+  const progressSourcesDisagree = seasonStateMismatch || runStatusMismatch
   const summaryRun = progressSourcesDisagree ? null : safeRun
   const summaryStatus = progressSourcesDisagree ? null : safeStatus
-  const nextPlannedEvent = seasonStateMismatch || nextEventSeasonMismatch || runStatusProgressMismatch
+  const nextPlannedEvent = seasonStateMismatch || nextEventSeasonMismatch || runStatusMismatch
     ? null : candidateNextEvent
   const nextPlannedWeek = nextPlannedEvent?.week ?? null
   const hasLineageChildren = (safeLineage?.lineage.children.length ?? 0) > 0
@@ -230,10 +231,8 @@ export function RunDiagnosticsPage(): JSX.Element {
         {progressSourcesDisagree && (
           <p role="status" className="status">{t('Conflicting progress values are hidden until the run reads agree.')}</p>
         )}
-        {runStatusProgressMismatch && (
-          <>
-            <p role="alert" className="error">{t('Run detail and status summary disagree on season or progress. Current-week links are hidden.')}</p>
-          </>
+        {runStatusMismatch && (
+          <p role="alert" className="error">{t('Run detail and status summary disagree on season, seed or progress. Current-week links are hidden.')}</p>
         )}
         {statusSummaryQuery.error && (
           <p className="error">{t('Failed to load status summary')}: {formatApiError(statusSummaryQuery.error)}</p>

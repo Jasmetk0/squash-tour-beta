@@ -101,6 +101,18 @@ describe('canonical Runs inventory', () => {
     expect(api.listRunBranches).not.toHaveBeenCalled()
   })
 
+  it.each([null, {}, [null], [{run_id: 'run-one', branch_id: ' '}], [{run_id: 'run-one'}]])(
+    'rejects malformed Branch inventory without crashing or claiming no Branches: %j', async run_branches => {
+      api.listRunBranches.mockResolvedValueOnce({run_branches})
+      renderPage()
+      const row = (await screen.findByText('Sandbox One')).closest('li')!
+      await userEvent.click(within(row).getByRole('button', {name: 'Větve +'}))
+      expect(await within(row).findByRole('alert')).toHaveTextContent('Nekonzistentní identita inventáře')
+      expect(within(row).queryByText('Run nemá dostupné větve.')).not.toBeInTheDocument()
+      expect(within(row).queryByText('Alternative')).not.toBeInTheDocument()
+    }
+  )
+
   it('links the chosen actual Branch, preserving unavailable time and Viewer selection', async () => {
     renderPage()
     const row = (await screen.findByText('Sandbox One')).closest('li')!
@@ -165,6 +177,72 @@ describe('canonical Runs inventory', () => {
     expect(await screen.findByText('Sandbox One')).toBeInTheDocument()
     expect(await screen.findByRole('alert')).toHaveTextContent('Přehled simulací není dostupný')
     expect(screen.getByRole('link', {name: 'Vytvořit prázdný Run'})).toBeInTheDocument()
+  })
+
+  it('rejects foreign or mismatched run_id in Branch responses and does not show empty branches status', async () => {
+    api.listRunBranches.mockResolvedValue({ run_branches: [
+      { run_id: 'other-run', branch_id: 'b-alt', display_name: 'Alternative', status: 'active' }
+    ] })
+    renderPage()
+    const row = (await screen.findByText('Sandbox One')).closest('li')!
+    await userEvent.click(within(row).getByRole('button', { name: 'Větve +' }))
+    const alert = await within(row).findByRole('alert')
+    expect(alert).toHaveTextContent('Nekonzistentní identita inventáře')
+    expect(within(row).queryByText('Run nemá dostupné větve.')).not.toBeInTheDocument()
+  })
+
+  it('rejects duplicate branch_id in Branch responses', async () => {
+    api.listRunBranches.mockResolvedValue({ run_branches: [
+      { run_id: 'run-one', branch_id: 'b-dup', display_name: 'First', status: 'active' },
+      { run_id: 'run-one', branch_id: 'b-dup', display_name: 'Second', status: 'active' }
+    ] })
+    renderPage()
+    const row = (await screen.findByText('Sandbox One')).closest('li')!
+    await userEvent.click(within(row).getByRole('button', { name: 'Větve +' }))
+    const alert = await within(row).findByRole('alert')
+    expect(alert).toHaveTextContent('Nekonzistentní identita inventáře')
+  })
+
+  it('hides time data and shows error if state response contains mismatches or duplicates', async () => {
+    api.listBranchStates.mockResolvedValue({ branch_states: [
+      { run_id: 'run-one', branch_id: 'b-alt', current_season: 2028, current_week: 27 },
+      { run_id: 'other-run', branch_id: 'b-alt', current_season: 2029, current_week: 1 }
+    ] })
+    renderPage()
+    const row = (await screen.findByText('Sandbox One')).closest('li')!
+    await userEvent.click(within(row).getByRole('button', { name: 'Větve +' }))
+    const alert = await within(row).findByRole('alert')
+    expect(alert).toHaveTextContent('Čas není dostupný: Nekonzistentní identita inventáře')
+    const branch = await within(row).findByText('Alternative')
+    const container = branch.closest('.runs-canonical-branch') as HTMLElement
+    expect(within(container).getByText('Čas není dostupný')).toBeInTheDocument()
+    expect(within(container).queryByText(/2028/)).not.toBeInTheDocument()
+  })
+
+  it('shows valid branches and states when the inventory is fully consistent', async () => {
+    renderPage()
+    const row = (await screen.findByText('Sandbox One')).closest('li')!
+    await userEvent.click(within(row).getByRole('button', { name: 'Větve +' }))
+    const target = await within(row).findByText('Alternative')
+    expect(target).toBeInTheDocument()
+    const container = target.closest('.runs-canonical-branch') as HTMLElement
+    expect(within(container).getByText('2028/29 · W27')).toBeInTheDocument()
+    expect(within(row).queryByRole('alert')).not.toBeInTheDocument()
+    expect(within(row).queryByText('Nekonzistentní identita inventáře')).not.toBeInTheDocument()
+  })
+
+  it('shows loading state while lazy fetching Branches', async () => {
+    let resolveBranches: any
+    api.listRunBranches.mockReturnValue(new Promise(resolve => resolveBranches = resolve))
+    renderPage()
+    const row = (await screen.findByText('Sandbox One')).closest('li')!
+    await userEvent.click(within(row).getByRole('button', { name: 'Větve +' }))
+    expect(within(row).getByRole('status')).toHaveTextContent('Načítám uložené Runy…')
+    resolveBranches({ run_branches: [] })
+    await waitFor(() => {
+      expect(within(row).queryByRole('status')).not.toBeInTheDocument()
+    })
+    expect(within(row).getByText('Run nemá dostupné větve.')).toBeInTheDocument()
   })
 
 })

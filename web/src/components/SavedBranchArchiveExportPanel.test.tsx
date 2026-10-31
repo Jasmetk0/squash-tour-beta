@@ -100,6 +100,34 @@ describe('Saved Branch archive Admin export panel', () => {
     expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
   })
 
+  it('paginates a long Saved history without mounting all revisions and retains page across language toggle', async () => {
+    const history = Array.from({length: 205}, (_, index) => ({
+      ...archive.history[0], revision_id: 'revision-' + (index + 1), sequence: index + 1
+    }))
+    mocks.previewSavedBranchArchive.mockResolvedValueOnce({...archive, history})
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    expect(screen.getByText('Zobrazené revize: 1–100 / 205')).toBeInTheDocument()
+    expect(screen.queryByText('revision-101')).not.toBeInTheDocument()
+    expect(screen.queryByText('revision-205')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', {name: 'Další revize', hidden: true}))
+    expect(screen.getByText('Zobrazené revize: 101–200 / 205')).toBeInTheDocument()
+    expect(screen.getByText('revision-101')).toBeInTheDocument()
+    expect(screen.queryByText('revision-1')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', {name: 'Další revize', hidden: true}))
+    expect(screen.getByText('Zobrazené revize: 201–205 / 205')).toBeInTheDocument()
+    expect(screen.getByText('revision-205')).toBeInTheDocument()
+    expect(screen.getByRole('button', {name: 'Další revize', hidden: true})).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', {name: 'Switch language'}))
+    expect(screen.getByText('Showing revisions: 201–205 / 205')).toBeInTheDocument()
+    expect(screen.getByText('revision-205')).toBeInTheDocument()
+    expect(mocks.previewSavedBranchArchive).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', {name: 'Reload preview'}))
+    await waitFor(() => expect(screen.getByText('Showing revisions: 1–2 / 2')).toBeInTheDocument())
+    expect(mocks.previewSavedBranchArchive).toHaveBeenCalledTimes(2)
+  })
+
   it('blocks stale HEAD before preview and does not call the export endpoint', async () => {
     mocks.listRunBranches.mockResolvedValueOnce({run_branches: [{...branch, saved_head_revision_id: 'new-head'}]})
     mount()

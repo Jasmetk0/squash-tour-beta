@@ -149,8 +149,15 @@ class FrontendHandler(SimpleHTTPRequestHandler):
 
 
 class FrontendServer(ThreadingHTTPServer):
-    allow_reuse_address = False
+    # POSIX REUSEADDR permits restart after TIME_WAIT, not a second listener.
+    # Windows REUSEADDR can steal a live port; use exclusive ownership there.
+    allow_reuse_address = os.name != "nt"
     daemon_threads = True
+
+    def server_bind(self):
+        if os.name == "nt":
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
 
 
 def reserve_api_socket() -> socket.socket:
@@ -158,6 +165,8 @@ def reserve_api_socket() -> socket.socket:
     try:
         if os.name == "nt":
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        else:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(("127.0.0.1", 8000))
         sock.listen(128)
         return sock
@@ -244,6 +253,11 @@ def host(root: Path, data: Path, stop: threading.Event, *, open_browser: bool) -
 
 
 def main(argv=None) -> int:
+    # Windows console supports Unicode; redirected logs otherwise use the local
+    # ANSI code page and can crash on a Czech username before startup.
+    for stream in (sys.stdout, sys.stderr):
+        if stream and not stream.isatty():
+            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
     parser = argparse.ArgumentParser(description="Squash Engine internal Windows preview")
     parser.add_argument("--no-browser", action="store_true", help="Do not open a browser automatically")
     parser.add_argument("--data-dir", type=Path, help="Advanced: empty or same-build test data folder")

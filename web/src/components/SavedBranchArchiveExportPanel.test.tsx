@@ -179,6 +179,35 @@ describe('Saved Branch archive Admin export panel', () => {
     expect(objectUrl).toHaveBeenCalledTimes(1)
   })
 
+  it('rejects a newer persisted HEAD at download time without requesting archive bytes', async () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    mocks.listRunBranches.mockResolvedValueOnce({run_branches: [
+      {...branch, saved_head_revision_id: 'newer-saved-head'}
+    ]})
+    fireEvent.click(screen.getByRole('button', {name: /Stáhnout ověřený/}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('HEAD')
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument()
+    expect(mocks.previewSavedBranchArchive).toHaveBeenCalledTimes(1)
+  })
+
+  it('refuses a newly dirty Viewer draft after review and requires a fresh preview', async () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    mocks.getBranchWorkingDraft.mockResolvedValueOnce({
+      run_id: 'r', branch_id: 'b', base_saved_revision_id: 'head',
+      status: 'dirty', change_count: 1
+    })
+    fireEvent.click(screen.getByRole('button', {name: /Stáhnout ověřený/}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Neuložené změny')
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument()
+    expect(screen.getByRole('link', {name: /ruční Save/})).toHaveAttribute('href', '/admin/runs/r')
+  })
+
   it('surfaces server preview error with explicit retry, not a fabricated v1 capability', async () => {
     mocks.previewSavedBranchArchive.mockRejectedValueOnce(new Error('unsupported_saved_component'))
     mount()

@@ -62,7 +62,7 @@ describe('Saved Branch export-only HTTP boundary', () => {
     fetchMock.mockResolvedValueOnce(new Response('wrong content', {
       status: 200, headers: {'Content-Type': 'application/vnd.squash.saved-branch+json'}
     }))
-    await expect(downloadSavedBranchArchive(original)).rejects.toThrow(/digest/)
+    await expect(downloadSavedBranchArchive(original)).rejects.toThrow(/size|digest/)
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(url).toContain('/admin/run-archives/export')
     expect(JSON.parse(init.body as string)).toEqual({

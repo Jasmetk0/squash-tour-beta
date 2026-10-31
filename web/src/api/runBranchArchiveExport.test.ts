@@ -67,6 +67,62 @@ describe('Saved Branch export-only HTTP boundary', () => {
     }, 'run', 'branch')).toThrow()
   })
 
+  it('accepts an unmodified fork whose selected Saved HEAD still belongs to the source Branch', () => {
+    // The v1 archive backend explicitly permits a Branch that shares its
+    // source's historical HEAD before it has written a new owned revision.
+    const inherited = {
+      ...original, selected_head_revision_id: 'source-head',
+      branches: [
+        {...original.branches[0], saved_head_revision_id: 'source-head',
+          forked_from_branch_id: 'source', forked_from_saved_revision_id: 'source-head'},
+        {branch_id: 'source', display_name: 'Source', role: 'dependency' as const,
+          saved_head_revision_id: 'source-head', forked_from_branch_id: null,
+          forked_from_saved_revision_id: null}
+      ],
+      history: [{...original.history[0], revision_id: 'source-head',
+        original_owner_branch_id: 'source'}]
+    }
+    expect(assertSavedBranchArchivePreview(inherited, 'run', 'branch')).toEqual(inherited)
+  })
+
+  it('accepts a source Branch ending at a historical prefix, not its current live HEAD', () => {
+    const ancestor = {...original.history[0], revision_id: 'source-prefix',
+      original_owner_branch_id: 'source'}
+    const selected = {...original.history[0], revision_id: 'head', sequence: 2,
+      parent_revision_id: 'source-prefix'}
+    const forked = {
+      ...original,
+      branches: [
+        {...original.branches[0], forked_from_branch_id: 'source',
+          forked_from_saved_revision_id: 'source-prefix'},
+        {branch_id: 'source', display_name: 'Source', role: 'dependency' as const,
+          saved_head_revision_id: 'source-prefix', forked_from_branch_id: null,
+          forked_from_saved_revision_id: null}
+      ],
+      history: [ancestor, selected]
+    }
+    expect(assertSavedBranchArchivePreview(forked, 'run', 'branch')).toEqual(forked)
+    expect(() => assertSavedBranchArchivePreview({
+      ...forked, branches: [{...forked.branches[0], forked_from_branch_id: 'absent'},
+        forked.branches[1]]
+    }, 'run', 'branch')).toThrow(/fork dependency/)
+    expect(() => assertSavedBranchArchivePreview({
+      ...forked, branches: [{...forked.branches[0], forked_from_saved_revision_id: 'absent'},
+        forked.branches[1]]
+    }, 'run', 'branch')).toThrow(/fork dependency/)
+    expect(() => assertSavedBranchArchivePreview({
+      ...forked, branches: [forked.branches[0],
+        {...forked.branches[1], forked_from_branch_id: 'branch'}]
+    }, 'run', 'branch')).toThrow(/fork cycle/)
+    expect(() => assertSavedBranchArchivePreview({
+      ...forked, history: [ancestor, {...selected, sequence: 4}]
+    }, 'run', 'branch')).toThrow(/noncontiguous/)
+    expect(() => assertSavedBranchArchivePreview({
+      ...forked, history: [ancestor, selected,
+        {...ancestor, revision_id: 'orphan', parent_revision_id: null}]
+    }, 'run', 'branch')).toThrow(/unreachable/)
+  })
+
   it('preview is a read-only, explicitly requested POST with no subsequent Save', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(original), {
       status: 200, headers: {'Content-Type': 'application/json'}

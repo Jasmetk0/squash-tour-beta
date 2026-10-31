@@ -132,7 +132,7 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
     const index = new Map<string, typeof serverTasks.data>()
     if (serverTasks.isSuccess) {
       for (const task of serverTasks.data) {
-        const key = `${task.run_id}::${task.branch_id}::${task.parent_command_id}`
+        const key = JSON.stringify([task.run_id, task.branch_id, task.parent_command_id])
         const existing = index.get(key)
         if (existing) {
           existing.push(task)
@@ -188,7 +188,7 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
         : operations.length === 0 ? <p className="status">{text.noMatches}</p>
           : <ul className="simulation-task-center__list" aria-label={text.title}>
             {operations.map(operation => {
-              const taskKey = `${operation.run_id}::${operation.branch_id}::${operation.command_id}`
+              const taskKey = JSON.stringify([operation.run_id, operation.branch_id, operation.command_id])
               const linkedTasks = serverTaskIndex.get(taskKey)
               const isAmbiguous = linkedTasks && linkedTasks.length > 1
               const linkedTask = linkedTasks && linkedTasks.length === 1 ? linkedTasks[0] : undefined

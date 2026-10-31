@@ -83,7 +83,7 @@ export function verifiedTournamentNavigation(
       source.blockers.some(x => typeof x !== 'string' || !x.trim()) ||
       typeof source.ready_for_match_schedule !== 'boolean' ||
       typeof source.next_required_action !== 'string' ||
-      (source.next_required_action !== 'none' && !Object.hasOwn(actions, source.next_required_action)) ||
+      (source.next_required_action !== 'none' && !Object.prototype.hasOwnProperty.call(actions, source.next_required_action)) ||
       (source.preparation_fingerprint !== undefined &&
         !/^[0-9a-f]{64}$/.test(source.preparation_fingerprint))) return null
 

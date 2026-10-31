@@ -35,6 +35,22 @@ jobs:
         run: |
           gh api "repos/${GITHUB_REPOSITORY}/check-runs/${SONAR_CHECK_ID}/annotations?per_page=100" \
             --jq '.[] | {path, start_line, end_line, title, message, annotation_level}'
+      - name: Query public Sonar issue data and quality gate read-only
+        run: |
+          if curl -fsSL --connect-timeout 10 --max-time 30 \
+            "https://sonarcloud.io/api/issues/search?componentKeys=Jasmetk0_squash-tour-beta&pullRequest=1678&ps=100&issueStatuses=OPEN,CONFIRMED" \
+            -o /tmp/sonar-issues.json; then
+            jq -c '{total, issues: [.issues[] | {key, rule, message, component, line, type, severity, status, impacts}]}' /tmp/sonar-issues.json
+          else
+            echo "Public Sonar issue API inaccessible"
+          fi
+          if curl -fsSL --connect-timeout 10 --max-time 30 \
+            "https://sonarcloud.io/api/qualitygates/project_status?projectKey=Jasmetk0_squash-tour-beta&pullRequest=1678" \
+            -o /tmp/sonar-gate.json; then
+            jq -c '.projectStatus | {status, conditions}' /tmp/sonar-gate.json
+          else
+            echo "Public Sonar gate API inaccessible"
+          fi
   real-export:
     name: Saved Branch archive / real Chromium + SQLite
     runs-on: ubuntu-latest

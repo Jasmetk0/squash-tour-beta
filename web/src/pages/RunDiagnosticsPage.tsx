@@ -235,14 +235,14 @@ export function RunDiagnosticsPage(): JSX.Element {
                 {
                   label: t('Progress'),
                   value: summaryStatus
-                    ? `${safeStatus.progress.next_event_index} / ${safeStatus.progress.total_events}`
+                    ? `${summaryStatus.progress.next_event_index} / ${summaryStatus.progress.total_events}`
                     : summaryRun
                       ? `${summaryRun.run.next_event_index} / ${summaryRun.run.total_events}`
                       : '—'
                 },
                 {
                   label: t('Completed events'),
-                  value: summaryStatus?.progress.completed_event_count ?? safeRun?.run.completed_event_ids.length ?? '—'
+                  value: summaryStatus?.progress.completed_event_count ?? summaryRun?.run.completed_event_ids.length ?? '—'
                 }
               ]}
             />

@@ -175,6 +175,13 @@ def reserve_api_socket() -> socket.socket:
         raise
 
 
+def wait_for_thread(thread: threading.Thread | None, label: str) -> None:
+    while thread and thread.is_alive():
+        thread.join(timeout=30)
+        if thread.is_alive():
+            print(f"Waiting for {label} shutdown. Keep this window open.", flush=True)
+
+
 def host(root: Path, data: Path, stop: threading.Event, *, open_browser: bool) -> None:
     import uvicorn
 
@@ -194,6 +201,7 @@ def host(root: Path, data: Path, stop: threading.Event, *, open_browser: bool) -
         raise LaunchError("Port 8000 is in use. Stop the other application and retry.") from exc
     api_thread = web_thread = None
     server = None
+    app = None
     locks = contextlib.ExitStack()
     previous_cwd = Path.cwd()
     try:
@@ -239,10 +247,13 @@ def host(root: Path, data: Path, stop: threading.Event, *, open_browser: bool) -
     finally:
         if server:
             server.should_exit = True
-        while api_thread and api_thread.is_alive():
-            api_thread.join(timeout=30)
-            if api_thread.is_alive():
-                print("Waiting for engine shutdown. Keep this window open.", flush=True)
+        wait_for_thread(api_thread, "engine")
+        # The existing lifespan asks the dispatcher to stop but joins only for
+        # five seconds. Retain ownership until an in-flight chunk has unwound;
+        # do not exit a process with a still-writing daemon worker.
+        worker = getattr(getattr(app, "state", None), "full_simulation_worker", None)
+        if worker:
+            wait_for_thread(worker.thread, "simulation worker")
         if web_thread and web_thread.is_alive():
             frontend.shutdown()
             web_thread.join(timeout=5)

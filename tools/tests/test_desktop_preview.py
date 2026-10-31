@@ -7,6 +7,7 @@ import json
 import socket
 import threading
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
@@ -139,3 +140,68 @@ def test_build_identity_requires_complete_package(bundle, monkeypatch):
     (root / "web/dist/index.html").unlink()
     with pytest.raises(launcher.LaunchError, match="Incomplete"):
         launcher.read_build(root)
+
+
+def test_shutdown_retains_data_lock_until_late_worker_has_stopped(bundle, tmp_path, monkeypatch):
+    import uvicorn
+
+    import beta_engine.main
+
+    root, _ = bundle
+    data = tmp_path / "data"
+    release = threading.Event()
+    waiting = threading.Event()
+    started = threading.Event()
+    stop = threading.Event()
+    worker = threading.Thread(target=release.wait)
+    worker.start()
+    app = SimpleNamespace(state=SimpleNamespace(
+        full_simulation_worker=SimpleNamespace(thread=worker)))
+    monkeypatch.setattr(beta_engine.main, "create_app", lambda **kwargs: app)
+    monkeypatch.setattr(launcher.logging, "basicConfig", lambda **kwargs: None)
+
+    class FakeServer:
+        def __init__(self, config):
+            self.started = False
+            self.should_exit = False
+
+        def run(self, sockets):
+            self.started = True
+            started.set()
+            while not self.should_exit:
+                stop.wait(0.01)
+
+    original_wait = launcher.wait_for_thread
+
+    def observe_wait(thread, label):
+        if label == "simulation worker":
+            waiting.set()
+        original_wait(thread, label)
+
+    monkeypatch.setattr(uvicorn, "Server", FakeServer)
+    monkeypatch.setattr(launcher, "wait_for_thread", observe_wait)
+    failures = []
+
+    def run():
+        try:
+            launcher.host(root, data, stop, open_browser=False)
+        except Exception as exc:  # noqa: BLE001 - report the test thread's failure on the main thread
+            failures.append(exc)
+
+    host_thread = threading.Thread(target=run)
+    host_thread.start()
+    try:
+        assert started.wait(10)
+        stop.set()
+        assert waiting.wait(10)
+        with pytest.raises(launcher.LaunchError, match="already in use"), launcher.DataLock(data):
+            pytest.fail("data lock released before worker stopped")
+    finally:
+        stop.set()
+        release.set()
+        host_thread.join(10)
+        worker.join(10)
+    assert not host_thread.is_alive()
+    assert not failures
+    with launcher.DataLock(data):
+        pass

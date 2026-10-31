@@ -207,6 +207,12 @@ export function SavedBranchArchiveExportPanel({
           {' → '}<code>{item.parent_revision_id || l.noParent}</code>
         </li>)}</ol>
       </details>
+      <details><summary>{l.components} ({active.included_components.length})</summary>
+        <ul>{active.included_components.map(name => <li key={name}><code>{name}</code></li>)}</ul>
+      </details>
+      <details><summary>{l.headComponents} ({active.selected_head_components.length})</summary>
+        <ul>{active.selected_head_components.map(name => <li key={name}><code>{name}</code></li>)}</ul>
+      </details>
       <h5>{l.refs} ({active.unresolved_package_references.length})</h5>
       {active.unresolved_package_references.length === 0 ? <p>{l.noRefs}</p> :
         <ul>{active.unresolved_package_references.map((reference, index) =>

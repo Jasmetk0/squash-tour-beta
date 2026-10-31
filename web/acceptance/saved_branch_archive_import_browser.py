@@ -19,7 +19,8 @@ from urllib.parse import urlsplit
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 API_PORT = 8023
-WEB_PORT = 5174
+# Match the backend's intentionally narrow DEV_ALLOWED_ORIGINS (5173 only).
+WEB_PORT = 5173
 
 
 def main() -> None:

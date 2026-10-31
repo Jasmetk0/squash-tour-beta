@@ -63,6 +63,14 @@ def main():
     with ApiServer(database_url=db) as fixture:
         run_id, branch_id, played, saved = manual_match(fixture)
         original_head = saved["saved_revision"]["revision_id"]
+        status, fork = _request(
+            "POST",
+            f"{fixture.base_url}/run-containers/{run_id}/branches",
+            {"source_branch_id": branch_id, "source_saved_revision_id": original_head},
+        )
+        assert status == 201, fork
+        fork_id = fork["branch_id"]
+        assert fork["saved_head_revision_id"] == original_head
         original_state = _dump(database)
     fixture.app.state.runtime.repository._engine.dispose()
 
@@ -293,6 +301,54 @@ def main():
             assert len(post_requests) == 6, "Preview must require an explicit new click"
             assert _dump(database) == original_state
 
+            # Prove the previously rejected client case with real persisted
+            # Branch owners: a fresh fork shares the source's Saved HEAD, and
+            # has no original revision owned by the fork itself yet.
+            page.goto(f"{web}/admin/runs/{run_id}/manage?branch={fork_id}")
+            fork_panel = page.get_by_role("region", name="Export uložené Branch")
+            expect(fork_panel).to_be_visible()
+            expect(fork_panel.get_by_text(original_head, exact=False)).to_be_visible()
+            with page.expect_response(
+                lambda response: (
+                    response.request.method == "POST"
+                    and response.url.endswith("/admin/run-archives/export/preview")
+                )
+            ) as fork_review_event:
+                fork_panel.get_by_role("button", name="Načíst exportní náhled").click()
+            fork_response = fork_review_event.value
+            assert fork_response.status == 200, fork_response.text()
+            fork_review = fork_response.json()
+            assert fork_review["selected_branch_id"] == fork_id
+            assert fork_review["selected_head_revision_id"] == original_head
+            assert any(
+                branch["branch_id"] == fork_id and branch["role"] == "selected"
+                for branch in fork_review["branches"]
+            )
+            assert any(
+                branch["branch_id"] == branch_id and branch["role"] == "dependency"
+                for branch in fork_review["branches"]
+            )
+            assert any(
+                revision["revision_id"] == original_head
+                and revision["original_owner_branch_id"] == branch_id
+                for revision in fork_review["history"]
+            )
+            with page.expect_download() as inherited_event:
+                fork_panel.get_by_role(
+                    "button", name="Stáhnout ověřený soubor .sqbranch"
+                ).click()
+            inherited_file = root / "fork-inherited-head.sqbranch"
+            inherited_event.value.save_as(inherited_file)
+            inherited_bytes = inherited_file.read_bytes()
+            inherited_hash = hashlib.sha256(inherited_bytes).hexdigest()
+            assert inherited_hash == fork_review["archive_digest"]
+            assert len(inherited_bytes) == fork_review["archive_size_bytes"]
+            inherited_archive = Archive(inherited_bytes)
+            assert inherited_archive.envelope.selected_branch_id == fork_id
+            assert inherited_archive.envelope.selected_head_revision_id == original_head
+            assert _dump(database) == original_state, "Inherited fork export performed a write"
+            fork_panel.screenshot(path=str(root / "fork-inherited-cs.png"))
+
             code, draft = _request(
                 "GET",
                 f"{api}/run-containers/{run_id}/branches/{branch_id}/working-draft",
@@ -321,6 +377,11 @@ def main():
                         "download_bytes": len(raw),
                         "reviewed_history_count": len(reviewed["history"]),
                         "real_match_result": bool(played["result"]),
+                        "inherited_fork_id": fork_id,
+                        "inherited_fork_sha256": inherited_hash,
+                        "inherited_fork_selected_head": original_head,
+                        "inherited_fork_original_owner": branch_id,
+                        "inherited_fork_browser_export": True,
                         "languages": ["en", "cs"],
                         "physical_reopen": True,
                         "sqlite_unchanged": True,

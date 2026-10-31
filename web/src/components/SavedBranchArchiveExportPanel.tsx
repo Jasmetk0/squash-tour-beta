@@ -43,7 +43,7 @@ export function SavedBranchArchiveExportPanel({
 
   const selected = branch?.run_id === run.run_id ? branch : null
   const allowed = run.storage_kind === 'custom_local' && !run.read_only &&
-    run.status === 'active' && selected?.status === 'active' && !selected.read_only &&
+    (run.status === 'working' || run.status === 'active') && selected?.status === 'active' && !selected.read_only &&
     Boolean(selected.saved_head_revision_id)
   const active = reviewed?.scope === scope &&
     reviewed.preview.selected_head_revision_id === selected?.saved_head_revision_id
@@ -56,7 +56,8 @@ export function SavedBranchArchiveExportPanel({
     ])
     const liveBranch = branchList.run_branches?.find(item => item.branch_id === branchId)
     if (!liveRun || liveRun.run_id !== run.run_id ||
-      liveRun.storage_kind !== 'custom_local' || liveRun.read_only || liveRun.status !== 'active' ||
+      liveRun.storage_kind !== 'custom_local' || liveRun.read_only ||
+      (liveRun.status !== 'working' && liveRun.status !== 'active') ||
       !liveBranch || liveBranch.run_id !== run.run_id || liveBranch.status !== 'active' ||
       liveBranch.read_only || liveBranch.saved_head_revision_id !== head) {
       throw new Error(l.invalidSelection)

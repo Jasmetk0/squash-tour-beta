@@ -616,6 +616,11 @@ describe('RunDiagnosticsPage', () => {
       expect(await screen.findByRole('alert')).toHaveTextContent(
         'Run detail and status summary disagree on season or progress. Current-week links are hidden.'
       )
+      expect(screen.getByText('Conflicting progress values are hidden until the run reads agree.')).toBeInTheDocument()
+      // Neither independently sampled value may masquerade as verified progress.
+      expect(screen.queryByText(`${statusIndex}/${statusTotal}`)).not.toBeInTheDocument()
+      expect(screen.queryByText(`${statusIndex} / ${statusTotal}`)).not.toBeInTheDocument()
+      expect(screen.queryByText('2029')).not.toBeInTheDocument()
       expect(screen.getByText('Week Detail (current week unavailable)')).toBeInTheDocument()
       expect(screen.queryByRole('link', { name: 'Week Detail (current week)' })).not.toBeInTheDocument()
       expect(screen.queryByRole('link', { name: /Inspect current week detail/ })).not.toBeInTheDocument()

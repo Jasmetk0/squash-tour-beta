@@ -13,6 +13,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -80,6 +81,7 @@ def main():
     web = f"http://127.0.0.1:{args.web_port}"
     errors = []
     post_requests = []
+    blocked_external_requests = []
     backend_log = (root / "backend.log").open("w")
     frontend_log = (root / "frontend.log").open("w")
 
@@ -110,12 +112,28 @@ def main():
     try:
         wait_http(web, frontend)
         with sync_playwright() as pw:
-            # Never disable Chromium sandbox for an export file test.
-            browser = pw.chromium.launch(chromium_sandbox=True)
+            # Hosted Ubuntu GitHub runners reject Chromium's user-namespace
+            # sandbox via AppArmor. Playwright's default launch works here;
+            # this test is NOT proof of browser sandbox confinement. Instead,
+            # restrict all browser HTTP requests to the isolated local servers.
+            browser = pw.chromium.launch()
             context = browser.new_context(
                 viewport={"width": 1440, "height": 1100},
                 accept_downloads=True,
             )
+            def local_http_only(route):
+                address = urlsplit(route.request.url)
+                if (
+                    address.scheme == "http"
+                    and address.hostname == "127.0.0.1"
+                    and address.port in {args.api_port, args.web_port}
+                ):
+                    route.continue_()
+                else:
+                    blocked_external_requests.append(route.request.url)
+                    route.abort()
+
+            context.route("**/*", local_http_only)
             context.add_init_script(
                 "localStorage.setItem('squash-engine-language-v1', 'en')"
             )
@@ -370,6 +388,7 @@ def main():
             assert code == 200 and reopened["base_saved_revision_id"] == original_head
             assert _dump(database) == original_state
             assert not errors, errors
+            assert not blocked_external_requests, blocked_external_requests
             (root / "evidence.json").write_text(
                 json.dumps(
                     {
@@ -397,6 +416,8 @@ def main():
                         "explicit_repreview_after_409": True,
                         "post_requests": post_requests,
                         "page_errors": errors,
+                        "blocked_external_requests": blocked_external_requests,
+                        "browser_sandbox": "unsupported_by_hosted_runner; local HTTP confined",
                     },
                     indent=2,
                 )

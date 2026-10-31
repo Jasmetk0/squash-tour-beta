@@ -109,6 +109,14 @@ export function projectSavedStateComparison(
       (c.before_fingerprint!==null&&typeof c.before_fingerprint!=='string')||
       (c.after_fingerprint!==null&&typeof c.after_fingerprint!=='string'))
       return null
+    // Server statuses are part of the comparison proof, not a cosmetic label.
+    // Reject inconsistent fingerprint presence/equality rather than reporting a
+    // forged "unchanged" component or an invented addition/removal.
+    const before=c.before_fingerprint,after=c.after_fingerprint
+    if((c.status==='added'&&(before!==null||after===null))||
+       (c.status==='removed'&&(before===null||after!==null))||
+       (c.status==='changed'&&(before===null||after===null||before===after))||
+       (c.status==='unchanged'&&(before===null||after===null||before!==after)))return null
     // Do not infer component payloads from fingerprints.
     ids.add(c.component_key)
     rows.push({id:'component:'+c.component_key,section:'component',

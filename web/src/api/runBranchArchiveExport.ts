@@ -162,22 +162,29 @@ export function assertSavedBranchArchivePreview(
   return value as SavedBranchArchivePreview
 }
 
-/** Preserve ordinary API details without buffering arbitrarily large error pages. */
-async function boundedArchiveError(response: Response): Promise<string> {
-  if (!response.body) return ''
+/** Bound both preview and error JSON without trusting Content-Length alone. */
+async function boundedResponseText(
+  response: Response, limit: number
+): Promise<{ text: string; exceeded: boolean }> {
+  const length = response.headers.get('Content-Length')
+  if (length !== null && /^\\d+$/.test(length) && Number(length) > limit) {
+    await response.body?.cancel().catch(() => undefined)
+    return { text: '', exceeded: true }
+  }
+  if (!response.body) return { text: '', exceeded: false }
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
   let received = 0
-  let message = ''
+  let text = ''
   try {
     while (true) {
       const chunk = await reader.read()
-      if (chunk.done) return message + decoder.decode()
-      if (chunk.value.byteLength > MAX_ERROR_BYTES - received) {
-        return 'Saved Branch archive error response exceeded the safe size limit.'
+      if (chunk.done) return { text: text + decoder.decode(), exceeded: false }
+      if (chunk.value.byteLength > limit - received) {
+        return { text: '', exceeded: true }
       }
       received += chunk.value.byteLength
-      message += decoder.decode(chunk.value, { stream: true })
+      text += decoder.decode(chunk.value, { stream: true })
     }
   } finally {
     await reader.cancel().catch(() => undefined)
@@ -193,7 +200,9 @@ async function archiveResponse(path: string, body: object, signal?: AbortSignal)
     signal
   })
   if (!response.ok) {
-    const message = await boundedArchiveError(response)
+    const errorBody = await boundedResponseText(response, MAX_ERROR_BYTES)
+    const message = errorBody.exceeded
+      ? 'Saved Branch archive error response exceeded the safe size limit.' : errorBody.text
     throw new ApiError(message || 'Saved Branch archive request failed', response.status)
   }
   return response
@@ -203,7 +212,12 @@ export async function previewSavedBranchArchive(
   runId: string, branchId: string, signal?: AbortSignal
 ): Promise<SavedBranchArchivePreview> {
   const response = await archiveResponse('/export/preview', { run_id: runId, branch_id: branchId }, signal)
-  return assertSavedBranchArchivePreview(await response.json() as unknown, runId, branchId)
+  if (!response.headers.get('Content-Type')?.startsWith('application/json')) {
+    throw new Error('Server returned a non-JSON archive preview.')
+  }
+  const previewBody = await boundedResponseText(response, MAX_BYTES)
+  if (previewBody.exceeded) throw new Error('Saved Branch archive preview exceeds the safe size limit.')
+  return assertSavedBranchArchivePreview(JSON.parse(previewBody.text) as unknown, runId, branchId)
 }
 
 /** Prove the attachment is the *exact* reviewed bytes, not merely a successful HTTP reply. */

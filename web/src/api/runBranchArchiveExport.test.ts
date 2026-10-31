@@ -112,7 +112,13 @@ describe('Saved Branch export-only HTTP boundary', () => {
     const blob = await downloadSavedBranchArchive(verified)
     expect(blob.type).toBe('application/vnd.squash.saved-branch+json')
     expect(blob.size).toBe(3)
-    expect(await blob.text()).toBe('abc')
+    const content = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsText(blob)
+    })
+    expect(content).toBe('abc')
     expect(digestMock).toHaveBeenCalledTimes(1)
   })
 

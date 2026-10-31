@@ -91,6 +91,8 @@ describe('Saved Branch archive Admin export panel', () => {
     expect(screen.getByText(/missing-package/)).toBeInTheDocument()
     expect(screen.getByText(/Počet revizí/)).toBeInTheDocument()
     expect(screen.getByText(/working_drafts/)).toBeInTheDocument()
+    expect(screen.getByText('Zahrnuté Saved komponenty (1)')).toBeInTheDocument()
+    expect(screen.getByText('Komponenty vybraného HEAD (1)')).toBeInTheDocument()
     expect(screen.getByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
     fireEvent.click(screen.getByRole('button', {name: 'Switch language'}))
     expect(screen.getByRole('button', {name: 'Download verified .sqbranch file'})).toBeEnabled()

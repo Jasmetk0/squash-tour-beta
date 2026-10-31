@@ -93,6 +93,49 @@ describe('Saved Branch export-only HTTP boundary', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
+  it('accepts only exact SHA-256-verified streamed bytes', async () => {
+    const digest = 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'
+    const verified = {...original, archive_size_bytes: 3, archive_digest: digest}
+    const digestMock = vi.fn(async (_algorithm: string, value: Uint8Array) => {
+      expect(_algorithm).toBe('SHA-256')
+      expect(Array.from(value)).toEqual([97, 98, 99])
+      return Uint8Array.from(digest.match(/../g)!.map(byte => Number.parseInt(byte, 16))).buffer
+    })
+    vi.stubGlobal('crypto', {subtle: {digest: digestMock}})
+    fetchMock.mockResolvedValueOnce(new Response(new ReadableStream({
+      start(controller) {
+        controller.enqueue(new Uint8Array([97]))
+        controller.enqueue(new Uint8Array([98, 99]))
+        controller.close()
+      }
+    }), {status: 200, headers: {'Content-Type': 'application/vnd.squash.saved-branch+json'}}))
+    const blob = await downloadSavedBranchArchive(verified)
+    expect(blob.type).toBe('application/vnd.squash.saved-branch+json')
+    expect(blob.size).toBe(3)
+    expect(await blob.text()).toBe('abc')
+    expect(digestMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects an oversized response as soon as streamed bytes exceed the reviewed size', async () => {
+    const cancelled = vi.fn()
+    fetchMock.mockResolvedValueOnce(new Response(new ReadableStream({
+      start(controller) { controller.enqueue(new Uint8Array(13)) },
+      cancel: cancelled
+    }), {status: 200, headers: {'Content-Type': 'application/vnd.squash.saved-branch+json'}}))
+    await expect(downloadSavedBranchArchive(original)).rejects.toThrow(/size exceeds/)
+    expect(cancelled).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects an incomplete streamed download without calculating a digest or offering a file', async () => {
+    const digestMock = vi.fn()
+    vi.stubGlobal('crypto', {subtle: {digest: digestMock}})
+    fetchMock.mockResolvedValueOnce(new Response('small', {
+      status: 200, headers: {'Content-Type': 'application/vnd.squash.saved-branch+json'}
+    }))
+    await expect(downloadSavedBranchArchive(original)).rejects.toThrow(/size differs/)
+    expect(digestMock).not.toHaveBeenCalled()
+  })
+
   it('rejects stale preview 409 and preserves server reason without retry', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
       detail: { code: 'stale_export_preview', message: 'Review again' }

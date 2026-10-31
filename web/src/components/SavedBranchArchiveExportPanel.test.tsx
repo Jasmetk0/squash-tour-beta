@@ -1,0 +1,163 @@
+/** Mocked component tests; these do not stand in for a real browser/SQLite export. */
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { RunBranch, RunContainer } from '../api/types'
+import type { SavedBranchArchivePreview } from '../api/runBranchArchiveExport'
+import { LanguageProvider, useLanguage } from '../i18n/LanguageContext'
+import { SavedBranchArchiveExportPanel } from './SavedBranchArchiveExportPanel'
+
+const mocks = vi.hoisted(() => ({
+  getRunContainer: vi.fn(),
+  listRunBranches: vi.fn(),
+  getBranchWorkingDraft: vi.fn(),
+  previewSavedBranchArchive: vi.fn(),
+  downloadSavedBranchArchive: vi.fn()
+}))
+vi.mock('../api/client', () => ({
+  getRunContainer: mocks.getRunContainer,
+  listRunBranches: mocks.listRunBranches,
+  getBranchWorkingDraft: mocks.getBranchWorkingDraft
+}))
+vi.mock('../api/runBranchArchiveExport', () => ({
+  previewSavedBranchArchive: mocks.previewSavedBranchArchive,
+  downloadSavedBranchArchive: mocks.downloadSavedBranchArchive
+}))
+const run = {
+  run_id: 'r', display_name: 'Run', storage_kind: 'custom_local', status: 'active', read_only: false
+} as RunContainer
+const branch = {
+  run_id: 'r', branch_id: 'b', display_name: 'Branch A', status: 'active', read_only: false,
+  saved_head_revision_id: 'head'
+} as RunBranch
+const archive = {
+  schema_version: 'run_branch_archive_preview.v1', run_id: 'r',
+  selected_branch_id: 'b', selected_head_revision_id: 'head',
+  archive_digest: 'a'.repeat(64), archive_size_bytes: 1024,
+  scope: 'custom_selected_saved_branch_with_dependency_history',
+  format: 'run_branch_archive.v1', minimum_engine: 'engine', display_name: 'Run',
+  viewer_branch_id: 'b', audit_event_count: 2, checkpoint_count: 1,
+  branches: [
+    { branch_id: 'b', display_name: 'Branch A', role: 'selected',
+      forked_from_branch_id: null, forked_from_saved_revision_id: null, saved_head_revision_id: 'head' },
+    { branch_id: 'dep', display_name: 'Source', role: 'dependency',
+      forked_from_branch_id: 'b', forked_from_saved_revision_id: 'previous', saved_head_revision_id: 'previous' }
+  ],
+  history: [
+    {revision_id: 'previous', original_owner_branch_id: 'dep', sequence: 1,
+      parent_revision_id: null, content_hash_algorithm: 'sha256',
+      content_hash: 'a'.repeat(64), payload_schema_version: 'run_saved_revision_v1'},
+    {revision_id: 'head', original_owner_branch_id: 'b', sequence: 2,
+      parent_revision_id: 'previous', content_hash_algorithm: 'sha256',
+      content_hash: 'b'.repeat(64), payload_schema_version: 'run_saved_revision_v1'}
+  ],
+  omitted_branch_ids: ['other'], omitted_areas: ['working_drafts'],
+  unresolved_package_references: [{revision_id: 'head', reference: {source_package_id: 'missing-package'}}],
+  included_components: ['run_package_state'], selected_head_components: ['run_package_state'],
+  continuation: 'Use existing operation-scoped preview'
+} as SavedBranchArchivePreview
+
+function Toggle(): JSX.Element {
+  const { setLanguage, language } = useLanguage()
+  return <button onClick={() => setLanguage(language === 'cs' ? 'en' : 'cs')}>Switch language</button>
+}
+function mount(props: {run?: RunContainer; branch?: RunBranch | null} = {}) {
+  return render(<MemoryRouter><LanguageProvider><Toggle />
+    <SavedBranchArchiveExportPanel run={props.run ?? run} branch={props.branch === undefined ? branch : props.branch} />
+  </LanguageProvider></MemoryRouter>)
+}
+describe('Saved Branch archive Admin export panel', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    localStorage.clear()
+    mocks.getRunContainer.mockResolvedValue(run)
+    mocks.listRunBranches.mockResolvedValue({run_branches: [branch]})
+    mocks.getBranchWorkingDraft.mockResolvedValue({
+      run_id: 'r', branch_id: 'b', base_saved_revision_id: 'head',
+      status: 'clean', change_count: 0
+    })
+    mocks.previewSavedBranchArchive.mockResolvedValue(archive)
+    mocks.downloadSavedBranchArchive.mockResolvedValue(new Blob(['file']))
+  })
+  afterEach(() => vi.restoreAllMocks())
+
+  it('does not preview or Save on mount, and retains the reviewed export after CS/EN toggle', async () => {
+    mount()
+    expect(mocks.previewSavedBranchArchive).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', {name: /Stáhnout/})).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByText('Source')).toBeInTheDocument()
+    expect(screen.getByText(/missing-package/)).toBeInTheDocument()
+    expect(screen.getByText(/Počet revizí/)).toBeInTheDocument()
+    expect(screen.getByText(/working_drafts/)).toBeInTheDocument()
+    expect(screen.getByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', {name: 'Switch language'}))
+    expect(screen.getByRole('button', {name: 'Download verified .sqbranch file'})).toBeEnabled()
+    expect(mocks.previewSavedBranchArchive).toHaveBeenCalledTimes(1)
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+  })
+
+  it('blocks stale HEAD before preview and does not call the export endpoint', async () => {
+    mocks.listRunBranches.mockResolvedValueOnce({run_branches: [{...branch, saved_head_revision_id: 'new-head'}]})
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('HEAD')
+    expect(mocks.previewSavedBranchArchive).not.toHaveBeenCalled()
+  })
+
+  it('offers manual Save navigation when the Viewer draft is dirty; never saves implicitly', async () => {
+    mocks.getBranchWorkingDraft.mockResolvedValueOnce({
+      run_id: 'r', branch_id: 'b', base_saved_revision_id: 'head',
+      status: 'dirty', change_count: 1
+    })
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Neuložené změny')
+    expect(screen.getByRole('link', {name: /ruční Save/})).toHaveAttribute('href', '/admin/runs/r')
+    expect(mocks.previewSavedBranchArchive).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name: 'Zrušit export'}))
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('invalidates reviewed bytes after an independent selected HEAD change', async () => {
+    const view = mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    view.rerender(<MemoryRouter><LanguageProvider><Toggle />
+      <SavedBranchArchiveExportPanel run={run} branch={{...branch, saved_head_revision_id: 'new-head'}} />
+    </LanguageProvider></MemoryRouter>)
+    await waitFor(() => expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument())
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+  })
+
+  it('downloads only after a second fresh context check and explicit click', async () => {
+    const objectUrl = vi.fn(() => 'blob:test')
+    const revoke = vi.fn()
+    Object.defineProperty(URL, 'createObjectURL', {configurable: true, value: objectUrl})
+    Object.defineProperty(URL, 'revokeObjectURL', {configurable: true, value: revoke})
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    fireEvent.click(await screen.findByRole('button', {name: /Stáhnout ověřený/}))
+    await waitFor(() => expect(click).toHaveBeenCalledTimes(1))
+    expect(mocks.getRunContainer).toHaveBeenCalledTimes(2)
+    expect(mocks.getBranchWorkingDraft).toHaveBeenCalledTimes(2)
+    expect(mocks.downloadSavedBranchArchive).toHaveBeenCalledWith(archive)
+    expect(objectUrl).toHaveBeenCalledTimes(1)
+  })
+
+  it('surfaces server preview error with explicit retry, not a fabricated v1 capability', async () => {
+    mocks.previewSavedBranchArchive.mockRejectedValueOnce(new Error('unsupported_saved_component'))
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('unsupported_saved_component')
+    expect(screen.getByRole('button', {name: 'Zkusit znovu'})).toBeEnabled()
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+  })
+
+  it('does not allow unsupported, read-only or foreign Run/Branch exports', () => {
+    mount({run: {...run, read_only: true}})
+    expect(screen.getByRole('button', {name: 'Načíst exportní náhled'})).toBeDisabled()
+    expect(mocks.previewSavedBranchArchive).not.toHaveBeenCalled()
+  })
+})

@@ -8,6 +8,7 @@ fabricated. This proves future-plan authoring, not automatic Entry eligibility.
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -23,8 +24,18 @@ def main():
     parser.add_argument("--web-port", type=int, default=5173)
     parser.add_argument("--serve", action="store_true")
     args = parser.parse_args()
+    workspace = Path(__file__).resolve().parents[1] / "work"
     root = args.root.resolve()
-    root.mkdir(parents=True, exist_ok=True)
+    if root.parent != workspace.resolve() or not re.fullmatch(
+        r"[A-Za-z0-9][A-Za-z0-9_-]{0,100}", root.name
+    ):
+        raise ValueError("Acceptance output must be one work/<case-name> directory")
+    if args.serve:
+        if not root.is_dir():
+            raise ValueError("Backend requires the existing acceptance directory")
+    else:
+        workspace.mkdir(exist_ok=True)
+        root.mkdir(exist_ok=False)  # Never overwrite any earlier acceptance output.
     database = root / "entry.sqlite"
     db = f"sqlite:///{database}"
     if args.serve:

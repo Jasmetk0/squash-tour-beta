@@ -186,3 +186,18 @@ attempts exposed an incorrect test origin (CORS), accessible-name and mobile
 failures, then the real post-Save receipt loss; these are not counted as passes.
 No browser claim is made for ranking adoption, automatic eligibility, full
 sporting continuation, all calendars or the 50-season release.
+
+### Fast CI selection and acceptance output safety
+
+The first final-head hosted browser proof passed. Fast CI also exposed its
+existing changed-test selector: adding a Python acceptance script selected the
+backend job but no changed Python test, producing pytest exit 5. The same PR now
+adds a genuine dirty-Draft lost-Confirm regression to the existing Entry API
+module. It verifies that exact retry returns the original receipt without any
+SQLite change, rejects changed audit under the same command, and permits only a
+separate explicit Save. All nine production Entry API tests pass locally.
+
+Acceptance outputs are restricted to one fresh `work/<case-name>` directory;
+path/symlink escapes and reuse of any existing evidence directory are rejected.
+The child backend may reopen only that existing acceptance directory. This
+prevents an acceptance invocation overwriting unrelated files or old evidence.

@@ -119,6 +119,43 @@ export function assertSavedBranchArchivePreview(
     value.omitted_branch_ids.some(id => includedBranchIds.has(id))) {
     throw new Error('Saved Branch archive preview contains incomplete or foreign dependency links.')
   }
+
+  // Match the archive v1 closed graph invariants. The dependency Branch may
+  // legitimately end at an earlier historical prefix rather than its live HEAD.
+  const branchById = new Map((branches as IncludedArchiveBranch[]).map(b => [b.branch_id, b]))
+  const reached = new Set<string>()
+  for (const branch of branches as IncludedArchiveBranch[]) {
+    if ((branch.forked_from_branch_id !== null &&
+        !branchById.has(branch.forked_from_branch_id)) ||
+      (branch.forked_from_saved_revision_id !== null &&
+        !revisionIds.has(branch.forked_from_saved_revision_id))) {
+      throw new Error('Saved Branch archive preview has a missing fork dependency.')
+    }
+    const forkPath = new Set<string>()
+    let owner: string | null = branch.branch_id
+    while (owner !== null) {
+      if (forkPath.has(owner)) throw new Error('Saved Branch archive preview has a Branch fork cycle.')
+      forkPath.add(owner)
+      owner = branchById.get(owner)?.forked_from_branch_id ?? null
+    }
+    let revisionId: string | null = branch.saved_head_revision_id
+    while (revisionId !== null && !reached.has(revisionId)) {
+      reached.add(revisionId)
+      const revision = revisionsById.get(revisionId)
+      if (!revision) throw new Error('Saved Branch archive preview has a missing revision.')
+      const parent = revision.parent_revision_id === null
+        ? null : revisionsById.get(revision.parent_revision_id)
+      if ((parent === null || parent === undefined) !== (revision.parent_revision_id === null) ||
+        (parent && revision.sequence !== parent.sequence + 1) ||
+        (!parent && revision.sequence !== 1)) {
+        throw new Error('Saved Branch archive preview has noncontiguous revision history.')
+      }
+      revisionId = revision.parent_revision_id
+    }
+  }
+  if (reached.size !== revisionIds.size) {
+    throw new Error('Saved Branch archive preview contains unreachable history.')
+  }
   return value as SavedBranchArchivePreview
 }
 

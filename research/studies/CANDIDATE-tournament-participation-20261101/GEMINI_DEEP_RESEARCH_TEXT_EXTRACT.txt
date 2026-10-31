@@ -1,0 +1,1798 @@
+# Gemini Deep Research — Tournament Participation, Scheduling and AI Player Decision-Making
+
+Source: original 42-page user-supplied DOCX "Výzkum Turnajové Účasti ve Squashi.docx" (received 2026-11-01).
+Status: RESEARCHED / UNVERIFIED. Provisional study candidate; no permanent R004 number or product approval.
+
+Fidelity: This is a searchable text-only extraction, NOT the original DOCX. Embedded shapes, table layouts, mathematical notation, figures, hyperlinks and source superscripts may be lost or degraded. Consult the original user-provided DOCX for diagrams, original formulas and tables. Original binary DOCX is not stored here.
+
+Scientific status: All AI-authored assertions and numerical claims are preserved for critical evaluation, NOT endorsed. The attached independent review explicitly identifies false numerical extrapolations and unapproved mechanics. Ranking rules quoted are PSA historical rules, not automatically FAX rules.
+
+------ BEGIN USER-SUPPLIED RESEARCH TEXT EXTRACTION ------
+
+<PARSED TEXT FOR PAGE: 1 / 42>
+Nezávislý hluboký výzkum pro Squash
+Engine: Turnajová účast, plánování
+kalendáře a rozhodovací modely
+profesionálních hráčů
+1. Executive Summary
+Profesionální mužský squashový okruh nepředstavuje homogenní trh, v němž by sportovci
+mechanicky maximalizovali počet odehraných zápasů, nýbrž vysoce stratifikovaný, kapacitně i
+fyziologicky omezený ekosystém1. Rozhodnutí hráče přihlásit se do turnaje, setrvat v listině
+přihlášených po uzávěrce nebo se na poslední chvíli odhlásit vzniká z nelineární interakce tří
+strukturálních sil: matematické architektury průměrovaného světového žebříčku s minimálním
+dělitelem, extrémní fyziologické náročnosti opakovaných excentrických zatížení v uzavřeném
+kurtu a příkré ekonomické asymetrie mezi elitními událostmi a vývojovým okruhem2.
+V reálném ekosystému řízeném Professional Squash Association (PSA) funguje žebříček na
+principu klouzavého 52týdenního průměru bodů z nejlepších započítávaných výsledků, nikoliv
+prostého kumulativního součtu4. Pro hráče, kteří během 52 týdnů odehrají 15 nebo méně
+turnajů, zůstává dělitel fixován na hodnotě 114. Jakmile však hráč překročí hranici 15 turnajů,
+dělitel začíná progresivně růst až ke skokové penalizaci na hodnotu 20 při 24 odehraných
+turnajích4. Tato matematická vlastnost přirozeně rozděluje populaci hráčů bez nutnosti
+umělých administrativních kvót. Začínající profesionálové s méně než 11 záznamy maximalizují
+marginální přírůstek každého turnaje, protože navýšení čitatele nezvyšuje jmenovatel4. Naopak
+etablovaní hráči v rozmezí Top 11–50 optimalizují poměr mezi dosažitelným kolem a bodovým
+ziskem: pro hráče kolem 20. místa světového pořadí je strategicky racionálnější cílit na
+čtvrtfinále či semifinále 24členných pavouků kategorií Gold (450 až 720 bodů) a Silver (337,5 až
+540 bodů) než podstupovat vysoce pravděpodobné vyřazení v prvním či druhém kole
+32členného či 48členného turnaje Platinum nebo Diamond (173,5 až 284 bodů), které zhoršuje
+bodový průměr i psychickou sebedůvěru2.
+Z fyziologického hlediska je turnajová aktivita shora zastropována schopností neuromuskulární
+a metabolické regenerace. Empirická data ze sportovní vědy dokládají, že squash je
+charakterizován přerušovanými vysoce intenzivními výměnami trvajícími převážně 16 až 20
+sekund s pouhými 7 až 8 sekundami odpočinku, při nichž srdeční frekvence dosahuje
+průměrných hodnot 155 až 183 tepů za minutu (s maximy přes 185 až 191 tepů za minutu) a
+spotřeba kyslíku ve specifických testech přesahuje 63 ml/kg/min8. Excentrické brzdné pohyby
+při výpadech vyvolávají v raketových sportech výrazné svalové mikropoškození, indikované
+nárůstem sérové kreatinkinázy o 430,1 % po soutěžním dni a přetrvávajícím zvýšením o 160,4
+<PARSED TEXT FOR PAGE: 2 / 42>
+% nad bazální úrovní i po 24 hodinách, doprovázené poklesem maximální silové produkce
+dolních končetin až o 35 %5. Trenérská a fyziologická praxe proto potvrzuje, že profesionální
+squashista nedokáže udržet 100% připravenost na 15 až 20 akcích ročně; reálně dokáže vyladit
+formu na 100 % pouze třikrát za sezónu, zatímco zbytek kalendáře odehraje na přibližně 80 %
+kapacity3.
+Pro simulační architekturu Squash Engine a její interní řídící rámec FAX z těchto zjištění vyplývá,
+že věrohodné rozhodování AI hráčů nesmí být postaveno na globální deterministické
+optimalizaci s dokonalou informací, která by vedla k nerealistickému přihlašování či zneužívání
+budoucích stavů. Optimálním řešením je omezeně racionální model diskrétní volby (Random
+Utility / Discrete Choice Model) s lokálním výhledovým oknem (Rolling Horizon), ukotvený ve
+striktně definovaných informačních množinách v čase uzávěrky přihlášek a doplněný o
+deterministicky seedovaný šum zachycující individuální heterogenitu hráčských preferencí11.
+
+2. Ověřené skutečnosti o profesionální turnajové
+účasti a procedurách okruhu
+Rozhodovací proces profesionálního squashisty probíhá v přísně formalizovaném
+institucionálním rámci. Aby bylo možné odlišit prokázané kauzální mechanismy od
+nepodložených domněnek, je nezbytné rozložit deset klíčových rozhodovacích faktorů na
+empiricky doložené vlivy, sportovně plausibilní hypotézy a pouhé spekulace, a následně
+analyzovat procedurální pravidla přihlášek, odhlášek a rezerv2.
+Epistemická dekonstrukce deseti faktorů turnajové účasti
+Aktuální světový ranking a očekávaná konkurenceschopnost tvoří základní propustku do
+turnajového ekosystému. Empiricky je doloženo, že světový žebříček, aktualizovaný týdně
+každé pondělí, přímo determinuje právo přijetí do turnaje (Entry Cut-off) a nasazení (Seeding) v
+pavouku1. Velikost pavouka se strukturálně liší podle kategorie: mistrovství světa čítá 64 hráčů,
+kategorie Diamond 48 hráčů, Platinum 32 hráčů (v historických sezónách před srpnem 2024
+rovněž 48 hráčů) a kategorie Gold, Silver, Bronze a Copper mají standardizovaný pavouk pro
+24 hráčů1. Hráči volí turnaje, v nichž jim jejich aktuální ranking zaručuje buď přímý postup do
+hlavní soutěže, nebo pozici mezi nasazenými hráči, kteří mají v 24členných a 48členných
+pavoucích volný los v prvním kole2. Jako sportovně plausibilní hypotézu lze formulovat chování
+hráčů nacházejících se těsně pod hranicí nasazení (například 9. až 12. v pořadí přihlášených do
+turnaje kategorie Bronze), kteří vykazují vyšší averzi k přihlášení do daného turnaje, pokud mají
+v témže týdnu k dispozici turnaj nižší kategorie, kde budou nasazeni jako číslo 1 nebo 2 a
+vyhnou se tak duelu s elitním soupeřem již ve druhém kole2. Naopak pouhou spekulací je
+předpoklad, že hráči v reálném čase počítají přesné Elo či bilanci vzájemných zápasů proti
+všem 23 ostatním potenciálním účastníkům ještě před uzavřením přihlášek, kdy finální seznam
+přihlášených není veřejně uzamčen13.
+Kategorie a prestiž turnaje strukturují profesionální okruh do dvou hlavních pilířů, které platí od
+reformy v srpnu 2024: PSA World Events (World Championships, Tour Finals, Diamond,
+<PARSED TEXT FOR PAGE: 3 / 42>
+Platinum, Gold, Silver, Bronze, Copper) s maximálním limitem 57 mužských turnajů za sezónu a
+PSA Challenger Events (Challenger 3, 6, 9, 12, 15, 18, 20, 30) doplněné o satelitní turnaje
+(Satellite) a federační akce1. Empiricky je prokázáno, že prestiž a kategorie turnaje přímo určují
+nejen finanční odměny a body do světového žebříčku, ale i to, zda se body započítávají do
+separátního kumulativního žebříčku World Events Ranking (tzv. Race to the Finals), do něhož
+se výsledky z okruhu Challenger vůbec nepromítají2. Vítězství na Mistrovství světa a v turnajích
+kategorie Diamond navíc zajišťuje automatickou kvalifikaci na sezónní vrchol PSA Squash Tour
+Finals pro osm nejlepších hráčů2. Sportovně plausibilní hypotézou je, že historické turnaje s
+ikonickou tradicí (např. British Open, CIB Egyptian Open, U.S. Open či Hong Kong Open)
+přitahují silnější startovní pole a vykazují nižší míru taktických odhlášek než nově založené
+turnaje identické bodové kategorie, protože titul z nich nese vyšší sponzorskou a kariérní
+hodnotu15. Do roviny spekulace naopak spadá domněnka, že samotný vizuální typ kurtu
+(celoskleněný kurt na památkovém místě oproti tradičnímu klubovému kurtu) rozhoduje o
+účasti hráčů mimo Top 50 nezávisle na prize money a bodech15.
+Potenciální rankingové body a pravděpodobnost postupu jednotlivými koly působí v
+rozhodování hráčů jako spojené nádoby, neboť bodové ohodnocení vykazuje strmou konvexní
+nelinearitu mezi úrovněmi pyramidy2. Zatímco vítěz satelitního turnaje získá 30 bodů, vítěz
+Challenger 3 obdrží 60 bodů a vítěz Challenger 15 získá 300 bodů, na úrovni World Events
+inkasuje šampion kategorie Copper 500 bodů, Bronze 900 bodů, Silver 1 350 bodů, Gold 1 800
+bodů, Platinum 2 800 bodů, Diamond 3 100 bodů a Mistr světa 3 500 bodů2. Zisk jednoho titulu
+Diamond (3 100 bodů) tak převyšuje součet tří titulů kategorie Bronze (2 700 bodů) a odpovídá
+více než padesátinásobku titulu z Challenger 32. Empiricky je přitom doloženo, že 24členné
+pavouky kategorií Gold a Silver jsou menší, ostřejší a volatilnější než 32členné a 48členné
+pavouky, protože vyžadují méně vítězných zápasů mezi nenasazeným hráčem a trofejí2. Hráč
+kolem 20. místa žebříčku proto cílí na kategorie Gold a Silver, kde má reálnou šanci vyhrát více
+kol, neboť vyřazení v úvodním kole Platinum (257 bodů za Last 32) či Diamond (173,5 bodu za
+Last 64 nebo 284 bodů za Last 32) vynáší výrazně méně v bodech i sebedůvěře než čtvrtfinále
+Gold (450 bodů) či semifinále Silver (540 bodů)2. Sportovně plausibilní hypotézou je, že hráči
+aktivně sledují bodové prahy svých nejhorších započítávaných výsledků (tj. 11. až 13. nejlepšího
+výsledku za posledních 52 týdnů) a přitom jejich subjektivní odhad pravděpodobnosti postupu
+systematicky převyšuje objektivní statistickou pravděpodobnost vlivem efektu nadměrné
+sebedůvěry (overconfidence bias), který je v behaviorální ekonomii turnajového vstupu
+opakovaně prokázán (v experimentálních studiích 75 % účastníků věří, že patří do nejlepší
+čtvrtiny pole, ačkoliv objektivně tam může patřit jen 25 % až 30 %)4. Pouhou spekulací je
+naopak předpoklad, že hráči přikládají lineárně stejnou váhu každému bodu bez ohledu na
+prahy nasazení nebo že před turnajem exaktně vyčíslují kombinatorický strom všech
+potenciálních soupeřů ještě před oficiálním rozlosováním pavouka13.
+
+ Turn      Celk      Velik     Vítěz     Finál     Semi      Čtvr      Osmi      2.        1.
+<PARSED TEXT FOR PAGE: 4 / 42>
+ajová   ová     ost      (Win    e       finál   tfinál   finál   kolo    kolo
+kate    dota    pavo     ner)    (Run    e       e        e       (Last   (Last
+gorie   ce      uka              ner-    (SF)    (QF)     (Last   32)     64)
+/       (Priz   (Dra             up)                      16)
+Úrov    e       w
+eň      Mon     Size)
+        ey)
+
+
+PSA     $600    64       3 500   2 275   1 400   875      525     321     196
+Worl    000     hráčů
+d
+Cha
+mpio
+nship
+s
+
+
+PSA     $300    8        +1      +550    +200    +150     —       —       —
+Squa    000     hráčů    000                     /
+sh              (skup    (+150                   výhra
+Tour            iny)     bonu                    ve
+Final                    s)                      skupi
+s                                                ně
+
+
+Worl    $300    48       3 100   2 015   1 240   775      465     284     173,5
+d       000     hráčů
+Even
+ts:
+Diam
+ond
+
+
+Worl    $190    32       2 800   1 820   1 120   700      420     257     —
+d       000     hráčů
+Even            (hist.
+ts:             48)
+Plati
+num
+<PARSED TEXT FOR PAGE: 5 / 42>
+Worl     $100    24      1 800   1 170   720   450     270     165    —
+d        000     hráčů
+Even
+ts:
+Gold
+
+
+Worl     $75     24      1 350   877,5   540   337,5   202,5   124    —
+d        000     hráčů
+Even
+ts:
+Silve
+r
+
+
+Worl     $50     24      900     585     360   225     135     82,5   —
+d        000     hráčů
+Even
+ts:
+Bron
+ze
+
+
+Worl     $25     24      500     325     200   125     75      46     —
+d        000     hráčů
+Even
+ts:
+Copp
+er
+
+
+Chall    18k–    24      300     195     120   75      45      27,5   —
+enge     $30k)   hráčů
+r 15
+(resp
+. 18–
+30)
+
+
+Chall    $12     16–     240 /   —       —     —       —       —      —
+enge     000 /   24      180 /
+r 12 /   $9
+<PARSED TEXT FOR PAGE: 6 / 42>
+9/6     000 /   hráčů   120
+        $6
+        000
+
+
+Chall   $3      16–     60    39    24    15   9   5,5   —
+enge    000     24
+r3              hráčů
+
+
+Satel   $1      16–     30    —     —     —    —   —     —
+lite    000     32
+Even    – $3    hráčů
+ts      000
+
+
+Konti   Fede    Dle     300   195   120   75   —   —     —
+nent    rační   feder
+ální    akce    ace
+mistr
+ovst
+ví
+(Seni
+or)
+
+
+Mistr   Fede    Dle     200   130   80    50   —   —     —
+ovst    rační   WSF/
+ví      akce    PSA
+svět
+a
+U23
+
+
+Náro    Fede    Dle     100   65    40    25   —   —     —
+dní     rační   MNF
+mistr   akce
+ovst
+ví
+(Seni
+or)
+<PARSED TEXT FOR PAGE: 7 / 42>
+Cestovní vzdálenost, geografická dostupnost a finanční prostředky vytvářejí tvrdé rozpočtové
+omezení zejména pro širší profesionální základnu. Empiricky je doloženo, že kalendář PSA
+pokrývá přibližně 70 zemí napříč Evropou, Asií, Blízkým východem, Afrikou, Oceánií a Severní
+Amerikou, což od hráčů vyžaduje náročné mezikontinentální přesuny, například na trase Egypt
+– Anglie – USA – Hongkong během několika podzimních týdnů15. Současně ekonomické studie
+profesionálních raketových sportů prokazují extrémní příjmovou nerovnost: zatímco vrcholné
+akce vyplácejí stovky tisíc dolarů, turnaje kategorie Challenger s celkovou dotací 3 000 až 15
+000 USD (respektive až 30 000 USD v dřívějších sezónách) neposkytují dostatečné odměny k
+pokrytí celosezónních cestovních a trenérských nákladů, přičemž účetní hranice rentability
+(break-even corridor) se v raketových sportech nachází přibližně kolem 150. místa světového
+žebříčku1. V nižších patrech se proto hráči neúčastní turnajů kvůli okamžitému čistému zisku,
+nýbrž jako investici do získání žebříčkových bodů, které jim v budoucnu odemknou vstup do
+lukrativnějších kategorií2. Jako sportovně plausibilní hypotézu lze uvést, že hráči minimalizují
+mezikontinentální náklady sdružováním turnajů do regionálních šňůr (regional swings) a mimo
+Top 100 vykazují silnou citlivost na to, zda turnaj poskytuje oficiální ubytování a lokální
+transport6. Pouhou spekulací je naopak předpoklad, že hráči Top 10 vynechávají turnaje
+Diamond či Platinum čistě kvůli délce letu nebo že hráči mění své zápasové úsilí podle
+krátkodobých kurzových výkyvů lokálních měn.
+Únava, zdravotní stav, očekávaná regenerace a termíny následujících turnajů ukotvují
+biologické limity plánování kalendáře. Pravidla PSA Squash Tour Rule Book (Sekce 4.4)
+empiricky stanovují, že sportovec smí odehrát maximálně jeden zápas denně a mezi zápasy v
+různých dnech musí mít minimální dobu odpočinku 18 hodin, přičemž u všech hlavních turnajů
+(World Events) jsou do rozpisu zabudovány jeden až dva volné dny24. Fyziologický výzkum v
+raketových sportech dokládá, že excentrické svalové kontrakce při výpadech vyvolávají
+opožděnou svalovou bolestivost (DOMS), redukci rozsahu pohybu v kyčelních kloubech a
+prudký nárůst kreatinkinázy o 430,1 % po soutěžním dni (se zvýšením o 160,4 % přetrvávajícím i
+po 24 hodinách), což snižuje svalovou funkci po dobu několika dnů5. Studie tréninkové zátěže
+dále potvrzují, že nízká chronická zátěž v kombinaci s prudkým nárůstem akutní zátěže
+(Acute:Chronic Workload Ratio – ACWR) je klíčovým prediktorem únavových zlomenin (bone
+stress injuries) a měkkotkáňových zranění26. Trenérská metodika Světové squashové federace
+(WSF) přitom jednoznačně konstatuje, že je fyziologicky nemožné žádat po hráčích 100%
+připravenost na 15 až 20 akcích ročně; hráč dokáže vyladit formu na 100 % pouze třikrát za rok
+po absolvování čtyřtýdenního přípravného bloku (zhruba 26 tréninkových jednotek z 52 se
+stupňovaným poměrem zátěže a odpočinku 3:1 v prvním týdnu, 2:1 ve druhém, 1:1 ve třetím a
+relaxačním týdnu před vrcholem), zatímco ostatní turnaje odehraje na přibližně 80 % kapacity3.
+Sportovně plausibilní hypotézou je, že po absolvování vyčerpávajícího pětisetového turnaje
+roste v následujícím týdnu pravděpodobnost zdravotního odhlášení a že elitní hráči cíleně
+vynechávají menší turnaje v týdnu bezprostředně předcházejícím majoru (pre-major tapering)3.
+Spekulací je naproti tomu lineární modelování poklesu únavy o konstantní procento každou
+hodinu bez ohledu na věk, excentrické poškození a cestování, stejně jako předpoklad, že hráči
+<PARSED TEXT FOR PAGE: 8 / 42>
+fixují svůj kalendář na dva až tři roky dopředu bez průběžné adaptace5.
+Význam domácích turnajů a dlouhodobá kariérní strategie uzavírají soustavu rozhodovacích
+faktorů. Empiricky platí, že domácí turnaje eliminují mezinárodní cestovní náklady, nabízejí 100
+bodů za vítězství v seniorském národním šampionátu (pokud o ně hráč požádá na webu PSA
+do sedmi dnů) a umožňují alokaci divokých karet domácím hráčům či uplatnění specifických
+pravidel nasazení u národních mistrovství4. Z dlouhodobého hlediska funguje okruh Challenger
+jako třídící síto, kde konzistentní vítězství na úrovni Challenger 15 (300 bodů) generují ranking
+potřebný pro vstup do pavouků Bronze a Silver, zatímco dlouhodobě zranění hráči mohou
+využít institutu chráněného žebříčku (Protected Ranking – PR, Sekce 4.7.2 v PSA Rule Book), o
+který musí požádat kancelář PSA a uplatnit jej před uzávěrkou konkrétního turnaje2. Sportovně
+plausibilní hypotézou je, že domácí prostředí zvyšuje ochotu přihlásit se i u elitních hráčů kvůli
+závazkům vůči národním federacím a sponzorům a že starší veteráni redukují počet startů na
+11 až 12 ročně, aby udrželi minimální dělitel 11 a maximalizovali regeneraci3. Pouhou spekulací je
+naopak předpoklad, že domácí vlajka automaticky zvyšuje technické atributy hráče v
+deterministickém herním enginu nebo že všichni hráči sledují identickou účelovou funkci bez
+ohledu na věk11.
+
+
+
+ Faktor                   Empiricky                Sportovně                Pouhá spekulace
+ rozhodování              doložený vliv            plausibilní              (Neověřené /
+                          (Vědecká data a          hypotéza                 Nerealistické
+                          pravidla PSA)            (Analytická              předpoklady)
+                                                   inference)
+
+
+                          Určuje Entry Cut-        Hráči těsně pod          Přesná kalkulace
+ 1. Světový ranking
+                          off a nasazení           čarou nasazení           vzájemné bilance
+ a
+                          (Seeding) v              preferují přechod        (H2H) proti všem
+ konkurenceschop
+                          pavoucích o              do souběžného            účastníkům před
+ nost
+                          velikosti 24, 32, 48 a   nižšího turnaje, kde     uzávěrkou
+                          64 hráčů; nasazení       získají status           přihlášek13.
+                          získávají volný los v    nasazeného hráče2.
+                          1. kole u 24/48
+                          pavouků2.
+
+                          Dělení na World          Tradiční majory          Samotný typ kurtu
+ 2. Kategorie a
+                          Events (max.             (např. British Open,     (sklo vs. klasický
+ prestiž turnaje
+                          57/sezónu) a             Egyptian Open)           kurt) determinuje
+                          Challenger Events;       vykazují nižší míru      účast hráčů mimo
+                          pouze World Events       odhlášek než nové        Top 50 nezávisle na
+                          se počítají do           turnaje stejné           odměnách15.
+<PARSED TEXT FOR PAGE: 9 / 42>
+                     kumulativního          kategorie15.
+                     žebříčku pro Tour
+                     Finals2.
+
+                     Konvexní škála         Hráči porovnávají
+3. Potenciální                                                    Lineární vnímání
+                     bodů: MS 3 500,        potenciální zisk s
+rankingové body                                                   hodnoty bodu bez
+                     Diamond 3 100,         hodnotou svého 11.
+                                                                  ohledu na prahové
+                     Platinum 2 800,        až 13. nejlepšího
+                                                                  skoky nasazení (Top
+                     Gold 1 800, Silver 1   výsledku, který by
+                                                                  8, Top 16, Top 32).
+                     350, Bronze 900,       byl novým turnajem
+                     Copper 500,            nahrazen4.
+                     Challenger 60–300
+                     b.2.
+
+                     24členné pavouky       Subjektivní odhad     Exaktní výpočet
+4.
+                     (Gold/Silver) mají     šance na postup je    kombinatorického
+Pravděpodobnost
+                     méně kol k titulu;     systematicky          stromu pavouka
+postupu koly
+                     čtvrtfinále Gold       vychýlen nadměrné     hráčem ještě před
+                     (450 b.) vynáší více   sebedůvěrou           oficiálním
+                     než Last 32            (overconfidence       rozlosováním13.
+                     Platinum (257 b.)2.    bias)11.
+
+                     Globální kalendář      Sdružování turnajů
+5. Cestovní                                                       Vynechávání
+                     (70 zemí); náročné     do kontinentálních
+vzdálenost a                                                      turnajů Diamond a
+                     přesuny (Egypt–        šňůr (regional
+dostupnost                                                        Platinum hráči Top
+                     UK–USA–HK)             swings) pro
+                                                                  10 čistě kvůli délce
+                     generují cestovní      amortizaci ceny
+                                                                  letu.
+                     únavu a přímé          mezikontinentální
+                     náklady15.             letenky15.
+
+
+                     Extrémní               Vysoká citlivost
+6. Finanční                                                       Okamžitá změna
+                     nerovnost: MS          hráčů mimo Top
+prostředky a prize                                                herního úsilí podle
+                     600k USD vs.           100 na hrazené
+money                                                             krátkodobých
+                     Challenger 3k–30k      ubytování a lokální
+                                                                  kurzových výkyvů
+                     USD; příjmy v          transport; nucené
+                                                                  lokálních měn.
+                     nižších patrech        pauzy při vyčerpání
+                     nepokrývají sezónní    rozpočtu6.
+                     náklady1.
+
+                     Min. 18h odpočinek     Těžký pětisetový      Lineární pokles
+7. Únava, zdraví a
+<PARSED TEXT FOR PAGE: 10 / 42>
+                          mezi zápasy, max. 1      maraton výrazně        únavy každou
+ regenerace
+                          zápas/den; CK            zvyšuje                hodinu bez ohledu
+                          +430 % po zápase         pravděpodobnost        na věk, excentrické
+                          (+160 % po 24h);         pozdního               poškození a
+                          100% forma možná         zdravotního            cestování5.
+                          jen ~3x ročně3.          odhlášení v
+                                                   následujícím týdnu5.
+
+                          Příprava na vrchol       Záměrné
+ 8. Termín                                                                Fixní neměnné
+                          vyžaduje 4týdenní        vynechávání turnajů
+ následujících                                                            plánování kalendáře
+                          cyklus (3:1, 2:1, 1:1,   Bronze/Silver v
+ turnajů                                                                  na 2 až 3 roky
+                          relaxace); turnaje v     týdnu před
+                                                                          dopředu bez
+                          rychlém sledu            majorem (pre-
+                                                                          adaptace na
+                          narušují                 major tapering) u
+                                                                          výsledky.
+                          superkompenzaci3.        hráčů Top 153.
+
+                          Nulové mezinárodní       Účast elitních hráčů
+ 9. Význam                                                                Automatický
+                          cestovní náklady;        na menších
+ domácích turnajů                                                         nepodmíněný
+                          alokace domácích         domácích akcích z
+                                                                          bonus k herním
+                          divokých karet; 100      důvodu závazků
+                                                                          atributům v enginu
+                          bodů za vítězství na     vůči národním
+                                                                          pouze na základě
+                          národním                 federacím a
+                                                                          vlajky státu.
+                          mistrovství4.            lokálním
+                                                   sponzorům19.
+
+                          Postup přes              Veteráni               Identická účelová
+ 10. Dlouhodobá
+                          Challenger do            minimalizují počet     funkce pro všechny
+ kariérní strategie
+                          World Events;            turnajů na 11–12       věkové kategorie
+                          využívání Protected      ročně, aby udrželi     od juniorů po
+                          Ranking (PR) při         minimální dělitel 11   třicátníky11.
+                          návratu po               a šetřili fyzický
+                          dlouhodobém              fond3.
+                          zranění2.
+
+Analýza procedur PSA: Entry, Withdrawals, Wildcards a Reserves
+Pro návrh věrohodného simulačního prostředí je nezbytné striktně oddělit normativní
+procedurální pravidla PSA, která definují legální rámec a sankce, od statistického chování
+hráčů, které vyjadřuje, jak sportovci na tyto pobídky reagují13. V oficiálním systému PSA Squash
+Tour probíhá přihlašování online a řídí se dvěma kritickými časovými milníky: prvním je Closing
+Date (uzávěrka přihlášek), což je konečné datum pro podání přihlášek do turnaje, kdy jsou
+<PARSED TEXT FOR PAGE: 11 / 42>
+online přihlášky přijímány přesně do 12:00 britského času (UK time)13. Po tomto termínu hráči
+nemohou měnit svůj přihlašovací status, přičemž případná žádost o využití chráněného
+žebříčku (Protected Ranking, Sekce 4.7.2) musí být uplatněna u kanceláře PSA rovněž před
+uzávěrkou každého jednotlivého turnaje13. Druhým milníkem je Entry Confirmation Deadline
+(termín potvrzení účasti), kterým se seznam přijatých hráčů definitivně uzamyká; jakékoliv
+odhlášení podané po tomto termínu je v pravidlech klasifikováno jako pozdní odhlášení (Late
+Withdrawal)13.
+Pořadí přijetí do hlavní soutěže (Main Draw, Sekce 4.3.5) a případné kvalifikace (Qualification
+Draw, Sekce 4.3.6) vychází z platného týdenního žebříčku PSA (případně schváleného
+Protected Ranking, kde si PSA vyhrazuje diskreční právo při finálním posouzení přihlášek) v
+okamžiku uzávěrky, přičemž nasazení (Seeding, Sekce 4.3.2) rozmisťuje nejvýše postavené
+hráče v pavouku13. Specifický procedurální režim platí pro divoké karty (Wildcards) a pozvánky
+upravené v Sekcích 4.2.4 a 4.2.513. Pravidla striktně rozlišují PSA Wildcard, Non-PSA Wildcard,
+náhradní divoké karty (Reserve Wildcards, Sekce 4.2.4.5) a způsobilost pozvaných hráčů na
+Mistrovství světa (World Championship Invitee Eligibility, Sekce 4.2.5.1)13. V případě
+odhlášení držitele divoké karty (Wildcard Withdrawal, Sekce 4.2.4.6) platí nekompromisní
+substituční hierarchie: uvolněné místo je nejprve nabídnuto určené Reserve Wildcard, avšak s
+tvrdým omezením, že Non-PSA Wildcard nemůže nahradit PSA Wildcard; teprve pokud není
+k dispozici žádná validní náhradní divoká karta, přechází uvolněné místo na dalšího hráče v
+pořadí na listině náhradníků13.
+Hráči, jejichž žebříček při uzávěrce nestačil na přímé přijetí do pavouka, jsou seřazeni na listině
+náhradníků (Reserve List) podle Sekce 4.3.413. Pravidla PSA zavádějí asymetrickou volnost pro
+náhradníky: hráči figurující na Reserve Listu se mohou kdykoliv odhlásit bez jakékoliv sankce,
+pokud ještě nebyli povýšeni do hlavní soutěže, a pravidla jim přímo ukládají povinnost se
+odhlásit, pokud již nemají v úmyslu v turnaji startovat13. Jakmile však dojde k pozdnímu
+odhlášení hráče z hlavní soutěže, kancelář PSA kontaktuje určeného náhradníka (Designated
+Reserve) e-mailem nebo telefonicky; pokud hráč neodpoví ve stanovené lhůtě, právo postupu
+propadá a přechází na dalšího v pořadí29. U turnajů s kvalifikací existuje navíc v Sekci 4.11
+institut Lucky Losers (včetně Main Draw Lucky Loser v Sekci 4.11.1), který umožňuje doplnit
+hlavní soutěž poraženými hráči z kvalifikace při pozdním výpadku účastníka hlavní soutěže13.
+Pro řešení pozdních odhlášek, přesunů v nasazení a časových kolizí obsahují pravidla PSA v
+Sekcích 4.4 až 4.10 detailní sankční a operativní aparát13. Kritickým časovým předělem pro
+stavbu pavouka je hranice 48 hodin před zahájením turnaje13. Odhlášení nasazeného hráče
+před touto hranicí umožňuje úpravu nasazení podle žebříčkového pořadí, zatímco pozdní
+odhlášení v okně kratším než 48 hodin před startem turnaje podléhá operativnímu doplnění z
+rezerv či Lucky Losers bez kompletní přestavby celého pavouka13. Protože světový žebříček
+počítá průměr z nejlepších turnajů a prostá finanční pokuta by movité hráče neodradila od
+taktického rušení startů, aplikuje PSA v Sekci 4.6 systém čtyř kategorií 52týdenních nulových
+bodových záznamů (Zero Scores), které se povinně započítávají do čitatele jako 0 bodů a
+<PARSED TEXT FOR PAGE: 12 / 42>
+zabírají jedno místo v děliteli započítávaných turnajů4. První kategorií jsou Disciplinary Zero
+Scores (Sekce 4.6.1), tedy 52týdenní nuly udělované za závažná disciplinární provinění4.
+Druhou kategorií jsou Penalty Zero Scores (Sekce 4.6.2) za neomluvené pozdní odhlášení
+nebo kumulativní porušení závazků účasti (Cumulative Commitment and Entry Offences), které
+jsou často doprovázeny okamžitou finanční pokutou (spot fine)4. Třetí kategorií jsou Medical
+Zero Scores (Sekce 4.6.3), udělované za pozdní odhlášení v případě, že hráč doloží skutečné
+zranění (bona fide injury) prostřednictvím oficiálního lékařského potvrzení (Medical
+Certificate, Sekce 4.8) splňujícího předepsané náležitosti; pravidla přitom ošetřují i sekvenční
+exspiraci, kdy po vypršení prvního Medical Zero po 52 týdnech přechází do specifického
+režimu případné druhé Medical Zero13. Kromě dobrovolného zdravotního odhlášení upravuje
+Sekce 4.10 také Involuntary Initiated Withdrawal (Medical), tedy nucené zdravotní stažení
+hráče iniciované lékařským dohledem, a Sekce 4.6.4 definuje Tournament Zero Scores13.
+Konečně Sekce 4.7 (Clashing Tournaments Procedure) a Sekce 4.9 (Match in Progress)
+formalizují postup v situacích, kdy se hráč v důsledku nečekaného postupu či zpoždění
+programu v předchozím turnaji dostane do přímé časové kolize se zahájením navazujícího
+turnaje13.
+
+
+
+
+V souladu s architektonickými hranicemi projektu platí, že pravidla PSA nejsou automaticky
+pravidly FAX v alternativním světě Squash Engine. Existující procedury FAX Entry a historicky
+verzované rankingové výpočty v dokumentech SQUASH_ENGINE_MASTER_VISION.md a
+PRE_ALPHA_INTEGRATION_2026_10_30.md zůstávají nedotčeny. Tam, kde reálná pravidla PSA
+obsahují mechanismy přesahující stávající pre-alpha specifikaci FAX (zejména institut
+52týdenních Medical/Penalty Zero blokujících slot v děliteli, Protected Ranking a dvoustupňová
+substituce PSA vs. Non-PSA Wildcard), jsou tyto mechanismy v deváté sekci této zprávy
+formálně vyčleněny jako návrhy k posouzení pro budoucí iterace, nikoliv jako zásah do
+<PARSED TEXT FOR PAGE: 13 / 42>
+současného jádra.
+
+3. Dostupná empirická data, jejich kvalita a metodika
+akvizice
+Při budování kalibrační základny pro Squash Engine je nutné provést přísný audit toho, jaká
+empirická data o turnajové účasti jsou ve vědecké literatuře a oficiálních záznamech skutečně
+přítomna a kde naopak existují datové mezery, které nelze vyplnit neověřenými odhady19.
+Audit dostupných empirických dat a bibliometrická realita
+Komplexní bibliometrická analýza světového výzkumu squashe pokrývající databáze Web of
+Science, Scopus a PubMed v období let 1973 až 2024 identifikovala z původních 1 675 záznamů
+pouhých 206 relevantních vědeckých publikací (201 původních výzkumných prací a 5
+přehledových studií) od 470 autorů a 206 institucí ze 36 zemí publikovaných ve 115 časopisech,
+což představuje průměrný roční výstup 3,89 článku se slabým lineárním trendem růstu (
+                  )34. Z tohoto korpusu spadá 35,4 % (73 publikací) do sportovní vědy, 30,9 %
+(64 publikací) do medicíny a 17,9 % (37 publikací) do zdravotnických profesí, přičemž výzkumu
+dominují instituce z Velké Británie (51 publikací, 24,76 % výstupů, 952 citací) a Austrálie (31
+publikací, 15,05 % výstupů, 955 citací), následované Kanadou (21 publikací, 10,19 %) a USA (16
+publikací, 7,77 %)34. Ještě závažnější metodologické omezení odhalil systematický přehled
+fyziologických a nutričních parametrů elitního squashe (Turner et al., 2024): z 35 detailně
+hodnocených studií (v nichž 78 % zkoumaných hráčů tvořili muži a 22 % ženy) bylo pouze 17
+publikováno v roce 2009 nebo později, tedy po zásadní změně pravidel PSA, která nahradila
+bodování do 9 bodů při podání (POS9) bodováním Point-a-Rally do 11 bodů (PAR11) a snížila
+horní hranu plechu (tin line) z 48,3 cm na 43,2 cm8.
+Z reálných a plně ověřených empirických zdrojů jsou k dispozici exaktní makro- i mikro-
+parametry okruhu. Globální kapacita profesionálního okruhu PSA zahrnuje přes 250 turnajů
+ročně v 70 zemích světa a registruje přes 1 200 profesionálních hráčů z více než 60 zemí na
+pěti kontinentech, zatímco celosvětová rekreační a soutěžní základna čítá přes 20 milionů
+hráčů ve 185 zemích (z nichž přibližně 3 % tvoří intenzivní ligoví a turnajoví hráči)1. Po reformě
+ze srpna 2024 je horní patro World Events zastropováno na maximálně 57 mužských a 57
+ženských turnajů za sezónu17. Dlouhodobé kariérní záznamy zároveň potvrzují mimořádnou
+konzistenci elitních hráčů, kteří dosahují podílu výher výrazně nad 70 %: když Ali Farag v roce
+2025 ukončil kariéru, jeho bilance na okruhu PSA činila 445 výher z 553 odehraných zápasů
+(úspěšnost 80,5 %) a 46 titulů19. Historické maximum v mužském squashi drží Jansher Khan s
+99 tituly PSA a 8 tituly mistra světa (1987–1996), následovaný Jahangirem Khanem (61 titulů,
+555 výher), Peterem Nicolem (52 titulů) a Mohamedem ElShorbagym (51 titulů)19.
+Pravidla výpočtu žebříčku PSA nepřímo vymezují empirické pásmo sezónní aktivity: minimální
+dělitel 11 platí pro všechny hráče s 15 či méně turnaji za 52 týdnů, mírná progrese (dělitel 12 až
+17) pokrývá pásmo 16 až 23 turnajů a při 24 turnajích nastává penalizační skok dělitele na 204.
+Toto ukotvení plně koresponduje s empirickým závěrem trenérské konference WSF, že
+<PARSED TEXT FOR PAGE: 14 / 42>
+žádného hráče nelze udržet ve špičkové kondici při 15 až 20 turnajích ročně a že 100%
+fyziologické formy lze dosáhnout pouze třikrát za rok3. V oblasti fyziologického zatížení a
+regeneračních intervalů mezi zápasy ukazují komparativní empirické studie vrcholných turnajů
+(mistrovství světa, olympijské hry a tenisové Grand Slamy v letech 2021–2023), že v příbuzných
+raketových sportech činí průměrný interval odpočinku mezi zápasy mužské dvouhry v tenise
+na OH               dne (rozpětí 1–3 dny), na Grand Slamech               dne (Wimbledon) až
+             dne (French Open) a v badmintonu                 dne (World Cup) až
+            dne (OH), zatímco na okruhu PSA se hraje tempem jeden zápas denně s
+minimálním odpočinkem 18 hodin (0,75 dne) mezi zápasy v po sobě jdoucích dnech, pouze s 1
+až 2 volnými dny vloženými do průběhu hlavních majorů24.
+
+
+
+ Sport / Vrcholná        Muži: Průměr ± SD       Muži: Rozpětí /        Jednotka /
+ soutěž nebo             (nebo hodnota v         Kontrolní hodnota      Specifikace
+ fyziologický            testu SST)              (Treadmill LT /        měření a
+ parametr                                        Baseline)              fyziologický
+                                                                        kontext
+
+
+                                                                        Povinný min.
+ PSA Squash Tour         Max. 1 zápas / den      Min. 0,75 dne (18
+                                                                        odpočinek mezi
+ (Regulační                                      hodin)
+                                                                        zápasy; 1–2 volné
+ minimum Sekce
+                                                                        dny během
+ 4.4)
+                                                                        majorů24.
+
+                                                                        Interval odpočinku
+ Badminton —                                     1–2 dny / 1–4 dny
+                                      /                                 mezi zápasy
+ Světový pohár /
+ Olympijské hry                                                         mužské dvouhry37.
+
+
+                                                                        Interval odpočinku
+ Tenis —                                         1–3 dny / 1–3 dny
+                                      /                                 mezi zápasy
+ Olympijské hry /
+ Australian Open                                                        mužské dvouhry37.
+
+
+                                                                        Interval odpočinku
+ Tenis —                                         1–3 / 1–3 / 1–4 dny
+                                      /                                 mezi zápasy
+ Wimbledon / US
+                                      /                                 mužské dvouhry na
+ Open / French
+ Open                                                                   Grand Slamech37.
+<PARSED TEXT FOR PAGE: 15 / 42>
+                                                                           Interval odpočinku
+Fotbal / Ragby —                               2–7 dnů / 5–15 dnů
+                                   /                                       v kolektivních
+Mistrovství světa
+                                                                           sportech s vysokým
+(kontext)
+                                                                           kontaktem37.
+
+                                                                           ml/min/kg (
+Squash: Maximální
+                                       (SST)
+spotřeba kyslíku (                             (Treadmill LT)                           );
+                                                                           druhá studie SST
+         )
+                                                                                            vs.
+                                                                           LT                 9
+                                                                                                  .
+
+                                                                           ml/min/kg a
+Squash: Produkce
+                                       /                          /        dechů/min ve
+       a dechová                                                           specifickém
+frekvence                                                                  squashovém testu
+                                                                           (SST) vs. LT9.
+
+                                                                           tepů/min (bpm);
+Squash: Srdeční      Průměr
+                                               Max.                        energetický výdej
+frekvence
+(Zápasová a                                    (v SST                  )
+maximální)
+                                                                           8
+                                                                            .
+
+
+                                                                           Silná korelace času
+Squash: Čas do
+                                                                (LT)       do vyčerpání s
+vyčerpání (Time to   (SST)
+                                                                           rankingem hráče v
+Exhaustion)
+                                                                           SST (
+                                                                                            vs.
+                                                                           běžci
+                                                                           )9.
+
+                                                                           Nárůst markeru
+Raketové sporty:                                            (24            svalového
+Sérová               (ihned po 2               hodin po zápase)            poškození nad
+kreatinkináza (CK)   zápasech)
+                                                                           bazální úroveň a
+                                                                           pokles rotace
+                                                                           kyčle10.
+<PARSED TEXT FOR PAGE: 16 / 42>
+                                                                          Pokles maximální
+ Raketové sporty:
+                                   (1-RM                   (CMJ) /        síly a výskoku
+ Pokles svalové
+                          dřep)                           (SJ)            (Countermovement
+ funkce (po 3h
+                                                                          / Squat Jump)
+ zápase)
+                                                                          přetrvávající do
+                                                                          dalšího dne5.
+
+Identifikace chybějících raw dat a metodický návrh akviziční pipeline
+V otevřené vědecké literatuře a veřejných souhrnech PSA nejsou publikována surová
+mikrodata, která by poskytovala exaktní procentuální rozdělení pro průměr a směrodatnou
+odchylku počtu odehraných turnajů za sezónu separátně pro decily či skupiny Top 10, 11–50,
+51–100 a 101–250, přesný empirický poměr účastí mezi World Events a Challenger Events pro
+hraniční skupinu Top 51–100, empirický histogram délky přestávek mezi turnaji v závislosti na
+věku hráče ani kvantifikované procentuální zastoupení jednotlivých příčin odhlášení (jaké
+procento pozdních odhlášek tvoří doložené Medical Zero oproti Penalty Zero či včasným
+odhláškám před uzávěrkou). V souladu s přísnou vědeckou integritou tato zpráva žádná taková
+neexistující procenta nevymýšlí a místo toho definuje čtyřfázový datový protokol pro jejich
+pozdější získání a očištění od statistických zkreslení.
+V první fázi akviziční pipeline je třeba využít týdenní archivy žebříčků PSA (publikované každé
+pondělí na psasquashtour.com, které obsahují jmenovatele i počet odehraných turnajů za 52
+týdnů pro každého hráče) a historické databáze turnajových pavouků4. Při sběru dat je nutné
+respektovat Terms of Service (ToS) a direktivy robots.txt daných portálů: komerční přebírání
+celé databáze podléhá databázovým právům (sui generis database right v EU a UK), avšak
+extrakce agregovaných statistických momentů (průměry, rozptyly, přechodové matice účastí
+bez ukládání osobních údajů hráčů) slouží jako čistě parametrický vstup pro nezávislý simulační
+model. Ve druhé fázi se pro kohortu mužských profesionálů v období 2018–2026 (s oddělením
+pandemických let 2020–2021 a reformního zlomu v srpnu 2024) sestaví panelová matice              ,
+
+kde označuje hráče a kalendářní týden, sledující aktuální ranking        , počet turnajů v okně
+
+52 týdnů      , kategorii odehraného turnaje    , vzdálenost od předchozího turnaje          a
+počet odehraných kol či minut v týdnu          2
+                                                .
+Ve třetí fázi probíhá rekonstrukce latentní míry odhlášení (Withdrawal Rate Reconstruction).
+Protože finální výsledkové listiny ukazují pouze hráče, kteří do zápasu skutečně nastoupili nebo
+vzdali po vylosování pavouka, nezachycují odhlášky mezi Closing Date a Publishing the Draw13.
+Tyto odhlášky lze zpětně odhalit porovnáním předběžných seznamů přijatých hráčů (Initial
+Entry Lists) s finálním rozlosováním hlavní soutěže (Main Draw) a identifikací diskontinuit v
+nasazení, kdy v pavouku chybí hráč z očekávané špičky nebo figuruje Reserve či Lucky Loser13.
+Ve čtvrté fázi je nutné aplikovat ekonometrické korekce na tři výběrová zkreslení. Prvním je
+zkreslení přežití (Survivorship Bias), neboť hráči na pozicích 150 až 400, kteří vyčerpají
+<PARSED TEXT FOR PAGE: 17 / 42>
+finanční rezervy nebo utrpí vážné zranění, opouštějí okruh; výpočet průměrné aktivity pouze z
+hráčů, kteří v žebříčku vydrželi celých 52 týdnů, by nadhodnotil frekvenci startů spodních
+pater, a proto je nutné použít modely přežití nebo nebalancovaný panel se zachycením
+fluktuace6. Druhým je cenzurování shora u přijímacích hranic (Right-Censoring / Cut-off
+
+Truncation), kdy pozorujeme pouze neúčast hráče v turnaji , aniž bychom věděli, zda se
+nepřihlásil dobrovolně, nebo zůstal pod čarou přijetí na listině náhradníků; při odhadu
+preferencí je proto nutné definovat omezenou množinu dostupných voleb (Feasible Choice
+Set     ), do níž vstupují pouze turnaje, kde měl hráč v době uzávěrky reálnou šanci na přijetí (
+                                          )12. Třetím je zkreslení ze změny režimu pravidel
+(Regime-Shift Bias), kvůli němuž nelze data před srpnem 2024 mechanicky slučovat s daty po
+srpnu 2024 bez zavedení strukturálních proměnných pro nové kategorie Diamond a Copper a
+změnu velikosti pavouka Platinum ze 48 na 32 hráčů1.
+
+4. Rozdíly v rozhodování podle úrovní a kariérních fází
+hráčů
+Ačkoliv všichni profesionální squashisté podléhají stejným pravidlům PSA/FAX, jejich efektivní
+rozhodovací prostor se radikálně liší podle postavení ve světovém žebříčku a fáze kariéry.
+Následující rozdělení na pět skupin nepředstavuje návrh pevných administrativních tříd v kódu,
+nýbrž analytickou typologii emergentního chování, které přirozeně vyplývá z pravidel okruhu2.
+1. Světová Top 10: Správa fyziologických vrcholů a honba za tituly
+Major
+Hráči v elitní desítce (v reálných datech např. Mostafa Asal s průměrem 2 338 bodů, Diego Elías
+s 1 631 body, Paul Coll s 1 153 body, Joel Makin s 1 096 body, Marwan ElShorbagy s 847 body,
+Karim Gawad s 811 body, Mohamed ElShorbagy se 794 body, Youssef Soliman s 616 body, Aly
+Abou Eleinen s 580 body a Youssef Ibrahim s 578 body) operují v režimu plné finanční
+bezpečnosti a garantovaného přijetí do jakéhokoliv turnaje na světě6. Jejich kalendář je
+ukotven kolem Mistrovství světa (300 000 USD, 3 100 bodů) a Platinum (100 000 USD, 1 800
+bodů) a sezónní vrchol pro osm nejlepších hráčů PSA Squash Tour Finals ($300 000 USD)2. V
+24členných a 48členných pavoucích mají prvních 8 (respektive 16) nasazených hráčů v prvním
+kole volný los (bye), což eliminuje riziko okamžitého vyřazení v úvodním kole2. Protože však tito
+hráči pravidelně postupují do semifinále a finále, odehrají na každém turnaji čtyři až šest vysoce
+intenzivních zápasů2. Jejich hlavním omezením proto není výše jmenovatele v žebříčku, nýbrž
+kumulativní neuromuskulární únava a nutnost načasovat 100% fyziologickou formu na tři
+klíčové vrcholy sezóny prostřednictvím čtyřtýdenních tréninkových bloků3.
+2. Hráči Top 11–50: Strategický arbitrážní management kalendáře
+Skupina hráčů na 11. až 50. místě představuje strategicky nejkomplexnější vrstvu okruhu, v níž
+správné plánování kalendáře přímo rozhoduje o kariérním vzestupu či stagnaci2. Hráč kolem
+<PARSED TEXT FOR PAGE: 18 / 42>
+20. až 35. místa žebříčku se sice dostane přímo do hlavního pavouka turnajů Platinum (32
+hráčů) a Diamond (48 hráčů), ale figuruje zde jako nenasazený hráč nebo nízké nasazení 9 až
+
+16, takže v prvním či druhém kole s vysokou pravděpodobností narazí na hráče Top 82. Vyřazení
+v Last 32 na Platinum přináší pouze 257 bodů a v Last 16 420 bodů4. Naopak v 24členném
+pavouku kategorie Gold nebo Silver patří týž hráč mezi nasazené (často s volným losem v
+prvním kole) a má reálnou šanci postoupit do čtvrtfinále (450 bodů v Gold, 337,5 bodu v Silver)
+či semifinále (720 bodů v Gold, 540 bodů v Silver)2. Tito hráči proto nejezdí slepě na všechny
+nejvyšší akce, ale cíleně vyhledávají 24členné turnaje Gold, Silver a Bronze, kde mohou vyhrávat
+zápasy, budovat bodový průměr i sebedůvěru a sbírat body do paralelního žebříčku World
+Events2.
+3. Hráči Top 51–100: Přechodové pásmo mezi World Events a
+Challenger Tour
+Hráči ve druhé padesátce světového pořadí se pohybují na rozhraní mezi spodními patry World
+Events (Bronze za $50 000 USD / 900 bodů a Copper za $25 000 USD / 500 bodů) a nejvyššími
+patry Challenger Events (Challenger 15 až 30 za $15 000 až $30 000 USD / 300 bodů)1. Při
+uzávěrce turnajů Silver a Bronze se tito hráči často ocitají těsně pod hranicí přímého přijetí na
+začátku Reserve Listu13. Čelí proto klasickému rozhodovacímu problému pod nejistotou: čekat
+jako první či druhý náhradník na odhlášení hráče v turnaji Bronze (kde čtvrtfinále dává 225 bodů
+a Last 16 135 bodů), nebo vsadit na jistotu přímého nasazení jako číslo 1 až 4 v turnaji
+Challenger 15, kde vítězství vynáší 300 bodů a finále 195 bodů4. Na této úrovni začínají cestovní
+náklady výrazně ukrajovat z hrubých prize money, a proto hráči silně preferují kontinentální
+šňůry a pečlivě hlídají svůj počet odehraných turnajů v okně 52 týdnů, aby zbytečně nezvýšili
+dělitel nad 12 či 134.
+4. Hráči Top 101–250: Ekonomický boj o přežití a třídící síto
+Challengerů
+Tato vrstva tvoří „neviditelnou většinu“ profesionálního sportu, která čelí vysoké příjmové
+nejistotě6. Hráči zde nastupují převážně v kategoriích Challenger 3 (6 000 USD, 120 bodů),
+Challenger 9 (12 000 USD, 240 bodů)1. Protože vyhrané částky v těchto kategoriích zpravidla
+nepokrývají celoroční náklady na cestování, trenéry a regeneraci a pohybují se pod účetní
+hranicí rentability (~150. místo žebříčku), působí finanční dostupnost jako tvrdý selekční filtr6.
+Geografická blízkost a minimalizace cestovních výdajů zde dominují nad prestiží; hráči
+vyhledávají lokální a regionální turnaje se slabším polem, kde mohou dosáhnout na finále či titul
+a získat bodový skok potřebný k průniku do Top 100, přičemž vysoká míra fluktuace a
+předčasného ukončení kariéry při vyčerpání úspor je v této skupině strukturálním jevem2.
+5. Hráči na začátku profesionální kariéry (Early Career / U23)
+Mladí hráči přecházející z juniorské kategorie (U17/U19) nebo kategorie U23 do seniorského
+okruhu vykazují specifickou matematickou pobídku danou konstrukcí žebříčku PSA2. Dokud
+hráč neodehraje v 52týdenním okně alespoň 11 turnajů, jeho celkový bodový zisk se stále dělí
+<PARSED TEXT FOR PAGE: 19 / 42>
+číslem 114. Každý odehraný turnaj od prvního do jedenáctého v pořadí tak přináší 100% čistý
+přírůstek do průměru bez jakéhokoliv ředění jmenovatele4. Jak uvádí metodika WSF, mladý
+hráč v této fázi musí odehrát co nejvíce turnajů a ligových zápasů a naučit se vyhrávat3.
+Začínající profesionálové proto kombinují satelitní turnaje (Satellite: 3 000 USD, 30 bodů pro
+vítěze), turnaje Challenger 3 (60 bodů), Mistrovství světa U23 (200 bodů pro vítěze), seniorské
+národní šampionáty (100 bodů) a především domácí divoké karty (Wildcards) do větších
+turnajů pořádaných v jejich vlasti, přičemž body ze satelitních a federačních turnajů se v
+reálném světě započítávají pouze tehdy, pokud o ně hráč aktivně požádá na webu PSA do
+sedmi dnů od skončení akce2.
+
+
+
+ Analytická      Primární         Typická          Riziko         Finanční a      Hlavní
+ skupina         cílové           sezónní          vyřazení v     cestovní        kariérní
+                 kategorie        aktivita a       1./2. kole     omezení         priorita
+                                  dělitel
+
+
+                 MS, Tour         11–15            Minimální      Zanedbatel      Zisk titulů
+ 1. Světová
+                 Finals,          turnajů          (volný los v   né; globální    Major,
+ Top 10
+                 Diamond,         (dělitel         1. kole u      mobilita s      kvalifikace
+                 Platinum,        fixován na       24/48          plným           do Top 8
+                 vybrané          min. 11) +       pavouků,       realizačním     (Tour
+                 Gold2.           bonus Tour       vysoké         týmem6.         Finals), 3
+                                  Finals4.         nasazení)2.                    vrcholy
+                                                                                  formy za
+                                                                                  rok3.
+
+                 Gold, Silver,    13–18            Vysoké v       Nízké až        Maximalizac
+ 2. Top 11–
+                 Bronze           turnajů          Platinum/Di    střední;        e bodového
+ 50
+                 (jako            (dělitel 11 až   amond;         optimalizac     průměru
+                 nasazení) +      13)4.            nízké až       e               přes
+                 selektivně                        střední v      mezikontin      hluboké
+                 Platinum/Di                       Gold/Silver2   entálních       postupy v
+                 amond2.                           .              šňůr6.          24členných
+                                                                                  pavoucích2.
+
+                 Bronze,          14–19            Vysoké ve      Výrazné;        Průnik do
+ 3. Top 51–
+                 Copper,          turnajů          World          citlivost na    Top 50 a
+ 100
+                 Challenger       (dělitel 11 až   Events;        cenu            udržení
+                 15–30            13)4.            nízké v        letenek a       přímých
+                 (rezervy v                        Challenger     oficiální       vstupů
+<PARSED TEXT FOR PAGE: 20 / 42>
+                 Silver)1.                         15 (kde jsou   hotelovou       (Cut-off) do
+                                                   nasazení) .
+                                                            2
+                                                                  kapacitu . 6
+                                                                                  World
+                                                                                  Events2.
+
+                 Challenger       12–20            Střední až     Kritické        Akumulace
+ 4. Top 101–
+                 3, 6, 9, 12      turnajů          vysoké         (pod hranicí    bodů pro
+ 250
+                 (výjimečně       (riziko          podle          rentability     opuštění
+                 Copper /         přestřelení      lokální        ~150.           ztrátového
+                 Challenger       dělitele při     hustoty        místa);         Challenger
+                 15)1.            honbě za         talentů v      dominance       pásma;
+                                  body)4.          regionu36.     regionálníc     ekonomick
+                                                                  h cest6.        é přežití2.
+
+                 Satellite,       Rychlá           Vysoké v       Závislost na    Naplnění
+ 5. Začátek
+                 Challenger       expanze do       seniorských    podpoře         prvních 11
+ kariéry
+                 3–6, U23         11–15            hlavních       národní         započítávan
+                 MS,              turnajů          soutěžích;     federace,       ých turnajů
+                 Národní          (plnění          sbírání        rodiny a        a
+                 šampionáty       dělitele 11)3.   zkušeností2.   lokálních       vybudování
+                 , domácí                                         klubů6.         startovního
+                 Wildcards2.                                                      rankingu4.
+
+5. Turnajový kalendář, konkurence mezi turnaji a
+dynamika světového žebříčku
+Aby se turnajový okruh ve Squash Engine choval jako živoucí ekosystém, nesmí být obsazování
+turnajů řízeno umělými skripty, které by předem diktovaly sílu startovního pole. Síla pole musí
+vyvstat emergentně z interakce kalendářní architektury, fyziologické únavy a matematiky
+žebříčku2.
+Dynamika sedmi kalendářních situací
+Když v témže týdnu probíhají dva atraktivní turnaje srovnatelné nebo blízké kategorie
+(například turnaj kategorie Silver v USA a turnaj kategorie Bronze v Evropě, případně dva
+turnaje Challenger 15 na různých kontinentech), dochází k prostorové a žebříčkové
+samoselekci2. Hráči z daného kontinentu přirozeně preferují geograficky bližší turnaj kvůli
+nižším cestovním nákladům a absenci pásmové nemoci, zatímco hráči na hraně nasazení (např.
+8. až 12. v očekávaném pořadí silnějšího turnaje) mají silnou pobídku zvolit druhý souběžný
+turnaj, pokud v něm získají status top 4 nasazeného hráče s volným losem v prvním kole a
+snazší cestou do semifinále2. Výsledkem je přirozené rozmělnění střední třídy hráčů bez
+nutnosti jakéhokoliv administrativního zásahu. Pokud naopak jeden turnaj nabízí výrazně více
+rankingových bodů než druhý (např. Platinum za 2 800 bodů vedle Bronze za 900 bodů), vzniká
+<PARSED TEXT FOR PAGE: 21 / 42>
+silný gravitační efekt směrem k vyššímu turnaji, který je však přirozeně regulován pevnou
+kapacitou pavouka (32 míst v Platinum) a strategickou kalkulací hráčů kolem 20. až 35. místa,
+pro něž je očekávaná hodnota bodového zisku vyšší v turnaji nižší kategorie2.
+Při sledu turnajů krátce po sobě (back-to-back scheduling) a při cestování mezi vzdálenými
+regiony naráží hráč na biofyzikální bariéru regenerace a transakční náklady přesunu. Zatímco v
+rámci jednoho turnaje garantuje Sekce 4.4 pravidel PSA minimálně 18 hodin odpočinku mezi
+zápasy a maximálně jeden zápas denně, kumulace čtyř až pěti náročných zápasů v prvním
+týdnu vyvolává výrazné excentrické svalové poškození (DOMS), pokles silové produkce dolních
+končetin až o 35 % a nárůst kreatinkinázy o 430,1 %, jejíž hladina zůstává i po 24 hodinách
+zvýšená o 160,4 % nad bazální úrovní5. Pokud hráč nastoupí bez přestávky do dalšího turnaje v
+následujícím týdnu, čelí zvýšenému riziku vyřazení v úvodním kole od odpočatého outsidera a
+eskalaci poměru akutní ku chronické zátěži (ACWR), což zvyšuje pravděpodobnost zranění15.
+Mezikontinentální přesuny (např. z Egypta přes Velkou Británii do USA a Hongkongu) navíc
+generují značnou třecí sílu, která v reálném kalendáři vede k formování regionálních vln: jakmile
+hráč investuje finanční prostředky a podstoupí časový posun při přeletu do Severní Ameriky
+nebo východní Asie, výrazně roste jeho sklon přihlásit se do navazujících turnajů v témže
+geografickém klastru, zatímco pravděpodobnost okamžitého návratu na jiný kontinent kvůli
+turnaji nižší kategorie se blíží nule15. Specifickým lokálním atraktorem je pak konání domácího
+turnaje, který dočasně potlačuje běžnou kategoriiovou hierarchii: domácí hráči všech úrovní
+mají nulové náklady na mezinárodní letenky, netrpí pásmovou nemocí, domácí špička plní
+očekávání národní federace a lokálních sponzorů a domácí mladé talenty absorbují divoké
+karty13.
+V situaci, kdy se nenasazený hráč nebo kvalifikant dostane nečekaně daleko v předchozím
+turnaji (což je v 24členných pavoucích Gold a Silver zdokumentovaným jevem, např. na Silicon
+Valley Open), dochází k narušení jeho původního kalendářního plánu v krátkodobém i
+střednědobém horizontu2. Okamžitým důsledkem je odehrání čtyř až pěti těžkých zápasů
+místo očekávaných jednoho až dvou; pokud je hráč přihlášen do turnaje v bezprostředně
+následujícím týdnu, dostává se buď do přímé časové kolize řešené Sekcí 4.7 (Clashing
+Tournaments Procedure) a Sekcí 4.9 (Match in Progress), nebo do stavu akutního vyčerpání,
+což spouští pozdní odhlášení kryté lékařským certifikátem jako Medical Zero5. Střednědobým
+důsledkem je pak bodový skok (např. 720 bodů za semifinále Gold), který se následující pondělí
+promítne do týdenní aktualizace žebříčku PSA, posune hráče o desítky míst vzhůru a pro
+turnaje s uzávěrkou v dalších týdnech mu odemkne přímý vstup (Cut-off) do vyšších kategorií,
+čímž klesne jeho potřeba objíždět turnaje Challenger2.
+Pokud konečně silný hráč odřekne účast a změní se atraktivita turnajového pole, závisí
+systémová odezva striktně na časovém okamžiku tohoto odhlášení. Dojde-li k odhlášení
+hvězdného hráče před uzávěrkou přihlášek (Before Closing Date), například z důvodu
+veřejně oznámeného dlouhodobého zranění, zvyšuje tato informace očekávanou
+pravděpodobnost postupu pro ostatní hráče z širší špičky a přitahuje další přihlášky před
+limitem 12:00 UK time13. Dojde-li však k odhlášení po uzávěrce (Late Withdrawal), žádní noví
+<PARSED TEXT FOR PAGE: 22 / 42>
+hráči zvenčí se již do turnaje přihlásit nemohou13. Pozdní odhlášení nasazené jedničky proto
+nemůže přilákat nové přihlášky, ale vyvolá vnitřní kaskádu: do 48 hodin před startem dojde k
+posunu nasazených hráčů (reseeding) a povolání prvního hráče z Reserve Listu, čímž se zvýší
+šance na titul pro zbývající účastníky v pavouku, zatímco po hranici 48 hodin vstupuje do
+uvolněné pozice náhradník nebo Lucky Loser13.
+Vztah turnajové účasti a světového žebříčku
+Světový žebříček PSA (upravený v Sekci 7 a Příloze IX pravidel PSA Squash Tour Rule Book)
+nepoužívá kumulativní součet bodů známý z tenisu (ATP/WTA), ale průměr bodů z nejlepších
+započítávaných turnajů v klouzavém okně 52 týdnů, přičemž u Mistrovství světa, Tour Finals,
+Diamond a Platinum platí flexibilní exspirační okno 49 až 55 týdnů, aby drobné meziroční
+posuny termínů v kalendáři nedeformovaly žebříček4.
+
+Nechť     je celkový počet turnajů, které hráč odehrál za posledních 52 týdnů, vyjma sezónního
+finále PSA Squash Tour Finals, které se do počtu odehraných turnajů     nezapočítává a jehož
+body         (150 bodů za každou výhru ve skupině, 200 za semifinále, 550 za finále, 1 000 za
+titul a 150 bonusových bodů za průchod turnajem bez porážky) se přičítají jako čistý bonus k
+celkovému součtu4. Počet započítávaných turnajů, tedy dělitel (divisor)          , je dán
+schodovou funkcí :4
+
+
+
+
+Do čitatele průměru vstupuje vždy         položek ve striktním prioritním pořadí: na prvním
+místě se vždy započítává výsledek z Mistrovství světa (World Championships), na druhém
+místě všechny aktivní Disciplinary, Medical nebo Penalty Zeros (každá nula zabírá jeden ze
+
+započítávaných slotů          s hodnotou    bodů) a zbývající počet slotů do výše           je
+zaplněn nejvýše bodovanými turnaji hráče za posledních 52 týdnů . Výsledný bodový průměr
+                                                                  4
+
+
+hráče       je pak dán vztahem4:
+<PARSED TEXT FOR PAGE: 23 / 42>
+kde                       jsou seřazené bodové zisky z ostatních turnajů a        je počet
+platných nulových záznamů4. Praktickou aritmetiku tohoto mechanismu dokládá konkrétní
+výpočet: pokud hráč během 52 týdnů odehraje 16 turnajů, jeho dělitel činí 12, takže se mu
+započítá 12 turnajů a 4 nejslabší výsledky se škrtnou4. Zahrnuje-li jeho 12 započítávaných
+výsledků osmifinále Mistrovství světa (525 bodů), dvě semifinále kategorie Gold (po 720
+bodech, celkem 1 440 bodů), jeden titul kategorie Bronze (900 bodů), tři čtvrtfinále kategorie
+Silver (po 337,5 bodu, celkem 1 012,5 bodu) a pět čtvrtfinále kategorie Copper (po 125 bodech,
+celkem 625 bodů), činí jeho bodový součet
+                                                          bodu, což po vydělení 12 dává
+výsledný žebříčkový průměr 375,2 bodu . 4
+<PARSED TEXT FOR PAGE: 25 / 42>
+Z této matematické konstrukce přirozeně, bez jakýchkoliv umělých pravidel typu „více turnajů
+znamená lepší ranking“, vyplývá zásadní strategická divergence mezi selektivním hráčem
+(„Selective Sniper“) a objemovým hráčem („Volume Grinder“)2. Selektivní hráč odehraje za
+rok přesně 14 až 15 kvalitně vybraných turnajů, na které dokáže optimálně vyladit kondici; jeho
+dělitel zůstává na minimální hodnotě 11, takže 3 až 4 nejhorší výsledky (např. nečekané prohry v
+prvním kole kvůli nemoci či těžkému losu) se vůbec nezapočítají3. Pokud se takový hráč
+rozhodne přihlásit na 16. turnaj v sezóně, jeho dělitel stoupne z 11 na 12; aby mu tento 16. turnaj
+vůbec zvýšil žebříčkový průměr, musí v něm (nebo ve svém dosavadním 12. nejlepším turnaji,
+který se nově započítá) uhrát více bodů, než činí jeho dosavadní celkový průměr            , jinak
+jeho bodový průměr po odehrání turnaje klesne . Naopak objemový hráč, který se snaží dohnat
+                                                  4
+
+chybějící kvalitu tím, že odehraje 24 malých turnajů ročně, je systémem dvojnásobně
+potrestán: jeho dělitel vyskočí na 20 (čímž se mu zúží ochranný polštář škrtnutých turnajů ze
+šesti při 19–23 startech na pouhé čtyři) a protože vítězství v turnaji Challenger 3 přináší jen 60
+bodů a v Challenger 15 300 bodů, zatímco semifinále jednoho turnaje Gold přináší 720 bodů,
+nemůže vysoký počet malých turnajů matematicky překonat průměr hráče bodujícího ve
+větších akcích2. Současně při 24 turnajích ročně nemá hráč prostor pro čtyřtýdenní tréninkové
+bloky, hraje permanentně unavený na                   kapacity a akumuluje vysoké riziko zranění
+vedoucí k Medical Zero . 3
+
+
+6. Alternativní matematické a rozhodovací modely
+turnajové účasti
+Pro implementaci rozhodovacího modulu ve Squash Engine je nezbytné porovnat pět
+kandidátních matematických architektur z hlediska identifikovatelnosti parametrů, výpočetní
+složitosti, numerické stability a deterministické reprodukovatelnosti11.
+Prvním přístupem je jednoduchý vážený rozhodovací model (Deterministic Linear Scoring
+
+Heuristic), v němž každému dostupnému turnaji           v týdnu přiřadí hráč deterministické
+skóre                              (kde    jsou normalizované atributy jako očekávané body,
+prize money, cestovní vzdálenost, domácí status a aktuální únava) a přihlásí se, pokud
+             . Tento přístup nabízí výpočetní složitost      na pár hráč-turnaj a triviální
+determinismus, avšak trpí kritickou slabinou stádního chování (herding) a nerealistickou
+ostrostí prahů: dva hráči s podobným rankingem a únavou učiní vždy 100% identické
+rozhodnutí, což způsobuje, že se do turnaje přihlásí buď celá kohorta, nebo nikdo. Druhým
+přístupem je pravděpodobnostní model účasti (Independent Bernoulli / Binomial Logit),
+který pro každý turnaj       nezávisle vyhodnotí pravděpodobnost přihlášení
+                                                      . Ačkoliv tento model odstraňuje ostré
+prahy, vyhodnocování souběžných turnajů v témže týdnu nezávisle na sobě porušuje
+podmínku vzájemné výlučnosti, takže se hráč může s nenulovou pravděpodobností přihlásit do
+<PARSED TEXT FOR PAGE: 26 / 42>
+více kolidujících turnajů najednou nebo ignorovat substituční efekt mezi alternativami12.
+Třetím, teoreticky i empiricky nejlépe ukotveným přístupem je model diskrétní volby
+(Random Utility / Multinomial & Mixed Logit Model), který vychází ze strukturální
+ekonometrie turnajového vstupu (Niederle & Vesterlund, 2007; Zhang, 2019; Arellano &
+
+Carrasco, 2003)11. Hráč v rozhodovacím uzlu volí jednu diskrétní alternativu
+
+                    (kde   je volba „odpočívat a trénovat“ a        je množina nekolidujících
+dostupných turnajů) tak, aby maximalizoval náhodný užitek                                  12
+                                                                                             :
+
+
+
+
+V této specifikaci představuje       individuální sklon k soutěživosti (competitive inclination),
+
+         je subjektivně očekávaný bodový zisk (zohledňující míru nadměrné sebedůvěry                ,
+takže subjektivní pravděpodobnost výhry je                       ) porovnaný s hraničním
+započítávaným výsledkem                       při aktuálním děliteli,   je koeficient averze k riziku,
+    finanční polštář hráče,          nelineární penalizace únavy a rizika zranění při vysokém
+ACWR a           je idiosynkratický šum s rozdělením extrémních hodnot typu I (Gumbelovým
+rozdělením) generovaný ze seedovaného PRNG4. Pravděpodobnost volby konkrétního turnaje
+má pak uzavřený analytický tvar Multinomial Logitu12:
+
+
+
+
+Čtvrtým přístupem je omezené optimalizační rozhodování hráče (Boundedly Rational
+
+Rolling-Horizon MDP). Protože rozhodnutí v týdnu ovlivňuje únavu, geografickou polohu
+hráče a dělitel v týdnu        , rozšiřuje tento model diskrétní volbu o konečný výhledový
+
+horizont délky      týdnů (typicky           až    týdnů, což odpovídá jednomu tréninkovému a
+turnajovému mikrocyklu dle WSF) . Hráč nevyhodnocuje jednotlivé týdny izolovaně, nýbrž
+                                     3
+
+
+vybírá nejlepší sekvenci účastí                                            z omezeného stromu
+přípustných cest, což přirozeně generuje kontinentální šňůry a odpočinek před majory2. Pátým
+přístupem jsou hierarchické modely individuálních preferencí (Hierarchical Latent Trait
+
+Models), v nichž nejsou váhy      pevně sdílené všemi hráči, ale vektor parametrů každého
+hráče                                             je tažen při generování hráče (a mírně upravován
+<PARSED TEXT FOR PAGE: 27 / 42>
+s věkem, neboť ekonometrické studie ukazují, že preference pro soutěživost jsou tvárné v
+mládí a následně se stabilizují) z hierarchického rozdělení                            11
+                                                                                         . Tím
+je zaručeno, že i dva hráči se stejným rankingem a národností vykazují odlišný osobnostní
+profil11.
+
+
+
+  Kritérium      1. Lineární     2.              3. Diskrétní    4.              5.
+  hodnocení      vážený          Nezávislý       volba (MNL      Omezená         Hierarchic
+                 model           Bernoulliho     / RUM)          optimaliza      ký model
+                                 model                           ce (Rolling-    preferencí
+                                                                 Horizon)        (Mixed
+                                                                                 Logit)
+
+
+                                                 Vysoká                          Vysoká při
+  Identifikov    Nízká (váhy     Střední                         Střední až
+                                                 (ukotveno v                     panelových
+  atelnost       jsou            (standardní                     vysoká
+                                                 teorii                          datech
+  parametrů      arbitrární,     logistická                      (vyžaduje
+                                                 náhodného                       (odhad
+                 silná           regrese na                      kalibraci
+                                                 užitku a                        středních
+                 kolinearita).   binárních                       diskontního
+                                                 poměru
+                                 datech).                        faktoru a       hodnot       a
+                                                 pravděpod
+                                                                 nákladů
+                                                 obností)12.                     rozptylů
+                                                                 přechodu).
+                                                                                 kohort)11.
+
+
+  Výpočetní
+                          ,              ,                ,                ,                 při
+  složitost
+                                 nezávislé       jeden           s ořezáním      simulaci
+  (na hráče a    kde      je
+                                 vyhodnoce       průchod         větví (beam     (pokud jsou
+  týden)         počet
+                                 ní.             přes            search) pro     parametry
+                 turnajů v
+                                                 množinu
+                 týdnu.
+                                                 alternativ      týdny velmi     předgenero
+                                                     .           rychlé.         vány).
+
+
+                                                 Vysoce          Vysoce          Vynikající;
+  Numerická      Nestabilní      Stabilní v
+                                                 stabilní        stabilní;       eliminuje
+  stabilita a    (skokové        rámci
+                                                 (součet         přirozeně       umělou
+  kalibrace      změny           jednoho
+                                                 pravděpod       modeluje        homogenit
+                 chování při     turnaje,
+                                                 obností v       kontinentál     u hráčů
+                 malém           nekonzisten
+                                                 týdnu je        ní šňůry a      stejné
+                 posunu          tní při
+                                                 vždy roven      odpočinek       úrovně11.
+                 prahu).         souběhu
+                                                                 před
+<PARSED TEXT FOR PAGE: 28 / 42>
+                                 akcí.           1)12.           majory3.
+
+
+
+ Determinis      Plně            Deterministi    Deterministi    Determinist    Plně
+
+ tická           deterministi    cká při         cká přes        ická při       deterministi
+ reproduko       cká (bez        fixním          Gumbelův        deterministi   cká při
+ vatelnost       PRNG).          seedu           trik (          ckém           seedované
+                                 PRNG                            prohledává     m
+                                 hash(seed,      ).              ní stromu s    generování
+                                 player_id,                      Gumbelový      latentních
+                                 week,                           m šumem.       rysů hráče.
+                                 tourn_id).
+
+
+ Doporučen       Nevhodné        Nevhodné        Jádro Pre-      Rozšíření      Kombinova
+ í pro           (produkuje      pro týdny s     Alphy           pro V1         t s #3 již v
+ Squash          klonované       více turnaji.   (ideální        (4týdenní      Pre-Alphě
+ Engine          chování).                       poměr           okno pro       (fixní vektor
+                                                 realismu a      plánování
+                                                                                rysů    pro
+                                                 jednoducho      šňůr a
+                                                                                každého
+                                                 sti).           přípravy).
+                                                                                hráče).
+
+
+7. Rizika nerealistického rozhodování AI hráčů a
+informační asymetrie
+Největším nebezpečím při návrhu rozhodovací umělé inteligence ve sportovních simulátorech
+není nedostatečná sofistikovanost vzorců, ale naopak informační kontaminace (Lookahead
+Leakage) a záměna lidské omezené racionality za dokonalou matematickou optimalizaci11.
+Pokud má AI přístup k informacím, které reálný hráč v okamžiku rozhodování nemůže znát,
+zhroutí se autenticita celého okruhu.
+První kritickou patologií „jasnovidecké AI“ je znalost budoucích výsledků a nerealizovaných
+pavouků (Future Outcome & Draw Leakage). Pokud AI při rozhodování o přihlášce, které v
+reálném světě probíhá týdny před turnajem v okamžiku Closing Date, nahlíží do budoucího
+rozlosování pavouka nebo využívá skutečný seed budoucího Match Enginu k odhadu, zda v
+prvním kole padne lehký či těžký soupeř, dopouští se kauzálního podvodu13. V okamžiku
+uzávěrky přihlášek není pavouk vylosován; hráč zná pouze kategorii turnaje, velikost pavouka a
+svůj aktuální světový žebříček2. Očekávaný bodový zisk           proto musí být v
+rozhodovacím modelu počítán výhradně z makro-charakteristik turnaje a očekávaného pásma
+nasazení, nikoliv ze simulace konkrétního pavouka.
+Druhou patologií je znalost finální přihlašovací listiny před uzávěrkou a zacyklení
+<PARSED TEXT FOR PAGE: 29 / 42>
+simultánní hry (Simultaneous Entry Game Cycling). V reálném světě odesílají hráči přihlášky
+do systému PSA před limitem 12:00 UK time v den uzávěrky bez dokonalé znalosti toho, kdo
+všechno se v poslední minutě přihlásí nebo odhlásí13. Pokud by v enginu všichni AI hráči viděli v
+reálném čase kompletní seznam přihlášených a okamžitě na něj reagovali, vznikly by
+nekonečné oscilace (Nash equilibrium cycling), kdy přihlášení Hráče A vytlačí Hráče B z pozice
+nasazeného do jiného turnaje, což následně změní pole druhého turnaje a vyžene Hráče C zpět
+do prvního turnaje. Rozhodování o přihlášení u uzávěrky proto musí probíhat jako hra s
+neúplnou informací nebo vyhodnocení nad očekávanou historickou silou pole dané kategorie a
+regionu, nikoliv nad živě mutujícím seznamem přihlášených v témže tiku enginu.
+Třetí patologií je znalost skrytého zdravotního stavu a formy soupeřů (Hidden State
+Omniscience). Skutečný hráč zná svou vlastní únavu, drobné bolesti a formu; jak uvádí
+trenérská metodika WSF, únavu svěřence pozná vlastní trenér z pohledu do jeho očí a vzhledu,
+nikoliv soupeř na druhém konci světa3. Pokud AI při výběru turnaje vidí interní proměnné
+Fatigue a Form ostatních hráčů a vybírá si turnaje, kam jsou přihlášeni unavení favorité, jde o
+
+nepřípustný únik dat. Informační množina hráče v čase , značená            , smí obsahovat jeho
+vlastní interní stavy                                            , ale u všech ostatních hráčů
+        výhradně veřejně publikované veličiny: jejich oficiální světový žebříček       z
+posledního pondělního vydání a veřejně známou historii již odehraných turnajů .    4
+
+
+Čtvrtou patologií je záměna kvalitního rozhodování za dokonalou globální optimalizaci.
+Reální sportovci nejsou neomylné výpočetní stroje řešící celočíselné programování přes všech
+250 turnajů v sezóně1. Empirický ekonomický výzkum dokumentuje, že sportovci podléhají
+zkreslení nadměrné sebedůvěry (overconfidence, kdy přibližně 75 % hráčů přeceňuje svou
+relativní výkonnost), setrvačnosti zvyku a lokálnímu uspokojení11. Dokonale optimalizující AI by
+vykazovala nepřirozenou sterilitu: nikdy by neudělala chybu v přetížení kalendáře, nikdy by
+nepropadla honu za body na konci sezóny a nikdy by nezkusila ambiciózní start ve vyšší
+
+kategorii. Právě kombinace individuálního zkreslení sebedůvěry        a deterministicky
+seedovaného Gumbelova šumu             v modelu diskrétní volby vytváří chování, které je
+racionálně ukotvené, ale lidsky rozmanité a občas chybující11.
+
+8. Experimentální a validační plán pro Squash Engine
+Pro ověření, že navržené rozhodovací mechanismy generují v prostředí Squash Engine
+realistické emergentní chování bez skrytých regresí, je definována sada 16
+reprodukovatelných validačních experimentů pokrývajících všechny úrovně hráčů,
+kalendářní kolize, fyziologickou únavu, správu rezerv i bitovou deterministickou invarianci2.
+První čtveřice experimentů ověřuje základní makro-rozložení aktivity, prostorovou samoselekci
+a fyziologickou odezvu. EXP-01 (Distribuce sezónní aktivity a dělitele napříč žebříčkovými
+skupinami) testuje hypotézu, že průměrný počet odehraných turnajů za 52 týdnů u hráčů Top
+10 se stabilizuje v pásmu 11–15 turnajů (minimální dělitel 11), zatímco u skupiny Top 11–100 leží v
+<PARSED TEXT FOR PAGE: 30 / 42>
+pásmu 13–19 turnajů (dělitel 11–13) a méně než 5 % aktivních profesionálů překročí penalizační
+hranici 24 turnajů (dělitel 20)3. Experiment vyžaduje pět sezónních běhů simulace a týdenní
+snímky žebříčku, přičemž výstupní metrikou jsou medián, mezikvartilové rozpětí (IQR) a 95.
+percentil hodnot       a            podle pěti analytických skupin; rizikem zkreslení je zahrnutí
+dlouhodobě zraněných hráčů (nutné filtrovat aktivní status) a experiment je plně použitelný v
+současné Pre-Alphě. EXP-02 (Samoselekce a rozdělení síly pole při souběhu turnajů)
+testuje hypotézu, že při zařazení dvou turnajů kategorie Silver/Bronze ve stejném týdnu v
+odlišných regionech klesne průměrný ranking nasazených č. 5–8 v obou turnajích oproti
+izolovanému týdnu a hráči se statisticky významně rozdělí podle geografické afinity a šance na
+nasazení2. Na syntetickém kalendáři s 10 dvojicemi kolidujících turnajů oproti 10 izolovaným
+turnajům měří posun přijímací hranice (                ) a rozdíl v rankingu 8. nasazeného hráče (
+              ) při kontrole na asymetrii regionálních bazénů hráčů, a je rovněž připraven pro Pre-
+Alphu . EXP-03 (Preferenční prémie domácího turnaje a absorpce divokých karet)
+         15
+
+ověřuje na třísezónních logách přihlášek a atributech z COUNTRY_ATTRIBUTES_V1.md
+hypotézu, že pravděpodobnost přihlášení hráče Top 30 do turnaje Bronze/Silver statisticky
+významně vzroste v jeho domovské zemi a domácí mladí hráči mimo přímý Cut-off obsadí
+alokované domácí divoké karty, přičemž výstupní metrikou je poměr šancí (Odds Ratio)
+kontrolovaný na prostou geografickou vzdálenost sousedních států (použitelné v Pre-Alphě) 19.
+EXP-04 (Dopad extrémního předchozího zápasu na odhlášky a výkon) propojuje zápasové
+logy z Match Enginu (počet setů, doba trvání, přírůstek únavy) s výsledky v týdnu            a
+
+testuje hypotézu, že hráč po pětisetových maratonech v semifinále či finále turnaje vykáže v
+bezprostředně navazujícím turnaji          vyšší relativní riziko (Risk Ratio) pozdního odhlášení a
+vyšší míru porážek v 1. kole (First-Round Upset Rate) při kontrole na proměnnou Form
+(použitelné v Pre-Alphě)5.
+Druhá čtveřice experimentů cílí na limity přetížení, emergentní strukturu polí a procedurální
+správu rezerv. EXP-05 (Penalizace nadměrného zatížení a únavový kolaps) je párový A/B
+experiment se 100 dvojicemi identicky inicializovaných hráčů po dobu jedné sezóny, který
+testuje hypotézu, že umělé přinucení skupiny B odehrát 25 turnajů za sezónu povede k nižšímu
+konečnému bodovému průměru              (vlivem skoku dělitele na 21 a poklesu výkonnosti z
+únavy) než u autonomně se rozhodující skupiny A s 14–16 turnaji; rizikem zkreslení je
+nedostatek turnajů v některých týdnech a experiment je přímo aplikovatelný v Pre-Alphě3.
+EXP-06 (Emergentní formování přijímacích hranic napříč pyramidou) testuje na pětileté
+simulaci hypotézu, že se přijímací hranice (Cut-off posledního přímo přijatého hráče) bez
+pevných zákazů přirozeně seřadí monotónně podle kategorií (Diamond/Platinum              Gold
+Silver        Bronze    Copper      Challenger 15      Challenger 3) se Spearmanovou korelací
+                a nulovým podílem neúplně obsazených pavouků (Unfilled Draws) u World Events,
+<PARSED TEXT FOR PAGE: 31 / 42>
+při kontrole na dostatečnou velikost populace hráčů v databázi (použitelné v Pre-Alphě)2.
+EXP-07 (Kaskáda pozdních odhlášení, povolávání rezerv a substituce divokých karet)
+testuje na jednotkových scénářích s odhláškami v časech                 a           hypotézu,
+že před/po hranici 48 hodin proběhne deterministicky korektní posun nasazení nebo doplnění z
+Reserve Listu a při výpadku PSA Wildcard nedojde k jejímu nelegálnímu nahrazení pomocí Non-
+PSA Wildcard, přičemž ošetřuje riziko, že první náhradník již nastoupil do souběžného turnaje
+(základní Reserve posun je použitelný v Pre-Alphě, plná Wildcard/48h kaskáda ve V1)13. EXP-08
+(Dynamika účasti na začátku kariéry) sleduje kohortu 50 nováčků během prvních 104 týdnů
+a testuje hypotézu, že hráči s         odehranými turnaji vykazují výrazně vyšší frekvenci
+přihlašování do nízkoúrovňových turnajů (Satellite / Challenger 3–6) než hráči stejné výkonnosti
+s           , dokud nenaplní kvótu 11 turnajů minimálního dělitele, při kontrole na regionální
+dostupnost satelitů (použitelné v Pre-Alphě)2.
+Třetí čtveřice experimentů prověřuje dlouhodobé kariérní strategie, geografické šňůry,
+průlomové turnaje a sankční nuly. EXP-09 (Dlouhodobý souboj strategií „Selective Sniper“
+vs. „Volume Grinder“) porovnává po dobu 104 týdnů tři skupiny po 30 hráčích se shodnými
+herními atributy na 25. místě žebříčku a testuje hypotézu, že hráč preferující 24členné turnaje
+Gold/Silver při 14 startech ročně dosáhne vyššího bodového průměru i výdělků než hráč
+objíždějící výhradně nejtěžší turnaje s výpadky v 1. kole nebo hráč objíždějící 22 malých turnajů
+Copper/Challenger, přičemž průměrování přes 30 běhů eliminuje zkreslení z náhodného
+průlomu v jednom turnaji Diamond (použitelné v Pre-Alphě)2. EXP-10 (Geografické
+klastrování a kontinentální šňůry) měří na matici mezikontinentálních přechodů hypotézu, že
+při sekvenci tří turnajů v Severní Americe nebo východní Asii během čtyř týdnů je podmíněná
+pravděpodobnost účasti mimokontinentálního hráče v turnaji 2 a 3 za předpokladu účasti v
+turnaji 1 výrazně vyšší než marginální pravděpodobnost účasti, při kontrole na celkový podíl
+turnajů v daném regionu (částečně použitelné v Pre-Alphě přes penalizaci vzdálenosti z
+poslední lokace, plně ve V1 přes 4týdenní výhledové okno)15. EXP-11 (Efekt nečekaného
+hlubokého postupu na revizi kalendáře) filtruje všechny události, kde nenasazený hráč
+porazil alespoň dva výše nasazené soupeře a získal více než dvojnásobek svého bodového
+průměru, a testuje hypotézu, že v týdnu         vzroste míra jeho únavového odhlášení a v
+okně                    se po pondělním přepočtu žebříčku zvýší průměrná kategorie jím
+přihlašovaných turnajů oproti oknu                    , při kontrole na regresi k průměru u
+krátkodobé formy (použitelné v Pre-Alphě) . EXP-12 (Zdravotní odhlášení a alokace Medical
+                                            2
+
+Zero vs. Penalty Zero) porovnává simulaci s aktivovaným a deaktivovaným modulem
+52týdenních nulových záznamů a testuje hypotézu, že Penalty Zero dramaticky sníží míru
+spekulativních pozdních odhlášek, zatímco Medical Zero se koncentruje u hráčů s
+překročeným prahem zranění; tento experiment je určen pro budoucí verze (V1) po rozšíření
+FAX struktur o 52týdenní Zero Score sloty4.
+Poslední čtveřice experimentů testuje sezónní vrchol, ekonomické přežití, informační izolaci
+<PARSED TEXT FOR PAGE: 32 / 42>
+uzávěrky a determinismus. EXP-13 (Konvergence bojů o postup na sezónní vrchol Race to
+the Finals) testuje v posledních šesti týdnech sezóny hypotézu, že hráči na 6. až 11. místě
+kumulativního žebříčku World Events (bez jistého postupu z titulu MS či Diamond) vykážou
+vyšší míru účasti v turnajích Gold/Silver/Bronze než zajištění hráči na 1. až 4. místě, při kontrole
+na únavu na konci sezóny (určeno pro V1 s duálním žebříčkem)2. EXP-14 (Finanční přežití a
+Break-Even filtr u hráčů mimo Top 100) sleduje roční bilanci odměn mínus cestovní náklady a
+testuje hypotézu, že účetní hranice nulového čistého zisku (Break-Even Rank) se ustálí v pásmu
+100. až 160. místa žebříčku a hráči mimo Top 150 silně omezí mezikontinentální lety do turnajů
+Challenger 3–9, při zohlednění podpory národních federací z COUNTRY_ATTRIBUTES_V1.md
+(částečně v Pre-Alphě přes nákladovou proxy, plně ve V1)2. EXP-15 (Citlivost atraktivity
+turnaje na odhlášení nasazené jedničky před uzávěrkou vs. po uzávěrce) spouští
+kontrafaktuální běh téhož turnaje ve třech variantách (plné pole, zranění č. 1 týden před
+uzávěrkou, zranění č. 1 dva dny před startem) a ověřuje, že neúčast č. 1 před uzávěrkou zvýší
+přihlášky hráčů na 5. až 15. místě, zatímco odhlášení po uzávěrce nezmění seznam
+přihlášených, čímž prokazuje absenci Lookahead Leakage (plně použitelné v Pre-Alphě)13.
+Konečně EXP-16 (Bit-level deterministická reprodukovatelnost) porovnává kryptografické
+hashe SHA-256 serializovaných stavů kalendáře, přihlášek a žebříčků po každém týdnu (
+                    ) ze dvou nezávislých běhů se stejným globálním seedem a vstupními
+soubory a vyžaduje nulovou bitovou odchylku (
+                                               ), čímž odhaluje případnou iteraci přes
+neseřazené kolekce a představuje povinnou bránu kvality v Pre-Alphě.
+
+
+
+  ID                  Název               Primární             Klíčová             Pre-Alpha
+                      experimentu         testovaný            výstupní            připravenost
+                                          mechanismus          metrika
+
+
+                                          Schodová
+  EXP-01              Distribuce                               Medián a IQR        Ano
+                                          funkce dělitele
+                      sezónní aktivity                         odehraných
+                                          a strop 11–19
+                      a dělitele
+                                          akcí3.               turnajů        a
+                                                               dělitele
+                                                                          .
+
+
+                                          Geografická a
+  EXP-02              Souběh                                   Posun Cut-          Ano
+                                          nasazovací
+                      atraktivních                             offu a
+                      turnajů             samoselekce2.
+                      (Clashing)                               oproti
+<PARSED TEXT FOR PAGE: 33 / 42>
+                                               izolované akci.
+
+
+                           Domácí afinita
+EXP-03   Prémie                                Odds Ratio        Ano
+                           a alokace
+         domácího                              účasti
+                           divokých
+         turnaje a                             domácích
+         Wildcards         karet19.            hráčů
+                                               kontrolované
+                                               na vzdálenost.
+
+
+                           Přenos únavy
+EXP-04   Dopad                                 Risk Ratio        Ano
+                           (DOMS/CK) do
+         5setového                             pozdní
+         maratonu na       týdne           .
+                                           5
+                                               odhlášky a
+         další týden                           míra proher v
+                                               1. kole v
+                                               .
+
+
+                           Souběh růstu
+EXP-05   Penalizace                            Párový rozdíl     Ano
+                           dělitele (
+         přetížení                                       mezi
+         (Over-                       )a
+                                               15 a 25 starty.
+         scheduling)       únavy3.
+
+
+                           Přirozená
+EXP-06   Emergentní                            Spearmanova       Ano
+                           hierarchie polí
+         formování                             korelace
+                           od Diamond
+         Cut-off hranic
+                           po
+                                               mezi kategorií
+                           Challenger2.
+                                               a Cut-offem.
+
+
+                           Pravidlo 48h,
+EXP-07   Kaskáda                               100% soulad       Částečně
+                           Reserve List a
+         odhlášek a                            pavouka s         (základ Ano)
+                           Wildcard
+         správa rezerv                         procedurálním
+                           substituce13.       automatem.
+
+
+                           Nulová
+EXP-08   Dynamika                              Doba do 11        Ano
+                           penalizace
+         začátku kariéry                       turnajů a
+                           jmenovatele
+         (Ramp-up)                             pokles
+<PARSED TEXT FOR PAGE: 34 / 42>
+                         pro
+                         4
+                          .
+                                            po            .
+
+
+                         Arbitráž
+EXP-09   „Selective                         Průměrný          Ano
+                         24členných
+         Sniper“ vs.                        ranking a
+                         Gold/Silver vs.
+         „Volume                            výdělky po 104
+                         objem malých
+         Grinder“                           týdnech.
+                         akcí2.
+
+                         Amortizace
+EXP-10   Geografické                        Podmíněná         Částečně
+                         mezikontinent
+         klastrování                        pravděpodobn
+                         álních
+         (Regional                          ost setrvání na
+         Swings)         přeletů15.         kontinentu
+
+
+                                            .
+
+
+                         Únavová
+EXP-11   Efekt                              Změna             Ano
+                         odhláška v
+         nečekaného                         průměrné
+         průlomu (Deep          a skok      kategorie
+         Run)            do vyšších         přihlášek v
+                         kategorií2.        okně
+
+
+                                            .
+
+
+                         Odstrašující
+EXP-12   Alokace                            Frekvence         Budoucí verze
+                         efekt
+         Medical Zero                       pozdních          (V1)
+                         52týdenních
+         vs. Penalty                        odhlášek a
+         Zero            nul v děliteli4.   podíl
+                                            doložených
+                                            zranění.
+
+
+                         Boj na bublině
+EXP-13   Konvergence                        Rozdíl v          Budoucí verze
+                         Top 8 ve World
+         „Race to the                       aktivitě mezi     (V1)
+                         Events
+         Finals“                            pořadím 6–11 a
+                         žebříčku2.         zajištěnou Top
+                                            4.
+<PARSED TEXT FOR PAGE: 35 / 42>
+                                       Ekonomická
+ EXP-14             Finanční přežití                      Medián čistého     Částečně
+                                       bariéra kolem
+                    a Break-Even                          příjmu podle
+                                       ~150. místa
+                    filtr                                 decilů a Break-
+                                       žebříčku6.         Even Rank.
+
+
+                                       Informační
+ EXP-15             Odhlášení č. 1                        Kontrafaktuáln     Ano
+                                       izolace
+                    před vs. po                           í srovnání
+                                       uzávěrky (No
+                    uzávěrce                              přihlašovací
+                                       Lookahead)13.      listiny v čase
+                                                          uzávěrky.
+
+
+ EXP-16             Bit-level          Kanonické          Nulová bitová      Ano (Povinné)
+                    deterministick     řazení a čistý     odchylka
+                    á invariance       seedovaný          SHA-256
+                                       PRNG.              hashů mezi
+                                                          běhy.
+
+
+9. Fázování implementace: Pre-Alpha vs. budoucí
+verze Squash Engine
+V souladu se závaznými dokumenty projektu (SQUASH_ENGINE_MASTER_VISION.md,
+PRE_ALPHA_INTEGRATION_2026_10_30.md, COUNTRY_ATTRIBUTES_V1.md a AGENTS.md) je
+nezbytné striktně oddělit mechanismy, které přinášejí okamžitý skok v realističnosti při
+minimální architektonické invazivnosti pro současnou Pre-Alphu, od komplexních
+procedurálních nadstaveb určených pro budoucí verze (V1/V2). Stávající FAX Entry a
+rankingové procedury zůstávají plně zachovány; níže uvedené rozdíly oproti reálným pravidlům
+PSA jsou formulovány výhradně jako návrhy k posouzení.
+Pro současnou Pre-Alphu jsou doporučeny čtyři neinvazivní pilíře. Prvním je implementace
+deterministického modelu diskrétní volby (MNL s Gumbelovým trikem) nad již existujícími
+stavovými proměnnými enginu: rozhodování hráče u uzávěrky přihlášek vyhodnocuje dostupné
+turnaje v daném týdnu pomocí užitkové funkce         , která čte aktuální světový ranking a
+historicky verzovanou bodovou tabulku FAX, očekávané kolo postupu (odhadnuté čistě z
+poměru hráčova rankingu ku historické síle kategorie turnaje bez čtení budoucího pavouka),
+
+aktuální Fatigue, Form a domácí příslušnost hráče vůči zemi turnaje2. Druhým pilířem je
+zavedení povědomí o děliteli (Divisor-Aware Marginal Points Valuation): aby hráči v Pre-
+Alphě přirozeně omezovali počet turnajů bez umělých pevných stropů, hodnotí hráč turnaj
+nikoliv podle hrubých bodů       , ale podle čistého marginálního příspěvku do svého
+žebříčkového průměru, tedy porovnáním očekávaného bodového zisku s hodnotou svého
+<PARSED TEXT FOR PAGE: 36 / 42>
+aktuálně nejhoršího započítávaného turnaje a zohledněním, zda mu další start zvýší dělitel4. Tím
+okamžitě vznikne realistický rozdíl mezi nováčkem plnícím prvních 11 turnajů a hráčem Top 20
+hlídajícím si nízký dělitel4. Třetím pilířem je dvoufázová kontrola dostupnosti (Closing Date
+Entry + Pre-Tournament Fatigue Withdrawal), kde po přihlášení u uzávěrky proběhne před
+startem turnaje deterministická kontrola, zda hráčova akutní únava (Fatigue) po předchozím
+turnaji nepřekročila kritický práh (např. po pětisetovém finále v předchozím týdnu), což vyvolá
+odhlášení a posun prvního náhradníka z Reserve Listu5. Čtvrtým pilířem je kanonický
+deterministický PRNG, kdy je veškerá stochastická heterogenita v rozhodování (Gumbelův
+
+šum       a individuální sklon k soutěživosti   ) deterministicky odvozena z čisté hašovací
+funkce hash(global_seed, player_id, tournament_id, decision_week) při kanonickém seřazení
+všech kolekcí podle primárních identifikátorů.
+Pro budoucí verze (V1 / V2) jsou naproti tomu vyčleněny čtyři architektonické návrhy k
+posouzení (Proposals for Evaluation) vůči stávajícímu Masteru. Prvním návrhem k posouzení
+je alokace 52týdenních nulových záznamů (Medical Zero & Penalty Zero): v reálných
+pravidlech PSA zabírá pozdní odhlášení slot v čitateli i jmenovateli průměru po dobu 52 týdnů;
+pokud stávající FAX ranking eviduje pouze odehrané turnaje, doporučuje se v Pre-Alphě řešit
+odrazení od pozdních odhlášek přes penalizaci v užitkové funkci a zavedení 52týdenních
+objektů ZeroScore zvážit až pro V14. Druhým návrhem k posouzení je duální žebříček (World
+Ranking vs. kumulativní World Events „Race to the Finals“), neboť reálná PSA vede od
+srpna 2024 paralelní kumulativní žebříček čistě z turnajů World Events pro kvalifikaci osmi
+hráčů na sezónní Tour Finals, přičemž body z Tour Finals se v hlavním žebříčku přičítají jako
+bonus bez zvýšení počtu odehraných turnajů2. Třetím návrhem k posouzení je vícekrokové
+plánování kontinentálních šňůr (4-Week Rolling-Horizon MDP) a explicitní bankroll hráče,
+které propojí geografickou polohu hráče týden po týdnu s účetní bilancí kariéry a
+rozpočtovými omezeními podle COUNTRY_ATTRIBUTES_V1.md3. Čtvrtým návrhem k
+posouzení je pak rozlišení PSA vs. Non-PSA Wildcard a Protected Ranking (PR) podle Sekcí
+4.2.4 a 4.7.2 PSA Rule Book pro detailní modelování návratů po dlouhodobých zraněních13.
+
+10. Přesné bibliografické zdroje a omezení poznání
+Transparentní vymezení epistemických hranic této výzkumné zprávy vyžaduje přesnou
+dokumentaci primárních normativních, empirických a ekonometrických zdrojů, na nichž jsou
+závěry postaveny, a pojmenování datových omezení současného stavu poznání.
+Při sestavování zprávy byl přímý automatizovaný přístup k URL repozitáře
+https://github.com/Jasmetk0/squash-tour-beta a k australskému regionálnímu zrcadlu PSA-
+Squash-Tour-Rule-Book-2025.pdf na doméně squashwa.asn.au ze strany cílových serverů
+technicky blokován41. Tento výpadek byl plně kompenzován křížovou verifikací z primárních
+oficiálních dokumentů PSA Squash Tour Rule Book (edice červenec 2024, srpen
+2024/2025, edice 2022 a provize 2026) publikovaných přímo na infrastruktuře PSA, World
+Squash a národních federací (psasquashtour.com, d2h2jicm4ii9y.cloudfront.net,
+worldsquash.sport, worldsquashofficiating.com, ffsquash.com, squashireland.ie) a z
+<PARSED TEXT FOR PAGE: 37 / 42>
+architektonických specifikací projektu Squash Engine13. Právě tyto oficiální edice PSA Squash
+Tour Rule Book (zejména Sekce 3.5.1 o lékařském zajištění, Sekce 4.2.4 o divokých kartách,
+Sekce 4.3 o velikosti pavouků, nasazení a rezervách, Sekce 4.4 o minimálním 18hodinovém
+odpočinku, Sekce 4.6 až 4.11 o nulových bodových záznamech, kolizích turnajů, lékařských
+certifikátech a Lucky Losers, a Sekce 7 s Přílohou IX o výpočtu světového žebříčku) poskytly
+exaktní procedurální základnu4.
+V oblasti sportovní fyziologie, periodizace tréninku a bibliometrie squashe se výzkum opírá o
+systematický přehled fyziologických a nutričních požadavků elitního squashe Physiological and
+Nutritional Considerations for Elite Squash: A Systematic Review (Turner et al., 2024, Sheffield
+Hallam University), přehled specifického testování A review of sport-specific performance
+testing in squash (2024/2025), komplexní bibliometrickou analýzu A Comprehensive
+Bibliometric Analysis of the Sport of Squash (1973–2024): Progress, Collaboration, Findings,
+and Thematic Evolution (publikovanou v časopise Sports, 2025, roč. 13, č. 157), studii
+tréninkových režimů Practice regimes in elite squash (Tayla Mounter, Applied Coaching
+Research Group, University of Edinburgh, JPESM, 2025, roč. 11) a oficiální sborník trenérské
+konference Světové squashové federace WSF Coaching Conference Egypt 20033. Data o
+neuromuskulární únavě, nárůstu kreatinkinázy a porovnání zápasových intervalů napříč
+vrcholnými turnajovými sporty pocházejí ze studií Recovery from sport-induced muscle
+damage in relation to match-intervals in major events (Edith Cowan University / PMC11288855,
+2024) a Neuromuscular fatigue and muscle damage following a simulated singles badminton
+match (Lin & Blazevich, PMC10192185)5. Konečně v oblasti mikroekonomie turnajového vstupu,
+příjmové nerovnosti a modelů diskrétní volby čerpá zpráva z prací Gender and Competition
+(Niederle & Vesterlund, Annual Review of Economics, 2011, roč. 3, s. 601–630), Can
+Experimental Economics Explain Competitive Behavior Outside the Lab (Y. Jane Zhang, 2019,
+využívající smíšený logit a Binswangerův instrument averze k riziku), Measuring Individual
+Competitiveness and its Impact on Sporting Success (využívající semiparametrický dynamický
+panelový model diskrétní volby dle Arellano & Carrasco, 2003) a přehledové studie Economic
+inequalities in professional tennis: Elite success, the invisible majority, and career sustainability
+(2026, zahrnující nákladové analýzy Balliauw et al., 2023 a Schöttl et al., 2026)6.
+
+
+
+  Oblast výzkumu                   Primární zdroj / Dokument         Klíčový empirický nebo
+                                   a autoři                          normativní přínos pro
+                                                                     Squash Engine
+
+
+                                   PSA Squash Tour Rule Book         Uzávěrky (12:00 UK),
+  Pravidla okruhu a
+                                   (edice 2022,                      hranice 48h, kaskáda
+  procedury
+                                   červenec/srpen 2024–              Reserve/Wildcard, Sekce
+                                   2025) & WSF Championship          4.4 (18h odpočinek), Sekce
+                                                                     4.6 (Medical/Penalty Zero),
+<PARSED TEXT FOR PAGE: 38 / 42>
+                                Regulations V1113.             Sekce 7 a Příloha IX (dělitel
+                                                               11–20)4.
+
+                                Oficiální specifikace PSA      Rozpad dotací (600k),
+ Struktura kategorií a
+                                World Events & Challenger      velikostí pavouků
+ bodů
+                                Events (reforma od srpna       (24/32/48/64), bodových
+                                2024, sezóny 2025/26 a         tabulek všech kol a
+                                2026/27)1.                     duálního žebříčku World
+                                                               Events pro Tour Finals2.
+
+                                Turner et al. (2024)
+ Fyziologie a periodizace                                      Zápasové               (
+                                Systematic Review; WSF
+ squashe                                                                            v
+                                Coaching Conference
+                                Egypt; Sport-specific          SST), tepová frekvence (
+                                performance testing in                          ), strop 3
+                                squash .
+                                       3
+                                                               vrcholů formy ročně,
+                                                               4týdenní přípravné cykly
+                                                               (3:1, 2:1, 1:1)3.
+
+                                Studie intervalů odpočinku     Komparace 18h pravidla
+ Svalové poškození a
+                                a EIMD (PMC11288855,           PSA s intervaly v
+ regenerace
+                                PMC10192185, Lin &             tenise/badmintonu (1,4–2,3
+                                Blazevich); studie ACWR a      dne); elevace CK (+430,1 %
+                                kostního stresu                ihned, +160,4 % po 24h),
+                                (PMC11548715,                  pokles síly dřepu o 35 %5.
+                                PMC8316280)5.
+
+                                Niederle & Vesterlund          Formulace Random Utility /
+ Ekonometrie a diskrétní
+                                (2007, 2011); Zhang (2019);    Mixed Logit modelu vstupu
+ volba
+                                Arellano & Carrasco (2003);    do turnaje, efekt nadměrné
+                                Balliauw et al. (2023);
+                                                               sebedůvěry ( , 75 %
+                                Economic inequalities
+                                                               nadhodnocení), hranice
+                                (2026)6.                       rentability kolem 150.
+                                                               místa6.
+
+Hlavním epistemickým omezením současného stavu poznání zůstává skutečnost, že
+publikovaný vědecký výzkum ve squashi (206 prací za 51 let) se soustředí téměř výhradně na
+laboratorní a kurtovou fyziologii a traumatologii, zatímco mikroekonomie rozhodování
+squashistů na úrovni Challenger Tour vyžaduje strukturální přenos poznatků z obecné teorie
+turnajů (tournament theory) a příbuzných raketových sportů6. Veřejné výsledkové archivy
+navíc zaznamenávají pouze realizované turnajové pavouky, nikoliv neúspěšné přihlášky pod
+<PARSED TEXT FOR PAGE: 39 / 42>
+čarou přijetí a bezsankční odhlášky z Reserve Listu před zahájením turnaje13. Právě proto musí
+být kalibrace parametrů modelu diskrétní volby ve Squash Engine validována nepřímo přes
+pozorovatelné makro-výstupy — distribuci přijímacích hranic Cut-off, distribuci dělitele
+        a sezónní frekvenci startů — prostřednictvím šestnácti navržených validačních
+experimentů2.
+
+Citovaná díla
+
+  1. Professional Squash Association - Wikipedia,
+      https://en.wikipedia.org/wiki/Professional_Squash_Association
+  2. How the PSA Squash Tour Works: Diamond, Platinum, Gold,
+      https://racquets.me/indoor/competitions/psa-squash-tour-tiers-explained/
+  3. 6th WORLD SQUASH DEVELOPME T AD COACHI G CO FERE CE,
+      https://www.worldsquash.sport/wp-content/uploads/2015/02/WSF-Coaching-
+      Conference-Egypt-2003.pdf
+  4. How the Squash ranking works - SportsMaze,
+      https://sportsmaze.com/sports/squash/rankings
+  5. Recovery from sport-induced muscle damage in relation to match,
+      https://ro.ecu.edu.au/cgi/viewcontent.cgi?article=5375&context=ecuworks2022-
+      2026
+  6. (PDF) Economic inequalities in professional tennis: Elite success,
+      https://www.researchgate.net/publication/417069776_Economic_inequalities_in_
+      professional_tennis_Elite_success_the_invisible_majority_and_career_sustainabili
+      ty
+  7. PSA Squash World Rankings on iPhone & iPad - BoolTek Labs,
+      https://www.boolteklabs.com/world-sports-rankings/squash/
+  8. Physiological and Nutritional Considerations for Elite Squash,
+      https://shura.shu.ac.uk/34486/1/Turner%20et%20al.,%20(2024)%20-
+      %20Physiological%20and%20Nutritional%20Considerations%20for%20Elite%20
+      Squash%20-%20A%20Systematic%20Review.pdf
+  9. A review of sport-specific performance testing in squash.,
+      https://www.researchgate.net/publication/389212353_A_review_of_sport-
+      specific_performance_testing_in_squash
+  10. Badminton Tournament Between-Match Recovery: Re-Warm Smart,
+      https://badmintonhouse.ca/blogs/news/badminton-tournament-between-
+      match-recovery
+  11. Measuring Individual Competitiveness and its Impact on Sporting,
+      https://cdn.prod.website-files.com/68d6be744d7efccc2207f571/68d6be744d7ef
+      ccc2208080e_193966%20-
+      %20Measuring%20Individual%20Competitiveness%20and%20its%20Impact%20
+      on%20Sporting%20Success.pdf
+  12. Can Experimental Economics Explain Competitive Behavior Outside,
+<PARSED TEXT FOR PAGE: 40 / 42>
+    https://www.yjanezhang.com/wp-content/uploads/2019/01/Zhang_ExtVal.pdf
+13. PSA Squash Tour Rule Book - Cloudfront.net,
+    https://d2h2jicm4ii9y.cloudfront.net/wp-content/uploads/2024/08/PSA-Squash-
+    Tour-Rule-Book-August-24.25.pdf
+14. Senior Tournament Information Policy Owner: CEO Date Approved,
+    https://www.squashireland.ie/wp-content/uploads/2026/03/Policy-19-Senior-
+    Tournament-Information-Policy-Web-version.pdf
+15. PSA World Tour Betting Odds and Event Info - Sports-King, https://www.sports-
+    king.com/contests/psa-world-tour/
+16. 2026–27 PSA Squash Tour - Wikipedia,
+    https://en.wikipedia.org/wiki/2026%E2%80%9327_PSA_Squash_Tour
+17. PSA revamps world squash tour and eyes $18m prize money by 2028,
+    https://squashmad.com/breaking-news/psa-revamps-world-squash-tour-and-
+    eyes-18m-prize-money-by-2028/
+18. The International Squash Scene: Major Tournaments, the PSA Tour, https://racket-
+    trip.com/en/blog/articles/the-international-squash-scene-major-tournaments-
+    the-psa-tour-and-the-road-to-the-top
+19. Professional Squash Player Statistics and Records - SquashChamps,
+    https://squashchamps.com/article/professional-squash-player-statistics-and-
+    records
+20. Gender and Competition - Stanford University,
+    https://web.stanford.edu/~niederle/NV.AnnualReview.Print.pdf
+21. Dynamic Incentives and Effort Provision in Professional Tennis,
+    https://econ.berkeley.edu/sites/default/files/Rowan_Pan_Senior_Honors_Thesis_F
+    inal.pdf
+22. 2025–26 PSA Squash Tour - Wikipedia,
+    https://en.wikipedia.org/wiki/2025%E2%80%9326_PSA_Squash_Tour
+23. How much does it really cost to be a pro tennis player?,
+    https://www.thefirstserve.com.au/post/the-100k-question-how-much-does-it-
+    really-cost-to-be-a-pro-tennis-player
+24. Athlete Health & Safety Provisions | World Squash,
+    https://www.worldsquash.sport/wp-content/uploads/2026/07/Appendix-I-
+    Athlete-Health-Safety-Provisions.pdf
+25. Championship Regulations V11.1 | PDF - Scribd,
+    https://www.scribd.com/document/1007025883/251209-Championship-
+    Regulations-V11-1-2
+26. Viable strategies for enhancing performance in ball sports by ... - PMC,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC11548715/
+27. A survey on external load monitoring and bone in sport - Frontiers,
+    https://www.frontiersin.org/journals/sports-and-active-living/articles/10.3389/
+    fspor.2023.1150052/full
+28. Preventing bone stress injuries in runners with optimal workload,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC8316280/
+<PARSED TEXT FOR PAGE: 41 / 42>
+29. PSA Tour Rule Book - Cloudfront.net, https://d2h2jicm4ii9y.cloudfront.net/wp-
+    content/uploads/2022/09/PSA-Tour-Rule-Book-2022.pdf
+30. Understanding the Sport Participation Environment: Squash in New,
+    https://openrepository.aut.ac.nz/server/api/core/bitstreams/64d0eed1-
+    f61b-4924-9f9d-7116da486adb/content
+31. Talent Identification and Development Programmes in Sport,
+    https://www.researchgate.net/publication/23180224_Talent_Identification_and_D
+    evelopment_Programmes_in_Sport
+32. 36th Japan Junior Open 2025 Details | PDF | Doping In Sport - Scribd,
+    https://www.scribd.com/document/876223045/36th-Japan-Junior-Open-2025
+33. PSA Tour Rule Book,
+    https://www.ffsquash.com/medias/fichiers/Competition%20F%C3%A9d%C3%A9
+    rales/R%C3%A9glement%20sportif%20et%20divers/PSA_Tour_Rule_Book.pdf
+34. A Comprehensive Bibliometric Analysis of the Sport of Squash,
+    https://www.researchgate.net/publication/392044668_A_Comprehensive_Biblio
+    metric_Analysis_of_the_Sport_of_Squash_1973-
+    2024_Progress_Collaboration_Findings_and_Thematic_Evolution
+35. (PDF) Physiological and Nutritional Considerations for Elite Squash,
+    https://www.researchgate.net/publication/385821990_Physiological_and_Nutritio
+    nal_Considerations_for_Elite_Squash_A_Systematic_Review
+36. Squash: four markets, three trajectories - Racquet Sports Institute,
+    https://racquetsports.institute/post/squash-three-trajectories
+37. Recovery from sport-induced muscle damage in relation to match,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC11288855/
+38. Economic inequalities in professional tennis: Elite success, the,
+    https://rrpubs.com/index.php/rol/article/view/2405
+39. Squash (sport) - Wikipedia, https://en.wikipedia.org/wiki/Squash_(sport)
+40. Good Girl, Bad Boy: Corrupt Behavior in Professional Tennis,
+    https://www.econstor.eu/bitstream/10419/108704/1/dp8824.pdf
+41. https://github.com/Jasmetk0/squash-tour-beta
+42. https://squashwa.asn.au/wp-content/uploads/2025/04/PSA-Squash-Tour-Rule-
+    Book-2025.pdf
+43. Practice Regimes in Squash – A Mismatch between Theory and,
+    https://jpesm.thebrpi.org/journals/jpesm/Vol_11_2025/4.pdf
+44. Officiating Standards Framework for LA28 - World Squash Officiating,
+    https://worldsquashofficiating.com/wp-content/uploads/2026/08/Officiating-
+    Standards-Framework-for-LA28.pdf
+45. Neuromuscular fatigue and muscle damage following a simulated,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC10192185/
+46. Neuromuscular fatigue and muscle damage following a simulated,
+    https://www.semanticscholar.org/paper/Neuromuscular-fatigue-and-muscle-
+    damage-following-a-Lin-Blazevich/
+    d9d91f6c2a921e29654b149fc657c1de2c9c646f
+<PARSED TEXT FOR PAGE: 42 / 42>
+47. Beyond the Baseline: The Economics of Tennis Revenue Sharing,
+   https://sites.lsa.umich.edu/mje/2026/05/11/beyond-the-baseline-the-economics-
+   of-tennis-revenue-sharing/
+
+------ END USER-SUPPLIED RESEARCH TEXT EXTRACTION ------

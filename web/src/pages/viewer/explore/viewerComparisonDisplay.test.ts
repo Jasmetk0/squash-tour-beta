@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { EventRecord, RunPlayerListItem, SeasonStateResponse } from '../../../api/types'
-import { buildSearchTournamentResults, comparisonStatFields, formatComparisonDifference, normalizeViewerSearchQuery, playerNumericField, searchTextMatches } from './viewerComparisonDisplay'
+import { buildSearchTournamentResults, comparablePlayerIds, comparisonStatFields, formatComparisonDifference, normalizeViewerSearchQuery, playerNumericField, searchTextMatches, verifiedComparisonPlayerDetail } from './viewerComparisonDisplay'
 
 function makePlayer(overrides: Partial<RunPlayerListItem> = {}): RunPlayerListItem {
   return {
@@ -65,6 +65,35 @@ describe('viewer comparison display helpers', () => {
   it('preserves case-insensitive search matching', () => {
     expect(searchTextMatches('egy', ['EGY', null])).toBe(true)
     expect(searchTextMatches('gold', ['Silver', 42])).toBe(false)
+  })
+
+  it('accepts a verified exact detail even when its ID is beyond the old 50-player sample', () => {
+    const player = makePlayer({player_id:'player-900',name:'Ninth hundredth player'})
+    expect(verifiedComparisonPlayerDetail(player, 'player-900')).toBe(player)
+    expect(verifiedComparisonPlayerDetail(player, 'player-1')).toBeNull()
+  })
+
+  it('rejects forged identity, invalid attributes, and malformed player details', () => {
+    const player = makePlayer()
+    for (const invalid of [
+      null, [], 3, {...player,player_id:'foreign'},
+      {...player,name:' '}, {...player,country_code:''},
+      {...player,overall:Number.NaN}, {...player,technique:Number.POSITIVE_INFINITY},
+      {...player,movement:undefined}, {...player,age:23.5},
+      {...player,source_type:'unknown'}, {...player,is_top_band:'yes'},
+      {...player,quality_band:{}}
+    ]) {
+      expect(verifiedComparisonPlayerDetail(invalid, 'player-a')).toBeNull()
+    }
+    expect(verifiedComparisonPlayerDetail(player, '')).toBeNull()
+  })
+
+  it('requires two different exact nonblank IDs before starting detail requests', () => {
+    expect(comparablePlayerIds('player-1', 'player-900')).toBe(true)
+    for (const pair of [['a','a'],['','b'],[' ','b'],['a',''],['a ','b'],
+      ['a',' b'],['a'.repeat(257),'b']]) {
+      expect(comparablePlayerIds(pair[0], pair[1])).toBe(false)
+    }
   })
 
   it('combines planned and persisted tournaments without changing result shape', () => {

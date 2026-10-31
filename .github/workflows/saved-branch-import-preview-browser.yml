@@ -1,0 +1,57 @@
+name: Saved Branch Import Preview Browser
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'web/src/api/runBranchArchiveImportPreview*'
+      - 'web/src/pages/SavedBranchArchiveImportPage*'
+      - 'web/src/App.tsx'
+      - 'web/src/navigation/adminNavigation.ts'
+      - 'web/src/i18n/LanguageContext.tsx'
+      - 'web/acceptance/saved_branch_archive_import_browser.py'
+      - '.github/workflows/saved-branch-import-preview-browser.yml'
+      - '.github/requirements/saved-branch-browser.lock.txt'
+  workflow_dispatch:
+
+concurrency:
+  group: saved-branch-import-preview-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  read-only-import:
+    name: Real Chromium / cold SQLite / read-only import collision review
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    env:
+      PYTHONPATH: ${{ github.workspace }}/src
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: .github/requirements/saved-branch-browser.lock.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: |
+          python -m pip install --only-binary=:all: --no-deps --require-hashes \
+            -r .github/requirements/saved-branch-browser.lock.txt
+      - run: npm --prefix web ci --ignore-scripts
+      - run: python -m playwright install --with-deps chromium
+      - name: Real source Save, independent import preview, tampering, collision and restart
+        run: |
+          timeout --signal=TERM --kill-after=10s 10m \
+            python web/acceptance/saved_branch_archive_import_browser.py --root work/archive-import-preview-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: saved-branch-import-preview-${{ github.run_id }}
+          path: work/archive-import-preview-browser/*
+          retention-days: 14

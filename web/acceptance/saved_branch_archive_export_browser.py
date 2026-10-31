@@ -234,6 +234,7 @@ def main():
                 "button", name="Stáhnout ověřený soubor .sqbranch"
             )).to_have_count(0)
             assert not extra_downloads, extra_downloads
+            tampered_downloads = list(extra_downloads)
             assert len(post_requests) == 3, post_requests
             assert _dump(database) == original_state, "Digest failure performed a write"
             with page.expect_response(
@@ -349,7 +350,7 @@ def main():
             assert inherited_archive.envelope.selected_branch_id == fork_id
             assert inherited_archive.envelope.selected_head_revision_id == historical_head
             assert _dump(database) == original_state, "Inherited fork export performed a write"
-            fork_panel.screenshot(path=str(root / "fork-inherited-cs.png"))
+            fork_panel.screenshot(path=str(root / "fork-inherited-en.png"))
 
             code, draft = _request(
                 "GET",
@@ -388,7 +389,7 @@ def main():
                         "physical_reopen": True,
                         "sqlite_unchanged": True,
                         "tampered_payload_200_rejected_by_sha256": True,
-                        "tampered_payload_downloads": extra_downloads,
+                        "tampered_payload_downloads": tampered_downloads,
                         "explicit_repreview_after_digest_failure": True,
                         "stale_409_failure_injected": True,
                         "stale_409_cleared_download": True,

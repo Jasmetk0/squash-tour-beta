@@ -76,17 +76,20 @@ describe('Saved player match history', () => {
       played_wins: 21, played_losses: 0, walkovers: 0,
       career_played_wins: 21, career_played_losses: 0, career_walkovers: 0,
       has_more: offset === 0,
-      matches: [{ event_id: 'event', event_name: 'Championship',
-        match_id: offset === 0 ? 'first' : 'second', season_index: 2, season: '2002/03',
-        week: 17, draw_type: 'main', round_number: 2, opponent_player_id: 'B',
-        outcome: 'win', completion: 'played', scoreline: '3-2' }],
+      matches: Array.from({length: Math.max(0, Math.min(limit, 21-offset))}, (_, i) => ({
+        event_id: 'event', event_name: i === 0 ? 'Championship' : 'Other match '+i,
+        match_id: offset === 0 ? (i === 0 ? 'first' : 'extra-'+i) : 'second',
+        season_index: 2, season: '2002/03',
+        week: 17, draw_type: 'main', round_number: 2, opponent_player_id: i === 0 ? 'B' : 'other-'+i,
+        outcome: 'win', completion: 'played', scoreline: '3-2'
+      })),
     }))
     mount()
     expect(await screen.findByText('Championship')).toBeInTheDocument()
     fireEvent.change(screen.getByRole('combobox', {name: 'Sezóna zápasů'}), {target: {value: '2'}})
     await waitFor(() => expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith(
       'run', 'branch', 'A', 2, 0, 20))
-    await waitFor(() => expect(screen.getByRole('link', {name: 'Detail zápasu →'})).toHaveAttribute('href',
+    await waitFor(() => expect(screen.getAllByRole('link', {name: 'Detail zápasu →'})[0]).toHaveAttribute('href',
       '/admin/runs/run/people/A/matches/event/first?tab=career&replayBranch=branch&replayHead=revision&careerSeason=2'))
     fireEvent.click(screen.getByRole('button', {name: 'Další →'}))
     await waitFor(() => expect(api.getSavedPlayerMatchHistory).toHaveBeenLastCalledWith(
@@ -159,12 +162,14 @@ describe('career navigation and filtering (mocked API, not browser acceptance)',
       total_results:21,played_wins:20,played_losses:1,walkovers:1,
       career_played_wins:20,career_played_losses:1,career_walkovers:1,
       has_more:offset===0,
-      matches:offset>=21?[]:[{
-        event_id:'EV',event_name:'Brno Championship',match_id:offset?'later':'M12',
+      matches:Array.from({length: Math.max(0, Math.min(limit, 21-offset))}, (_, i) => ({
+        event_id:'EV',event_name:i === 0 ? 'Brno Championship' : 'Other tournament '+i,
+        match_id:offset ? 'later' : (i === 0 ? 'M12' : 'm'+i),
         season_index:2,season:'2002/03',week:17,draw_type:'main',round_number:2,
-        opponent_player_id:'B',outcome:offset?'loss':'win',completion:offset?'walkover':'played',
+        opponent_player_id:i === 0 ? 'B' : 'other-'+i,
+        outcome:offset?'loss':'win',completion:offset?'walkover':'played',
         scoreline:offset?'W/O':'3-2',
-      }],
+      })),
     }))
   })
   it('rejects duplicate season/page/filter keys without asking the API for results', async () => {

@@ -12,6 +12,7 @@ import { savedBranchArchiveText } from '../i18n/savedBranchArchiveText'
 import { formatApiError } from '../utils/apiErrors'
 
 class UnsavedBranchChanges extends Error {}
+const REVISION_PAGE_SIZE = 100
 const bytes = (value: number): string => new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 })
   .format(value / (1024 * 1024)) + ' MiB'
 
@@ -31,6 +32,7 @@ export function SavedBranchArchiveExportPanel({
   const inFlight = useRef<AbortController | null>(null)
   const [reviewed, setReviewed] = useState<{scope: string; preview: SavedBranchArchivePreview} | null>(null)
   const [workingStatus, setWorkingStatus] = useState<'clean' | 'dirty' | null>(null)
+  const [revisionPage, setRevisionPage] = useState(0)
   const [busy, setBusy] = useState<'preview' | 'download' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -42,6 +44,7 @@ export function SavedBranchArchiveExportPanel({
     inFlight.current = null
     setReviewed(null)
     setWorkingStatus(null)
+    setRevisionPage(0)
     setError(null)
     setBusy(null)
     return () => {
@@ -58,6 +61,12 @@ export function SavedBranchArchiveExportPanel({
   const active = reviewed?.scope === scope &&
     reviewed.preview.selected_head_revision_id === selected?.saved_head_revision_id
     ? reviewed.preview : null
+  // Rendering a collapsed <details> still mounts all its children; keep the
+  // long Saved revision inventory bounded without hiding any exported bytes.
+  const revisionTotal = active?.history.length ?? 0
+  const revisionStart = Math.min(revisionPage * REVISION_PAGE_SIZE,
+    Math.max(0, Math.ceil(revisionTotal / REVISION_PAGE_SIZE) - 1) * REVISION_PAGE_SIZE)
+  const revisionEnd = Math.min(revisionStart + REVISION_PAGE_SIZE, revisionTotal)
 
   /** Re-read persisted owners directly, never trust cached React Query data for export consent. */
   async function recheck(head: string, branchId: string, token: number, key: string): Promise<void> {
@@ -94,6 +103,7 @@ export function SavedBranchArchiveExportPanel({
     setError(null)
     setReviewed(null)
     setWorkingStatus(null)
+    setRevisionPage(0)
     try {
       await recheck(selected.saved_head_revision_id, selected.branch_id, token, key)
       if (generation.current !== token || currentScope.current !== key) return
@@ -202,10 +212,18 @@ export function SavedBranchArchiveExportPanel({
       <p>{l.omitted}: {active.omitted_branch_ids.length ? active.omitted_branch_ids.join(', ') : l.omittedNone}</p>
       <p>{l.areas}: {active.omitted_areas.length ? active.omitted_areas.join(', ') : l.omittedNone}</p>
       <details><summary>{l.revisionParent} ({active.history.length})</summary>
-        <ol>{active.history.map(item => <li key={item.revision_id}>
-          <code>{item.revision_id}</code> ({item.original_owner_branch_id}, #{item.sequence})
-          {' → '}<code>{item.parent_revision_id || l.noParent}</code>
-        </li>)}</ol>
+        <p className="status">{l.revisionRange}: {revisionStart + 1}–{revisionEnd} / {revisionTotal}</p>
+        <ol start={revisionStart + 1}>{active.history.slice(revisionStart, revisionEnd).map(item =>
+          <li key={item.revision_id}>
+            <code>{item.revision_id}</code> ({item.original_owner_branch_id}, #{item.sequence})
+            {' → '}<code>{item.parent_revision_id || l.noParent}</code>
+          </li>)}</ol>
+        {revisionTotal > REVISION_PAGE_SIZE && <div className="actions">
+          <button type="button" disabled={revisionStart === 0}
+            onClick={() => setRevisionPage(page => Math.max(0, page - 1))}>{l.previousRevisions}</button>
+          <button type="button" disabled={revisionEnd >= revisionTotal}
+            onClick={() => setRevisionPage(page => page + 1)}>{l.nextRevisions}</button>
+        </div>}
       </details>
       <details><summary>{l.components} ({active.included_components.length})</summary>
         <ul>{active.included_components.map(name => <li key={name}><code>{name}</code></li>)}</ul>

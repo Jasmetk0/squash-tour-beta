@@ -6,6 +6,7 @@ import contextlib
 import functools
 import json
 import logging
+import mimetypes
 import multiprocessing
 import os
 import re
@@ -17,9 +18,8 @@ import threading
 import time
 import uuid
 import webbrowser
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import ClassVar
 from urllib.parse import unquote, urlsplit
 
 
@@ -116,28 +116,58 @@ def prepare_data(root: Path, data: Path, build: dict) -> None:
             shutil.rmtree(staging)
 
 
-class FrontendHandler(SimpleHTTPRequestHandler):
-    """Serve only the compiled UI, with bounded SPA fallback and no listings."""
+def compiled_files(directory: Path) -> dict[str, tuple[bytes, str]]:
+    """Build the public URL map from trusted build outputs, never request paths."""
+    files = {}
+    for path in directory.rglob("*"):
+        if path.is_symlink():
+            raise LaunchError("The compiled UI must not contain symbolic links.")
+        if path.is_file():
+            media_type = {".js": "application/javascript", ".css": "text/css"}.get(path.suffix)
+            media_type = media_type or mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+            files["/" + path.relative_to(directory).as_posix()] = (path.read_bytes(), media_type)
+    if "/index.html" not in files:
+        raise LaunchError("The compiled UI is incomplete. Extract the whole ZIP.")
+    return files
 
-    extensions_map: ClassVar[dict] = {**SimpleHTTPRequestHandler.extensions_map,
-                      ".js": "application/javascript", ".css": "text/css"}
 
-    def send_head(self):
-        path = unquote(urlsplit(self.path).path)
-        relative = Path(path.lstrip("/"))
-        target = (Path(self.directory) / relative).resolve()
-        if not target.is_relative_to(Path(self.directory).resolve()):
+class FrontendHandler(BaseHTTPRequestHandler):
+    """Only an exact public asset lookup or a bounded SPA route can read a file."""
+
+    def __init__(self, *args, files: dict[str, tuple[bytes, str]], **kwargs):
+        self.files = files
+        super().__init__(*args, **kwargs)
+
+    def do_GET(self):
+        self.send_asset(body=True)
+
+    def do_HEAD(self):
+        self.send_asset(body=False)
+
+    def send_asset(self, *, body: bool):
+        try:
+            path = unquote(urlsplit(self.path).path, errors="strict")
+        except (UnicodeError, ValueError):
             self.send_error(404)
-            return None
-        if path == "/" or path in ("/admin", "/viewer", "/runs", "/world") or (
-            path.startswith(("/admin/", "/viewer/", "/runs/", "/world/"))
-            and not target.is_file()
-        ):
-            self.path = "/index.html"
-        return super().send_head()
-
-    def list_directory(self, path):
-        self.send_error(404)
+            return
+        if "\\" in path or "\x00" in path or ".." in path.split("/"):
+            self.send_error(404)
+            return
+        # A URL never becomes a filesystem path (including UNC/device paths on
+        # Windows). All public bytes were loaded from trusted files at startup.
+        asset = self.files.get(path)
+        if asset is None and (path == "/" or re.match(r"^/(admin|viewer|runs|world)(/|$)", path)):
+            asset = self.files["/index.html"]
+        if asset is None:
+            self.send_error(404)
+            return
+        content, media_type = asset
+        self.send_response(200)
+        self.send_header("Content-Type", media_type)
+        self.send_header("Content-Length", str(len(content)))
+        self.end_headers()
+        if body:
+            self.wfile.write(content)
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")
@@ -189,9 +219,10 @@ def host(root: Path, data: Path, stop: threading.Event, *, open_browser: bool) -
 
     # Reserve BOTH endpoints before initializing a database or opening a browser.
     # Never attach to, stop, or silently choose another existing application's port.
+    public_files = compiled_files(root / "web/dist")
     try:
         frontend = FrontendServer(("127.0.0.1", 5173), functools.partial(
-            FrontendHandler, directory=str(root / "web/dist")))
+            FrontendHandler, files=public_files))
     except OSError as exc:
         raise LaunchError("Port 5173 is in use. Stop the other application and retry.") from exc
     try:

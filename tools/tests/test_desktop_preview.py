@@ -103,13 +103,18 @@ def test_occupied_ports_reject_before_creating_data(bundle, tmp_path, port):
         assert foreign.getsockname()[1] == port
 
 
-def test_frontend_deep_links_assets_and_private_file_boundaries(bundle, tmp_path):
+def test_frontend_deep_links_assets_and_private_file_boundaries(bundle, tmp_path, monkeypatch):
     root, _ = bundle
     (root / "web/secret.txt").write_text("PRIVATE SENTINEL", encoding="utf-8")
     server = launcher.FrontendServer(("127.0.0.1", 0), functools.partial(
-        launcher.FrontendHandler, directory=str(root / "web/dist")))
+        launcher.FrontendHandler, files=launcher.compiled_files(root / "web/dist")))
     worker = threading.Thread(target=server.serve_forever)
     worker.start()
+
+    def no_request_paths(*args, **kwargs):
+        pytest.fail("An HTTP request must never construct or resolve a filesystem path")
+
+    monkeypatch.setattr(launcher, "Path", no_request_paths)
     try:
         base = f"http://127.0.0.1:{server.server_port}"
         for route in ("/", "/admin", "/admin/runs/test?tab=calendar", "/viewer/run"):
@@ -121,7 +126,8 @@ def test_frontend_deep_links_assets_and_private_file_boundaries(bundle, tmp_path
             assert b"console.log" in response.read()
         for route in ("/assets/", "/config/seed.txt", "/beta_engine.db",
                       "/../secret.txt", "/%2e%2e/secret.txt", "/admin/../../secret.txt",
-                      "/%5c..%5csecret.txt", "/assets/missing.js"):
+                      "/%5c..%5csecret.txt", "/%5c%5cremote-host%5cshare%5csecret",
+                      "/assets/missing.js"):
             with pytest.raises(HTTPError) as error:
                 urlopen(base + route)
             assert error.value.code == 404

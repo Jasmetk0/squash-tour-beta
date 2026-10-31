@@ -11,6 +11,8 @@ platí stále úplná vydávací brána v [testovací politice](PRE_ALPHA_TEST_P
    odpovídající požadovanému commitu a dole stáhni artefakt
    **SquashEngine-Windows-Preview**. Ke stažení artefaktu je potřeba přihlášení na GitHub.
    GitHub **Code → Download ZIP** obsahuje pouze zdrojový kód a spustit nejde.
+   Pro nové sestavení aktuálního `buuk` lze po merge launcheru v témže workflow
+   zvolit **Run workflow → buuk**. Každý běžný merge nemusí znovu stavět balíček.
 2. Rozbal **celý** ZIP do běžné uživatelské složky, například Dokumenty.
    Nespouštěj soubor přímo uvnitř ZIPu a neodděluj EXE od `_internal`, `config`, `src` a `web`.
 3. Dvojklik na **Spustit_Squash_Engine.bat**. Otevře se konzole a následně prohlížeč

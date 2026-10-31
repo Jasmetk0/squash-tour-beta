@@ -1,7 +1,7 @@
 # R001 — Global participation and talent pipeline
 
 **Prepared:** 2026-10-31  
-**Research status:** PLANNED (no completed Deep Research results)  
+**Research status:** RESEARCHED (initial Gemini report and two audits archived; NOT independently VERIFIED or approved)  
 **Scope:** cross-version research; can inform current global squash world and later optional Run scenarios, but commits nothing to pre-alpha  
 **Researcher:** Gemini 4 Argon / Deep Research candidate; independent review required
 
@@ -38,3 +38,7 @@ Squash Engine simulates an **alternative world with genuinely global squash**. I
 - Before starting full Deep Research, submit the **research plan** for review.
 - Do not code, change canonical rules or treat speculative suggestions as approved features.
 - Store reviewed findings alongside this brief later; do not imply they exist now.
+
+## Research material received 2026-10-31
+
+The initial 38-page Gemini Deep Research report, its critical self-audit and subsequent Country V1 alignment were archived. See [source manifest](SOURCE_MANIFEST.md) and [review/handoff](REVIEW_AND_HANDOFF.md). The original DOCX is **not** reproduced faithfully by the text extract (equations/images missing); scientific verification and owner decisions remain pending. This is the end of the first *research stage*, not approval to implement any model.

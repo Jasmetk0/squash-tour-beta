@@ -16,24 +16,61 @@ export type CompareResult={
 export function validateReachableCompareHistory(
   runId:string,branchId:string,pages:SavedRevisionHistoryPageResponse[]
 ):{entries:SavedRevisionHistoryEntry[];head:string}|null{
-  if(!runId||!branchId||!pages.length)return null
-  const head=pages[0].saved_head_revision_id
-  const total=pages[0].total_count
-  if(!head||!Number.isSafeInteger(total)||total<0||
-    pages.some(p=>p.run_id!==runId||p.branch_id!==branchId||
-      p.saved_head_revision_id!==head||p.total_count!==total||
-      !Array.isArray(p.saved_revisions)))return null
-  const entries=pages.flatMap(p=>p.saved_revisions)
-  if(entries.length>total)return null
-  if(new Set(entries.map(x=>x.revision_id)).size!==entries.length||
-     new Set(entries.map(x=>x.sequence)).size!==entries.length ||
-     entries.some(x=>!x.revision_id||!x.revision_branch_id||
-       !Number.isSafeInteger(x.sequence)||x.sequence<1||
-       !x.content_hash||!x.content_hash_algorithm||
-       (x.is_branch_head&&x.revision_id!==head)))return null
-  // The read model promises ascending global sequence; pages may be requested newest first.
-  const ascending=[...entries].sort((a,b)=>a.sequence-b.sequence)
-  return {entries:ascending,head}
+  if(!runId||!branchId||!Array.isArray(pages)||pages.length===0)return null
+  const head=pages[0]?.saved_head_revision_id
+  const total=pages[0]?.total_count
+  if(typeof head!=='string'||!head||!Number.isSafeInteger(total)||total<1)return null
+
+  // This endpoint returns ascending sequences inside a page and fetches pages
+  // newest first. Each cursor is the oldest sequence of the preceding page.
+  // Merely sorting all rows masks malformed, overlapping or stale pagination
+  // evidence and could present an incomplete A/B history as verified.
+  const entries:SavedRevisionHistoryEntry[]=[]
+  let newerPageOldestSequence:number|null=null
+  for(let pageIndex=0;pageIndex<pages.length;pageIndex++){
+    const page=pages[pageIndex]
+    if(!page||page.run_id!==runId||page.branch_id!==branchId||
+      page.saved_head_revision_id!==head||page.total_count!==total||
+      !Array.isArray(page.saved_revisions)||page.saved_revisions.length===0||
+      typeof page.has_more_older!=='boolean')return null
+
+    let previousSequence:number|null=null
+    for(const entry of page.saved_revisions){
+      if(!entry||typeof entry.revision_id!=='string'||!entry.revision_id||
+        typeof entry.revision_branch_id!=='string'||!entry.revision_branch_id||
+        !Number.isSafeInteger(entry.sequence)||entry.sequence<1||
+        typeof entry.content_hash!=='string'||!entry.content_hash||
+        typeof entry.content_hash_algorithm!=='string'||!entry.content_hash_algorithm||
+        (previousSequence!==null&&entry.sequence<=previousSequence)||
+        (entry.is_branch_head&&entry.revision_id!==head))return null
+      previousSequence=entry.sequence
+      entries.push(entry)
+    }
+
+    const oldest=page.saved_revisions[0].sequence
+    const newest=page.saved_revisions[page.saved_revisions.length-1].sequence
+    if(newerPageOldestSequence!==null&&newest>=newerPageOldestSequence)return null
+    if(pageIndex===0){
+      // The selected Branch HEAD must be the latest entry of the first page.
+      const latest=page.saved_revisions[page.saved_revisions.length-1]
+      if(latest.revision_id!==head||latest.is_branch_head!==true)return null
+    }else if(page.saved_revisions.some(entry=>entry.is_branch_head))return null
+
+    if(page.has_more_older){
+      if(page.next_before_sequence!==oldest)return null
+    }else if(page.next_before_sequence!==null)return null
+    // No page may follow an exhausted page.
+    if(pageIndex<pages.length-1&&!page.has_more_older)return null
+    newerPageOldestSequence=oldest
+  }
+
+  if(entries.length>total||
+    (pages[pages.length-1].has_more_older?entries.length>=total:entries.length!==total)||
+    new Set(entries.map(x=>x.revision_id)).size!==entries.length||
+    new Set(entries.map(x=>x.sequence)).size!==entries.length)return null
+  // Shared original-source revisions remain valid; only the selected Branch
+  // HEAD must match the pagination authority, not every revision's owner.
+  return {entries:[...entries].sort((a,b)=>a.sequence-b.sequence),head}
 }
 export function projectSavedStateComparison(
   data:SavedRevisionComparison,runId:string,branchId:string,

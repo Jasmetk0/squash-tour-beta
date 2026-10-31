@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   downloadSavedBranchArchive: vi.fn()
 }))
 vi.mock('../api/client', () => ({
+  ApiError: class ApiError extends Error { constructor(message: string, public status = 409) { super(message) } },
   getRunContainer: mocks.getRunContainer,
   listRunBranches: mocks.listRunBranches,
   getBranchWorkingDraft: mocks.getBranchWorkingDraft

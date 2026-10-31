@@ -140,6 +140,47 @@ describe('Saved Branch export-only HTTP boundary', () => {
     }, 'run', 'branch')).toThrow(/unreachable/)
   })
 
+  it('accepts a deep Saved fork/history graph without recursive or repeated ancestor scans', () => {
+    // A legitimate long series of Branches can each own one Saved Revision,
+    // with every fork bound to its immediate predecessor's historical HEAD.
+    const count = 2500
+    const branches = Array.from({length: count}, (_, i) => ({
+      branch_id: 'branch-' + i, display_name: 'Branch ' + i,
+      role: (i === count - 1 ? 'selected' : 'dependency') as 'selected' | 'dependency',
+      forked_from_branch_id: i ? 'branch-' + (i - 1) : null,
+      forked_from_saved_revision_id: i ? 'revision-' + (i - 1) : null,
+      saved_head_revision_id: 'revision-' + i,
+    }))
+    const history = Array.from({length: count}, (_, i) => ({
+      revision_id: 'revision-' + i, original_owner_branch_id: 'branch-' + i,
+      sequence: i + 1, parent_revision_id: i ? 'revision-' + (i - 1) : null,
+      content_hash_algorithm: 'sha256', content_hash: hash,
+      payload_schema_version: 'run_saved_revision_v1',
+    }))
+    const deep = {
+      ...original, selected_branch_id: 'branch-' + (count - 1),
+      selected_head_revision_id: 'revision-' + (count - 1),
+      viewer_branch_id: 'branch-' + (count - 1),
+      run_activation_revision_id: 'revision-0', omitted_branch_ids: [],
+      branches, history,
+    }
+    expect(assertSavedBranchArchivePreview(
+      deep, 'run', 'branch-' + (count - 1)
+    )).toBe(deep)
+    // An unrelated *future* revision exists in the archive but is not in
+    // the declared parent Branch's historical lineage at its included HEAD.
+    const forgedSource = branches.map((row, i) => i === 500
+      ? {...row, forked_from_saved_revision_id: 'revision-2000'} : row)
+    expect(() => assertSavedBranchArchivePreview(
+      {...deep, branches: forgedSource}, 'run', 'branch-' + (count - 1)
+    )).toThrow(/foreign fork source revision/)
+    const cyclic = branches.map((row, i) => i === 0
+      ? {...row, forked_from_branch_id: 'branch-' + (count - 1)} : row)
+    expect(() => assertSavedBranchArchivePreview(
+      {...deep, branches: cyclic}, 'run', 'branch-' + (count - 1)
+    )).toThrow(/fork cycle/)
+  })
+
   it('preview is a read-only, explicitly requested POST with no subsequent Save', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(original), {
       status: 200, headers: {'Content-Type': 'application/json'}

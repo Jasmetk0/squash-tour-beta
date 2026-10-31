@@ -13,6 +13,7 @@ const original: SavedBranchArchivePreview = {
   scope: 'custom_selected_saved_branch_with_dependency_history',
   run_id: 'run', display_name: 'Run', selected_branch_id: 'branch',
   selected_head_revision_id: 'head', viewer_branch_id: 'branch',
+  run_activation_revision_id: 'head',
   branches: [{
     branch_id: 'branch', display_name: 'Main', role: 'selected',
     forked_from_branch_id: null, forked_from_saved_revision_id: null,
@@ -44,6 +45,12 @@ describe('Saved Branch export-only HTTP boundary', () => {
     expect(() => assertSavedBranchArchivePreview({...original, archive_digest: 'bad'}, 'run', 'branch')).toThrow()
     expect(() => assertSavedBranchArchivePreview({...original, branches: [{...original.branches[0], role: 'dependency'}]}, 'run', 'branch')).toThrow()
     expect(() => assertSavedBranchArchivePreview({...original, history: []}, 'run', 'branch')).toThrow()
+    expect(() => assertSavedBranchArchivePreview({
+      ...original, run_activation_revision_id: 'missing-witness'
+    }, 'run', 'branch')).toThrow(/dependency/)
+    expect(() => assertSavedBranchArchivePreview({
+      ...original, run_activation_revision_id: ''
+    }, 'run', 'branch')).toThrow(/scope/)
   })
 
   it('refuses a foreign owner, missing parent, missing dependency HEAD or unknown archive format', () => {
@@ -71,7 +78,7 @@ describe('Saved Branch export-only HTTP boundary', () => {
     // The v1 archive backend explicitly permits a Branch that shares its
     // source's historical HEAD before it has written a new owned revision.
     const inherited = {
-      ...original, selected_head_revision_id: 'source-head',
+      ...original, selected_head_revision_id: 'source-head', run_activation_revision_id: 'source-head',
       branches: [
         {...original.branches[0], saved_head_revision_id: 'source-head',
           forked_from_branch_id: 'source', forked_from_saved_revision_id: 'source-head'},
@@ -91,7 +98,7 @@ describe('Saved Branch export-only HTTP boundary', () => {
     const selected = {...original.history[0], revision_id: 'head', sequence: 2,
       parent_revision_id: 'source-prefix'}
     const forked = {
-      ...original,
+      ...original, run_activation_revision_id: 'source-prefix',
       branches: [
         {...original.branches[0], forked_from_branch_id: 'source',
           forked_from_saved_revision_id: 'source-prefix'},

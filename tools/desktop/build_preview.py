@@ -44,7 +44,9 @@ def main():
     shutil.copyfile(root / "docs/WINDOWS_PREVIEW.md", package / "docs/WINDOWS_PREVIEW.md")
     shutil.copyfile(root / "docs/PRE_ALPHA_TEST_POLICY.md", package / "docs/PRE_ALPHA_TEST_POLICY.md")
     dependencies = subprocess.check_output([sys.executable, "-m", "pip", "freeze"], text=True)
-    (package / "build-dependencies.txt").write_text(dependencies, encoding="utf-8")
+    # Fingerprint the exact shipped bytes; Windows text writes would change LF
+    # to CRLF after hashing and make the manifest's on-disk checksum disagree.
+    (package / "build-dependencies.txt").write_bytes(dependencies.encode("utf-8"))
     metadata = {
         "format": "squash-desktop-preview.v1", "source_commit": commit,
         "label": "Internal test build; not a certified pre-alpha release",

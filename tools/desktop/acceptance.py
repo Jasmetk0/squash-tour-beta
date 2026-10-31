@@ -102,6 +102,7 @@ def main():
     data = work / "Moje data žebříček"
     before = config_digest(package)
     metadata = json.loads((package / "build-info.json").read_text(encoding="utf-8"))
+    assert hashlib.sha256((package / "build-dependencies.txt").read_bytes()).hexdigest() == metadata["dependency_fingerprint"]
     processes = []
     passed = False
     try:

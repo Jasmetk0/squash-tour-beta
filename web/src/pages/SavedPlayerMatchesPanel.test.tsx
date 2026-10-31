@@ -97,6 +97,51 @@ describe('Saved player match history', () => {
     await waitFor(() => expect(screen.getByRole('link', {name: 'Detail zápasu →'})).toHaveAttribute('href',
       '/admin/runs/run/people/A/matches/event/second?tab=career&replayBranch=branch&replayHead=revision&careerSeason=2&careerPage=1'))
   })
+  it('rejects truncated in-range rows even when server advertises a complete Saved career', async () => {
+    api.getSavedPlayerMatchHistory.mockResolvedValueOnce({
+      schema_version:'saved_player_match_history.v1',source:'selected_branch_saved_revision',
+      run_id:'run',branch_id:'branch',saved_revision_id:'revision',player_id:'A',
+      status:'ready',season_index:null,offset:0,limit:20,available_seasons:[2],
+      total_results:21,played_wins:21,played_losses:0,walkovers:0,
+      career_played_wins:21,career_played_losses:0,career_walkovers:0,
+      has_more:true,matches:[{
+        event_id:'event',event_name:'False partial history',match_id:'m1',
+        season_index:2,season:'2002/03',week:17,draw_type:'main',round_number:2,
+        opponent_player_id:'B',outcome:'win',completion:'played',scoreline:'3-2',
+      }]
+    })
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('úplnost stránky zápasů')
+    expect(screen.queryByText('False partial history')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'Detail zápasu →'})).not.toBeInTheDocument()
+  })
+
+  it('rejects false has-more, wrong schema and unsupported status before displaying sporting results', async () => {
+    const base = {
+      schema_version:'saved_player_match_history.v1',source:'selected_branch_saved_revision',
+      run_id:'run',branch_id:'branch',saved_revision_id:'revision',player_id:'A',
+      status:'ready',season_index:null,offset:0,limit:20,available_seasons:[2],
+      total_results:1,played_wins:1,played_losses:0,walkovers:0,
+      career_played_wins:1,career_played_losses:0,career_walkovers:0,
+      has_more:false,matches:[{
+        event_id:'event',event_name:'Unverified match',match_id:'m1',
+        season_index:2,season:'2002/03',week:17,draw_type:'main',round_number:2,
+        opponent_player_id:'B',outcome:'win',completion:'played',scoreline:'3-2',
+      }]
+    }
+    for (const invalid of [
+      {...base,has_more:true},
+      {...base,schema_version:'foreign.v999'},
+      {...base,status:'unsupported'},
+    ]) {
+      api.getSavedPlayerMatchHistory.mockResolvedValueOnce(invalid)
+      const view=mount()
+      expect(await screen.findByRole('alert')).toHaveTextContent('úplnost stránky zápasů')
+      expect(screen.queryByText('Unverified match')).not.toBeInTheDocument()
+      view.unmount()
+    }
+  })
+
   it('rejects an empty in-range response rather than inventing an empty career', async () => {
     api.getSavedPlayerMatchHistory.mockResolvedValueOnce({
       schema_version:'saved_player_match_history.v1', source:'selected_branch_saved_revision',

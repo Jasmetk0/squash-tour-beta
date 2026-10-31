@@ -4,6 +4,10 @@ Squash Engine is a deterministic, data-driven manager and simulator of the ficti
 
 The repository is a beta in migration. The product model below is canonical target behavior, but individual capabilities may still be partial, transitional, or not implemented yet.
 
+For a portable internal Windows test build with a bundled runtime and one-file
+startup, see [Windows preview instructions](docs/WINDOWS_PREVIEW.md). This is a
+development preview; the complete pre-alpha release gate still applies.
+
 For the current first-tournament Admin usability work, see [the first-tournament milestone status](docs/PRE_ALPHA_ADMIN_SMOKE_PROGRESS.md). It distinguishes newly implemented UI, tested behavior and work still needed before claiming a playable pre-alpha. Older task handoffs in CURRENT_STATE.md and ROADMAP.md may describe earlier baselines.\n\n## Product model
 
 - **Viewer** is a historically faithful, read-only environment for fictional public websites; the primary current site is **MSA Squash**.

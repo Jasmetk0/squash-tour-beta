@@ -57,6 +57,7 @@ def main():
     from scripts.native_tour_browser_acceptance import stop_process, wait_http
     from tests.api.test_run_edition_entry_timing_api import EVENT, PACKAGE, setup
     from tests.api.test_saved_revision_history_api import ApiServer, _request
+    from tests.api.test_player_generation_calendar_gate import _dump
 
     if database.exists():
         raise ValueError("Use a fresh disposable acceptance directory")
@@ -74,6 +75,9 @@ def main():
         assert code == 201, saved
         original_head = saved["saved_revision"]["revision_id"]
     fixture.app.state.runtime.repository._engine.dispose()
+    # This is the physical Saved baseline before the browser starts reviewing.
+    # A read-only preview must preserve it byte-for-byte at the row level.
+    preview_baseline = _dump(database)
 
     api = f"http://127.0.0.1:{args.api_port}"
     web = f"http://127.0.0.1:{args.web_port}"
@@ -184,6 +188,9 @@ def main():
             assert (
                 _request("GET", branch_root + "/working-draft")[1]["status"] == "clean"
             )
+            assert _dump(database) == preview_baseline, (
+                "Entry timing preview unexpectedly mutated physical SQLite"
+            )
             panel.screenshot(path=str(root / "preview-en.png"))
             page.get_by_label("Language / Jazyk").select_option("cs")
             expect(
@@ -289,6 +296,28 @@ def main():
                 code,
                 revision,
             )
+            # The browser's first Confirm truly committed despite its lost
+            # response, and the user safely retried the identical payload.
+            # The SAME command must remain idempotent after physical restart
+            # and the separate Save. A changed request using its command ID
+            # must be rejected without touching Signed history.
+            original_command = json.loads(writes[1]["body"])
+            saved_rows = _dump(database)
+            retry_code, replay = _request("POST", entry + "/confirm", original_command)
+            assert retry_code == 200, (retry_code, replay)
+            assert replay == {**acknowledged[0], "already_applied": True}, replay
+            assert _dump(database) == saved_rows, (
+                "Exact original Confirm replay created additional Saved state"
+            )
+            changed_command = {
+                **original_command,
+                "audit_reason": original_command["audit_reason"] + " (different)",
+            }
+            conflict_code, _ = _request("POST", entry + "/confirm", changed_command)
+            assert conflict_code == 409, conflict_code
+            assert _dump(database) == saved_rows, (
+                "Conflicting duplicate command modified physical Saved state"
+            )
             page.reload()
             expect(panel.get_by_label("Main opening – week", exact=True)).to_have_value(
                 "13"
@@ -303,6 +332,9 @@ def main():
                 languages=["en", "cs"],
                 mobile_width=390,
                 real_confirm_response_lost_and_exactly_retried=True,
+                preview_keeps_sqlite_unmodified=True,
+                confirmed_command_replayed_after_process_restart=True,
+                changed_command_id_payload_rejected_without_write=True,
             )
             assert not errors, errors
             (root / "evidence.json").write_text(json.dumps(evidence, indent=2))

@@ -82,7 +82,7 @@ describe('verified Viewer saved player population', () => {
       expect(check(players([{...original,[field]: 50}]))).toBeNull()
       const omitted = {...original} as Record<string, unknown>
       delete omitted[field]
-      expect(check(players([omitted as ViewerPlayer]))).toBeNull()
+      expect(check(players([omitted as unknown as ViewerPlayer]))).toBeNull()
     }
     expect(check(players([{...original,
       potential_ovr:null,current_form:null,

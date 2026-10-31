@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   getRunEditionEntryTiming, previewRunEditionEntryTiming, confirmRunEditionEntryTiming,
   listTournamentRankingPublicationOptions
-} from './client'
+} from './runEditionEntryTimingClient'
 import type {
   EditionEntryTiming, EntryTimingPreview, EntryTimingReceipt
 } from './runEditionEntryTiming'
@@ -93,6 +93,13 @@ describe('Run Edition Entry timing HTTP client — mocked transport', () => {
       method:'POST',body:JSON.stringify(payload),
       headers:{'Content-Type':'application/json'}
     })
+    expect(spy).toHaveBeenCalledTimes(1)
+  })
+
+  it('preserves HTTP rejection and does not automatically retry a Confirm', async () => {
+    const body = JSON.stringify({detail:{code:'stale_review',message:'Review changed'}})
+    const spy = vi.spyOn(globalThis,'fetch').mockResolvedValue(new Response(body,{status:409}))
+    await expect(confirmRunEditionEntryTiming(...args,payload)).rejects.toMatchObject({status:409,message:body})
     expect(spy).toHaveBeenCalledTimes(1)
   })
 

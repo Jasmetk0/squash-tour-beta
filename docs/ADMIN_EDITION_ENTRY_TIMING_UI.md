@@ -97,7 +97,7 @@ The Working Draft Save route does not accept this UI's immutable Entry command I
 
 ## Published ranking picker input integrity
 
-The shared HTTP client now validates every published ranking option before exposing it to the Entry override picker: exact Run/Branch/Edition identity and source, nonnegative safe count matching a real array, strictly valid publication week, SHA-256 fingerprint, nonnegative ranked count, positive Best N, nonempty policy ID, and no duplicate season/week key. Invalid/missing nested rows fail the read closed rather than producing a malformed or ambiguous select. The client mock suite covers valid response and nine corrupt response cases. No publication is automatically adopted by selecting it.
+The Entry-only HTTP client validates every published ranking option before exposing it to the Entry override picker: exact Run/Branch/Edition identity and source, nonnegative safe count matching a real array, strictly valid publication week, SHA-256 fingerprint, nonnegative ranked count, positive Best N, nonempty policy ID, and no duplicate season/week key. Invalid/missing nested rows fail the read closed rather than producing a malformed or ambiguous select. The client mock suite covers valid response and nine corrupt response cases. No publication is automatically adopted by selecting it.
 
 ## Explicit re-read rehydration (31 October continuation)
 
@@ -201,3 +201,28 @@ Acceptance outputs are restricted to one fresh `work/<case-name>` directory;
 path/symlink escapes and reuse of any existing evidence directory are rejected.
 The child backend may reopen only that existing acceptance directory. This
 prevents an acceptance invocation overwriting unrelated files or old evidence.
+
+## Final API ownership isolation
+
+The independent review found that strict published-ranking validation had leaked
+into the shared client and therefore changed the contract for unrelated consumers.
+All Entry requests and its strict publication picker now live in
+`web/src/api/runEditionEntryTimingClient.ts`. The shared `web/src/api/client.ts` is
+restored byte-for-byte to buuk `9980628243f6ac637cb6ab803af1e4c632520849`; no Native
+Tour or other shared client behavior changes. HTTP error identity/body/status and
+no implicit Confirm retry are tested alongside the original exact payload guards.
+
+The original whole W80/1,000 scenario timed out twice at its unchanged 18-minute
+bound on the earlier candidate. It is not declared passed or fixed by this scope
+isolation. All sporting Python source, native Tour page/panel and native scenario
+are byte-identical to buuk. A production-API diagnostic on a disposable backup of
+the failed fixture completed Week 6, 560 public ranking points, explicit Save and
+full Saved-view equality after physical SQLite reopen. The 119.47-second final
+read demonstrates little performance margin; the underlying performance problem
+remains a distinct release concern.
+
+Existing workflow filters, native scenarios, assertions, population and timeouts
+are unchanged. They still run for changes in their native/shared scope. The final
+Entry candidate requires its actual Chromium/API/SQLite proof, selected frontend
+and Entry API contracts, build and CodeQL; unrelated scenarios are never counted
+as executed final-head evidence when their existing filters do not select them.

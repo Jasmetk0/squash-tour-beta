@@ -27,6 +27,7 @@ const api = vi.hoisted(() => ({
   listTournamentRankingPublicationOptions: vi.fn()
 }))
 vi.mock('../api/client', () => api)
+vi.mock('../api/runEditionEntryTimingClient', () => api)
 const hash = (letter: string) => letter.repeat(64)
 const calendar: RunCalendarMetadata = {
   schema_version: 'run_calendar.v1', weeks_per_year: 80,

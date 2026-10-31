@@ -3,10 +3,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import {
-  confirmRunEditionEntryTiming, getRunEditionEntryTiming, previewRunEditionEntryTiming,
   getRunContainer, listRunBranches, getBranchWorkingDraft, getRunPackageState,
-  saveRunPackageWorkingDraft, listTournamentRankingPublicationOptions
+  saveRunPackageWorkingDraft
 } from '../api/client'
+import {
+  confirmRunEditionEntryTiming, getRunEditionEntryTiming, previewRunEditionEntryTiming,
+  listTournamentRankingPublicationOptions
+} from '../api/runEditionEntryTimingClient'
 import type { RunCalendarMetadata } from '../api/runCalendarCreation'
 import {
   entryTimingScope, isHash, weekInClock, sameTiming, sameWeek, sameClock, verifiedRunCalendar,

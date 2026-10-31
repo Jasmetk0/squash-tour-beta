@@ -42,10 +42,10 @@ def main() -> None:
     from playwright.sync_api import expect, sync_playwright
     from scripts.native_tour_browser_acceptance import stop_process, wait_http
     from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
-    from tests.application.test_viewer_people_read_model import _world, _lifecycle, _sporting
+    from tests.application.test_viewer_people_read_model import _world
     from beta_engine.infrastructure.db.initial_world_state import put_initial_world
-    from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
-    from beta_engine.infrastructure.db.player_sporting_state import put_sporting
+    from beta_engine.infrastructure.db.player_lifecycle_state import bootstrap_lifecycle
+    from beta_engine.infrastructure.db.player_sporting_state import bootstrap_sporting
     from tests.api.test_player_generation_calendar_gate import _dump
 
     work.mkdir(exist_ok=True)
@@ -56,20 +56,13 @@ def main() -> None:
         run_id, branch_id, _ = _create_run(source, display_name="Saved Public Roster Browser")
         repo = source.app.state.runtime.repository
         world = _world().model_copy(update={"run_id": run_id, "branch_id": branch_id})
-        lifecycle = _lifecycle()[0].model_copy(update={
-            "run_id": run_id, "branch_id": branch_id,
-            "source_initial_world_fingerprint": world.fingerprint,
-            "players": tuple(p for p in _lifecycle()[0].players if p.player_id != "PROSPECT-1"),
-        })
-        sporting = _sporting()[0].model_copy(update={
-            "run_id": run_id, "branch_id": branch_id,
-            "source_initial_world_fingerprint": world.fingerprint,
-            "players": tuple(p for p in _sporting()[0].players if p.player_id != "PROSPECT-1"),
-        })
+        # Capture a genuine canonical initial Week-1 population and sporting
+        # baseline. Saving an arbitrary later week without predecessor evidence
+        # is correctly prohibited by the production integrity validator.
         with repo._session_factory.begin() as session:
             put_initial_world(session, world)
-            put_lifecycle(session, lifecycle)
-            put_sporting(session, sporting)
+            bootstrap_lifecycle(session, world)
+            bootstrap_sporting(session, world)
         # The initial-world component has its own exact reviewed Save gate.
         # Do not manufacture a dirty Working Draft or bypass its protection.
         save_root = (
@@ -90,14 +83,13 @@ def main() -> None:
         assert actual["product_run_id"] == run_id
         assert actual["viewer_branch_id"] == branch_id
         assert actual["player_count"] == 2
-        assert actual["active_player_count"] == 1
-        assert actual["retired_player_count"] == 1
-        assert actual["season_index"] == 1 and actual["week"] == 5
+        assert actual["active_player_count"] == 2
+        assert actual["retired_player_count"] == 0
+        assert actual["season_index"] == 0 and actual["week"] == 1
         assert all(all(row[k] is None for k in (
             "potential_ovr", "current_form", "match_sharpness", "long_term_fatigue"
         )) for row in actual["players"])
-        assert any(row["current_ovr"] == 130 for row in actual["players"])
-        assert any(row["current_ovr"] is None for row in actual["players"])
+        assert all(isinstance(row["current_ovr"], int) for row in actual["players"])
         (root / "published-roster.json").write_text(json.dumps(actual, indent=2))
     before_browser = _dump(db)
 
@@ -175,7 +167,7 @@ def main() -> None:
 
             for clock in [
                 {"tour_entry_season_index": 2, "tour_entry_week": 1},
-                {"tour_entry_season_index": 1, "tour_entry_week": 6},
+                {"tour_entry_season_index": 0, "tour_entry_week": 2},
                 {"tour_entry_season_index": None, "tour_entry_week": 1},
             ]:
                 altered = json.loads(json.dumps(actual))

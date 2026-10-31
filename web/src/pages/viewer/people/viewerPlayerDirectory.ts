@@ -6,7 +6,7 @@ const nonEmpty = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0
 const whole = (value: unknown, min: number, max: number): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= min && value <= max
-const nullableWhole = (value: unknown, min: number, max: number): boolean =>
+const nullableWhole = (value: unknown, min: number, max: number): value is number | null =>
   value === null || whole(value, min, max)
 
 export function playerViewerBranch(context: unknown, runId: string): string | null {

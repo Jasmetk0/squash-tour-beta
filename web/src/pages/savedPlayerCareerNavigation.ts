@@ -43,8 +43,12 @@ export function validCareerResultWindow(
     !Array.isArray(matches) || matches.length > limit) return false
   if (identityUnavailable) return total === 0 && matches.length === 0
   const expected = Math.max(0, Math.min(limit, total - offset))
-  if ((expected > 0 && matches.length === 0) ||
-    (expected === 0 && matches.length !== 0) ||
+  // A Saved history page is an exact backend slice, not a best-effort sample.
+  // A response containing 1 of the expected 20 rows is truncated evidence,
+  // even if its declared total and page cursor are otherwise plausible.
+  if (matches.length !== expected ||
+    matches.some(m => !m || typeof m.event_id !== 'string' ||
+      !m.event_id.trim() || typeof m.match_id !== 'string' || !m.match_id.trim()) ||
     new Set(matches.map(m => JSON.stringify([m.event_id, m.match_id]))).size !== matches.length)
     return false
   return true

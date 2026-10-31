@@ -156,11 +156,32 @@ export async function downloadSavedBranchArchive(
   if (!response.headers.get('Content-Type')?.startsWith('application/vnd.squash.saved-branch+json')) {
     throw new Error('Server returned a non-archive attachment.')
   }
-  const blob = await response.blob()
-  if (blob.size !== preview.archive_size_bytes) throw new Error('Export size differs from reviewed preview.')
+  // Do not buffer an arbitrary HTTP payload before checking its size: even
+  // a wrong/stale server response must stay within the reviewed byte budget.
+  if (!response.body) throw new Error('Server returned an unreadable archive stream.')
+  const reader = response.body.getReader()
+  const raw = new Uint8Array(preview.archive_size_bytes)
+  let received = 0
+  try {
+    while (true) {
+      const chunk = await reader.read()
+      if (chunk.done) break
+      if (chunk.value.byteLength > raw.byteLength - received) {
+        throw new Error('Export size exceeds reviewed preview.')
+      }
+      raw.set(chunk.value, received)
+      received += chunk.value.byteLength
+    }
+  } catch (cause) {
+    await reader.cancel().catch(() => undefined)
+    throw cause
+  } finally {
+    reader.releaseLock()
+  }
+  if (received !== raw.byteLength) throw new Error('Export size differs from reviewed preview.')
   if (!globalThis.crypto?.subtle) throw new Error('SHA-256 verification is unavailable in this browser.')
-  const digest = await globalThis.crypto.subtle.digest('SHA-256', await blob.arrayBuffer())
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', raw)
   const actual = Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2, '0')).join('')
   if (actual !== preview.archive_digest) throw new Error('Export digest differs from reviewed preview.')
-  return blob
+  return new Blob([raw.buffer], { type: 'application/vnd.squash.saved-branch+json' })
 }

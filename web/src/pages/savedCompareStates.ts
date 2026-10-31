@@ -19,7 +19,7 @@ export function validateReachableCompareHistory(
   if(!runId||!branchId||!Array.isArray(pages)||pages.length===0)return null
   const head=pages[0]?.saved_head_revision_id
   const total=pages[0]?.total_count
-  if(typeof head!=='string'||!head||!Number.isSafeInteger(total)||total<1)return null
+  if(typeof head!=='string'||!head||typeof total!=='number'||!Number.isSafeInteger(total)||total<1)return null
 
   // This endpoint returns ascending sequences inside a page and fetches pages
   // newest first. Each cursor is the oldest sequence of the preceding page.

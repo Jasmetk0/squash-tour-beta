@@ -85,7 +85,18 @@ export function SavedBranchArchiveExportPanel({
     const [liveRun, branchList, viewerDraft] = await Promise.all([
       getRunContainer(run.run_id), listRunBranches(run.run_id), getBranchWorkingDraft(run.run_id, branchId)
     ])
-    const liveBranch = branchList.run_branches?.find(item => item.branch_id === branchId)
+    // Never pick the first matching Branch from an ambiguous or foreign
+    // inventory. The caller has only reviewed one exact Run/Branch/HEAD.
+    const liveBranches = branchList?.run_branches
+    if (!Array.isArray(liveBranches) ||
+      liveBranches.some(item => !item || item.run_id !== run.run_id ||
+        typeof item.branch_id !== 'string' || !item.branch_id) ||
+      new Set(liveBranches.map(item => item.branch_id)).size !== liveBranches.length) {
+      throw new Error(l.invalidSelection)
+    }
+    const matches = liveBranches.filter(item => item.branch_id === branchId)
+    if (matches.length !== 1) throw new Error(l.invalidSelection)
+    const liveBranch = matches[0]
     if (!liveRun || liveRun.run_id !== run.run_id ||
       liveRun.display_name !== run.display_name ||
       liveRun.storage_kind !== 'custom_local' || liveRun.read_only ||

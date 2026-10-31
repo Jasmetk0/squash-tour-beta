@@ -130,6 +130,55 @@ describe('Saved Branch archive Admin export panel', () => {
     expect(mocks.previewSavedBranchArchive).toHaveBeenCalledTimes(2)
   })
 
+  it.each([
+    ['duplicate selected Branch', [branch, {...branch, display_name: 'Conflicting duplicate'}]],
+    ['foreign matching Branch', [{...branch, run_id: 'another-run'}, branch]],
+    ['foreign unrelated Branch', [branch, {...branch, branch_id: 'foreign', run_id: 'another-run'}]],
+    ['duplicate unrelated Branch', [branch, {...branch, branch_id: 'other'},
+      {...branch, branch_id: 'other'}]],
+    ['missing selected Branch', [{...branch, branch_id: 'unrelated'}]],
+    ['blank unrelated identity', [branch, {...branch, branch_id: ''}]],
+  ])('rejects %s in persisted Branch inventory before archive preview', async (_case, branches) => {
+    mocks.listRunBranches.mockResolvedValueOnce({run_branches: branches})
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('HEAD')
+    expect(mocks.previewSavedBranchArchive).not.toHaveBeenCalled()
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+  })
+
+  it('does not present an empty or malformed Branch inventory as export consent', async () => {
+    mocks.listRunBranches.mockResolvedValueOnce({run_branches: null})
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('HEAD')
+    expect(mocks.previewSavedBranchArchive).not.toHaveBeenCalled()
+  })
+
+  it('accepts a legitimate second Branch in the same Run without blocking export', async () => {
+    mocks.listRunBranches.mockResolvedValueOnce({run_branches: [
+      {...branch, branch_id: 'other-valid'}, branch
+    ]})
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    expect(mocks.previewSavedBranchArchive).toHaveBeenCalledWith('r', 'b', expect.any(AbortSignal))
+  })
+
+  it.each([
+    ['duplicate selected Branch', [branch, {...branch}]],
+    ['foreign unrelated Branch', [branch, {...branch, run_id: 'another-run', branch_id: 'other'}]],
+  ])('invalidates reviewed bytes when %s appears at download time', async (_case, branches) => {
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    const download = await screen.findByRole('button', {name: /Stáhnout ověřený/})
+    mocks.listRunBranches.mockResolvedValueOnce({run_branches: branches})
+    fireEvent.click(download)
+    expect(await screen.findByRole('alert')).toHaveTextContent('HEAD')
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument()
+  })
+
   it('blocks stale HEAD before preview and does not call the export endpoint', async () => {
     mocks.listRunBranches.mockResolvedValueOnce({run_branches: [{...branch, saved_head_revision_id: 'new-head'}]})
     mount()

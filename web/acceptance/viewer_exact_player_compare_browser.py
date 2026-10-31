@@ -63,7 +63,21 @@ def main() -> None:
     countries = root / "countries.json"
     overrides = root / "overrides.json"
     db = root / "world.sqlite"
-    _write_fixture(countries, COUNTRIES_FIXTURE)
+    # The canonical single-country test fixture has only ~34 players, so it
+    # cannot prove lookup beyond the 50-row discovery page. Replicate the
+    # genuine generator configuration across three distinct countries instead
+    # of fabricating player records or mocking API results.
+    base_country = COUNTRIES_FIXTURE["countries"][0]
+    countries_fixture = {
+        **COUNTRIES_FIXTURE,
+        "countries": [
+            {**base_country, "code": code, "name": name}
+            for code, name in (
+                ("AAA", "Alpha"), ("BBB", "Beta"), ("CCC", "Gamma")
+            )
+        ],
+    }
+    _write_fixture(countries, countries_fixture)
     _write_fixture(overrides, {"overrides": []})
     with ApiServer(
         database_url=f"sqlite:///{db}",

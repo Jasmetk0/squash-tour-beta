@@ -51,7 +51,7 @@ def main():
         )
         return
 
-    from playwright.sync_api import expect, sync_playwright
+    from playwright.sync_api import Error as PlaywrightError, expect, sync_playwright
 
     from beta_engine.domain.run_branch_archive import Archive
     from scripts.native_tour_browser_acceptance import stop_process, wait_http
@@ -134,6 +134,23 @@ def main():
                     route.abort()
 
             context.route("**/*", local_http_only)
+            # Negative control: prove an attempted external navigation is
+            # intercepted and denied by this exact browser context. The
+            # reserved .invalid host must never reach DNS or the network.
+            probe_url = "http://example.invalid/squash-archive-network-probe"
+            probe = context.new_page()
+            try:
+                try:
+                    probe.goto(probe_url, wait_until="domcontentloaded", timeout=10000)
+                except PlaywrightError:
+                    pass
+                else:
+                    raise AssertionError("External navigation escaped the browser route")
+            finally:
+                probe.close()
+            assert blocked_external_requests == [probe_url], blocked_external_requests
+            blocked_external_requests.clear()
+
             context.add_init_script(
                 "localStorage.setItem('squash-engine-language-v1', 'en')"
             )
@@ -417,6 +434,7 @@ def main():
                         "post_requests": post_requests,
                         "page_errors": errors,
                         "blocked_external_requests": blocked_external_requests,
+                        "external_navigation_deny_probe_verified": True,
                         "browser_sandbox": "unsupported_by_hosted_runner; local HTTP confined",
                     },
                     indent=2,

@@ -486,17 +486,40 @@ def verify_viewer(page, run_url, artifacts: Path, prefix=""):
     from playwright.sync_api import expect
 
     base, run_id = run_url.split("/admin/runs/")
+    # Restart uses a genuinely fresh browser context, whose default locale is
+    # Czech. Select the scenario's English labels through the real Admin UI.
+    page.goto(base + "/admin")
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
+    # Finish real Admin reads before a full document navigation cancels them.
+    # Otherwise the request tracker can retain requests from the old document.
+    browser_settle(page)
     page.goto(f"{base}/viewer/runs/{run_id}/rankings")
-    page.get_by_role("link", name="Open Week 2 ranking", exact=True).click()
+    # The publication list includes its immutable ordinal in each link.
+    # Exercise that actual link, then every page of the current detail UI.
+    publication = page.get_by_role("link", name="Open Week 2 ranking (#1)", exact=True)
+    expect(publication).to_have_attribute("href", f"/viewer/runs/{run_id}/rankings/1")
+    publication.click()
     browser_settle(page)
     table = page.get_by_role(
-        "table", name="Historical Official Ranking table", exact=True
+        "table", name="Historical Official Ranking players", exact=True
     )
-    expect(table.locator("tbody tr")).to_have_count(64)
-    rows = table.locator("tbody tr").all_text_contents()
-    points = [
-        row.locator("td").nth(3).inner_text() for row in table.locator("tbody tr").all()
-    ]
+    rows = []
+    ranks, player_ids, points = [], [], []
+    for page_size in (50, 14):
+        if rows:
+            page.get_by_role("button", name="Next page", exact=True).click()
+        expect(table.locator("tbody tr")).to_have_count(page_size)
+        expect(table.locator("tbody tr").first.locator("td").first).to_have_text(
+            str(len(rows) + 1)
+        )
+        for row in table.locator("tbody tr").all():
+            ranks.append(int(row.locator("td").nth(0).inner_text()))
+            player_ids.append(row.locator("td").nth(1).inner_text())
+            points.append(row.locator("td").nth(2).inner_text())
+            rows.append(row.inner_text())
+    assert ranks == list(range(1, 65)), ranks
+    assert len(player_ids) == len(set(player_ids)) == 64, player_ids
+    expect(page.get_by_role("button", name="Next page", exact=True)).to_be_disabled()
     assert points[:4] == ["100", "60", "30", "30"], points[:4]
     assert all(value == "0" for value in points[4:])
     page.screenshot(
@@ -513,8 +536,11 @@ def verify_viewer(page, run_url, artifacts: Path, prefix=""):
 
 
 def run_acceptance(root: Path, *, port: int, base_url: str, chromium: str, saved_replay_only: bool = False, saved_replay_fork: bool = False, country_records: bool = False, saved_tour: bool = False):
-    from saved_player_replay_browser_checks import verify_saved_player_replay, verify_materialized_branch_fork_replay
     from country_records_browser_checks import verify_country_saved_records
+    from saved_player_replay_browser_checks import (
+        verify_materialized_branch_fork_replay,
+        verify_saved_player_replay,
+    )
     from saved_tour_calendar_browser_checks import verify_saved_tour_calendar
     if country_records and not saved_replay_only:
         raise ValueError("Country Records acceptance uses the saved-replay-only restart flow")

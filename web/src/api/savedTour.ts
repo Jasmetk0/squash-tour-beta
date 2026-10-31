@@ -211,7 +211,9 @@ function validSavedTourOutcomeFields(event:SavedTourEvent):boolean{
   const winner=event.champion_player_id,runnerUp=event.finalist_player_id
   if(winner!==null&&(typeof winner!=='string'||!winner.trim()))return false
   if(runnerUp!==null&&(typeof runnerUp!=='string'||!runnerUp.trim()))return false
-  return !event.result_published||!winner||!runnerUp||winner!==runnerUp
+  // A published result is a completed sporting outcome, not merely a flag.
+  // Missing champion/finalist IDs cannot authorize result links or player finishes.
+  return !event.result_published||(Boolean(winner)&&Boolean(runnerUp)&&winner!==runnerUp)
 }
 
 /** Fail closed before displaying data from stale caches or cross-Branch responses. */
@@ -248,8 +250,9 @@ export function validSavedTourCalendar(
     ||(payload.calendar_status==='empty'&&payload.editions.length>0))return false
   const seen=new Set<string>()
   return payload.editions.every(e=>{
-    if(!validSavedTourOutcomeFields(e)||!e.event_id||seen.has(e.event_id)
-      ||!Number.isInteger(e.season_week)||e.season_week<1||e.season_week>61
+    if(!validSavedTourOutcomeFields(e)||typeof e.event_id!=='string'||!e.event_id.trim()
+      ||seen.has(e.event_id)
+      ||!Number.isSafeInteger(e.season_week)||e.season_week<1||e.season_week>61
       ||!isSavedTourSeason(e.season,seasonIndex))return false
     seen.add(e.event_id)
     return true
@@ -261,7 +264,11 @@ export function validSavedTourEdition(
   if(!matchesSavedTourContext(payload,runId,branchId,revisionId,seasonIndex)
     ||payload.schema_version!=='run_saved_tour_edition.v1'
     ||!validSavedTourOutcomeFields(payload.edition)
+    ||typeof payload.edition.event_id!=='string'
     ||payload.edition.event_id!==eventId
+    ||!isSavedTourSeason(payload.edition.season,seasonIndex)
+    ||!Number.isSafeInteger(payload.edition.season_week)
+    ||payload.edition.season_week<1||payload.edition.season_week>61
     ||payload.lifecycle_status!=='unavailable')return false
   const result=payload.published_result
   const published=result===null?!payload.edition.result_published:

@@ -142,8 +142,10 @@ def main():
             try:
                 try:
                     probe.goto(probe_url, wait_until="domcontentloaded", timeout=10000)
-                except PlaywrightError:
-                    pass
+                except PlaywrightError as exc:
+                    # A route.abort() must produce Chromium's explicit network
+                    # failure, not an unrelated navigation or browser error.
+                    assert "net::ERR_FAILED" in str(exc), str(exc)
                 else:
                     raise AssertionError("External navigation escaped the browser route")
             finally:

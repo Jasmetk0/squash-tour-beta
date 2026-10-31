@@ -53,6 +53,7 @@ import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { isRunCalendarProjection } from '../api/runFirstTournament'
 import { verifiedRunCalendarHandoff } from '../api/runCalendarHandoff'
 import { RunTournamentEntryReviewPanel } from '../components/RunTournamentEntryReviewPanel'
+import { RunTournamentNextActionPanel } from '../components/RunTournamentNextActionPanel'
 import { RunEditionEntryTimingPanel } from '../components/RunEditionEntryTimingPanel'
 import { verifiedRunCalendar } from '../api/runEditionEntryTiming'
 import { RunCurrentEntryFreezePanel } from '../components/RunCurrentEntryFreezePanel'
@@ -1219,17 +1220,45 @@ export function PlannedEventDetailPage(): JSX.Element {
         <p role="status">Using the validated Run-owned Calendar snapshot for this canonical Product Run. Legacy Simulation Run history is absent; canonical tournament authorities below remain independent.</p> : null}
       {eventsQuery.error && !canonicalSeasonState ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
 
+      {canonicalSeasonState && plannedEvent && !viewed.historical && verifiedCalendarScope &&
+        activeBranchId && (
+          <RunTournamentNextActionPanel
+            runId={runId} branchId={activeBranchId} eventId={eventId}
+            language={language} preparation={canonicalPreparationQuery.data}
+            sections={{
+              'canonical-entry-timing': Boolean(entryTimingContext && entryTimingRunClock && requestedCalendarId),
+              'canonical-preparation': true,
+              'canonical-entry-review': Boolean(canonicalPreparationQuery.data?.run_id === runId &&
+                canonicalPreparationQuery.data.branch_id === activeBranchId &&
+                canonicalPreparationQuery.data.event_id === eventId &&
+                canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1'),
+              'canonical-reviewed-entry-field': Boolean(canonicalPreparationQuery.data?.run_id === runId &&
+                canonicalPreparationQuery.data.branch_id === activeBranchId &&
+                canonicalPreparationQuery.data.event_id === eventId &&
+                canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1'),
+              'canonical-main-draw-preflight': true,
+              'canonical-wc-review': true,
+              'canonical-draw-authority': true,
+              'canonical-first-match': Boolean(canonicalPreparationQuery.data?.run_id === runId &&
+                canonicalPreparationQuery.data.branch_id === activeBranchId &&
+                canonicalPreparationQuery.data.event_id === eventId &&
+                canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1'),
+              'finals-race-replacement': finalsReplacementVisible
+            }}
+          />
+        )}
+
       {entryTimingContext && entryTimingRunClock && requestedCalendarId && (
-        <RunEditionEntryTimingPanel
+        <div id="canonical-entry-timing"><RunEditionEntryTimingPanel
           key={['entry-timing', runId, activeBranchId, requestedCalendarId, eventId].join(':')}
           runId={runId} branchId={activeBranchId} packageId={requestedCalendarId}
           eventId={eventId} calendar={entryTimingRunClock}
           enabled={entryTimingEditable}
-        />
+        /></div>
       )}
 
       {plannedEvent && !viewed.historical && activeBranchId ? (
-        <SectionCard title="Canonical tournament preparation">
+        <div id="canonical-preparation"><SectionCard title="Canonical tournament preparation">
           <p className="status">
             One Run-owned readiness view across Ranking Snapshot, Entry Field, WC/RWC, Draw Input and Draw authority.
           </p>
@@ -1403,7 +1432,7 @@ export function PlannedEventDetailPage(): JSX.Element {
               ) : null}
             </>
           ) : null}
-        </SectionCard>
+        </SectionCard></div>
       ) : null}
 
       {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
@@ -1411,13 +1440,13 @@ export function PlannedEventDetailPage(): JSX.Element {
         canonicalPreparationQuery.data.branch_id === activeBranchId &&
         canonicalPreparationQuery.data.event_id === eventId &&
         canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
-        <RunReviewedEntryFieldPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
+        <div id="canonical-reviewed-entry-field"><RunReviewedEntryFieldPanel runId={runId} branchId={activeBranchId} eventId={eventId} /></div>}
       {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
         canonicalPreparationQuery.data?.run_id === runId &&
         canonicalPreparationQuery.data.branch_id === activeBranchId &&
         canonicalPreparationQuery.data.event_id === eventId &&
         canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
-        <RunFirstDrawPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
+        <div id="canonical-first-draw"><RunFirstDrawPanel runId={runId} branchId={activeBranchId} eventId={eventId} /></div>}
       {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
         canonicalPreparationQuery.data?.run_id === runId &&
         canonicalPreparationQuery.data.branch_id === activeBranchId &&
@@ -1429,7 +1458,7 @@ export function PlannedEventDetailPage(): JSX.Element {
         canonicalPreparationQuery.data.branch_id === activeBranchId &&
         canonicalPreparationQuery.data.event_id === eventId &&
         canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
-        <RunFirstMatchPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
+        <div id="canonical-first-match"><RunFirstMatchPanel runId={runId} branchId={activeBranchId} eventId={eventId} /></div>}
       {canonicalSeasonState && plannedEvent && !viewed.historical && activeBranchId &&
         canonicalPreparationQuery.data?.run_id === runId &&
         canonicalPreparationQuery.data.branch_id === activeBranchId &&
@@ -1441,7 +1470,7 @@ export function PlannedEventDetailPage(): JSX.Element {
         canonicalPreparationQuery.data.branch_id === activeBranchId &&
         canonicalPreparationQuery.data.event_id === eventId &&
         canonicalPreparationQuery.data.authority_source === 'run_owned_db_authorities.v1' &&
-        <RunTournamentEntryReviewPanel runId={runId} branchId={activeBranchId} eventId={eventId} />}
+        <div id="canonical-entry-review"><RunTournamentEntryReviewPanel runId={runId} branchId={activeBranchId} eventId={eventId} /></div>}
       {plannedEvent && !viewed.historical && activeBranchId && finalsReplacementVisible ? (
         <div id="finals-race-replacement">
           <SectionCard title="World Tour Finals Race replacement">

@@ -188,6 +188,60 @@ def main():
             assert post_requests[0]["url"].endswith("/export/preview")
             assert post_requests[1]["url"].endswith("/export")
             assert _dump(database) == original_state, "Export performed an implicit Save"
+
+            # Failure injection is limited to the second browser export response.
+            # The initial preview and downloaded file above came from the real
+            # production HTTP/SQLite backend; this 409 explicitly tests that a
+            # stale export guard never falls through to an automatic download.
+            page.route(
+                "**/admin/run-archives/export",
+                lambda route: route.fulfill(
+                    status=409,
+                    content_type="application/json",
+                    body=json.dumps({
+                        "detail": {
+                            "code": "stale_export_preview",
+                            "message": "Saved HEAD changed; review a fresh preview.",
+                        }
+                    }),
+                ),
+                times=1,
+            )
+            with page.expect_response(
+                lambda response: (
+                    response.request.method == "POST"
+                    and response.url.endswith("/admin/run-archives/export")
+                    and response.status == 409
+                )
+            ):
+                panel.get_by_role(
+                    "button", name="Stáhnout ověřený soubor .sqbranch"
+                ).click()
+            expect(panel.get_by_role("alert")).to_contain_text(
+                "Saved HEAD changed"
+            )
+            expect(panel.get_by_role(
+                "button", name="Stáhnout ověřený soubor .sqbranch"
+            )).to_have_count(0)
+            expect(panel.get_by_role(
+                "button", name="Zkusit znovu"
+            )).to_be_enabled()
+            assert len(post_requests) == 3, post_requests
+            assert _dump(database) == original_state, "Stale rejection performed a write"
+            with page.expect_response(
+                lambda response: (
+                    response.request.method == "POST"
+                    and response.url.endswith("/admin/run-archives/export/preview")
+                )
+            ) as fresh_preview_event:
+                panel.get_by_role("button", name="Zkusit znovu").click()
+            assert fresh_preview_event.value.status == 200
+            expect(panel.get_by_role(
+                "button", name="Stáhnout ověřený soubor .sqbranch"
+            )).to_be_enabled()
+            assert len(post_requests) == 4, "Preview must require an explicit new click"
+            assert _dump(database) == original_state
+
             code, draft = _request(
                 "GET",
                 f"{api}/run-containers/{run_id}/branches/{branch_id}/working-draft",
@@ -219,6 +273,9 @@ def main():
                         "languages": ["en", "cs"],
                         "physical_reopen": True,
                         "sqlite_unchanged": True,
+                        "stale_409_failure_injected": True,
+                        "stale_409_cleared_download": True,
+                        "explicit_repreview_after_409": True,
                         "post_requests": post_requests,
                         "page_errors": errors,
                     },

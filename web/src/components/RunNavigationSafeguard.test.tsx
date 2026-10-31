@@ -107,6 +107,41 @@ describe('Run dirty navigation evidence',()=>{
     expect(window.confirm).not.toHaveBeenCalled()
   })
 
+  it('re-bases an edited form on its newly saved value instead of the pre-Save default',async()=>{
+    const view=setup();await loaded()
+    edit('saved revision')
+    expect(view.shell()).toHaveAttribute('data-run-form-edited','true')
+    act(()=>acknowledgeSavedRunForm('run-a','branch-a'))
+    expect(view.shell()).not.toHaveAttribute('data-run-form-edited')
+    // Returning to the OLD value is a real unsaved edit after the Save.
+    edit('initial')
+    expect(view.shell()).toHaveAttribute('data-run-form-edited','true')
+    vi.mocked(window.confirm).mockReturnValue(false)
+    fireEvent.click(screen.getByRole('link',{name:'All Runs'}))
+    expect(window.confirm).toHaveBeenCalledOnce()
+    // Returning to the NEW persisted value must clear the warning.
+    edit('saved revision')
+    expect(view.shell()).not.toHaveAttribute('data-run-form-edited')
+    fireEvent.click(screen.getByRole('link',{name:'All Runs'}))
+    expect(window.confirm).toHaveBeenCalledTimes(1)
+  })
+
+  it('re-bases checkbox state after Save and still tracks later unsaved toggles',async()=>{
+    const view=setup();await loaded()
+    const checkbox=screen.getByRole('checkbox',{name:'Approve'})
+    fireEvent.click(checkbox)
+    expect(checkbox).toBeChecked()
+    expect(view.shell()).toHaveAttribute('data-run-form-edited','true')
+    act(()=>acknowledgeSavedRunForm('run-a','branch-a'))
+    expect(view.shell()).not.toHaveAttribute('data-run-form-edited')
+    fireEvent.click(checkbox)
+    expect(checkbox).not.toBeChecked()
+    expect(view.shell()).toHaveAttribute('data-run-form-edited','true')
+    fireEvent.click(checkbox)
+    expect(checkbox).toBeChecked()
+    expect(view.shell()).not.toHaveAttribute('data-run-form-edited')
+  })
+
   it('preserves server-authoritative dirty Working Draft after local form Save acknowledgement',async()=>{
     const view=setup();await loaded()
     act(()=>view.cache.setQueryData(['package-working-draft','run-a','branch-a'],{...clean,status:'dirty',draft_version:1}))

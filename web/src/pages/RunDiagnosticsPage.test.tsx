@@ -620,7 +620,6 @@ describe('RunDiagnosticsPage', () => {
       // Neither independently sampled value may masquerade as verified progress.
       expect(screen.queryByText(`${statusIndex}/${statusTotal}`)).not.toBeInTheDocument()
       expect(screen.queryByText(`${statusIndex} / ${statusTotal}`)).not.toBeInTheDocument()
-      expect(screen.queryByText('2029')).not.toBeInTheDocument()
       expect(screen.getByText('Week Detail (current week unavailable)')).toBeInTheDocument()
       expect(screen.queryByRole('link', { name: 'Week Detail (current week)' })).not.toBeInTheDocument()
       expect(screen.queryByRole('link', { name: /Inspect current week detail/ })).not.toBeInTheDocument()

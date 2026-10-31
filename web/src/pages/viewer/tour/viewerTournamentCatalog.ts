@@ -83,6 +83,9 @@ export function verifiedTournamentCatalog(
         typeof item.result_published !== 'boolean' ||
         (item.champion_player_id !== null && !nonempty(item.champion_player_id)) ||
         (item.finalist_player_id !== null && !nonempty(item.finalist_player_id)) ||
+        (item.result_published &&
+          (!nonempty(item.champion_player_id) || !nonempty(item.finalist_player_id) ||
+            item.champion_player_id === item.finalist_player_id)) ||
         (!item.result_published && (item.champion_player_id !== null || item.finalist_player_id !== null))) return null
     const event = byEvent.get(item.event_id)
     if (!event || item.season !== String(event.season) ||
@@ -91,7 +94,17 @@ export function verifiedTournamentCatalog(
         item.template_id !== event.template_id ||
         item.category !== event.category ||
         item.tour_level !== event.tour_level ||
-        item.host_country !== event.host_country) return null
+        item.host_country !== event.host_country ||
+        // These are copied from one canonical Calendar projection. A partial
+        // metadata match cannot prove that two responses describe the same
+        // Saved Edition (e.g. mismatched draw capacities or host city).
+        item.host_city !== event.host_city || item.region !== event.region ||
+        item.main_draw_size !== event.main_draw_size ||
+        item.qualification_draw_size !== event.qualification_draw_size ||
+        item.seeds_count !== event.seeds_count ||
+        item.qualifier_spots !== event.qualifier_spots ||
+        item.wild_cards !== event.wild_cards ||
+        item.byes !== event.byes) return null
     matched.add(item.event_id)
     if (item.result_published) publishedCount++
     entries.push({ event, publication: item })

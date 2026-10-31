@@ -30,7 +30,8 @@ export function SavedBranchArchiveExportPanel({
   const scope = JSON.stringify([
     run.run_id, run.storage_kind, run.status, run.read_only, run.display_name,
     branch?.run_id ?? null, branch?.branch_id ?? null,
-    branch?.saved_head_revision_id ?? null, branch?.status ?? null,
+    branch?.display_name ?? null, branch?.saved_head_revision_id ?? null,
+    branch?.status ?? null,
     branch?.read_only ?? null
   ])
   const currentScope = useRef(scope)
@@ -82,9 +83,11 @@ export function SavedBranchArchiveExportPanel({
     ])
     const liveBranch = branchList.run_branches?.find(item => item.branch_id === branchId)
     if (!liveRun || liveRun.run_id !== run.run_id ||
+      liveRun.display_name !== run.display_name ||
       liveRun.storage_kind !== 'custom_local' || liveRun.read_only ||
       (liveRun.status !== 'working' && liveRun.status !== 'active') ||
       !liveBranch || liveBranch.run_id !== run.run_id || liveBranch.status !== 'active' ||
+      liveBranch.display_name !== selected?.display_name ||
       liveBranch.read_only || liveBranch.saved_head_revision_id !== head) {
       throw new Error(l.invalidSelection)
     }

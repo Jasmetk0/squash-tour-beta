@@ -63,14 +63,16 @@ def main():
     with ApiServer(database_url=db) as fixture:
         run_id, branch_id, played, saved = manual_match(fixture)
         original_head = saved["saved_revision"]["revision_id"]
+        historical_head = saved["saved_revision"]["parent_revision_id"]
+        assert historical_head and historical_head != original_head
         status, fork = _request(
             "POST",
             f"{fixture.base_url}/run-containers/{run_id}/branches",
-            {"source_branch_id": branch_id, "source_saved_revision_id": original_head},
+            {"source_branch_id": branch_id, "source_saved_revision_id": historical_head},
         )
         assert status == 201, fork
         fork_id = fork["branch_id"]
-        assert fork["saved_head_revision_id"] == original_head
+        assert fork["saved_head_revision_id"] == historical_head, fork
         original_state = _dump(database)
     fixture.app.state.runtime.repository._engine.dispose()
 
@@ -302,12 +304,12 @@ def main():
             assert _dump(database) == original_state
 
             # Prove the previously rejected client case with real persisted
-            # Branch owners: a fresh fork shares the source's Saved HEAD, and
-            # has no original revision owned by the fork itself yet.
+            # Branch owners: a historical fork inherits the source's older
+            # Saved revision and has not written an owned revision itself.
             page.goto(f"{web}/admin/runs/{run_id}/manage?branch={fork_id}")
             fork_panel = page.get_by_role("region", name="Export uložené Branch")
             expect(fork_panel).to_be_visible()
-            expect(fork_panel.get_by_text(original_head, exact=False)).to_be_visible()
+            expect(fork_panel.get_by_text(historical_head, exact=False)).to_be_visible()
             with page.expect_response(
                 lambda response: (
                     response.request.method == "POST"
@@ -319,7 +321,7 @@ def main():
             assert fork_response.status == 200, fork_response.text()
             fork_review = fork_response.json()
             assert fork_review["selected_branch_id"] == fork_id
-            assert fork_review["selected_head_revision_id"] == original_head
+            assert fork_review["selected_head_revision_id"] == historical_head
             assert any(
                 branch["branch_id"] == fork_id and branch["role"] == "selected"
                 for branch in fork_review["branches"]
@@ -329,7 +331,7 @@ def main():
                 for branch in fork_review["branches"]
             )
             assert any(
-                revision["revision_id"] == original_head
+                revision["revision_id"] == historical_head
                 and revision["original_owner_branch_id"] == branch_id
                 for revision in fork_review["history"]
             )
@@ -345,7 +347,7 @@ def main():
             assert len(inherited_bytes) == fork_review["archive_size_bytes"]
             inherited_archive = Archive(inherited_bytes)
             assert inherited_archive.envelope.selected_branch_id == fork_id
-            assert inherited_archive.envelope.selected_head_revision_id == original_head
+            assert inherited_archive.envelope.selected_head_revision_id == historical_head
             assert _dump(database) == original_state, "Inherited fork export performed a write"
             fork_panel.screenshot(path=str(root / "fork-inherited-cs.png"))
 
@@ -379,7 +381,7 @@ def main():
                         "real_match_result": bool(played["result"]),
                         "inherited_fork_id": fork_id,
                         "inherited_fork_sha256": inherited_hash,
-                        "inherited_fork_selected_head": original_head,
+                        "inherited_fork_selected_head": historical_head,
                         "inherited_fork_original_owner": branch_id,
                         "inherited_fork_browser_export": True,
                         "languages": ["en", "cs"],

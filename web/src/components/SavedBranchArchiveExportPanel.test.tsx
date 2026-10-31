@@ -1,5 +1,5 @@
 /** Mocked component tests; these do not stand in for a real browser/SQLite export. */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RunBranch, RunContainer } from '../api/types'
@@ -143,7 +143,7 @@ describe('Saved Branch archive Admin export panel', () => {
     await waitFor(() => expect(click).toHaveBeenCalledTimes(1))
     expect(mocks.getRunContainer).toHaveBeenCalledTimes(2)
     expect(mocks.getBranchWorkingDraft).toHaveBeenCalledTimes(2)
-    expect(mocks.downloadSavedBranchArchive).toHaveBeenCalledWith(archive)
+    expect(mocks.downloadSavedBranchArchive).toHaveBeenCalledWith(archive, expect.objectContaining({aborted: false}))
     expect(objectUrl).toHaveBeenCalledTimes(1)
   })
 
@@ -164,6 +164,58 @@ describe('Saved Branch archive Admin export panel', () => {
   it('does not allow unsupported, read-only or foreign Run/Branch exports', () => {
     mount({run: {...run, read_only: true}})
     expect(screen.getByRole('button', {name: 'Načíst exportní náhled'})).toBeDisabled()
+    expect(mocks.previewSavedBranchArchive).not.toHaveBeenCalled()
+  })
+
+  it('actually aborts pending preview transport and ignores the late result after Cancel', async () => {
+    let complete!: (result: SavedBranchArchivePreview) => void
+    mocks.previewSavedBranchArchive.mockImplementationOnce(() =>
+      new Promise<SavedBranchArchivePreview>(resolve => { complete = resolve }))
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    await waitFor(() => expect(mocks.previewSavedBranchArchive).toHaveBeenCalledTimes(1))
+    const signal = mocks.previewSavedBranchArchive.mock.calls[0][2] as AbortSignal
+    expect(signal.aborted).toBe(false)
+    fireEvent.click(screen.getByRole('button', {name: 'Zrušit export'}))
+    expect(signal.aborted).toBe(true)
+    await act(async () => complete(archive))
+    expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument()
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+  })
+
+  it('aborts a pending download on Cancel and does not trigger a delayed file save', async () => {
+    let complete!: (result: Blob) => void
+    mocks.downloadSavedBranchArchive.mockImplementationOnce(() =>
+      new Promise<Blob>(resolve => { complete = resolve }))
+    const objectUrl = vi.fn()
+    Object.defineProperty(URL, 'createObjectURL', {configurable: true, value: objectUrl})
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    fireEvent.click(await screen.findByRole('button', {name: /Stáhnout ověřený/}))
+    await waitFor(() => expect(mocks.downloadSavedBranchArchive).toHaveBeenCalledTimes(1))
+    const signal = mocks.downloadSavedBranchArchive.mock.calls[0][1] as AbortSignal
+    fireEvent.click(screen.getByRole('button', {name: 'Zrušit export'}))
+    expect(signal.aborted).toBe(true)
+    await act(async () => complete(new Blob(['old bytes'])))
+    expect(objectUrl).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument()
+  })
+
+  it('does not apply an old draft status after a scope/head change', async () => {
+    let complete!: (result: object) => void
+    mocks.getBranchWorkingDraft.mockImplementationOnce(() =>
+      new Promise(resolve => { complete = resolve }))
+    const view = mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    await waitFor(() => expect(mocks.getBranchWorkingDraft).toHaveBeenCalledTimes(1))
+    view.rerender(<MemoryRouter><LanguageProvider><Toggle />
+      <SavedBranchArchiveExportPanel run={run} branch={{...branch, saved_head_revision_id: 'new-head'}} />
+    </LanguageProvider></MemoryRouter>)
+    await act(async () => complete({
+      run_id: 'r', branch_id: 'b', base_saved_revision_id: 'head', status: 'dirty', change_count: 1
+    }))
+    expect(screen.queryByText(/Neuložené změny blokují export/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(mocks.previewSavedBranchArchive).not.toHaveBeenCalled()
   })
 })

@@ -97,6 +97,25 @@ describe('Saved Compare A/B source validation',()=>{
       'run','fork',a,b,'rev-3')).toBeNull()
     expect(projectSavedStateComparison(compare(),'run','fork',a,b,'stale-head')).toBeNull()
   })
+  it('rejects component status claims contradicted by their fingerprints',()=>{
+    const invalid=[
+      {status:'added',before_fingerprint:'old',after_fingerprint:'new'},
+      {status:'added',before_fingerprint:null,after_fingerprint:null},
+      {status:'removed',before_fingerprint:'old',after_fingerprint:'new'},
+      {status:'removed',before_fingerprint:null,after_fingerprint:null},
+      {status:'changed',before_fingerprint:'same',after_fingerprint:'same'},
+      {status:'changed',before_fingerprint:null,after_fingerprint:'new'},
+      {status:'unchanged',before_fingerprint:'old',after_fingerprint:'new'},
+      {status:'unchanged',before_fingerprint:null,after_fingerprint:null}
+    ] as const
+    for(const evidence of invalid){
+      const payload=compare()
+      payload.components[0]={...payload.components[0],...evidence}
+      expect(projectSavedStateComparison(payload,'run','fork',a,b,'rev-3')).toBeNull()
+    }
+    // The canonical Added/Removed/Changed/Unchanged combinations are preserved.
+    expect(projectSavedStateComparison(compare(),'run','fork',a,b,'rev-3')).not.toBeNull()
+  })
   it('rejects invented statuses, duplicate components and invalid before/after payloads',()=>{
     const q=compare()
     q.components[0].status='made-up' as 'changed'

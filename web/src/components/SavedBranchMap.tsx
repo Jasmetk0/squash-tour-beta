@@ -13,23 +13,35 @@ export function buildSavedBranchMap(runId:string,branches:RunBranch[]):BranchMap
   if(!runId||branches.some(b=>b.run_id!==runId||!b.branch_id.trim())||
       new Set(branches.map(b=>b.branch_id)).size!==branches.length)
     return {nodes:[],error:'Branch map Run scope or Branch identity is inconsistent'}
-  const byId=new Map(branches.map(b=>[b.branch_id,b]))
+  const byId=new Map<string,RunBranch>(branches.map(b=>[b.branch_id,b]))
   const depth=new Map<string,number>()
-  const visiting=new Set<string>()
-  function level(id:string):number{
-    if(depth.has(id))return depth.get(id)!
-    if(visiting.has(id))throw Error('Branch fork lineage contains a cycle')
-    const branch=byId.get(id)!
-    visiting.add(id)
-    const parent=branch.forked_from_branch_id
-    const n=parent&&parent!==id&&byId.has(parent)?level(parent)+1:0
-    if(parent===id)throw Error('Branch fork lineage points to itself')
-    visiting.delete(id);depth.set(id,n)
-    return n
+
+  try {
+    for (const b of branches) {
+      if (depth.has(b.branch_id)) continue
+      let curr: string | null = b.branch_id
+      const path: string[] = []
+      const pathSet = new Set<string>()
+
+      while (curr && byId.has(curr) && !depth.has(curr)) {
+        if (pathSet.has(curr)) throw Error('Branch fork lineage contains a cycle')
+        const currentBranch: RunBranch = byId.get(curr)!
+        if (currentBranch.forked_from_branch_id === curr) throw Error('Branch fork lineage points to itself')
+
+        path.push(curr)
+        pathSet.add(curr)
+        curr = currentBranch.forked_from_branch_id
+      }
+
+      let d = (curr && depth.has(curr)) ? depth.get(curr)! + 1 : 0
+      for (let i = path.length - 1; i >= 0; i--) {
+        depth.set(path[i], d++)
+      }
+    }
+  } catch (e) {
+    return {nodes:[],error:e instanceof Error?e.message:String(e)}
   }
-  try{
-    branches.forEach(b=>level(b.branch_id))
-  }catch(e){return {nodes:[],error:e instanceof Error?e.message:String(e)}}
+
   const byParent=new Map<string,RunBranch[]>()
   const roots:RunBranch[]=[]
   const sort=(a:RunBranch,b:RunBranch)=>a.display_name.localeCompare(b.display_name)||
@@ -44,17 +56,36 @@ export function buildSavedBranchMap(runId:string,branches:RunBranch[]):BranchMap
   roots.sort(sort)
   byParent.forEach(children=>children.sort(sort))
   const nodes:BranchMapNode[]=[]
-  function walk(b:RunBranch):void{
-    const parent=b.forked_from_branch_id
-    const hasParent=Boolean(parent&&byId.has(parent))
-    const connection:BranchMapNode['connection']=!parent?'root':
-      !hasParent?'unresolved':
-      b.forked_from_saved_revision_id?'saved_revision':
-      b.forked_from_checkpoint_id?'checkpoint':'unresolved'
-    nodes.push({branch:b,depth:depth.get(b.branch_id)!,parentId:hasParent?parent:null,connection})
-    for(const child of byParent.get(b.branch_id)??[])walk(child)
+
+  try {
+    const stack: RunBranch[] = [...roots].reverse()
+    const visited = new Set<string>()
+
+    while (stack.length > 0) {
+      const b = stack.pop()!
+      if (visited.has(b.branch_id)) throw Error('Branch fork lineage contains a cycle')
+      visited.add(b.branch_id)
+
+      const parent=b.forked_from_branch_id
+      const hasParent=Boolean(parent&&byId.has(parent))
+      const connection:BranchMapNode['connection']=!parent?'root':
+        !hasParent?'unresolved':
+        b.forked_from_saved_revision_id?'saved_revision':
+        b.forked_from_checkpoint_id?'checkpoint':'unresolved'
+
+      nodes.push({branch:b,depth:depth.get(b.branch_id)!,parentId:hasParent?parent:null,connection})
+
+      const children = byParent.get(b.branch_id)
+      if (children) {
+        for (let i = children.length - 1; i >= 0; i--) {
+          stack.push(children[i])
+        }
+      }
+    }
+  } catch(e) {
+    return {nodes:[],error:e instanceof Error?e.message:String(e)}
   }
-  roots.forEach(walk)
+
   if(nodes.length!==branches.length)return {nodes:[],error:'Branch lineage traversal is incomplete'}
   return {nodes,error:null}
 }

@@ -35,6 +35,22 @@ describe('Read-only Saved Branch lineage',()=>{
       .toMatch(/cycle/)
     expect(buildSavedBranchMap('run-a',[branch('a','a','rev1')]).error).toMatch(/itself/)
   })
+  it('can gracefully handle missing ancestors (missing parents) and cycles', () => {
+    const cycle = buildSavedBranchMap('run-a', [branch('1', '3'), branch('2', '1'), branch('3', '2')])
+    expect(cycle.error).toMatch(/cycle/)
+    const missing = buildSavedBranchMap('run-a', [branch('1', 'nonexistent')])
+    expect(missing.error).toBeNull()
+    expect(missing.nodes[0].connection).toBe('unresolved')
+    expect(missing.nodes[0].depth).toBe(0)
+  })
+  it('can perform valid standard traversal correctly', () => {
+    const branches = [branch('a'), branch('b', 'a'), branch('c', 'a')]
+    const result = buildSavedBranchMap('run-a', branches)
+    expect(result.error).toBeNull()
+    expect(result.nodes.map(n => n.branch.branch_id)).toEqual(['a', 'b', 'c'])
+    expect(result.nodes[1].depth).toBe(1)
+    expect(result.nodes[2].depth).toBe(1)
+  })
   it('selects a view branch without activating or restoring any Run state',async()=>{
     locale.current='en'
     const select=vi.fn()
@@ -64,5 +80,29 @@ describe('Read-only Saved Branch lineage',()=>{
     expect(within(map).getByRole('button',{name:'Zobrazit větev root'})).toHaveTextContent('Prohlížená')
     expect(map).not.toHaveTextContent('Official')
     expect(map).not.toHaveTextContent('Viewer')
+  })
+  it('can handle extremely deep history without blowing up call stack',()=>{
+    const branches: RunBranch[] = []
+    let prev = null
+    for (let i = 0; i < 3000; i++) {
+      const b = branch(String(i), prev, null, null)
+      branches.push(b)
+      prev = String(i)
+    }
+    const result = buildSavedBranchMap('run-a', branches)
+    expect(result.error).toBeNull()
+    expect(result.nodes).toHaveLength(3000)
+    expect(result.nodes[2999].depth).toBe(2999)
+  })
+  it('can handle wide branching structures',()=>{
+    const branches: RunBranch[] = [branch('root')]
+    for (let i = 0; i < 1000; i++) {
+      branches.push(branch(`child-${i}`, 'root', null, null))
+    }
+    const result = buildSavedBranchMap('run-a', branches)
+    expect(result.error).toBeNull()
+    expect(result.nodes).toHaveLength(1001)
+    expect(result.nodes[1].depth).toBe(1)
+    expect(result.nodes[1000].depth).toBe(1)
   })
 })

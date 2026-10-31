@@ -307,7 +307,7 @@ def main():
             # Branch owners: a historical fork inherits the source's older
             # Saved revision and has not written an owned revision itself.
             page.goto(f"{web}/admin/runs/{run_id}/manage?branch={fork_id}")
-            fork_panel = page.get_by_role("region", name="Export uložené Branch")
+            fork_panel = page.get_by_role("region", name="Export Saved Branch")
             expect(fork_panel).to_be_visible()
             expect(fork_panel.get_by_text(historical_head, exact=False)).to_be_visible()
             with page.expect_response(
@@ -316,7 +316,7 @@ def main():
                     and response.url.endswith("/admin/run-archives/export/preview")
                 )
             ) as fork_review_event:
-                fork_panel.get_by_role("button", name="Načíst exportní náhled").click()
+                fork_panel.get_by_role("button", name="Load export preview").click()
             fork_response = fork_review_event.value
             assert fork_response.status == 200, fork_response.text()
             fork_review = fork_response.json()
@@ -337,7 +337,7 @@ def main():
             )
             with page.expect_download() as inherited_event:
                 fork_panel.get_by_role(
-                    "button", name="Stáhnout ověřený soubor .sqbranch"
+                    "button", name="Download verified .sqbranch file"
                 ).click()
             inherited_file = root / "fork-inherited-head.sqbranch"
             inherited_event.value.save_as(inherited_file)

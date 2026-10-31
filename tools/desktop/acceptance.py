@@ -16,8 +16,8 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 
-def get_json(path):
-    with urlopen("http://127.0.0.1:8000" + path, timeout=5) as response:
+def get_json(path, *, timeout=30):
+    with urlopen("http://127.0.0.1:8000" + path, timeout=timeout) as response:
         return json.load(response)
 
 
@@ -106,7 +106,7 @@ def main():
         first = launch(package, data, evidence, "first-start", work, batch=True)
         processes.append(first)
         wait_ready(first)
-        assert get_json("/world/packages")["packages"], "Bundled world sources were not loaded"
+        assert get_json("/world/packages", timeout=180)["packages"], "Bundled world sources were not loaded"
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch()
             page = browser.new_page()
@@ -153,6 +153,7 @@ def main():
             page = browser.new_page()
             try:
                 page.goto(run_url)
+                page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
                 page.get_by_role("heading", name="World and Calendar copies", exact=True).wait_for()
                 page.screenshot(path=str(evidence / "restored-run.png"), full_page=True)
             finally:

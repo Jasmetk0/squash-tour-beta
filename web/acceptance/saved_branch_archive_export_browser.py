@@ -110,7 +110,8 @@ def main():
     try:
         wait_http(web, frontend)
         with sync_playwright() as pw:
-            browser = pw.chromium.launch(args=["--no-sandbox"])
+            # Never disable Chromium sandbox for an export file test.
+            browser = pw.chromium.launch(chromium_sandbox=True)
             context = browser.new_context(
                 viewport={"width": 1440, "height": 1100},
                 accept_downloads=True,

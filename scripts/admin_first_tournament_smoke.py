@@ -486,6 +486,10 @@ def verify_viewer(page, run_url, artifacts: Path, prefix=""):
     from playwright.sync_api import expect
 
     base, run_id = run_url.split("/admin/runs/")
+    # Restart uses a genuinely fresh browser context, whose default locale is
+    # Czech. Select the scenario's English labels through the real Admin UI.
+    page.goto(run_url)
+    page.get_by_role("combobox", name="Language / Jazyk").select_option("en")
     page.goto(f"{base}/viewer/runs/{run_id}/rankings")
     # The publication list includes its immutable ordinal in each link.
     # Exercise that actual link, then every page of the current detail UI.

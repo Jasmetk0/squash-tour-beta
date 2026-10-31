@@ -66,7 +66,7 @@ export function assertSavedBranchArchivePreview(
     (value.archive_size_bytes as number) <= 0 ||
     (value.archive_size_bytes as number) > MAX_BYTES ||
     typeof value.display_name !== 'string' ||
-    typeof value.format !== 'string' || !value.format ||
+    value.format !== 'run_branch_archive.v1' ||
     typeof value.minimum_engine !== 'string' || !value.minimum_engine ||
     typeof value.continuation !== 'string' || !value.continuation ||
     !Array.isArray(value.branches) || !value.branches.length ||
@@ -101,6 +101,23 @@ export function assertSavedBranchArchivePreview(
     !history.some(r => record(r) && r.revision_id === value.selected_head_revision_id) ||
     new Set(history.map(r => (r as ArchiveHistoryRevision).revision_id)).size !== history.length) {
     throw new Error('Saved Branch archive preview has invalid dependencies or revision history.')
+  }
+  const includedBranchIds = new Set(branches.map(b => (b as IncludedArchiveBranch).branch_id))
+  const revisionIds = new Set(history.map(r => (r as ArchiveHistoryRevision).revision_id))
+  const revisionsById = new Map(history.map(r => [
+    (r as ArchiveHistoryRevision).revision_id, r as ArchiveHistoryRevision
+  ]))
+  if (branches.some(b => !revisionIds.has((b as IncludedArchiveBranch).saved_head_revision_id)) ||
+    history.some(r => {
+      const revision = r as ArchiveHistoryRevision
+      return !includedBranchIds.has(revision.original_owner_branch_id) ||
+        (revision.parent_revision_id !== null && !revisionIds.has(revision.parent_revision_id))
+    }) ||
+    revisionsById.get(value.selected_head_revision_id)?.original_owner_branch_id !== branchId ||
+    (value.viewer_branch_id !== null && !includedBranchIds.has(value.viewer_branch_id)) ||
+    new Set(value.omitted_branch_ids).size !== value.omitted_branch_ids.length ||
+    value.omitted_branch_ids.some(id => includedBranchIds.has(id))) {
+    throw new Error('Saved Branch archive preview contains incomplete or foreign dependency links.')
   }
   return value as SavedBranchArchivePreview
 }

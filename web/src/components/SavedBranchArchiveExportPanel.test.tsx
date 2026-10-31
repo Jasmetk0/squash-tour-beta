@@ -286,6 +286,26 @@ describe('Saved Branch archive Admin export panel', () => {
     expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
   })
 
+  it.each(['completed', 'archived'])('reviews the Saved export of a writable %s Run', async status => {
+    const persisted = {...run, status}
+    mocks.getRunContainer.mockResolvedValue(persisted)
+    mount({run: persisted})
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    expect(mocks.previewSavedBranchArchive).toHaveBeenCalledTimes(1)
+  })
+
+  it('requires a fresh review if the persisted Run lifecycle status changes before download', async () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    mocks.getRunContainer.mockResolvedValueOnce({...run, status: 'completed'})
+    fireEvent.click(screen.getByRole('button', {name: /Stáhnout ověřený/}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('HEAD')
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument()
+  })
+
   it('allows the canonical newly created working Run status (archive v1 supported)', () => {
     mount({run: {...run, status: 'working'}})
     expect(screen.getByRole('button', {name: 'Načíst exportní náhled'})).toBeEnabled()

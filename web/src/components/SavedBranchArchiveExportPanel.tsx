@@ -13,6 +13,10 @@ import { formatApiError } from '../utils/apiErrors'
 
 class UnsavedBranchChanges extends Error {}
 const REVISION_PAGE_SIZE = 100
+// Archive v1 accepts every persisted Run lifecycle status. Completion/archive
+// does not make a writable Saved Branch ineligible for this read-only export.
+const supportedRunStatus = (status: string): boolean =>
+  ['working', 'active', 'completed', 'archived'].includes(status)
 const bytes = (value: number): string => new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 })
   .format(value / (1024 * 1024)) + ' MiB'
 
@@ -64,7 +68,7 @@ export function SavedBranchArchiveExportPanel({
 
   const selected = branch?.run_id === run.run_id ? branch : null
   const allowed = run.storage_kind === 'custom_local' && !run.read_only &&
-    (run.status === 'working' || run.status === 'active') && selected?.status === 'active' && !selected.read_only &&
+    supportedRunStatus(run.status) && selected?.status === 'active' && !selected.read_only &&
     Boolean(selected.saved_head_revision_id)
   const active = reviewed?.scope === scope &&
     reviewed.preview.selected_head_revision_id === selected?.saved_head_revision_id
@@ -85,7 +89,7 @@ export function SavedBranchArchiveExportPanel({
     if (!liveRun || liveRun.run_id !== run.run_id ||
       liveRun.display_name !== run.display_name ||
       liveRun.storage_kind !== 'custom_local' || liveRun.read_only ||
-      (liveRun.status !== 'working' && liveRun.status !== 'active') ||
+      !supportedRunStatus(liveRun.status) || liveRun.status !== run.status ||
       !liveBranch || liveBranch.run_id !== run.run_id || liveBranch.status !== 'active' ||
       liveBranch.display_name !== selected?.display_name ||
       liveBranch.read_only || liveBranch.saved_head_revision_id !== head) {

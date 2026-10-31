@@ -79,7 +79,7 @@ describe('Viewer Players directory with mocked canonical Saved GETs', () => {
   it('shows complete real roster, linked profile/country, active and retired totals without hidden metrics', async () => {
     writeViewerActiveProductRunId(run)
     api.getViewerPlayers.mockResolvedValue(roster([
-      { ...player(1, 'active', 'EGY', 180), potential_ovr: 199, current_form: 181 },
+      player(1, 'active', 'EGY', 180),
       player(2, 'retired', 'NZL', null), player(3, 'active', 'NZL', 160)
     ]))
     mount()
@@ -96,6 +96,26 @@ describe('Viewer Players directory with mocked canonical Saved GETs', () => {
       .toHaveAttribute('href', '/viewer/runs/run%20alpha/players')
     expect(within(table).queryByText('199')).not.toBeInTheDocument()
     expect(within(table).queryByText('181')).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('never renders a public roster when the backend leaks one private player attribute', async () => {
+    writeViewerActiveProductRunId(run)
+    api.getViewerPlayers.mockResolvedValueOnce(roster([
+      {...player(1), potential_ovr: 199}, player(2)
+    ])).mockResolvedValueOnce(roster([player(1), player(2)]))
+    const user = userEvent.setup()
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('neplatná nebo cizí data')
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.queryByText('199')).not.toBeInTheDocument()
+    expect(api.getViewerPlayers).toHaveBeenCalledTimes(1)
+    // Only an explicit GET retry with a corrected projection can display
+    // players again; no partial list is ever rendered.
+    await user.click(screen.getByRole('button', {name:'Načíst znovu (GET)'}))
+    const table = await screen.findByRole('table')
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    expect(api.getViewerPlayers).toHaveBeenCalledTimes(2)
     expectNoForbiddenViewerActions()
   })
 

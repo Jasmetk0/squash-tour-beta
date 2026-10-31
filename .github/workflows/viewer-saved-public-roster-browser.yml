@@ -1,0 +1,54 @@
+name: Viewer Saved Public Roster Browser
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'web/src/pages/viewer/people/ViewerPlayersPage*'
+      - 'web/src/pages/viewer/people/viewerPlayerDirectory*'
+      - 'web/acceptance/viewer_saved_public_roster_browser.py'
+      - '.github/workflows/viewer-saved-public-roster-browser.yml'
+      - '.github/requirements/saved-branch-browser.lock.txt'
+  workflow_dispatch:
+
+concurrency:
+  group: viewer-saved-public-roster-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  chromium-sqlite:
+    name: Real Saved roster / Chromium / SQLite / private-field guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      PYTHONPATH: ${{ github.workspace }}/src
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: .github/requirements/saved-branch-browser.lock.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: |
+          python -m pip install --only-binary=:all: --no-deps --require-hashes \
+            -r .github/requirements/saved-branch-browser.lock.txt
+      - run: npm --prefix web ci --ignore-scripts
+      - run: python -m playwright install --with-deps chromium
+      - name: Real Saved GET, private leak rejection, explicit retry, persisted no-write proof
+        run: |
+          timeout --signal=TERM --kill-after=10s 9m \
+            python web/acceptance/viewer_saved_public_roster_browser.py --root work/viewer-public-roster-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: viewer-public-roster-${{ github.run_id }}
+          path: work/viewer-public-roster-browser/*
+          retention-days: 14

@@ -8,7 +8,7 @@ on:
       - 'web/src/components/SavedBranchArchiveExportPanel*'
       - 'web/src/i18n/savedBranchArchiveText.ts'
       - 'web/src/pages/RunManagementPage.tsx'
-      - 'scripts/saved_branch_archive_export_browser.py'
+      - 'web/acceptance/saved_branch_archive_export_browser.py'
       - '.github/workflows/saved-branch-export-browser.yml'
   workflow_dispatch:
 
@@ -42,7 +42,7 @@ jobs:
       - name: Actual export preview and browser download — exact bytes and no Save
         run: |
           timeout --signal=TERM --kill-after=10s 9m \
-            python scripts/saved_branch_archive_export_browser.py --root work/archive-export-browser
+            python web/acceptance/saved_branch_archive_export_browser.py --root work/archive-export-browser
       - uses: actions/upload-artifact@v4
         if: always()
         with:

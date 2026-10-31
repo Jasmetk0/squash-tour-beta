@@ -42,6 +42,16 @@ function artifactAvailability({
 }
 
 import { useHistoryText } from './runHistoryText'
+
+// The API combines independently fetched Run summary and SeasonState records.
+// Order is not meaningful for completed IDs, but multiplicity is: never
+// mistake a repeated ID for another completed event in a racing response.
+function sameCompletedEventIds(left: readonly string[], right: readonly string[]): boolean {
+  if (left.length !== right.length) return false
+  const sortedLeft = [...left].sort()
+  const sortedRight = [...right].sort()
+  return sortedLeft.every((id, index) => id === sortedRight[index])
+}
 export function RunDiagnosticsPage(): JSX.Element {
   const t = useHistoryText()
   const { runId = '' } = useParams()
@@ -148,7 +158,8 @@ export function RunDiagnosticsPage(): JSX.Element {
   // If a concurrent update made them inconsistent, do not link to an obsolete week.
   const seasonStateMismatch = Boolean(safeRun && (
     safeRun.season_state.season !== safeRun.run.season ||
-    safeRun.season_state.next_event_index !== safeRun.run.next_event_index
+    safeRun.season_state.next_event_index !== safeRun.run.next_event_index ||
+    !sameCompletedEventIds(safeRun.season_state.completed_event_ids, safeRun.run.completed_event_ids)
   ))
   const candidateNextEvent = safeRun?.season_state.ordered_events[safeRun.season_state.next_event_index] ?? null
   const nextEventSeasonMismatch = Boolean(candidateNextEvent && candidateNextEvent.season !== safeRun?.run.season)
@@ -162,8 +173,9 @@ export function RunDiagnosticsPage(): JSX.Element {
   // A status and run-detail read can race across a real command. Neither
   // progress source is authoritative for a combined summary when they disagree.
   // Independent history queries and identity-safe inspection links remain usable.
-  const summaryRun = runStatusProgressMismatch ? null : safeRun
-  const summaryStatus = runStatusProgressMismatch ? null : safeStatus
+  const progressSourcesDisagree = seasonStateMismatch || runStatusProgressMismatch
+  const summaryRun = progressSourcesDisagree ? null : safeRun
+  const summaryStatus = progressSourcesDisagree ? null : safeStatus
   const nextPlannedEvent = seasonStateMismatch || nextEventSeasonMismatch || runStatusProgressMismatch
     ? null : candidateNextEvent
   const nextPlannedWeek = nextPlannedEvent?.week ?? null
@@ -215,10 +227,12 @@ export function RunDiagnosticsPage(): JSX.Element {
         {(seasonStateMismatch || nextEventSeasonMismatch) && (
           <p role="alert" className="error">{t('Run calendar and progress disagree. Current-week links are hidden.')}</p>
         )}
+        {progressSourcesDisagree && (
+          <p role="status" className="status">{t('Conflicting progress values are hidden until the run reads agree.')}</p>
+        )}
         {runStatusProgressMismatch && (
           <>
             <p role="alert" className="error">{t('Run detail and status summary disagree on season or progress. Current-week links are hidden.')}</p>
-            <p role="status" className="status">{t('Conflicting progress values are hidden until the run reads agree.')}</p>
           </>
         )}
         {statusSummaryQuery.error && (

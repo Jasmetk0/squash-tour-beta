@@ -103,6 +103,7 @@ def prepare_data(root: Path, data: Path, build: dict) -> None:
     if any(p.name != ".preview.lock" for p in data.iterdir()):
         raise LaunchError("Unrecognized existing data. Select a new empty folder; nothing was overwritten.")
     staging = data / ("config-preparing-" + uuid.uuid4().hex)
+    print("Preparing first start / Pripravuji prvni spusteni. Please wait / Prosim vyckej.", flush=True)
     try:
         shutil.copytree(root / "config", staging)
         staging.rename(data / "config")

@@ -32,7 +32,8 @@ def config_digest(root):
 
 def child_env():
     env = os.environ.copy()
-    windows = Path(env["SystemRoot"])
+    # os.environ is case-insensitive on Windows; its plain dict copy is not.
+    windows = Path(env["SYSTEMROOT"])
     env["PATH"] = os.pathsep.join([str(windows / "System32"), str(windows)])
     env.pop("PYTHONPATH", None)
     env.pop("PYTHONHOME", None)
@@ -84,6 +85,7 @@ def stop(proc):
 
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
     parser = argparse.ArgumentParser()
     parser.add_argument("--package", type=Path, required=True)
     parser.add_argument("--evidence", type=Path, required=True)
@@ -101,6 +103,7 @@ def main():
     before = config_digest(package)
     metadata = json.loads((package / "build-info.json").read_text(encoding="utf-8"))
     processes = []
+    passed = False
     try:
         # First run uses the actual double-click batch entry; host tools are absent.
         first = launch(package, data, evidence, "first-start", work, batch=True)
@@ -187,11 +190,18 @@ def main():
                   "scope": "Portable startup, actual UI/SQLite empty Run Save, restart and launcher failures"}
         (evidence / "result.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
         print(json.dumps(report, indent=2))
+        passed = True
     finally:
         for proc in processes:
             if proc.poll() is None:
                 # Failure cleanup kills the test process tree, never a pre-existing service.
                 subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], check=False)
+        if (data / "launcher.log").is_file():
+            shutil.copyfile(data / "launcher.log", evidence / "backend.log")
+        if not passed:
+            for log in evidence.glob("*.log"):
+                print("Launcher diagnostic: " + log.name)
+                print(log.read_text(encoding="utf-8", errors="replace")[-12000:])
         shutil.rmtree(work, ignore_errors=True)
 
 

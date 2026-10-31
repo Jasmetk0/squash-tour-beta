@@ -17,6 +17,10 @@ SPEC = importlib.util.spec_from_file_location(
     "desktop_launcher", Path(__file__).parents[1] / "desktop/launcher.py")
 launcher = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(launcher)
+ACCEPTANCE_SPEC = importlib.util.spec_from_file_location(
+    "desktop_acceptance", Path(__file__).parents[1] / "desktop/acceptance.py")
+acceptance = importlib.util.module_from_spec(ACCEPTANCE_SPEC)
+ACCEPTANCE_SPEC.loader.exec_module(acceptance)
 
 
 @pytest.fixture
@@ -44,6 +48,18 @@ def test_same_build_restart_preserves_world_and_edited_packages(bundle, tmp_path
     assert (data / "config/seed.txt").read_text() == "user edited"
     assert (data / "beta_engine.db").read_bytes() == b"saved world sentinel"
     assert (root / "config/seed.txt").read_text() == "original"
+
+
+def test_acceptance_environment_uses_canonical_windows_keys_and_removes_host_tools(monkeypatch):
+    monkeypatch.setenv("SYSTEMROOT", "C:/Windows")
+    monkeypatch.setenv("PATH", "C:/Python;C:/Git;C:/Node")
+    monkeypatch.setenv("PYTHONPATH", "host modules")
+    monkeypatch.setenv("PYTHONHOME", "host Python")
+    child = acceptance.child_env()
+    assert "System32" in child["PATH"]
+    assert not any(tool in child["PATH"] for tool in ("Python", "Git", "Node"))
+    assert "PYTHONPATH" not in child
+    assert "PYTHONHOME" not in child
 
 
 def test_foreign_build_and_unknown_data_fail_closed(bundle, tmp_path):

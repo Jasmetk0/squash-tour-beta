@@ -159,6 +159,11 @@ export function RunDiagnosticsPage(): JSX.Element {
     safeRun.run.next_event_index !== safeStatus.progress.next_event_index ||
     safeRun.run.total_events !== safeStatus.progress.total_events
   ))
+  // A status and run-detail read can race across a real command. Neither
+  // progress source is authoritative for a combined summary when they disagree.
+  // Independent history queries and identity-safe inspection links remain usable.
+  const summaryRun = runStatusProgressMismatch ? null : safeRun
+  const summaryStatus = runStatusProgressMismatch ? null : safeStatus
   const nextPlannedEvent = seasonStateMismatch || nextEventSeasonMismatch || runStatusProgressMismatch
     ? null : candidateNextEvent
   const nextPlannedWeek = nextPlannedEvent?.week ?? null
@@ -187,18 +192,18 @@ export function RunDiagnosticsPage(): JSX.Element {
       }}>{t('Refresh read-only data')}</button>
       <CurrentContextStrip
         items={[
-          { label: t('Season'), value: safeStatus?.season ?? safeRun?.run.season ?? '—' },
+          { label: t('Season'), value: summaryStatus?.season ?? summaryRun?.run.season ?? '—' },
           {
             label: t('Progress'),
-            value: safeStatus
-              ? `${safeStatus.progress.next_event_index}/${safeStatus.progress.total_events}`
-              : safeRun
-                ? `${safeRun.run.next_event_index}/${safeRun.run.total_events}`
+            value: summaryStatus
+              ? `${summaryStatus.progress.next_event_index}/${summaryStatus.progress.total_events}`
+              : summaryRun
+                ? `${summaryRun.run.next_event_index}/${summaryRun.run.total_events}`
                 : '—'
           },
           {
             label: t('Completed events'),
-            value: safeStatus?.progress.completed_event_count ?? safeRun?.run.completed_event_ids.length ?? '—'
+            value: summaryStatus?.progress.completed_event_count ?? summaryRun?.run.completed_event_ids.length ?? '—'
           }
         ]}
       />
@@ -211,7 +216,10 @@ export function RunDiagnosticsPage(): JSX.Element {
           <p role="alert" className="error">{t('Run calendar and progress disagree. Current-week links are hidden.')}</p>
         )}
         {runStatusProgressMismatch && (
-          <p role="alert" className="error">{t('Run detail and status summary disagree on season or progress. Current-week links are hidden.')}</p>
+          <>
+            <p role="alert" className="error">{t('Run detail and status summary disagree on season or progress. Current-week links are hidden.')}</p>
+            <p role="status" className="status">{t('Conflicting progress values are hidden until the run reads agree.')}</p>
+          </>
         )}
         {statusSummaryQuery.error && (
           <p className="error">{t('Failed to load status summary')}: {formatApiError(statusSummaryQuery.error)}</p>
@@ -222,33 +230,33 @@ export function RunDiagnosticsPage(): JSX.Element {
             <CompactSummaryCard
               items={[
                 { label: t('Run ID'), value: safeRun?.run.run_id ?? safeStatus?.run_id ?? '—' },
-                { label: t('Season'), value: safeStatus?.season ?? safeRun?.run.season ?? '—' },
-                { label: t('Seed'), value: safeStatus?.seed ?? safeRun?.run.seed ?? '—' },
+                { label: t('Season'), value: summaryStatus?.season ?? summaryRun?.run.season ?? '—' },
+                { label: t('Seed'), value: summaryStatus?.seed ?? summaryRun?.run.seed ?? '—' },
                 {
                   label: t('Progress'),
-                  value: safeStatus
+                  value: summaryStatus
                     ? `${safeStatus.progress.next_event_index} / ${safeStatus.progress.total_events}`
-                    : safeRun
-                      ? `${safeRun.run.next_event_index} / ${safeRun.run.total_events}`
+                    : summaryRun
+                      ? `${summaryRun.run.next_event_index} / ${summaryRun.run.total_events}`
                       : '—'
                 },
                 {
                   label: t('Completed events'),
-                  value: safeStatus?.progress.completed_event_count ?? safeRun?.run.completed_event_ids.length ?? '—'
+                  value: summaryStatus?.progress.completed_event_count ?? safeRun?.run.completed_event_ids.length ?? '—'
                 }
               ]}
             />
             <SummaryPills
               items={[
-                { label: t('Events'), value: safeStatus?.history_counts.events ?? (!eventsQuery.error && eventsQuery.data?.run_id === runId ? safeEvents.length : '—') },
+                { label: t('Events'), value: summaryStatus?.history_counts.events ?? (!eventsQuery.error && eventsQuery.data?.run_id === runId ? safeEvents.length : '—') },
                 {
                   label: t('Ranking snapshots'),
                   value:
-                    safeStatus?.history_counts.ranking_snapshots ?? (!rankingSnapshotsQuery.error && rankingSnapshotsQuery.data?.run_id === runId ? safeRankingSnapshots.length : '—')
+                    summaryStatus?.history_counts.ranking_snapshots ?? (!rankingSnapshotsQuery.error && rankingSnapshotsQuery.data?.run_id === runId ? safeRankingSnapshots.length : '—')
                 },
                 {
                   label: t('Race snapshots'),
-                  value: safeStatus?.history_counts.race_snapshots ?? (!raceSnapshotsQuery.error && raceSnapshotsQuery.data?.run_id === runId ? safeRaceSnapshots.length : '—')
+                  value: summaryStatus?.history_counts.race_snapshots ?? (!raceSnapshotsQuery.error && raceSnapshotsQuery.data?.run_id === runId ? safeRaceSnapshots.length : '—')
                 }
               ]}
             />

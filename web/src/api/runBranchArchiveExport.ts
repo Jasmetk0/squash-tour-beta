@@ -6,6 +6,7 @@ import { ApiError } from './client'
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 const SHA256 = /^[0-9a-f]{64}$/
 const MAX_BYTES = 128 * 1024 * 1024
+const MAX_ERROR_BYTES = 64 * 1024
 
 export type IncludedArchiveBranch = {
   branch_id: string
@@ -161,6 +162,29 @@ export function assertSavedBranchArchivePreview(
   return value as SavedBranchArchivePreview
 }
 
+/** Preserve ordinary API details without buffering arbitrarily large error pages. */
+async function boundedArchiveError(response: Response): Promise<string> {
+  if (!response.body) return ''
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let received = 0
+  let message = ''
+  try {
+    while (true) {
+      const chunk = await reader.read()
+      if (chunk.done) return message + decoder.decode()
+      if (chunk.value.byteLength > MAX_ERROR_BYTES - received) {
+        return 'Saved Branch archive error response exceeded the safe size limit.'
+      }
+      received += chunk.value.byteLength
+      message += decoder.decode(chunk.value, { stream: true })
+    }
+  } finally {
+    await reader.cancel().catch(() => undefined)
+    reader.releaseLock()
+  }
+}
+
 async function archiveResponse(path: string, body: object, signal?: AbortSignal): Promise<Response> {
   const response = await fetch(API_BASE + '/admin/run-archives' + path, {
     method: 'POST',
@@ -169,7 +193,7 @@ async function archiveResponse(path: string, body: object, signal?: AbortSignal)
     signal
   })
   if (!response.ok) {
-    const message = await response.text()
+    const message = await boundedArchiveError(response)
     throw new ApiError(message || 'Saved Branch archive request failed', response.status)
   }
   return response

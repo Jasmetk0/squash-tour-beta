@@ -155,7 +155,7 @@ def main() -> None:
                 + json.dumps(run_id) + ")"
             )
             context.add_init_script(
-                "localStorage.setItem('squash-engine-language-v1', 'en')"
+                "if (!localStorage.getItem('squash-engine-language-v1')) localStorage.setItem('squash-engine-language-v1', 'en')"
             )
             page = context.new_page()
             page.on("pageerror", lambda e: errors.append(str(e)))

@@ -209,7 +209,21 @@ describe('Saved Branch export-only HTTP boundary', () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
       detail: { code: 'stale_export_preview', message: 'Review again' }
     }), {status: 409}))
-    await expect(downloadSavedBranchArchive(original)).rejects.toMatchObject({status: 409})
+    await expect(downloadSavedBranchArchive(original)).rejects.toMatchObject({status: 409,
+      message: expect.stringContaining('Review again')})
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('bounds and cancels unexpectedly large error responses before showing server text', async () => {
+    const cancelled = vi.fn()
+    fetchMock.mockResolvedValueOnce(new Response(new ReadableStream({
+      start(controller) { controller.enqueue(new Uint8Array(65_537)) },
+      cancel: cancelled
+    }), {status: 503, headers: {'Content-Type': 'text/html'}}))
+    await expect(previewSavedBranchArchive('run', 'branch')).rejects.toMatchObject({
+      status: 503, message: 'Saved Branch archive error response exceeded the safe size limit.'
+    })
+    expect(cancelled).toHaveBeenCalledTimes(1)
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 

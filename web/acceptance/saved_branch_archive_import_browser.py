@@ -118,7 +118,7 @@ def main() -> None:
                     route.continue_()
                 else:
                     external.append(route.request.url)
-                    route.abort_()
+                    route.abort()
 
             context.route("**/*", local_only)
             # Verify that our browser is not capable of reaching external sites.

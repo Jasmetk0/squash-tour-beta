@@ -21,6 +21,16 @@ permissions:
   contents: read
 
 jobs:
+  # Temporary read-only diagnosis of the remaining Sonar issue.
+  sonar-diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Show open Sonar issues for PR 1678
+        run: |
+          curl -fsSL --connect-timeout 10 --max-time 30 \
+            "https://sonarcloud.io/api/issues/search?componentKeys=Jasmetk0_squash-tour-beta&pullRequest=1678&ps=100&issueStatuses=OPEN,CONFIRMED" \
+            | jq -c '{total, issues: [.issues[] | {key, rule, message, component, line, type, severity, status}]}'
   real-export:
     name: Saved Branch archive / real Chromium + SQLite
     runs-on: ubuntu-latest

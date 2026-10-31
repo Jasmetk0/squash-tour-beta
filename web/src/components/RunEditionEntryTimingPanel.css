@@ -1,0 +1,33 @@
+/* Keep Entry's sequential review usable inside the existing Admin shell. */
+#run-edition-entry-timing,
+#run-edition-entry-timing .grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#run-edition-entry-timing > *,
+#run-edition-entry-timing fieldset {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#run-edition-entry-timing input:not([type='checkbox']),
+#run-edition-entry-timing select,
+#run-edition-entry-timing textarea {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+#run-edition-entry-timing .kv-grid {
+  display: block;
+}
+
+#run-edition-entry-timing .kv-grid dt {
+  color: inherit;
+}
+
+#run-edition-entry-timing .kv-grid dd {
+  margin: 0 0 0.8rem;
+  overflow-wrap: anywhere;
+}

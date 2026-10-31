@@ -95,7 +95,7 @@ function mount(props: Partial<Parameters<typeof RunEditionEntryTimingPanel>[0]> 
 }
 async function fill(): Promise<void> {
   await screen.findByText(/není uložený plán|has no configured Entry plan/i)
-  fireEvent.change(screen.getByLabelText(/Main opening – season|Otevření Main – sezona/), { target: { value: '0' } })
+  fireEvent.change(screen.getByRole('combobox', { name: /^(Main opening – season|Otevření Main – sezona)$/ }), { target: { value: '0' } })
   fireEvent.change(screen.getByLabelText(/Main opening – week|Otevření Main – týden/), { target: { value: '13' } })
   fireEvent.change(screen.getByLabelText(/Confirmation operator|Operátor potvrzení/), { target: { value: 'Operator' } })
   fireEvent.change(screen.getByLabelText(/Confirmation reason|Důvod potvrzení/), { target: { value: 'Reviewed' } })

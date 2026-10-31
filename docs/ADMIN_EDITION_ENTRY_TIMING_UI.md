@@ -20,9 +20,9 @@ missing_prerequisite is not confirmation. A valid future plan may still be confi
 
 ## Test boundary
 
-Mocked tests in web/src/components/RunEditionEntryTimingPanel.test.tsx verify empty/existing review, CS/EN persistence, preview invalidation, blockers, future missing ranking, exact confirm/retry, Save safeguards and delayed/foreign contexts. web/src/api/runEditionEntryTiming.test.ts verifies the exact encoded HTTP request/response boundary; web/src/pages/PlannedEventDetailPage.test.tsx exercises verified Admin wiring. These are not real Chromium, production HTTP or SQLite integration evidence. #1675 separately has backend HTTP/SQLite tests. The final head needs TypeScript/Vite and relevant hosted checks; skipped Draft acceptance is not a pass.
+Mocked tests in web/src/components/RunEditionEntryTimingPanel.test.tsx verify empty/existing review, CS/EN persistence, preview invalidation, blockers, future missing ranking, exact confirm/retry, Save safeguards and delayed/foreign contexts. web/src/api/runEditionEntryTiming.test.ts verifies the exact encoded HTTP request/response boundary; web/src/pages/PlannedEventDetailPage.test.tsx exercises verified Admin wiring. These mocked suites remain separate from the actual Chromium/API/SQLite evidence below. #1675 separately has backend HTTP/SQLite tests. The final head needs TypeScript/Vite and relevant hosted checks; skipped Draft acceptance is not a pass.
 
-Known limitation: historical Run records without explicit v1 Run calendar metadata intentionally fail closed. The existing general planned-event page still has separate legacy-only projection assumptions. Automatic sporting Entry validator and real browser Save/reopen acceptance remain outside this slice.
+Known limitation: historical Run records without explicit v1 Run calendar metadata intentionally fail closed. The existing general planned-event page still has separate legacy-only projection assumptions. Automatic sporting Entry validation remains outside this slice. Actual browser acceptance below covers future-plan configuration, not automatic eligibility or sporting execution.
 ## Checklist of 30 continuation tasks (30 Oct 2026)
 
 _Status is evidence-scoped: **Implemented/Improved** = frontend code added, **Retained** = pre-existing behavior preserved, **Partial** = verified dependency remains. Mock tests are not real browser/HTTP/SQLite acceptance._
@@ -57,8 +57,8 @@ _Status is evidence-scoped: **Implemented/Improved** = frontend code added, **Re
 | 26 | Retained | Independent consented Save and fresh Run/Branch/Draft/fingerprint reads |
 | 27 | Partial | Exact Saved ID and existing history link; no verified per-revision deep-link route |
 | 28 | Improved | New UI messages and state labels CS/EN; audit text and preview preserved |
-| 29 | Partial | Field label/aria associations and wrapping improved; real browser/mobile keyboard audit pending |
-| 30 | Partial | Mocked component tests added for local restore, preview audit, diff, publication options, empty state. Hosted final-head CI and real browser/HTTP/SQLite acceptance still required |
+| 29 | Improved | Exact select accessible names and scoped wrapping; actual CS/EN Chromium review at 390px without panel overflow. Full accessibility certification is not claimed |
+| 30 | Improved | Focused mocked component/API suites plus actual Chromium/API/SQLite Confirm/retry/Save/restart. Final-head hosted acceptance must pass; full release remains separate |
 
 ### Verification boundary
 
@@ -146,3 +146,43 @@ React Query's `dataUpdatedAt` is a millisecond timestamp, not a unique read revi
 ## Explicit GET recovery rejects different Run clock before rehydrating
 
 Manual re-read now checks the inspected plan's embedded Run clock before replacing any local timing fields. A self-consistent W52 server record cannot overwrite the operator's W80 edit merely because the Run/Branch/Package/Edition IDs match. The clock mismatch warning remains visible and Preview/Confirm are blocked until a truly matching inspection is obtained. A mocked component regression preserves the local Main opening after a foreign-clock GET response.
+
+## Independent integration review — 31 October 2026
+
+The real browser exposed defects that isolated component mocks did not cover:
+
+- A nested select inside its label included every option in its accessible name.
+  Season and publication pickers now have separate explicitly associated labels.
+- The generic multi-column `.grid` overflowed at a 390px viewport. A dedicated
+  `RunEditionEntryTimingPanel.css` scopes sequential layout, shrinking controls
+  and wrapping to this panel; no shared styles are changed.
+- After actual Save, Branch HEAD and Draft requests finish independently. Their
+  temporary mismatch previously unmounted the editor and erased the definitive
+  Saved receipt. Mount identity now follows the verified Run/Branch/Edition; the
+  existing complete HEAD/Draft checks still disable every new mutation. The
+  receipt remains visible until navigation to a fresh editing context.
+
+`scripts/edition_entry_timing_browser.py` creates an isolated Calendar through
+real Package HTTP commands and starts a separate production backend process. It
+uses Chromium on the normal Admin route, without fabricated API responses. It
+proves missing plan -> explicit Main 13/Q defaults -> read-only server Preview,
+CS/EN switch retaining review/audit, 390px layout, and no implicit writes. It
+forwards the real Confirm to the server and drops only its network reply, then
+requires the identical original command/payload to recover the committed receipt.
+A separately consented Save produces a new immutable revision containing the exact
+plan. Parent cache refreshes retain the successful receipt. A fresh backend
+process physically reopens SQLite; the complete Saved payload and Entry timing
+remain identical and a page reload performs no writes.
+
+Reproduce with a fresh directory:
+
+```sh
+python scripts/edition_entry_timing_browser.py --root work/entry-timing-browser
+```
+
+The dedicated `Edition Entry Timing` Ready/manual workflow runs this exact proof.
+Existing relevant acceptance workflows remain unchanged. Initial development
+attempts exposed an incorrect test origin (CORS), accessible-name and mobile
+failures, then the real post-Save receipt loss; these are not counted as passes.
+No browser claim is made for ranking adoption, automatic eligibility, full
+sporting continuation, all calendars or the 50-season release.

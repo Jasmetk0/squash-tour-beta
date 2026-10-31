@@ -17,6 +17,7 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { editionEntryTimingText } from '../i18n/editionEntryTimingText'
 import { formatApiError } from '../utils/apiErrors'
 import { SectionCard } from './RunScopedUi'
+import './RunEditionEntryTimingPanel.css'
 
 type WeekFields = { season: string; week: string }
 type Inputs = {
@@ -473,7 +474,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
     const weekInvalid = !/^\d+$/.test(value.week) || Number(value.week) < 1 ||
       Number(value.week) > calendar.weeks_per_year
     return <div className="grid" key={name}>
-      <label htmlFor={inputId(name + '-season')}>{seasonLabel}
+      <label htmlFor={inputId(name + '-season')}>{seasonLabel}</label>
         <select id={inputId(name + '-season')} value={value.season} disabled={editingBlocked}
           aria-invalid={seasonInvalid} aria-describedby={seasonInvalid ? inputId(name + '-season-error') : undefined}
           onChange={event => update({ [name]: { ...value, season: event.target.value } })}>
@@ -482,7 +483,6 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
             <option key={seasonLabelFor(index)} value={index}>{seasonLabelFor(index)} (S{index})</option>
           ))}
         </select>
-      </label>
       {seasonInvalid && <span id={inputId(name + '-season-error')} className="error">{t.seasonRange} 0–{calendar.season_count - 1}.</span>}
       <label htmlFor={inputId(name + '-week')}>{weekLabel}
         <input id={inputId(name + '-week')} type="number" min={1} max={calendar.weeks_per_year}
@@ -556,7 +556,7 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
         <label><input type="checkbox" checked={form.overrideEnabled}
           onChange={event => update({ overrideEnabled: event.target.checked })} /> {t.overrideSwitch}</label>
         {form.overrideEnabled && <div className="grid">
-          <label htmlFor={inputId('publication-picker')}>{t.publicationsPicker}
+          <label htmlFor={inputId('publication-picker')}>{t.publicationsPicker}</label>
             <select id={inputId('publication-picker')} disabled={editingBlocked || rankingOptionsQuery.isFetching}
               value={validPublications.some(row =>
                 String(row.ranking_week.season_index) === form.override.season &&
@@ -578,7 +578,6 @@ export function RunEditionEntryTimingPanel({ runId, branchId, packageId, eventId
                 {' · '}{row.ranked_row_count} {t.rankingRows}
               </option>)}
             </select>
-          </label>
           {rankingOptionsQuery.isPending && <p role="status">{t.publicationsLoading}</p>}
           {rankingOptionsQuery.isError && <p role="alert" className="error">
             {t.publicationsError}: {formatApiError(rankingOptionsQuery.error)}

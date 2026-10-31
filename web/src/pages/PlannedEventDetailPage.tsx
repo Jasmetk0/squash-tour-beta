@@ -195,7 +195,10 @@ export function PlannedEventDetailPage(): JSX.Element {
     canonicalSavedHeadScope && canonicalCalendarDraftQuery.data &&
     canonicalCalendarDraftQuery.data.run_id === runId &&
     canonicalCalendarDraftQuery.data.branch_id === activeBranchId &&
-    canonicalCalendarDraftQuery.data.base_saved_revision_id === canonicalActiveBranch?.saved_head_revision_id &&
+    // Keep a mounted editor's confirmed/uncertain Save receipt during the
+    // separate Branch HEAD and Draft refreshes. Their temporary mismatch only
+    // disables new edits through verifiedCalendarScope below; unmounting here
+    // would lose the receipt immediately after a successful real Save.
     entryTimingRunClock &&
     canonicalCalendarQuery.data?.run_id === runId &&
     canonicalCalendarQuery.data.branch_id === activeBranchId &&

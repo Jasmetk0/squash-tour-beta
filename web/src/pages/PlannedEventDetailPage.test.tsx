@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { useState } from 'react'
@@ -92,7 +92,7 @@ type MockViewedState =
   | ReturnType<typeof presentBranchView>
   | ReturnType<typeof historicalView>
 
-function renderAt(route: string): void {
+function renderAt(route: string): QueryClient {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
@@ -103,6 +103,7 @@ function renderAt(route: string): void {
       </MemoryRouter>
     </QueryClientProvider>
   )
+  return client
 }
 
 describe('PlannedEventDetailPage', () => {
@@ -593,7 +594,7 @@ describe('PlannedEventDetailPage', () => {
         host_country: 'CZE', main_draw_size: 8, qualification_draw_size: 0
       }] }
     })
-    renderAt('/runs/run-a/calendar/E1?branch=branch-a&calendar=calendar-2000-2001')
+    const client = renderAt('/runs/run-a/calendar/E1?branch=branch-a&calendar=calendar-2000-2001')
     expect(await screen.findByText(/Using the validated Run-owned Calendar snapshot/)).toBeInTheDocument()
     expect(await screen.findByText(/Canonical tournament preparation/)).toBeInTheDocument()
     expect(api.getCanonicalTournamentPreparation).toHaveBeenCalledWith('run-a','branch-a','E1')
@@ -604,6 +605,22 @@ describe('PlannedEventDetailPage', () => {
       properties.packageId === 'calendar-2000-2001' && properties.eventId === 'E1' &&
       properties.calendar.weeks_per_year === 80 && properties.enabled === true
     ))).toBe(true)
+    // Real Save returns HEAD and Draft refreshes separately. Keep the receipt's
+    // editor mounted, but read-only, throughout their temporary cache mismatch.
+    entryTimingChild.render.mockClear()
+    act(() => client.setQueryData(['admin-run-branches', 'run-a'], {
+      run_branches: [{run_id:'run-a',branch_id:'branch-a',status:'active',
+        read_only:false,saved_head_revision_id:'rev-2'}]
+    }))
+    await waitFor(() => expect(entryTimingChild.render.mock.calls.some(([props]) =>
+      props.enabled === false)).toBe(true))
+    entryTimingChild.render.mockClear()
+    act(() => client.setQueryData(['package-working-draft','run-a','branch-a'], {
+      run_id:'run-a',branch_id:'branch-a',base_saved_revision_id:'rev-2',
+      status:'clean',draft_version:2
+    }))
+    await waitFor(() => expect(entryTimingChild.render.mock.calls.some(([props]) =>
+      props.enabled === true)).toBe(true))
   })
 
   it('refuses canonical Calendar deep links whose clean Draft is based on an old Saved Head', async () => {

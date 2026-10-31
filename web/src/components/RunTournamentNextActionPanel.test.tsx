@@ -20,7 +20,7 @@ const mounted: TournamentNavigationSections = {
   'canonical-entry-review': true, 'canonical-reviewed-entry-field': true,
   'canonical-main-draw-preflight': true, 'canonical-wc-review': true,
   'canonical-draw-authority': true, 'canonical-first-match': true,
-  'finals-race-replacement': false
+  'finals-race-replacement': true
 }
 const derive = (source: CanonicalTournamentPreparationState, sections = mounted,
   lang: 'cs' | 'en' = 'en') =>

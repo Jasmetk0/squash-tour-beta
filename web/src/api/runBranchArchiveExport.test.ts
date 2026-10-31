@@ -124,6 +124,10 @@ describe('Saved Branch export-only HTTP boundary', () => {
         forked.branches[1]]
     }, 'run', 'branch')).toThrow(/fork dependency/)
     expect(() => assertSavedBranchArchivePreview({
+      ...forked, branches: [{...forked.branches[0], forked_from_saved_revision_id: 'head'},
+        forked.branches[1]]
+    }, 'run', 'branch')).toThrow(/foreign fork source revision/)
+    expect(() => assertSavedBranchArchivePreview({
       ...forked, branches: [forked.branches[0],
         {...forked.branches[1], forked_from_branch_id: 'branch'}]
     }, 'run', 'branch')).toThrow(/fork cycle/)

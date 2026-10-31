@@ -62,6 +62,33 @@ export function selectedComparisonPlayers(selection: Pick<ViewerSelectedComparis
   return [selection.playerA, selection.playerB].filter((player): player is RunPlayerListItem => Boolean(player))
 }
 
+/**
+ * The active-run player detail endpoint is scoped by its URL, but does not
+ * echo a Run ID. Verify the *exact* requested player identity and every field
+ * rendered by the comparison before accepting it as evidence. Never fall back
+ * to a first-50 player list for a URL-selected player.
+ */
+export function verifiedComparisonPlayerDetail(value: unknown, requestedId: string): RunPlayerListItem | null {
+  if (!requestedId.trim() || typeof value !== 'object' || value === null || Array.isArray(value)) return null
+  const player = value as Record<string, unknown>
+  const numeric = ['age', 'overall', 'technique', 'movement', 'physical', 'mental'] as const
+  if (player.player_id !== requestedId ||
+    typeof player.name !== 'string' || !player.name.trim() ||
+    typeof player.country_code !== 'string' || !player.country_code.trim() ||
+    !numeric.every(key => typeof player[key] === 'number' && Number.isFinite(player[key])) ||
+    !Number.isSafeInteger(player.age) ||
+    !['rollover_carried', 'planner_generated', 'manual_override'].includes(String(player.source_type)) ||
+    typeof player.is_top_band !== 'boolean' ||
+    (player.quality_band !== null && typeof player.quality_band !== 'string')) return null
+  return value as RunPlayerListItem
+}
+
+/** Distinct, nonblank exact IDs are needed before requesting either player. */
+export function comparablePlayerIds(first: string, second: string): boolean {
+  return Boolean(first.trim() && second.trim() && first === first.trim() &&
+    second === second.trim() && first !== second && first.length <= 256 && second.length <= 256)
+}
+
 export type ViewerSearchPlannedEvent = SeasonStateResponse['season_state']['ordered_events'][number]
 
 export type ViewerSearchTournamentResult = {

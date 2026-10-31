@@ -30,7 +30,7 @@ const compare=():SavedRevisionComparison=>({
 })
 describe('Saved Compare A/B source validation',()=>{
   it('checks a true reachable branch including shared ancestors across pages',()=>{
-    const history=validateReachableCompareHistory('run','fork',[page([b],2),page([a])])
+    const history=validateReachableCompareHistory('run','fork',[page([b],3),page([a])])
     expect(history?.entries.map(x=>x.revision_id)).toEqual(['rev-1','rev-3'])
     expect(history?.head).toBe('rev-3')
   })
@@ -42,6 +42,36 @@ describe('Saved Compare A/B source validation',()=>{
     expect(validateReachableCompareHistory('run','fork',[page([a]),{...page([b]),saved_head_revision_id:'wrong'}]))
       .toBeNull()
     expect(validateReachableCompareHistory('run','fork',[page([{...a,content_hash:''},b])]))
+      .toBeNull()
+  })
+  it('rejects forged Saved history cursors, misordered or overlapping pages',()=>{
+    const good=[page([b],3),page([a])]
+    expect(validateReachableCompareHistory('run','fork',good)).not.toBeNull()
+    const bad=[
+      [page([b],2),page([a])], // Cursor is not the oldest sequence in its page.
+      [page([b],3),page([a,b])], // Older page overlaps a newer page.
+      [page([b],3),page([a]),page([a])], // Exhausted page cannot be followed.
+      [page([a,b],1)], // False claim of older pages with an impossible cursor.
+      [{...page([a,b]),saved_revisions:[b,a]}], // Sort cannot repair bad server ordering.
+      [{...page([a,b]),has_more_older:true,next_before_sequence:null}],
+      [{...page([a,b]),has_more_older:false,next_before_sequence:1}],
+      [{...page([a,b]),total_count:3}], // End of history contradicts total_count.
+      [{...page([b],3),total_count:2}, {...page([a]),total_count:4}],
+      [page([a])], // Missing actual HEAD from the first page.
+      [{...page([a,b]),saved_revisions:[a,{...b,is_branch_head:false}]}],
+      [page([b],3),{...page([a]),saved_revisions:[{...a,is_branch_head:true}]}]
+    ]
+    for(const pages of bad){
+      expect(validateReachableCompareHistory('run','fork',pages)).toBeNull()
+    }
+  })
+  it('supports incomplete but honestly paginated history without claiming it is fully loaded',()=>{
+    const newest={...page([b],3),total_count:2}
+    expect(validateReachableCompareHistory('run','fork',[newest])?.entries.map(x=>x.revision_id))
+      .toEqual(['rev-3'])
+    expect(validateReachableCompareHistory('run','fork',[{...newest,has_more_older:false,
+      next_before_sequence:null}])).toBeNull()
+    expect(validateReachableCompareHistory('run','fork',[{...newest,total_count:1}]))
       .toBeNull()
   })
   it('preserves canonical A→B differences, unchanged components and source fingerprints',()=>{
@@ -66,6 +96,25 @@ describe('Saved Compare A/B source validation',()=>{
     expect(projectSavedStateComparison({...compare(),from_revision:{...a,revision_branch_id:'fork'}},
       'run','fork',a,b,'rev-3')).toBeNull()
     expect(projectSavedStateComparison(compare(),'run','fork',a,b,'stale-head')).toBeNull()
+  })
+  it('rejects component status claims contradicted by their fingerprints',()=>{
+    const invalid=[
+      {status:'added',before_fingerprint:'old',after_fingerprint:'new'},
+      {status:'added',before_fingerprint:null,after_fingerprint:null},
+      {status:'removed',before_fingerprint:'old',after_fingerprint:'new'},
+      {status:'removed',before_fingerprint:null,after_fingerprint:null},
+      {status:'changed',before_fingerprint:'same',after_fingerprint:'same'},
+      {status:'changed',before_fingerprint:null,after_fingerprint:'new'},
+      {status:'unchanged',before_fingerprint:'old',after_fingerprint:'new'},
+      {status:'unchanged',before_fingerprint:null,after_fingerprint:null}
+    ] as const
+    for(const evidence of invalid){
+      const payload=compare()
+      payload.components[0]={...payload.components[0],...evidence}
+      expect(projectSavedStateComparison(payload,'run','fork',a,b,'rev-3')).toBeNull()
+    }
+    // The canonical Added/Removed/Changed/Unchanged combinations are preserved.
+    expect(projectSavedStateComparison(compare(),'run','fork',a,b,'rev-3')).not.toBeNull()
   })
   it('rejects invented statuses, duplicate components and invalid before/after payloads',()=>{
     const q=compare()

@@ -167,7 +167,7 @@ async function boundedResponseText(
   response: Response, limit: number
 ): Promise<{ text: string; exceeded: boolean }> {
   const length = response.headers.get('Content-Length')
-  if (length !== null && /^\\d+$/.test(length) && Number(length) > limit) {
+  if (length !== null && /^\d+$/.test(length) && Number(length) > limit) {
     await response.body?.cancel().catch(() => undefined)
     return { text: '', exceeded: true }
   }

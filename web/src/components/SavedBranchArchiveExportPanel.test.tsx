@@ -196,6 +196,42 @@ describe('Saved Branch archive Admin export panel', () => {
     expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument()
   })
 
+  it('invalidates reviewed export when the selected Branch is renamed without a new HEAD', async () => {
+    const view = mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    view.rerender(<MemoryRouter><LanguageProvider><Toggle />
+      <SavedBranchArchiveExportPanel run={run} branch={{...branch, display_name: 'Renamed Branch'}} />
+    </LanguageProvider></MemoryRouter>)
+    await waitFor(() => expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument())
+    expect(screen.getByText('Renamed Branch')).toBeInTheDocument()
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+  })
+
+  it('blocks a persisted Branch rename discovered at download time before requesting bytes', async () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    mocks.listRunBranches.mockResolvedValueOnce({run_branches: [
+      {...branch, display_name: 'Server Renamed Branch'}
+    ]})
+    fireEvent.click(screen.getByRole('button', {name: /Stáhnout ověřený/}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('HEAD')
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument()
+  })
+
+  it('blocks a persisted Run rename discovered at download time before requesting bytes', async () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    mocks.getRunContainer.mockResolvedValueOnce({...run, display_name: 'Server Renamed Run'})
+    fireEvent.click(screen.getByRole('button', {name: /Stáhnout ověřený/}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('HEAD')
+    expect(mocks.downloadSavedBranchArchive).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument()
+  })
+
   it('downloads only after a second fresh context check and explicit click', async () => {
     const objectUrl = vi.fn(() => 'blob:test')
     const revoke = vi.fn()

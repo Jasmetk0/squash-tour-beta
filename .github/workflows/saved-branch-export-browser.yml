@@ -18,6 +18,7 @@ concurrency:
 
 permissions:
   contents: read
+  checks: read
 
 jobs:
   real-export:
@@ -25,6 +26,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
+      # Temporary, read-only diagnostic: retrieve the exact annotations of the
+      # previous Sonar check run after its analysis has already completed.
+      - name: Inspect previous Sonar annotations (no credentials logged)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SONAR_CHECK_ID: "124550565906"
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/check-runs/${SONAR_CHECK_ID}/annotations?per_page=100" \
+            --jq '.[] | {path, start_line, end_line, title, message, annotation_level}'
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:

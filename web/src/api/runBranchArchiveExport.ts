@@ -113,7 +113,6 @@ export function assertSavedBranchArchivePreview(
       return !includedBranchIds.has(revision.original_owner_branch_id) ||
         (revision.parent_revision_id !== null && !revisionIds.has(revision.parent_revision_id))
     }) ||
-    revisionsById.get(value.selected_head_revision_id)?.original_owner_branch_id !== branchId ||
     (value.viewer_branch_id !== null && !includedBranchIds.has(value.viewer_branch_id)) ||
     new Set(value.omitted_branch_ids).size !== value.omitted_branch_ids.length ||
     value.omitted_branch_ids.some(id => includedBranchIds.has(id))) {

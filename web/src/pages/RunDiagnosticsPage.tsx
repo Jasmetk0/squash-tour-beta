@@ -42,6 +42,16 @@ function artifactAvailability({
 }
 
 import { useHistoryText } from './runHistoryText'
+
+// The API combines independently fetched Run summary and SeasonState records.
+// Order is not meaningful for completed IDs, but multiplicity is: never
+// mistake a repeated ID for another completed event in a racing response.
+function sameCompletedEventIds(left: readonly string[], right: readonly string[]): boolean {
+  if (left.length !== right.length) return false
+  const sortedLeft = [...left].sort()
+  const sortedRight = [...right].sort()
+  return sortedLeft.every((id, index) => id === sortedRight[index])
+}
 export function RunDiagnosticsPage(): JSX.Element {
   const t = useHistoryText()
   const { runId = '' } = useParams()
@@ -148,18 +158,26 @@ export function RunDiagnosticsPage(): JSX.Element {
   // If a concurrent update made them inconsistent, do not link to an obsolete week.
   const seasonStateMismatch = Boolean(safeRun && (
     safeRun.season_state.season !== safeRun.run.season ||
-    safeRun.season_state.next_event_index !== safeRun.run.next_event_index
+    safeRun.season_state.next_event_index !== safeRun.run.next_event_index ||
+    !sameCompletedEventIds(safeRun.season_state.completed_event_ids, safeRun.run.completed_event_ids)
   ))
   const candidateNextEvent = safeRun?.season_state.ordered_events[safeRun.season_state.next_event_index] ?? null
   const nextEventSeasonMismatch = Boolean(candidateNextEvent && candidateNextEvent.season !== safeRun?.run.season)
-  // Different read times can leave the detail and status-summary endpoints at
-  // different seasons or progress cursors, even though their Run IDs match.
-  const runStatusProgressMismatch = Boolean(safeRun && safeStatus && (
+  // Independent reads can disagree on season/progress or an immutable Run seed.
+  // Even with the same Run ID, do not combine their stale/corrupted values.
+  const runStatusMismatch = Boolean(safeRun && safeStatus && (
     safeRun.run.season !== safeStatus.season ||
+    safeRun.run.seed !== safeStatus.seed ||
     safeRun.run.next_event_index !== safeStatus.progress.next_event_index ||
     safeRun.run.total_events !== safeStatus.progress.total_events
   ))
-  const nextPlannedEvent = seasonStateMismatch || nextEventSeasonMismatch || runStatusProgressMismatch
+  // A status and run-detail read can race across a real command. Neither
+  // progress source is authoritative for a combined summary when they disagree.
+  // Independent history queries and identity-safe inspection links remain usable.
+  const progressSourcesDisagree = seasonStateMismatch || runStatusMismatch
+  const summaryRun = progressSourcesDisagree ? null : safeRun
+  const summaryStatus = progressSourcesDisagree ? null : safeStatus
+  const nextPlannedEvent = seasonStateMismatch || nextEventSeasonMismatch || runStatusMismatch
     ? null : candidateNextEvent
   const nextPlannedWeek = nextPlannedEvent?.week ?? null
   const hasLineageChildren = (safeLineage?.lineage.children.length ?? 0) > 0
@@ -187,18 +205,18 @@ export function RunDiagnosticsPage(): JSX.Element {
       }}>{t('Refresh read-only data')}</button>
       <CurrentContextStrip
         items={[
-          { label: t('Season'), value: safeStatus?.season ?? safeRun?.run.season ?? '—' },
+          { label: t('Season'), value: summaryStatus?.season ?? summaryRun?.run.season ?? '—' },
           {
             label: t('Progress'),
-            value: safeStatus
-              ? `${safeStatus.progress.next_event_index}/${safeStatus.progress.total_events}`
-              : safeRun
-                ? `${safeRun.run.next_event_index}/${safeRun.run.total_events}`
+            value: summaryStatus
+              ? `${summaryStatus.progress.next_event_index}/${summaryStatus.progress.total_events}`
+              : summaryRun
+                ? `${summaryRun.run.next_event_index}/${summaryRun.run.total_events}`
                 : '—'
           },
           {
             label: t('Completed events'),
-            value: safeStatus?.progress.completed_event_count ?? safeRun?.run.completed_event_ids.length ?? '—'
+            value: summaryStatus?.progress.completed_event_count ?? summaryRun?.run.completed_event_ids.length ?? '—'
           }
         ]}
       />
@@ -210,8 +228,11 @@ export function RunDiagnosticsPage(): JSX.Element {
         {(seasonStateMismatch || nextEventSeasonMismatch) && (
           <p role="alert" className="error">{t('Run calendar and progress disagree. Current-week links are hidden.')}</p>
         )}
-        {runStatusProgressMismatch && (
-          <p role="alert" className="error">{t('Run detail and status summary disagree on season or progress. Current-week links are hidden.')}</p>
+        {progressSourcesDisagree && (
+          <p role="status" className="status">{t('Conflicting progress values are hidden until the run reads agree.')}</p>
+        )}
+        {runStatusMismatch && (
+          <p role="alert" className="error">{t('Run detail and status summary disagree on season, seed or progress. Current-week links are hidden.')}</p>
         )}
         {statusSummaryQuery.error && (
           <p className="error">{t('Failed to load status summary')}: {formatApiError(statusSummaryQuery.error)}</p>
@@ -222,33 +243,33 @@ export function RunDiagnosticsPage(): JSX.Element {
             <CompactSummaryCard
               items={[
                 { label: t('Run ID'), value: safeRun?.run.run_id ?? safeStatus?.run_id ?? '—' },
-                { label: t('Season'), value: safeStatus?.season ?? safeRun?.run.season ?? '—' },
-                { label: t('Seed'), value: safeStatus?.seed ?? safeRun?.run.seed ?? '—' },
+                { label: t('Season'), value: summaryStatus?.season ?? summaryRun?.run.season ?? '—' },
+                { label: t('Seed'), value: summaryStatus?.seed ?? summaryRun?.run.seed ?? '—' },
                 {
                   label: t('Progress'),
-                  value: safeStatus
-                    ? `${safeStatus.progress.next_event_index} / ${safeStatus.progress.total_events}`
-                    : safeRun
-                      ? `${safeRun.run.next_event_index} / ${safeRun.run.total_events}`
+                  value: summaryStatus
+                    ? `${summaryStatus.progress.next_event_index} / ${summaryStatus.progress.total_events}`
+                    : summaryRun
+                      ? `${summaryRun.run.next_event_index} / ${summaryRun.run.total_events}`
                       : '—'
                 },
                 {
                   label: t('Completed events'),
-                  value: safeStatus?.progress.completed_event_count ?? safeRun?.run.completed_event_ids.length ?? '—'
+                  value: summaryStatus?.progress.completed_event_count ?? summaryRun?.run.completed_event_ids.length ?? '—'
                 }
               ]}
             />
             <SummaryPills
               items={[
-                { label: t('Events'), value: safeStatus?.history_counts.events ?? (!eventsQuery.error && eventsQuery.data?.run_id === runId ? safeEvents.length : '—') },
+                { label: t('Events'), value: summaryStatus?.history_counts.events ?? (!eventsQuery.error && eventsQuery.data?.run_id === runId ? safeEvents.length : '—') },
                 {
                   label: t('Ranking snapshots'),
                   value:
-                    safeStatus?.history_counts.ranking_snapshots ?? (!rankingSnapshotsQuery.error && rankingSnapshotsQuery.data?.run_id === runId ? safeRankingSnapshots.length : '—')
+                    summaryStatus?.history_counts.ranking_snapshots ?? (!rankingSnapshotsQuery.error && rankingSnapshotsQuery.data?.run_id === runId ? safeRankingSnapshots.length : '—')
                 },
                 {
                   label: t('Race snapshots'),
-                  value: safeStatus?.history_counts.race_snapshots ?? (!raceSnapshotsQuery.error && raceSnapshotsQuery.data?.run_id === runId ? safeRaceSnapshots.length : '—')
+                  value: summaryStatus?.history_counts.race_snapshots ?? (!raceSnapshotsQuery.error && raceSnapshotsQuery.data?.run_id === runId ? safeRaceSnapshots.length : '—')
                 }
               ]}
             />

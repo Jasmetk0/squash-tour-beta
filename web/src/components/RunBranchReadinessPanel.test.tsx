@@ -178,6 +178,44 @@ describe('RunBranchReadinessPanel', () => {
     expect(within(card).queryByRole('link', { name: /Inspect authoritative simulation/ })).not.toBeInTheDocument()
   })
 
+  it.each([
+    { week_ready_for_transition: 'true' },
+    { current_slot_complete: 1 },
+    { supported_tournament_complete: null },
+    { current_slot_kind: 'invalid' },
+    { slot_ordinal: -1 },
+    { position_fingerprint: 'short' },
+    { position_fingerprint: 123 },
+    { terminal_sporting_fingerprint: 'short' }
+  ])('blocks readiness on invalid position invariant: %j', async (changed) => {
+    api.getAuthoritativeSimulationPosition.mockImplementation((_runId: string, branchId: string) =>
+      Promise.resolve({ ...pos(branchId), ...changed } as any)
+    )
+    render([baseBranch])
+    const card = await screen.findByLabelText('Operating status for original')
+    expect(await within(card).findByText(/Legacy simulation position does not match this Run/)).toBeInTheDocument()
+    expect(within(card).queryByRole('link', { name: /Inspect authoritative simulation/ })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    { revision_branch_id: 'foreign' },
+    { content_hash: 'short' },
+    { content_hash_algorithm: null }
+  ])('blocks readiness on invalid revision invariant: %j', async (changed) => {
+    api.getSavedRevision.mockImplementation((_runId: string, branchId: string) =>
+      Promise.resolve({ ...revision(branchId === 'original' ? baseBranch : alternative), ...changed } as any)
+    )
+    render([baseBranch])
+    const card = await screen.findByLabelText('Operating status for original')
+    expect(await within(card).findByText(/Saved revision head identity or head status is inconsistent/)).toBeInTheDocument()
+    expect(within(card).queryByRole('link', { name: /Inspect authoritative simulation/ })).not.toBeInTheDocument()
+  })
+
+  it('deduplicates branches with the same identity', async () => {
+    render([baseBranch, baseBranch])
+    expect(await screen.findAllByLabelText('Operating status for original')).toHaveLength(1)
+  })
+
   it('shows the unresolved application-validation gate only at an Entry slot', async () => {
     api.getAuthoritativeSimulationPosition.mockImplementation((_runId: string, branchId: string) =>
       Promise.resolve({ ...pos(branchId), current_slot_kind: 'entry' })

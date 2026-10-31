@@ -123,7 +123,17 @@ function validPosition(
     value.current_week.season_index >= 0 && value.current_week.season_index < 50 &&
     Number.isInteger(value.current_week?.week) &&
     value.current_week.week >= 1 && value.current_week.week <= 61 &&
-    Array.isArray(value.transition_blockers)
+    Array.isArray(value.transition_blockers) &&
+    typeof value.week_ready_for_transition === 'boolean' &&
+    typeof value.current_slot_complete === 'boolean' &&
+    typeof value.supported_tournament_complete === 'boolean' &&
+    (value.current_slot_kind === 'entry' || value.current_slot_kind === 'match' || value.current_slot_kind === null) &&
+    (value.slot_ordinal === null || (Number.isInteger(value.slot_ordinal) && value.slot_ordinal! >= 0)) &&
+    Array.isArray(value.unresolved_group_ids) &&
+    Array.isArray(value.eligible_match_ids) &&
+    Array.isArray(value.blocked_match_ids) &&
+    typeof value.position_fingerprint === 'string' && value.position_fingerprint.length === 64 &&
+    (value.terminal_sporting_fingerprint === null || (typeof value.terminal_sporting_fingerprint === 'string' && value.terminal_sporting_fingerprint.length === 64))
   )
 }
 
@@ -135,8 +145,10 @@ function validRevision(
 ): value is SavedRevisionHistoryDetail {
   return Boolean(
     value && value.run_id === runId && value.branch_id === branchId &&
-    value.revision_id === revisionId && value.is_branch_head &&
-    value.content_hash && value.content_hash_algorithm
+    value.revision_id === revisionId && value.revision_branch_id === branchId &&
+    value.is_branch_head &&
+    typeof value.content_hash === 'string' && value.content_hash.length === 64 &&
+    typeof value.content_hash_algorithm === 'string'
   )
 }
 
@@ -178,8 +190,12 @@ function readinessReason(run: RunContainer, branch: RunBranch, locale: 'cs' | 'e
 export function RunBranchReadinessPanel({ run, branches, locale = 'en' }: BranchReadinessPanelProps): JSX.Element {
   const l = content[locale]
   const client = useQueryClient()
+  const validBranches = branches.filter((branch, index, self) =>
+    typeof branch.branch_id === 'string' && branch.branch_id.length > 0 &&
+    index === self.findIndex(b => b.branch_id === branch.branch_id)
+  )
   const positions = useQueries({
-    queries: branches.map(branch => ({
+    queries: validBranches.map(branch => ({
       queryKey: positionKey(run.run_id, branch.branch_id),
       queryFn: () => getAuthoritativeSimulationPosition(run.run_id, branch.branch_id),
       enabled: branch.run_id === run.run_id && Boolean(branch.saved_head_revision_id),
@@ -187,7 +203,7 @@ export function RunBranchReadinessPanel({ run, branches, locale = 'en' }: Branch
     }))
   })
   const revisions = useQueries({
-    queries: branches.map(branch => ({
+    queries: validBranches.map(branch => ({
       queryKey: revisionKey(run.run_id, branch.branch_id, branch.saved_head_revision_id ?? null),
       queryFn: () => getSavedRevision(run.run_id, branch.branch_id, branch.saved_head_revision_id!),
       enabled: branch.run_id === run.run_id && Boolean(branch.saved_head_revision_id),
@@ -195,7 +211,7 @@ export function RunBranchReadinessPanel({ run, branches, locale = 'en' }: Branch
     }))
   })
   const gates = useQueries({
-    queries: branches.map((branch, index) => {
+    queries: validBranches.map((branch, index) => {
       const position = positions[index]?.data
       return {
         queryKey: entryGateKey(run.run_id, branch.branch_id),
@@ -217,8 +233,8 @@ export function RunBranchReadinessPanel({ run, branches, locale = 'en' }: Branch
           client.invalidateQueries({ queryKey: ['admin-branch-operational-entry-gate', run.run_id] })
         ])
       }}>{l.refresh}</button>
-      {branches.length === 0 && <EmptyState message={l.noBranches} />}
-      {branches.map((branch, index) => {
+      {validBranches.length === 0 && <EmptyState message={l.noBranches} />}
+      {validBranches.map((branch, index) => {
         const positionQuery = positions[index]
         const revisionQuery = revisions[index]
         const gateQuery = gates[index]

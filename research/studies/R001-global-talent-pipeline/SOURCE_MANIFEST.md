@@ -15,3 +15,4 @@
 **Research status:** `RESEARCHED` (received and archived); **NOT `VERIFIED`**.
 
 **Updated after independent Deep Research:** the selected studies by Güllich et al. (2023), Güllich & Barth (2026), Rossing et al. (2018) and the De Bosscher et al. journal record were spot-checked against original publication records. This does not certify all citations or make any candidate canonical.
+

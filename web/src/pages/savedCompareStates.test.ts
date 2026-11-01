@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest'
-import {projectSavedStateComparison,validateReachableCompareHistory, projectCrossSavedStateComparison} from './savedCompareStates'
-import type {SavedRevisionHistoryEntry,SavedRevisionComparison,SavedRevisionHistoryPageResponse, CrossSavedRevisionComparison, CrossSavedRevisionComparisonSource} from '../api/types'
+import {projectSavedStateComparison,validateReachableCompareHistory} from './savedCompareStates'
+import type {SavedRevisionHistoryEntry,SavedRevisionComparison,SavedRevisionHistoryPageResponse} from '../api/types'
 
 const item=(id:string,sequence:number,owner='original'):SavedRevisionHistoryEntry=>({
   revision_id:id,sequence,revision_branch_id:owner,
@@ -20,17 +20,6 @@ const page=(items:SavedRevisionHistoryEntry[],cursor:number|null=null):
 const compare=():SavedRevisionComparison=>({
   run_id:'run',branch_id:'fork',saved_head_revision_id:'rev-3',
   from_revision:a,to_revision:b,
-  run_changes:{viewer_branch_id:{before:'origin',after:'fork'}},
-  branch_changes:{display_name:{before:'First',after:'Second'}},
-  components:[
-    {component_key:'calendar',status:'changed',before_fingerprint:'old',after_fingerprint:'new'},
-    {component_key:'ranking',status:'unchanged',before_fingerprint:'same',after_fingerprint:'same'},
-    {component_key:'player',status:'added',before_fingerprint:null,after_fingerprint:'new'}
-  ]
-})
-const crossCompare=():CrossSavedRevisionComparison=>({
-  from_source: {run_id: 'run1', branch_id: 'branch1', saved_head_revision_id: 'rev-2', revision: a},
-  to_source: {run_id: 'run2', branch_id: 'branch2', saved_head_revision_id: 'rev-4', revision: b},
   run_changes:{viewer_branch_id:{before:'origin',after:'fork'}},
   branch_changes:{display_name:{before:'First',after:'Second'}},
   components:[
@@ -99,20 +88,6 @@ describe('Saved Compare A/B source validation',()=>{
     expect(view.rows.find(x=>x.id==='component:ranking')?.status).toBe('unchanged')
     expect(view.rows.find(x=>x.id==='component:player')?.before).toBeNull()
   })
-  it('preserves canonical A→B differences for cross-run compare',()=>{
-    const view=projectCrossSavedStateComparison(crossCompare())!
-    expect(view.changed).toBe(4)
-    expect(view.unchanged).toBe(1)
-    expect(view.runChanges).toBe(1)
-    expect(view.branchChanges).toBe(1)
-    expect(view.components).toBe(3)
-    expect(view.rows.find(x=>x.id==='run:viewer_branch_id')).toEqual({
-      id:'run:viewer_branch_id',section:'run',key:'viewer_branch_id',
-      status:'changed',before:'origin',after:'fork'
-    })
-    expect(view.rows.find(x=>x.id==='component:ranking')?.status).toBe('unchanged')
-    expect(view.rows.find(x=>x.id==='component:player')?.before).toBeNull()
-  })
   it('fails closed on wrong Run, same state, cross-history hash or altered original owner',()=>{
     expect(projectSavedStateComparison({...compare(),run_id:'foreign'},'run','fork',a,b,'rev-3')).toBeNull()
     expect(projectSavedStateComparison(compare(),'run','fork',a,a,'rev-3')).toBeNull()
@@ -121,13 +96,6 @@ describe('Saved Compare A/B source validation',()=>{
     expect(projectSavedStateComparison({...compare(),from_revision:{...a,revision_branch_id:'fork'}},
       'run','fork',a,b,'rev-3')).toBeNull()
     expect(projectSavedStateComparison(compare(),'run','fork',a,b,'stale-head')).toBeNull()
-  })
-  it('fails cross compare with invalid sources', ()=>{
-      const cross = crossCompare()
-      const invalid = {...cross, from_source: {...cross.from_source, run_id: ''}}
-      expect(projectCrossSavedStateComparison(invalid)).toBeNull()
-      const invalid2 = {...cross, to_source: {...cross.to_source, branch_id: ''}}
-      expect(projectCrossSavedStateComparison(invalid2)).toBeNull()
   })
   it('rejects component status claims contradicted by their fingerprints',()=>{
     const invalid=[

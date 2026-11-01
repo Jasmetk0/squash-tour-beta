@@ -1,103 +1,92 @@
+"""ASGI/SQLite integration through the actual app and public Run/Saved boundaries."""
 import pytest
-from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 
-from beta_engine.api.routers.admin_saved_cross_compare import router
-from beta_engine.api.deps import get_run_cross_saved_comparison_service
-from fastapi import FastAPI
-from beta_engine.infrastructure.db.repositories import (
-    SavedRevisionHistoryNotFoundError,
-    SavedRevisionHistoryConflictError
-)
+from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
+from beta_engine.main import create_app
+from tests.support.cross_run_compare import create, params, snapshot
 
-app = FastAPI()
-app.include_router(router)
+pytestmark = pytest.mark.pr_critical
 
-def test_compare_endpoint_success():
-    mock_service = MagicMock()
-    mock_comparison = MagicMock()
-    mock_comparison.from_source.run_id = "run-a"
-    mock_comparison.from_source.branch_id = "branch-a"
-    mock_comparison.from_source.saved_head_revision_id = "head-a"
-    mock_comparison.from_source.revision.revision_id = "rev-a"
-    mock_comparison.from_source.revision.branch_id = "branch-a"
-    mock_comparison.from_source.revision.sequence = 1
-    mock_comparison.from_source.revision.parent_revision_id = None
-    mock_comparison.from_source.revision.content_hash_algorithm = "sha256"
-    mock_comparison.from_source.revision.content_hash = "hash-a"
 
-    mock_comparison.to_source.run_id = "run-b"
-    mock_comparison.to_source.branch_id = "branch-b"
-    mock_comparison.to_source.saved_head_revision_id = "head-b"
-    mock_comparison.to_source.revision.revision_id = "rev-b"
-    mock_comparison.to_source.revision.branch_id = "branch-b"
-    mock_comparison.to_source.revision.sequence = 1
-    mock_comparison.to_source.revision.parent_revision_id = None
-    mock_comparison.to_source.revision.content_hash_algorithm = "sha256"
-    mock_comparison.to_source.revision.content_hash = "hash-b"
+@pytest.fixture
+def cross_client(tmp_path):
+    database = tmp_path / "cross-saved.db"
+    app = create_app(database_url=f"sqlite:///{database}")
+    with TestClient(app) as client:
+        yield client, app, database
 
-    mock_comparison.run_changes = {}
-    mock_comparison.branch_changes = {}
-    mock_comparison.components = []
 
-    mock_service.compare.return_value = mock_comparison
+def test_cross_sources_same_source_swap_and_read_only(cross_client):
+    client, _app, path = cross_client
+    a, b = create(client, "Source A"), create(client, "Source B")
+    before = snapshot(path)
+    result = client.get("/admin/cross-run-compare", params=params(a, b))
+    assert result.status_code == 200, result.text
+    value = result.json()
+    assert value["from_source"]["run_id"] == a[0]
+    assert value["to_source"]["run_id"] == b[0]
+    assert value["from_source"]["revision"]["revision_id"] == a[2]
+    assert value["from_source"]["revision"]["is_shared_revision"] is False
+    reverse = client.get("/admin/cross-run-compare", params=params(b, a)).json()
+    assert reverse["from_source"] == value["to_source"]
+    for key, change in value["run_changes"].items():
+        assert reverse["run_changes"][key]["before"] == change["after"]
+        assert reverse["run_changes"][key]["after"] == change["before"]
+    same = client.get("/admin/cross-run-compare", params=params(a, a)).json()
+    assert same["run_changes"] == same["branch_changes"] == {}
+    assert all(c["status"] == "unchanged" for c in same["components"])
+    assert snapshot(path) == before
 
-    app.dependency_overrides[get_run_cross_saved_comparison_service] = lambda: mock_service
 
-    client = TestClient(app)
-    response = client.get(
-        "/admin/cross-run-compare",
-        params={
-            "run_a_id": "run-a",
-            "branch_a_id": "branch-a",
-            "revision_a_id": "rev-a",
-            "run_b_id": "run-b",
-            "branch_b_id": "branch-b",
-            "revision_b_id": "rev-b",
-        }
-    )
+@pytest.mark.parametrize("side", ["a", "b"])
+def test_foreign_revision_and_wrong_branch_are_404_without_mutation(cross_client, side):
+    client, _app, path = cross_client
+    a, b = create(client, "A"), create(client, "B")
+    query = params(a, b)
+    before = snapshot(path)
+    query[f"revision_{side}_id"] = b[2] if side == "a" else a[2]
+    assert client.get("/admin/cross-run-compare", params=query).status_code == 404
+    query = params(a, b)
+    query[f"branch_{side}_id"] = b[1] if side == "a" else a[1]
+    assert client.get("/admin/cross-run-compare", params=query).status_code == 404
+    assert snapshot(path) == before
 
-    assert response.status_code == 200
-    data = response.json()
-    assert data["from_source"]["run_id"] == "run-a"
-    assert data["to_source"]["run_id"] == "run-b"
 
-def test_compare_endpoint_not_found():
-    mock_service = MagicMock()
-    mock_service.compare.side_effect = SavedRevisionHistoryNotFoundError("Not found")
+@pytest.mark.parametrize("side", ["a", "b"])
+def test_corruption_rejected_after_warming_real_validation(cross_client, side):
+    client, app, path = cross_client
+    a, b = create(client, "A"), create(client, "B")
+    assert client.get("/admin/cross-run-compare", params=params(a, b)).status_code == 200
+    with app.state.runtime.repository._session_factory.begin() as session:
+        row = session.get(BranchSavedRevisionModel, a[2] if side == "a" else b[2])
+        row.change_summary_json = '{"tampered":true}'
+    damaged = snapshot(path)
+    response = client.get("/admin/cross-run-compare", params=params(a, b))
+    assert response.status_code == 409, response.text
+    assert snapshot(path) == damaged
 
-    app.dependency_overrides[get_run_cross_saved_comparison_service] = lambda: mock_service
 
-    client = TestClient(app)
-    response = client.get(
-        "/admin/cross-run-compare",
-        params={
-            "run_a_id": "run-a",
-            "branch_a_id": "branch-a",
-            "revision_a_id": "rev-a",
-            "run_b_id": "run-b",
-            "branch_b_id": "branch-b",
-            "revision_b_id": "rev-b",
-        }
-    )
-    assert response.status_code == 404
+def test_shared_ancestor_requires_reachable_selected_branch(cross_client):
+    client, _app, path = cross_client
+    a, b = create(client, "A"), create(client, "B")
+    response = client.post(f"/run-containers/{a[0]}/branches", json={
+        "source_branch_id": a[1], "source_saved_revision_id": a[2]})
+    assert response.status_code == 201, response.text
+    fork = response.json()
+    shared = (a[0], fork["branch_id"], a[2])
+    before = snapshot(path)
+    value = client.get("/admin/cross-run-compare", params=params(shared, b)).json()
+    assert value["from_source"]["branch_id"] == fork["branch_id"]
+    assert value["from_source"]["revision"]["revision_branch_id"] == a[1]
+    assert value["from_source"]["revision"]["is_shared_revision"] is True
+    assert snapshot(path) == before
 
-def test_compare_endpoint_conflict():
-    mock_service = MagicMock()
-    mock_service.compare.side_effect = SavedRevisionHistoryConflictError("Conflict")
 
-    app.dependency_overrides[get_run_cross_saved_comparison_service] = lambda: mock_service
-
-    client = TestClient(app)
-    response = client.get(
-        "/admin/cross-run-compare",
-        params={
-            "run_a_id": "run-a",
-            "branch_a_id": "branch-a",
-            "revision_a_id": "rev-a",
-            "run_b_id": "run-b",
-            "branch_b_id": "branch-b",
-            "revision_b_id": "rev-b",
-        }
-    )
-    assert response.status_code == 409
+def test_query_validation_and_missing_scope(cross_client):
+    client, _app, _path = cross_client
+    a, b = create(client, "A"), create(client, "B")
+    query = params(a, b)
+    for field in query:
+        assert client.get("/admin/cross-run-compare", params={**query, field: ""}).status_code == 422
+    assert client.get("/admin/cross-run-compare", params={**query, "run_a_id": "not-found"}).status_code == 404

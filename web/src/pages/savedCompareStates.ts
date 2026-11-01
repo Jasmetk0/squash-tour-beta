@@ -1,7 +1,7 @@
 /** Exact Saved Revision A/B comparison presentation. This NEVER reconstructs
  * players, matches or rankings from opaque component hashes. */
 import type {
-  SavedRevisionHistoryEntry,SavedRevisionComparison,SavedRevisionHistoryPageResponse,CrossSavedRevisionComparison
+  SavedRevisionHistoryEntry,SavedRevisionComparison,SavedRevisionHistoryPageResponse
 } from '../api/types'
 
 export type CompareRow={
@@ -72,7 +72,27 @@ export function validateReachableCompareHistory(
   // HEAD must match the pagination authority, not every revision's owner.
   return {entries:[...entries].sort((a,b)=>a.sequence-b.sequence),head}
 }
-function checkComponentValidity(data: SavedRevisionComparison | CrossSavedRevisionComparison): CompareResult | null {
+export function projectSavedStateComparison(
+  data:SavedRevisionComparison,runId:string,branchId:string,
+  a:SavedRevisionHistoryEntry,b:SavedRevisionHistoryEntry,
+  knownHead:string
+):CompareResult|null{
+  if(data.run_id!==runId||data.branch_id!==branchId||
+    data.saved_head_revision_id!==knownHead||
+    !a.revision_id||!b.revision_id||a.revision_id===b.revision_id)return null
+  const same=(x:SavedRevisionHistoryEntry,y:SavedRevisionHistoryEntry)=>
+    x.revision_id===y.revision_id&&x.sequence===y.sequence&&
+    x.content_hash===y.content_hash&&x.content_hash_algorithm===y.content_hash_algorithm&&
+    x.revision_branch_id===y.revision_branch_id&&
+    x.parent_revision_id===y.parent_revision_id
+  if(!same(data.from_revision,a)||!same(data.to_revision,b))return null
+  return projectSavedComparisonRows(data)
+}
+
+/** Shared presentation guard; callers must independently verify their source identities. */
+export function projectSavedComparisonRows(
+  data:Pick<SavedRevisionComparison,'run_changes'|'branch_changes'|'components'>
+):CompareResult|null{
   const validMap=(map:unknown):map is Record<string,{before:unknown;after:unknown}>=>
     !!map&&typeof map==='object'&&!Array.isArray(map)&&
     Object.values(map).every(x=>!!x&&typeof x==='object'&&!Array.isArray(x)&&
@@ -85,7 +105,7 @@ function checkComponentValidity(data: SavedRevisionComparison | CrossSavedRevisi
   ] as const){
     for(const key of Object.keys(map).sort()){
       if(!key)return null
-      rows.push({id:section+':'+key,section: section as 'run'|'branch',key,status:'changed',
+      rows.push({id:section+':'+key,section,key,status:'changed',
         before:map[key].before,after:map[key].after})
     }
   }
@@ -107,7 +127,7 @@ function checkComponentValidity(data: SavedRevisionComparison | CrossSavedRevisi
     // Do not infer component payloads from fingerprints.
     ids.add(c.component_key)
     rows.push({id:'component:'+c.component_key,section:'component',
-      key:c.component_key,status:c.status as 'added'|'removed'|'changed'|'unchanged',
+      key:c.component_key,status:c.status,
       before:c.before_fingerprint,after:c.after_fingerprint})
   }
   const changed=rows.filter(row=>row.status!=='unchanged').length
@@ -115,29 +135,4 @@ function checkComponentValidity(data: SavedRevisionComparison | CrossSavedRevisi
     runChanges:Object.keys(data.run_changes).length,
     branchChanges:Object.keys(data.branch_changes).length,
     components:data.components.length}
-}
-
-export function projectCrossSavedStateComparison(
-  data:CrossSavedRevisionComparison
-):CompareResult|null{
-  if(!data.from_source.run_id || !data.from_source.branch_id || !data.from_source.saved_head_revision_id || !data.from_source.revision) return null
-  if(!data.to_source.run_id || !data.to_source.branch_id || !data.to_source.saved_head_revision_id || !data.to_source.revision) return null
-  return checkComponentValidity(data)
-}
-
-export function projectSavedStateComparison(
-  data:SavedRevisionComparison,runId:string,branchId:string,
-  a:SavedRevisionHistoryEntry,b:SavedRevisionHistoryEntry,
-  knownHead:string
-):CompareResult|null{
-  if(data.run_id!==runId||data.branch_id!==branchId||
-    data.saved_head_revision_id!==knownHead||
-    !a.revision_id||!b.revision_id||a.revision_id===b.revision_id)return null
-  const same=(x:SavedRevisionHistoryEntry,y:SavedRevisionHistoryEntry)=>
-    x.revision_id===y.revision_id&&x.sequence===y.sequence&&
-    x.content_hash===y.content_hash&&x.content_hash_algorithm===y.content_hash_algorithm&&
-    x.revision_branch_id===y.revision_branch_id&&
-    x.parent_revision_id===y.parent_revision_id
-  if(!same(data.from_revision,a)||!same(data.to_revision,b))return null
-  return checkComponentValidity(data)
 }

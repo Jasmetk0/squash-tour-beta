@@ -1,8 +1,8 @@
 # R001 — Global participation and talent pipeline
 
-**Prepared:** 2026-10-31
-**Research status:** RESEARCHED (initial Gemini report and two audits archived; NOT independently VERIFIED or approved)
-**Scope:** cross-version research; can inform current global squash world and later optional Run scenarios, but commits nothing to pre-alpha
+**Prepared:** 2026-10-31  
+**Research status:** RESEARCHED (initial Gemini report and two audits archived; NOT independently VERIFIED or approved)  
+**Scope:** cross-version research; can inform current global squash world and later optional Run scenarios, but commits nothing to pre-alpha  
 **Researcher:** Gemini 4 Argon / Deep Research candidate; independent review required
 
 ## Goal

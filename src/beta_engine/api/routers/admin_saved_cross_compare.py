@@ -1,40 +1,38 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from typing import Annotated, Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
-from beta_engine.api.deps import get_run_cross_saved_comparison_service
+from beta_engine.api.deps import get_runtime
+from beta_engine.api.schemas import SavedRevisionHistoryEntryResponse
 from beta_engine.application.run_cross_saved_comparison import (
-    RunCrossSavedComparisonService,
     CrossSavedRevisionComparison,
-    CrossSavedRevisionComparisonSource
+    CrossSavedRevisionComparisonSource,
+    RunCrossSavedComparisonService,
 )
 from beta_engine.infrastructure.db.repositories import (
-    SavedRevisionHistoryNotFoundError,
     SavedRevisionHistoryConflictError,
+    SavedRevisionHistoryNotFoundError,
 )
 
 router = APIRouter(prefix="/admin", tags=["admin", "runs"])
 
 
-class CrossSavedRevisionHistoryEntryResponse(BaseModel):
-    revision_id: str
-    revision_branch_id: str
-    sequence: int
-    parent_revision_id: str | None
-    is_branch_head: bool
-    content_hash_algorithm: str
-    content_hash: str
+def get_run_cross_saved_comparison_service(request: Request) -> RunCrossSavedComparisonService:
+    return RunCrossSavedComparisonService(get_runtime(request).repository)
+
 
 
 class CrossSavedRevisionComparisonSourceResponse(BaseModel):
     run_id: str
     branch_id: str
     saved_head_revision_id: str
-    revision: CrossSavedRevisionHistoryEntryResponse
+    revision: SavedRevisionHistoryEntryResponse
 
 
 class CrossSavedRevisionComponentComparisonResponse(BaseModel):
     component_key: str
-    status: str
+    status: Literal["added", "removed", "changed", "unchanged"]
     before_fingerprint: str | None
     after_fingerprint: str | None
 
@@ -54,12 +52,17 @@ def _map_source(source: CrossSavedRevisionComparisonSource) -> CrossSavedRevisio
         run_id=source.run_id,
         branch_id=source.branch_id,
         saved_head_revision_id=source.saved_head_revision_id,
-        revision=CrossSavedRevisionHistoryEntryResponse(
+        revision=SavedRevisionHistoryEntryResponse(
             revision_id=source.revision.revision_id,
             revision_branch_id=source.revision.branch_id,
             sequence=source.revision.sequence,
             parent_revision_id=source.revision.parent_revision_id,
             is_branch_head=source.revision.revision_id == source.saved_head_revision_id,
+            is_shared_revision=source.revision.branch_id != source.branch_id,
+            kind=source.revision.kind,
+            payload_schema_version=source.revision.payload_schema_version,
+            change_summary=source.revision.change_summary,
+            created_at=source.revision.created_at,
             content_hash_algorithm=source.revision.content_hash_algorithm,
             content_hash=source.revision.content_hash,
         ),
@@ -91,15 +94,13 @@ def _map_response(
     response_model=CrossSavedRevisionComparisonResponse,
 )
 def compare_cross_saved_revisions(
+    service: Annotated[RunCrossSavedComparisonService, Depends(get_run_cross_saved_comparison_service)],
     run_a_id: str = Query(..., min_length=1, max_length=128),
     branch_a_id: str = Query(..., min_length=1, max_length=128),
     revision_a_id: str = Query(..., min_length=1, max_length=128),
     run_b_id: str = Query(..., min_length=1, max_length=128),
     branch_b_id: str = Query(..., min_length=1, max_length=128),
     revision_b_id: str = Query(..., min_length=1, max_length=128),
-    service: RunCrossSavedComparisonService = Depends(
-        get_run_cross_saved_comparison_service
-    ),
 ) -> CrossSavedRevisionComparisonResponse:
     try:
         return _map_response(

@@ -1,8 +1,8 @@
 # R001 — reviewed synthesis and handoff to ChatGPT Work
 
-**Date:** 2026-10-31
-**Research status:** **RESEARCHED**, **not VERIFIED** and **not owner-decided**
-**Scope:** design/evidence review of globally popular fictional men's squash; relevant beyond pre-alpha
+**Date:** 2026-10-31  
+**Research status:** **RESEARCHED**, **not VERIFIED** and **not owner-decided**  
+**Scope:** design/evidence review of globally popular fictional men's squash; relevant beyond pre-alpha  
 **Implementation:** none; no tests run, no parameter calibration performed, no Master change
 
 ## Source provenance and limitations

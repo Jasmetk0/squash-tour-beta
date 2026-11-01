@@ -1,11 +1,11 @@
 # RXXX — Research title
 
-**Date:** YYYY-MM-DD
-**Research status:** PLANNED / RESEARCHED / VERIFIED / OWNER DECIDED / CLOSED
-**Version relevance:** pre-alpha / alpha / beta / 1.0 / later (proposed only; distinguish decided scope)
-**Prepared by:** researcher/model and mode if relevant
-**Reviewed by:** unreviewed / reviewer and date
-**Sources cut-off:** YYYY-MM-DD
+**Date:** YYYY-MM-DD  
+**Research status:** PLANNED / RESEARCHED / VERIFIED / OWNER DECIDED / CLOSED  
+**Version relevance:** pre-alpha / alpha / beta / 1.0 / later (proposed only; distinguish decided scope)  
+**Prepared by:** researcher/model and mode if relevant  
+**Reviewed by:** unreviewed / reviewer and date  
+**Sources cut-off:** YYYY-MM-DD  
 **Canonical references:** precise Master sections and existing docs
 
 ## Question and scope

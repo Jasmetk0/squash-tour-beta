@@ -9,8 +9,6 @@ from uuid import uuid4
 from fastapi import Request
 
 from beta_engine.application.api_services import SimulationApiService
-from beta_engine.application.run_cross_saved_comparison import RunCrossSavedComparisonService
-from beta_engine.application.api_services import SimulationApiService
 from beta_engine.application.config_validation_service import ConfigValidationService
 from beta_engine.application.category_service import CategoryService
 from beta_engine.application.calendar_template_service import CalendarTemplateService
@@ -598,9 +596,3 @@ def get_tour_seasons_validation_service(request: Request) -> TourSeasonsValidati
         tournament_service=get_tournament_master_service(request),
         season_template_service=get_season_template_service(request),
     )
-
-def get_run_cross_saved_comparison_service(
-    request: Request,
-) -> RunCrossSavedComparisonService:
-    runtime = get_runtime(request)
-    return RunCrossSavedComparisonService(repository=runtime.repository)

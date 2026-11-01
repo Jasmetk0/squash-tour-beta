@@ -1,8 +1,8 @@
 # R001 — Independent research audit: findings and decision boundaries
 
-**Date:** 2026-10-31
-**Source:** user-supplied 31-page ChatGPT Deep Research report, [text-only archive](CHATGPT_INDEPENDENT_AUDIT_01_TEXT_EXTRACT.txt)
-**Status:** **RESEARCHED**; selected scientific sources independently checked, **NOT comprehensively VERIFIED**, **NOT owner-decided**
+**Date:** 2026-10-31  
+**Source:** user-supplied 31-page ChatGPT Deep Research report, [text-only archive](CHATGPT_INDEPENDENT_AUDIT_01_TEXT_EXTRACT.txt)  
+**Status:** **RESEARCHED**; selected scientific sources independently checked, **NOT comprehensively VERIFIED**, **NOT owner-decided**  
 **Scope:** scientific and methodological review of Gemini R001; **no simulation execution or product change**
 
 ## Executive finding

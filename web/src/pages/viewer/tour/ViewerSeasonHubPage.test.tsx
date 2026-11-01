@@ -3,19 +3,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveProductRunId } from '../../../test/viewerTestUtils'
 import { ViewerSeasonHubPage } from './ViewerSeasonHubPage'
+import { LanguageProvider } from '../../../i18n/LanguageContext'
 
 const api = vi.hoisted(() => ({
   getViewerRunCalendar: vi.fn(),
   getViewerTournamentHistory: vi.fn(),
-  getViewerFinalsRace: vi.fn()
+  getViewerFinalsRace: vi.fn(),
+  getViewerOfficialRunContext: vi.fn()
 }))
 
 vi.mock('../../../api/client', () => api)
+vi.mock('../../../api/viewerSignedSeason', () => ({
+  listViewerSignedSeasons: vi.fn().mockRejectedValue(new Error('No native signed season')),
+  readViewerSignedSeason: vi.fn()
+}))
 
 describe('ViewerSeasonHubPage canonical tour authority', () => {
   beforeEach(() => {
     clearViewerStorage()
     vi.clearAllMocks()
+    api.getViewerOfficialRunContext.mockResolvedValue({ product_run_id: 'run alpha', official_branch_id: 'branch-tour' })
     api.getViewerRunCalendar.mockResolvedValue({
       schema_version: 'viewer_run_calendar.v1',
       product_run_id: 'run alpha',
@@ -51,14 +58,14 @@ describe('ViewerSeasonHubPage canonical tour authority', () => {
   })
 
   it('shows Product Run empty state when none is selected', () => {
-    renderWithViewerProviders(<ViewerSeasonHubPage />)
+    renderWithViewerProviders(<LanguageProvider><ViewerSeasonHubPage /></LanguageProvider>)
     expect(screen.getByText('No Product Run is selected yet.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
   it('renders canonical tour summary and Product Run links', async () => {
     setViewerActiveProductRunId('run alpha')
-    renderWithViewerProviders(<ViewerSeasonHubPage />)
+    renderWithViewerProviders(<LanguageProvider><ViewerSeasonHubPage /></LanguageProvider>)
 
     expect(await screen.findByText('Season Hub summary')).toBeInTheDocument()
     expect(api.getViewerRunCalendar).toHaveBeenCalledWith('run alpha')

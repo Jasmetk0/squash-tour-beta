@@ -32,7 +32,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**69 identities** across 2026 ATP Tour fixtures and selected older masters.
+**75 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -297,3 +297,48 @@ categories (1990–2022) are still *not exhaustively reconstructed*. Their
 annual category references must not be marketed as historical complete
 seasons. Full historically accurate pre-alpha consumption additionally
 requires the semantic Package registry/Run adapters and explicit Save.
+
+## 2022 pandemic-adjusted ATP Tour — confirmed exceptions, partial ordinary lower-tier roster
+
+Official [ATP press release of 21 July 2022](https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf)
+explicitly documents four **cancelled** tournaments on the China swing:
+Shanghai (Masters 1000), Beijing (500), Chengdu (250), and Zhuhai
+(250, now tracked via the continuing `hangzhou` identity after the
+2024 Zhuhai→Hangzhou relocation).
+
+The same release confirms six **single-year 2022 ATP 250 licences**:
+San Diego, Seoul, Tel Aviv, Florence, Gijón and Naples. We represent
+each as its own Series identity with only 2022 effective, not as
+permanent competitions or phantom 2023 editions. The corresponding
+played events are also documented in the
+[ATP 2022 results archive](https://www.atptour.com/en/scores/results-archive?year=2022).
+
+The 2022 **Astana Open was elevated to ATP 500**, returning to ATP 250
+in 2023. Its separate permanent tournament membership was transferred
+from St. Petersburg. As the pre-2022 Astana editions had one-year
+licences, we preserve the historical licence ancestry explicitly:
+
+- `st_petersburg.licence_lineage.successor_source_entity_id = almaty`
+- `almaty.licence_lineage.predecessor_source_entity_id = st_petersburg`
+- Transfer year: **2022**, with the ATP official press release as evidence.
+
+These legacy technical identities are **not yet consolidated into a
+single source identity**, so a future full licence-continuity audit
+must resolve the precise pre-2022 boundary before promoting the
+source set into a production Series registry. The venue continuity
+across **Astana 2022–23 → Almaty 2024** is already represented.
+
+**2022 source counts must not be confused with played events:** the
+year-resolved state contains **14 ATP 500 category-effective Series
+identities**, but Beijing is marked as **cancelled**, giving 13
+actually played ATP 500 events. The nine top-tier Masters Series
+identities likewise include **cancelled Shanghai**, yielding only
+eight played Masters 1000 tournaments that year. The remaining
+ATP 250 year roster for 2022 is **not complete**.
+
+By contrast, the 2023–2025 year-specific Masters/500/250 category
+rosters have been reconciled to published ATP results, not merely
+copied from prospective season announcements. Distinguishing
+(1) source identity, (2) scheduled/cancelled annual category and
+(3) a genuinely played Tournament Edition is essential to preserving
+historical realism.

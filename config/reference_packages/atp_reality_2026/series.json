@@ -2153,6 +2153,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2025,
+            "to": 2025,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/marseille-lyon-relocation",
+            "notes": "Same licensed event hosted in Marseille before the move; preserve this series identity across venue relocation"
+          },
+          {
             "from": 2026,
             "to": 2026,
             "category_id": "atp_250",
@@ -2161,7 +2168,14 @@
           }
         ],
         "history_scope": "identified_years_only_not_all_editions",
-        "identity_review_note": "Marseille ATP 250 tournament relocated to Lyon for 2026; older Marseille event continuity requires source identity link."
+        "identity_review_note": "Same ATP tournament licence relocated Marseille to Lyon in 2026; continuity preserved; pre-2025 archive remains unverified.",
+        "historical_location_change": {
+          "from_year": 2025,
+          "previous_host_city": "Marseille",
+          "moved_in": 2026,
+          "new_host_city": "Lyon",
+          "source_url": "https://www.atptour.com/en/news/marseille-lyon-relocation"
+        }
       },
       "references": [
         {
@@ -2638,45 +2652,6 @@
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "tennis_masters_series",
-          "expected_entity_kind": "tennis.category.reference.v1",
-          "minimum_schema_version": 1
-        }
-      ],
-      "valid": true
-    },
-    {
-      "source_entity_id": "marseille_open13",
-      "entity_kind": "tennis.series.reference.v1",
-      "entity_schema_version": 1,
-      "scope": "tennis.series.reference.1955_2026",
-      "payload": {
-        "name": "Marseille / relocated Lyon ATP licence",
-        "category_id_2026": null,
-        "host_city_2026": null,
-        "host_country_code_2026": null,
-        "surface_2026": null,
-        "historical_host_city": "Marseille",
-        "historical_country_code": "FRA",
-        "historical_surface": "indoor_hard",
-        "reference_year": null,
-        "sponsor_names_can_change": true,
-        "not_calendar_editions": true,
-        "not_squash_rules": true,
-        "history_scope": "identified_years_only_not_all_editions",
-        "history_periods": [
-          {
-            "from": 2025,
-            "to": 2025,
-            "category_id": "atp_250",
-            "source_url": "https://www.atptour.com/en/news/marseille-lyon-relocation",
-            "notes": "Historical venue-based reference; do not infer unverified earlier seasons"
-          }
-        ]
-      },
-      "references": [
-        {
-          "source_package_id": "atp_reality_2026_category",
-          "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }

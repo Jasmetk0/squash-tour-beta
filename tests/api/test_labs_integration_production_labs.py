@@ -3,37 +3,7 @@ from __future__ import annotations
 import pytest
 from test_simulation_api import ApiServer, _request
 
-from beta_engine.domain.players import HiddenCareerTraits, Player
-
 pytestmark = pytest.mark.pr_critical
-
-def _player(player_id: str, base: int) -> Player:
-    return Player(
-        player_id=player_id,
-        name=player_id,
-        age=27,
-        nationality="TST",
-        technique=base,
-        movement=base,
-        physical=base,
-        mental=base,
-        consistency=base,
-        clutch=base,
-        recovery=base,
-        play_style="tempo-controller",
-        archetype="all-court tactician",
-        hidden_career_traits=HiddenCareerTraits(
-            potential_ceiling=90,
-            growth_curve="balanced",
-            professionalism=0.7,
-            ambition=0.7,
-            travel_tolerance=0.7,
-            schedule_aggression=0.6,
-            injury_proneness=0.2,
-            resilience=0.8,
-        ),
-    )
-
 
 def _run_lab_lifecycle(
     tmp_path,

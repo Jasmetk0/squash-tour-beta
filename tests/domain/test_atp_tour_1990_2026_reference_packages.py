@@ -31,7 +31,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 89
+    assert len(series["entities"]) == 88
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -282,10 +282,10 @@ def test_2023_played_tour_250_and_500_roster_matches_official_archive() -> None:
 def test_2023_two_adelaide_events_and_2024_venue_moves_keep_stable_identity() -> None:
     yearly = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
     d23, d24 = yearly[2023]["series_category_ids"], yearly[2024]["series_category_ids"]
-    for id in ("adelaide", "adelaide_2", "pune", "banja_luka", "sofia"):
+    for id in ("adelaide", "adelaide_2", "hong_kong", "banja_luka", "sofia"):
         assert d23[id] == "atp_250"
     assert "adelaide_2" not in d24
-    assert "pune" not in d24
+    assert d24["hong_kong"] == "atp_250"  # Pune licence moved to Hong Kong
     assert "banja_luka" not in d24
     assert "sofia" not in d24
 
@@ -432,3 +432,20 @@ def test_2021_two_belgrade_and_two_melbourne_events_remain_distinct() -> None:
     assert [row["city"] for row in by_id["almaty"]["historical_host_change"]] == [
         "Nur-Sultan", "Astana", "Astana", "Almaty"
     ]
+
+
+def test_pune_to_hong_kong_retains_one_series_id_from_2022_to_2026() -> None:
+    years = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    for year in range(2022, 2027):
+        assert years[year]["series_category_ids"]["hong_kong"] == "atp_250"
+        assert "pune" not in years[year]["series_category_ids"]
+    source = _source("series")
+    ids = {e["source_entity_id"] for e in source["entities"]}
+    assert "pune" not in ids
+    assert "hong_kong" in ids
+    hong_kong = next(e for e in source["entities"]
+                     if e["source_entity_id"] == "hong_kong")["payload"]
+    assert [row["city"] for row in hong_kong["historical_host_change"]] == [
+        "Pune", "Pune", "Hong Kong"
+    ]
+    assert "atptour.com" in hong_kong["historical_licence_source_url"]

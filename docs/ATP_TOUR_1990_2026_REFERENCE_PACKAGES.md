@@ -32,7 +32,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**58 identities** across 2026 ATP Tour fixtures and selected older masters.
+**59 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -148,3 +148,22 @@ from the older decades have NOT been populated exhaustively. Never infer
 a complete category/Series distribution in an earlier year from the
 current incomplete count, and never conflate an `unlisted` event with
 `did not exist`.
+
+### Special one-year ATP 500 and Next Gen Finals in 2020
+
+In addition to ordinary long-term reclassifications, the ATP temporarily
+upgraded the St. Petersburg Open to **ATP 500 for its 2020 edition**, then
+confirmed its return to ATP 250 in 2021. Source:
+[ATP 2020 revised calendar](https://www.atptour.com/en/news/revised-atp-tour-calendar-13-august-2020),
+[ATP Q4 2021 calendar](https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-updates-2021-q4-calendar.pdf).
+This is one persistent Series identity, not separate permanent 250/500
+tournaments. The ATP's 2022 relocation of that tournament licence to
+Nur-Sultan is **not yet reconciled** with subsequent Series identity.
+The 2014 gap in the St. Petersburg reference is preserved.
+
+The **2020 Next Gen ATP Finals were not held**, whereas the main 2020 ATP
+Finals did take place behind closed doors:
+[Next Gen official history](https://www.nextgenatpfinals.com/en/heritage/history),
+[ATP Finals official history](https://www.nittoatpfinals.com/en/heritage/history).
+The data differentiates those outcomes rather than treating every ATP
+year-end competition as identical.

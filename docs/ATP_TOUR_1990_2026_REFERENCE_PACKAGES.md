@@ -96,3 +96,55 @@ The included tests assert Python canonical document shape, source identity
 integrity, cross-Package links, 37 derived years, the main historical
 category-era transitions and the 2026 roster. A clean test run / CI
 and full independent historical event audit must be confirmed separately.
+
+
+## Verified 1990–2026 Masters-tier lineage and 2015/2025 upgrades
+
+The ATP explicitly traces its nine-event Masters lineage to 1990. The
+year-resolved source identifies **nine top-tier Series slots in every season**,
+while the name of their Category changes across epochs. These are Series
+membership **references**, not evidence that every tournament was played
+without interruption. Official archival source examples:
+[1990 ATP Masters archive](https://www.atptour.com/en/scores/results-archive?tournamentType=1000&year=1990),
+[2002 ATP Masters archive](https://www.atptour.com/en/scores/results-archive?tournamentType=1000&year=2002),
+[2022 ATP media guide with historical Masters records](https://www.atptour.com/-/media/files/media-guide/2022/2022-atp-media-guide-updated-may.pdf).
+
+- 1990–1994: Stockholm completes the nine Series; **Essen in 1995**
+  and **Stuttgart indoor 1996–2001** take its historical slot.
+- 2002–2008: Madrid replaces Stuttgart indoor in the Masters tier;
+  Hamburg remains a Masters through 2008.
+- 2009–2026: Shanghai replaces Hamburg in the top-nine category.
+- **2015:** ATP recategorized Queen's Club and Halle from ATP 250 to 500
+  ([official 2015 ATP media guide](https://www.atptour.com/-/media/files/media-guide/2015/atp_media_guide_2015.pdf)).
+- **2025:** ATP upgraded Dallas, Doha and Munich from 250 to 500
+  ([official announcement](https://www.atptour.com/en/news/atp-500-upgrades-from-2025)).
+- Source-backed ATP 500 Series totals in **2024, 2025 and 2026** are
+  **13, 16 and 16**, respectively. Evidence:
+  [2024 final calendar](https://www.atptour.com/-/media/files/final-2024-atp-calendar.pdf),
+  [2025 announcement](https://www.atptour.com/en/news/2025-atp-tour-calendar-announced),
+  [2026 calendar](https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar).
+
+### Cancellations are not category deletions
+
+The cancelled Masters at Indian Wells, Miami, Monte-Carlo, Madrid, Canada
+and Shanghai in **2020** retain their historical Series membership, but
+are marked in `known_not_held_series_ids` rather than synthesized as
+played editions. An equally explicit marker is present for 2020 Halle,
+Queen's Club, Beijing and Chengdu. Sources:
+[ATP's 2022 historical Masters table](https://www.atptour.com/-/media/files/media-guide/2022/2022-atp-media-guide-updated-may.pdf),
+[ATP China cancellations](https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-announces-cancellation-of-the-2020-china-swing.pdf),
+[ATP suspension through July](https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html).
+The generator now rejects a cancellation for a year in which the source
+Series has **no category-effective interval**; this prevents claiming a
+never-created tournament was cancelled (for example Hangzhou in 2020).
+
+### Exact coverage warning
+
+The ATP 2024 calendar contains **many more** ATP Tour events than the
+currently identified 27 Series references for 2024. The same applies to
+the 2025 partial registry. The top-nine historical tour tier and the
+2024–2026 ATP 500 upgrades are narrowly supported, but the lower tiers
+from the older decades have NOT been populated exhaustively. Never infer
+a complete category/Series distribution in an earlier year from the
+current incomplete count, and never conflate an `unlisted` event with
+`did not exist`.

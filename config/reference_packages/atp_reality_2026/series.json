@@ -10,25 +10,30 @@
     "purpose": "historical/structural tennis reference for optional future squash-world adaptations; not a playable tennis mode",
     "runtime_status": "data_only_no_semantic_adapters_or_sporting_consumers",
     "sources": [
-      "https://www.atptour.com/en/corporate/rulebook",
-      "https://www.atptour.com/Rankings/Rankings-FAQ.aspx",
-      "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
-      "https://www.atptour.com/en/news/what-is-",
-      "https://www.atptour.com/-/media/files/media-guide/2026/2026-atp-media-guide-full.pdf"
+      "https://www.itftennis.com/en/about-us/organisation/history-of-world-tennis/",
+      "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+      "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+      "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+      "https://www.nittoatpfinals.com/en/heritage/history",
+      "https://www.atptour.com/en/news/marseille-lyon-relocation"
     ],
     "evidence_boundary": "Headline 2026 singles winner/max points only. Detailed round/draw-dependent awards, event formats, doubles, qualifiers and historical seasons are not encoded.",
-    "coverage": "Four Grand Slams, nine Masters, 16 ATP 500, 29 named ATP 250, ATP Finals, Next Gen Finals, United Cup, Laver Cup, Davis Cup. Not all Challenger/ITF event identities.",
-    "calendar_uncertainty": "Historical 2026 announcements included a TBD ATP 250 slot. No fictitious Series was created for TBD; counts describe this reference roster, not a final certified event count."
+    "coverage": "Major historic Masters and season-end events, four Slams and the 2026 listed ATP Tour reference roster. No full historical annual event census or editions.",
+    "calendar_uncertainty": "Historical 2026 announcements included a TBD ATP 250 slot. No fictitious Series was created for TBD; counts describe this reference roster, not a final certified event count.",
+    "reference_span": {
+      "from": 1955,
+      "to": 2026
+    }
   },
   "explicit_scope": [
-    "tennis.series.reference.2026"
+    "tennis.series.reference.1955_2026"
   ],
   "entities": [
     {
       "source_entity_id": "indian_wells",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "BNP Paribas Open",
         "category_id_2026": "atp_masters_1000",
@@ -38,9 +43,45 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1999,
+            "category_id": "atp_championship_single_week",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2000,
+            "to": 2008,
+            "category_id": "tennis_masters_series",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2009,
+            "to": 2026,
+            "category_id": "atp_masters_1000",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_championship_single_week",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "tennis_masters_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "atp_masters_1000",
@@ -54,7 +95,7 @@
       "source_entity_id": "miami",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Miami Open",
         "category_id_2026": "atp_masters_1000",
@@ -64,9 +105,45 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1999,
+            "category_id": "atp_championship_single_week",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2000,
+            "to": 2008,
+            "category_id": "tennis_masters_series",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2009,
+            "to": 2026,
+            "category_id": "atp_masters_1000",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_championship_single_week",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "tennis_masters_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "atp_masters_1000",
@@ -80,7 +157,7 @@
       "source_entity_id": "monte_carlo",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Rolex Monte-Carlo Masters",
         "category_id_2026": "atp_masters_1000",
@@ -90,9 +167,45 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1999,
+            "category_id": "atp_championship_single_week",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2000,
+            "to": 2008,
+            "category_id": "tennis_masters_series",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2009,
+            "to": 2026,
+            "category_id": "atp_masters_1000",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_championship_single_week",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "tennis_masters_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "atp_masters_1000",
@@ -106,7 +219,7 @@
       "source_entity_id": "madrid",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Mutua Madrid Open",
         "category_id_2026": "atp_masters_1000",
@@ -116,9 +229,32 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2002,
+            "to": 2008,
+            "category_id": "tennis_masters_series",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": "indoor Masters slot, not Madrid clay"
+          },
+          {
+            "from": 2009,
+            "to": 2026,
+            "category_id": "atp_masters_1000",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": "moved to spring clay slot"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "tennis_masters_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "atp_masters_1000",
@@ -132,7 +268,7 @@
       "source_entity_id": "rome",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Internazionali BNL d’Italia",
         "category_id_2026": "atp_masters_1000",
@@ -142,9 +278,45 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1999,
+            "category_id": "atp_championship_single_week",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2000,
+            "to": 2008,
+            "category_id": "tennis_masters_series",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2009,
+            "to": 2026,
+            "category_id": "atp_masters_1000",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_championship_single_week",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "tennis_masters_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "atp_masters_1000",
@@ -158,7 +330,7 @@
       "source_entity_id": "canadian_open",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "National Bank Open",
         "category_id_2026": "atp_masters_1000",
@@ -168,9 +340,46 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1999,
+            "category_id": "atp_championship_single_week",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2000,
+            "to": 2008,
+            "category_id": "tennis_masters_series",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2009,
+            "to": 2026,
+            "category_id": "atp_masters_1000",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions",
+        "historical_host_note": "Alternates Toronto and Montreal; 2026 Montreal is not permanent host."
       },
       "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_championship_single_week",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "tennis_masters_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "atp_masters_1000",
@@ -184,7 +393,7 @@
       "source_entity_id": "cincinnati",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Cincinnati Open",
         "category_id_2026": "atp_masters_1000",
@@ -194,9 +403,45 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1999,
+            "category_id": "atp_championship_single_week",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2000,
+            "to": 2008,
+            "category_id": "tennis_masters_series",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2009,
+            "to": 2026,
+            "category_id": "atp_masters_1000",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_championship_single_week",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "tennis_masters_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "atp_masters_1000",
@@ -210,7 +455,7 @@
       "source_entity_id": "shanghai",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Rolex Shanghai Masters",
         "category_id_2026": "atp_masters_1000",
@@ -220,7 +465,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2009,
+            "to": 2026,
+            "category_id": "atp_masters_1000",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": ""
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -236,7 +491,7 @@
       "source_entity_id": "paris_masters",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Rolex Paris Masters",
         "category_id_2026": "atp_masters_1000",
@@ -246,9 +501,45 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1999,
+            "category_id": "atp_championship_single_week",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2000,
+            "to": 2008,
+            "category_id": "tennis_masters_series",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          },
+          {
+            "from": 2009,
+            "to": 2026,
+            "category_id": "atp_masters_1000",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": "top-nine tour membership; annual holding separately subject to cancellation"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_championship_single_week",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "tennis_masters_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "atp_masters_1000",
@@ -262,7 +553,7 @@
       "source_entity_id": "dallas",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Dallas Open",
         "category_id_2026": "atp_500",
@@ -272,7 +563,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -288,7 +589,7 @@
       "source_entity_id": "rotterdam",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "ABN AMRO Open",
         "category_id_2026": "atp_500",
@@ -298,7 +599,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -314,7 +625,7 @@
       "source_entity_id": "doha",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Qatar ExxonMobil Open",
         "category_id_2026": "atp_500",
@@ -324,7 +635,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -340,7 +661,7 @@
       "source_entity_id": "rio",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Rio Open",
         "category_id_2026": "atp_500",
@@ -350,7 +671,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -366,7 +697,7 @@
       "source_entity_id": "acapulco",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Abierto Mexicano Telcel",
         "category_id_2026": "atp_500",
@@ -376,7 +707,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -392,7 +733,7 @@
       "source_entity_id": "dubai",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Dubai Duty Free Tennis Championships",
         "category_id_2026": "atp_500",
@@ -402,7 +743,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -418,7 +769,7 @@
       "source_entity_id": "barcelona",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Barcelona Open Banc Sabadell",
         "category_id_2026": "atp_500",
@@ -428,7 +779,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -444,7 +805,7 @@
       "source_entity_id": "munich",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "BMW Open",
         "category_id_2026": "atp_500",
@@ -454,9 +815,32 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2024,
+            "to": 2024,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "known 250 before upgrade; 2025–26 ATP 500"
+          },
+          {
+            "from": 2025,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": ""
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "atp_500",
@@ -470,7 +854,7 @@
       "source_entity_id": "hamburg",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Hamburg Open",
         "category_id_2026": "atp_500",
@@ -480,9 +864,45 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1999,
+            "category_id": "atp_championship_single_week",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": ""
+          },
+          {
+            "from": 2000,
+            "to": 2008,
+            "category_id": "tennis_masters_series",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": ""
+          },
+          {
+            "from": 2009,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": ""
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_championship_single_week",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "tennis_masters_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "atp_500",
@@ -496,7 +916,7 @@
       "source_entity_id": "halle",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Terra Wortmann Open",
         "category_id_2026": "atp_500",
@@ -506,7 +926,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -522,7 +952,7 @@
       "source_entity_id": "queens_club",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Queen’s Club Championships",
         "category_id_2026": "atp_500",
@@ -532,7 +962,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -548,7 +988,7 @@
       "source_entity_id": "washington",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Mubadala Citi DC Open",
         "category_id_2026": "atp_500",
@@ -558,7 +998,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -574,7 +1024,7 @@
       "source_entity_id": "tokyo",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Japan Open",
         "category_id_2026": "atp_500",
@@ -584,7 +1034,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -600,7 +1060,7 @@
       "source_entity_id": "beijing",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "China Open",
         "category_id_2026": "atp_500",
@@ -610,7 +1070,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -626,7 +1096,7 @@
       "source_entity_id": "basel",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Swiss Indoors Basel",
         "category_id_2026": "atp_500",
@@ -636,7 +1106,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -652,7 +1132,7 @@
       "source_entity_id": "vienna",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Erste Bank Open",
         "category_id_2026": "atp_500",
@@ -662,7 +1142,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -678,7 +1168,7 @@
       "source_entity_id": "brisbane",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Brisbane International",
         "category_id_2026": "atp_250",
@@ -688,7 +1178,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -704,7 +1204,7 @@
       "source_entity_id": "hong_kong",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Hong Kong Tennis Open",
         "category_id_2026": "atp_250",
@@ -714,7 +1214,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -730,7 +1240,7 @@
       "source_entity_id": "adelaide",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Adelaide International",
         "category_id_2026": "atp_250",
@@ -740,7 +1250,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -756,7 +1276,7 @@
       "source_entity_id": "auckland",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "ASB Classic",
         "category_id_2026": "atp_250",
@@ -766,7 +1286,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -782,7 +1312,7 @@
       "source_entity_id": "montpellier",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Open Occitanie",
         "category_id_2026": "atp_250",
@@ -792,7 +1322,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -808,7 +1348,7 @@
       "source_entity_id": "buenos_aires",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Argentina Open",
         "category_id_2026": "atp_250",
@@ -818,7 +1358,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -834,7 +1384,7 @@
       "source_entity_id": "delray_beach",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Delray Beach Open",
         "category_id_2026": "atp_250",
@@ -844,7 +1394,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -860,7 +1420,7 @@
       "source_entity_id": "santiago",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Chile Open",
         "category_id_2026": "atp_250",
@@ -870,7 +1430,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -886,7 +1456,7 @@
       "source_entity_id": "bucharest",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Tiriac Open",
         "category_id_2026": "atp_250",
@@ -896,7 +1466,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -912,7 +1492,7 @@
       "source_entity_id": "houston",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "U.S. Men’s Clay Court Championship",
         "category_id_2026": "atp_250",
@@ -922,7 +1502,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -938,7 +1528,7 @@
       "source_entity_id": "marrakech",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Grand Prix Hassan II",
         "category_id_2026": "atp_250",
@@ -948,7 +1538,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -964,7 +1564,7 @@
       "source_entity_id": "geneva",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Geneva Open",
         "category_id_2026": "atp_250",
@@ -974,7 +1574,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -990,7 +1600,7 @@
       "source_entity_id": "stuttgart",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "BOSS OPEN",
         "category_id_2026": "atp_250",
@@ -1000,7 +1610,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1016,7 +1636,7 @@
       "source_entity_id": "s_hertogenbosch",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Libema Open",
         "category_id_2026": "atp_250",
@@ -1026,7 +1646,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1042,7 +1672,7 @@
       "source_entity_id": "mallorca",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Mallorca Championships",
         "category_id_2026": "atp_250",
@@ -1052,7 +1682,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1068,7 +1708,7 @@
       "source_entity_id": "eastbourne",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Eastbourne Open",
         "category_id_2026": "atp_250",
@@ -1078,7 +1718,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1094,7 +1744,7 @@
       "source_entity_id": "bastad",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Nordea Open",
         "category_id_2026": "atp_250",
@@ -1104,7 +1754,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1120,7 +1780,7 @@
       "source_entity_id": "gstaad",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Swiss Open Gstaad",
         "category_id_2026": "atp_250",
@@ -1130,7 +1790,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1146,7 +1816,7 @@
       "source_entity_id": "umag",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Croatia Open",
         "category_id_2026": "atp_250",
@@ -1156,7 +1826,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1172,7 +1852,7 @@
       "source_entity_id": "kitzbuhel",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Generali Open",
         "category_id_2026": "atp_250",
@@ -1182,7 +1862,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1198,7 +1888,7 @@
       "source_entity_id": "estoril",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Millennium Estoril Open",
         "category_id_2026": "atp_250",
@@ -1208,7 +1898,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1224,7 +1924,7 @@
       "source_entity_id": "los_cabos",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Los Cabos Open",
         "category_id_2026": "atp_250",
@@ -1234,7 +1934,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1250,7 +1960,7 @@
       "source_entity_id": "winston_salem",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Winston-Salem Open",
         "category_id_2026": "atp_250",
@@ -1260,7 +1970,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1276,7 +1996,7 @@
       "source_entity_id": "chengdu",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Chengdu Open",
         "category_id_2026": "atp_250",
@@ -1286,7 +2006,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1302,7 +2032,7 @@
       "source_entity_id": "hangzhou",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Hangzhou Open",
         "category_id_2026": "atp_250",
@@ -1312,7 +2042,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1328,7 +2068,7 @@
       "source_entity_id": "almaty",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Almaty Open",
         "category_id_2026": "atp_250",
@@ -1338,7 +2078,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1354,7 +2104,7 @@
       "source_entity_id": "brussels",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "European Open",
         "category_id_2026": "atp_250",
@@ -1364,7 +2114,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1380,7 +2140,7 @@
       "source_entity_id": "lyon",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Grand Prix Auvergne-Rhône-Alpes",
         "category_id_2026": "atp_250",
@@ -1390,7 +2150,18 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/marseille-lyon-relocation",
+            "notes": "2026 edition in Lyon inherited relocated Marseille license; older Marseille site not represented as Lyon editions"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions",
+        "identity_review_note": "Marseille ATP 250 tournament relocated to Lyon for 2026; older Marseille event continuity requires source identity link."
       },
       "references": [
         {
@@ -1406,7 +2177,7 @@
       "source_entity_id": "stockholm",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Stockholm Open",
         "category_id_2026": "atp_250",
@@ -1416,9 +2187,33 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1994,
+            "category_id": "atp_championship_single_week",
+            "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
+            "notes": ""
+          },
+          {
+            "from": 2026,
+            "to": 2026,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": "no fabricated category for intervening years"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions",
+        "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit."
       },
       "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_championship_single_week",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "atp_250",
@@ -1432,7 +2227,7 @@
       "source_entity_id": "australian_open",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Australian Open",
         "category_id_2026": "grand_slam",
@@ -1442,7 +2237,20 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1955,
+            "to": 2026,
+            "category_id": "grand_slam",
+            "source_url": "https://www.itftennis.com/en/about-us/organisation/history-of-world-tennis/",
+            "notes": "Series identity; NOT assertion of played annual edition; Australian Open absent 1986, Wimbledon cancelled 2020"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions",
+        "not_held_years_known": [
+          1986
+        ]
       },
       "references": [
         {
@@ -1458,7 +2266,7 @@
       "source_entity_id": "roland_garros",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Roland Garros",
         "category_id_2026": "grand_slam",
@@ -1468,7 +2276,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1955,
+            "to": 2026,
+            "category_id": "grand_slam",
+            "source_url": "https://www.itftennis.com/en/about-us/organisation/history-of-world-tennis/",
+            "notes": "Series identity; NOT assertion of played annual edition; Australian Open absent 1986, Wimbledon cancelled 2020"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1484,7 +2302,7 @@
       "source_entity_id": "wimbledon",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Wimbledon",
         "category_id_2026": "grand_slam",
@@ -1494,7 +2312,20 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1955,
+            "to": 2026,
+            "category_id": "grand_slam",
+            "source_url": "https://www.itftennis.com/en/about-us/organisation/history-of-world-tennis/",
+            "notes": "Series identity; NOT assertion of played annual edition; Australian Open absent 1986, Wimbledon cancelled 2020"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions",
+        "not_held_years_known": [
+          2020
+        ]
       },
       "references": [
         {
@@ -1510,7 +2341,7 @@
       "source_entity_id": "us_open",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "US Open",
         "category_id_2026": "grand_slam",
@@ -1520,7 +2351,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1955,
+            "to": 2026,
+            "category_id": "grand_slam",
+            "source_url": "https://www.itftennis.com/en/about-us/organisation/history-of-world-tennis/",
+            "notes": "Series identity; NOT assertion of played annual edition; Australian Open absent 1986, Wimbledon cancelled 2020"
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1536,7 +2377,7 @@
       "source_entity_id": "atp_finals",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Nitto ATP Finals",
         "category_id_2026": "atp_finals",
@@ -1546,7 +2387,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1970,
+            "to": 2026,
+            "category_id": "atp_finals",
+            "source_url": "https://www.nittoatpfinals.com/en/heritage/history",
+            "notes": ""
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1562,7 +2413,7 @@
       "source_entity_id": "next_gen_atp_finals",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Next Gen ATP Finals",
         "category_id_2026": "next_gen_finals",
@@ -1572,7 +2423,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2017,
+            "to": 2026,
+            "category_id": "next_gen_finals",
+            "source_url": "https://www.atptour.com/-/media/files/media-guide/2017/2017-atp-media-guide.pdf",
+            "notes": ""
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1588,7 +2449,7 @@
       "source_entity_id": "united_cup",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "United Cup",
         "category_id_2026": "united_cup",
@@ -1598,7 +2459,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2023,
+            "to": 2026,
+            "category_id": "united_cup",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": ""
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1614,7 +2485,7 @@
       "source_entity_id": "laver_cup",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Laver Cup",
         "category_id_2026": "laver_cup",
@@ -1624,7 +2495,17 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2017,
+            "to": 2026,
+            "category_id": "laver_cup",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+            "notes": ""
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
@@ -1640,7 +2521,7 @@
       "source_entity_id": "davis_cup",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
-      "scope": "tennis.series.reference.2026",
+      "scope": "tennis.series.reference.1955_2026",
       "payload": {
         "name": "Davis Cup",
         "category_id_2026": "davis_cup",
@@ -1650,12 +2531,152 @@
         "reference_year": 2026,
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
-        "not_squash_rules": true
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1955,
+            "to": 2026,
+            "category_id": "davis_cup",
+            "source_url": "https://www.itftennis.com/en/about-us/organisation/history-of-world-tennis/",
+            "notes": ""
+          }
+        ],
+        "history_scope": "identified_years_only_not_all_editions"
       },
       "references": [
         {
           "source_package_id": "atp_reality_2026_category",
           "source_entity_id": "davis_cup",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "essen_masters",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.1955_2026",
+      "payload": {
+        "name": "Essen Masters",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Essen",
+        "historical_country_code": "DEU",
+        "historical_surface": "indoor_carpet",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "identified_years_only_not_all_editions",
+        "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_championship_single_week",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": "Historical venue-based reference; do not infer unverified earlier seasons"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_championship_single_week",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "stuttgart_indoor_masters",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.1955_2026",
+      "payload": {
+        "name": "Stuttgart indoor Masters",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Stuttgart",
+        "historical_country_code": "DEU",
+        "historical_surface": "indoor_carpet",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "identified_years_only_not_all_editions",
+        "history_periods": [
+          {
+            "from": 1996,
+            "to": 1999,
+            "category_id": "atp_championship_single_week",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": "Historical venue-based reference; do not infer unverified earlier seasons"
+          },
+          {
+            "from": 2000,
+            "to": 2001,
+            "category_id": "tennis_masters_series",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": "Historical venue-based reference; do not infer unverified earlier seasons"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_championship_single_week",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "tennis_masters_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "marseille_open13",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.1955_2026",
+      "payload": {
+        "name": "Marseille / relocated Lyon ATP licence",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Marseille",
+        "historical_country_code": "FRA",
+        "historical_surface": "indoor_hard",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "identified_years_only_not_all_editions",
+        "history_periods": [
+          {
+            "from": 2025,
+            "to": 2025,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/marseille-lyon-relocation",
+            "notes": "Historical venue-based reference; do not infer unverified earlier seasons"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }

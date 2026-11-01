@@ -138,7 +138,10 @@ def test_admin_health_http_preview_commit_retry_and_save(tmp_path) -> None:
         status, preview = _request("POST", root + "/preview", payload)
         assert status == 200
         unversioned = {key: value for key, value in payload.items() if key != "schema_version"}
-        assert _request("POST", root + "/preview", unversioned) == (200, preview)
+        # We must expect a 422 Unprocessable Entity when the schema_version discriminator is missing.
+        status, response = _request("POST", root + "/preview", unversioned)
+        assert status == 422
+        assert "schema_version" in response["detail"][0]["msg"]
         assert len(preview["preview_fingerprint"]) == 64
 
         status, committed = _request(

@@ -21,6 +21,28 @@
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
       "ATP 250 2026 list may differ between official updates: reconcile against the final event directory before calling it complete."
+    ],
+    "evidence_updates_2026_11_01": [
+      {
+        "source_url": "https://www.atptour.com/-/media/files/final-2024-atp-calendar.pdf",
+        "summary": "ATP final 2024 calendar corroborates the 13 ATP 500 incumbent events"
+      },
+      {
+        "source_url": "https://www.atptour.com/en/news/atp-500-upgrades-from-2025",
+        "summary": "Dallas, Doha and Munich upgraded 250 to 500 effective 2025"
+      },
+      {
+        "source_url": "https://www.atptour.com/-/media/files/media-guide/2015/atp_media_guide_2015.pdf",
+        "summary": "Halle and Queen's promoted to ATP 500 in 2015"
+      },
+      {
+        "source_url": "https://www.atptour.com/en/news/rio-de-janeiro-2024-history-draw-schedule",
+        "summary": "Rio de Janeiro debuted 2014 as ATP 500"
+      },
+      {
+        "source_url": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
+        "summary": "Six Masters 1000 cancelled in 2020, but identity remained"
+      }
     ]
   },
   "explicit_scope": [
@@ -65,7 +87,11 @@
             "notes": "top-nine tour membership; annual holding separately subject to cancellation"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2020
+        ],
+        "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments"
       },
       "references": [
         {
@@ -127,7 +153,11 @@
             "notes": "top-nine tour membership; annual holding separately subject to cancellation"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2020
+        ],
+        "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments"
       },
       "references": [
         {
@@ -189,7 +219,11 @@
             "notes": "top-nine tour membership; annual holding separately subject to cancellation"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2020
+        ],
+        "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments"
       },
       "references": [
         {
@@ -244,7 +278,11 @@
             "notes": "moved to spring clay slot"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2020
+        ],
+        "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments"
       },
       "references": [
         {
@@ -363,7 +401,11 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
-        "historical_host_note": "Alternates Toronto and Montreal; 2026 Montreal is not permanent host."
+        "historical_host_note": "Alternates Toronto and Montreal; 2026 Montreal is not permanent host.",
+        "not_held_years_known": [
+          2020
+        ],
+        "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments"
       },
       "references": [
         {
@@ -473,7 +515,11 @@
             "notes": ""
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2020
+        ],
+        "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments"
       },
       "references": [
         {
@@ -564,16 +610,29 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2024,
+            "to": 2024,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/atp-500-upgrades-from-2025",
+            "notes": "2024 Dallas ATP 250; explicit upgrade to ATP 500 from 2025"
+          },
+          {
+            "from": 2025,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/en/news/atp-500-upgrades-from-2025",
+            "notes": "Upgrade announced 2023, effective 2025"
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
       },
       "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_500",
@@ -600,11 +659,11 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/-/media/files/final-2024-atp-calendar.pdf",
+            "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
@@ -636,16 +695,29 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2024,
+            "to": 2024,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/atp-500-upgrades-from-2025",
+            "notes": "2024 Qatar ATP 250; explicit upgrade to ATP 500 from 2025"
+          },
+          {
+            "from": 2025,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/en/news/atp-500-upgrades-from-2025",
+            "notes": "Upgrade effective 2025"
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
       },
       "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_500",
@@ -672,11 +744,11 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2014,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/en/news/rio-de-janeiro-2024-history-draw-schedule",
+            "notes": "First edition 2014 as ATP 500; annual reference interval does not assert each edition was held"
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
@@ -708,11 +780,11 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/-/media/files/final-2024-atp-calendar.pdf",
+            "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
@@ -744,11 +816,11 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/-/media/files/final-2024-atp-calendar.pdf",
+            "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
@@ -780,11 +852,11 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/-/media/files/final-2024-atp-calendar.pdf",
+            "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
@@ -819,15 +891,15 @@
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "known 250 before upgrade; 2025–26 ATP 500"
+            "source_url": "https://www.atptour.com/en/news/atp-500-upgrades-from-2025",
+            "notes": "2024 BMW Open ATP 250; explicit upgrade to ATP 500 from 2025"
           },
           {
             "from": 2025,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": ""
+            "source_url": "https://www.atptour.com/en/news/atp-500-upgrades-from-2025",
+            "notes": "Upgrade effective 2025"
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
@@ -927,16 +999,33 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2009,
+            "to": 2014,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/files/media-guide/2015/atp_media_guide_2015.pdf",
+            "notes": "2015 ATP media guide confirms promotion from ATP 250"
+          },
+          {
+            "from": 2015,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/-/media/files/media-guide/2015/atp_media_guide_2015.pdf",
+            "notes": "2015 upgrade to ATP 500; cancelled editions such as 2020 tracked independently"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2020
+        ],
+        "known_nonheld_source": "https://www.atptour.com/en/news/atp-2020-calendar-update-coronavirus"
       },
       "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_500",
@@ -963,16 +1052,33 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2009,
+            "to": 2014,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/files/media-guide/2015/atp_media_guide_2015.pdf",
+            "notes": "2015 ATP media guide confirms promotion from ATP 250"
+          },
+          {
+            "from": 2015,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/-/media/files/media-guide/2015/atp_media_guide_2015.pdf",
+            "notes": "2015 upgrade to ATP 500; cancelled editions such as 2020 tracked independently"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2020
+        ],
+        "known_nonheld_source": "https://www.atptour.com/en/news/atp-2020-calendar-update-coronavirus"
       },
       "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_500",
@@ -999,11 +1105,11 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/-/media/files/final-2024-atp-calendar.pdf",
+            "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
@@ -1035,11 +1141,11 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/-/media/files/final-2024-atp-calendar.pdf",
+            "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
@@ -1071,14 +1177,18 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/-/media/files/final-2024-atp-calendar.pdf",
+            "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2020
+        ],
+        "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-announces-cancellation-of-the-2020-china-swing.pdf"
       },
       "references": [
         {
@@ -1107,11 +1217,11 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/-/media/files/final-2024-atp-calendar.pdf",
+            "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
@@ -1143,11 +1253,11 @@
         "not_squash_rules": true,
         "history_periods": [
           {
-            "from": 2026,
+            "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
-            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
-            "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
+            "source_url": "https://www.atptour.com/-/media/files/final-2024-atp-calendar.pdf",
+            "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
@@ -2014,7 +2124,11 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2020
+        ],
+        "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-announces-cancellation-of-the-2020-china-swing.pdf"
       },
       "references": [
         {
@@ -2050,7 +2164,11 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2020
+        ],
+        "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-announces-cancellation-of-the-2020-china-swing.pdf"
       },
       "references": [
         {

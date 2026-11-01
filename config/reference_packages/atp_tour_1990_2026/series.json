@@ -105,6 +105,27 @@
         "shanghai"
       ],
       "scope": "played ATP Tour event category roster plus independent 2022 cancelled planned event identities; not full edition details"
+    },
+    "calendar_validation_2021": {
+      "archive_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "release_url": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
+      "played_atp_250_count": 39,
+      "played_atp_500_count": 9,
+      "played_masters_count": 8,
+      "known_cancelled_250_ids": [
+        "houston",
+        "chengdu",
+        "hangzhou"
+      ],
+      "known_cancelled_500_ids": [
+        "rio",
+        "beijing",
+        "basel"
+      ],
+      "known_cancelled_masters_ids": [
+        "shanghai"
+      ],
+      "scope": "2021 played category 250/500/Masters roster reconciled; known cancelled list not exhaustive"
     }
   },
   "explicit_scope": [
@@ -737,6 +758,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_500",
@@ -786,6 +814,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -857,7 +892,11 @@
             "notes": "First edition 2014 as ATP 500; annual reference interval does not assert each edition was held"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2021
+        ],
+        "known_nonheld_source": "https://www1.folha.uol.com.br/esporte/2021/04/rio-open-e-cancelado-em-2021-por-conta-do-agravamento-da-pandemia.shtml"
       },
       "references": [
         {
@@ -885,6 +924,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -936,6 +982,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_500",
@@ -986,6 +1039,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_500",
@@ -1035,6 +1095,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -1267,6 +1334,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_500",
@@ -1437,6 +1511,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_500",
+            "source_url": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
+            "notes": "Tournament organizer confirms Basel ATP 500 2021 was cancelled"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_500",
@@ -1458,7 +1539,11 @@
             "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2021
+        ],
+        "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php"
       },
       "references": [
         {
@@ -1486,6 +1571,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -1759,6 +1851,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -1822,6 +1921,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -1887,6 +1993,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -1950,6 +2063,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -2065,6 +2185,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
+            "notes": "ATP cancelled Houston 2021; do not create a played edition"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -2100,7 +2227,11 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2021
+        ],
+        "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events"
       },
       "references": [
         {
@@ -2193,6 +2324,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -2256,6 +2394,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -2385,6 +2530,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -2448,6 +2600,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -2513,6 +2672,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -2576,6 +2742,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -2641,6 +2814,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -2704,6 +2884,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -2769,6 +2956,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -2825,6 +3019,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -2889,6 +3090,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -3141,6 +3349,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_500",
@@ -3179,19 +3394,31 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2021,
+            "city": "Nur-Sultan",
+            "country_code": "KAZ",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021"
+          },
+          {
+            "year": 2022,
+            "city": "Astana",
+            "country_code": "KAZ",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022"
+          },
+          {
             "year": 2023,
             "city": "Astana",
             "country_code": "KAZ",
-            "source_url": "https://www.atptour.com/en/news/2024-atp-calendar-update-gijon-almaty"
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023"
           },
           {
             "year": 2024,
             "city": "Almaty",
             "country_code": "KAZ",
-            "source_url": "https://www.atptour.com/en/news/2024-atp-calendar-update-gijon-almaty"
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2024"
           }
         ],
-        "identity_review_note": "Astana tournament venue moved to Almaty from 2024, preserving same tournament Series identity.",
+        "identity_review_note": "Nur-Sultan 2021 temporary event, 2022 permanent Astana licence transferred from St Petersburg; 2024 move to Almaty. Exact pre-2022 legal licence identity is a review boundary.",
         "licence_lineage": {
           "predecessor_source_entity_id": "st_petersburg",
           "effective_from": 2022,
@@ -3232,6 +3459,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -3310,6 +3544,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -3408,6 +3649,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
           },
           {
             "from": 2022,
@@ -3765,6 +4013,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -3817,6 +4072,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -3871,6 +4133,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -3923,6 +4192,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -4022,6 +4298,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -4214,6 +4497,13 @@
         "not_squash_rules": true,
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -4581,6 +4871,439 @@
           }
         ],
         "identity_review_note": "Belgrade clay 2022 Serbia Open is not automatically the same identity as Belgrade indoor 2024/2025. Relationship to 2023 Banja Luka clay event remains to be independently verified."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "antalya_2021",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Antalya Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Antalya",
+        "historical_country_code": "TUR",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
+        "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "melbourne_1_2021",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Great Ocean Road Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Melbourne",
+        "historical_country_code": "AUS",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
+        "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "melbourne_2_2021",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Murray River Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Melbourne",
+        "historical_country_code": "AUS",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
+        "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "singapore_2021",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Singapore Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Singapore",
+        "historical_country_code": "SGP",
+        "historical_surface": "indoor_hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
+        "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          }
+        ],
+        "identity_review_note": "Official ATP announced one-year 2021 event licence; not permanent membership."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "cagliari_2021",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Sardegna Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Cagliari",
+        "historical_country_code": "ITA",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
+        "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "marbella_2021",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Andalucia Open Marbella",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Marbella",
+        "historical_country_code": "ESP",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
+        "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          }
+        ],
+        "identity_review_note": "Official ATP announced one-year 2021 event licence; not permanent membership."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "belgrade_clay_2021",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Belgrade Open 1",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Belgrade",
+        "historical_country_code": "SRB",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
+        "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          }
+        ],
+        "identity_review_note": "First of two Belgrade 2021 ATP250 events; licensed Budapest relocation, legal continuity with 2022 Belgrade/2023 Banja Luka unresolved."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "parma_2021",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Emilia-Romagna Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Parma",
+        "historical_country_code": "ITA",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
+        "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "belgrade_2_2021",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Belgrade Open 2",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Belgrade",
+        "historical_country_code": "SRB",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
+        "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          }
+        ],
+        "identity_review_note": "Second additional 2021 Belgrade ATP250; not same Edition as Belgrade 1."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "san_diego_2021",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "San Diego Open 2021",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "San Diego",
+        "historical_country_code": "USA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
+        "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "moscow_2021",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Kremlin Cup",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Moscow",
+        "historical_country_code": "RUS",
+        "historical_surface": "indoor_hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
+        "history_periods": [
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+            "notes": "Played ATP Tour event in official 2021 Results Archive"
+          }
+        ]
       },
       "references": [
         {

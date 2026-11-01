@@ -31,7 +31,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 59
+    assert len(series["entities"]) == 65
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -192,3 +192,71 @@ def test_st_petersburg_one_off_2020_upgrade_and_2022_boundary() -> None:
     assert years[2021]["series_category_ids"]["st_petersburg"] == "atp_250"
     assert "st_petersburg" not in years[2022]["series_category_ids"]
     assert "next_gen_atp_finals" in years[2020]["known_not_held_series_ids"]
+
+
+def test_2024_and_2025_played_atp_250_rosters_reconcile_to_atp_archives() -> None:
+    seasons = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    expected = {
+        2024: {"atp_masters_1000": 9, "atp_500": 13, "atp_250": 38, "atp_finals": 1, "next_gen_finals": 1},
+        2025: {"atp_masters_1000": 9, "atp_500": 16, "atp_250": 30, "atp_finals": 1, "next_gen_finals": 1},
+        2026: {"atp_masters_1000": 9, "atp_500": 16, "atp_250": 29, "atp_finals": 1, "next_gen_finals": 1},
+    }
+    for year, category_counts in expected.items():
+        assert Counter(seasons[year]["series_category_ids"].values()) == category_counts
+    assert len(seasons[2024]["series_category_ids"]) == 62
+    assert len(seasons[2025]["series_category_ids"]) == 57
+    assert len(seasons[2026]["series_category_ids"]) == 56
+
+    # ATP published June 2025 overview omitted Hangzhou; its own 2025
+    # results archive and tournament article establish that edition.
+    assert seasons[2024]["series_category_ids"]["hangzhou"] == "atp_250"
+    assert seasons[2025]["series_category_ids"]["hangzhou"] == "atp_250"
+    assert seasons[2026]["series_category_ids"]["hangzhou"] == "atp_250"
+
+
+def test_2024_2025_2026_historical_tour_licences_and_discontinued_events() -> None:
+    seasons = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    d24, d25, d26 = (seasons[year]["series_category_ids"] for year in (2024, 2025, 2026))
+    # Two DIFFERENT ATP 250 identities operated from Lyon in 2024 and 2026:
+    # 2024 clay Lyon licence versus Marseille indoor event moved in 2026.
+    assert d24["lyon_old"] == "atp_250"
+    assert d24["lyon"] == "atp_250"  # Marseille licence, NOT 2024 Lyon clay
+    assert d25["lyon"] == "atp_250"  # Marseille 2025
+    assert d26["lyon"] == "atp_250"  # Relocated to Lyon 2026
+    assert "lyon_old" not in d25 and "lyon_old" not in d26
+    assert d24["brussels"] == "atp_250"  # Played in Antwerp in 2024
+    assert d25["brussels"] == "atp_250"  # Relocated to Brussels in 2025
+
+    for discontinued in ("cordoba", "newport", "atlanta"):
+        assert d24[discontinued] == "atp_250"
+        assert discontinued not in d25
+    assert d24["estoril"] == "atp_250"
+    assert "estoril" not in d25
+    assert d26["estoril"] == "atp_250"
+    for historic in ("belgrade", "metz"):
+        assert d24[historic] == "atp_250"
+        assert d25[historic] == "atp_250"
+        assert historic not in d26
+
+
+def test_2024_2025_atp_250_intervals_are_backed_by_official_atp_archives() -> None:
+    source = _source("series")
+    provenance = source["provenance"]["calendar_validation_2024_2025"]
+    assert provenance["singles_main_tour_250_count_by_year"] == {
+        "2024": 38, "2025": 30
+    }
+    assert "atptour.com" in provenance["source_2024"]
+    assert "atptour.com" in provenance["source_2025"]
+    for year in (2024, 2025):
+        active = [
+            e for e in source["entities"]
+            if any(p["from"] <= year <= p["to"] and p["category_id"] == "atp_250"
+                   for p in e["payload"]["history_periods"])
+        ]
+        assert len(active) == (38 if year == 2024 else 30)
+        for entity in active:
+            intervals = entity["payload"]["history_periods"]
+            record = next(p for p in intervals
+                          if p["from"] <= year <= p["to"] and p["category_id"] == "atp_250")
+            assert record["source_url"].startswith("https://")
+

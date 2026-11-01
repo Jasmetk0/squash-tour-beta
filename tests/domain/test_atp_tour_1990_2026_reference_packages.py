@@ -31,7 +31,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 88
+    assert len(series["entities"]) == 87
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -374,10 +374,10 @@ def test_2022_melbourne_sydney_adelaide_and_belgrade_do_not_conflate_licences() 
     years = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
     d22, d23, d24 = (years[year]["series_category_ids"] for year in (2022, 2023, 2024))
     for id in ("adelaide", "adelaide_2", "melbourne_2022", "sydney_2022",
-               "belgrade_clay_2022"):
+               "banja_luka"):
         assert d22[id] == "atp_250"
     assert d23["adelaide"] == d23["adelaide_2"] == "atp_250"
-    for id in ("melbourne_2022", "sydney_2022", "belgrade_clay_2022"):
+    for id in ("melbourne_2022", "sydney_2022"):
         assert id not in d23
         assert id not in d24
     assert d24["belgrade"] == "atp_250"
@@ -422,7 +422,7 @@ def test_2021_two_belgrade_and_two_melbourne_events_remain_distinct() -> None:
         "singapore_2021", "marbella_2021", "almaty",
     ))
     assert d22["melbourne_2022"] == "atp_250"
-    assert d22["belgrade_clay_2022"] == "atp_250"
+    assert d22["banja_luka"] == "atp_250"
     for name in ("melbourne_1_2021", "melbourne_2_2021",
                  "belgrade_clay_2021", "belgrade_2_2021",
                  "singapore_2021", "marbella_2021"):
@@ -449,3 +449,19 @@ def test_pune_to_hong_kong_retains_one_series_id_from_2022_to_2026() -> None:
         "Pune", "Pune", "Hong Kong"
     ]
     assert "atptour.com" in hong_kong["historical_licence_source_url"]
+
+
+def test_belgrade_2022_to_banja_luka_2023_is_one_series() -> None:
+    by_year = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    assert by_year[2022]["series_category_ids"]["banja_luka"] == "atp_250"
+    assert by_year[2023]["series_category_ids"]["banja_luka"] == "atp_250"
+    assert "belgrade_clay_2022" not in {
+        e["source_entity_id"] for e in _source("series")["entities"]
+    }
+    assert by_year[2024]["series_category_ids"]["belgrade"] == "atp_250"
+    source = next(e for e in _source("series")["entities"]
+                  if e["source_entity_id"] == "banja_luka")
+    assert [x["city"] for x in source["payload"]["historical_host_change"]] == [
+        "Belgrade", "Banja Luka"
+    ]
+    assert "atptour.com" in source["payload"]["historical_licence_source_url"]

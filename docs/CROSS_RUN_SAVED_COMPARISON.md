@@ -37,7 +37,7 @@ or infer sporting causality/time from opaque component hashes or Save timestamps
 ## Validation and retained limits
 
 Focused service contracts cover all four component statuses, canonical hashes,
-null/missing/type distinctions and bounded fingerprint output. Actual ASGI/SQLite
+null/missing/type distinctions and bounded fingerprint output. Actual HTTP/SQLite
 integration creates Runs through production commands, tests both source error
 paths, exact shared-ancestor scope and corruption after a warm read, and compares
 all SQLite rows before/after browsing. A real HTTP test also uses a four-player
@@ -55,3 +55,22 @@ cost for each source. Component response hashes stay bounded, but this does not
 prove long-Run latency/RSS bounds, streaming or full domain comparison. The complete
 pre-alpha release/50-season acceptance remains separate. Master, sporting rules,
 Saved writers and existing comparison/recovery authority are unchanged.
+
+## Advisory Sonar review
+
+Static review of the five annotations on repair commit `0398b48e` found no
+confirmed vulnerability in this slice. This is a bounded annotation assessment,
+not a complete security audit; no repository `SECURITY.md` was present.
+
+| Sonar issue suffix | Assessment and evidence |
+| --- | --- |
+| `h0Sc` (pip build scripts) | Intended reviewed CI build: editable installation of this checkout requires its build backend. The workflow has only `contents: read` and no deployment or configured secrets. No injected command is established. |
+| `h0Sb` (API traversal) | Test-only helper, fixed loopback origin, fixed routes and IDs created by the same disposable app; comparison parameters are URL encoded. It is not a production endpoint taking caller-supplied paths. |
+| `h0Se` (npm lifecycle) | `npm ci` uses the checked-in lockfile; build lifecycle scripts, including esbuild, are intentional. No lower-trust command source is demonstrated. |
+| `h0Sd` (unlocked Python resolution) | Valid reproducibility/supply-chain concern for separate coordinated review. Existing project dependency ranges are reused; no compromised or vulnerable resolved package is established here. |
+| `h0Sa` (report path traversal) | The output directory comes from explicit `--artifacts`, literal `/tmp/cross-saved-evidence` in CI, with a constant `result.json` basename. Git/API/SQLite values become report content, never its destination. |
+
+These findings are not suppressed and Sonar's gate is not weakened. The owner's
+policy treats Sonar as advisory; its red aggregate is not a functional-test pass.
+Ordinary dependency compromise remains possible in any build pipeline and is not
+disproved by these static boundary observations.

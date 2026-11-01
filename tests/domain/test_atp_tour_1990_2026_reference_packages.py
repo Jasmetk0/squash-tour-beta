@@ -31,7 +31,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 78
+    assert len(series["entities"]) == 89
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -384,3 +384,51 @@ def test_2022_melbourne_sydney_adelaide_and_belgrade_do_not_conflate_licences() 
     assert d22["lyon_old"] == d22["lyon"] == "atp_250"
     assert d22["brussels"] == "atp_250"
     assert d22["sofia"] == "atp_250"
+
+
+def test_2021_played_tour_categories_and_cancelled_2021_differ() -> None:
+    years = {s["year"]: s for s in build(_source("category"), _source("series"))["seasons"]}
+    row = years[2021]
+    categories = Counter(row["series_category_ids"].values())
+    assert categories == {
+        "atp_250": 42,  # 39 played + cancelled Houston, Chengdu, Zhuhai
+        "atp_500": 12,  # 9 played + cancelled Rio, Beijing, Basel
+        "atp_masters_1000": 9,  # 8 played + cancelled Shanghai
+        "atp_finals": 1,
+        "next_gen_finals": 1,
+    }
+    assert set(row["known_not_held_series_ids"]) == {
+        "basel", "beijing", "chengdu", "hangzhou", "houston", "rio", "shanghai",
+    }
+    source = _source("series")["provenance"]["calendar_validation_2021"]
+    assert source["played_atp_250_count"] == 39
+    assert source["played_atp_500_count"] == 9
+    assert source["played_masters_count"] == 8
+    for category_id, count in (
+        ("atp_250", 39), ("atp_500", 9), ("atp_masters_1000", 8)
+    ):
+        assert sum(
+            category == category_id and id not in row["known_not_held_series_ids"]
+            for id, category in row["series_category_ids"].items()
+        ) == count
+
+
+def test_2021_two_belgrade_and_two_melbourne_events_remain_distinct() -> None:
+    years = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    d21, d22 = (years[y]["series_category_ids"] for y in (2021, 2022))
+    assert all(d21[name] == "atp_250" for name in (
+        "melbourne_1_2021", "melbourne_2_2021",
+        "belgrade_clay_2021", "belgrade_2_2021",
+        "singapore_2021", "marbella_2021", "almaty",
+    ))
+    assert d22["melbourne_2022"] == "atp_250"
+    assert d22["belgrade_clay_2022"] == "atp_250"
+    for name in ("melbourne_1_2021", "melbourne_2_2021",
+                 "belgrade_clay_2021", "belgrade_2_2021",
+                 "singapore_2021", "marbella_2021"):
+        assert name not in d22
+    source = _source("series")
+    by_id = {e["source_entity_id"]: e["payload"] for e in source["entities"]}
+    assert [row["city"] for row in by_id["almaty"]["historical_host_change"]] == [
+        "Nur-Sultan", "Astana", "Astana", "Almaty"
+    ]

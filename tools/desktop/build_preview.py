@@ -40,6 +40,7 @@ def main():
     tracked_copy(root, package, "src")
     shutil.copytree(root / "web/dist", package / "web/dist")
     shutil.copyfile(root / "Spustit_Squash_Engine.bat", package / "Spustit_Squash_Engine.bat")
+    shutil.copyfile(root / "Zalohovat_Squash_Engine.bat", package / "Zalohovat_Squash_Engine.bat")
     (package / "docs").mkdir()
     shutil.copyfile(root / "docs/WINDOWS_PREVIEW.md", package / "docs/WINDOWS_PREVIEW.md")
     shutil.copyfile(root / "docs/PRE_ALPHA_TEST_POLICY.md", package / "docs/PRE_ALPHA_TEST_POLICY.md")

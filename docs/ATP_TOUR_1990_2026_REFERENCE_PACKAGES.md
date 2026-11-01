@@ -32,7 +32,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**75 identities** across 2026 ATP Tour fixtures and selected older masters.
+**78 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -333,8 +333,8 @@ year-resolved state contains **14 ATP 500 category-effective Series
 identities**, but Beijing is marked as **cancelled**, giving 13
 actually played ATP 500 events. The nine top-tier Masters Series
 identities likewise include **cancelled Shanghai**, yielding only
-eight played Masters 1000 tournaments that year. The remaining
-ATP 250 year roster for 2022 is **not complete**.
+eight played Masters 1000 tournaments that year. The 2022 ATP 250 played roster has now been independently reconciled
+against the official Results Archive; its cancelled licences remain separate.
 
 By contrast, the 2023–2025 year-specific Masters/500/250 category
 rosters have been reconciled to published ATP results, not merely
@@ -342,3 +342,38 @@ copied from prospective season announcements. Distinguishing
 (1) source identity, (2) scheduled/cancelled annual category and
 (3) a genuinely played Tournament Edition is essential to preserving
 historical realism.
+
+## 2022 completed played main-Tour category roster — official results archive
+
+After cross-checking the [ATP 2022 results archive](https://www.atptour.com/en/scores/results-archive?year=2022)
+against ATP's July 2022 cancelled-event notice, the reference contains
+**42 played ATP 250** identities plus **2 cancelled/scheduled 250**
+identities (**Chengdu** and **Zhuhai**, the predecessor venue of
+`hangzhou`). The cancelled event is **not** a played Edition.
+
+| 2022 Tour class | Source category-effective identities | Known cancelled | Actually played |
+| --- | ---: | ---: | ---: |
+| Masters 1000 | 9 | 1 (Shanghai) | 8 |
+| ATP 500 | 14 | 1 (Beijing) | 13 |
+| ATP 250 | 44 | 2 (Chengdu, Zhuhai) | 42 |
+| ATP Finals | 1 | 0 | 1 |
+| Next Gen ATP Finals | 1 | 0 | 1 |
+| **Total** | **69** | **4** | **65** |
+
+A player's record or award does not appear in this package, even when
+the ATP results archive was consulted for category counts; those results
+are not imported.
+
+Three 2022-only source identities are now separately represented:
+**Melbourne Summer Set**, **Sydney Tennis Classic**, and the **Belgrade
+clay** event (not automatically identified with the later Belgrade indoor
+event). Adelaide 1 and Adelaide 2 are two independently counted
+ATP 250 editions; no licence overlap is invented. The existing six
+one-year ATP 250 replacement licences remain individually traceable.
+
+Thus **2022–2025** are reconciled at the broad Masters/500/250
+played-vs-cancelled event level, subject to all remaining identity
+and event-specific semantic audits. The historic category/Series coverage
+for **1990–2021** still has significant unverified lower tiers, and
+2026 remains provisional. A complete factual ATP Calendar Package
+remains outside this PR's current source-only scope.

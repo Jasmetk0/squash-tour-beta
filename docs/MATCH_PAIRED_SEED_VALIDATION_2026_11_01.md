@@ -57,6 +57,16 @@ Bounded input: 1–500 blocks (six cells and twelve real simulations per
 block), nonnegative 63-bit seed. Runtime scales with block count and match
 length; do not treat this as a performance acceptance benchmark.
 
+## Draft-inclusive hosted evidence
+
+The separate `.github/workflows/prealpha-match-paired-evidence.yml` runs even
+while the PR remains Draft, executes the actual domain tests plus **8 complete
+blocks** (48 original real Matches and 48 reversed replay checks), validates
+the final observations' SHA-256 and uploads one JSON artifact for 30 days.
+A green **Fast CI** alone means the scoped tests passed, not that the full
+8-block artifact was generated; inspect both workflows on the exact final
+commit. This experiment is deliberately not a pre-alpha release gate.
+
 ## Scientific and product limits
 
 - No arbitrary empirical realism threshold, no automatic engine calibration,

@@ -167,3 +167,41 @@ Finals did take place behind closed doors:
 [ATP Finals official history](https://www.nittoatpfinals.com/en/heritage/history).
 The data differentiates those outcomes rather than treating every ATP
 year-end competition as identical.
+
+
+## Source completeness dashboard (NOT an ATP tournament census)
+
+These counts describe **currently documented source identities** in this
+incomplete historical reference. They must never be presented as the actual
+number of ATP events held. Sources may also include cancelled 2020 Series
+identities while no played tournament Edition is present.
+
+| Reference year | Defined Series-category relationships | Masters-tier identities |
+| --- | ---: | ---: |
+| 1990 | 10 | 9 |
+| 1995 | 11 | 9 |
+| 2000 | 11 | 9 |
+| 2010 | 14 | 9 |
+| 2020 | 18 | 9 (only 3 actually played) |
+| 2024 | 27 | 9 |
+| 2025 | 28 | 9 |
+| 2026 | 56 | 9 |
+
+The very low pre-2024 counts are a visible **blocker** for a complete ATP
+Tour historical Category/Series library. The 2026 reference is also a
+**dated, provisional roster**: the ATP's published calendar included a
+non-named ATP 250 `TBD` entry, which must never be invented as a
+persistent Series identity. A final ATP source inventory and event
+lineage audit are required before release.
+
+### Data licensing boundary
+
+A public dataset mirror is not automatically a suitable authoring source.
+Some Jeff Sackmann-derived historical match-data mirrors retain a
+CC BY-NC-SA 4.0 licence, which does not authorize unrestricted commercial
+reuse. This PR contains **no imported third-party match results**, no
+bulk mirroring, and no inferred tennis player records. Any future
+data-scale import must document provenance, rights, attribution,
+redistribution permissions and the licence compatibility of any derivative.
+Official ATP webpages cited here support bounded historical assertions,
+not wholesale republishing of their content.

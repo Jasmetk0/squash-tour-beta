@@ -5,11 +5,12 @@ import {SavedEditionShortcuts} from './SavedEditionShortcuts'
 import {
   SAVED_EDITION_SHORTCUT_STORAGE_KEY as KEY,
   createSavedEditionShortcut,loadSavedEditionShortcuts,serializeSavedEditionShortcuts,
+  type SavedEditionShortcutTab,
 } from '../pages/savedEditionShortcuts'
 
 const props={
   runId:'run-a',branchId:'branch-a',revisionId:'rev-old',seasonIndex:2,
-  eventId:'event-x',eventName:'Brno Open',tab:'results' as const,
+  eventId:'event-x',eventName:'Brno Open',tab:'results' as SavedEditionShortcutTab,
   matchSearch:'P1',cs:false,
 }
 function mount(changes:Partial<typeof props>={}){

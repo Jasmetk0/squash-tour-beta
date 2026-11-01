@@ -4,6 +4,8 @@ import { getRunContainer } from '../api/client'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { RunPackageSetupPanel } from '../components/RunPackageSetupPanel'
 import { SavedBranchArchiveExportPanel } from '../components/SavedBranchArchiveExportPanel'
+import { RunEditionCoveragePanel } from '../components/RunEditionCoveragePanel'
+import { verifiedRunCalendar } from '../api/runEditionEntryTiming'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -40,6 +42,12 @@ export function RunManagementPage(): JSX.Element {
       <p><Link to={base}>{language === 'cs' ? 'Otevřít přehled Runu' : 'Open Run overview'} →</Link></p>
       {run.storage_kind === 'custom_local' && !run.read_only &&
         <RunPackageSetupPanel run={run} branch={activeBranch} />}
+      {activeBranch?.saved_head_revision_id && verifiedRunCalendar(run) &&
+        <RunEditionCoveragePanel
+          key={runId + ':' + activeBranch.branch_id + ':' + activeBranch.saved_head_revision_id}
+          runId={runId} branchId={activeBranch.branch_id}
+          head={activeBranch.saved_head_revision_id}
+          weeksPerYear={verifiedRunCalendar(run)!.weeks_per_year} />}
     </>}
     <div className="home-entry-grid">
       <article className="home-entry"><h3>{language === 'cs' ? 'Validace a diagnostika' : 'Validation & diagnostics'}</h3>

@@ -2438,7 +2438,11 @@
             "notes": ""
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "not_held_years_known": [
+          2020
+        ],
+        "known_nonheld_source": "https://www.nextgenatpfinals.com/en/heritage/history"
       },
       "references": [
         {
@@ -2535,6 +2539,99 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "tennis_masters_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "st_petersburg",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "St. Petersburg Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Saint Petersburg",
+        "historical_country_code": "RUS",
+        "historical_surface": "indoor_hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "year_effective_category_reference_1995_2021_with_2014_gap",
+        "history_periods": [
+          {
+            "from": 1995,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.grandslamhistory.com/atp/st-petersburg-open",
+            "notes": "Historic year-effective category; 2014 not held, 2022 moved away"
+          },
+          {
+            "from": 2000,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.grandslamhistory.com/atp/st-petersburg-open",
+            "notes": "Historic year-effective category; 2014 not held, 2022 moved away"
+          },
+          {
+            "from": 2009,
+            "to": 2013,
+            "category_id": "atp_250",
+            "source_url": "https://www.grandslamhistory.com/atp/st-petersburg-open",
+            "notes": "Historic year-effective category; 2014 not held, 2022 moved away"
+          },
+          {
+            "from": 2015,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.grandslamhistory.com/atp/st-petersburg-open",
+            "notes": "Historic year-effective category; 2014 not held, 2022 moved away"
+          },
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/news/revised-atp-tour-calendar-13-august-2020",
+            "notes": "Special one-year ATP 500 elevation in pandemic-adjusted tour calendar"
+          },
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-updates-2021-q4-calendar.pdf",
+            "notes": "Reverted to ATP 250 in 2021, relocated to Nur-Sultan 2022; later licence identity review needed"
+          }
+        ],
+        "identity_review_note": "ATP announced the St Petersburg licence's relocation to Nur-Sultan in 2022; this dataset does not yet resolve continued tournament Series identity after relocation."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_500",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }

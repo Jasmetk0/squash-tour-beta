@@ -83,6 +83,14 @@ describe('current Working Draft Edition Entry coverage audit',()=>{
     expect(r.calendar).toHaveBeenCalledTimes(2)
     expect(r.timing).toHaveBeenCalledTimes(80)
   })
+  it('does not claim completed configuration when Calendar has zero Editions',async()=>{
+    const r=reader(0)
+    const result=await inspect(r)
+    expect(result.row_count).toBe(0)
+    expect(result.complete_reads).toBe(true)
+    expect(result.all_plans_configured).toBe(false)
+    expect(r.timing).not.toHaveBeenCalled()
+  })
   it('separates plan configured from bound ranking and sporting eligibility',async()=>{
     const r=reader(3)
     r.timing.mockImplementation(async (_a,_b,_c,id)=>id==='edition-1'

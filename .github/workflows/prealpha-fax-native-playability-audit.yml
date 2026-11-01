@@ -6,6 +6,7 @@ on:
     paths:
       - 'tools/audit_fax_native_playability.py'
       - 'tests/tools/test_fax_native_playability.py'
+      - 'docs/FAX_80_NATIVE_PLAYABILITY_GAP_2026_11_01.md'
       - '.github/workflows/prealpha-fax-native-playability-audit.yml'
       - 'src/beta_engine/application/pre_alpha_fax_acceptance_calendar_source.py'
       - 'src/beta_engine/domain/tournaments/calendar_tour.py'

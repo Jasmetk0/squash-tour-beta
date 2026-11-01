@@ -86,6 +86,25 @@
       "licence_transfer_from": "st_petersburg",
       "licence_transfer_to": "almaty",
       "note": "2022 complete ATP 500 played roster 13; scheduled cancelled Beijing 500 remains a separate non-played reference"
+    },
+    "calendar_validation_2022": {
+      "archive_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "press_release_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+      "played_atp_250_count": 42,
+      "scheduled_not_held_atp_250_ids": [
+        "chengdu",
+        "hangzhou"
+      ],
+      "scheduled_250_identity_count": 44,
+      "played_atp_500_count": 13,
+      "scheduled_not_held_atp_500_ids": [
+        "beijing"
+      ],
+      "played_masters_count": 8,
+      "scheduled_not_held_masters_ids": [
+        "shanghai"
+      ],
+      "scope": "played ATP Tour event category roster plus independent 2022 cancelled planned event identities; not full edition details"
     }
   },
   "explicit_scope": [
@@ -655,6 +674,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -760,6 +786,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -1002,6 +1035,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -1597,6 +1637,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -1712,6 +1759,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -1768,6 +1822,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -1826,6 +1887,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -1882,6 +1950,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -1990,6 +2065,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -2046,6 +2128,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -2104,6 +2193,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -2160,6 +2256,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -2218,6 +2321,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -2274,6 +2384,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -2332,6 +2449,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -2388,6 +2512,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -2446,6 +2577,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -2502,6 +2640,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -2560,6 +2705,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -2617,6 +2769,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -2666,6 +2825,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -2723,6 +2889,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -3060,6 +3233,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -3130,6 +3310,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -3221,6 +3408,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
           },
           {
             "from": 2023,
@@ -3571,6 +3765,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -3616,6 +3817,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -3663,6 +3871,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -3708,6 +3923,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -3801,6 +4023,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -3854,6 +4083,13 @@
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -3892,6 +4128,13 @@
         "not_squash_rules": true,
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -4220,6 +4463,124 @@
             "notes": "ATP July 2022 official release: one-year ATP Tour 250 licence, also present in official 2022 results archive"
           }
         ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "melbourne_2022",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Melbourne Summer Set (ATP 250, 2022)",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Melbourne",
+        "historical_country_code": "AUS",
+        "historical_surface": "hard",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2022_results_archive_single_year_without_asserting_licence_ancestry",
+        "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "2022 ATP official results archive: played ATP 250 event; earlier and future licence lineage not inferred"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "sydney_2022",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Sydney Tennis Classic (ATP 250, 2022)",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Sydney",
+        "historical_country_code": "AUS",
+        "historical_surface": "hard",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2022_results_archive_single_year_without_asserting_licence_ancestry",
+        "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "2022 ATP official results archive: played ATP 250 event; earlier and future licence lineage not inferred"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "belgrade_clay_2022",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Serbia Open Belgrade clay tournament (2022)",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Belgrade",
+        "historical_country_code": "SRB",
+        "historical_surface": "clay",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2022_results_archive_single_year_without_asserting_licence_ancestry",
+        "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "2022 ATP official results archive: played ATP 250 event; earlier and future licence lineage not inferred"
+          }
+        ],
+        "identity_review_note": "Belgrade clay 2022 Serbia Open is not automatically the same identity as Belgrade indoor 2024/2025. Relationship to 2023 Banja Luka clay event remains to be independently verified."
       },
       "references": [
         {

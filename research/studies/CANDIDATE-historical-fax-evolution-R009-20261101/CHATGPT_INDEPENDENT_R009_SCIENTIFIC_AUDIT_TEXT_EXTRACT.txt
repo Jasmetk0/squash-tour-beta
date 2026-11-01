@@ -1,0 +1,1355 @@
+# R009 — ChatGPT Deep Research: independent scientific audit of alternative FAX evolution
+
+Original: owner-uploaded DOCX "SQUASH ENGINE — R009_ Nezávislý vědecký audit historické evoluce alternativního globálního světa FAX.docx", 33 pages, received 2026-11-01.
+
+**STATUS: INDEPENDENT AI RESEARCH AUDIT / UNAPPROVED. NOT FINAL EXTERNAL PEER REVIEW, NOT A VALIDATED GAME PARAMETER, RELEASE GATE OR IMPLEMENTATION AUTHORIZATION.**
+
+This file is a **searchable text extraction**. The original binary DOCX is not included in GitHub. A historical squash-court image and typeset equations, tables, and citations may be dropped or have altered layouts. Consult original attached DOCX for text/visual/equation-level verification.
+
+Important independence caveat: the ChatGPT scientific reviewer explicitly states it **did NOT have direct file-tool access to Gemini's original 52-page DOCX**. It reviewed the earlier lossy GitHub extraction and available primary sources; it cannot certify every original Word equation. It did use the PR #1728 preliminary review as a pointer to candidate issues, not a complete independent re-reading of the original Gemini Word file.
+
+Scientific caution: quoted numerical and empirical facts in this report require source-provenance checks. The central corrections include +2.53% not +7.89% shots/rally, conditional EVT endpoint results, non-obligatory RPS tactical cycles and national dynasties, conditional institutional RAE, and current implementation caveats. 15 original experiment proposals were reviewed but not executed.
+
+----- BEGIN FULL AVAILABLE TEXT EXTRACTION -----
+
+<PARSED TEXT FOR PAGE: 1 / 33>
+SQUASH ENGINE — R009: Nezávislý vědecký
+audit historické evoluce alternativního
+globálního světa FAX
+
+
+
+
+Executive Summary a celkové nezávislé hodnocení Gemini
+Nejdůležitější závěr auditu je, že základní filozofie R009 je správná, ale několik
+jeho nejsilnějších tvrzení je vědecky příliš silných. Správný je princip, že FAX
+nemá kopírovat historickou PSA Tour, že dlouhodobé změny mají pokud
+<PARSED TEXT FOR PAGE: 2 / 33>
+možno vznikat endogenně a že národnost nesmí přímo určovat vrozený
+talent, styl nebo mentální vlastnosti. To je v souladu i s aktuálním Masterem a
+Country Attributes V1: země ovlivňuje velikost dostupného squashového poolu a
+prostředí vývoje, nikoli vrozenou kvalitu jednotlivce. [1]
+
+R009 ale opakovaně přechází od rozumné hypotézy k tvrzení o nutném výsledku.
+Nejvýraznější příklady jsou: automatická komprese Top 100 při růstu populace
+hráčů, „nevyhnutelný“ silný Relative Age Effect, přirozená Rock–Paper–Scissors
+dominance tří taktických archetypů, očekávané Hopfovy cykly s periodou 10–25
+let, přirozené 15–30leté národní dynastie a možnost statisticky „dokázat nulový
+efekt“ národnosti pomocí nevýznamného testu. Takto formulované závěry nejsou
+podloženy příslušnou matematikou ani empirickými daty. Samotný návrh R009
+je přitom v repozitáři správně označen jako UNVERIFIED PROPOSAL, nikoliv
+jako produktové rozhodnutí nebo kalibrace. [2]
+
+V historické části je R009 většinou kvalitní v chronologii hlavních
+institucionálních a pravidlových změn. Přechod ISRF→WSF v roce 1992, vznik
+PSA v roce 1993 spojením mužského ISPA a severoamerické profesionální
+organizace, mužský přechod na PAR15 v roce 1989, PAR11 na mužském
+profesionálním okruhu od roku 2004, následný přechod žen a pozdější sjednocení
+pravidel jsou historicky doložitelné. Stejně tak vývoj skleněných kurtů,
+kompozitních raket a standardizace míčků. [3]
+
+Slabší je však R009 v kauzálním jazyce. Například změna skórování a snížení
+tinu proběhly v historickém období spolu s vývojem raket, profesionalizací,
+změnou tréninku a generační obměnou hráčů. Z observačních studií proto nelze
+izolovat jednoduché tvrzení typu „nižší tin způsobil X % více winnerů“ bez
+vhodného experimentálního designu. Studie Murray et al. skutečně zjistila změny
+v časových a úderových charakteristikách elitního mužského squashe po
+změnách pravidel, ale šlo o observační srovnání období, nikoliv randomizovaný
+experiment. [4]
+
+Nejjasnější numerická chyba R009 je zásadní právě proto, že jde o triviální
+kontrolu: změna z 12,67 na 12,99 úderu na výměnu není +7,89 %, ale +2,53 %:
+
+
+
+Původní tabulka R009 uvádí +7,89 %. Ostatní hlavní procentní změny z téže
+tabulky jsou naopak při prostém přepočtu většinou správné: winners +12,53 %,
+unforced errors −13,15 %, critical points přibližně +47,96 %, rest between rallies
++10,04 %, skutečná délka −1,90 % a extrapolovaná délka přibližně −29,98 %. [5]
+<PARSED TEXT FOR PAGE: 3 / 33>
+Z hlediska aktuálního Squash Engine je největší problém R009 v tom, že místy
+zachází s budoucím nebo částečným modelem jako s již funkční dynamikou.
+Aktuální repozitář výslovně upozorňuje, že produktový model je kanonický cíl,
+zatímco implementace může být částečná nebo přechodová. Health existuje jako
+struktura a stav, ale kalibrované numerické health/healing efekty zůstávají
+nedokončené. Natural Style a Gameplan jsou aktivnější než Health, ale
+dlouhodobý Natural Style se stále materializuje z legacy play_style a plná kariérní
+evoluce stylu a 57atributová Style Execution nejsou hotové. Počáteční populace
+rovněž stále pochází z provizorní sedmihodnotové kalibrace, nikoliv z kompletní
+historické generační pipeline. [6]
+
+Celkový verdikt proto zní:
+
+R009 je cenný jako katalog mechanismů a hypotéz, nikoli jako hotová
+vědecká specifikace historické evoluce FAX. Nejlepší části jsou
+epistemologické: Earth jako evidence, nikoli scénář; oddělení vrozeného talentu
+od národního prostředí; požadavek na emergentní historii; důraz na historické
+snapshoty a reprodukovatelnost. Nejslabší jsou části, kde elegantní matematický
+aparát nahrazuje empirickou identifikaci parametrů.
+
+Klíčový návrhový princip pro FAX by proto měl být:
+
+    Simulovat příčiny a omezení, nikoli požadované historické tvary.
+
+Engine může modelovat populační pool, účast, přístup, kvalitu rozvoje,
+konkurenci, podporu, tradici, individuální potenciál, trénink, gameplan, únavu a
+později zdraví či institucionální změny. Neměl by však obsahovat skrytý
+požadavek, aby z toho vyšla „egyptská éra“, 20letý taktický cyklus nebo
+komprimovaná Top 100.
+
+Historická fakta, evoluce výkonnosti, globalizace a národní
+dominance
+Instituce. Mezinárodní řízení squashe se postupně institucionalizovalo během
+20. století. World Squash Library uvádí přejmenování International Squash
+Rackets Federation na World Squash Federation v roce 1992 a vznik Professional
+Squash Association v roce 1993 sloučením mužské profesionální struktury ISPA s
+profesionální severoamerickou hardballovou organizací. Profesionální mužský
+tour již předtím fungoval samostatně od mezinárodní federace. R009 tuto
+základní chronologii zachycuje dobře. [7]
+<PARSED TEXT FOR PAGE: 4 / 33>
+Je však vhodné zpřesnit formulaci „vznik PSA“. PSA roku 1993 nebyla vznikem
+profesionálního squashe jako takového. Profesionální hráčská struktura
+existovala před ní; rok 1993 představuje institucionální konsolidaci. Podobně
+WSF nevznikla ex nihilo roku 1992, ale přejmenováním existující ISRF. [8]
+
+Scoring. Tradiční HiHo znamenalo, že bod získával pouze podávající; receiver po
+vyhrané rally získal servis. Mužský profesionální okruh přešel roku 1989 na
+point-a-rally do 15 a současně se měnily další parametry profesionální hry. World
+Squash Library uvádí v témže roce zrušení druhého servisu, přechod mužského
+profesionálního squashe na PAR15 a tin 17 palců. Mužský profesionální tour
+přešel na PAR11 v roce 2004, ženský profesionální tour následoval v roce 2008.
+[7]
+
+R009 je správný v tom, že scoring může změnit strategické incentivy i bez
+dramatické změny průměrné délky jedné rally. Je ale příliš silné tvrdit, že
+konkrétní psychologický nebo taktický efekt byl kauzálně dokázán prostým
+před/po srovnáním. Scoring mění hodnotu bodu, riziko comebacku a význam
+serve turnover mechanicky; to je matematický důsledek pravidel. Z toho však
+neplyne přesná velikost změny shot selection, winner rate nebo psychological
+pressure. [9]
+
+Tin a kurt. Standardizace kurtu ve 20. letech 20. století je doložená a pozdější
+snížení profesionálního tinu změnilo dostupný cílový prostor pro nízké útočné
+údery. R009 správně upozorňuje, že nižší tin může teoreticky zvýšit návratnost
+agresivních zakončení, ale přesná kauzální velikost je problematická, protože
+scoring, vybavení a hráčská populace se měnily paralelně. [10]
+
+Vývoj skleněných stěn a přenosných showcourtů je historicky důležitý především
+pro komercializaci, diváckou viditelnost a možnost pořádat turnaje v arénách a
+ikonických lokalitách. To je mechanismus přenositelný do FAX jako vztah
+technologie → event economics / audience / venue flexibility, nikoliv jako
+přímý atributový bonus hráčům. World Squash Library dokumentuje postupný
+vývoj skleněných kurtů a jejich turnajové použití. [8]
+
+Rakety. Historický přechod od dřeva k lehčím kovovým a kompozitním
+konstrukcím je reálný. Pravidla v roce 1982 již připouštěla rakety vyrobené zcela
+z jiných materiálů než dřeva; následně rostla významnost grafitu a dalších
+kompozitů a v roce 1991 se zvětšila povolená vypletená plocha. [3]
+
+R009 však přisuzuje technologii velmi konkrétní taktický řetězec — lehčí raketa →
+kratší nápřah → více volejů → více deception. Tento mechanismus je
+biomechanicky plausibilní, ale historický fakt o materiálu není důkazem
+<PARSED TEXT FOR PAGE: 5 / 33>
+velikosti jeho taktické kauzality. Bez longitudinálních dat o stroke mechanics a
+kontrolní strategie by měl být označen jako mechanism hypothesis.
+
+Míčky. Produkce double-yellow-dot míčků na konci 90. let je doložena. Není však
+vědecky bezpečné tvrdit, že byly zavedeny právě jako cílená „protiváha“
+silnějším kompozitním raketám a že tím zabránily dvouúderovému squashi,
+pokud pro toto rozhodnutí není primární dokumentace výrobce či federace. R009
+zde zaměňuje plausible functional effect za doloženou historickou motivaci. [8]
+
+Taktika. Empirická literatura poskytuje mnohem lepší oporu pro kontinuální
+taktické veličiny než pro pevné archetypy. Vučković a kol. například zjistili
+význam taktické kontroly T-area a rozdíly související s herní úrovní a výsledkem
+rally. Starší motion-analysis práce rovněž prokazují rozdíly v pohybu mezi
+výkonnostními skupinami. To podporuje modelování pozice, tlaku, pohybu a
+kontroly prostoru. Nepodporuje to však existenci tří přirozených druhů hráčů s
+cyklickou dominancí. [11]
+
+Trénink. Squash je fyziologicky kombinací vysoké aerobní náročnosti,
+opakovaných intenzivních anaerobních úseků a specifické agility. Moderní
+měření ukazuje vztahy mezi sport-specifickou aerobní výkonností, change-of-
+direction schopností a úrovní hráče. Analýza profesionálního tréninku navíc
+ukazuje, že různé typy tréninkových jednotek generují odlišný vnitřní a vnější
+load a že matchplay není automaticky nejintenzivnější jednotkou. To podporuje
+FAX mechanismus „training environment → realized performance“, ale nikoliv
+univerzální historickou křivku tréninkové efektivity. [12]
+
+Pákistán. Historická dominance Pákistánu je skutečná, nikoliv artefakt několika
+náhodných šampionů. Hashim Khan vyhrál od roku 1951 sedm British Open;
+později Jahangir Khan získal šest World Open a deset British Open a Jansher
+Khan osm World Open. Pákistánská federace sama popisuje Jansherův odchod
+jako konec přibližně půlstoletí mimořádně silné pákistánské éry, i když přesný
+termín „50 let dominance“ je narativní zkratka, nikoliv statisticky definovaný
+režim. [13]
+
+Pro FAX je z toho přenositelný fakt, že silné lokální ekosystémy mohou
+opakovaně produkovat světovou špičku. Není z toho přenositelný zákon, že
+dynastie musí trvat přibližně 15–30 let nebo že podobně velký sport bude nutně
+vytvářet národní dynastie této délky.
+
+Egypt. Egypt má starší squashovou tradici než jeho současná dominance: F. D.
+Amr Bey a Mahmoud Karim patřili k předním hráčům již před pákistánskou
+érou. Moderní egyptská dominance se výrazně projevila od období Amra
+<PARSED TEXT FOR PAGE: 6 / 33>
+Shabany a v posledních desetiletích pokračovala mimořádnou koncentrací
+světových titulů. Oficiální historie World Championships ukazuje sérii
+egyptských mužských i ženských vítězů ve 21. století. [14]
+
+Zdroje z Egypta a dobový tisk zmiňují kombinaci juniorských programů, role
+models, klubové infrastruktury, koučinku a institucionální podpory jako
+vysvětlení úspěchu. To je však observational causal story. Jednotlivé složky nelze
+z výsledků Egypta identifikovat samostatně bez srovnávacího designu. [15]
+
+Pro FAX je proto vhodnější modelovat národní úspěch jako emergentní důsledek:
+
+
+
+což přesně odpovídá směru Country Attributes V1. [16]
+
+Historická pákistánská nebo egyptská dominance proto není argumentem pro
+skrytý bonus Pakistan +talent nebo Egypt +deception. Takový mechanismus by
+byl současně empiricky neobhajitelný i v rozporu s produktovým kanonem
+Squash Engine. [16]
+
+Numerický audit, teorie extrémních hodnot a evoluce
+sportovní výkonnosti
+Audit tabulky Hughes. Přepočet nejvýznamnějších hodnot R009 dává:
+
+                                               Nezávisl
+                                                      ý
+Veličina     Původní       Nová         R009   přepočet Verdikt
+Shots/          12,67      12,99     +7,89 %    +2,53 % chybný
+rally                                                   výpočet
+Winners/        53,41      60,10    +12,53 %   +12,53 % správně
+match
+Unforced        31,79      27,61    −13,15 %   −13,15 % správně
+errors
+Critical         4,17        6,17   +48,00 %   +47,96 % správně
+points                                                  po
+                                                        zaokrouh
+                                                        lení
+Rest            11,55     12,71 s   +10,04 %   +10,04 % správně
+between
+rallies
+<PARSED TEXT FOR PAGE: 7 / 33>
+                                              Nezávisl
+                                                     ý
+Veličina    Původní        Nová        R009   přepočet Verdikt
+Actual         70,67       69,33   −1,90 %     −1,90 % správně
+match                       min
+duration
+Extrapol       74,88       52,43   −29,99 %   −29,98 % prakticky
+ated                        min                        správně
+duration
+
+Údaje jsou převzaty z tabulky reprodukované v R009; samotná studie analyzovala
+elitní mužský squash při odlišných scoring systems. [5]
+
+Výpočet 7,89 % u shots/rally není drobný rounding issue. Je přibližně
+trojnásobkem skutečné relativní změny. Proto všechny numerické tabulky
+R009 vyžadují kontrolu strojově jednoduchou aritmetikou ještě před jakoukoliv
+kalibrací.
+
+Druhým problémem je interpretace statistické nevýznamnosti. Pokud studie
+nezjistí významnou změnu průměrné, mediánové či modální délky rally, správný
+závěr je „data neposkytla dostatečný důkaz změny při daném designu a síle
+testu“, nikoliv „délka rally se nezměnila“. Pro tvrzení o ekvivalenci by byl
+vhodnější předem definovaný equivalence margin a TOST či jiný ekvivalenční
+design.
+
+Podobně relativní procentní změny nejsou effect sizes v inferenčním smyslu. Bez
+variance, covariance, počtu zápasů, struktury repeated observations a nejistoty
+nelze +12,53 % winners interpretovat jako přesně odhadnutý populacionální
+efekt.
+
+EVT a konečný strop. R009 má pravdu jen za konkrétní třídou modelů.
+Předpokládejme latentní výkon s konečným pravým endpointem a tail behavior
+
+
+
+Potom pro maximum z přibližně nezávislých pozorování platí řádově
+
+
+
+a podobnou škálu mají mezery mezi několika nejvyššími order statistics. Za
+těchto předpokladů tedy větší pool skutečně přibližuje nejlepší jedince k horní
+hranici a absolutní mezery mezi fixním počtem nejvyšších latentních výkonů
+<PARSED TEXT FOR PAGE: 8 / 33>
+mají tendenci klesat. To je standardní finite-endpoint/Weibull-domain logika EVT.
+[17]
+
+To však není univerzální zákon.
+
+Pokud je parent distribution neomezené a v Gumbelově doméně, maximum
+může růst například přibližně jako a spacing nemusí sledovat stejnou kompresní
+logiku. U heavy-tailed Fréchet-type distributions mohou absolutní rozdíly
+extrémů dokonce růst. Proto věta „větší populace automaticky komprimuje Top
+100“ není vlastností EVT jako takové; je vlastností zvolené tail class a zvoleného
+měřítka.
+
+Navíc lidský „talent“ není přímo pozorovaná jednorozměrná náhodná veličina.
+Výsledek profesionálního hráče lze lépe konceptualizovat jako
+
+
+
+kde je latentní potenciál, development, training, health, competitive
+environment a match-specific interaction. Ranking je navíc agregát výsledků,
+nikoliv přímý fyziologický výkon.
+
+Proto je třeba oddělit tři otázky:
+
+Latentní potenciál. Větší pool zvyšuje pravděpodobnost nalezení vzácných
+vysokých potenciálů, pokud jsou draws srovnatelné.
+
+Realizovaný výkon. Může se komprimovat, ale pouze pokud jsou development
+opportunities relativně homogenní a systém dokáže talenty objevit a převést do
+profesionálního sportu.
+
+Výsledkové rozdíly. Mohou zůstávat velké i při velmi malé latentní skill
+difference kvůli kumulativní výhodě, prize money, lepšímu coachingu, seedingu,
+travel access, zkušenosti a nonlinear match conversion.
+
+Zvětšení hráčské základny může dokonce zvýšit nerovnost, pokud současně
+vznikne silnější selekce do malého počtu elitních akademií a winners získávají
+systematicky lepší prostředí.
+
+Dalším problémem je selection bias. „Top 100“ po rozšíření sportu není stejná
+statistická populace jako Top 100 před rozšířením. Mění se participation process,
+geography, professional conversion, opportunity set i number of tournaments.
+
+Z hlediska FAX proto EVT poskytuje dobrý mechanismus pro prospect sampling,
+ne automatický cíl pro ranking spread.
+<PARSED TEXT FOR PAGE: 9 / 33>
+Správná falsifikovatelná hypotéza by byla například:
+
+       Při konstantním development environment a bounded latent-talent
+       distribution vede zvýšení effective talent pool k poklesu očekávané
+       vzdálenosti fixních horních order statistics od endpointu.
+
+Nesprávná produktová podmínka by byla:
+
+       Po zdvojnásobení popularity se musí Top 100 stlačit o X %.
+
+Biologické limity. Literatura o sportovních rekordech podporuje možnost
+plateau a fyziologických mezí, ale neurčuje jeden univerzální strop nezávislý na
+pravidlech, technologiích a prostředí. Studie pokoušející se odhadovat konečné
+performance limits pracují vždy s konkrétními disciplínami, obdobím a
+extrapolačním modelem. [18]
+
+Ve squashi je situace ještě složitější, protože „výkon“ není stopky nebo délka
+skoku. Hráč může být absolutně fyzicky lepší a současně mít stejnou win
+probability proti elitě, pokud se zlepšil celý field. Proto by Squash Engine měl
+oddělovat:
+
+        absolutní fyzickou/technickou kapacitu,
+        relativní sílu v současném field,
+        taktické matchup effects,
+        ranking outcome.
+
+To umožní historický svět, kde se absolutní kvalita několik desetiletí zvyšuje, ale
+ranking dominance nevykazuje monotónní trend.
+
+Evoluční teorie her, taktické cykly a Relative Age Effect
+Empirický status taktických archetypů. R009 navrhuje tři archetypy: high-pace
+volley aggressor, deceptive controller a attrition retriever a tvrdí mezi nimi
+„přirozenou“ netranzitivní asymetrii. Samotné popisy jsou sportovně plausibilní,
+ale dostupná squashová literatura lépe podporuje měřitelné dimenze jako T-
+position, movement, pace, shot selection, pressure a rally structure než tři
+diskrétní biologicky analogické „species“. [19]
+
+Neexistuje zde doložená empirická payoff matrix typu
+<PARSED TEXT FOR PAGE: 10 / 33>
+s měřenými koeficienty potvrzujícími například Aggressor > Retriever > Deceiver
+
+> Aggressor. R009 tuto netransitivitu předpokládá; neodvozuje ji z matchup
+databáze. [20]
+
+To je zásadní rozdíl. RPS není neutrální způsob implementace variability. RPS
+je konkrétní empirická hypotéza o znaménkách interakcí.
+
+Standardní replicator dynamics
+
+
+
+je matematicky správná pro frekvenčně závislý výběr strategií v určité třídě
+evolutionary games. Samotná korektnost rovnice však nedokazuje, že squashová
+populace funguje jako replicator system. Literatura evolutionary game theory
+ukazuje, že i velmi jednoduché RPS systémy mohou mít stabilní coexistence
+equilibrium, neutrální cykly, outward trajectories nebo jiné chování podle payoff
+matrix. [21]
+
+Hopfova bifurkace. Hopf není synonymum pro „systém se třemi strategiemi
+začne cyklit“. Vyžaduje lokální dynamickou podmínku: komplexně sdružený pár
+eigenvalues Jacobianu v equilibrium musí při změně parametru překročit
+imaginární osu s nenulovou transversality. Typ vzniklého limit cycle závisí ještě
+na nonlinear terms a znaménku prvního Lyapunovova koeficientu.
+
+Mobilia ukazuje konkrétní RPS-with-mutation model, kde vysoká mutation rate
+vede ke stabilnímu interior fixed point, nízká v určité části parametrického
+prostoru k limit cycle přes Hopfovu bifurkaci a bez mutace mohou vznikat
+heteroclinic cycles, které nejsou robustní vůči šumu. [22]
+
+Toupo a Strogatz obdobně ukazují, že stabilita a oscilace závisejí na konkrétní
+struktuře mutation pathways a parametrů. To je důkaz podmíněnosti, nikoliv
+univerzálnosti cyklů. [23]
+
+Mutation term. V kulturním/sportovním modelu by „mutation“ neměla být
+interpretována biologicky. Mohla by reprezentovat exploration, coaching
+innovation, náhodný drift gameplanu, imitation errors nebo vstup nových
+taktických myšlenek. Každý z těchto mechanismů má ale jiné časové škály a
+empirickou interpretaci. Bez této semantiky je parametr pouze ladicí knoflík.
+
+Perioda 10–25 let. Nenašel jsem spolehlivý historický důkaz, že profesionální
+squash vykazuje stabilní 10–25leté periodické střídání taktických stylů. R009 tuto
+periodu používá jako žádoucí výsledek EXP-06. To je metodologicky obráceně:
+perioda má být měřený emergentní výsledek, ne acceptance target. [24]
+<PARSED TEXT FOR PAGE: 11 / 33>
+Navíc Fourier peak v 100leté simulaci je velmi slabý základ pro tvrzení o 10–
+25letém cyklu: ve stoletém series jsou k dispozici jen přibližně 4–10 period.
+Trendy, regime shifts, autocorrelation a stochastic oscillations mohou vytvořit
+zdánlivý spectral peak bez pravého limit cycle.
+
+Pro FAX je vědecky silnější řešení využít již rozhodnuté spojité osy Risk / Tempo /
+Court Positioning / Variation, Natural Style, Style Familiarity a match Gameplan.
+Engine pak může z dat odhadnout matchup surface
+
+
+
+aniž by předem vyžadoval netransitivitu. Master právě takové osy už rozhodl a
+část Gameplanu je implementovaná; současná omezení Natural Style jsou v
+dokumentaci výslovně popsána. [25]
+
+Pokud se z výsledků simulace později objeví netransitivní vztahy, mohou být
+skutečnou emergent property. Pokud ne, engine by je neměl vyrábět násilím.
+
+Relative Age Effect. R009 tvrdí, že masová popularita FAX „nevyhnutelně“
+vytvoří silný RAE. Tato formulace je neopodstatněná. Samotný R009 cituje pooled
+evidence z racket sports, ale přechází z aggregate result k deterministickému
+mechanismu. [26]
+
+Aktuální systematický přehled racket sports z roku 2026 uvádí 26 studií, 198
+vzorků a více než sedm milionů sportovců; agregovaný rozdíl mezi Q1 a Q4 byl
+výrazný, přibližně 34,8 % versus 16,8 %, ale efekt se měnil podle sportu, věku a
+competition level. Výsledky byly konzistentnější v tenisu a badmintonu než ve
+squashi. V době auditu jde navíc o preprint, takže jeho status je slabší než peer-
+reviewed final publication. [27]
+
+Přímo ve squashi jsou důkazy smíšené. Velká turecká studie racket sports nalezla
+RAE v několika sportech, ale nikoliv statisticky významný efekt ve squashovém
+subsample; squashový vzorek byl však malý, takže z výsledku nelze odvozovat
+„nulový RAE“. [28]
+
+Také studie evropských juniorských squashistů nezjistila statisticky významnou
+nerovnoměrnost birth-quarter distribution u chlapců ani dívek, ale opět to není
+důkaz univerzální absence. [29]
+
+England Squash dokonce experimentoval s birthday-banding přístupem právě
+proto, aby institutional selection structure mohl relative-age disadvantage
+zmírňovat. To je silný konceptuální protiargument proti tvrzení „více hráčů ⇒
+nutně silnější RAE“. [30]
+<PARSED TEXT FOR PAGE: 12 / 33>
+RAE vzniká pravděpodobněji tehdy, když se současně sejdou:
+
+časná selekce, pevná roční cut-off data, silná soutěž o omezená academy places,
+významný maturity advantage v hodnoceném věku a nízká možnost pozdějšího
+návratu do pathway.
+
+Naopak jej může oslabovat široký intake, maturity-adjusted assessment, birthday
+banding, více vstupních věků, dlouhá development window a mechanismy late
+bloomers.
+
+Proto by FAX neměl mít parametr „global popularity → RAE“. Pokud se RAE
+někdy modeluje, měl by vznikat z institutional selection mechanics.
+
+Srovnání se současným Squash Engine a audit navržených
+mechanismů
+Aktuální dokumentace projektu je v jednom ohledu mimořádně vhodná pro
+vědeckou simulaci: explicitně rozlišuje produktový kanon od implementation
+evidence a zakazuje slučovat stavy DECIDED, TARGET, OPEN, DEFERRED a podobné
+kategorie. README výslovně říká, že beta je v migraci a některé canonical
+capabilities jsou pouze částečné nebo neimplementované. [31]
+
+World Packages — DECIDED, ale ne automatický historický motor. World
+Package má obsahovat země, regiony, populační historii, šest Country ratings,
+pipeline parametry, world-specific rules a provenance. Po aplikaci se payload
+kopíruje do nezávislého Run snapshotu; nejde o live link na zdroj. Run může
+existovat i úplně bez World Package. [32]
+
+To je výborný základ pro historicky verzované prostředí, ale existence World
+Package sama neznamená, že země autonomně historicky vyvíjí coaching quality,
+popularity nebo institutions. R009 nesmí zaměňovat „data lze verzovat“ s „engine
+již obsahuje jejich endogenní evoluci“.
+
+Country Attributes — šest, ne sedm. Country Attributes V1 explicitně stanoví
+šest authorovaných atributů: squash_popularity, squash_access, development_quality,
+competition_quality, elite_support, squash_tradition. Population je factual data,
+nikoliv sedmý rating. Přesná numerická kalibrace 1–10 je OPEN a runtime stále
+prochází migrací ze staršího kontraktu. [16]
+
+Court Count byl pro pre-alpha explicitně odložen; dostupnost má zatím
+reprezentovat Squash Access. [33]
+<PARSED TEXT FOR PAGE: 13 / 33>
+Effective player base — conceptually supported, calibration open.
+Dokumentace již rozlišuje Population, Effective Squash Pool, Competitive Depth,
+Talent Discovery Rate a Professional Conversion Rate. Zároveň zakazuje národní
+innate talent quality. To je přesně architektura vhodná pro FAX: větší
+země/participation zvyšuje počet sampled prospects, ne quality multiplier
+každého občana. [16]
+
+Generování talentu — TARGET/partly transitional. Současný CURRENT_STATE
+stále uvádí, že initial pool originates in seven-value calibration a že nejde o plnou
+historical cohort development ani annual advancement pipeline. R009 proto
+nemůže experimenty závislé na desetiletích endogenního talent generation
+označit jednoduše za aktuálně validované. [34]
+
+Long-term Player Style — DECIDED, částečně IMPLEMENTED. Master
+rozhoduje dlouhodobě vyvíjený Natural Style Profile, Style Familiarity a aktivní
+čtyři gameplan axes. Současná implementace ale Natural Style zatím
+deterministicky odvozuje z legacy play_style; plný kariérní spojitý profil není
+hotový. [35]
+
+Match Gameplan — IMPLEMENTED v omezené pre-alpha kalibraci. README
+uvádí aktivní Risk / Tempo / Court Positioning / Variation, familiarity, imperfect
+opponent estimates a adaptaci během rally-by-rally zápasu. Exact weights jsou
+však stále replaceable pre_alpha_gameplan_v1 calibration. To je dostačující k
+testování lokální kauzality gameplanu, nikoli k tvrzení o 100leté evoluční metě.
+[36]
+
+Health and recovery — datový model ano, plná sportovní dynamika ne.
+CURRENT_STATE opakovaně uvádí numeric Health/healing mezi nedokončenými
+oblastmi a dokonce blokuje některé importy tam, kde by bylo nutné vymyslet
+nepodložený efekt. Proto jakýkoli experiment, který používá dynamické injuries,
+return-to-play, age-related deterioration nebo endogenous career termination
+jako již kalibrovanou fyziologii, překračuje skutečný stav enginu. [37]
+
+Ranking dynasties. Engine umí historicky verzované ranking policies a
+snapshots. To umožňuje studovat vznik dominance, ale ranking mechanism není
+mechanismem vzniku talentu. Národní dynasty metric musí být outcome, ne
+requirement. [31]
+
+Historical states. Historické snapshoty, provenance, replayable commands a
+oddělené Branches jsou jednou z nejsilnějších částí architektury pro vědecké
+testování. Jsou vhodné pro counterfactual paired runs a deterministic
+reproducibility. [31]
+<PARSED TEXT FOR PAGE: 14 / 33>
+Následující matice shrnuje mechanismy R009:
+
+                   Mate
+                   matic             Maste                       Pre-
+Mecha Vědec        ká       Kalibr   r        Již v     Nové     alpha
+nismu ká           konzis   ovatel   compa engin        rozho    priorit
+s     opora        tence    nost     tibility u         dnutí?   a
+větší     vysok ano         středn   vysok     částeč   spíše    ano
+effecti   á jako            í        á         ně       kalibr
+ve        princi                                        ace
+talent    p
+pool      sampli
+          ng
+countr vysok       ano      středn   explici částeč     ne       ano
+y      á                    í        tní     ně
+develo
+pment
+enviro
+nment
+národ     žádná může        špatně zakáz       ne       ano, v ne
+ní        potřeb být               án                   rozpor
+innate    ná     mate                                   u
+talent           matic
+bonus            ky
+                 defino
+                 ván,
+                 ale
+                 chybn
+                 ý
+                 model
+imitati   plausi   ano      nízká–   možn      ne/      ano      pozděj
+on of     bilní,            středn   á         plně              i
+cham      slabě             í                  ne
+pions     kvanti
+          fikova
+          ná
+coachi    plausi   ano      nízká    komp      ne       ano      pozděj
+ng        bilní                      atibiln   jako              i
+<PARSED TEXT FOR PAGE: 15 / 33>
+                   Mate
+                   matic             Maste                       Pre-
+Mecha Vědec        ká       Kalibr   r        Již v     Nové     alpha
+nismu ká           konzis   ovatel   compa engin        rozho    priorit
+s     opora        tence    nost     tibility u         dnutí?   a
+knowl                                í         endog
+edge                                           enní
+diffusi                                        síť
+on
+institu   silná    ano      středn   komp      World    ano      pozděj
+tional    obecn             í        atibiln   data              i
+develo    á                          í         ano,
+pment     opora                                endog
+                                               enní
+                                               vývoj
+                                               ne
+traini plausi      ano      nízká    komp      omeze    pravd    pozděj
+ng      bilní                        atibiln   ně       ěpodo    i
+efficie                              í                  bně
+ncy
+progre
+ss
+techn histori      ano      středn komp        ne       ano      pozděj
+ologic cky                  í pro   atibiln    jako              i
+al     silný                rules/e í          auton
+progre                      quipm              omní
+ss                          ent                evoluc
+                            epoch              e
+                            s
+finite    plausi   ano      nízká    komp      ne       pravd    pozděj
+biolog    bilní,                     atibiln   jako     ěpodo    i
+ical      model                      í         EVT      bně
+limits    -                                    law
+          depen
+          dent
+autom     ne       pouze    špatná není        ne       nemá     ne
+atic      jako     za       bez    požad                být
+Top-1     zákon    konkr    defini ována                target
+<PARSED TEXT FOR PAGE: 16 / 33>
+                    Mate
+                    matic             Maste                       Pre-
+Mecha Vědec         ká       Kalibr   r        Již v     Nové     alpha
+nismu ká            konzis   ovatel   compa engin        rozho    priorit
+s     opora         tence    nost     tibility u         dnutí?   a
+00                  étní    ce
+compr               distrib
+ession              uce
+RPS     empiri model         nízká    není      ne       ano      ne
+tactica cky    může                   nutný
+l cycle nedol být
+        ožen   správ
+               ný
+10–     nedol       lze      neide není         ne       ano      ne
+25y     ožena       vynuti   ntifiko požad
+tactica             t        vateln ována
+l                            á
+period
+RAE       středn    ano      středn   komp      ne       ano      pozděj
+via       í/                 í        atibiln                     i
+institu   vysok                       í
+tional    á
+selecti   obecn
+on        ě
+RAE       nepod     ne     špatná není          ne       neměl    ne
+via       ložen     jako          nutný                  by
+popul               kauzál                               vznik
+arity               ní law                               nout
+alone
+nume      medic     ano      obtížn   pláno     nedok kalibr      ne
+ric       ínsky              á        váno      ončen ace         před
+injury    plausi                                o     nutná       valida
+feedb     bilní                                                   cí
+ack
+emerg     histori   ano      středn   velmi     jen      ano      pozděj
+ent       cky                í        vysok     část     pro      i
+nation    plausi                      á         příčin   někter
+<PARSED TEXT FOR PAGE: 17 / 33>
+                 Mate
+                 matic             Maste                       Pre-
+Mecha Vědec      ká       Kalibr   r        Již v    Nové      alpha
+nismu ká         konzis   ovatel   compa engin       rozho     priorit
+s     opora      tence    nost     tibility u        dnutí?    a
+al      bilní                                        é
+rise/de                                              dyna
+cline                                                miky
+
+Nejdůležitější implementační princip vyplývající z tohoto auditu je, že data
+model ≠ causal model ≠ calibrated model ≠ validated model.
+
+Audit experimentů Gemini a opravený experimentální plán
+R009 má velkou zásluhu v tom, že vůbec navrhuje explicitní experimentální testy,
+deterministic seeds a falsification thresholds. Katalog EXP-01–15 je lepší výchozí
+bod než subjektivní „simulace vypadá realisticky“. Některá kritéria jsou však
+nastavena tak, aby vynutila předem očekávanou historii. [38]
+
+Experiment                         Audit
+EXP-01 Stable vs evolving          Hypotéza je smysluplná. Chyba
+world                              je požadovat ADF stationarity v
+                                   krátkých a strukturálně
+                                   složitých sportovních series a
+                                   pevný 6–10letý lag. ADF má
+                                   nízkou sílu a stationarity of
+                                   mean ranking strength není
+                                   nutný invariant. Paired
+                                   intervention runs jsou
+                                   vhodnější. Aktuální engine
+                                   navíc nemá kompletní
+                                   autonomní historical country
+                                   evolution.
+EXP-02 Larger player base /        Velmi dobrá otázka, chybná
+EVT                                expected answer. Nesmí
+                                   vyžadovat Top-20/Top-100
+                                   compression. Testovat více
+                                   parent distributions a odděleně
+                                   latent potential, realized skill a
+<PARSED TEXT FOR PAGE: 18 / 33>
+Experiment                   Audit
+                             ranking spread.
+EXP-03 Coaching diffusion    Vědecky plausibilní, ale
+                             parametry diffusion
+                             speed/network nejsou aktuálně
+                             identifikovatelné. Bez
+                             explicitního coaching network
+                             mechanismu jde o future
+                             research, ne current test.
+EXP-04 Champion imitation    Plausibilní kulturní
+                             mechanismus. Pevný 4–8letý lag
+                             je nepodložený. Potřebuje
+                             exposure variable, adoption
+                             hazard a counterfactual no-
+                             imitation run.
+EXP-05 Performance plateau   Validní koncept, pokud je
+                             plateau hypothesis
+                             porovnávána s alternativními
+                             saturating/non-saturating
+                             models. Nelze předem
+                             vyžadovat konkrétní
+                             biologickou asymptotu.
+EXP-06 Tactical cycles       Původní acceptance criterion je
+                             chybný. Výskyt 10–25letého
+
+                             spectral peak/Hopf cycle není
+                             potvrzení realismu; může být
+                             artefakt. Cyklus musí být
+                             možný, nikoliv povinný.
+EXP-07 Ranking historical    Velmi cenný. Ranking
+stability                    invariance ale musí být
+                             definována podle změny
+                             competition structure.
+                             Dvojnásobný počet hráčů a
+                             eventů nemusí ekonomicky ani
+                             matematicky zachovat stejnou
+                             ranking distribution.
+EXP-08 National diversity    Smysluplný descriptively. Earth
+<PARSED TEXT FOR PAGE: 19 / 33>
+Experiment                      Audit
+                                distribution nesmí být target
+                                pro FAX. Lepší je testovat
+                                sensitivity k
+                                symmetric/asymmetric country
+                                environments a absenci direct
+                                nationality coefficient.
+EXP-09 Depth vs upset rate      Silný experiment. Očekávaná
+                                direction může být odvozena ze
+                                skill-gap mechanismu, ale match
+                                duration nemusí monotónně
+                                růst s parity. Vhodné analyzovat
+                                upset probability a score/rally
+                                distributions odděleně.
+EXP-10 Emergent dynasties       Původní 15–30letý požadavek je
+                                nevědecký. Symetrický svět
+                                nemusí vytvářet dlouhé národní
+                                dynastie; jejich absence není
+                                selhání. Test má zjišťovat
+                                distribution of leadership spells,
+                                ne vyžadovat Pakistan/Egypt
+                                analogue.
+EXP-11 Zero creep / champion    Užitečný software/statistical
+clones                          invariant test, pokud „clone“
+                                opravdu znamená identické
+                                inputs/states. 10 000 zápasů
+                                může odhalit drift, ale nulový
+                                pozorovaný drift není důkaz
+                                nulové chyby ve všech stavech.
+EXP-12 Nationality neutrality   Princip je zásadně správný,
+                                testovací logika nikoliv. p>0.05 u
+                                KS/ANOVA neprokazuje nulový
+                                efekt. Použít equivalence
+                                testing, confidence interval na
+                                effect size a property-based test
+                                přímé funkční invariance vůči
+                                labelu nationality.
+EXP-13 Save/load/replay         Jeden z nejsilnějších
+<PARSED TEXT FOR PAGE: 20 / 33>
+Experiment                       Audit
+                                 experimentů. Bit-identical
+                                 deterministic state/hash je
+                                 vhodný technický invariant,
+                                 pokud je definována
+                                 serialization canonicalization.
+EXP-14 Identifiability           Výborný směr. Požadavek, že
+                                 „všechny parameters musí ležet
+                                 v 95% CI“ v jednotlivém
+                                 synthetic runu je nesprávná
+                                 interpretace coverage. Coverage
+                                 se hodnotí opakovanými
+                                 synthetic datasets; pairwise
+                                 correlations nestačí k
+                                 identifiability.
+EXP-15 Multi-seed stability      Potřebný robustness test, ale 0
+                                 failures ze 50 běhů neprokazuje
+                                 robustnost vůči rare events.
+                                 Pokud je 0/50 failures, klasická
+                                 horní 95% hranice pro failure
+                                 probability je přibližně 5,8 %
+                                 („rule of three“ ≈ 3/50 = 6 %).
+                                 Stoleté běhy navíc nejsou
+                                 aktuálně plně podloženy všemi
+                                 plánovanými lifecycle/Health
+                                 mechanismy.
+
+R009 skutečně EXP-06 staví na požadovaných kvaziperiodických 10–25letých
+cyklech, EXP-10 na spontánních 15–30letých dynastiích a EXP-15 na 50
+nezávislých stoletých bězích bez degenerace. Tyto thresholdy jsou v textu
+explicitní. [39]
+
+Opravený experimentální plán — maximálně deset experimentů:
+
+                Opravený         Hlavní           Falsifikace /
+ID              experiment       hypotéza         inference
+A1 Population   Měnit pouze      Větší pool       Porovnat
+sampling law    effective        mění order       simulated
+                candidate pool   statistics       order stats s
+<PARSED TEXT FOR PAGE: 21 / 33>
+              Opravený         Hlavní             Falsifikace /
+ID            experiment       hypotéza           inference
+              při stejném      předvídatelně      analytickou/M
+              talent           podle zvolené      onte-Carlo
+              distribution a   distribuce.        očekávanou
+              development                         distribucí;
+              environment.                        žádný povinný
+                                                  Top-100
+                                                  compression
+                                                  target.
+A2 Country-   U identických    Samotný label      Exact
+label         hráčských a      nationality        deterministic
+invariance    environmentál    nemění latent      equality tam,
+              ních inputs      talent ani         kde nationality
+              permutovat       match              není
+              nationality      performance.       environment
+              labels.                             input; u
+                                                  population
+                                                  generation
+                                                  equivalence CI
+                                                  na
+                                                  distributional
+                                                  effects po
+                                                  kontrolované
+                                                  permutaci.
+A3 Pipeline   Měnit            Country            Pokud country
+mediation     popularity/acc   strength           attribute
+              ess/developme    vzniká přes        ovlivňuje
+              nt postupně a    explicitní         outcome mimo
+              izolovaně.       pipeline           specifikovanou
+                               mediators.         pathway,
+                                                  mechanism
+                                                  leak.
+A4            Sweep            Marginal           Porovnat
+Development   development/t    returns mohou      linear,
+saturation    raining inputs   klesat, ale tvar   saturating a
+              od nízkých po    není předem        threshold
+              vysoké.          fixní.             response;
+<PARSED TEXT FOR PAGE: 22 / 33>
+                Opravený          Hlavní            Falsifikace /
+ID              experiment        hypotéza          inference
+                                                    nepředepisova
+                                                    t plateau.
+A5 Gameplan     Párovat stejné    Gameplan má       Effect musí
+causal          hráče/stavy/see   předvídatelný     procházet
+response        dy a měnit        lokální           deklarovanými
+                pouze jednu       kauzální vliv     rally
+                Gameplan axis.    bez direct        mechanisms;
+                                  point bonusu.     jinak kalibrace
+                                                    chybná.
+A6 Emergent     Velké cross-      Netransitivita    Odhadnout
+matchup         play mezi         může              empirical
+topology        kontinuálními     vzniknout, ale    payoff surface;
+                style vectors.    není              změřit
+                                  předpokládána     prevalence 3-
+                                  .                 cycles proti
+                                                    transitive
+                                                    baseline.
+A7 Meta         Nechat style      Meta může         Model se
+dynamics        adoption          konvergovat,      nepovažuje za
+without         reagovat na       driftovat nebo    chybný jen
+forced cycles   measured          cyklit podle      proto, že nemá
+                success.          mechanismů.       periodu; hledat
+                                                    stability
+                                                    regimes a
+                                                    bifurcations až
+                                                    ex post.
+A8 National     Multi-seed        Dynasty length    Report
+concentration   runs se           je emergent       survival curve
+distribution    symetrickými      random            leadership
+                a                 variable.         spells, HHI,
+                asymetrickými                       transition rate;
+                countries.                          žádný 15–30y
+                                                    quota.
+A9 RAE          Simulovat         RAE závisí na     Pokud
+institutional   různé cut-offs,   institucích, ne   popularity
+experiment      academy           pouze na pool     sama při
+<PARSED TEXT FOR PAGE: 23 / 33>
+                 Opravený          Hlavní              Falsifikace /
+ID               experiment        hypotéza            inference
+                 quotas,           size.               vypnuté age-
+                 maturity                              linked
+                 effects a                             selection
+                 reselection                           vytváří RAE, je
+                 opportunities.                        v modelu leak.
+A10              Save/reload/      Stejný              Hash/state
+Reproducibili    replay +          authoritative       equality pro
+ty + rare        stratified/adve   state a seed        determinism;
+failure          rsarial seeds.    reprodukuje         binomial
+campaign                           historii; failure   confidence
+                                   probability je      bound pro
+                                   bounded, ne         failure rate.
+                                   „dokázaně
+                                   nula“.
+
+Tento plán má důležitou vlastnost: každý experiment může uspět i tím, že
+původní narativ R009 vyvrátí. To je podmínka skutečné falsifikovatelnosti.
+
+U identifiability bych před samostatným experimentem doporučil nejprve
+vytvořit parameter map:
+
+
+
+Dva parametry, které mají prakticky stejný dopad na všechny dostupné
+observables, nelze kalibrovat odděleně jen proto, že mají odlišné názvy.
+Typickým kandidátem může být například vysoká development_quality versus
+vysoká competition_quality, pokud obě v budoucím modelu jen násobí stejný skill-
+growth term. Takový model je strukturálně nebo prakticky non-identifiable.
+
+Doporučení pro pre-alphu, budoucí verze a matice Earth →
+FAX
+Pro pre-alphu je prioritou nikoli přidávat kompletní sociologickou historii, ale
+zajistit, že již rozhodnuté mikromechanismy mají správnou kauzální strukturu a
+nulové skryté national/style bonuses.
+
+Doporučuji před pre-alphou držet rozsah přibližně takto:
+<PARSED TEXT FOR PAGE: 24 / 33>
+      Population + šest Country Attributes mohou určovat velikost a účinnost
+       pipeline, ale jejich přesné koeficienty mají zůstat kalibračními parametry,
+       nikoliv historickými „pravdami“. Country V1 právě takto odděluje
+       population od šesti ratings a exact calibration ponechává OPEN. [16]
+      Žádné národní innate talent, style, mentality nebo genetics coefficients.
+      Žádné povinné dynasty duration.
+      Žádné globální takticko-historické sinusoidy.
+      Match Gameplan validovat lokálně na existujících čtyřech osách dříve, než
+       se přidá population-level meta evolution. [35]
+      Health nepoužívat jako argument pro dlouhodobou realism validation,
+       dokud numeric Health/healing není skutečně implementováno a
+       kalibrováno. [37]
+      Reproducibility, save/load/replay a history provenance považovat za hard
+       invariants. Současná architektura deterministic randomness, snapshots a
+       historical policies je pro toto velmi vhodná. [31]
+      Nepovažovat současný initial pool za plnou validaci historické talent
+       pipeline; CURRENT_STATE to výslovně odmítá. [40]
+
+Pro pozdější verze má smysl přidávat mechanismy v pořadí podle
+identifikovatelnosti, nikoliv podle narativní atraktivity.
+
+Nejdříve lze přidat historicky verzované environment parameters, protože mají
+jasnou interpretaci. Poté development/training response, career mobility,
+coaching diffusion a institucionalizované talent selection. Až poté dává smysl
+zkoumat population-level style imitation, meta adaptation, equipment epochs
+nebo RAE.
+
+Endogenní národní rise-and-fall by měl vznikat z pozitivní a negativní zpětné
+vazby: role models mohou zvyšovat participation, participation zvětšuje
+discovery pool, úspěch může přitahovat investice a know-how; zároveň kapacitní
+limity, migration of coaches, konkurence jiných zemí a diminishing returns
+mohou dominanci erodovat. To je mnohem věrohodnější než explicitní „dynasty
+clock“. Historie Egypta a Pákistánu ukazuje, že dlouhé koncentrace úspěchu jsou
+možné; neukazuje jejich povinnou duration distribution. [41]
+
+Technologická evoluce by měla být historical state, například Equipment
+Ruleset/Technology Epoch, nikoliv automatický globální +0.2 Skill/year. Reálné
+změny raket, míčků a kurtů dokazují, že technologie mění action space hry,
+nikoliv že lidské atributy rostou lineárně. [3]
+<PARSED TEXT FOR PAGE: 25 / 33>
+Totéž platí pro rules evolution. Pokud FAX někdy historicky změní scoring nebo
+tin, změna musí ovlivnit match mechanics a selection pressures od okamžiku
+účinnosti. Není žádný důvod, aby FAX musel projít HiHo→PAR15→PAR11 ve
+stejných letech nebo vůbec stejnou trajektorií jako Earth.
+
+Earth → FAX transfer matrix:
+
+                  Síla evidence    Co lze přenést    Co se přenášet
+Earth evidence    na Zemi          do FAX            nesmí
+HiHo/PAR          vysoká           obecný            přesné
+změny mění                         princip, že       historické roky
+scoring                            rules mění        a efekt sizes
+incentives                         strategy/payoff
+nižší tin mění    vysoká           geometrický       povinný nárůst
+available         mechanická       mechanismus       aggression o
+target                                               konkrétní %
+geometry
+lehčí/            vysoká           technology        automatický
+composite                          epoch může        dlouhodobý
+rackets mění                       změnit stroke     skill bonus
+equipment                          possibilities
+constraints
+větší             vysoká           více draws z      povinná
+participant                        latent            komprese Top
+pool zvyšuje                       distribution      100
+počet sampled
+talents
+finite            plausibilní      saturating        jediná známá
+biological                         mechanisms        biologická
+constraints                        lze testovat      asymptota
+Egypt/Pakistan    vysoká           ekosystém         nation bonus
+dominance         historická       může vytvořit     nebo dynasty
+                                   dlouhou           quota
+                                   koncentraci
+                                   úspěchu
+T-position/       střední–vysoká   spatial/control   tři rigidní
+control souvisí                    variables v       tactical species
+s rally success                    match engine
+<PARSED TEXT FOR PAGE: 26 / 33>
+                   Síla evidence   Co lze přenést   Co se přenášet
+Earth evidence     na Zemi         do FAX           nesmí
+RPS                vysoká jako     analytický       předem daná
+evolutionary       matematická     nástroj, pokud   RPS payoff
+dynamics           teorie          data odhalí      matrix
+                                   netransitivitu
+Hopf cycles        vysoká          možnost          povinné 10–
+existují v         matematická     analyzovat       25leté cykly
+některých RPS                      bifurcation po
+modelech                           kalibraci
+RAE v racket       střední–        age-linked       popularity →
+sports             vysoká,         selection        inevitable RAE
+                   heterogenní     mechanism
+moderní            vysoká          development/     univerzální
+training                           training         historical
+science                            environment      efficiency
+zlepšuje                                            curve
+monitoring
+professionaliza historicky silná   economics        automatický
+tion zvyšuje                       může ovlivnit    skill inflation
+specialization/r                   conversion/ret
+esources                           ention
+ranking            měřitelná       outcome          přímý
+dominance                          metric           generátor
+                                                    ability
+statistical non-   standard        interval         důkaz nuly
+significance       inference       uncertainty
+
+Nejlepší metodologická definice přenositelnosti je proto trojstupňová:
+
+Mechanism invariant: fyzikální, matematické nebo behaviorální mechanismy,
+které mají rozumnou šanci fungovat i ve FAX — například více potential
+candidates při větší participation nebo změna incentive při jiném scoringu.
+
+Earth-calibrated parameter: číslo odhadnuté z reálného squashe, které může
+být použito jako prior nebo sanity range, ale ne jako povinná hodnota FAX.
+<PARSED TEXT FOR PAGE: 27 / 33>
+Earth historical contingency: konkrétní Egypt, Pákistán, rok 1989, délka
+pákistánské éry, dnešní nationality distribution nebo pořadí technologických
+změn. To je reference history, nikoliv invariant.
+
+Závěry, vědecké chyby, potvrzené poznatky a otevřené
+otázky
+Nejzávažnější vědecké chyby R009 jsou následující. Nejjasnější je numerická
+chyba 12,67→12,99, která je +2,53 %, nikoliv +7,89 %. Druhou je transformace
+podmíněného EVT výsledku na univerzální zákon komprese elitního field. Třetí je
+tvrzení, že masová popularita nutně vytváří silný RAE, přestože současná racket-
+sport literatura vykazuje značnou sportovní a institucionální heterogenitu.
+Čtvrtou je postulování RPS payoff topology bez empirických matchup dat. Pátou
+je zaměňování existence Hopf bifurcations v některých matematických RPS
+modelech za důkaz 10–25letých cyklů ve squashi. Šestou je nastavení 15–30letých
+národních dynastií jako acceptance criterion. Sedmou je interpretace p>0.05 jako
+důkazu nationality neutrality. Osmou je zaměňování nulových failures v
+omezeném multi-seed sample za důkaz bezpečnosti vůči rare failures. Devátou je
+nedostatečné rozlišení mezi strukturou současného datového modelu a živými
+numerickými sporting effects, zejména u Health a historical player generation.
+[42]
+
+Nejcennější potvrzené poznatky R009 jsou naopak velmi použitelné. FAX
+skutečně nemá být PSA clone. Historical evolution má být branchově a časově
+reprodukovatelná. Country environment má měnit opportunity and development
+
+rather than innate national talent. Real-world squash poskytuje kvalitní evidence
+anchors pro rules, equipment, professionalization, physiology a spatial tactics.
+Dlouhodobý výkon nemusí monotónně růst; saturation a regime change jsou
+legitimní možnosti. A v neposlední řadě je správná ambice testovat model přes
+reproducible counterfactual experiments místo subjective realism. Tyto principy
+jsou současně dobře slučitelné s Masterem. [43]
+
+Nejdůležitější otevřené výzkumné otázky jsou nyní jiné než „jak dlouhý má být
+cyklus“. Klíčové je zjistit, jakou latent-talent distribution má engine vlastně
+reprezentovat a které její parametry budou produktovým rozhodnutím versus
+kalibrovatelným prior; jak oddělit talent discovery od development quality; jaká
+observables dokážou identifikovat jednotlivé Country Attributes; zda a jak vzniká
+měřitelná netransitivita v kontinuálním gameplan space; jak silný má být role-
+model feedback na participation; jak modelovat coaching mobility a knowledge
+spillovers; jak zavést Health bez neoprávněného přenosu epidemiologie z jiných
+<PARSED TEXT FOR PAGE: 28 / 33>
+populací; jak reprezentovat technology/rule epochs; a jak odhadovat nejistotu
+dlouhodobých makro-výstupů při deterministic replay, ale stochastic seeds.
+
+Nejdůležitější z nich je identifikovatelnost. Squash Engine může obsahovat
+stovky elegantních parametrů a přesto být vědecky slabší než jednodušší model,
+pokud více parametrů produkuje nerozlišitelné makrohistorie. Budoucí výzkum
+proto musí opakovaně klást otázku: „Jaké pozorování by nám umožnilo tento
+mechanismus odlišit od alternativy?“
+
+Druhou klíčovou otázkou je emergence versus scripting. Přirozená historie
+neznamená, že engine musí produkovat dramatické dějiny. Ve zcela symetrickém
+dobře promíchaném světě může být realistickým emergentním výsledkem
+dlouhodobě velmi vysoká parity, absence dynastií a relativně stabilní meta.
+Takový výsledek není model failure jen proto, že je méně narativně zajímavý.
+
+Třetí otázkou je historická endogenita. Pokud se popularity, development
+quality, elite support a tradition pouze ručně přepisují v datech, engine simuluje
+následky historie, nikoliv vznik historie. To může být pro pre-alphu zcela
+správné. Endogenní institution evolution je samostatná budoucí produktová
+oblast a neměla by být přidána předčasně jen proto, aby simulace vypadala
+„živě“.
+
+Konečné vědecké doporučení pro R009 proto zní:
+
+Přijmout epistemologii, historickou evidence base a experimentální
+orientaci; odmítnout numerické chyby, povinné cykly, povinné dynastie,
+automatický RAE a automatickou elitní kompresi. R009 nepřevádět do
+mechanismů jako celek. Rozdělit jej na testovatelné hypotézy a každou
+mechanismickou vrstvu přijímat až po samostatné identifikaci, kalibraci a
+falsifikačním testu.
+
+Takto vznikne FAX, který může přirozeně vytvořit svůj vlastní Egypt, vlastní
+Pákistán, úplně jiný typ velmoci — nebo žádnou dlouhou národní dynastii. Může
+projít obdobím útočnější hry, později stabilizací nebo žádným pravidelným
+taktickým cyklem. Právě možnost, že historie dopadne jinak, je vědeckým testem
+toho, zda jde o alternativní svět, a nikoliv o PSA historii přepsanou jinými názvy.
+
+Bibliografické zdroje a auditní provenance
+Primární projektové zdroje. SQUASH_ENGINE_MASTER_VISION.md, aktuální větev
+buuk, Master v86; CURRENT_STATE.md; docs/COUNTRY_ATTRIBUTES_V1.md;
+repository README; Draft PR #1728 a jeho archivní textová extrakce R009.
+<PARSED TEXT FOR PAGE: 29 / 33>
+Aktuální README výslovně odděluje canonical target od částečné implementace
+a Master/Country V1 definují šest country ratings, World Package semantics,
+Gameplan a další použité kontrakty. [44]
+
+Důležitá auditní výhrada: originální 52stránkový DOCX nebyl v této relaci
+zpřístupněn souborovým nástrojům. PR #1728 potvrzuje, že jeho GitHub verze
+je pouze ztrátová textová extrakce; originál obsahuje devět tabulek a 175 inline
+shapes včetně matematických rovnic a grafů. Proto lze zde nezávisle auditovat
+čitelný text, tabulkové hodnoty a externí zdroje, ale nikoliv s definitivní jistotou
+potvrdit vizuální transkripci každé rovnice, která se při extrakci z DOCX mohla
+ztratit. To není důvod přijmout ani odmítnout matematiku; je to hranice evidence
+tohoto auditu. [45]
+
+Historie squashe. World Squash Library, History Timeline, průběžná historická
+chronologie institucí, pravidel, vybavení, British Open, World Championships a
+technologických milníků. [8] World Squash Library, Squash Rackets, 1928 until
+now, historické změny konstrukce a pravidel raket. [46]
+
+Scoring a match structure. Hughes, M. a kol. (2006), Game structures of elite
+male squash under different rules, analýza elitních mužských zápasů při odlišných
+scoring systems; dostupná reprodukce výsledků obsahuje hodnoty použité v
+R009. [47]
+
+Murray, S.; James, N.; Hughes, M. D.; Perš, J.; Mandeljc, R.; Vučković, G. (2016),
+Effects of rule changes on physical demands and shot characteristics of elite-
+standard men's squash and implications for training, Journal of Sports Sciences 34,
+DOI 10.1080/02640414.2016.1216155. [4]
+
+Squash tactics. Vučković, G.; Dežman, B.; Erčulj, F.; Kovačič, S.; Perš, J. (2009),
+Tactical use of the T area in squash by players of differing standard, Journal of
+Sports Sciences, DOI 10.1080/02640410902926412. [48]
+
+Hughes, M.; Franks, I. M. (1994), Dynamic patterns of movement of squash players
+of different standards in winning and losing rallies, Ergonomics, DOI
+10.1080/00140139408963619. [49]
+
+Fyziologie a trénink. Physiological and Performance Correlates of Squash
+Physical Performance — studie elitních hráčů ukazující vztahy sport-specifické
+aerobní kapacity, COD a dalších physical markers k performance tier. [50]
+
+Game analysis and energy requirements of elite squash — fyziologická analýza
+vysoké aerobní a anaerobní náročnosti elitního squashe. [51]
+<PARSED TEXT FOR PAGE: 30 / 33>
+Quantifying Training Demands of a 2-Week In-Season Squash Microcycle —
+profesionální squash, session-specific internal/external training load. [52]
+
+Evolutionary game theory. Mobilia, M. (2010), Oscillatory dynamics in rock-
+paper-scissors games with mutations, Journal of Theoretical Biology 264, DOI
+10.1016/j.jtbi.2010.01.008. Studie explicitně ukazuje stabilní equilibrium, limit
+cycles přes Hopfovu bifurkaci i heteroclinic behavior podle parametrického
+režimu. [22]
+
+Toupo, D. F.; Strogatz, S. H. (2015), Nonlinear dynamics of the rock-paper-scissors
+game with mutations, Physical Review E 91, 052907, DOI
+10.1103/PhysRevE.91.052907. [53]
+
+Relative Age Effect. Song, Z.; Li, C.; Weldon, A.; Duncan, M.; Kelly, A. L. (2026),
+The Relative Age Effect in Racket Sports: A Systematic Review and Meta-Analysis,
+preprint; 26 studií a 198 samples, s výraznou heterogenitou podle sportu a
+soutěžní úrovně. [27]
+
+Celonárodní turecká analýza racket sports s 57 476 sportovci nalezla významné
+RAE v několika raketových sportech, ale nikoliv ve statisticky malém squashovém
+subsample; tento null finding nelze interpretovat jako důkaz nulového efektu.
+[28]
+
+Přímá studie evropského juniorského squashe rovněž nenašla statisticky
+významný RAE v analyzovaném vzorku. [29]
+
+Výzkum birthday banding v England Squash dokumentuje, že institucionální
+změna věkového seskupování může být použita jako intervence proti relative-age
+disadvantage, což podporuje podmíněný, nikoliv nevyhnutelný charakter RAE.
+[30]
+
+Extreme-value theory a sportovní limity. Literatura o finite endpoint
+estimation zdůrazňuje nutnost explicitního předpokladu konečného pravého
+endpointu a příslušné max-domain-of-attraction struktury; z EVT tedy nelze
+odvodit obecnou kompresi bez specifikace tail distribution. [54] Analýzy
+extrémních sportovních výkonů ukazují použitelnost EVT pro estimation ultimate
+performance v dané populaci, nikoliv existenci jednoho univerzálního
+biologického ceiling nezávislého na prostředí. [55]
+
+Historická dominance. World Squash Library dokumentuje Hashima, Jahangira
+a Janshera Khana v chronologii světového squashe. [8] Pakistan Squash
+Federation uvádí Jahangirových šest World Open a deset British Open a
+Jansherových osm World Open. [56] Oficiální historie PSA World Championships
+<PARSED TEXT FOR PAGE: 31 / 33>
+dokumentuje dlouhou moderní sérii egyptských světových šampionů; Egyptian
+Squash Federation popisuje historický vývoj od Amr Beye a Mahmouda Karima
+po moderní generaci. [14]
+
+
+
+[1] [2] [5] [19] [20] [24] [26] [38] [39] [43] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/docs/r009-
+alternative-global-squash-evolution-20261101/research/studies/CANDIDATE-
+historical-fax-evolution-R009-20261101/GEMINI_R009_FULL_TEXT_EXTRACT.txt
+
+[3] [7] [8] [10] [13] HISTORY TIMELINE | World Squash Library | Archived &
+Available
+
+https://www.squashlibrary.info/history-of-squash?utm_source=chatgpt.com
+
+[4] Effects of rule changes on physical demands and shot characteristics of elite-
+standard men's squash and implications for training - PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/27494689/?utm_source=chatgpt.com
+
+[6] [31] [36] [44] GitHub - Jasmetk0/squash-tour-beta · GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta
+
+[9] [47] Alto Rendimiento » Game structures of elite male squash under different
+rules.
+
+https://altorendimiento.com/game-structures-of-elite-male-squash-under-
+different-rules/?utm_source=chatgpt.com
+
+[11] [48] Tactical use of the T area in squash by players of differing standard.
+
+https://pubmed.ncbi.nlm.nih.gov/19551552/?utm_source=chatgpt.com
+
+[12] [50] Physiological and Performance Correlates of Squash Physical
+Performance - PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/35250337/?utm_source=chatgpt.com
+
+[14] HISTORY – 2026-2027 PSA World Championships
+
+https://worldsquashchamps.com/history/?utm_source=chatgpt.com
+
+[15] History – Egyptian Squash Federation
+
+https://egyptiansquash.com/history?utm_source=chatgpt.com
+<PARSED TEXT FOR PAGE: 32 / 33>
+[16] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/docs/
+COUNTRY_ATTRIBUTES_V1.md
+
+[17] [54] Estimating an endpoint with high order moments in the Weibull domain
+of attraction - ScienceDirect
+
+https://www.sciencedirect.com/science/article/pii/S0167715212002775?
+utm_source=chatgpt.com
+
+[18] [55] Statistics for Exceptional Athletics Records | Journal of the Royal
+Statistical Society Series C: Applied Statistics | Oxford Academic
+
+https://academic.oup.com/jrsssc/article/44/4/499/6990386?
+utm_source=chatgpt.com
+
+[21] The replicator equation and other game dynamics - PMC
+
+https://pmc.ncbi.nlm.nih.gov/articles/PMC4113915/?utm_source=chatgpt.com
+
+[22] Oscillatory dynamics in rock-paper-scissors games with mutations.
+
+https://pubmed.ncbi.nlm.nih.gov/20083126/?utm_source=chatgpt.com
+
+[23] Nonlinear dynamics of the rock-paper-scissors game with mutations.
+
+https://pubmed.ncbi.nlm.nih.gov/26066229/?utm_source=chatgpt.com
+
+[25] [32] [33] [35] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/
+SQUASH_ENGINE_MASTER_VISION.md
+
+[27] Professor Kevin Till | Leeds Beckett University
+
+https://www.leedsbeckett.ac.uk/staff/professor-kevin-till//?
+utm_source=chatgpt.com
+
+[28] The prevalence of relative age effects in a nationwide analysis of racket
+sports: Happy birthday? - PMC
+
+https://pmc.ncbi.nlm.nih.gov/articles/PMC11684631/?utm_source=chatgpt.com
+
+[29] Studia Kinanthropologica: Relativní efekt věku ve squashi
+
+https://sk.pf.jcu.cz/artkey/stk-202502-0002_relativni-efekt-veku-ve-squashi.php?
+utm_source=chatgpt.com
+<PARSED TEXT FOR PAGE: 33 / 33>
+[30] "Birthday-Banding" as a Strategy to Moderate the Relative Age Effect: A Case
+Study Into the England Squash Talent Pathway - PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/33345136/?utm_source=chatgpt.com
+
+[34] [37] [40] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/
+CURRENT_STATE.md
+
+[41] [56] Jansher Khan – Pakistan Squash Federation
+
+https://pakistansquash.org/jansher-khan/?utm_source=chatgpt.com
+
+[42] [45] docs(research R009): archive Gemini alternative FAX sport evolution and
+critical audit by Jasmetk0 · Pull Request #1728 · Jasmetk0/squash-tour-beta ·
+GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta/pull/1728
+
+[46] Squash Rackets, 1928 until now
+
+https://www.squashlibrary.info/post/squash-rackets-1928-until-now?
+utm_source=chatgpt.com
+
+[49] Dynamic patterns of movement of squash players of different standards in
+winning and losing rallies - PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/8112279/?utm_source=chatgpt.com
+
+[51] Game analysis and energy requirements of elite squash - PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/17685699/?utm_source=chatgpt.com
+
+[52] Quantifying Training Demands of a 2-Week In-Season Squash Microcycle.
+
+https://pubmed.ncbi.nlm.nih.gov/33547264/?utm_source=chatgpt.com
+
+[53] Nonlinear dynamics of the rock-paper-scissors game with mutations | Phys.
+Rev. E
+
+https://journals.aps.org/pre/abstract/10.1103/PhysRevE.91.052907?
+utm_source=chatgpt.com
+
+----- END FULL AVAILABLE TEXT EXTRACTION -----

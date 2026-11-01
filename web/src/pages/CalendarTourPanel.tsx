@@ -10,6 +10,7 @@ import {tourWeekOffset,scheduleTourEdition} from '../api/nativeTourCalendar'
 import {useLanguage} from '../i18n/LanguageContext'
 import {NativeTransitionReadinessPanel} from './NativeTransitionReadinessPanel'
 import {NativeFullSimulationPanel} from '../components/FullSimulationTasksNative'
+import {NativeTourOperatorQueue} from '../components/NativeTourOperatorQueue'
 import {formatApiError} from '../utils/apiErrors'
 import type {RunBranchListResponse} from '../api/types'
 
@@ -251,6 +252,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
     {!view&&<p>{cs?'Načítání autorit…':'Loading authorities…'}</p>}
     {view&&<>
       <p>{cs?'Stav':'State'}: {view.saved?'Saved':'Working Draft'} · {view.state&&`${cs?'Týden':'Week'} ${view.state.week.week}/${view.state.week.calendar.weeks_per_year}`}</p>
+      {view.state&&<NativeTourOperatorQueue view={view} runId={runId} branchId={branchId}/>}
       {view.state&&!nativePopulation&&<section aria-label="Next-week prospect intake preflight">
         <h3>{cs?'Prospect intake – další týden':'Prospect intake – next week'}</h3>
         <p>{cs?'Kontrola ověřeného Saved zdroje; žádná aktivace hráčů.':'Verified Saved source only; no player activation.'}</p>
@@ -320,10 +322,10 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           <label>{cs?'Zápas tohoto slotu':'Match in this slot'}<select aria-label="Global slot match" value={selectedSlotMatch} onChange={e=>{setSelectedSlotMatch(e.target.value);invalidate()}}><option value="">{cs?'První zbývající zápas':'First remaining match'}</option>{view.next_slot.matches.filter(m=>!m.completed).map(m=><option key={m.match_id} value={m.match_id}>{m.edition_id}: {names.get(m.player_a_id??'')??m.player_a_id} / {names.get(m.player_b_id??'')??m.player_b_id}</option>)}</select></label>
           <p>{cs?'Všechny zápasy slotu používají stejný zmrazený vstup. Rozpracovaný slot lze ručně uložit a obnovit po restartu.':'Every match uses the same frozen slot input. Manually Save a partial slot to resume after restart.'}</p>
         </section>}
-        {view.state.editions.map(a=>{
+        {view.state.editions.map((a,sourceIndex)=>{
           const id=a.edition.edition_id,active=a.edition.week.week===view.state!.week.week&&a.edition.week.season_index===view.state!.week.season_index
           const next: keyof typeof actionLabels=!a.field?'approve':!a.draw?'draw':!a.tournament_fingerprint?'play':'confirm-result'
-          return <section key={id} aria-label={`Edition ${id}`}>
+          return <section key={id} id={'native-tour-edition-'+sourceIndex} aria-label={`Edition ${id}`}>
             <h3>{a.edition.name} · S{a.edition.week.season_index+1}/W{a.edition.week.week}</h3>
             {['calendar_tournament_edition.v2','calendar_tournament_edition.v3'].includes(a.edition.schema_version??'')&&<p>{cs?'Uložený seed turnaje':'Stored tournament seed'}: {a.edition.simulation_seed}</p>}
             <p>{cs?'Přihlášky':'Applications'}: {a.submissions.length} · {cs?'Schválení':'Approved'}: {a.field?.direct_main_player_ids.length??0} · {a.result_confirmed?(cs?'Výsledky potvrzeny':'Results confirmed'):a.tournament_fingerprint?(cs?'Odehráno':'Played'):a.draw?(cs?'Vylosováno':'Drawn'):(cs?'Příprava':'Preparation')}</p>

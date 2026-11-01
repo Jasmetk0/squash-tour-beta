@@ -297,7 +297,7 @@ def test_2023_two_adelaide_events_and_2024_venue_moves_keep_stable_identity() ->
     doc = _source("series")
     by_id = {e["source_entity_id"]: e["payload"] for e in doc["entities"]}
     assert [row["city"] for row in by_id["hangzhou"]["historical_host_change"]] == ["Zhuhai", "Hangzhou"]
-    assert [row["city"] for row in by_id["almaty"]["historical_host_change"]] == ["Astana", "Almaty"]
+    assert [row["city"] for row in by_id["almaty"]["historical_host_change"]] == ["Nur-Sultan", "Astana", "Astana", "Almaty"]
     assert d23["lyon_old"] == "atp_250"  # Original Lyon clay event
     assert d23["lyon"] == "atp_250"  # Marseille event (later moved to Lyon)
 

@@ -53,7 +53,7 @@ describe('Admin Branch readiness comparison (CS/EN)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Načíst porovnání' }))
     expect(await screen.findByText('Kalendář turnajů')).toBeVisible()
     expect(screen.getByText('Zdrojová revize')).toBeVisible()
-    expect(screen.getByText(/Samostatných/)).toBeDefined()
+    expect(screen.getByText('počty v samostatných snímcích')).toBeVisible()
     expect(screen.getByRole('button', { name: 'Stáhnout ověřené srovnání JSON' })).toBeEnabled()
     expect(client.listRunBranches).toHaveBeenCalledTimes(2)
     expect(client.getRunHomeReadiness).toHaveBeenCalledTimes(2)

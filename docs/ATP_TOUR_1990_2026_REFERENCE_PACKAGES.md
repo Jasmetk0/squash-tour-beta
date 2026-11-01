@@ -32,7 +32,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**88 identities** across 2026 ATP Tour fixtures and selected older masters.
+**87 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -439,3 +439,26 @@ The fact that Hong Kong previously hosted an ATP Tour competition
 in 1990–2002 does not prove it was the *same* licence as the later
 Pune-to-Hong-Kong transfer. That older event remains separate
 historical identity work and is not silently backfilled under this ID.
+
+### Critical source-identity reconciliation: Belgrade clay to Banja Luka
+
+[ATP's 2023 calendar announcement](https://www.atptour.com/en/news/united-cup-to-kick-off-2023-tennis-season)
+confirms that the **April 2023 Belgrade ATP 250 moved to
+Banja Luka, Bosnia and Herzegovina**. The previous `belgrade_clay_2022`
+technical identity has been consolidated into the stable `banja_luka`
+Series (with a 2022 Belgrade host and a 2023 Banja Luka host).
+This avoids inventing a second permanent tournament after relocation.
+
+The independent **Belgrade 2024/2025 indoor tournament** came from a
+**Gijón calendar slot** and was not the same 2022 Belgrade clay
+tournament: [ATP's 2024 announcement](https://www.atptour.com/en/news/belgrade-2024-announcement).
+The two separate Belgrade 2021 events remain separately recorded
+because the exact licence-level relationships with 2022 have not yet
+been exhaustively established. Same city, same name or adjacent year
+is never by itself proof of identical Series licensing.
+
+The data now contain **87 stable, partially historically reconstructed
+Series source identities** and 37 annual snapshots. Among those
+snapshots, Masters/ATP500/ATP250 **2021–2025** played rosters have been
+reconciled with ATP Results Archive; **1990–2020** lower tiers remain
+incomplete and the 2026 roster is still provisional.

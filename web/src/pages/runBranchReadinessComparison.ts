@@ -116,7 +116,7 @@ export async function inspectBranchReadinessComparison(
       saved_head_revision_id: leftHead, evidence: left },
     right: { branch_id: rightId, branch_name: rightBranch!.display_name,
       saved_head_revision_id: rightHead, evidence: right },
-    comparisons, same_calendar, same_phase: left.phase === right.phase,
+    comparisons, same_calendar: sameCalendar, same_phase: left.phase === right.phase,
     same_saved_head: leftHead === rightHead,
     saved_transitions_delta: right.saved_transition_count - left.saved_transition_count,
     published_rankings_delta: right.saved_published_ranking_count - left.saved_published_ranking_count,

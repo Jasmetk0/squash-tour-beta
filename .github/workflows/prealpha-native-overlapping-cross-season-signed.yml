@@ -1,0 +1,53 @@
+name: Pre-alpha Native Overlapping Cross-season Signed
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'tests/api/test_native_overlapping_cross_season_signed.py'
+      - '.github/workflows/prealpha-native-overlapping-cross-season-signed.yml'
+      - 'src/beta_engine/application/calendar_tour*.py'
+      - 'src/beta_engine/application/calendar_global_slot_service.py'
+      - 'src/beta_engine/domain/tournaments/calendar_global_slots.py'
+      - 'src/beta_engine/application/calendar_tour_signed_records.py'
+      - 'src/beta_engine/application/calendar_tour_season_summary.py'
+      - 'src/beta_engine/infrastructure/db/calendar_tour.py'
+      - 'src/beta_engine/api/routers/admin_calendar_tour.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-overlap-signed-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  real-overlapping-cross-season:
+    # Execute on Drafts: a skipped Ready-only slow gate is not evidence.
+    name: Two genuine simultaneous Editions each side of Signed Season / HTTP SQLite
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install -e . pytest
+      - name: Real overlapping S1 final and S2 opening global slots, two Signed seasons, restart
+        run: |
+          GITHUB_EVENT_NAME=native_overlapping_cross_season_acceptance \
+            python -m pytest tests/api/test_native_overlapping_cross_season_signed.py \
+            -k test_simultaneous_s1_terminal_and_s2_opening_real_matches_two_signed_seasons \
+            -vv -s --basetemp "$RUNNER_TEMP/native-overlapping-cross-season" \
+            --maxfail=1 --durations=10
+      - name: Retain disposable exact SQLite evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-overlapping-cross-season-${{ github.run_id }}
+          path: ${{ runner.temp }}/native-overlapping-cross-season/
+          if-no-files-found: warn
+          retention-days: 7

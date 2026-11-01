@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.pr_critical
+
 PATH = Path(__file__).resolve().parents[2] / "scripts" / "compare_run_storage_profiles.py"
 spec = importlib.util.spec_from_file_location("compare_run_storage_profiles", PATH)
 module = importlib.util.module_from_spec(spec)

@@ -7,6 +7,7 @@ import type {SavedTourEvent} from '../api/savedTour'
 import {useAdminBranch} from '../admin/AdminBranchContext'
 import {useAdminTime} from '../admin/AdminTimeContext'
 import {useLanguage} from '../i18n/LanguageContext'
+import {SavedTourCalendarExportPanel} from '../components/SavedTourCalendarExportPanel'
 import {formatApiError} from '../utils/apiErrors'
 import {calendarSeasonIndex} from './runWorldCountryTournaments'
 import {calendarWeeksWithEditions,filterSavedTourEvents,neighboringMatchingWeeks,
@@ -206,6 +207,9 @@ export function SavedTourCalendarPage():JSX.Element{
         {' · '}{shown.length} {cs?'po filtrování':'after filtering'}
         {typeof selectedWeek==='number'&&<> · {weekEditions.length} {cs?'ve vybraném týdnu':'in focused week'}</>}
         {' · '}{cs?'Zdrojová Branch':'Source Branch'}: <code>{model.revision_branch_id}</code></p>
+      <SavedTourCalendarExportPanel model={model} runId={runId} branchId={branch!}
+        revisionId={revision!} seasonIndex={seasonIndex} filters={filters}
+        focusedWeek={selectedWeek}/>
       {model.calendar_status==='empty'&&<p role="status">{cs?'Tato revize nemá uložený Calendar Package.':
         'This revision has no saved Calendar Package.'}</p>}
       {model.calendar_status==='ready'&&editions.length===0&&<p role="status">{cs?

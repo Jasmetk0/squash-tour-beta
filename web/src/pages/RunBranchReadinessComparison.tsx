@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import type { RunBranch } from '../api/types'
 import { getRunHomeReadiness, listRunBranches } from '../api/client'
 import { useLanguage } from '../i18n/LanguageContext'
-import { formatApiError } from '../utils/apiErrors'
 import {
   inspectBranchReadinessComparison, serializeBranchReadinessComparison,
   type BranchReadinessComparison

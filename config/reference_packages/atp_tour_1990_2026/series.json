@@ -53,7 +53,18 @@
       },
       "note": "Tour-only played events, excluding Grand Slam, team, Olympic, Challenger and ITF. The 2025 overview page omitted Hangzhou; ATP 2025 results prove participation."
     },
-    "historical_roster_scope": "2024/2025 ATP 250 rosters source-reconciled; 2026 provisional; 1990–2023 lower-tier incomplete"
+    "historical_roster_scope": "2023–2025 main-Tour level rosters source-reconciled; 2026 dated provisional reference; 1990–2022 lower-tier incomplete",
+    "calendar_validation_2023": {
+      "source_2023": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "singles_main_tour_250_count": 38,
+      "atp_500_count": 13,
+      "masters_count": 9,
+      "relocations": [
+        "Zhuhai -> Hangzhou 2024",
+        "Astana -> Almaty 2024"
+      ],
+      "double_adelaide_2023": true
+    }
   },
   "explicit_scope": [
     "tennis.atp_tour.series.reference.1990_2026"
@@ -620,6 +631,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -669,6 +687,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
@@ -704,6 +729,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -790,6 +822,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
@@ -825,6 +864,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2026,
@@ -862,6 +908,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
@@ -897,6 +950,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -1115,6 +1175,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
@@ -1150,6 +1217,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2026,
@@ -1194,6 +1268,13 @@
             "notes": "Scheduled ATP 500 was cancelled; no played Edition"
           },
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
@@ -1234,6 +1315,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2026,
             "category_id": "atp_500",
@@ -1269,6 +1357,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2026,
@@ -1406,6 +1501,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -1427,7 +1529,8 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "edition_note_2023": "Adelaide 1 in 2023; Adelaide 2 is a separate additional 2023 event; never collapse both into one year-Edition."
       },
       "references": [
         {
@@ -1455,6 +1558,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -1506,6 +1616,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -1555,6 +1672,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -1606,6 +1730,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -1655,6 +1786,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -1756,6 +1894,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -1805,6 +1950,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -1856,6 +2008,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -1905,6 +2064,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -1956,6 +2122,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -2005,6 +2178,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -2056,6 +2236,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -2105,6 +2292,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -2156,6 +2350,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -2205,6 +2406,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -2256,6 +2464,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -2306,6 +2521,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -2348,6 +2570,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -2398,6 +2627,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -2456,6 +2692,13 @@
             "notes": "Scheduled ATP 250 was cancelled; no played Edition"
           },
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -2510,6 +2753,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -2536,7 +2786,22 @@
         "evidence_2025_exception": {
           "source_url": "https://www.atptour.com/en/news/bublik-royer-hangzhou-2025-final",
           "reason": "2025 tournament completed, even though a brief overview page omitted it"
-        }
+        },
+        "historical_host_change": [
+          {
+            "year": 2023,
+            "city": "Zhuhai",
+            "country_code": "CHN",
+            "source_url": "https://www.atptour.com/en/news/to"
+          },
+          {
+            "year": 2024,
+            "city": "Hangzhou",
+            "country_code": "CHN",
+            "source_url": "https://www.atptour.com/en/news/to"
+          }
+        ],
+        "identity_review_note": "Zhuhai ATP 250 Tour licence relocated to Hangzhou starting 2024. Stable Series ID retained."
       },
       "references": [
         {
@@ -2565,6 +2830,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -2586,7 +2858,22 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2023,
+            "city": "Astana",
+            "country_code": "KAZ",
+            "source_url": "https://www.atptour.com/en/news/2024-atp-calendar-update-gijon-almaty"
+          },
+          {
+            "year": 2024,
+            "city": "Almaty",
+            "country_code": "KAZ",
+            "source_url": "https://www.atptour.com/en/news/2024-atp-calendar-update-gijon-almaty"
+          }
+        ],
+        "identity_review_note": "Astana tournament venue moved to Almaty from 2024, preserving same tournament Series identity."
       },
       "references": [
         {
@@ -2614,6 +2901,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -2678,6 +2972,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -2762,6 +3063,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
           },
           {
             "from": 2024,
@@ -3099,6 +3407,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -3137,6 +3452,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -3177,6 +3499,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -3215,6 +3544,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
           {
             "from": 2024,
             "to": 2024,
@@ -3301,6 +3637,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Verified in ATP 2023 results archive at the recorded Tour event level; not extrapolated to other years"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -3313,6 +3656,163 @@
             "category_id": "atp_250",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
             "notes": "ATP official result archive confirms this Tour 250 event in the given year"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "pune",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Tata Open Maharashtra",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Pune",
+        "historical_country_code": "IND",
+        "historical_surface": "hard",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2023_actual_edition_evidence_only",
+        "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "ATP 2023 official results archive verifies ATP Tour 250 event in this year"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "adelaide_2",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Adelaide International 2 (2023)",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Adelaide",
+        "historical_country_code": "AUS",
+        "historical_surface": "hard",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2023_actual_edition_evidence_only",
+        "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "ATP 2023 official results archive verifies ATP Tour 250 event in this year"
+          }
+        ],
+        "edition_note_2023": "Additional 2023 ATP 250 alongside Adelaide 1; count separately."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "banja_luka",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Srpska Open (Banja Luka 2023)",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Banja Luka",
+        "historical_country_code": "BIH",
+        "historical_surface": "clay",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2023_actual_edition_evidence_only",
+        "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "ATP 2023 official results archive verifies ATP Tour 250 event in this year"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "sofia",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Sofia Open",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Sofia",
+        "historical_country_code": "BGR",
+        "historical_surface": "indoor_hard",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2023_actual_edition_evidence_only",
+        "history_periods": [
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "ATP 2023 official results archive verifies ATP Tour 250 event in this year"
           }
         ]
       },

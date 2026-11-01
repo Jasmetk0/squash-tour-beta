@@ -150,7 +150,8 @@
         "miami": "atp_championship_single_week",
         "monte_carlo": "atp_championship_single_week",
         "paris_masters": "atp_championship_single_week",
-        "rome": "atp_championship_single_week"
+        "rome": "atp_championship_single_week",
+        "st_petersburg": "atp_world_series"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 1995
@@ -175,6 +176,7 @@
         "monte_carlo": "atp_championship_single_week",
         "paris_masters": "atp_championship_single_week",
         "rome": "atp_championship_single_week",
+        "st_petersburg": "atp_world_series",
         "stuttgart_indoor_masters": "atp_championship_single_week"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
@@ -200,6 +202,7 @@
         "monte_carlo": "atp_championship_single_week",
         "paris_masters": "atp_championship_single_week",
         "rome": "atp_championship_single_week",
+        "st_petersburg": "atp_world_series",
         "stuttgart_indoor_masters": "atp_championship_single_week"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
@@ -225,6 +228,7 @@
         "monte_carlo": "atp_championship_single_week",
         "paris_masters": "atp_championship_single_week",
         "rome": "atp_championship_single_week",
+        "st_petersburg": "atp_world_series",
         "stuttgart_indoor_masters": "atp_championship_single_week"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
@@ -250,6 +254,7 @@
         "monte_carlo": "atp_championship_single_week",
         "paris_masters": "atp_championship_single_week",
         "rome": "atp_championship_single_week",
+        "st_petersburg": "atp_world_series",
         "stuttgart_indoor_masters": "atp_championship_single_week"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
@@ -275,6 +280,7 @@
         "monte_carlo": "tennis_masters_series",
         "paris_masters": "tennis_masters_series",
         "rome": "tennis_masters_series",
+        "st_petersburg": "atp_international_series",
         "stuttgart_indoor_masters": "tennis_masters_series"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
@@ -300,6 +306,7 @@
         "monte_carlo": "tennis_masters_series",
         "paris_masters": "tennis_masters_series",
         "rome": "tennis_masters_series",
+        "st_petersburg": "atp_international_series",
         "stuttgart_indoor_masters": "tennis_masters_series"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
@@ -325,7 +332,8 @@
         "miami": "tennis_masters_series",
         "monte_carlo": "tennis_masters_series",
         "paris_masters": "tennis_masters_series",
-        "rome": "tennis_masters_series"
+        "rome": "tennis_masters_series",
+        "st_petersburg": "atp_international_series"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2002
@@ -350,7 +358,8 @@
         "miami": "tennis_masters_series",
         "monte_carlo": "tennis_masters_series",
         "paris_masters": "tennis_masters_series",
-        "rome": "tennis_masters_series"
+        "rome": "tennis_masters_series",
+        "st_petersburg": "atp_international_series"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2003
@@ -375,7 +384,8 @@
         "miami": "tennis_masters_series",
         "monte_carlo": "tennis_masters_series",
         "paris_masters": "tennis_masters_series",
-        "rome": "tennis_masters_series"
+        "rome": "tennis_masters_series",
+        "st_petersburg": "atp_international_series"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2004
@@ -400,7 +410,8 @@
         "miami": "tennis_masters_series",
         "monte_carlo": "tennis_masters_series",
         "paris_masters": "tennis_masters_series",
-        "rome": "tennis_masters_series"
+        "rome": "tennis_masters_series",
+        "st_petersburg": "atp_international_series"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2005
@@ -425,7 +436,8 @@
         "miami": "tennis_masters_series",
         "monte_carlo": "tennis_masters_series",
         "paris_masters": "tennis_masters_series",
-        "rome": "tennis_masters_series"
+        "rome": "tennis_masters_series",
+        "st_petersburg": "atp_international_series"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2006
@@ -450,7 +462,8 @@
         "miami": "tennis_masters_series",
         "monte_carlo": "tennis_masters_series",
         "paris_masters": "tennis_masters_series",
-        "rome": "tennis_masters_series"
+        "rome": "tennis_masters_series",
+        "st_petersburg": "atp_international_series"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2007
@@ -475,7 +488,8 @@
         "miami": "tennis_masters_series",
         "monte_carlo": "tennis_masters_series",
         "paris_masters": "tennis_masters_series",
-        "rome": "tennis_masters_series"
+        "rome": "tennis_masters_series",
+        "st_petersburg": "atp_international_series"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2008
@@ -503,7 +517,8 @@
         "paris_masters": "atp_masters_1000",
         "queens_club": "atp_250",
         "rome": "atp_masters_1000",
-        "shanghai": "atp_masters_1000"
+        "shanghai": "atp_masters_1000",
+        "st_petersburg": "atp_250"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2009
@@ -531,7 +546,8 @@
         "paris_masters": "atp_masters_1000",
         "queens_club": "atp_250",
         "rome": "atp_masters_1000",
-        "shanghai": "atp_masters_1000"
+        "shanghai": "atp_masters_1000",
+        "st_petersburg": "atp_250"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2010
@@ -559,7 +575,8 @@
         "paris_masters": "atp_masters_1000",
         "queens_club": "atp_250",
         "rome": "atp_masters_1000",
-        "shanghai": "atp_masters_1000"
+        "shanghai": "atp_masters_1000",
+        "st_petersburg": "atp_250"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2011
@@ -587,7 +604,8 @@
         "paris_masters": "atp_masters_1000",
         "queens_club": "atp_250",
         "rome": "atp_masters_1000",
-        "shanghai": "atp_masters_1000"
+        "shanghai": "atp_masters_1000",
+        "st_petersburg": "atp_250"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2012
@@ -615,7 +633,8 @@
         "paris_masters": "atp_masters_1000",
         "queens_club": "atp_250",
         "rome": "atp_masters_1000",
-        "shanghai": "atp_masters_1000"
+        "shanghai": "atp_masters_1000",
+        "st_petersburg": "atp_250"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2013
@@ -673,7 +692,8 @@
         "queens_club": "atp_500",
         "rio": "atp_500",
         "rome": "atp_masters_1000",
-        "shanghai": "atp_masters_1000"
+        "shanghai": "atp_masters_1000",
+        "st_petersburg": "atp_250"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2015
@@ -702,7 +722,8 @@
         "queens_club": "atp_500",
         "rio": "atp_500",
         "rome": "atp_masters_1000",
-        "shanghai": "atp_masters_1000"
+        "shanghai": "atp_masters_1000",
+        "st_petersburg": "atp_250"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2016
@@ -733,7 +754,8 @@
         "queens_club": "atp_500",
         "rio": "atp_500",
         "rome": "atp_masters_1000",
-        "shanghai": "atp_masters_1000"
+        "shanghai": "atp_masters_1000",
+        "st_petersburg": "atp_250"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2017
@@ -764,7 +786,8 @@
         "queens_club": "atp_500",
         "rio": "atp_500",
         "rome": "atp_masters_1000",
-        "shanghai": "atp_masters_1000"
+        "shanghai": "atp_masters_1000",
+        "st_petersburg": "atp_250"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2018
@@ -795,7 +818,8 @@
         "queens_club": "atp_500",
         "rio": "atp_500",
         "rome": "atp_masters_1000",
-        "shanghai": "atp_masters_1000"
+        "shanghai": "atp_masters_1000",
+        "st_petersburg": "atp_250"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2019
@@ -819,6 +843,7 @@
         "madrid",
         "miami",
         "monte_carlo",
+        "next_gen_atp_finals",
         "queens_club",
         "shanghai"
       ],
@@ -839,7 +864,8 @@
         "queens_club": "atp_500",
         "rio": "atp_500",
         "rome": "atp_masters_1000",
-        "shanghai": "atp_masters_1000"
+        "shanghai": "atp_masters_1000",
+        "st_petersburg": "atp_500"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2020
@@ -870,7 +896,8 @@
         "queens_club": "atp_500",
         "rio": "atp_500",
         "rome": "atp_masters_1000",
-        "shanghai": "atp_masters_1000"
+        "shanghai": "atp_masters_1000",
+        "st_petersburg": "atp_250"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2021

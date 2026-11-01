@@ -52,7 +52,7 @@ describe('source-verified native Tour operator queue',()=>{
     expect(deriveNativeTourOperatorQueue(v,'run-A','branch-B').items[0].stage).toBe('group_tie')
   })
   it('handles 80 Editions without truncation and sorts by current, past, future',()=>{
-    const editions=Array.from({length:80},(_,i)=>makeEdition('edition-'+String(i+1).padStart(2,'0'),(i%52)+1))
+    const editions=Array.from({length:80},(_,i)=>makeEdition('edition-'+String(i+1).padStart(2,'0'),(i%50)+1))
     const queue=deriveNativeTourOperatorQueue(makeView(editions),'run-A','branch-B')
     expect(queue.items).toHaveLength(80)
     expect(queue.items[0].period).toBe('current')

@@ -64,6 +64,28 @@
         "Astana -> Almaty 2024"
       ],
       "double_adelaide_2023": true
+    },
+    "historical_exceptions_2022": {
+      "release_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+      "results_archive_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "one_year_250_licences": [
+        "san_diego_2022",
+        "seoul_2022",
+        "tel_aviv_2022",
+        "florence_2022",
+        "gijon_2022",
+        "naples_2022"
+      ],
+      "one_year_500_exception": "almaty",
+      "known_cancelled_china": [
+        "shanghai",
+        "beijing",
+        "chengdu",
+        "hangzhou"
+      ],
+      "licence_transfer_from": "st_petersburg",
+      "licence_transfer_to": "almaty",
+      "note": "2022 complete ATP 500 played roster 13; scheduled cancelled Beijing 500 remains a separate non-played reference"
     }
   },
   "explicit_scope": [
@@ -538,9 +560,11 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "not_held_years_known": [
-          2020
+          2020,
+          2021,
+          2022
         ],
-        "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments"
+        "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf"
       },
       "references": [
         {
@@ -687,6 +711,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "Played ATP 500 documented in official ATP 2022 Results Archive"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_500",
@@ -822,6 +853,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "Played ATP 500 documented in official ATP 2022 Results Archive"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_500",
@@ -865,6 +903,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "Played ATP 500 documented in official ATP 2022 Results Archive"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_500",
@@ -907,6 +952,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "Played ATP 500 documented in official ATP 2022 Results Archive"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -1175,6 +1227,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "Played ATP 500 documented in official ATP 2022 Results Archive"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_500",
@@ -1217,6 +1276,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "Played ATP 500 documented in official ATP 2022 Results Archive"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -1268,6 +1334,20 @@
             "notes": "Scheduled ATP 500 was cancelled; no played Edition"
           },
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "Scheduled China-swing Tour 500 cancelled by ATP, not played"
+          },
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "Scheduled China-swing Tour 500 cancelled by ATP, not played"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_500",
@@ -1284,9 +1364,11 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "not_held_years_known": [
-          2020
+          2020,
+          2021,
+          2022
         ],
-        "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-announces-cancellation-of-the-2020-china-swing.pdf"
+        "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf"
       },
       "references": [
         {
@@ -1314,6 +1396,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "Played ATP 500 documented in official ATP 2022 Results Archive"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -1357,6 +1446,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "Played ATP 500 documented in official ATP 2022 Results Archive"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -2692,6 +2788,20 @@
             "notes": "Scheduled ATP 250 was cancelled; no played Edition"
           },
           {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "Chengdu licence scheduled but cancelled; NOT a played tournament"
+          },
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "Chengdu licence scheduled but cancelled; NOT a played tournament"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -2722,9 +2832,11 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "not_held_years_known": [
-          2020
+          2020,
+          2021,
+          2022
         ],
-        "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-announces-cancellation-of-the-2020-china-swing.pdf"
+        "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf"
       },
       "references": [
         {
@@ -2752,6 +2864,27 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "Zhuhai licence scheduled but cancelled; moved to Hangzhou from 2024"
+          },
+          {
+            "from": 2021,
+            "to": 2021,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "Zhuhai licence scheduled but cancelled; moved to Hangzhou from 2024"
+          },
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "Zhuhai licence scheduled but cancelled; moved to Hangzhou from 2024"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -2782,7 +2915,11 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
-        "not_held_years_known": [],
+        "not_held_years_known": [
+          2020,
+          2021,
+          2022
+        ],
         "evidence_2025_exception": {
           "source_url": "https://www.atptour.com/en/news/bublik-royer-hangzhou-2025-final",
           "reason": "2025 tournament completed, even though a brief overview page omitted it"
@@ -2801,7 +2938,8 @@
             "source_url": "https://www.atptour.com/en/news/to"
           }
         ],
-        "identity_review_note": "Zhuhai ATP 250 Tour licence relocated to Hangzhou starting 2024. Stable Series ID retained."
+        "identity_review_note": "Zhuhai ATP 250 Tour licence relocated to Hangzhou starting 2024. Stable Series ID retained.",
+        "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf"
       },
       "references": [
         {
@@ -2829,6 +2967,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "One-year 2022 Astana ATP 500 elevation, later reverted to 250"
+          },
           {
             "from": 2023,
             "to": 2023,
@@ -2873,12 +3018,25 @@
             "source_url": "https://www.atptour.com/en/news/2024-atp-calendar-update-gijon-almaty"
           }
         ],
-        "identity_review_note": "Astana tournament venue moved to Almaty from 2024, preserving same tournament Series identity."
+        "identity_review_note": "Astana tournament venue moved to Almaty from 2024, preserving same tournament Series identity.",
+        "licence_lineage": {
+          "predecessor_source_entity_id": "st_petersburg",
+          "effective_from": 2022,
+          "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+          "notes": "ATP confirmed Astana became permanent 2022 member using transferred St Petersburg licence after temporary one-year Astana events in 2020–21; legacy separate source IDs linked until deduplicated"
+        },
+        "history_2022_note": "Official 2022 ATP 500 elevation in Astana; ATP 250 in 2023 Astana and 2024 onward Almaty"
       },
       "references": [
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_500",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -3356,7 +3514,13 @@
             "notes": "Reverted to ATP 250 in 2021, relocated to Nur-Sultan 2022; later licence identity review needed"
           }
         ],
-        "identity_review_note": "ATP announced the St Petersburg licence's relocation to Nur-Sultan in 2022; this dataset does not yet resolve continued tournament Series identity after relocation."
+        "identity_review_note": "ATP announced the St Petersburg licence's relocation to Nur-Sultan in 2022; this dataset does not yet resolve continued tournament Series identity after relocation.",
+        "licence_lineage": {
+          "successor_source_entity_id": "almaty",
+          "effective_from": 2022,
+          "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+          "notes": "Permanent ATP membership transferred to Astana in 2022; no simultaneous St Petersburg edition asserted"
+        }
       },
       "references": [
         {
@@ -3808,11 +3972,252 @@
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "Sofia ATP Tour 250 played in 2022"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
             "notes": "ATP 2023 official results archive verifies ATP Tour 250 event in this year"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "san_diego_2022",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "San Diego Open (one-year 2022 licence)",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "reference_year": null,
+        "historical_host_city": "San Diego",
+        "historical_country_code": "USA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "official_one_year_2022_tour_250_licence",
+        "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "ATP July 2022 official release: one-year ATP Tour 250 licence, also present in official 2022 results archive"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "seoul_2022",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Korea Open (one-year 2022 licence)",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "reference_year": null,
+        "historical_host_city": "Seoul",
+        "historical_country_code": "KOR",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "official_one_year_2022_tour_250_licence",
+        "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "ATP July 2022 official release: one-year ATP Tour 250 licence, also present in official 2022 results archive"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "tel_aviv_2022",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Tel Aviv Open (one-year 2022 licence)",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "reference_year": null,
+        "historical_host_city": "Tel Aviv",
+        "historical_country_code": "ISR",
+        "historical_surface": "indoor_hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "official_one_year_2022_tour_250_licence",
+        "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "ATP July 2022 official release: one-year ATP Tour 250 licence, also present in official 2022 results archive"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "florence_2022",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "UniCredit Firenze Open (one-year 2022 licence)",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "reference_year": null,
+        "historical_host_city": "Florence",
+        "historical_country_code": "ITA",
+        "historical_surface": "indoor_hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "official_one_year_2022_tour_250_licence",
+        "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "ATP July 2022 official release: one-year ATP Tour 250 licence, also present in official 2022 results archive"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "gijon_2022",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Gijón Open (one-year 2022 licence)",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "reference_year": null,
+        "historical_host_city": "Gijón",
+        "historical_country_code": "ESP",
+        "historical_surface": "indoor_hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "official_one_year_2022_tour_250_licence",
+        "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "ATP July 2022 official release: one-year ATP Tour 250 licence, also present in official 2022 results archive"
+          }
+        ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "naples_2022",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Tennis Napoli Cup (one-year 2022 licence)",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "reference_year": null,
+        "historical_host_city": "Naples",
+        "historical_country_code": "ITA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "official_one_year_2022_tour_250_licence",
+        "history_periods": [
+          {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+            "notes": "ATP July 2022 official release: one-year ATP Tour 250 licence, also present in official 2022 results archive"
           }
         ]
       },

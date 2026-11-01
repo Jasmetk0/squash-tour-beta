@@ -32,7 +32,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**89 identities** across 2026 ATP Tour fixtures and selected older masters.
+**88 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -278,9 +278,13 @@ Important historical identities newly differentiated:
 - **Astana 2023 → Almaty 2024:** the same 250 tournament relocated.
   The `almaty` source identity preserves both historical hosts:
   [ATP calendar update](https://www.atptour.com/en/news/2024-atp-calendar-update-gijon-almaty).
-- **Pune, Banja Luka and Sofia** are distinct ATP 250 Series in 2023.
-  Their absence from this library's 2024 season is intentional, not an
-  assertion that tennis in those cities ended permanently.
+- **Pune 2023 → Hong Kong 2024:** ATP confirmed that the Pune ATP 250
+  tournament licence (owned by IMG) moved to Hong Kong. It therefore
+  remains a single `hong_kong` Series identity for Pune editions
+  2022–2023 and Hong Kong editions from 2024. The old 1990–2002
+  Hong Kong ATP event is not automatically assumed to have shared this
+  later licence. Banja Luka and Sofia remain distinct ATP 250 Series
+  whose 2024 status must not be guessed.
 - The 2023 clay **Lyon Open** and the 2023 **Marseille Open 13**
   remain separate Series. The latter eventually moves its licence
   to Lyon in 2026; equal host cities do not imply identical Series IDs.
@@ -420,3 +424,18 @@ and without duplicating match results. **1990–2020 remains
 partially documented** in the lower tour categories. Source-only
 Package semantics and missing Run adapters are separate integration
 blockers; an indexed annual reference is not a historical Edition.
+
+### Critical source-identity reconciliation: Pune to Hong Kong
+
+On 12 June 2023 ATP [announced the relocation of the Pune ATP 250
+tournament to Hong Kong for 2024](https://www.atptour.com/en/news/hong-kong-atp-250-2024),
+with approval of the ATP Board and the same IMG-owned licence.
+The previous separate `pune` reference would have **double counted
+one persistent Series identity**. Its 2022 and 2023 ATP 250 intervals
+are now stored under `hong_kong`, which continues in Hong Kong from
+2024 through the currently reviewed 2026 roster.
+
+The fact that Hong Kong previously hosted an ATP Tour competition
+in 1990–2002 does not prove it was the *same* licence as the later
+Pune-to-Hong-Kong transfer. That older event remains separate
+historical identity work and is not silently backfilled under this ID.

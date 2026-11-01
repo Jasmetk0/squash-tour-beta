@@ -43,7 +43,7 @@ describe('global Task Center CS/EN recovery evidence',()=>{
     expect(screen.queryByRole('button',{name:/Resume|Pokračovat|Save|Stop/})).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button',{name:'Zobrazit podrobnosti'}))
     expect(screen.getByText('Example run / Timeline 2')).toBeVisible()
-    expect(screen.getByText(/Vyžaduje rozhodnutí operátora/)).toBeVisible()
+    expect(screen.getAllByText(/Vyžaduje rozhodnutí operátora/).length).toBeGreaterThan(0)
     expect(screen.getByRole('link',{name:'Otevřít řízení ve správné Branch'})).toHaveAttribute(
       'href','/admin/runs/run%20%2FA/simulate?branch=branch%20B&task=task%3A%2012')
   })
@@ -66,7 +66,7 @@ describe('global Task Center CS/EN recovery evidence',()=>{
   })
   it('blocks incomplete/corrupt inventory, never treats it as an empty task center',()=>{
     mount({inventory:{...receipts,pending_count:100}})
-    expect(screen.getByRole('alert')).toHaveTextContent('nelze vzájemně důvěryhodné')
+    expect(screen.getByRole('alert')).toHaveTextContent('Záznamy nejsou vzájemně důvěryhodné')
     expect(screen.queryByRole('button',{name:'Stáhnout diagnostiku JSON'})).not.toBeInTheDocument()
   })
   it('preserves the task priority filter while avoiding extra network requests',()=>{

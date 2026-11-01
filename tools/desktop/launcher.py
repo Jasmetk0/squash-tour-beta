@@ -342,8 +342,10 @@ def _sqlite_snapshot(source: Path, destination: Path) -> None:
         raise LaunchError("Saved SQLite database is missing or linked; nothing was backed up.")
     try:
         uri = source.resolve().as_uri() + "?mode=ro"
-        with sqlite3.connect(uri, uri=True, timeout=5) as origin:
-            with sqlite3.connect(destination) as target:
+        # sqlite3.Connection.__exit__ commits/rolls back but does NOT close.
+        # Windows refuses to delete the temporary DB until both handles close.
+        with contextlib.closing(sqlite3.connect(uri, uri=True, timeout=5)) as origin:
+            with contextlib.closing(sqlite3.connect(destination)) as target:
                 origin.backup(target, pages=256, sleep=0.05)
                 result = target.execute("PRAGMA quick_check").fetchall()
                 if result != [("ok",)]:
@@ -397,7 +399,6 @@ def verify_offline_backup(archive: Path) -> dict:
             entries = manifest["files"]
             if not entries or len(entries) != len(names) - 1:
                 raise LaunchError("Backup inventory does not cover every file.")
-            required = {"data/preview-owner.json", "data/config"}
             declared = set()
             for item in entries:
                 if not isinstance(item, dict) or set(item) != {"path", "size", "sha256"}:

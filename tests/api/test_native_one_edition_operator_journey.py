@@ -15,6 +15,25 @@ from tests.api.test_saved_revision_history_api import ApiServer, _request
 pytestmark = pytest.mark.smoke
 
 
+
+@pytest.mark.pr_critical
+def test_operator_command_preview_is_explicit_and_revision_pinned():
+    """Cheap Fast CI guard: no operator action authorizes Save/Play by itself."""
+    view = {
+        "saved_head_revision_id": "signed-head",
+        "checkpoint_fingerprint": "a" * 64,
+        "tour_fingerprint": "b" * 64,
+    }
+    draw = command(view, "draw", name="operator:draw", edition_id="fixture-cup")
+    assert draw["action"] == "draw"
+    assert draw["edition_id"] == "fixture-cup"
+    assert draw["expected_saved_head"] == "signed-head"
+    assert draw["expected_checkpoint_fingerprint"] == "a" * 64
+    assert draw["expected_tour_fingerprint"] == "b" * 64
+    assert "explicit_confirmation" not in draw
+    assert "expected_preview_fingerprint" not in draw
+    assert draw["command_id"] == "operator:draw"
+
 def _viewer(server):
     status, view = _request("GET", server.base_url + "/viewer/runs/run/calendar-tour")
     assert status == 200, view
@@ -43,7 +62,8 @@ def test_single_edition_real_operator_save_chain_and_physical_restart(tmp_path):
         original_saved_head = initial["saved_head_revision_id"]
         public_before_draft = _viewer(server)
         assert initial["saved"]
-        assert not initial["edition_evidence"][edition_id]["matches"]
+        # The signed Edition can exist before any separate sporting evidence.
+        assert not initial["edition_evidence"].get(edition_id, {}).get("matches", [])
 
         # Exactly four real players apply; approval/draw are explicit reviewed
         # commands staged in the same Working Draft, not an implicit Save.
@@ -71,7 +91,7 @@ def test_single_edition_real_operator_save_chain_and_physical_restart(tmp_path):
         status, blocked = _request("POST", tour_url(server) + "/preview", preview_play)
         assert status == 409, blocked
         assert "Manual Save" in blocked["detail"]["message"]
-        assert not inspect(server)["edition_evidence"][edition_id]["matches"]
+        assert not inspect(server)["edition_evidence"].get(edition_id, {}).get("matches", [])
         assert _viewer(server) == public_before_draft
 
         signed_draw = save_tour(server)

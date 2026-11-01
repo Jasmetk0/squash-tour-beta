@@ -102,6 +102,7 @@ def _run_edition(server, edition_id):
     assert not after_play["saved"]
     assert _viewer(server) == signed_public
     signed_matches = save_tour(server)
+    signed_match_viewer = _viewer(server)
 
     confirmed, result_request = execute(server, command(
         inspect(server), "confirm-result", name=edition_id + ":result",
@@ -111,10 +112,9 @@ def _run_edition(server, edition_id):
     after_result = inspect(server)
     assert len(after_result["edition_evidence"][edition_id]["results"]) == 4
     assert not after_result["saved"]
-    assert _viewer(server) != original_viewer
-    # Uncommitted result confirmation is not visible even though signed
-    # MatchEngine receipts already are visible in the Viewer.
-    assert _viewer(server) == _viewer(server)
+    # Uncommitted result confirmation must not leak before explicit Save;
+    # the Viewer continues to expose only the already-signed MatchEngine data.
+    assert _viewer(server) == signed_match_viewer
     signed_results = save_tour(server)
     assert signed_results["revision_id"] != signed_matches["revision_id"]
 
@@ -180,6 +180,13 @@ def test_two_sequential_editions_keep_results_and_rankings_after_restart(tmp_pat
         second_unpublished = _viewer(reopened)
         transition_two, request_two, signed_week_two = _next_week(reopened, "tour:second-points")
         assert inspect(reopened)["state"]["week"]["week"] == first_week + 2
+        second_published_points = sorted(
+            r["points"] for r in transition_two["impact"]["ranking"]["rows"]
+        )
+        assert max(second_published_points) >= 200
+        assert sorted(
+            r["points"] for r in inspect(reopened)["state"]["rankings"][-1]["rows"]
+        ) == second_published_points
         assert _viewer(reopened) != second_unpublished
         saved_second_head = signed_week_two["revision_id"]
         both_saved = inspect(reopened)

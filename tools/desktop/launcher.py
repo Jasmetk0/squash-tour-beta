@@ -466,14 +466,10 @@ def offline_backup(root: Path, data: Path, destination: Path) -> dict:
             raise LaunchError("Saved configuration is missing; keep the original folder.")
 
         destination.parent.mkdir(parents=True, exist_ok=True)
-        # Reserve the final filename exclusively; no earlier archive can be overwritten.
-        try:
-            file_descriptor = os.open(destination, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-        except FileExistsError as exc:
-            raise LaunchError("Backup destination already exists.") from exc
-        os.close(file_descriptor)
+        # Keep an unfinished backup under .part, never a visible final ZIP.
+        # Windows rename refuses an existing destination; POSIX hard-link
+        # publishes atomically with the same O_EXCL protection.
         temporary = destination.parent / ("." + destination.name + "." + uuid.uuid4().hex + ".part")
-        published = False
         try:
             with tempfile.TemporaryDirectory(prefix="squash-preview-offline-") as scratch:
                 db_copy = Path(scratch) / "beta_engine.db"
@@ -495,15 +491,17 @@ def offline_backup(root: Path, data: Path, destination: Path) -> dict:
                     writer.writestr(BACKUP_MANIFEST, json.dumps(
                         manifest, sort_keys=True, separators=(",", ":")))
             result = verify_offline_backup(temporary)
-            # os.replace replaces only our own earlier exclusive placeholder.
-            os.replace(temporary, destination)
-            published = True
+            try:
+                if os.name == "nt":
+                    os.rename(temporary, destination)
+                else:
+                    os.link(temporary, destination)
+            except FileExistsError as exc:
+                raise LaunchError("Backup destination already exists.") from exc
             return {**result, "archive": str(destination)}
         finally:
             if temporary.exists():
                 temporary.unlink()
-            if not published and destination.exists():
-                destination.unlink()
 
 
 def default_backup_path(build: dict) -> Path:

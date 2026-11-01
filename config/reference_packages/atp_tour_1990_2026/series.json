@@ -126,7 +126,16 @@
         "shanghai"
       ],
       "scope": "2021 played category 250/500/Masters roster reconciled; known cancelled list not exhaustive"
-    }
+    },
+    "identity_reconciliations_2026_11_01": [
+      {
+        "moved_from": "pune",
+        "persistent_series_id": "hong_kong",
+        "effective_from": 2024,
+        "source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024",
+        "temporal_note": "Pune 2022/2023 -> Hong Kong 2024+"
+      }
+    ]
   },
   "explicit_scope": [
     "tennis.atp_tour.series.reference.1990_2026"
@@ -1679,6 +1688,20 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "Pune event licence relocated to Hong Kong from 2024, confirmed by ATP. ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
+          },
+          {
+            "from": 2023,
+            "to": 2023,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+            "notes": "Pune event licence relocated to Hong Kong from 2024, confirmed by ATP. ATP 2023 official results archive verifies ATP Tour 250 event in this year"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -1700,7 +1723,29 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2022,
+            "city": "Pune",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024"
+          },
+          {
+            "year": 2023,
+            "city": "Pune",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024"
+          },
+          {
+            "year": 2024,
+            "city": "Hong Kong",
+            "country_code": "HKG",
+            "source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024"
+          }
+        ],
+        "identity_review_note": "ATP announced Pune (IMG) ATP Tour 250 licence relocating to Hong Kong for 2024. Preserve same Series source identity from Pune 2022/23 to Hong Kong 2024–26; older 1990–2002 Hong Kong Tour event may be distinct and remains unassigned.",
+        "historical_licence_source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024"
       },
       "references": [
         {
@@ -4332,52 +4377,6 @@
             "category_id": "atp_250",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
             "notes": "ATP official result archive confirms this Tour 250 event in the given year"
-          }
-        ]
-      },
-      "references": [
-        {
-          "source_package_id": "atp_tour_1990_2026_category",
-          "source_entity_id": "atp_250",
-          "expected_entity_kind": "tennis.category.reference.v1",
-          "minimum_schema_version": 1
-        }
-      ],
-      "valid": true
-    },
-    {
-      "source_entity_id": "pune",
-      "entity_kind": "tennis.series.reference.v1",
-      "entity_schema_version": 1,
-      "scope": "tennis.atp_tour.series.reference.1990_2026",
-      "payload": {
-        "name": "Tata Open Maharashtra",
-        "category_id_2026": null,
-        "host_city_2026": null,
-        "host_country_code_2026": null,
-        "surface_2026": null,
-        "historical_host_city": "Pune",
-        "historical_country_code": "IND",
-        "historical_surface": "hard",
-        "reference_year": null,
-        "sponsor_names_can_change": true,
-        "not_calendar_editions": true,
-        "not_squash_rules": true,
-        "history_scope": "2023_actual_edition_evidence_only",
-        "history_periods": [
-          {
-            "from": 2022,
-            "to": 2022,
-            "category_id": "atp_250",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
-            "notes": "ATP official 2022 Results Archive: played ATP 250 event; future and earlier Series history not inferred"
-          },
-          {
-            "from": 2023,
-            "to": 2023,
-            "category_id": "atp_250",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
-            "notes": "ATP 2023 official results archive verifies ATP Tour 250 event in this year"
           }
         ]
       },

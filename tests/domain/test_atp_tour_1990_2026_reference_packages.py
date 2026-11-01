@@ -31,7 +31,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 65
+    assert len(series["entities"]) == 69
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -260,3 +260,43 @@ def test_2024_2025_atp_250_intervals_are_backed_by_official_atp_archives() -> No
                           if p["from"] <= year <= p["to"] and p["category_id"] == "atp_250")
             assert record["source_url"].startswith("https://")
 
+
+
+def test_2023_played_tour_250_and_500_roster_matches_official_archive() -> None:
+    yearly = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    assert Counter(yearly[2023]["series_category_ids"].values()) == {
+        "atp_masters_1000": 9,
+        "atp_500": 13,
+        "atp_250": 38,
+        "atp_finals": 1,
+        "next_gen_finals": 1,
+    }
+    assert len(yearly[2023]["series_category_ids"]) == 62
+    evidence = _source("series")["provenance"]["calendar_validation_2023"]
+    assert evidence["singles_main_tour_250_count"] == 38
+    assert evidence["atp_500_count"] == 13
+    assert evidence["masters_count"] == 9
+    assert "atptour.com" in evidence["source_2023"]
+
+
+def test_2023_two_adelaide_events_and_2024_venue_moves_keep_stable_identity() -> None:
+    yearly = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    d23, d24 = yearly[2023]["series_category_ids"], yearly[2024]["series_category_ids"]
+    for id in ("adelaide", "adelaide_2", "pune", "banja_luka", "sofia"):
+        assert d23[id] == "atp_250"
+    assert "adelaide_2" not in d24
+    assert "pune" not in d24
+    assert "banja_luka" not in d24
+    assert "sofia" not in d24
+
+    # ATP approved explicit relocations: these should NOT mint new
+    # Series IDs or fabricate two simultaneous tournaments.
+    for id in ("hangzhou", "almaty"):
+        assert d23[id] == "atp_250"
+        assert d24[id] == "atp_250"
+    doc = _source("series")
+    by_id = {e["source_entity_id"]: e["payload"] for e in doc["entities"]}
+    assert [row["city"] for row in by_id["hangzhou"]["historical_host_change"]] == ["Zhuhai", "Hangzhou"]
+    assert [row["city"] for row in by_id["almaty"]["historical_host_change"]] == ["Astana", "Almaty"]
+    assert d23["lyon_old"] == "atp_250"  # Original Lyon clay event
+    assert d23["lyon"] == "atp_250"  # Marseille event (later moved to Lyon)

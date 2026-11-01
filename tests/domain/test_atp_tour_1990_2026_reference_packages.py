@@ -5,8 +5,12 @@ import json
 from collections import Counter
 from pathlib import Path
 
+import pytest
+
 from beta_engine.domain.run_packages import CanonicalPackageDocument, PackageType
 from scripts.build_atp_tour_historical_seasons import build, canonical_output
+
+pytestmark = pytest.mark.pr_critical
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "config" / "reference_packages" / "atp_tour_1990_2026"
@@ -105,7 +109,6 @@ def test_37_annual_snapshots_historical_category_transitions_and_unchanged_sourc
 def test_builder_rejects_corrupted_history_without_modifying_source() -> None:
     categories, series = _source("category"), _source("series")
     import copy
-    import pytest
     corrupted = copy.deepcopy(series)
     corrupted["entities"][0]["payload"]["history_periods"][0]["category_id"] = "grand_slam"
     with pytest.raises(ValueError, match="Invalid Series Category reference"):

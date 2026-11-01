@@ -50,8 +50,8 @@ export function deriveNativeTourOperatorQueue(
     ||view.run_id!==runId||view.branch_id!==branchId
     ||typeof view.saved_head_revision_id!=='string'||!view.saved_head_revision_id
     ||typeof view.saved!=='boolean'
-    ||!state||!now||!validInteger(max,1,100)
-    ||!validInteger(now.season_index,0,10000)||!validInteger(now.week,1,max!)
+    ||!state||!now||!validInteger(max,1,Number.MAX_SAFE_INTEGER)
+    ||!validInteger(now.season_index,0,Number.MAX_SAFE_INTEGER)||!validInteger(now.week,1,max!)
     ||!Array.isArray(state.editions)||!view.edition_evidence
     ||typeof view.edition_evidence!=='object'||Array.isArray(view.edition_evidence))
     throw Error('Native Tour operator queue has no verified Run/Branch/Week source')
@@ -63,7 +63,7 @@ export function deriveNativeTourOperatorQueue(
     const evidence=typeof id==='string'?view.edition_evidence[id]:undefined
     if(!item||!edition||typeof id!=='string'||id.length===0||seen.has(id)
       ||typeof edition.name!=='string'||!edition.name.trim()
-      ||!when||!validInteger(when.season_index,0,10000)
+      ||!when||!validInteger(when.season_index,0,Number.MAX_SAFE_INTEGER)
       ||!validInteger(when.week,1,max!)||!when.calendar
       ||when.calendar.weeks_per_year!==max
       ||!Array.isArray(item.submissions)

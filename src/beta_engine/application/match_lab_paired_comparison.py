@@ -12,7 +12,7 @@ import json
 from collections import Counter
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, model_validator
 
 from beta_engine.application.match_test_lab_service import (
     MatchLabRequest,
@@ -53,10 +53,10 @@ class MatchLabComparisonSource(BaseModel):
 
 
 class MatchLabComparisonRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+    model_config = ConfigDict(extra="forbid", frozen=True)
     baseline: MatchLabComparisonSource
     candidate: MatchLabComparisonSource
-    batch_seeds: tuple[int, ...]
+    batch_seeds: tuple[StrictInt, ...]
 
     @model_validator(mode="after")
     def validate_seeds(self):

@@ -9,7 +9,6 @@ from pathlib import Path
 import re
 import sys
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 SCHEMA = "pr_path_overlap_audit.v1"
@@ -47,6 +46,8 @@ def _files_for_pr(repo: str, number: int, token: str | None) -> list[dict]:
     rows = _pages(repo, f"pulls/{number}/files", token)
     if not rows or any(not isinstance(row, dict) for row in rows):
         raise ValueError(f"PR #{number} has no reliable file list")
+    if len(rows) >= 3000:
+        raise ValueError(f"PR #{number} reached GitHub\u0027s 3,000-file API cap; audit incomplete")
     return rows
 
 

@@ -1,0 +1,35 @@
+name: Native one-Edition operator journey (real HTTP SQLite)
+
+on:
+  pull_request:
+    paths:
+      - 'tests/api/test_native_one_edition_operator_journey.py'
+      - '.github/workflows/prealpha-native-one-edition-operator.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-one-edition-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  one-edition:
+    name: Real HTTP / SQLite operator chain and restart
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install real production dependencies and pytest
+        run: python -m pip install -e . pytest
+      - name: Play four-player Tour via real HTTP, manually Save and reopen SQLite
+        env:
+          GITHUB_EVENT_NAME: workflow_dispatch
+        run: |
+          python -m pytest -q -x --durations=10 tests/api/test_native_one_edition_operator_journey.py

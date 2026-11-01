@@ -35,3 +35,27 @@ Critical tests inspect the real 80-Edition source and canonical Calendar fingerp
 
 The next implementation dependency is a reviewed accurate FAX 24/32 Main/Qualification/points/timing bridge with provenance and owner-approved policy where unresolved. Only then can the real 1,000-player, 80-played-Edition FAX season be claimed. This report must not be treated as the bridge itself.
 
+
+## Verified result on the actual checked-in FAX source (2026-11-01)
+
+The dedicated CI run [41349933045](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/41349933045) executed all six new tests against the real source, ran the report command and retained its exact 80-event JSON as [artifact 13100881247](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/41349933045/artifacts/13100881247).
+
+Canonical Calendar fingerprint: `e2150e66eef92943b56b2d22f3de26b8fe6c161669bd5d24c770c516f560e197`.
+
+| Observed source attribute / blocker | Editions |
+| --- | ---: |
+| Original source Editions / structurally blocked | **80 / 80** |
+| Original GOLD / Platinum templates | **40 / 40** |
+| GOLD Main 24 / PLATINUM Main 32 | **40 / 40** |
+| Qualification size 16 / 24 | **40 / 40** |
+| Main full-field unsupported by current native v2 4/8 | **80** |
+| Qualification incompatible with native main-only executor | **80** |
+| WC/BYE original geometry not losslessly mapped | **80** |
+| Category point stages missing | **80** |
+| Legacy ↔ native point-stage mapping not lossless | **80** |
+| Announcements too early from the specified W2 bootstrap | **4** |
+| Actually played Editions proven by this audit | **0** |
+
+The four early announcement source identities are `FAX-ACCEPT-WT-001` and `002` (SW1), `003` (SW2) and `004` (SW3). These counts are the observed source snapshot, **not promises** about future templates or an owner's authored new point configuration. Each issue count is independent and can overlap another category. The source is explicitly a release fixture and not final FAX sporting canon.
+
+**Decision implication:** prioritize an authenticated, historically versioned 24/32 Main and Qualification knockout bridge plus an honest initial-announcement strategy before claiming any 80-played-Edition reference acceptance. Missing point awards require existing owner authority, not a synthetic zero default.

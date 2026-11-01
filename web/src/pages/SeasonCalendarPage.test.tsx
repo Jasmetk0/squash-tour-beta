@@ -33,8 +33,8 @@ describe('SeasonCalendarPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     adminTime.viewed.mockImplementation(presentView)
-    api.getRun.mockResolvedValue({
-      run: { run_id: 'run-a', season: 2029, seed: 7, next_event_index: 1, total_events: 4, completed_event_ids: ['E2'] },
+    api.getRun.mockImplementation(async (runId: string) => ({
+      run: { run_id: runId || 'run-a', season: 2029, seed: 7, next_event_index: 1, total_events: 4, completed_event_ids: ['E2'] },
       season_state: {
         season: 2029,
         next_event_index: 1,
@@ -46,13 +46,13 @@ describe('SeasonCalendarPage', () => {
           { event_id: 'E4', season: 2029, week: 10, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-D' }
         ]
       }
-    })
-    api.listEvents.mockResolvedValue({
-      run_id: 'run-a',
+    }))
+    api.listEvents.mockImplementation(async (runId: string) => ({
+      run_id: runId || 'run-a',
       events: [
         { event_sequence: 2, event_id: 'E2', season: 2029, week: 4, template_id: 'TEMP-C', tournament_result: { ok: true } }
       ]
-    })
+    }))
   })
 
   it('renders historical checkpoint SeasonState without current Run or Events reads', async () => {
@@ -152,6 +152,15 @@ describe('SeasonCalendarPage', () => {
     expect(api.listEvents).toHaveBeenCalledWith('run x/y')
   })
 
+  it.each(['run%name', 'run%20name'])('preserves a literal percent in the decoded Run ID %s', async runId => {
+    renderWithRoute(<SeasonCalendarPage />, `/runs/${encodeURIComponent(runId)}/calendar`)
+    const list = await screen.findByRole('list', { name: 'Season calendar ordered list' })
+    expect(api.getRun).toHaveBeenCalledWith(runId)
+    expect(api.listEvents).toHaveBeenCalledWith(runId)
+    expect(within(list).getByRole('link', { name: 'history' }))
+      .toHaveAttribute('href', `/runs/${encodeURIComponent(runId)}/events/E2`)
+  })
+
   it('filters by week/category/text without re-sorting matching entries', async () => {
     renderWithRoute(<SeasonCalendarPage />, '/runs/run-a/calendar')
     const list = await screen.findByRole('list', { name: 'Season calendar ordered list' })
@@ -173,4 +182,81 @@ describe('SeasonCalendarPage', () => {
     expect(items).toHaveLength(1)
     expect(items[0]).toHaveTextContent('E4')
   })
+
+  it('rejects foreign history when listEvents returns mismatched run_id', async () => {
+    api.listEvents.mockImplementation(async () => ({
+      run_id: 'malicious-other-run',
+      events: [
+        { event_sequence: 1, event_id: 'E1', season: 2029, week: 2, template_id: 'TEMP-A', tournament_result: { ok: true } }
+      ]
+    }))
+    renderWithRoute(<SeasonCalendarPage />, '/runs/run-a/calendar')
+
+    const list = await screen.findByRole('list', { name: 'Season calendar ordered list' })
+    const items = within(list).getAllByRole('listitem')
+    expect(items[0]).toHaveTextContent('E2')
+    expect(within(items[0]).queryByRole('link', { name: 'history' })).not.toBeInTheDocument()
+  })
+
+  it('does not display ambiguous historical links', async () => {
+    api.listEvents.mockImplementation(async () => ({
+      run_id: 'run-a',
+      events: [
+        { event_sequence: 2, event_id: 'E2', season: 2029, week: 4, template_id: 'TEMP-C', tournament_result: { ok: true } },
+        { event_sequence: 3, event_id: 'E2', season: 2029, week: 5, template_id: 'TEMP-C', tournament_result: { ok: true } }
+      ]
+    }))
+    renderWithRoute(<SeasonCalendarPage />, '/runs/run-a/calendar')
+
+    const list = await screen.findByRole('list', { name: 'Season calendar ordered list' })
+    const items = within(list).getAllByRole('listitem')
+    expect(items[0]).toHaveTextContent('E2')
+    expect(within(items[0]).queryByRole('link', { name: 'history' })).not.toBeInTheDocument()
+  })
+
+  it('renders mismatch identity error when run_id from API does not match URL param', async () => {
+    api.getRun.mockImplementation(async () => ({
+      run: { run_id: 'different-run', season: 2029, seed: 7, next_event_index: 1, total_events: 4, completed_event_ids: ['E2'] },
+      season_state: { season: 2029, next_event_index: 1, completed_event_ids: ['E2'], ordered_events: [] }
+    }))
+    renderWithRoute(<SeasonCalendarPage />, '/runs/run-a/calendar')
+
+    expect(await screen.findByRole('heading', { name: 'Chyba identity Runu / Run identity mismatch' })).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Season calendar ordered list' })).not.toBeInTheDocument()
+  })
+
+  it('safely handles missing or invalid filter properties', async () => {
+    // Add an event with missing optional template_id or event_id properties
+    api.getRun.mockImplementation(async () => ({
+      run: { run_id: 'run-a', season: 2029, seed: 7, next_event_index: 1, total_events: 5, completed_event_ids: ['E2'] },
+      season_state: {
+        season: 2029,
+        next_event_index: 1,
+        completed_event_ids: ['E2'],
+        ordered_events: [
+          { event_id: 'E2', season: 2029, week: 4, tour: 'WORLD', category: 'PLATINUM', template_id: 'TEMP-C' },
+          { event_id: 'E1', season: 2029, week: 2, tour: 'ELITE', category: 'GOLD', template_id: 'TEMP-A' },
+          { event_id: 'E3', season: 2029, week: 8, tour: 'WORLD', category: 'SILVER', template_id: 'TEMP-B' },
+          { event_id: 'E4', season: 2029, week: 10, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-D' },
+          // Missing template_id entirely (simulating incomplete backend data structure fallback behavior)
+          { event_id: 'E-MISSING', season: 2029, week: 11, tour: 'WORLD', category: 'BRONZE' } as any
+        ]
+      }
+    }))
+
+    renderWithRoute(<SeasonCalendarPage />, '/runs/run-a/calendar')
+
+    const list = await screen.findByRole('list', { name: 'Season calendar ordered list' })
+    let items = within(list).getAllByRole('listitem')
+    expect(items).toHaveLength(5)
+
+    // Type a string into text filter. Ensure we don't throw an error for E-MISSING (which has undefined template_id)
+    await userEvent.clear(screen.getByLabelText('Filter by event or template'))
+    await userEvent.type(screen.getByLabelText('Filter by event or template'), 'e-missing')
+
+    items = within(list).getAllByRole('listitem')
+    expect(items).toHaveLength(1)
+    expect(items[0]).toHaveTextContent('E-MISSING')
+  })
+
 })

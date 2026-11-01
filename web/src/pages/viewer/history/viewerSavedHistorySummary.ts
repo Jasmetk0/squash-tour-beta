@@ -34,6 +34,11 @@ function validTournaments(value: unknown, runId: string, branchId: string): valu
         typeof event.result_published !== 'boolean' ||
         (event.champion_player_id !== null && !isId(event.champion_player_id)) ||
         (event.finalist_player_id !== null && !isId(event.finalist_player_id)) ||
+        // A publication is a canonical finished result: both distinct finalists
+        // must be present before it can become the latest public Tournament.
+        (event.result_published &&
+          (!isId(event.champion_player_id) || !isId(event.finalist_player_id) ||
+            event.champion_player_id === event.finalist_player_id)) ||
         (!event.result_published && (event.champion_player_id !== null || event.finalist_player_id !== null))) return false
     ids.add(event.event_id)
     if (event.result_published) published += 1

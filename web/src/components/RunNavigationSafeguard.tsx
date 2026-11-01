@@ -72,7 +72,7 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): JSX.Elemen
   const draft = draftQuery.data
   const serverDirty = Boolean(
     branchId && draft?.run_id === runId && draft.branch_id === branchId &&
-    draft.status === 'dirty'
+    draft.base_saved_revision_id === savedHead && draft.status === 'dirty'
   )
   const serverDirtyRef = useRef(serverDirty)
   const localDirtyRef = useRef(false)
@@ -92,8 +92,10 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): JSX.Elemen
       return controls.size > 0 || serverDirtyRef.current
     }
     function sync(): void {
+      // Prune detached/reverted controls before reporting local dirty evidence.
+      const dirty = unsaved()
       localDirtyRef.current = controls.size > 0
-      if (unsaved()) shell?.setAttribute('data-run-form-edited', 'true')
+      if (dirty) shell?.setAttribute('data-run-form-edited', 'true')
       else shell?.removeAttribute('data-run-form-edited')
     }
     function rememberBaseline(event: Event): void {
@@ -140,6 +142,11 @@ export function RunNavigationSafeguard({ runId }: { runId: string }): JSX.Elemen
     function afterSaved(event: Event): void {
       const detail = (event as CustomEvent<{runId?: string; branchId?: string}>).detail
       if (detail?.runId !== runId || detail.branchId !== branchId) return
+      // The Save makes CURRENT values the new persisted baseline. Merely
+      // clearing dirty controls would retain their pre-Save WeakMap values:
+      // editing back to an old value would then appear clean and let the user
+      // navigate away without a warning despite unsaved changes.
+      for (const control of controls) baselines.set(control, controlValue(control))
       controls.clear()
       sync()
     }

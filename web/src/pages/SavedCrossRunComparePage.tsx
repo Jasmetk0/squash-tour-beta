@@ -10,53 +10,7 @@ import {formatApiError} from '../utils/apiErrors'
 import {useLanguage} from '../i18n/LanguageContext'
 import {historyText} from '../i18n/historyText'
 
-type CompareRow={
-  id:string;section:'run'|'branch'|'component';key:string
-  status:'added'|'removed'|'changed'|'unchanged'
-  before:unknown;after:unknown
-}
-type CompareResult={
-  rows:CompareRow[];changed:number;unchanged:number
-  runChanges:number;branchChanges:number;components:number
-}
-
-function projectCrossSavedStateComparison(
-  data:CrossSavedRevisionComparison
-):CompareResult|null{
-  const validMap=(map:unknown):map is Record<string,{before:unknown;after:unknown}>=>
-    !!map&&typeof map==='object'&&!Array.isArray(map)&&
-    Object.values(map).every(x=>!!x&&typeof x==='object'&&!Array.isArray(x)&&
-      'before' in x&&'after' in x)
-  if(!validMap(data.run_changes)||!validMap(data.branch_changes)||
-    !Array.isArray(data.components))return null
-  const rows:CompareRow[]=[]
-  for(const [section,map] of [
-    ['run',data.run_changes],['branch',data.branch_changes]
-  ] as const){
-    for(const key of Object.keys(map).sort()){
-      if(!key)return null
-      rows.push({id:section+':'+key,section,key,status:'changed',
-        before:map[key].before,after:map[key].after})
-    }
-  }
-  const ids=new Set<string>()
-  for(const c of data.components){
-    if(!c||!c.component_key||ids.has(c.component_key)||
-      !['added','removed','changed','unchanged'].includes(c.status)||
-      (c.before_fingerprint!==null&&typeof c.before_fingerprint!=='string')||
-      (c.after_fingerprint!==null&&typeof c.after_fingerprint!=='string'))
-      return null
-    ids.add(c.component_key)
-    rows.push({id:'component:'+c.component_key,section:'component',
-      key:c.component_key,status:c.status as any,
-      before:c.before_fingerprint,after:c.after_fingerprint})
-  }
-  const changed=rows.filter(row=>row.status!=='unchanged').length
-  return {rows,changed,unchanged:rows.length-changed,
-    runChanges:Object.keys(data.run_changes).length,
-    branchChanges:Object.keys(data.branch_changes).length,
-    components:data.components.length}
-}
+import {projectCrossSavedStateComparison, type CompareResult} from './savedCompareStates'
 
 export function SavedCrossRunComparePage():JSX.Element{
   const {language}=useLanguage()

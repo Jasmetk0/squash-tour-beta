@@ -7,6 +7,7 @@ const words: Record<string, { cs: string; en: string }> = {
   'Home': { cs: 'Domů', en: 'Home' },
   'Runs': { cs: 'Runy', en: 'Runs' },
   'Run inventory': { cs: 'Přehled Runů', en: 'Run inventory' },
+  'Saved Branch import review': { cs: 'Kontrola importu Saved Branch', en: 'Saved Branch import review' },
   'Simulation Task Center': { cs: 'Centrum simulací', en: 'Simulation Task Center' },
   'Packages': { cs: 'Balíčky', en: 'Packages' },
   'Test Lab': { cs: 'Testovací laboratoř', en: 'Test Lab' },

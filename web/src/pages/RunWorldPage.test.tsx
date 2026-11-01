@@ -289,9 +289,13 @@ describe('Run-owned World overview navigation',()=>{
     expect(screen.getByLabelText('Run World canonical country players')).toHaveTextContent(
       'NOT a historical roster for World year 2020'
     )
-    expect(await screen.findByRole('link',{name:'Czech Player One'})).toHaveAttribute(
-      'href','/admin/runs/run-a/people/cze-p1'
-    )
+    const profile=new URL((await screen.findByRole('link',{name:'Czech Player One'})).getAttribute('href')!,'https://test.invalid')
+    expect(profile.pathname).toBe('/admin/runs/run-a/people/cze-p1')
+    const countryReturn=new URL(profile.searchParams.get('fromCountry')!,'https://test.invalid')
+    expect(countryReturn.pathname).toBe('/admin/runs/run-a/world/countries/CZE')
+    expect(countryReturn.searchParams.get('tab')).toBe('players')
+    expect(countryReturn.searchParams.get('year')).toBe('2020')
+    expect(JSON.parse(countryReturn.searchParams.get('spScope')!)).toEqual(['run-a','branch-a','head-a','CZE'])
     expect(api.getSavedPlayersInventory).toHaveBeenCalledWith(
       'run-a','branch-a','head-a',expect.objectContaining({
         country_code:'CZE',include_prepared:false,offset:0,limit:25
@@ -672,7 +676,7 @@ describe('Run-owned World overview navigation',()=>{
       .toHaveTextContent('Most played wins')
     expect(achievements).toHaveTextContent('Winner real-1, Loser real-2')
     await userEvent.click(within(achievements).getAllByRole('button',{name:'Open evidence'})[1])
-    const detail=await within(achievements).findByLabelText('Country match record detail')
+    const detail=await within(panel).findByLabelText('Country match record detail')
     expect(detail).toHaveTextContent('All tied holders')
     expect(detail).toHaveTextContent('rev-old')
     expect(await within(detail).findByRole('table',{name:'Country match record source matches'}))
@@ -686,7 +690,7 @@ describe('Run-owned World overview navigation',()=>{
     expect(u.searchParams.get('fromCountry')).toContain('rperiod=season')
     expect(u.searchParams.get('fromCountry')).toContain('year=2030')
     await userEvent.click(within(detail).getByRole('button',{name:'Close detail'}))
-    expect(within(achievements).queryByLabelText('Country match record detail')).not.toBeInTheDocument()
+    expect(within(panel).queryByLabelText('Country match record detail')).not.toBeInTheDocument()
     expect(within(panel).getByRole('combobox',{name:'Country record period'}))
       .toHaveValue('season')
     expect(api.getCountryMatchRecordHighlights).toHaveBeenCalledWith(
@@ -845,7 +849,8 @@ describe('Run-owned World overview navigation',()=>{
       rev:string,offset=0,limit=25)=>{
       const rows=Array.from({length:Math.max(0,Math.min(limit,26-offset))},(_,i)=>
         standing('P'+String(offset+i).padStart(2,'0'),offset+i+1))
-      return savedStandings(rev,offset,limit,rows,26)
+      return {...savedStandings(rev,offset,limit,rows,26),
+        country_played_wins:52,country_played_losses:26}
     })
     mountWorld('/admin/runs/run-a/world/countries/CZE?tab=records')
     const panel=await screen.findByLabelText('Country canonical player standings')

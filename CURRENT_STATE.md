@@ -1,3 +1,17 @@
+# Portable Windows preview candidate — 31 October 2026
+
+Verified base `buuk`: `7a08ff441dd185189638c05dfc3bd33401407b7d`.
+This isolated delivery slice adds a bundled Windows runtime, compiled UI and
+one-file console launcher; it does not change sporting logic or declare a release.
+Each source commit owns separate local data and never migrates an older world
+automatically. See [download, shutdown, backup and evidence boundaries](docs/WINDOWS_PREVIEW.md).
+The dedicated Windows workflow must prove the actual frozen executable, real
+browser/SQLite empty-Run first Save and restart before publishing its ZIP.
+The full pre-alpha integration/release gates remain separate. Older checkpoints
+below retain their original dates and do not describe the present merge queue.
+
+---
+
 # Edition Entry timing preparation candidate — 30 October 2026
 
 Verified `buuk`: `57d07a1c52c48bd5460519f2e837829ce7770de2`; owner merges

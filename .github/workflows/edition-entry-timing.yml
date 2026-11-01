@@ -26,7 +26,8 @@ concurrency:
 
 jobs:
   browser:
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    # Draft PRs must run this safety-critical browser/SQLite acceptance too.
+    # Skipping it until ready_for_review leaves the most risky edits untested.
     name: Entry timing / real Chromium CS EN Save restart
     runs-on: ubuntu-latest
     timeout-minutes: 10

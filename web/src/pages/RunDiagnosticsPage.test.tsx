@@ -591,11 +591,12 @@ describe('RunDiagnosticsPage', () => {
   })
 
   it.each([
-    { issue: 'season', statusSeason: 2029, statusIndex: 0, statusTotal: 24 },
-    { issue: 'next-event cursor', statusSeason: 2028, statusIndex: 1, statusTotal: 24 },
-    { issue: 'total-event count', statusSeason: 2028, statusIndex: 0, statusTotal: 25 },
+    { issue: 'season', statusSeason: 2029, statusIndex: 0, statusTotal: 24, statusSeed: 11 },
+    { issue: 'next-event cursor', statusSeason: 2028, statusIndex: 1, statusTotal: 24, statusSeed: 11 },
+    { issue: 'total-event count', statusSeason: 2028, statusIndex: 0, statusTotal: 25, statusSeed: 11 },
+    { issue: 'seed', statusSeason: 2028, statusIndex: 0, statusTotal: 24, statusSeed: 991 },
   ])('hides current-week navigation when Run detail and status summary disagree on $issue',
-    async ({statusSeason, statusIndex, statusTotal}) => {
+    async ({statusSeason, statusIndex, statusTotal, statusSeed}) => {
       api.getRun.mockResolvedValueOnce({
         run: { run_id: 'run-a', season: 2028, seed: 11, next_event_index: 0,
           total_events: 24, completed_event_ids: [] },
@@ -604,7 +605,7 @@ describe('RunDiagnosticsPage', () => {
             tour: 'WORLD', category: 'GOLD', template_id: 'TMP-1' }] }
       })
       api.getRunStatusSummary.mockResolvedValueOnce({
-        run_id: 'run-a', season: statusSeason, seed: 11,
+        run_id: 'run-a', season: statusSeason, seed: statusSeed,
         progress: { next_event_index: statusIndex, total_events: statusTotal, completed_event_count: 5 },
         finals: { qualification_available: false, result_available: false },
         rollover: null, source: { source_type: 'new_run', parent_run_id: null },
@@ -614,8 +615,19 @@ describe('RunDiagnosticsPage', () => {
       renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
 
       expect(await screen.findByRole('alert')).toHaveTextContent(
-        'Run detail and status summary disagree on season or progress. Current-week links are hidden.'
+        'Run detail and status summary disagree on season, seed or progress. Current-week links are hidden.'
       )
+      expect(screen.getByText('Conflicting progress values are hidden until the run reads agree.')).toBeInTheDocument()
+      // Both summary surfaces must remain explicitly unverified, not a mix of reads.
+      const context = screen.getByRole('list', { name: 'Current context' })
+      expect(within(context).getAllByText('—')).toHaveLength(3)
+      const summary = screen.getByRole('heading', { name: 'Run diagnostics summary' }).closest('article')
+      expect(summary).not.toBeNull()
+      expect(Array.from(summary!.querySelectorAll('.compact-summary-card__value')).map((node) => node.textContent))
+        .toEqual(['run-a', '—', '—', '—', '—'])
+      // Neither independently sampled value may masquerade as verified progress.
+      expect(screen.queryByText(`${statusIndex}/${statusTotal}`)).not.toBeInTheDocument()
+      expect(screen.queryByText(`${statusIndex} / ${statusTotal}`)).not.toBeInTheDocument()
       expect(screen.getByText('Week Detail (current week unavailable)')).toBeInTheDocument()
       expect(screen.queryByRole('link', { name: 'Week Detail (current week)' })).not.toBeInTheDocument()
       expect(screen.queryByRole('link', { name: /Inspect current week detail/ })).not.toBeInTheDocument()
@@ -656,9 +668,84 @@ describe('RunDiagnosticsPage', () => {
     expect(screen.queryByRole('link', {name: /Inspect current week detail/})).not.toBeInTheDocument()
     expect(screen.queryByRole('link', {name: 'Week Detail (current week)'})).not.toBeInTheDocument()
     expect(screen.queryByText(/STALE_EVENT/)).not.toBeInTheDocument()
-    expect(screen.getByText(`${runIndex} / 24`)).toBeInTheDocument()
+    const summary = screen.getByRole('heading', { name: 'Run diagnostics summary' }).closest('article')!
+    if (stateSeason !== 2028 || stateIndex !== runIndex) {
+      // The two sampled progress sources disagree, so they cannot be combined.
+      expect(screen.getByText('Conflicting progress values are hidden until the run reads agree.')).toBeInTheDocument()
+      expect(within(summary).getAllByText('—').length).toBeGreaterThan(1)
+    } else {
+      // Only the next event has a foreign season: Run progress itself is still coherent.
+      expect(screen.queryByText('Conflicting progress values are hidden until the run reads agree.')).not.toBeInTheDocument()
+      expect(within(summary).getByText(`${runIndex} / 24`)).toBeInTheDocument()
+    }
     expect(screen.getByRole('link', {name: 'Inspect latest completed event (E5)'}))
       .toHaveAttribute('href', '/runs/run-a/events/E5')
+  })
+
+  it.each([
+    { caseName: 'lost completed event', stateIds: ['E1'] },
+    { caseName: 'substituted completed event', stateIds: ['E1', 'OTHER'] },
+    { caseName: 'duplicate hiding another completed event', stateIds: ['E1', 'E1'] }
+  ])('rejects independently read SeasonState with $caseName without hiding trusted history', async ({ stateIds }) => {
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2028, seed: 11, next_event_index: 2,
+        total_events: 3, completed_event_ids: ['E1', 'E2'] },
+      season_state: {
+        season: 2028, next_event_index: 2, completed_event_ids: stateIds,
+        ordered_events: [
+          { event_id: 'E1', season: 2028, week: 3, tour: 'WORLD', category: 'GOLD', template_id: 'T1' },
+          { event_id: 'E2', season: 2028, week: 4, tour: 'WORLD', category: 'GOLD', template_id: 'T2' },
+          { event_id: 'E3', season: 2028, week: 8, tour: 'WORLD', category: 'GOLD', template_id: 'T3' }
+        ]
+      }
+    })
+    api.getRunStatusSummary.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2028, seed: 11,
+      progress: { next_event_index: 2, total_events: 3, completed_event_count: 2 },
+      finals: { qualification_available: false, result_available: false },
+      rollover: null, source: { source_type: 'new_run', parent_run_id: null },
+      lineage: { child_run_count: 1 },
+      history_counts: { events: 5, ranking_snapshots: 7, race_snapshots: 6 }
+    })
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Run calendar and progress disagree. Current-week links are hidden.')
+    expect(screen.getByText('Conflicting progress values are hidden until the run reads agree.')).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: 'Current context' })).getAllByText('—')).toHaveLength(3)
+    expect(screen.getByText('Week Detail (current week unavailable)')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Inspect current week detail/ })).not.toBeInTheDocument()
+    const summary = screen.getByRole('heading', { name: 'Run diagnostics summary' }).closest('article')!
+    expect(Array.from(summary.querySelectorAll('.compact-summary-card__value')).map((node) => node.textContent))
+      .toEqual(['run-a', '—', '—', '—', '—'])
+    expect(screen.getByRole('link', { name: 'Inspect latest completed event (E5)' }))
+      .toHaveAttribute('href', '/runs/run-a/events/E5')
+  })
+
+  it('accepts equivalent completed-event ID sets in different order', async () => {
+    api.getRun.mockResolvedValueOnce({
+      run: { run_id: 'run-a', season: 2028, seed: 11, next_event_index: 2,
+        total_events: 3, completed_event_ids: ['E2', 'E1'] },
+      season_state: {
+        season: 2028, next_event_index: 2, completed_event_ids: ['E1', 'E2'],
+        ordered_events: [
+          { event_id: 'E1', season: 2028, week: 3, tour: 'WORLD', category: 'GOLD', template_id: 'T1' },
+          { event_id: 'E2', season: 2028, week: 4, tour: 'WORLD', category: 'GOLD', template_id: 'T2' },
+          { event_id: 'E3', season: 2028, week: 8, tour: 'WORLD', category: 'GOLD', template_id: 'T3' }
+        ]
+      }
+    })
+    api.getRunStatusSummary.mockResolvedValueOnce({
+      run_id: 'run-a', season: 2028, seed: 11,
+      progress: { next_event_index: 2, total_events: 3, completed_event_count: 2 },
+      finals: { qualification_available: false, result_available: false },
+      rollover: null, source: { source_type: 'new_run', parent_run_id: null },
+      lineage: { child_run_count: 1 },
+      history_counts: { events: 5, ranking_snapshots: 7, race_snapshots: 6 }
+    })
+    renderWithRoute(<RunDiagnosticsPage />, '/runs/run-a/diagnostics')
+    expect(await screen.findByRole('link', { name: 'Inspect current week detail (W8 from E3)' }))
+      .toHaveAttribute('href', '/runs/run-a/weeks/8')
+    expect(screen.queryByText('Conflicting progress values are hidden until the run reads agree.')).not.toBeInTheDocument()
+    expect(screen.getByText('2/3')).toBeInTheDocument()
   })
 
   it('includes a targeted week detail quick-navigation link when next planned week is available', async () => {

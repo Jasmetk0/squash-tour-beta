@@ -27,13 +27,23 @@ export function SeasonCalendarPage(): JSX.Element {
   const eventsQuery = useQuery({ queryKey: ['events', runId], queryFn: () => listEvents(runId), enabled: Boolean(runId) && !viewed.historical })
 
   const seasonState = viewed.historical ? viewed.seasonState : runQuery.data?.season_state
+  // React Router already decoded the parameter; preserve literal '%' in IDs.
+  const isRunIdentityMismatch = !viewed.historical && runQuery.data && runQuery.data.run.run_id !== runId
+  const runDataAvailable = seasonState && !isRunIdentityMismatch
   const orderedEvents = seasonState?.ordered_events ?? []
   const nextEventIndex = seasonState?.next_event_index ?? 0
   const completedEventIds = useMemo(
     () => new Set(seasonState?.completed_event_ids ?? []),
     [seasonState?.completed_event_ids]
   )
-  const persistedEventIds = useMemo(() => new Set((eventsQuery.data?.events ?? []).map((event) => event.event_id)), [eventsQuery.data?.events])
+  const validPersistedEvents = useMemo(() => {
+    if (eventsQuery.data && eventsQuery.data.run_id === runId) {
+      return eventsQuery.data.events
+    }
+    return []
+  }, [eventsQuery.data, runId])
+
+  const persistedEventIds = useMemo(() => new Set(validPersistedEvents.map((event) => event.event_id)), [validPersistedEvents])
 
   const weekOptions = useMemo(() => {
     return getWeeksInSeasonOrder(orderedEvents)
@@ -48,7 +58,7 @@ export function SeasonCalendarPage(): JSX.Element {
     const weekMatches = weekFilter ? String(event.week) === weekFilter : true
     const categoryMatches = categoryFilter ? event.category === categoryFilter : true
     const textMatches = normalizedTextFilter
-      ? event.event_id.toLowerCase().includes(normalizedTextFilter) || event.template_id.toLowerCase().includes(normalizedTextFilter)
+      ? (event.event_id?.toLowerCase() || "").includes(normalizedTextFilter) || (event.template_id?.toLowerCase() || "").includes(normalizedTextFilter)
       : true
     return weekMatches && categoryMatches && textMatches
   })
@@ -60,6 +70,7 @@ export function SeasonCalendarPage(): JSX.Element {
   if (viewed.historical && viewed.unavailable) return <section className="panel"><h1>Historical calendar is not available for this checkpoint.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId} · Kind: {viewed.time?.selectedCheckpoint?.kind ?? 'unknown'}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
   if (viewed.historical && viewed.failed) return <section className="panel"><h1>Failed to load historical calendar state.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
   if (viewed.historical && viewed.query.isLoading) return <section className="panel"><p className="status">Loading historical calendar...</p></section>
+  if (isRunIdentityMismatch) return <section className="panel"><h1>Chyba identity Runu / Run identity mismatch</h1><p>Požadované ID nesouhlasí s načteným kalendářem. / The requested run ID does not match the loaded calendar state.</p></section>
 
   return (
     <section className="panel">
@@ -81,7 +92,7 @@ export function SeasonCalendarPage(): JSX.Element {
       <SectionCard title="Season progress summary">
         {!viewed.historical && runQuery.isLoading ? <p className="status">Loading season calendar...</p> : null}
         {runQuery.error ? <p className="error">Failed to load run season state: {formatApiError(runQuery.error)}</p> : null}
-        {seasonState ? (
+        {runDataAvailable ? (
           <>
             <SummaryPills
               items={[
@@ -146,8 +157,8 @@ export function SeasonCalendarPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Ordered season calendar">
-        {seasonState && filteredEvents.length === 0 ? <EmptyState message="No calendar events match the current filters." /> : null}
-        {seasonState && filteredEvents.length > 0 ? (
+        {runDataAvailable && filteredEvents.length === 0 ? <EmptyState message="No calendar events match the current filters." /> : null}
+        {runDataAvailable && filteredEvents.length > 0 ? (
           <ol className="item-list" aria-label="Season calendar ordered list">
             {filteredEvents.map((event) => {
               const absoluteIndex = orderedEvents.indexOf(event)
@@ -158,6 +169,8 @@ export function SeasonCalendarPage(): JSX.Element {
                 eventId: event.event_id
               })
               const hasPersistedDetail = persistedEventIds.has(event.event_id)
+              const matchingPersistedEvents = validPersistedEvents.filter(e => e.event_id === event.event_id)
+              const isAmbiguous = matchingPersistedEvents.length > 1
 
               return (
                 <li key={event.event_id}>
@@ -170,7 +183,7 @@ export function SeasonCalendarPage(): JSX.Element {
                         value: (
                           <>
                             <Link to={`/runs/${encodeURIComponent(runId)}/calendar/${encodeURIComponent(event.event_id)}`}>{event.event_id}</Link>
-                            {!viewed.historical && status === 'Completed' && hasPersistedDetail ? (
+                            {!viewed.historical && status === 'Completed' && hasPersistedDetail && !isAmbiguous ? (
                               <>
                                 {' '}·{' '}
                                 <Link to={`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(event.event_id)}`}>history</Link>
@@ -194,7 +207,7 @@ export function SeasonCalendarPage(): JSX.Element {
         {!viewed.historical && eventsQuery.error ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
       </SectionCard>
 
-      {nextEvent ? (
+      {runDataAvailable && nextEvent ? (
         <SectionCard title="Next event focus">
           <MetadataList
             items={[

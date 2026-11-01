@@ -1,0 +1,76 @@
+name: Windows preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - '.github/workflows/windows-preview.yml'
+      - 'tools/desktop/**'
+      - 'tools/tests/test_desktop_preview.py'
+      - 'Spustit_Squash_Engine.bat'
+      - 'docs/WINDOWS_PREVIEW.md'
+  push:
+    branches: [buuk]
+    paths:
+      - '.github/workflows/windows-preview.yml'
+      - 'tools/desktop/**'
+      - 'tools/tests/test_desktop_preview.py'
+      - 'Spustit_Squash_Engine.bat'
+      - 'docs/WINDOWS_PREVIEW.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  portable-windows:
+    name: Portable Windows build and restart acceptance
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install build and acceptance dependencies
+        run: python -m pip install -e . pytest playwright pyinstaller==6.22.3
+      - name: Launcher failure and isolation tests (also on draft PRs)
+        run: python -m pytest tools/tests/test_desktop_preview.py --maxfail=1
+      - name: Build the existing frontend
+        run: |
+          npm --prefix web ci --ignore-scripts
+          npm --prefix web run build
+      - name: Build portable executable and tracked resources
+        run: python tools/desktop/build_preview.py
+      - name: Install acceptance browser
+        run: python -m playwright install chromium
+      - name: Exercise actual frozen application and persisted Run after restart
+        run: python tools/desktop/acceptance.py --package dist/SquashEnginePreview --evidence "${{ runner.temp }}/windows-preview-evidence"
+      - name: Publish tested portable folder as one ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: SquashEngine-Windows-Preview
+          path: dist/SquashEnginePreview/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 30
+      - name: Preserve launcher acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-preview-evidence
+          path: ${{ runner.temp }}/windows-preview-evidence/
+          if-no-files-found: warn
+          retention-days: 14

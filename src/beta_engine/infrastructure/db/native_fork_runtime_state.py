@@ -5,6 +5,7 @@ import json
 from contextlib import contextmanager
 from contextvars import ContextVar
 
+from pydantic_core import SchemaValidator, core_schema
 from sqlalchemy import event as sqlalchemy_event
 from sqlalchemy.engine import Engine
 
@@ -31,6 +32,38 @@ _MAX_DEPENDENCY_REFERENCE_HINTS = 4096
 _MAX_DEPENDENCY_REFERENCE_BYTES = 1024
 _MAX_PARSED_RUNTIMES = 8
 _MAX_PARSED_RUNTIME_BYTES = 8 * 1024 * 1024
+
+
+def _projection_object(**fields):
+    return core_schema.typed_dict_schema({
+        key: core_schema.typed_dict_field(value, required=False)
+        for key, value in fields.items()
+    }, extra_behavior='ignore', strict=True)
+
+
+_DEPENDENCY_PROJECTION = SchemaValidator(_projection_object(content=_projection_object(
+    native_fork_baseline=_projection_object(state=_projection_object(
+        selected_source_branch_id=core_schema.nullable_schema(core_schema.str_schema(strict=True)),
+    )),
+    calendar_tour_authority=_projection_object(),
+)), config=core_schema.CoreConfig(cache_strings=False))
+
+
+def _dependency_content(raw):
+    """Extract routing data without materializing unrelated Saved components.
+
+    This is NOT a Saved decoder. Every actual byte still enters the physical
+    signature and the original full payload/component/hash/replay gates. The
+    projection discards large population/rally trees that this reference walk
+    never reads. Unfamiliar shapes retain Python's original JSON path, including
+    its duplicate-key behavior and errors. No decoded payload or proof is kept.
+    """
+    if type(raw) is str:
+        try:
+            return _DEPENDENCY_PROJECTION.validate_json(raw, strict=True).get('content', {})
+        except (TypeError, ValueError):
+            pass
+    return json.loads(raw).get('content', {})
 
 
 @sqlalchemy_event.listens_for(Engine, "before_cursor_execute")
@@ -345,7 +378,7 @@ def _dependency_references(repository, row, digest):
             if digest in hints:
                 return hints[digest]
     try:
-        content = json.loads(row[9]).get("content", {})
+        content = _dependency_content(row[9])
         baseline = content.get("native_fork_baseline", {}).get("state")
         branches = {baseline.get("selected_source_branch_id")} if isinstance(baseline, dict) else set()
         if "calendar_tour_authority" in content:

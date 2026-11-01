@@ -75,6 +75,7 @@ import { AdminRunBranchesPage } from './pages/AdminRunBranchesPage'
 import { SavedStatesComparePage } from './pages/SavedStatesComparePage'
 import { SavedCrossRunComparePage } from './pages/SavedCrossRunComparePage'
 import { RunsPage } from './pages/RunsPage'
+import { SavedBranchArchiveImportPage } from './pages/SavedBranchArchiveImportPage'
 import { LegacyRunsPage } from './pages/LegacyRunsPage'
 import { PlannedEventDetailPage } from './pages/PlannedEventDetailPage'
 import { SavedTourCalendarPage } from './pages/SavedTourCalendarPage'
@@ -185,6 +186,7 @@ export default function App(): JSX.Element {
         <Route path="admin/compare-runs" element={<SavedCrossRunComparePage />} />
         <Route path="admin/runs/new" element={<RunCreatePage />} />
         <Route path="admin/runs" element={<RunsPage />} />
+        <Route path="admin/archive/import" element={<SavedBranchArchiveImportPage />} />
         <Route path="admin/runs/:runId" element={<RunPage />} />
         <Route path="admin/runs/:runId/manage" element={<RunManagementPage />} />
         <Route path="admin/runs/:runId/simulate" element={<RunSimulationPage />} />

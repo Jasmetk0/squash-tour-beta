@@ -71,6 +71,50 @@ describe('verified Viewer saved player population', () => {
     ]) expect(check({ ...base, players: [modified] })).toBeNull()
   })
 
+  it('rejects leaked private Player metrics in the Saved public projection', () => {
+    const original = player('P1')
+    // The backend's public viewer_people v1 projection intentionally sets all
+    // four of these fields to null; the legacy DTO allows numbers only for
+    // historical compatibility. Zero is still private, not a public value.
+    for (const field of ['potential_ovr', 'current_form',
+      'match_sharpness', 'long_term_fatigue'] as const) {
+      expect(check(players([{...original,[field]: 0}]))).toBeNull()
+      expect(check(players([{...original,[field]: 50}]))).toBeNull()
+      const omitted = {...original} as Record<string, unknown>
+      delete omitted[field]
+      expect(check(players([omitted as unknown as ViewerPlayer]))).toBeNull()
+    }
+    expect(check(players([{...original,
+      potential_ovr:null,current_form:null,
+      match_sharpness:null,long_term_fatigue:null
+    }]))).not.toBeNull()
+  })
+
+  it('requires paired Tour-entry time not later than this exact Saved week', () => {
+    const original = player('P1')
+    for (const entry of [
+      {tour_entry_season_index:5,tour_entry_week:12},
+      {tour_entry_season_index:5,tour_entry_week:1},
+      {tour_entry_season_index:4,tour_entry_week:61},
+      {tour_entry_season_index:null,tour_entry_week:null}
+    ]) expect(check(players([{...original,...entry}]))).not.toBeNull()
+
+    for (const invalid of [
+      {tour_entry_season_index:5,tour_entry_week:13},
+      {tour_entry_season_index:6,tour_entry_week:1},
+      {tour_entry_season_index:null,tour_entry_week:1},
+      {tour_entry_season_index:5,tour_entry_week:null},
+      {tour_entry_season_index:5,tour_entry_week:1.5},
+      {tour_entry_season_index:4,tour_entry_week:62}
+    ]) expect(check(players([{...original,...invalid}]))).toBeNull()
+
+    // A matching clock in another Run is still foreign evidence.
+    expect(verifiedViewerPlayers(
+      players([{...original,tour_entry_season_index:5,tour_entry_week:12}], 'foreign'),
+      'run-1', 'branch-1'
+    )).toBeNull()
+  })
+
   it('supports null public power without showing hidden future attributes', () => {
     const data = players([player('A', 'retired', null)])
     expect(check(data)).toBe(data)

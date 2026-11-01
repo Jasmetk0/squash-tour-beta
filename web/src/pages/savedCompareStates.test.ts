@@ -1,6 +1,6 @@
 import {describe,expect,it} from 'vitest'
-import {projectSavedStateComparison,validateReachableCompareHistory} from './savedCompareStates'
-import type {SavedRevisionHistoryEntry,SavedRevisionComparison,SavedRevisionHistoryPageResponse} from '../api/types'
+import {projectSavedStateComparison,validateReachableCompareHistory, projectCrossSavedStateComparison} from './savedCompareStates'
+import type {SavedRevisionHistoryEntry,SavedRevisionComparison,SavedRevisionHistoryPageResponse, CrossSavedRevisionComparison, CrossSavedRevisionComparisonSource} from '../api/types'
 
 const item=(id:string,sequence:number,owner='original'):SavedRevisionHistoryEntry=>({
   revision_id:id,sequence,revision_branch_id:owner,
@@ -28,9 +28,20 @@ const compare=():SavedRevisionComparison=>({
     {component_key:'player',status:'added',before_fingerprint:null,after_fingerprint:'new'}
   ]
 })
+const crossCompare=():CrossSavedRevisionComparison=>({
+  from_source: {run_id: 'run1', branch_id: 'branch1', saved_head_revision_id: 'rev-2', revision: a},
+  to_source: {run_id: 'run2', branch_id: 'branch2', saved_head_revision_id: 'rev-4', revision: b},
+  run_changes:{viewer_branch_id:{before:'origin',after:'fork'}},
+  branch_changes:{display_name:{before:'First',after:'Second'}},
+  components:[
+    {component_key:'calendar',status:'changed',before_fingerprint:'old',after_fingerprint:'new'},
+    {component_key:'ranking',status:'unchanged',before_fingerprint:'same',after_fingerprint:'same'},
+    {component_key:'player',status:'added',before_fingerprint:null,after_fingerprint:'new'}
+  ]
+})
 describe('Saved Compare A/B source validation',()=>{
   it('checks a true reachable branch including shared ancestors across pages',()=>{
-    const history=validateReachableCompareHistory('run','fork',[page([b],2),page([a])])
+    const history=validateReachableCompareHistory('run','fork',[page([b],3),page([a])])
     expect(history?.entries.map(x=>x.revision_id)).toEqual(['rev-1','rev-3'])
     expect(history?.head).toBe('rev-3')
   })
@@ -44,8 +55,52 @@ describe('Saved Compare A/B source validation',()=>{
     expect(validateReachableCompareHistory('run','fork',[page([{...a,content_hash:''},b])]))
       .toBeNull()
   })
+  it('rejects forged Saved history cursors, misordered or overlapping pages',()=>{
+    const good=[page([b],3),page([a])]
+    expect(validateReachableCompareHistory('run','fork',good)).not.toBeNull()
+    const bad=[
+      [page([b],2),page([a])], // Cursor is not the oldest sequence in its page.
+      [page([b],3),page([a,b])], // Older page overlaps a newer page.
+      [page([b],3),page([a]),page([a])], // Exhausted page cannot be followed.
+      [page([a,b],1)], // False claim of older pages with an impossible cursor.
+      [{...page([a,b]),saved_revisions:[b,a]}], // Sort cannot repair bad server ordering.
+      [{...page([a,b]),has_more_older:true,next_before_sequence:null}],
+      [{...page([a,b]),has_more_older:false,next_before_sequence:1}],
+      [{...page([a,b]),total_count:3}], // End of history contradicts total_count.
+      [{...page([b],3),total_count:2}, {...page([a]),total_count:4}],
+      [page([a])], // Missing actual HEAD from the first page.
+      [{...page([a,b]),saved_revisions:[a,{...b,is_branch_head:false}]}],
+      [page([b],3),{...page([a]),saved_revisions:[{...a,is_branch_head:true}]}]
+    ]
+    for(const pages of bad){
+      expect(validateReachableCompareHistory('run','fork',pages)).toBeNull()
+    }
+  })
+  it('supports incomplete but honestly paginated history without claiming it is fully loaded',()=>{
+    const newest={...page([b],3),total_count:2}
+    expect(validateReachableCompareHistory('run','fork',[newest])?.entries.map(x=>x.revision_id))
+      .toEqual(['rev-3'])
+    expect(validateReachableCompareHistory('run','fork',[{...newest,has_more_older:false,
+      next_before_sequence:null}])).toBeNull()
+    expect(validateReachableCompareHistory('run','fork',[{...newest,total_count:1}]))
+      .toBeNull()
+  })
   it('preserves canonical A→B differences, unchanged components and source fingerprints',()=>{
     const view=projectSavedStateComparison(compare(),'run','fork',a,b,'rev-3')!
+    expect(view.changed).toBe(4)
+    expect(view.unchanged).toBe(1)
+    expect(view.runChanges).toBe(1)
+    expect(view.branchChanges).toBe(1)
+    expect(view.components).toBe(3)
+    expect(view.rows.find(x=>x.id==='run:viewer_branch_id')).toEqual({
+      id:'run:viewer_branch_id',section:'run',key:'viewer_branch_id',
+      status:'changed',before:'origin',after:'fork'
+    })
+    expect(view.rows.find(x=>x.id==='component:ranking')?.status).toBe('unchanged')
+    expect(view.rows.find(x=>x.id==='component:player')?.before).toBeNull()
+  })
+  it('preserves canonical A→B differences for cross-run compare',()=>{
+    const view=projectCrossSavedStateComparison(crossCompare())!
     expect(view.changed).toBe(4)
     expect(view.unchanged).toBe(1)
     expect(view.runChanges).toBe(1)
@@ -66,6 +121,32 @@ describe('Saved Compare A/B source validation',()=>{
     expect(projectSavedStateComparison({...compare(),from_revision:{...a,revision_branch_id:'fork'}},
       'run','fork',a,b,'rev-3')).toBeNull()
     expect(projectSavedStateComparison(compare(),'run','fork',a,b,'stale-head')).toBeNull()
+  })
+  it('fails cross compare with invalid sources', ()=>{
+      const cross = crossCompare()
+      const invalid = {...cross, from_source: {...cross.from_source, run_id: ''}}
+      expect(projectCrossSavedStateComparison(invalid)).toBeNull()
+      const invalid2 = {...cross, to_source: {...cross.to_source, branch_id: ''}}
+      expect(projectCrossSavedStateComparison(invalid2)).toBeNull()
+  })
+  it('rejects component status claims contradicted by their fingerprints',()=>{
+    const invalid=[
+      {status:'added',before_fingerprint:'old',after_fingerprint:'new'},
+      {status:'added',before_fingerprint:null,after_fingerprint:null},
+      {status:'removed',before_fingerprint:'old',after_fingerprint:'new'},
+      {status:'removed',before_fingerprint:null,after_fingerprint:null},
+      {status:'changed',before_fingerprint:'same',after_fingerprint:'same'},
+      {status:'changed',before_fingerprint:null,after_fingerprint:'new'},
+      {status:'unchanged',before_fingerprint:'old',after_fingerprint:'new'},
+      {status:'unchanged',before_fingerprint:null,after_fingerprint:null}
+    ] as const
+    for(const evidence of invalid){
+      const payload=compare()
+      payload.components[0]={...payload.components[0],...evidence}
+      expect(projectSavedStateComparison(payload,'run','fork',a,b,'rev-3')).toBeNull()
+    }
+    // The canonical Added/Removed/Changed/Unchanged combinations are preserved.
+    expect(projectSavedStateComparison(compare(),'run','fork',a,b,'rev-3')).not.toBeNull()
   })
   it('rejects invented statuses, duplicate components and invalid before/after payloads',()=>{
     const q=compare()

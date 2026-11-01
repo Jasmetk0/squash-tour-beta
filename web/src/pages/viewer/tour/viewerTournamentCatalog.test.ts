@@ -94,6 +94,39 @@ describe('verified Saved Tournament Catalog (legacy V1)', () => {
     expect(valid(c, { ...h, tournaments: [{ ...h.tournaments[0], event_id: '' }] })).toBeNull()
     expect(valid(c, { ...h, tournaments: [{ ...h.tournaments[0], season: 'different' }] })).toBeNull()
   })
+  it('rejects incomplete or self-referential published finalists instead of granting result/player links', () => {
+    const e = event('publication')
+    const { calendar, history } = source([e], [e.event_id])
+    const invalid = (fields: Partial<ViewerTournamentHistoryItem>) =>
+      verifiedTournamentCatalog(calendar, {
+        ...history, tournaments: [{...history.tournaments[0], ...fields}]
+      }, 'run a', 'branch a')
+    expect(verifiedTournamentCatalog(calendar, history, 'run a', 'branch a')).not.toBeNull()
+    expect(invalid({champion_player_id:null})).toBeNull()
+    expect(invalid({finalist_player_id:null})).toBeNull()
+    expect(invalid({champion_player_id:null,finalist_player_id:null})).toBeNull()
+    expect(invalid({champion_player_id:'  '})).toBeNull()
+    expect(invalid({finalist_player_id:'  '})).toBeNull()
+    expect(invalid({champion_player_id:'same',finalist_player_id:'same'})).toBeNull()
+  })
+
+  it('rejects every independently changed published Calendar-derived tournament field', () => {
+    const e = event('source')
+    const { calendar, history } = source([e], [e.event_id])
+    const mutations: Partial<ViewerTournamentHistoryItem>[] = [
+      {host_city:'Other city'}, {region:'Other region'},
+      {main_draw_size:64}, {qualification_draw_size:32},
+      {seeds_count:16}, {qualifier_spots:8},
+      {wild_cards:3}, {byes:2}
+    ]
+    for (const change of mutations) {
+      expect(verifiedTournamentCatalog(calendar, {
+        ...history, tournaments: [{...history.tournaments[0], ...change}]
+      }, 'run a', 'branch a')).toBeNull()
+    }
+    expect(verifiedTournamentCatalog(calendar, history, 'run a', 'branch a')?.publishedCount).toBe(1)
+  })
+
   it('filters all seasons, actual published results and full-text IDs/locations without altering source order', () => {
     const e1 = event('Gold 1', '2000/01', 4)
     const e2 = event('Silver 2', '2001/02', 1)

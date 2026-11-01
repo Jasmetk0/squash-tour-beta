@@ -96,6 +96,23 @@ describe('canonical saved Viewer history hub validation', () => {
     expect(check(t, { ...r, publications: [{ ...r.publications[0], snapshot_fingerprint: 'corrupt' }, r.publications[1]] }, f)).toBeNull()
   })
 
+  it('requires distinct actual published finalists before selecting latest Tournament history', () => {
+    const t = tournaments(), r = rankings(), f = race()
+    const valid = (fields: Partial<ViewerTournamentHistory['tournaments'][number]>) =>
+      check({...t, tournaments:[
+        t.tournaments[0], {...t.tournaments[1], ...fields}
+      ]}, r, f)
+    expect(check(t, r, f)?.lastTournament?.event_id).toBe('winner')
+    expect(valid({champion_player_id:null})).toBeNull()
+    expect(valid({finalist_player_id:null})).toBeNull()
+    expect(valid({champion_player_id:null,finalist_player_id:null})).toBeNull()
+    expect(valid({champion_player_id:' '})).toBeNull()
+    expect(valid({finalist_player_id:' '})).toBeNull()
+    expect(valid({champion_player_id:'same',finalist_player_id:'same'})).toBeNull()
+    expect(valid({result_published:false,champion_player_id:null,
+      finalist_player_id:null})).toBeNull() // Published count must still reconcile.
+  })
+
   it('rejects duplicate Finals Race seasons and stale latest publication', () => {
     const t = tournaments(), r = rankings(), f = race()
     expect(check(t, r, { ...f, latest_target_season_index: 2 })).toBeNull()

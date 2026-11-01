@@ -45,11 +45,13 @@ jobs:
               - 'scripts/**'
               # These acceptance-only scripts own their real Chromium/SQLite gate,
               # not backend's pr_critical selector (which selects no tests for them).
+              - '!scripts/admin_first_tournament_smoke.py'
               - '!scripts/admin_large_cohort_browser.py'
               - '!scripts/admin_world_country_checks.py'
               - '!scripts/full_simulation_boundary_targets_browser.py'
               - '!scripts/saved_player_replay_browser_checks.py'
               - '!scripts/saved_tour_calendar_browser_checks.py'
+              - '!scripts/edition_entry_timing_browser.py'
               - 'src/**'
               - 'tests/**'
               - 'pyproject.toml'
@@ -77,11 +79,13 @@ jobs:
               - 'config/world_packages/**'
               - 'config/player_generation/**'
               - 'scripts/**'
+              - '!scripts/admin_first_tournament_smoke.py'
               - '!scripts/admin_large_cohort_browser.py'
               - '!scripts/admin_world_country_checks.py'
               - '!scripts/full_simulation_boundary_targets_browser.py'
               - '!scripts/saved_player_replay_browser_checks.py'
               - '!scripts/saved_tour_calendar_browser_checks.py'
+              - '!scripts/edition_entry_timing_browser.py'
               - 'src/**'
               - 'tests/**'
               - '!tests/application/test_earth_seed_progress.py'
@@ -139,7 +143,9 @@ jobs:
           python -m compileall -q src
           # This acceptance-only script is excluded from pr_critical, but its
           # syntax must still pass cheap Draft feedback before real Chromium.
+          python -m py_compile scripts/admin_first_tournament_smoke.py
           python -m py_compile scripts/saved_tour_calendar_browser_checks.py
+          python -m py_compile scripts/edition_entry_timing_browser.py
       - name: Run focused Earth-data validation
         if: needs.changes.outputs.earth_data == 'true' && needs.changes.outputs.backend_core != 'true'
         run: |

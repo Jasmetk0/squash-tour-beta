@@ -8,6 +8,7 @@ export const globalAdminNav: AdminNavItem[] = [
   { to: '/admin', label: 'Home' },
   { to: '/admin/runs', label: 'Runs', children: [
     { to: '/admin/runs', label: 'Run inventory' },
+    { to: '/admin/archive/import', label: 'Saved Branch import review' },
     { to: '/admin/operations', label: 'Simulation Task Center' }
   ] },
   { to: '/admin/packages', label: 'Packages' },

@@ -123,9 +123,11 @@ export function assertSavedBranchArchivePreview(
     throw new Error('Saved Branch archive preview contains incomplete or foreign dependency links.')
   }
 
-  // Match the archive v1 closed graph invariants. The dependency Branch may
-  // legitimately end at an earlier historical prefix rather than its live HEAD.
+  // Match archive v1's closed graphs without repeatedly walking the same
+  // ancestors. A large Saved export may contain thousands of dependent Branches
+  // and revisions; validating each fork from scratch grows quadratically.
   const branchById = new Map((branches as IncludedArchiveBranch[]).map(b => [b.branch_id, b]))
+  const checkedForks = new Set<string>()
   const reached = new Set<string>()
   for (const branch of branches as IncludedArchiveBranch[]) {
     if ((branch.forked_from_branch_id !== null &&
@@ -134,13 +136,17 @@ export function assertSavedBranchArchivePreview(
         !revisionIds.has(branch.forked_from_saved_revision_id))) {
       throw new Error('Saved Branch archive preview has a missing fork dependency.')
     }
+    // Every suffix is examined only once, including a deep fork chain.
     const forkPath = new Set<string>()
     let owner: string | null = branch.branch_id
-    while (owner !== null) {
+    while (owner !== null && !checkedForks.has(owner)) {
       if (forkPath.has(owner)) throw new Error('Saved Branch archive preview has a Branch fork cycle.')
       forkPath.add(owner)
-      owner = branchById.get(owner)?.forked_from_branch_id ?? null
+      const current = branchById.get(owner)
+      if (!current) throw new Error('Saved Branch archive preview has a missing fork dependency.')
+      owner = current.forked_from_branch_id
     }
+    for (const id of forkPath) checkedForks.add(id)
     let revisionId: string | null = branch.saved_head_revision_id
     while (revisionId !== null && !reached.has(revisionId)) {
       reached.add(revisionId)
@@ -159,19 +165,57 @@ export function assertSavedBranchArchivePreview(
   if (reached.size !== revisionIds.size) {
     throw new Error('Saved Branch archive preview contains unreachable history.')
   }
-  // A fork's historical source must belong to its declared source Branch
-  // lineage, not merely to some other included Branch in the same Run.
-  // Archived dependencies may stop at a historical prefix of their live HEAD.
+
+  // Each Saved Revision has exactly one parent: it is a rooted forest.
+  // Iterative DFS timestamps make an ancestry proof constant-time per fork,
+  // even when the source Branch ends at an earlier historical prefix.
+  const children = new Map<string, string[]>()
+  const roots: string[] = []
+  for (const revision of history as ArchiveHistoryRevision[]) {
+    if (revision.parent_revision_id === null) {
+      roots.push(revision.revision_id)
+    } else {
+      const siblings = children.get(revision.parent_revision_id) ?? []
+      siblings.push(revision.revision_id)
+      children.set(revision.parent_revision_id, siblings)
+    }
+  }
+  const entered = new Map<string, number>()
+  const exited = new Map<string, number>()
+  let tick = 0
+  for (const root of roots) {
+    const stack: {id: string; leaving: boolean}[] = [{id: root, leaving: false}]
+    while (stack.length) {
+      const item = stack.pop()!
+      if (item.leaving) {
+        exited.set(item.id, ++tick)
+        continue
+      }
+      if (entered.has(item.id)) {
+        throw new Error('Saved Branch archive preview has a revision ancestry cycle.')
+      }
+      entered.set(item.id, ++tick)
+      stack.push({id: item.id, leaving: true})
+      const descendants = children.get(item.id) ?? []
+      for (let i = descendants.length - 1; i >= 0; i--) {
+        stack.push({id: descendants[i], leaving: false})
+      }
+    }
+  }
+  if (entered.size !== revisionIds.size) {
+    throw new Error('Saved Branch archive preview contains unreachable revision ancestry.')
+  }
   for (const branch of branches as IncludedArchiveBranch[]) {
     if (branch.forked_from_branch_id === null ||
       branch.forked_from_saved_revision_id === null) continue
-    const source = branchById.get(branch.forked_from_branch_id)
-    let sourceRevision = source?.saved_head_revision_id ?? null
-    while (sourceRevision !== null &&
-      sourceRevision !== branch.forked_from_saved_revision_id) {
-      sourceRevision = revisionsById.get(sourceRevision)?.parent_revision_id ?? null
-    }
-    if (sourceRevision === null) {
+    const sourceHead = branchById.get(branch.forked_from_branch_id)?.saved_head_revision_id
+    const forkStart = entered.get(branch.forked_from_saved_revision_id)
+    const forkEnd = exited.get(branch.forked_from_saved_revision_id)
+    const headStart = sourceHead === undefined ? undefined : entered.get(sourceHead)
+    const headEnd = sourceHead === undefined ? undefined : exited.get(sourceHead)
+    if (forkStart === undefined || forkEnd === undefined ||
+      headStart === undefined || headEnd === undefined ||
+      !(forkStart <= headStart && forkEnd >= headEnd)) {
       throw new Error('Saved Branch archive preview has a foreign fork source revision.')
     }
   }

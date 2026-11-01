@@ -79,9 +79,11 @@ function SavedPlayerMatchesTimeline({ runId, branchId, savedHead, playerId, loca
     q.data?.season_index === (season === 'all' ? null : Number(season)) &&
     q.data?.offset === page! * CAREER_PAGE_SIZE &&
     q.data?.limit === CAREER_PAGE_SIZE && Array.isArray(q.data?.matches) &&
+    q.data?.schema_version === 'saved_player_match_history.v1' &&
+    (q.data?.status === 'ready' || q.data?.status === 'identity_unavailable') &&
     validCareerResultWindow(q.data!.total_results, q.data!.offset, q.data!.limit,
       q.data!.matches, q.data!.status === 'identity_unavailable') &&
-    typeof q.data?.has_more === 'boolean'
+    q.data?.has_more === (q.data!.offset + q.data!.limit < q.data!.total_results)
   const data = scoped ? q.data : null
   const opponentIds = data?.status === 'ready'
     ? [...new Set(data.matches.map(match => match.opponent_player_id))] : []

@@ -168,6 +168,15 @@ describe('RunBranchReadinessPanel', () => {
     expect(within(original).queryByRole('link', { name: /Inspect authoritative simulation/ })).not.toBeInTheDocument()
   })
 
+  it('accepts a reachable source-owned HEAD in the exact selected Branch context', async () => {
+    api.getSavedRevision.mockImplementation((_runId: string, branchId: string) =>
+      Promise.resolve({ ...revision(branchId === 'original' ? baseBranch : alternative), revision_branch_id: 'source-owner' })
+    )
+    render([baseBranch])
+    const card = await screen.findByLabelText('Operating status for original')
+    expect(await within(card).findByRole('link', { name: /Inspect authoritative simulation/ })).toBeInTheDocument()
+  })
+
   it('blocks readiness when saved head returns another Branch or revision', async () => {
     api.getSavedRevision.mockImplementation((_runId: string, branchId: string) =>
       Promise.resolve({ ...revision(branchId === 'original' ? baseBranch : alternative), branch_id: 'foreign' })
@@ -176,6 +185,49 @@ describe('RunBranchReadinessPanel', () => {
     const card = await screen.findByLabelText('Operating status for original')
     expect(await within(card).findByText(/Saved revision head identity or head status is inconsistent/)).toBeInTheDocument()
     expect(within(card).queryByRole('link', { name: /Inspect authoritative simulation/ })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    { week_ready_for_transition: 'true' },
+    { current_slot_complete: 1 },
+    { supported_tournament_complete: null },
+    { current_slot_kind: 'invalid' },
+    { slot_ordinal: -1 },
+    { position_fingerprint: 'short' },
+    { position_fingerprint: 123 },
+    { terminal_sporting_fingerprint: 'short' },
+    { position_fingerprint: 'z'.repeat(64) },
+    { transition_blockers: [{message: 'not a string'}] },
+    { eligible_match_ids: [null] }
+  ])('blocks readiness on invalid position invariant: %j', async (changed) => {
+    api.getAuthoritativeSimulationPosition.mockImplementation((_runId: string, branchId: string) =>
+      Promise.resolve({ ...pos(branchId), ...changed } as any)
+    )
+    render([baseBranch])
+    const card = await screen.findByLabelText('Operating status for original')
+    expect(await within(card).findByText(/Legacy simulation position does not match this Run/)).toBeInTheDocument()
+    expect(within(card).queryByRole('link', { name: /Inspect authoritative simulation/ })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    { revision_branch_id: '' },
+    { content_hash: 'short' },
+    { content_hash_algorithm: null }
+  ])('blocks readiness on invalid revision invariant: %j', async (changed) => {
+    api.getSavedRevision.mockImplementation((_runId: string, branchId: string) =>
+      Promise.resolve({ ...revision(branchId === 'original' ? baseBranch : alternative), ...changed } as any)
+    )
+    render([baseBranch])
+    const card = await screen.findByLabelText('Operating status for original')
+    expect(await within(card).findByText(/Saved revision head identity or head status is inconsistent/)).toBeInTheDocument()
+    expect(within(card).queryByRole('link', { name: /Inspect authoritative simulation/ })).not.toBeInTheDocument()
+  })
+
+  it('rejects ambiguous duplicate Branches without inspecting either first match', async () => {
+    render([baseBranch, baseBranch])
+    expect(await screen.findByRole('alert')).toHaveTextContent('Branch inventory identity is invalid or ambiguous')
+    expect(screen.queryByLabelText('Operating status for original')).not.toBeInTheDocument()
+    expect(api.getAuthoritativeSimulationPosition).not.toHaveBeenCalled()
   })
 
   it('shows the unresolved application-validation gate only at an Entry slot', async () => {

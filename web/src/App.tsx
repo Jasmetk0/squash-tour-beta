@@ -73,6 +73,7 @@ import { RunSimulationPage } from './pages/RunSimulationPage'
 import { AdminRankingCandidatesPage } from './pages/AdminRankingCandidatesPage'
 import { AdminRunBranchesPage } from './pages/AdminRunBranchesPage'
 import { SavedStatesComparePage } from './pages/SavedStatesComparePage'
+import { SavedCrossRunComparePage } from './pages/SavedCrossRunComparePage'
 import { RunsPage } from './pages/RunsPage'
 import { SavedBranchArchiveImportPage } from './pages/SavedBranchArchiveImportPage'
 import { LegacyRunsPage } from './pages/LegacyRunsPage'
@@ -182,6 +183,7 @@ export default function App(): JSX.Element {
         <Route path="admin/labs/tournament" element={<TournamentTestLabPage />} />
         <Route path="admin/legacy-runs" element={<LegacyRunsPage />} />
         <Route path="admin/operations" element={<GlobalSimulationTaskCenterPage />} />
+        <Route path="admin/compare-runs" element={<SavedCrossRunComparePage />} />
         <Route path="admin/runs/new" element={<RunCreatePage />} />
         <Route path="admin/runs" element={<RunsPage />} />
         <Route path="admin/archive/import" element={<SavedBranchArchiveImportPage />} />

@@ -210,7 +210,7 @@ def _ranking(server, week, expected_ids, total_points):
         assert len(sources) == (1 if len(expected_ids) == 2 else 2)
         assert sum(eid in FIRST_WEEK for eid in sources) == 1
         assert sum(eid in SECOND_WEEK for eid in sources) == (1 if len(expected_ids) == 4 else 0)
-        assert row["points"] == sum(entry["points"] for entry in row["counted_results"])
+        assert row["points"] == sum(\n            entry["main_points"] + entry["qualification_points"]\n            for entry in row["counted_results"]\n        )
     return ranking
 
 

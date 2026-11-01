@@ -216,7 +216,7 @@ export async function inspectRunEditionCoverage(
     package_state_fingerprint:stateHash,season:initialCalendar.season,
     row_count:events.length,rows,counts,
     complete_reads:counts.unavailable===0,
-    all_plans_configured:counts.no_plan===0&&counts.unavailable===0,
+    all_plans_configured:events.length>0&&counts.no_plan===0&&counts.unavailable===0,
     automatic_eligibility:'not_implemented',authorizes_execution:false,
     automatic_save:false,evidence_scope:'current_working_draft'
   }

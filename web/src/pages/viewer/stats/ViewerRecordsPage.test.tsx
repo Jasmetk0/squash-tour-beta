@@ -3,23 +3,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveRunId } from '../../../test/viewerTestUtils'
 import { ViewerRecordsPage } from './ViewerRecordsPage'
+import { LanguageProvider } from '../../../i18n/LanguageContext'
 
 const api = vi.hoisted(() => ({
   getFinalsSummary: vi.fn(),
   getRunStatusSummary: vi.fn(),
   listEvents: vi.fn(),
   listRaceSnapshots: vi.fn(),
-  listRankingSnapshots: vi.fn()
+  listRankingSnapshots: vi.fn(),
+  getViewerOfficialRunContext: vi.fn()
 }))
 
 vi.mock('../../../api/client', () => api)
+vi.mock('../../../api/viewerSignedTourRecords', () => ({
+  getViewerSignedTourRecords: vi.fn().mockRejectedValue(new Error('Signed season not available'))
+}))
 
 
 function renderRecords(): void {
-  renderWithViewerProviders(<ViewerRecordsPage />)
+  renderWithViewerProviders(<LanguageProvider><ViewerRecordsPage /></LanguageProvider>)
 }
 
 function resetApiMocks(): void {
+  api.getViewerOfficialRunContext.mockResolvedValue({ product_run_id: 'record run', official_branch_id: 'branch-1' })
   api.getRunStatusSummary.mockResolvedValue({
     run_id: 'record run',
     season: 2032,

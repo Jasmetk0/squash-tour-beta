@@ -32,7 +32,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**78 identities** across 2026 ATP Tour fixtures and selected older masters.
+**89 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -46,7 +46,7 @@ PYTHONPATH=src pytest -q tests/domain/test_atp_tour_1990_2026_reference_packages
 ```
 
 **Important precision:** these are not 37 proven-complete ATP Tour calendars.
-Not every Series from 1990–2022 has been enumerated and assigned an
+Not every Series from 1990–2020 has been enumerated and assigned an
 evidence-supported category for every year. `unlisted` means
 **unverified/unknown**, not `did not exist`. Even a listed Series identity
 does **not** assert that a played Tournament Edition existed that year:
@@ -143,7 +143,7 @@ never-created tournament was cancelled (for example Hangzhou in 2020).
 The ATP **2023, 2024 and 2025** Tour category rosters have now been
 reconciled with official ATP results archives: **38, 38 and 30** ATP 250
 events, respectively, alongside all nine Masters and **13/13/16** ATP 500s.
-Earlier 1990–2022 lower tiers have NOT been populated exhaustively. The 2026
+Earlier 1990–2020 lower tiers have NOT been populated exhaustively. The 2026
 calendar remains a dated/provisional reference, not certified final. Never infer
 a complete category/Series distribution in an earlier year from the
 current incomplete count, and never conflate an `unlisted` event with
@@ -228,7 +228,7 @@ The year-effective roster therefore includes Hangzhou in both 2024 and 2025.
 
 The 2024/2025 counts reflect tournament identities at their tour level;
 no player or match results were imported. The source categorisation is now
-closed for those specific two played seasons, **not** for 1990–2022 or
+closed for those specific two played seasons, **not** for 1990–2020 or
 for the definitive outcome of late 2026.
 
 ### Identities that must not be collapsed
@@ -293,7 +293,7 @@ Important historical identities newly differentiated:
 | 2026 (provisional) | 9 | 16 | 29 | 1 | 1 | 56 |
 
 **Remaining material gap:** roughly the first 33 years of lower ATP Tour
-categories (1990–2022) are still *not exhaustively reconstructed*. Their
+categories (1990–2020) are still *not exhaustively reconstructed*. Their
 annual category references must not be marketed as historical complete
 seasons. Full historically accurate pre-alpha consumption additionally
 requires the semantic Package registry/Run adapters and explicit Save.
@@ -371,9 +371,52 @@ event). Adelaide 1 and Adelaide 2 are two independently counted
 ATP 250 editions; no licence overlap is invented. The existing six
 one-year ATP 250 replacement licences remain individually traceable.
 
-Thus **2022–2025** are reconciled at the broad Masters/500/250
+Thus **2021–2025** are reconciled at the broad Masters/500/250
 played-vs-cancelled event level, subject to all remaining identity
 and event-specific semantic audits. The historic category/Series coverage
-for **1990–2021** still has significant unverified lower tiers, and
+for **1990–2020** still has significant unverified lower tiers, and
 2026 remains provisional. A complete factual ATP Calendar Package
 remains outside this PR's current source-only scope.
+
+## 2021 played ATP Tour category roster — cancelled events separated
+
+The official [ATP 2021 Results Archive](https://www.atptour.com/en/scores/results-archive?year=2021)
+records **39 played ATP 250**, **9 played ATP 500** and **8 played
+Masters 1000** events. The Package's category-effective 2021 references
+additionally retain *known cancelled events*, not incorrectly scored
+as played Editions.
+
+| 2021 category | Defined category-effective Series | Known cancellations | Played |
+| --- | ---: | ---: | ---: |
+| ATP Masters 1000 | 9 | Shanghai | 8 |
+| ATP 500 | 12 | Beijing, Rio, Basel | 9 |
+| ATP 250 | 42 | Houston, Chengdu, Zhuhai | 39 |
+| ATP Finals | 1 | — | 1 |
+| Next Gen ATP Finals | 1 | — | 1 |
+| **Total** | **65** | **7** | **58** |
+
+The currently listed cancellations are **individually evidenced,
+not an exhaustive claim about every originally planned competition**.
+Specifically [Swiss Indoors Basel](https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php)
+confirms the cancelled Basel 500; 2021 Rio was cancelled
+([tournament announcement](https://www1.folha.uol.com.br/esporte/2021/04/rio-open-e-cancelado-em-2021-por-conta-do-agravamento-da-pandemia.shtml));
+and [ATP's January 2021 update](https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events)
+confirms the cancelled Houston 250.
+
+Distinct one-off historical sources include **Melbourne 1 and Melbourne 2**,
+**Belgrade 1 and Belgrade 2**, Singapore and Marbella. The two Belgrade
+2021 events cannot be collapsed into the 2022 Belgrade clay edition,
+much less the later Belgrade indoor tournaments, without a documented
+tournament licence mapping. The ATP confirmed Singapore and Marbella
+one-year licences and a Budapest-to-Belgrade relocation for one
+2021 event. Kazakhstan's 2021 venue was **Nur-Sultan**, not Almaty;
+the data records Nur-Sultan (2021), Astana (2022–23), and
+Almaty (2024 onward) independently of any unresolved legal
+licence ancestry.
+
+The main ATP Tour's played top-tier roster is now reconciled at
+the **2021–2025** year level, with the explicit non-played subset
+and without duplicating match results. **1990–2020 remains
+partially documented** in the lower tour categories. Source-only
+Package semantics and missing Run adapters are separate integration
+blockers; an indexed annual reference is not a historical Edition.

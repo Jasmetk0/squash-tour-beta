@@ -134,6 +134,13 @@
         "effective_from": 2024,
         "source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024",
         "temporal_note": "Pune 2022/2023 -> Hong Kong 2024+"
+      },
+      {
+        "moved_from": "belgrade_clay_2022",
+        "persistent_series_id": "banja_luka",
+        "effective_from": 2023,
+        "source_url": "https://www.atptour.com/en/news/united-cup-to-kick-off-2023-tennis-season",
+        "temporal_note": "Belgrade 2022 -> Banja Luka 2023"
       }
     ]
   },
@@ -4458,13 +4465,36 @@
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
           {
+            "from": 2022,
+            "to": 2022,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+            "notes": "Belgrade ATP 250 clay tournament licence moved to Banja Luka in 2023; 2022 ATP official results archive: played ATP 250 event; earlier and future licence lineage not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
             "notes": "ATP 2023 official results archive verifies ATP Tour 250 event in this year"
           }
-        ]
+        ],
+        "historical_host_change": [
+          {
+            "year": 2022,
+            "city": "Belgrade",
+            "country_code": "SRB",
+            "source_url": "https://www.atptour.com/en/news/united-cup-to-kick-off-2023-tennis-season"
+          },
+          {
+            "year": 2023,
+            "city": "Banja Luka",
+            "country_code": "BIH",
+            "source_url": "https://www.atptour.com/en/news/united-cup-to-kick-off-2023-tennis-season"
+          }
+        ],
+        "historical_licence_source_url": "https://www.atptour.com/en/news/united-cup-to-kick-off-2023-tennis-season",
+        "identity_review_note": "Belgrade April ATP 250 (2022) relocated to Banja Luka for 2023, documented by ATP; 2021 Budapest licence history and 2024–25 indoor Belgrade are not automatically the same licence."
       },
       "references": [
         {
@@ -4830,46 +4860,6 @@
             "notes": "2022 ATP official results archive: played ATP 250 event; earlier and future licence lineage not inferred"
           }
         ]
-      },
-      "references": [
-        {
-          "source_package_id": "atp_tour_1990_2026_category",
-          "source_entity_id": "atp_250",
-          "expected_entity_kind": "tennis.category.reference.v1",
-          "minimum_schema_version": 1
-        }
-      ],
-      "valid": true
-    },
-    {
-      "source_entity_id": "belgrade_clay_2022",
-      "entity_kind": "tennis.series.reference.v1",
-      "entity_schema_version": 1,
-      "scope": "tennis.atp_tour.series.reference.1990_2026",
-      "payload": {
-        "name": "Serbia Open Belgrade clay tournament (2022)",
-        "category_id_2026": null,
-        "host_city_2026": null,
-        "host_country_code_2026": null,
-        "surface_2026": null,
-        "historical_host_city": "Belgrade",
-        "historical_country_code": "SRB",
-        "historical_surface": "clay",
-        "reference_year": null,
-        "sponsor_names_can_change": true,
-        "not_calendar_editions": true,
-        "not_squash_rules": true,
-        "history_scope": "2022_results_archive_single_year_without_asserting_licence_ancestry",
-        "history_periods": [
-          {
-            "from": 2022,
-            "to": 2022,
-            "category_id": "atp_250",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
-            "notes": "2022 ATP official results archive: played ATP 250 event; earlier and future licence lineage not inferred"
-          }
-        ],
-        "identity_review_note": "Belgrade clay 2022 Serbia Open is not automatically the same identity as Belgrade indoor 2024/2025. Relationship to 2023 Banja Luka clay event remains to be independently verified."
       },
       "references": [
         {

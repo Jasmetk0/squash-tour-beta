@@ -1,0 +1,300 @@
+{
+  "schema_version": 1,
+  "package_type": "Category",
+  "package_id": "atp_reality_2026_category",
+  "source_version": 1,
+  "provenance": {
+    "author": "Squash Engine project reference data (not endorsed by ATP or ITF)",
+    "reference_year": 2026,
+    "reference_cutoff": "2026-11-01",
+    "purpose": "historical/structural tennis reference for optional future squash-world adaptations; not a playable tennis mode",
+    "runtime_status": "data_only_no_semantic_adapters_or_sporting_consumers",
+    "sources": [
+      "https://www.atptour.com/en/corporate/rulebook",
+      "https://www.atptour.com/Rankings/Rankings-FAQ.aspx",
+      "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
+      "https://www.atptour.com/en/news/what-is-",
+      "https://www.atptour.com/-/media/files/media-guide/2026/2026-atp-media-guide-full.pdf"
+    ],
+    "evidence_boundary": "Headline 2026 singles winner/max points only. Detailed round/draw-dependent awards, event formats, doubles, qualifiers and historical seasons are not encoded."
+  },
+  "explicit_scope": [
+    "tennis.category.reference.2026"
+  ],
+  "entities": [
+    {
+      "source_entity_id": "grand_slam",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "Grand Slam",
+        "governing_body": "Grand Slam organisations",
+        "event_family": "external",
+        "singles_winner_or_maximum_points_2026": 2000,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_finals",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "Nitto ATP Finals",
+        "governing_body": "ATP",
+        "event_family": "atp",
+        "singles_winner_or_maximum_points_2026": 1500,
+        "points_interpretation": "undefeated_round_robin_maximum",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_masters_1000",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "ATP Masters 1000",
+        "governing_body": "ATP",
+        "event_family": "atp",
+        "singles_winner_or_maximum_points_2026": 1000,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_500",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "ATP Tour 500",
+        "governing_body": "ATP",
+        "event_family": "atp",
+        "singles_winner_or_maximum_points_2026": 500,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_250",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "ATP Tour 250",
+        "governing_body": "ATP",
+        "event_family": "atp",
+        "singles_winner_or_maximum_points_2026": 250,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "challenger_175",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "ATP Challenger 175",
+        "governing_body": "ATP",
+        "event_family": "atp_challenger",
+        "singles_winner_or_maximum_points_2026": 175,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "challenger_125",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "ATP Challenger 125",
+        "governing_body": "ATP",
+        "event_family": "atp_challenger",
+        "singles_winner_or_maximum_points_2026": 125,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "challenger_100",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "ATP Challenger 100",
+        "governing_body": "ATP",
+        "event_family": "atp_challenger",
+        "singles_winner_or_maximum_points_2026": 100,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "challenger_75",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "ATP Challenger 75",
+        "governing_body": "ATP",
+        "event_family": "atp_challenger",
+        "singles_winner_or_maximum_points_2026": 75,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "challenger_50",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "ATP Challenger 50",
+        "governing_body": "ATP",
+        "event_family": "atp_challenger",
+        "singles_winner_or_maximum_points_2026": 50,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "itf_m25",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "ITF Men’s World Tennis Tour M25",
+        "governing_body": "ITF",
+        "event_family": "external",
+        "singles_winner_or_maximum_points_2026": 25,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "itf_m15",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "ITF Men’s World Tennis Tour M15",
+        "governing_body": "ITF",
+        "event_family": "external",
+        "singles_winner_or_maximum_points_2026": 15,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "next_gen_finals",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "Next Gen ATP Finals",
+        "governing_body": "ATP",
+        "event_family": "atp",
+        "singles_winner_or_maximum_points_2026": null,
+        "points_interpretation": "special_format_no_standard_ranking_points",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "united_cup",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "United Cup",
+        "governing_body": "ATP/WTA/Tennis Australia",
+        "event_family": "team",
+        "singles_winner_or_maximum_points_2026": 500,
+        "points_interpretation": "conditional_match_based_maximum",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "laver_cup",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "Laver Cup",
+        "governing_body": "Laver Cup/ATP sanctioned",
+        "event_family": "team",
+        "singles_winner_or_maximum_points_2026": 0,
+        "points_interpretation": "no_atp_ranking_points",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "davis_cup",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.category.reference.2026",
+      "payload": {
+        "name": "Davis Cup",
+        "governing_body": "ITF",
+        "event_family": "external_team",
+        "singles_winner_or_maximum_points_2026": 0,
+        "points_interpretation": "no_atp_ranking_points",
+        "reference_year": 2026,
+        "not_squash_rules": true
+      },
+      "references": [],
+      "valid": true
+    }
+  ],
+  "children": [],
+  "parent_source_fingerprint": null
+}

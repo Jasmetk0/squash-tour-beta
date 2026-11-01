@@ -7,7 +7,9 @@ on:
       - '.github/workflows/windows-preview.yml'
       - 'tools/desktop/**'
       - 'tools/tests/test_desktop_preview.py'
+      - 'tools/tests/test_desktop_backup.py'
       - 'Spustit_Squash_Engine.bat'
+      - 'Zalohovat_Squash_Engine.bat'
       - 'docs/WINDOWS_PREVIEW.md'
   push:
     branches: [buuk]

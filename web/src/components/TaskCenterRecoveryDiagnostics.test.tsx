@@ -1,4 +1,4 @@
-import {fireEvent,render,screen,within} from '@testing-library/react'
+import {fireEvent,render,screen} from '@testing-library/react'
 import {MemoryRouter} from 'react-router-dom'
 import {beforeEach,describe,expect,it,vi} from 'vitest'
 import type {ServerTask} from '../api/fullSimulationTasks'
@@ -83,7 +83,6 @@ describe('global Task Center CS/EN recovery evidence',()=>{
   it('exports only bounded evidence without original command payload',()=>{
     const create=vi.fn(()=> 'blob:task-debug')
     const revoke=vi.fn()
-    const save=document.createElement
     vi.stubGlobal('URL',{createObjectURL:create,revokeObjectURL:revoke})
     try{
       const spy=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{})

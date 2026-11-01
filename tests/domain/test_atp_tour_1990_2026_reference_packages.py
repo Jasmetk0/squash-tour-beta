@@ -31,7 +31,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 69
+    assert len(series["entities"]) == 75
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -167,7 +167,7 @@ def test_recorded_cancelled_2020_series_are_members_but_not_played_editions() ->
     }.issubset(set(y2020["known_not_held_series_ids"]))
     assert all(series_id in y2020["series_category_ids"]
                for series_id in y2020["known_not_held_series_ids"])
-    assert "hangzhou" not in y2020["known_not_held_series_ids"]
+    assert "hangzhou" in y2020["known_not_held_series_ids"]  # Zhuhai licence before 2024 move
     assert y2020["edition_assertion"].startswith("none;")
 
 
@@ -176,7 +176,7 @@ def test_cancelled_year_without_effective_category_fails_closed() -> None:
     categories, series = _source("category"), _source("series")
     bad = copy.deepcopy(series)
     entity = next(e for e in bad["entities"] if e["source_entity_id"] == "hangzhou")
-    entity["payload"]["not_held_years_known"] = [2020]
+    entity["payload"]["not_held_years_known"] = [2017]  # Pre-Zhuhai history is not documented
     with pytest.raises(ValueError, match="Cancellation without effective Series category"):
         build(categories, bad)
 
@@ -300,3 +300,43 @@ def test_2023_two_adelaide_events_and_2024_venue_moves_keep_stable_identity() ->
     assert [row["city"] for row in by_id["almaty"]["historical_host_change"]] == ["Astana", "Almaty"]
     assert d23["lyon_old"] == "atp_250"  # Original Lyon clay event
     assert d23["lyon"] == "atp_250"  # Marseille event (later moved to Lyon)
+
+
+def test_2022_one_year_250_licences_and_cancelled_china_tour() -> None:
+    by_year = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    d22 = by_year[2022]["series_category_ids"]
+    six_temporary = {
+        "san_diego_2022", "seoul_2022", "tel_aviv_2022",
+        "florence_2022", "gijon_2022", "naples_2022",
+    }
+    assert all(d22[x] == "atp_250" for x in six_temporary)
+    assert all(x not in by_year[2023]["series_category_ids"] for x in six_temporary)
+    assert d22["almaty"] == "atp_500"  # Nur-Sultan / Astana, one-year upgrade
+    assert by_year[2023]["series_category_ids"]["almaty"] == "atp_250"
+    assert d22["shanghai"] == "atp_masters_1000"
+    assert d22["beijing"] == "atp_500"
+    assert d22["chengdu"] == "atp_250"
+    assert d22["hangzhou"] == "atp_250"  # At that time Zhuhai licence
+    assert {"shanghai", "beijing", "chengdu", "hangzhou"} <= set(
+        by_year[2022]["known_not_held_series_ids"]
+    )
+    # A suspended ATP 500 is not an additional played 500 title.
+    candidates = {id for id, category in d22.items() if category == "atp_500"}
+    assert len(candidates) == 14  # 13 played plus cancelled Beijing
+    assert candidates & set(by_year[2022]["known_not_held_series_ids"]) == {"beijing"}
+
+
+def test_2022_st_petersburg_to_astana_licence_transfer_is_explicitly_linked() -> None:
+    series = _source("series")
+    by_id = {e["source_entity_id"]: e["payload"] for e in series["entities"]}
+    previous = by_id["st_petersburg"]["licence_lineage"]
+    current = by_id["almaty"]["licence_lineage"]
+    assert previous["successor_source_entity_id"] == "almaty"
+    assert current["predecessor_source_entity_id"] == "st_petersburg"
+    assert previous["effective_from"] == current["effective_from"] == 2022
+    assert previous["source_url"] == current["source_url"]
+    assert "st_petersburg" not in {
+        e["source_entity_id"] for e in series["entities"]
+        if any(p["from"] <= 2022 <= p["to"] for p in e["payload"]["history_periods"])
+    }
+    assert len(series["provenance"]["historical_exceptions_2022"]["one_year_250_licences"]) == 6

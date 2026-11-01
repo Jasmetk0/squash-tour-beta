@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.pr_critical
+
 PATH = Path(__file__).resolve().parents[2] / "scripts" / "audit_pr_overlap.py"
 spec = importlib.util.spec_from_file_location("audit_pr_overlap", PATH)
 module = importlib.util.module_from_spec(spec)

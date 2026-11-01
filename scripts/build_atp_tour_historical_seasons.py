@@ -81,8 +81,11 @@ def build(
                 if len(_active(categories[cid]["payload"]["history_periods"], year)) != 1:
                     raise ValueError("Series references category outside effective years")
         for year in range(FIRST, LAST + 1):
-            if len(_active(intervals, year)) > 1:
+            applicable = _active(intervals, year)
+            if len(applicable) > 1:
                 raise ValueError("Conflicting category for Series in year " + str(year))
+            if year in entity["payload"].get("not_held_years_known", []) and not applicable:
+                raise ValueError("Cancellation without effective Series category in year " + str(year))
 
     rows = []
     for year in range(FIRST, LAST + 1):

@@ -31,7 +31,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 58
+    assert len(series["entities"]) == 59
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -163,6 +163,7 @@ def test_recorded_cancelled_2020_series_are_members_but_not_played_editions() ->
     assert {
         "indian_wells", "miami", "monte_carlo", "madrid", "canadian_open",
         "shanghai", "halle", "queens_club", "beijing", "chengdu",
+        "next_gen_atp_finals",
     }.issubset(set(y2020["known_not_held_series_ids"]))
     assert all(series_id in y2020["series_category_ids"]
                for series_id in y2020["known_not_held_series_ids"])
@@ -178,3 +179,16 @@ def test_cancelled_year_without_effective_category_fails_closed() -> None:
     entity["payload"]["not_held_years_known"] = [2020]
     with pytest.raises(ValueError, match="Cancellation without effective Series category"):
         build(categories, bad)
+
+
+def test_st_petersburg_one_off_2020_upgrade_and_2022_boundary() -> None:
+    years = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    assert years[1999]["series_category_ids"]["st_petersburg"] == "atp_world_series"
+    assert years[2000]["series_category_ids"]["st_petersburg"] == "atp_international_series"
+    assert years[2009]["series_category_ids"]["st_petersburg"] == "atp_250"
+    assert "st_petersburg" not in years[2014]["series_category_ids"]
+    assert years[2019]["series_category_ids"]["st_petersburg"] == "atp_250"
+    assert years[2020]["series_category_ids"]["st_petersburg"] == "atp_500"
+    assert years[2021]["series_category_ids"]["st_petersburg"] == "atp_250"
+    assert "st_petersburg" not in years[2022]["series_category_ids"]
+    assert "next_gen_atp_finals" in years[2020]["known_not_held_series_ids"]

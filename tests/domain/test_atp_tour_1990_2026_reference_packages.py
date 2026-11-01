@@ -31,7 +31,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 75
+    assert len(series["entities"]) == 78
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -340,3 +340,47 @@ def test_2022_st_petersburg_to_astana_licence_transfer_is_explicitly_linked() ->
         if any(p["from"] <= 2022 <= p["to"] for p in e["payload"]["history_periods"])
     }
     assert len(series["provenance"]["historical_exceptions_2022"]["one_year_250_licences"]) == 6
+
+
+def test_2022_all_played_atp_250_and_cancelled_scheduled_entries_are_distinct() -> None:
+    years = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    row = years[2022]
+    current = row["series_category_ids"]
+    assert Counter(current.values()) == {
+        "atp_250": 44, # 42 actually played plus cancelled Zhuhai/Chengdu
+        "atp_500": 14, # 13 played plus cancelled Beijing
+        "atp_masters_1000": 9, # 8 played plus cancelled Shanghai
+        "atp_finals": 1,
+        "next_gen_finals": 1,
+    }
+    assert len(current) == 69
+    assert set(row["known_not_held_series_ids"]) == {
+        "beijing", "chengdu", "hangzhou", "shanghai"
+    }
+    evidence = _source("series")["provenance"]["calendar_validation_2022"]
+    assert evidence["played_atp_250_count"] == 42
+    assert evidence["scheduled_250_identity_count"] == 44
+    assert evidence["played_atp_500_count"] == 13
+    assert evidence["played_masters_count"] == 8
+    assert "atptour.com" in evidence["archive_source_url"]
+    assert (
+        sum(cat == "atp_250" and id not in row["known_not_held_series_ids"]
+            for id, cat in current.items())
+        == 42
+    )
+
+
+def test_2022_melbourne_sydney_adelaide_and_belgrade_do_not_conflate_licences() -> None:
+    years = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    d22, d23, d24 = (years[year]["series_category_ids"] for year in (2022, 2023, 2024))
+    for id in ("adelaide", "adelaide_2", "melbourne_2022", "sydney_2022",
+               "belgrade_clay_2022"):
+        assert d22[id] == "atp_250"
+    assert d23["adelaide"] == d23["adelaide_2"] == "atp_250"
+    for id in ("melbourne_2022", "sydney_2022", "belgrade_clay_2022"):
+        assert id not in d23
+        assert id not in d24
+    assert d24["belgrade"] == "atp_250"
+    assert d22["lyon_old"] == d22["lyon"] == "atp_250"
+    assert d22["brussels"] == "atp_250"
+    assert d22["sofia"] == "atp_250"

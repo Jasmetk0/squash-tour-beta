@@ -114,3 +114,67 @@ def test_builder_rejects_corrupted_history_without_modifying_source() -> None:
     with pytest.raises(ValueError, match="Invalid Series Category reference"):
         build(categories, corrupted)
     assert build(categories, series)["seasons_count"] == 37
+
+
+def test_all_37_years_have_nine_historical_top_tier_series_identity_slots() -> None:
+    seasons = build(_source("category"), _source("series"))["seasons"]
+    top_category = {
+        "atp_championship_single_week",
+        "tennis_masters_series",
+        "atp_masters_1000",
+    }
+    for season in seasons:
+        year = season["year"]
+        top = {
+            series_id for series_id, category_id in season["series_category_ids"].items()
+            if category_id in top_category
+        }
+        assert len(top) == 9, (year, top)
+        assert "hamburg" in top if year <= 2008 else "shanghai" in top
+        if year <= 1994:
+            assert "stockholm" in top
+        elif year == 1995:
+            assert "essen_masters" in top
+        elif year <= 2001:
+            assert "stuttgart_indoor_masters" in top
+        elif year <= 2008:
+            assert "madrid" in top
+        else:
+            assert "madrid" in top
+
+
+def test_2024_to_2026_500_upgrades_match_official_atp_tier_counts() -> None:
+    years = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    for year, count in ((2024, 13), (2025, 16), (2026, 16)):
+        level = years[year]["series_category_ids"]
+        assert sum(v == "atp_500" for v in level.values()) == count
+    for id in ("dallas", "doha", "munich"):
+        assert years[2024]["series_category_ids"][id] == "atp_250"
+        assert years[2025]["series_category_ids"][id] == "atp_500"
+    for id in ("halle", "queens_club"):
+        assert years[2014]["series_category_ids"][id] == "atp_250"
+        assert years[2015]["series_category_ids"][id] == "atp_500"
+    assert years[2014]["series_category_ids"]["rio"] == "atp_500"
+
+
+def test_recorded_cancelled_2020_series_are_members_but_not_played_editions() -> None:
+    years = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    y2020 = years[2020]
+    assert {
+        "indian_wells", "miami", "monte_carlo", "madrid", "canadian_open",
+        "shanghai", "halle", "queens_club", "beijing", "chengdu",
+    }.issubset(set(y2020["known_not_held_series_ids"]))
+    assert all(series_id in y2020["series_category_ids"]
+               for series_id in y2020["known_not_held_series_ids"])
+    assert "hangzhou" not in y2020["known_not_held_series_ids"]
+    assert y2020["edition_assertion"].startswith("none;")
+
+
+def test_cancelled_year_without_effective_category_fails_closed() -> None:
+    import copy
+    categories, series = _source("category"), _source("series")
+    bad = copy.deepcopy(series)
+    entity = next(e for e in bad["entities"] if e["source_entity_id"] == "hangzhou")
+    entity["payload"]["not_held_years_known"] = [2020]
+    with pytest.raises(ValueError, match="Cancellation without effective Series category"):
+        build(categories, bad)

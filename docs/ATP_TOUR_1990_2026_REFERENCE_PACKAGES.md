@@ -32,7 +32,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**65 identities** across 2026 ATP Tour fixtures and selected older masters.
+**69 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -46,7 +46,7 @@ PYTHONPATH=src pytest -q tests/domain/test_atp_tour_1990_2026_reference_packages
 ```
 
 **Important precision:** these are not 37 proven-complete ATP Tour calendars.
-Not every Series from 1990–2023 has been enumerated and assigned an
+Not every Series from 1990–2022 has been enumerated and assigned an
 evidence-supported category for every year. `unlisted` means
 **unverified/unknown**, not `did not exist`. Even a listed Series identity
 does **not** assert that a played Tournament Edition existed that year:
@@ -140,10 +140,10 @@ never-created tournament was cancelled (for example Hangzhou in 2020).
 
 ### Exact coverage warning
 
-The ATP 2024 and 2025 singles Tour category rosters have now been
-reconciled with official ATP results archives: 38 and 30 ATP 250 events,
-respectively, alongside all nine Masters and 13/16 ATP 500s. Earlier
-1990–2023 lower tiers have NOT been populated exhaustively. The 2026
+The ATP **2023, 2024 and 2025** Tour category rosters have now been
+reconciled with official ATP results archives: **38, 38 and 30** ATP 250
+events, respectively, alongside all nine Masters and **13/13/16** ATP 500s.
+Earlier 1990–2022 lower tiers have NOT been populated exhaustively. The 2026
 calendar remains a dated/provisional reference, not certified final. Never infer
 a complete category/Series distribution in an earlier year from the
 current incomplete count, and never conflate an `unlisted` event with
@@ -183,12 +183,13 @@ identities while no played tournament Edition is present.
 | 2000 | 11 | 9 |
 | 2010 | 14 | 9 |
 | 2020 | 18 | 9 (only 3 actually played) |
+| 2023 | 62 | 9 |
 | 2024 | 62 | 9 |
 | 2025 | 57 | 9 |
 | 2026 | 56 | 9 |
 
-The very low pre-2024 counts are a visible **blocker** for a complete ATP
-Tour historical Category/Series library. The 2024/2025 counts, by contrast,
+The very low pre-2023 counts are a visible **blocker** for a complete ATP
+Tour historical Category/Series library. The 2023–2025 counts, by contrast,
 now include the complete main-Tour category rosters for those specific years. The 2026 reference is also a
 **dated, provisional roster**: the ATP's published calendar included a
 non-named ATP 250 `TBD` entry, which must never be invented as a
@@ -209,7 +210,7 @@ not wholesale republishing of their content.
 
 ## Completed ATP 250 rosters for 2024 and 2025 (played events, not assumptions)
 
-The source now includes **all 38 played ATP 250 events in 2024** and
+The source includes **all 38 played ATP 250 events in 2024** and
 **all 30 played ATP 250 events in 2025**, cross-checked against official
 [ATP 2024 results archive](https://www.atptour.com/en/scores/results-archive?year=2024)
 and [ATP 2025 results archive](https://www.atptour.com/en/scores/results-archive?year=2025).
@@ -227,7 +228,7 @@ The year-effective roster therefore includes Hangzhou in both 2024 and 2025.
 
 The 2024/2025 counts reflect tournament identities at their tour level;
 no player or match results were imported. The source categorisation is now
-closed for those specific two played seasons, **not** for 1990–2023 or
+closed for those specific two played seasons, **not** for 1990–2022 or
 for the definitive outcome of late 2026.
 
 ### Identities that must not be collapsed
@@ -254,3 +255,45 @@ No claim of a complete **historical Run Calendar Package** follows
 from these categorical year rosters. Actual Tournament Editions,
 date/time, draw structure, qualifying, points-by-round and temporal
 name/location changes remain a separate and more detailed data layer.
+
+## Completed 2023 Tour 250/500 roster and preserved tournament relocation history
+
+The [ATP 2023 official results archive](https://www.atptour.com/en/scores/results-archive?year=2023)
+confirms **38 ATP 250** and **13 ATP 500** events, together with
+nine Masters 1000 tournaments and the two ATP year-end Finals identities
+(62 source-level identities). This **does not** automatically make an
+edition-based calendar: the reference documents Category assignment only.
+
+Important historical identities newly differentiated:
+
+- **2023 Adelaide International 1 and Adelaide International 2** were
+  two different consecutive ATP 250 events, not one event played twice:
+  [ATP Adelaide 1 overview](https://www.atptour.com/en/tournaments/adelaide-1/2843/overview).
+  The 2023 second event has a separate `adelaide_2` reference; the existing
+  `adelaide` source records Adelaide 1.
+- **Zhuhai 2023 → Hangzhou 2024:** the same ATP Tour 250 tournament
+  licence moved. We retain a single `hangzhou` source identity with
+  historical hosts and no fabricated concurrent Zhuhai tournament:
+  [ATP relocation notice](https://www.atptour.com/en/news/to).
+- **Astana 2023 → Almaty 2024:** the same 250 tournament relocated.
+  The `almaty` source identity preserves both historical hosts:
+  [ATP calendar update](https://www.atptour.com/en/news/2024-atp-calendar-update-gijon-almaty).
+- **Pune, Banja Luka and Sofia** are distinct ATP 250 Series in 2023.
+  Their absence from this library's 2024 season is intentional, not an
+  assertion that tennis in those cities ended permanently.
+- The 2023 clay **Lyon Open** and the 2023 **Marseille Open 13**
+  remain separate Series. The latter eventually moves its licence
+  to Lyon in 2026; equal host cities do not imply identical Series IDs.
+
+| Year | Masters tier | ATP 500 | ATP 250 | ATP Finals | Next Gen Finals | Source identities |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2023 | 9 | 13 | 38 | 1 | 1 | **62** |
+| 2024 | 9 | 13 | 38 | 1 | 1 | **62** |
+| 2025 | 9 | 16 | 30 | 1 | 1 | **57** |
+| 2026 (provisional) | 9 | 16 | 29 | 1 | 1 | 56 |
+
+**Remaining material gap:** roughly the first 33 years of lower ATP Tour
+categories (1990–2022) are still *not exhaustively reconstructed*. Their
+annual category references must not be marketed as historical complete
+seasons. Full historically accurate pre-alpha consumption additionally
+requires the semantic Package registry/Run adapters and explicit Save.

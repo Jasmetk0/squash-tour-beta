@@ -90,7 +90,7 @@ export function RunBranchReadinessComparison({ runId, branchId, head, branches }
       )
       if (version.current === stamp) setReport(verified)
     } catch (e) {
-      if (version.current === stamp) setError(formatApiError(e))
+      if (version.current === stamp) setError(e instanceof Error ? e.message : t.failed)
     } finally {
       if (version.current === stamp) setLoading(false)
     }

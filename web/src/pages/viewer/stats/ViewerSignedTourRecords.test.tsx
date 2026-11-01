@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '../../../i18n/LanguageContext'
 import { renderWithViewerProviders } from '../../../test/viewerTestUtils'
 import { ViewerSignedTourRecords } from './ViewerSignedTourRecords'
-import { signedRecordFixture } from './viewerSignedTourRecords.test'
+import { signedRecordFixture } from './viewerSignedTourRecordsFixture'
 
 const client = vi.hoisted(() => ({ getViewerOfficialRunContext: vi.fn() }))
 const records = vi.hoisted(() => ({ getViewerSignedTourRecords: vi.fn() }))
@@ -31,15 +31,17 @@ describe('Viewer signed native Tour record browser (mocked GET contract)', () =>
     expect(await screen.findByText('2000/01 – 2001/02')).toBeInTheDocument()
     expect(screen.getByText('revision-7')).toBeInTheDocument()
     expect(screen.getByText('Confirmed tournaments')).toBeInTheDocument()
-    expect(screen.getAllByText(/Titles: 1/)).toHaveLength(2)
-    expect(screen.getAllByText(/Finals: 2/)).toHaveLength(2)
-    expect(screen.getAllByText(/Awarded points: 150/)).toHaveLength(2)
+    const summaries = [...document.querySelectorAll('summary')].map(element => element.textContent ?? '')
+    expect(summaries.filter(text => text.startsWith('Titles: 1'))).toHaveLength(2)
+    expect(summaries.filter(text => text.startsWith('Finals: 2'))).toHaveLength(2)
+    expect(summaries.filter(text => text.startsWith('Awarded points: 150'))).toHaveLength(2)
     expect(records.getViewerSignedTourRecords).toHaveBeenCalledWith(
       'record run', { asOfSeason: null, fromSeason: 0, countryCode: null }, expect.anything()
     )
     const playerSection = screen.getByRole('region', { name: 'Players' })
-    fireEvent.click(within(playerSection).getByText(/Titles: 1/))
-    expect(within(playerSection).getByRole('link', { name: 'Player One' })).toHaveAttribute(
+    fireEvent.click(within(playerSection).getAllByText((_, element) =>
+      element?.tagName === 'SUMMARY' && element.textContent?.startsWith('Titles: 1') === true)[0])
+    expect(within(playerSection).getAllByRole('link', { name: 'Player One' })[0]).toHaveAttribute(
       'href', '/viewer/runs/record%20run/players/p-1/career'
     )
     expect(screen.queryByRole('button', { name: /Save|Simulate|Publish/i })).not.toBeInTheDocument()

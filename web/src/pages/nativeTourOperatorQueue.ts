@@ -43,19 +43,20 @@ const stage=(edition:TourEdition,tie:boolean):NativeTourOperatorStage=>{
 export function deriveNativeTourOperatorQueue(
   view:TourView,runId:string,branchId:string,
 ):NativeTourOperatorQueue{
-  const now=view?.state?.week
+  const state=view?.state
+  const now=state?.week
   const max=now?.calendar?.weeks_per_year
   if(view?.schema_version!=='calendar_tour_inspection.v1'
     ||view.run_id!==runId||view.branch_id!==branchId
     ||typeof view.saved_head_revision_id!=='string'||!view.saved_head_revision_id
     ||typeof view.saved!=='boolean'
-    ||!now||!validInteger(max,1,100)
+    ||!state||!now||!validInteger(max,1,100)
     ||!validInteger(now.season_index,0,10000)||!validInteger(now.week,1,max!)
-    ||!Array.isArray(view.state?.editions)||!view.edition_evidence
+    ||!Array.isArray(state.editions)||!view.edition_evidence
     ||typeof view.edition_evidence!=='object'||Array.isArray(view.edition_evidence))
     throw Error('Native Tour operator queue has no verified Run/Branch/Week source')
   const seen=new Set<string>()
-  const items=view.state.editions.map((item,index):NativeTourOperatorItem=>{
+  const items=state.editions.map((item,index):NativeTourOperatorItem=>{
     const edition=item?.edition
     const when=edition?.week
     const id=edition?.edition_id

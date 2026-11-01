@@ -195,11 +195,22 @@ def _ranking(server, week, expected_ids, total_points):
     rows = ranking["rows"]
     assert len(rows) == 8
     assert sum(r["points"] for r in rows) == total_points
-    assert all(
-        {result["edition_id"] for result in r["counted_results"]} == set(expected_ids)
-        and len(r["counted_results"]) == len(expected_ids)
-        for r in rows
+    # Each simultaneous tournament has its own disjoint four-player field.
+    # Thus EACH player has one of two W4 Edition results, not both. Only
+    # after W5 should each player carry one W4 and one W5 source.
+    assert set(expected_ids) == set(FIRST_WEEK) or set(expected_ids) == set(EDITION_FACTORS)
+    from collections import Counter
+
+    occurrences = Counter(
+        entry["edition_id"] for row in rows for entry in row["counted_results"]
     )
+    assert occurrences == Counter({eid: 4 for eid in expected_ids})
+    for row in rows:
+        sources = [entry["edition_id"] for entry in row["counted_results"]]
+        assert len(sources) == (1 if len(expected_ids) == 2 else 2)
+        assert sum(eid in FIRST_WEEK for eid in sources) == 1
+        assert sum(eid in SECOND_WEEK for eid in sources) == (1 if len(expected_ids) == 4 else 0)
+        assert row["points"] == sum(entry["points"] for entry in row["counted_results"])
     return ranking
 
 

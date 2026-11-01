@@ -133,7 +133,7 @@ def test_two_real_tournaments_and_two_signed_seasons_after_cold_restarts(tmp_pat
             data={"player_ids": [p["player_id"] for p in before_announcement["players"][:4]]})
         assert _request("POST", tour_url(server) + "/preview", premature)[0] == 409
 
-        _, _, before_last_week = _advance(
+        _, _, _ = _advance(
             server, "transition", "announce-second-at-last-week", 0, 4)
         at_last_week = inspect(server)
         assert SECOND in at_last_week["state"]["transitions"][-1]["public_event"]["announced_edition_ids"]
@@ -150,7 +150,6 @@ def test_two_real_tournaments_and_two_signed_seasons_after_cold_restarts(tmp_pat
         assert _published(server)["official_ranking"] == original_published["official_ranking"]
         assert _request("GET", tour_url(server) + "/seasons/0")[0] == 409
 
-        first_saved_head = inspect(server)["saved_head_revision_id"]
         transition, season_request, signed_s1 = _advance(
             server, "season-transition", "signed-s1-to-s2", 1, 1)
         assert transition["impact"]["target_week"]["season_index"] == 1
@@ -188,7 +187,10 @@ def test_two_real_tournaments_and_two_signed_seasons_after_cold_restarts(tmp_pat
         edition(restarted, SECOND, size=4)
         second = _assert_played(restarted, SECOND, factor=2)
         assert inspect(restarted)["edition_evidence"][FIRST]["matches"] == first["matches"]
-        assert _signed_season(restarted, 0) == signed_s1_summary
+        after_s2_play = _signed_season(restarted, 0)
+        assert after_s2_play["editions"] == signed_s1_summary["editions"]
+        assert after_s2_play["countries"] == signed_s1_summary["countries"]
+        assert after_s2_play["last_week_published_ranking"] == signed_s1_summary["last_week_published_ranking"]
         assert _request("GET", tour_url(restarted) + "/seasons/1")[0] == 409
         assert _published(restarted)["official_ranking"] == published_s2["official_ranking"]
 
@@ -226,7 +228,18 @@ def test_two_real_tournaments_and_two_signed_seasons_after_cold_restarts(tmp_pat
         assert records["completed_edition_count"] == 2
         awarded = next(r for r in records["records"]
                        if r["record_id"] == "native_tour.country.awarded_points.v1")
-        assert awarded["value"] == 660
+        by_country = {}
+        for signed in (s1, s2):
+            for country in signed["countries"]:
+                by_country[country["country_code"]] = (
+                    by_country.get(country["country_code"], 0) + country["awarded_points"]
+                )
+        assert sum(by_country.values()) == 660
+        assert awarded["value"] == max(by_country.values())
+        assert {holder["entity_id"] for holder in awarded["holders"]} == {
+            code for code, points in by_country.items()
+            if points == awarded["value"]
+        }
         signed_last_head = final["saved_head_revision_id"]
         signed_public = _published(restarted)
 

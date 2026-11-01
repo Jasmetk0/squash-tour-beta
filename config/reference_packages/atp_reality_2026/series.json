@@ -1,0 +1,1668 @@
+{
+  "schema_version": 1,
+  "package_type": "Series",
+  "package_id": "atp_reality_2026_series",
+  "source_version": 1,
+  "provenance": {
+    "author": "Squash Engine project reference data (not endorsed by ATP or ITF)",
+    "reference_year": 2026,
+    "reference_cutoff": "2026-11-01",
+    "purpose": "historical/structural tennis reference for optional future squash-world adaptations; not a playable tennis mode",
+    "runtime_status": "data_only_no_semantic_adapters_or_sporting_consumers",
+    "sources": [
+      "https://www.atptour.com/en/corporate/rulebook",
+      "https://www.atptour.com/Rankings/Rankings-FAQ.aspx",
+      "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
+      "https://www.atptour.com/en/news/what-is-",
+      "https://www.atptour.com/-/media/files/media-guide/2026/2026-atp-media-guide-full.pdf"
+    ],
+    "evidence_boundary": "Headline 2026 singles winner/max points only. Detailed round/draw-dependent awards, event formats, doubles, qualifiers and historical seasons are not encoded.",
+    "coverage": "Four Grand Slams, nine Masters, 16 ATP 500, 29 named ATP 250, ATP Finals, Next Gen Finals, United Cup, Laver Cup, Davis Cup. Not all Challenger/ITF event identities.",
+    "calendar_uncertainty": "Historical 2026 announcements included a TBD ATP 250 slot. No fictitious Series was created for TBD; counts describe this reference roster, not a final certified event count."
+  },
+  "explicit_scope": [
+    "tennis.series.reference.2026"
+  ],
+  "entities": [
+    {
+      "source_entity_id": "indian_wells",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "BNP Paribas Open",
+        "category_id_2026": "atp_masters_1000",
+        "host_city_2026": "Indian Wells",
+        "host_country_code_2026": "USA",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_masters_1000",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "miami",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Miami Open",
+        "category_id_2026": "atp_masters_1000",
+        "host_city_2026": "Miami",
+        "host_country_code_2026": "USA",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_masters_1000",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "monte_carlo",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Rolex Monte-Carlo Masters",
+        "category_id_2026": "atp_masters_1000",
+        "host_city_2026": "Monte-Carlo",
+        "host_country_code_2026": "MCO",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_masters_1000",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "madrid",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Mutua Madrid Open",
+        "category_id_2026": "atp_masters_1000",
+        "host_city_2026": "Madrid",
+        "host_country_code_2026": "ESP",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_masters_1000",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "rome",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Internazionali BNL d’Italia",
+        "category_id_2026": "atp_masters_1000",
+        "host_city_2026": "Rome",
+        "host_country_code_2026": "ITA",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_masters_1000",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "canadian_open",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "National Bank Open",
+        "category_id_2026": "atp_masters_1000",
+        "host_city_2026": "Montreal",
+        "host_country_code_2026": "CAN",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_masters_1000",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "cincinnati",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Cincinnati Open",
+        "category_id_2026": "atp_masters_1000",
+        "host_city_2026": "Cincinnati",
+        "host_country_code_2026": "USA",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_masters_1000",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "shanghai",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Rolex Shanghai Masters",
+        "category_id_2026": "atp_masters_1000",
+        "host_city_2026": "Shanghai",
+        "host_country_code_2026": "CHN",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_masters_1000",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "paris_masters",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Rolex Paris Masters",
+        "category_id_2026": "atp_masters_1000",
+        "host_city_2026": "Paris",
+        "host_country_code_2026": "FRA",
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_masters_1000",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "dallas",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Dallas Open",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Dallas",
+        "host_country_code_2026": "USA",
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "rotterdam",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "ABN AMRO Open",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Rotterdam",
+        "host_country_code_2026": "NLD",
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "doha",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Qatar ExxonMobil Open",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Doha",
+        "host_country_code_2026": "QAT",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "rio",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Rio Open",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Rio de Janeiro",
+        "host_country_code_2026": "BRA",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "acapulco",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Abierto Mexicano Telcel",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Acapulco",
+        "host_country_code_2026": "MEX",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "dubai",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Dubai Duty Free Tennis Championships",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Dubai",
+        "host_country_code_2026": "ARE",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "barcelona",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Barcelona Open Banc Sabadell",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Barcelona",
+        "host_country_code_2026": "ESP",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "munich",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "BMW Open",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Munich",
+        "host_country_code_2026": "DEU",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "hamburg",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Hamburg Open",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Hamburg",
+        "host_country_code_2026": "DEU",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "halle",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Terra Wortmann Open",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Halle",
+        "host_country_code_2026": "DEU",
+        "surface_2026": "grass",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "queens_club",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Queen’s Club Championships",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "London",
+        "host_country_code_2026": "GBR",
+        "surface_2026": "grass",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "washington",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Mubadala Citi DC Open",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Washington, D.C.",
+        "host_country_code_2026": "USA",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "tokyo",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Japan Open",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Tokyo",
+        "host_country_code_2026": "JPN",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "beijing",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "China Open",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Beijing",
+        "host_country_code_2026": "CHN",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "basel",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Swiss Indoors Basel",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Basel",
+        "host_country_code_2026": "CHE",
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "vienna",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Erste Bank Open",
+        "category_id_2026": "atp_500",
+        "host_city_2026": "Vienna",
+        "host_country_code_2026": "AUT",
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "brisbane",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Brisbane International",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Brisbane",
+        "host_country_code_2026": "AUS",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "hong_kong",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Hong Kong Tennis Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Hong Kong",
+        "host_country_code_2026": "HKG",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "adelaide",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Adelaide International",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Adelaide",
+        "host_country_code_2026": "AUS",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "auckland",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "ASB Classic",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Auckland",
+        "host_country_code_2026": "NZL",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "montpellier",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Open Occitanie",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Montpellier",
+        "host_country_code_2026": "FRA",
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "buenos_aires",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Argentina Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Buenos Aires",
+        "host_country_code_2026": "ARG",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "delray_beach",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Delray Beach Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Delray Beach",
+        "host_country_code_2026": "USA",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "santiago",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Chile Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Santiago",
+        "host_country_code_2026": "CHL",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "bucharest",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Tiriac Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Bucharest",
+        "host_country_code_2026": "ROU",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "houston",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "U.S. Men’s Clay Court Championship",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Houston",
+        "host_country_code_2026": "USA",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "marrakech",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Grand Prix Hassan II",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Marrakech",
+        "host_country_code_2026": "MAR",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "geneva",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Geneva Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Geneva",
+        "host_country_code_2026": "CHE",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "stuttgart",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "BOSS OPEN",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Stuttgart",
+        "host_country_code_2026": "DEU",
+        "surface_2026": "grass",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "s_hertogenbosch",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Libema Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "’s-Hertogenbosch",
+        "host_country_code_2026": "NLD",
+        "surface_2026": "grass",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "mallorca",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Mallorca Championships",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Mallorca",
+        "host_country_code_2026": "ESP",
+        "surface_2026": "grass",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "eastbourne",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Eastbourne Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Eastbourne",
+        "host_country_code_2026": "GBR",
+        "surface_2026": "grass",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "bastad",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Nordea Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Båstad",
+        "host_country_code_2026": "SWE",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "gstaad",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Swiss Open Gstaad",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Gstaad",
+        "host_country_code_2026": "CHE",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "umag",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Croatia Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Umag",
+        "host_country_code_2026": "HRV",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "kitzbuhel",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Generali Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Kitzbühel",
+        "host_country_code_2026": "AUT",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "estoril",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Millennium Estoril Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Estoril",
+        "host_country_code_2026": "PRT",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "los_cabos",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Los Cabos Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Los Cabos",
+        "host_country_code_2026": "MEX",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "winston_salem",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Winston-Salem Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Winston-Salem",
+        "host_country_code_2026": "USA",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "chengdu",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Chengdu Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Chengdu",
+        "host_country_code_2026": "CHN",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "hangzhou",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Hangzhou Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Hangzhou",
+        "host_country_code_2026": "CHN",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "almaty",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Almaty Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Almaty",
+        "host_country_code_2026": "KAZ",
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "brussels",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "European Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Brussels",
+        "host_country_code_2026": "BEL",
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "lyon",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Grand Prix Auvergne-Rhône-Alpes",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Lyon",
+        "host_country_code_2026": "FRA",
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "stockholm",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Stockholm Open",
+        "category_id_2026": "atp_250",
+        "host_city_2026": "Stockholm",
+        "host_country_code_2026": "SWE",
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "australian_open",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Australian Open",
+        "category_id_2026": "grand_slam",
+        "host_city_2026": "Melbourne",
+        "host_country_code_2026": "AUS",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "grand_slam",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "roland_garros",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Roland Garros",
+        "category_id_2026": "grand_slam",
+        "host_city_2026": "Paris",
+        "host_country_code_2026": "FRA",
+        "surface_2026": "clay",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "grand_slam",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "wimbledon",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Wimbledon",
+        "category_id_2026": "grand_slam",
+        "host_city_2026": "London",
+        "host_country_code_2026": "GBR",
+        "surface_2026": "grass",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "grand_slam",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "us_open",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "US Open",
+        "category_id_2026": "grand_slam",
+        "host_city_2026": "New York",
+        "host_country_code_2026": "USA",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "grand_slam",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_finals",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Nitto ATP Finals",
+        "category_id_2026": "atp_finals",
+        "host_city_2026": "Turin",
+        "host_country_code_2026": "ITA",
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "atp_finals",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "next_gen_atp_finals",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Next Gen ATP Finals",
+        "category_id_2026": "next_gen_finals",
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "next_gen_finals",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "united_cup",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "United Cup",
+        "category_id_2026": "united_cup",
+        "host_city_2026": "Perth / Sydney",
+        "host_country_code_2026": "AUS",
+        "surface_2026": "hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "united_cup",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "laver_cup",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Laver Cup",
+        "category_id_2026": "laver_cup",
+        "host_city_2026": "London",
+        "host_country_code_2026": "GBR",
+        "surface_2026": "indoor_hard",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "laver_cup",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "davis_cup",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.series.reference.2026",
+      "payload": {
+        "name": "Davis Cup",
+        "category_id_2026": "davis_cup",
+        "host_city_2026": "Multi-city",
+        "host_country_code_2026": null,
+        "surface_2026": "variable",
+        "reference_year": 2026,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true
+      },
+      "references": [
+        {
+          "source_package_id": "atp_reality_2026_category",
+          "source_entity_id": "davis_cup",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    }
+  ],
+  "children": [],
+  "parent_source_fingerprint": null
+}

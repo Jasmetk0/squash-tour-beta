@@ -89,18 +89,24 @@ def test_foreign_identity_missing_database_and_invalid_sqlite_fail_closed(runnin
     owner.write_text(json.dumps(build), encoding="utf-8")
 
     db = data / "beta_engine.db"
-    original = db.read_bytes()
     db.write_bytes(b"not sqlite")
     with pytest.raises(launcher.LaunchError, match="SQLite"):
         launcher.offline_backup(program, data, destination)
     assert db.read_bytes() == b"not sqlite"
     assert not destination.exists()
 
-    db.unlink()
+    # A separate data fixture proves missing-DB rejection without requiring
+    # immediate deletion of a SQLite file that Windows or a scanner may still
+    # have open following its corruption probe.
+    missing = tmp_path / "missing database"
+    missing.mkdir()
+    (missing / "preview-owner.json").write_bytes(owner.read_bytes())
+    import shutil
+    shutil.copytree(data / "config", missing / "config")
     with pytest.raises(launcher.LaunchError, match="missing"):
-        launcher.offline_backup(program, data, destination)
+        launcher.offline_backup(program, missing, destination)
     assert not destination.exists()
-    db.write_bytes(original)
+    assert db.read_bytes() == b"not sqlite"
 
 
 def test_refuses_overwrite_inside_data_and_installed_program(running_data, tmp_path):

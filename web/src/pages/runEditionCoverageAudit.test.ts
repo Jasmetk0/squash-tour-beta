@@ -37,7 +37,7 @@ function missing(id:string):EntryTimingInspection{
 function configured(id:string,binding:'missing_prerequisite'|'ready_for_explicit_confirmation'|'bound'='missing_prerequisite'):EntryTimingInspection{
   return {
     schema_version:'run_edition_entry_timing_preview.v1',run_id:run,branch_id:branch,
-    package_id:pkg,event_id:id,saved_head_revision_id:head,
+    package_id:pkg,event_id:id,saved_head_revision_id:head,draft_version:1,
     state_fingerprint:hash,edition_fingerprint:'d'.repeat(64),preview_fingerprint:'e'.repeat(64),
     timing:{schema_version:'edition_entry_timing.v1',main_open:week(10),
       main_duration_weeks:2,qualification_duration_weeks:1,

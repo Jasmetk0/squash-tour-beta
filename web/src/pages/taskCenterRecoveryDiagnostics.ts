@@ -114,7 +114,6 @@ export function buildTaskCenterRecoveryDiagnostics(
     }
   })
   const resultTasks: TaskDiagnostic[] = serverTasks.map(t=>{
-    const matching = tasksByParent.get(tuple(t.run_id,t.branch_id,t.parent_command_id))??[]
     // A stale heartbeat is NOT proof of crash. A lease is NOT a worker process.
     const priority: TaskDiagnosticPriority = t.needs_operator_action ? 'operator_action'
       : t.heartbeat_health==='stale' && ['active','queued','pause_requested'].includes(t.state)

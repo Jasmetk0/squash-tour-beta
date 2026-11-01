@@ -90,6 +90,7 @@ def test_single_edition_real_operator_save_chain_and_physical_restart(tmp_path):
         assert not played["saved"]
         assert _viewer(server) == public_after_draw
         match_save = save_tour(server)
+        public_after_match_save = _viewer(server)
 
         confirmed, _ = execute(server, command(
             inspect(server), "confirm-result", name="operator:result",
@@ -99,7 +100,7 @@ def test_single_edition_real_operator_save_chain_and_physical_restart(tmp_path):
         closed = inspect(server)
         assert len(closed["edition_evidence"][edition_id]["results"]) == 4
         assert not closed["saved"]
-        assert _viewer(server) != public_after_draw or not closed["saved"]
+        assert _viewer(server) == public_after_match_save
         result_save = save_tour(server)
         assert result_save["revision_id"] != match_save["revision_id"]
 

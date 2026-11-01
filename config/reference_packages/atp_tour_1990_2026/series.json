@@ -1017,7 +1017,7 @@
         "not_held_years_known": [
           2020
         ],
-        "known_nonheld_source": "https://www.atptour.com/en/news/atp-2020-calendar-update-coronavirus"
+        "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html"
       },
       "references": [
         {
@@ -1070,7 +1070,7 @@
         "not_held_years_known": [
           2020
         ],
-        "known_nonheld_source": "https://www.atptour.com/en/news/atp-2020-calendar-update-coronavirus"
+        "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html"
       },
       "references": [
         {
@@ -1176,6 +1176,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-announces-cancellation-of-the-2020-china-swing.pdf",
+            "notes": "Scheduled ATP 500 was cancelled; no played Edition"
+          },
           {
             "from": 2024,
             "to": 2026,
@@ -2117,6 +2124,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-announces-cancellation-of-the-2020-china-swing.pdf",
+            "notes": "Scheduled ATP 250 was cancelled; no played Edition"
+          },
+          {
             "from": 2026,
             "to": 2026,
             "category_id": "atp_250",
@@ -2165,10 +2179,7 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
-        "not_held_years_known": [
-          2020
-        ],
-        "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-announces-cancellation-of-the-2020-china-swing.pdf"
+        "not_held_years_known": []
       },
       "references": [
         {

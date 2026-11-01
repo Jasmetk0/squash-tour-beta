@@ -1,0 +1,358 @@
+# R011 — Travel fatigue and jet lag scientific research (user-supplied ChatGPT)
+
+Original uploaded DOCX: "Vědecké důkazy o cestovní únavě a jet lagu.docx", 10 pages, received 2026-11-01.
+**RESEARCH-ONLY, UNVERIFIED AS SPORT COEFFICIENTS OR FAX POLICY.** This text extraction is searchable, not the original DOCX binary. The DOCX has 70 paragraphs and no complex tables/inline shapes. Citation markers such as [44:L171-L179] are unresolved snippet indices, not full bibliography/working hyperlinks; named primary sources have been independently checked in an accompanying review.
+Do NOT apply the proposed per-time-zone performance penalty, day-based arrival clock, travel-state architecture or 61-week global assumption based solely on this source. FAX is an independently evolving global sport, not a PSA calendar replay. Current Master and real engine capabilities govern.
+
+----- BEGIN AVAILABLE SOURCE TEXT -----
+
+<PARSED TEXT FOR PAGE: 1 / 10>
+Vědecké důkazy o cestovní únavě a jet lagu
+Ve vědecké literatuře se shoduje, že mezinárodní cestování může ovlivnit
+sportovní výkon i zdraví, byť konkrétní data pro odhad procentuálních zhoršení
+výkonu chybí【23†L259-L264】【62†L51-L60】. Konsenzusní článek Janse van
+Rensburg et al. (2021) zdůrazňuje výrazný nedostatek kvalitních studií pro
+přesnou kalibraci ve sportu【23†L259-L264】【62†L51-L60】. Například Fowler a
+kol. (2015) ukázali, že simulační 24hodinová letecká cesta (včetně mírné hypoxie)
+vedla k výraznému snížení kvality spánku a degradaci vytrvalostního výkonu
+(„Yo-Yo“ test) oproti 5hodinové domácí cestě【53†L282-L290】. Podobně
+Schwellnus (2012) prokázal 2–3násobně vyšší riziko nemocí u sportovců, kteří
+cestovali přes více než pět časových pásem. Na druhou stranu studie tenisového
+WTA Tour (WHOOP 3.0, 2025) s 52 profesionálními hráčkami našla, že každý
+překročený časový pás znamenal v průměru o ~11 minut méně spánku první noc
+po příletu, přičemž posun na východ měl výraznější negativní efekt (~–24,5
+min/časové pásmo) než posun na západ (+30 min/časové pásmo)【44†L171-
+L179】. Zajímavé je, že u těchto tenistek nebyla zjištěna přímá souvislost mezi
+poklesem spánku a okamžitým herním výkonem – hráčky si prý většinou nechaly
+dostatečnou pauzu na aklimatizaci【44†L180-L187】. Další statistické analýzy ze
+sportů jako americký fotbal či NBA naznačují, že cestování a posun cirkadiánního
+rytmu negativně ovlivňují výsledek (např. zápasy „letecké“ NBA nebo výhody
+západních týmů v NFL)【46†L254-L262】. Celkově tedy literatura potvrzuje, že
+dlouhé cesty (zejména přes více pásem) zhoršují spánek, náladu i fyzický výkon
+【53†L282-L290】【46†L213-L221】, ale konkrétní pravidla (např. “% poklesu za
+pásmo”) nelze univerzálně stanovit vzhledem k nedostatku dat【23†L259-L264】
+【44†L171-L179】.
+
+Cestovní únava vs. jet lag
+Cestovní únava („travel fatigue“) se týká bezprostřední únavy a nepohody
+způsobené samotnou cestou – dlouhé sezení, hluk, dehydratace, stres, nižší
+kvalita spánku během letu či v neobvyklém prostředí. Jet lag naopak představuje
+desynchronizaci cirkadiánního rytmu po překročení časových pásem. Jak ukazují
+konsenzusní definice, jet lag nastává obvykle při překročení ≥3 pásem a
+projevuje se výraznějšími symptomy než jen únava z cesty【46†L213-L221】.
+<PARSED TEXT FOR PAGE: 2 / 10>
+Symptomy obou jsou podobné (denní únava, poruchy spánku, potíže s
+koncentrací, gastrointestinální projevy)【46†L213-L221】, ale jet lag je primárně
+cirkadiánní fenomén, zatímco cestovní únava je akumulovaná únava z náročné
+cesty. Výzkumy ukazují, že samotná dlouhá cesta (bez časového posunu) může
+výrazně snížit kvalitu spánku a následný výkon【53†L282-L290】, zatímco
+překročení pásem přidává další efekt z rozladění vnitřních „hodin“ – např.
+zkrácení spánku o ~11 minut na pásmo【44†L171-L179】. Obecně se odhaduje, že
+adaptace probíhá rychleji po cestách na západ (cca půl dne na pásmo) než na
+východ (cca 1 den na pásmo)【29†L277-L279】. Při návratu na domácí čas pak
+nastupuje jet lag znovu (zpětná adaptace). Tyto odhady ale lze považovat jen za
+hrubé, protože existuje velká variabilita mezi jedinci i mezi sportovními
+kontexty. Konsenzusní skupina zdůrazňuje, že v praxi je vhodné rozlišit cestovní
+itineráře bez pásem (kde většinou dominuje kumulativní únava z letu) od
+itinerářů s posunem (kde převládá cirkadiánní narušení)【23†L259-L264】
+【48†L331-L339】.
+
+Individuální rozdíly a chronotyp
+Vnímání únavy i čas nutný pro aklimatizaci se výrazně liší mezi jedinci.
+Chronotyp („ranní ptáče“ vs. „noční sova“) ovlivňuje, jak rychle se člověk
+přizpůsobuje novému režimu světla a spánku. Starší jedinci či senioři často
+potřebují více času na adaptaci. Biologická pohlaví a tréninková zkušenost
+mohou měnit vnímání únavy, i když přesná data chybí. Uvažuje se i o
+„tréninkové únavě“ – například hráči zvyklí na intenzivní zápas těsně před
+cestou mohou být více vyčerpaní. V praxi profesionálové proto doporučují
+individuální monitoring (nositelné „wearables“) a individuální strategie (např.
+užívání melatoninu, světelná terapie) přizpůsobené osobnímu chronotypu.
+Důležité je nezavádět stejnou penalizaci pro každého: někteří hráči rychleji opět
+nabývají plnou výkonnost, zatímco jiní mají delší útlum.
+
+Dopady na profesionální kalendář
+Globální rozvrh turnajů zásadně ovlivňuje strategii účasti hráčů. V turnajových
+sériích (např. tenis, golf) je známo, že hráči „klasifikují“ akce podle geografické
+blízkosti a bodové nabídky – často se rozhodnou vynechat vzdálený turnaj s
+nízkými body, pokud nejsou dobře odpočatí. V simulaci FAX by podobné
+rozhodování mělo zohlednit odhadované „náklady“ na cestu versus
+potencionální zisk (rankingové body). Distribuce turnajů také působí regionálně:
+<PARSED TEXT FOR PAGE: 3 / 10>
+hráči z oblasti s koncentrovanými turnaji si drží domácí náskok (nižší cestovní
+zátěž), zatímco ostatní cestují častěji. Struktura kalendáře tak může nepřímo
+ovlivnit pořadí hráčů – například hráč ze severní Ameriky může před sezonou
+zvolit evropský blok turnajů místo přesunů mezi kontinenty.
+
+Tyto faktory mohou mít i dlouhodobé důsledky. Program WTA pro mladé hráčky
+(včetně omezení přístupu k turnajům a vzdělávání) prokázal, že uvědomělá
+regulace cestování a tréninku významně prodloužila kariéry: medián délky
+kariéry se po zavedení vylepšil z 12,1 na 14,2 let【46†L229-L237】. V širším
+pohledu je tedy třeba vyvažovat domácí výhodu (regionální soutěžní „bonus“)
+proti budoucím rizikům (přetížení, zranění). Důrazná je potřeba, aby herní
+simulátor FAX nepreferoval či nepenalizoval hráče dle národnosti – místo toho by
+měl modelovat „cestovní reálné náklady“ neutrálně, na základě vzdáleností a
+časových pásem.
+
+Alternativní globální scénáře FAX
+Pokud by FAX měl mnohem širší globální okruh než real PSA Tour, může tomu
+odpovídat několik modelových situací:
+
+      Hustý regionální kalendář: Mnoho turnajů v jednom regionu postupně
+       eliminuje mezikontinentální lety. Hráči se pak často střídají mezi
+       sousedními zeměmi (nižší časové posuny) a mohou minimalizovat jet lag.
+       Domácí hráči z takového regionu by profitovali nižší cestovní zátěží.
+      Časté mezikontinentální seriály: Pokud se frékvence turnajů
+       rovnoměrně rozmístí po kontinentech, hráči budou pravidelně létat přes
+       několik pásem. To zvyšuje kumulativní nápor jet lagu. Na druhou stranu
+       týmová podpora a logistika (lékaři, trénink) mohou být profesionálnější,
+       aby tlak snížily.
+      Více domácích příležitostí: Pokud FAX poskytne hodně malých domácích
+       turnajů, hráči se mohou více lokalizovat a čerpat lokální body, aniž by
+       utrpěli extrémní cestování.
+      Koncentrovaná světová série: Naopak pokud elita hromadně cestuje na
+       jeden velký blok turnajů (např. „světová série“ v jedné linii), největší
+       výhodu získá ten, kdo má základnu blízko této akce. Ale dlouhodobě se
+       hráči mohou lépe naplánovat seriál během krátké doby.
+
+Žádný z těchto scénářů však není „správný“ za všech okolností – FAX by měl
+zkoušet různé možnosti, jak nadcházející sezony uspořádat, a sledovat, zda
+dochází k systematickým posunům v pořadí hráčů. Každý model světa FAX
+<PARSED TEXT FOR PAGE: 4 / 10>
+(blízká vs. dálná protáčená sezóna) má jiné důsledky a měl by být testován
+odděleně.
+
+Matematické modely cestovních účinků
+Pro reprezentaci „cestovního penalizačního efektu“ lze zvážit několik přístupů:
+
+      Žádný samostatný penalty: Simulátor ignoruje speciální cestovní efekt.
+       Výhoda je nulová režie, nevýhoda – simulace může nereálně podceňovat
+       dlouhodobou kumulaci únavy. (Tento přístup by měl být cíleně vyzkoušen
+       jako kontrolní scénář.)
+      Jednoduchý časově omezený efekt: Po návratu z daleké cesty se na určité
+       období (např. několik dní nebo týdnů) přidá fixní penalizace výkonu či
+       snížená regenerace. Vyžaduje metriky: kdy byl poslední let, kolik týdnů v
+       sezóně uplynulo. Velikost efektu by se musela odhadnout (např. z
+       historických dat) a snadno by byla parametricky laditelná. Výhodou je
+       jednoduchost nízká výpočetní náročnost, nevýhodou hrubost (nelze
+       snadno rozlišit směr letu či počet pásem).
+      Dvě složky – cestovní únava a jet lag: Do modelu se přidají dvě
+       proměnné. Cestovní únava by se zvyšovala vždy po letu dle délky a
+       organizace cesty (např. počet hodin v sedě, počet přestupů). Jet lag by se
+       počítal podle absolutního rozdílu časových pásem a směru (východ/západ).
+       Každá složka by mohla mít vlastní křivku návratu k nule (regeneraci).
+       Data: potřebujeme relativní zhoršení spánku/výkonu na 1 pásmo, dobu
+       rekonvalescence na východ/západ apod., což lze odhadnout z literatury a
+       později kalibrovat (viz [44] a [59]). Výpočetní náročnost je střední – stačí
+       uchovávat stavy jako „aktuální jet lag“ a „cestovní únava“ pro každého
+       hráče.
+      Individuální tolerance: Ke dvěma výše uvedeným složkám může být
+       přidán parametr individual travel tolerance, aby někteří hráči cítili menší
+       dopady. Ten by se mohl přednastavit náhodně nebo z tréninkových dat.
+       Počítání by zůstalo podobné.
+      Model s rekonvalescencí: Všechny cestovní penalizace se postupně snižují
+       (např. exponenciálně) v závislosti na čase od příjezdu. Tento přístup je
+       vhodný, pokud lze modelovat, za jak dlouho se spánek a výkonnost vrátí na
+       základní úroveň. Může vyžadovat jemné časové rozlišení (dny místo
+       týdnů).
+      Kumulace zátěže: Cestovní efekty by se kombinovaly s běžným zatížením
+       ze zápasů (stamina, form). Např. “travel fatigue” by mohl dočasně snížit
+       kapacitu odpočinku, takže po těžkém zápase + dlouhé cestě hráč odpočine
+<PARSED TEXT FOR PAGE: 5 / 10>
+      méně než normálně. To vyžaduje znát data o únavě po výkonech i po
+      letech a jejich případnou interakci – patrně jen orientačně, ale umožňuje
+      detekovat zdvojování penalizace.
+
+Potřebná data a kalibrace: Kterýkoli model by vyžadoval data o skutečných
+dopadech cestování na fyziologii a výkon. Ideálně: měření spánku (nositelné,
+denní únava) a výsledky při různých cestovních scénářích. Pro sportovní
+kalibraci postačí statistiky typu „výkon hráče X na turnaji Y s různým
+dostatečným časem na přípravu“. Velmi důležité budou data o délce letů, počtech
+přestupů, časových diferencích a modelovaných parametrech (např. „létal/přílet
+do turnaje 1 den, 3 pásma“). Vzhledem k omezeným datům bude každý model
+nutné později kalibrovat (např. optimalizací vah v rámci reálně simulovaných
+sezón).
+
+Výpočetní náročnost a časové rozlišení: Jednoduché lineární modely lze
+provádět bez dalšího fragmentování (na úrovni týdnů). Pokud však chceme
+modelovat postupné přizpůsobení (jet lag, rekonvalescenci den po dni), bylo by
+třeba použít jemnější časový krok (např. dny). Současná architektura s
+61týdenním rokem nepodporuje denní plánování, takže komplikovanější křivky
+by znamenaly buď zvláštní zjednodušení (např. fixní počet týdnů na adaptaci),
+nebo budoucí vývoj simulátoru.
+
+Audit současné implementace (žádoucí vs. skutečný stav)
+V architektuře FAX se dosud rozlišuje Travel Region a Timezone Area (viz
+COUNTRY_ATTRIBUTES), což je v souladu s potřebou oddělit logistickou a
+cirkadiánní složku cestování. Z dokumentů není jasné, jak přesně se tyto vstupy
+používají. Pravděpodobně bylo rozhodnuto (DECIDED), že cestovní složky budou,
+ale implementace (IMPLEMENTED) zatím využívá pouze
+jednoduchý travel_modifier. Travel Region by měl odrážet komplikovanost cesty
+(vzdálenost, režim dopravy), zatímco Timezone Area (diference pásem) by se
+použila pro jet lag. Je nutné ověřit zdroj a význam proměnné travel_modifier:
+může jít o fixní faktor (např. penalizaci výkonu v závislosti na vzdálenosti) – ale
+zda má sportovní smysl a zda je nějak vědecky podložen, není zřejmé (mohlo by
+to být zatím jen tendenční řešení bez validace).
+
+Další prvky enginu: dostupnost hráčů na turnajích se odvíjí z jejich kalendáře a
+možná i z toho, kdy se nacházejí (vždy bylo zapracováno, že nelze hrát dva
+turnaje najednou). Možná existují značky „zabookováno na cestu“ – to je cílový
+stav (TARGET), pokud vůbec. Form a Stamina jsou zjevně implementované
+hráčské stavy ovlivňující výkon. Form je krátkodobější výkonová schopnost,
+<PARSED TEXT FOR PAGE: 6 / 10>
+stamina se vyčerpává zápasy. Regenerace a Health (zdraví) pravděpodobně
+existují jako implementované mechaniky (s regenerací na týdenní bázi nebo při
+zápasech). Historie přesunů (kumulativní únavy) není ve stávajícím modelu
+explicitně evidována – toto je pravděpodobně nepřipravené (OPEN) téma. Časový
+model Runu je fixně 61 týdnů na rok (IMPLEMENTED), což není ekvivalent
+skutečného kalendáře 365 dní. Tedy momentálně simulace pracuje s delším
+rokem bez přesného rozlišení dnů a měsíců.
+
+Pro přehled bychom tedy mohli uvést: Travel Region – DECIDED (vize),
+IMPLEMENTED (zřejmě v datech), využití? Travel Modifier – IMPLEMENTED (ve
+vstupu), zdroj a efektivita = ?? (OPEN pro ověření). Timezone Area – DECIDED, lze
+předpokládat IMPLEMENTED. Dostupnost hráčů – IMPLEMENTED (nějak řešeno
+kalendářem), Form/Stamina – IMPLEMENTED, Regenerace/Health –
+IMPLEMENTED. Evidování staré únavy z cest – DEFERRED/OPEN. Faktický časový
+model (61 týdnů) – IMPLEMENTED (pozitivní: konzistence, negativní: nereálný
+rozpad roku).
+
+Důraz: Není třeba vnášet nové mechanismy, pokud stávající systémy už řeší
+podobné efekty. Například pokud „Form“ klesá po náročných zápasech a
+regeneruje postupně, nemusí být potřeba další penalizace za krátký span před
+cestou. Naopak musíme dávat pozor, abychom stejnou únavu nezapočítali
+dvakrát – pokud by travel_modifier například zhoršoval výkon stejnou veličinou,
+jakou by ubral stamina či form stavu, došlo by k duplicitě (viz kapitola o riziku
+dvojího započítání níže).
+
+Diagnostické experimenty
+Navrhujeme následující scénáře pro testování modelu (bez zadání konkrétních
+čísel, pouze s předepsanými podmínkami):
+
+      Stejný časový posun, různé směry: Například simulovat dva identické
+       hráče, kteří překročí 5 časových pásem – jeden cestuje na východ, druhý na
+       západ, za identických letových podmínek. Porovnat jejich úroveň formy a
+       výkon v prvním zápase po příletu.
+      Dlouhá cesta bez jet lagu: Např. let 20 hodin v jedné časové zóně (doprava
+       letadlem + přesun na letišti), vs. ukázat, jaký dopad má samotná délka cesty
+       bez posunu.
+      Krátká cesta s časovým posunem: Například let přes 5 časových pásem
+       trvající 6 hodin (rychlý přímý let) – testovat, zda systém bere v úvahu
+       pouze posun, nebo i délku letu.
+<PARSED TEXT FOR PAGE: 7 / 10>
+   Různá doba příjezdu: Jeden hráč přiletí 5 dní před turnajem, druhý jen 1
+    den před. Očekává se rozdíl ve formě při startu.
+   Opakovaná cestování: Hráč z účastní v sérii turnajů na více kontinentech
+    po sobě. Sledujeme kumulaci únavy – např. tři lety během jednoho měsíce.
+   Zápasy těsně po příjezdu: Hráč hraje zápas v den příletu versus hráč se
+    stejným itinerářem, ale s jednodenní odmlkou. Porovnat výsledek zápasu a
+    průběh formy.
+   Regenerace po soutěžní zátěži: Například nastavit dva scénáře – v
+    jednom má hráč mezi turnaji dost času na regeneraci, ve druhém ne
+    (turnaje na sebe navazují). Sledujeme ztrátu „Form“ a případné zhoršení
+    výkonu v dalším turnaji.
+   Domácí výhoda vs. cestovní nevýhoda: Porovnat hypotetické hráče stejné
+    úrovně, přičemž jeden hraje sérii turnajů doma (s nulovou cestou), druhý
+    jede na stejné turnaje zdaleka (např. z jiného kontinentu). Očekávaně by
+    měl systém penalizovat toho druhého, pokud cestovní faktor funguje.
+   Stejná národnost, různé „domácí základny“: Dva hráči stejné země
+    pocházející, ale jeden je oddílově založen v Evropě, druhý v Asii. I když
+    jsou oba stejné národnosti, jejich itineráře jsou rozdílné. Tím lze otestovat,
+    zda engine využívá národnost (což by neměl) nebo skutečné geografické
+    umístění turnajů.
+   Národní neutralita: Test, ve kterém se zajistí, že žádná implementace
+    nepreferuje hráče „home-country“: například globální turnaje konané v
+    jedné zemi nedávají bodovou výhodu domácímu hráči nad cizincem se
+    stejnou formou.
+   Interakce s Form/Stamina/Health: Scénář, kde hráč má již nízkou Form či
+    Stamina z předchozího turnaje a zároveň urazí dlouhou cestu. Je třeba
+    ověřit, že není dvojnásobně penalizován (viz následující kapitola).
+   Chování Entry AI: Simulovat dvě identické situace rozhodování zápisu do
+    turnaje: v jednom má pro hráče těžší cestu (vysoký „Travel Region“), ve
+    druhém ne. Očekávat, že AI správně vyhodnotí, že dlouhá cesta s nízkými
+    body možná nedává smysl.
+   Deterministický replay: Opakovaným spuštěním stejné simulace (se
+    stejnými náhodnými semínky) by model cestovních efektů měl dávat
+    konzistentní výsledky. Testovat opakovatelnost výsledků souvisejících s
+    cestováním.
+   Historická konzistence: Porovnat výstupy simulačního kalendáře bez
+    cestovních efektů a s nimi – např. simulovat minulou sezónu PSA Tour a
+<PARSED TEXT FOR PAGE: 8 / 10>
+       porovnat predikce. Měla by se evidovat korelace s reálnými výsledky a
+       zjistit, zda nové cestovní mechanismy generují razantní odchylky.
+      Porovnání globálních kalendářů: Pro různé fiktivní rozvrhy (viz kapitola
+       scénáře) porovnat dopady na průměrný výkon hráčů. Např. „hustý
+       regionální“ vs. „střídavé globální“ – jak se mění kumulativní únavové
+       ukazatele, body a dostupnost.
+
+Každý test by měl být definován tak, aby vstupy (počet cest, posuny, dostupnost)
+měly jednoznačně ovlivnit výstupy (změna Form/Stamina, skóre, dostupné
+zápasy). Nepoužívat předem stanovené procentuální penalizace; cílem je zachytit
+rozdíly při podpoře současného modelu.
+
+Riziko dvojího započítání
+Je třeba zabránit situaci, kdy by stejná únava byla aplikována dvakrát. Například
+pokud travel_modifier explicitně snižuje výkon, a zároveň engine snižuje formu
+nebo regeneraci kvůli dlouhé hře či krátkému odpočinku, mohl by být hráč
+penalizován nadměrně. Podobně, pokud cestovní efekt implicitně zhorší spánek
+(např. snížením stamina), nesmí ještě paralelně zvyšovat porci únavy zvláštní
+penalizací. Doporučujeme auditovat, jaký zásah má současný travel_modifier do
+výkonu a zda už se nějaký efekt nepočítá jinde (např. snížení počáteční fyzické
+úrovně po cestě). Potenciálně by bylo bezpečné integrovat cestovní únavu přímo
+do existujících stavů (Form/Stamina) namísto přidávání separátní penalizace.
+
+Doporučení pro implementaci
+      Pre-alfa fáze: Nasadit jednoduchou verzi modelu – například lineární
+       penalizaci výkonu podle časových pásem či vzdálenosti, s jednoduchou
+       decays obecně nastavenou (např. týden penalizace za 5 překročených
+       pásem). Současně pečlivě shromáždit data z playtestů a případně z
+       reálných statistik (PSA/WTA). Zajistit, aby se nové parametry daly ladit;
+       doporučit konzervativní nastavení (malá penalizace), dokud nejsou
+       výsledky ověřeny.
+      Pozdější fáze: Postupně rozšířit model o dvě složky (únava vs jet lag).
+       Implementovat nástroje na zaznamenávání doby přistání vs doby zápasu a
+       odpovídající kalkulaci penalizace. Ujistit se, že nedochází k duplikaci efektů
+       (viz rizika). Případně umožnit uživateli či výzkumníkům (projektovým
+       vědcům) nastavovat různé scénáře cestovních pravidel (parametry jízdní
+       dynamiky).
+      Organizační: Udržet nezávislou evidenci cest po hráči (kdy a odkud) – aby
+       se dalo vypočítat, zda se hráč v turnaji dobře aklimatizoval. Zajistit, aby AI
+<PARSED TEXT FOR PAGE: 9 / 10>
+      hráčů při plánování (Entry AI) zvažoval cestovní náročnost spolu s
+      očekávanými body.
+     Vzdělávání a opozice: Uživatelům (hráčům a manažerům FAX)
+      poskytnout informace o existujících strategiích (např. přechodné
+      přizpůsobení spánku/příjmu světla) shrnutých z literatury, podobně jako
+      konsenzus doporučuje „cestovní toolboxy“.
+
+Neidentifikované parametry
+Některé klíčové parametry zůstanou v rané fázi neznámé a budou vyžadovat
+kalibraci:
+
+     Velikost penalizace za pásmo: O kolik % spadne výkon na začátku (nebo
+      jak dlouho se adaptace bude odehrávat) pro každé překročené pásmo.
+     Rychlost zotavení: Jak se penalizace snižuje časem (dny/týdny) a jaký je
+      rozdíl mezi východem a západem.
+     Osobní činitelé: Rozptyl citlivosti jednotlivých hráčů (např.
+      multikriteriálně podle věku, tréninkového věku, genetických dispozic).
+     Akumulační efekt: Jak se sčítají únavy z nepřetržitého cestování a těžkých
+      zápasů.
+      Tyto parametry nelze předem přesně určit a bude je nutné odhadnout
+      později (např. regresní kalibrací modelu vůči historickým datům). Do doby,
+      než budou známá data, by měla zůstat jako nastavitelné proměnné.
+
+Použité zdroje
+     Konsenzusní přehled o cestovní únavě a jet lagu【23†L259-L264】
+      【62†L51-L60】.
+     Maynard et al. 2025: Studie tenisových hráček s nositelnou technologií
+      (WHOOP)【44†L171-L179】【44†L180-L187】.
+     Fowler et al. 2015: Simulovaný let (vliv na spánek a výkon)【53†L282-
+      L290】.
+     Odborný článek o cestování mezi studenty atletiky【59†L85-L92】
+      【59†L99-L104】 (vliv východ/západ, chronotyp, rozvrh).
+     Další odborné články a systematické přehledy v dané problematice (citace
+      v textech)【46†L213-L221】【46†L254-L262】【46†L229-L237】.
+<PARSED TEXT FOR PAGE: 10 / 10>
+Každé tvrzení výše je podloženo výše uvedenými zdroji【23†L259-L264】
+【53†L282-L290】【44†L171-L179】【46†L213-L221】【59†L85-L92】.
+
+----- END AVAILABLE SOURCE TEXT -----

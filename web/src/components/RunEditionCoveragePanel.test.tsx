@@ -67,7 +67,7 @@ describe('bulk Run-owned Entry timing UI',()=>{
     expect(mocks.getRunEditionEntryTiming).not.toHaveBeenCalled()
     await inspect()
     expect(await screen.findByText('Aster Open')).toBeVisible()
-    expect(screen.getByText(/Část GET selhala/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Část GET selhala/)).not.toBeInTheDocument()
     expect(screen.getByText(/Všechny GET dokončeny/)).toBeInTheDocument()
     expect(mocks.getRunEditionEntryTiming).toHaveBeenCalledWith(run,branch,pkg,'edition-a')
     expect(screen.getByRole('link',{name:'Otevřít Entry detail'}))

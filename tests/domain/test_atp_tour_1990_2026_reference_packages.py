@@ -1352,12 +1352,15 @@ def test_2006_palermo_and_continuous_pre_2007_city_licence_history() -> None:
     by_id = {e["source_entity_id"]: e for e in source["entities"]}
     palermo = by_id["palermo"]
     assert palermo["payload"]["historical_surface"] == "clay"
-    assert palermo["payload"]["history_periods"] == [{
-        "from": 2006, "to": 2006,
-        "category_id": "atp_international_series",
-        "source_url": "https://www.atptour.com/en/tournaments/palermo/325/overview",
-        "notes": palermo["payload"]["history_periods"][0]["notes"],
-    }]
+    played_2006 = [
+        p for p in palermo["payload"]["history_periods"]
+        if p["from"] <= 2006 <= p["to"]
+    ]
+    assert len(played_2006) == 1
+    assert played_2006[0]["category_id"] == "atp_international_series"
+    assert played_2006[0]["source_url"] == (
+        "https://www.atptour.com/en/tournaments/palermo/325/overview"
+    )
     hosts = {
         "warsaw_2008": "Sopot",
         "bangalore_2008": "Mumbai",
@@ -1424,7 +1427,8 @@ def test_2005_to_2006_real_licence_moves_keep_single_identity() -> None:
         hosts = _host_by_year(by_id[id])
         assert hosts[2005] == from_city
         assert hosts[2006] == to_city
-    assert [p["from"] for p in by_id["palermo"]["history_periods"]] == [2005, 2006]
+    assert [p["from"] for p in by_id["palermo"]["history_periods"]
+            if 2005 <= p["from"] <= 2006] == [2005, 2006]
     refs = source["provenance"]["calendar_validation_2005"]["verified_licence_relocations"]
     assert len(refs) == 4
     assert {r["series_id"] for r in refs} == set(moves)

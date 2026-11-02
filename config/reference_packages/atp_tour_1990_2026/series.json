@@ -180,6 +180,18 @@
       "next_gen_finals_played": true,
       "scope": "2018 64 ATP Tour events (9 Masters,13 500,40 250 and both Finals); no Grand Slams, ITF or team events",
       "source_note": "Official 2018 brochure/calendar identifies each Tier; ATP archive documents played editions. Quito→Córdoba licence transfer uses contemporaneous independent reporting."
+    },
+    "calendar_validation_2017": {
+      "archive_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+      "official_announcement_url": "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars",
+      "played_atp_masters_1000_count": 9,
+      "played_atp_500_count": 13,
+      "played_atp_250_count": 40,
+      "atp_finals_played": true,
+      "next_gen_finals_played": true,
+      "identity_source_chennai_to_pune": "https://scroll.in/field/844022/",
+      "identity_source_memphis_to_new_york": "https://www.atptour.com/-/media/931dfc248f6e4ccbba6e75cf4020fd44.pdf",
+      "scope": "2017 played men's ATP World Tour Tier roster, excluding Slams/ITF/Davis Cup and Laver Cup; match results not imported"
     }
   },
   "explicit_scope": [
@@ -764,6 +776,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -816,6 +835,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2017,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/-/media/931dfc248f6e4ccbba6e75cf4020fd44.pdf"
+          },
+          {
             "year": 2018,
             "city": "New York",
             "country_code": "USA",
@@ -840,7 +865,7 @@
             "source_url": "https://www.atptour.com/en/news/fritz-dallas-2025-preview"
           }
         ],
-        "identity_review_note": "ATP confirms New York Open relocated to Dallas in 2022; source preserves a single Series across 2020 New York and 2022+ Dallas, earlier Memphis/San Jose lineage needs separate historical review."
+        "identity_review_note": "2017 Memphis ATP Tour 250 licence moved to Long Island/New York 2018, then Dallas 2022; same tournament Series as documented in 2020 ATP media notes; earlier pre-2017 history remains under review."
       },
       "references": [
         {
@@ -874,6 +899,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -952,6 +984,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -1084,6 +1123,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_500",
@@ -1161,6 +1207,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -1240,6 +1293,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_500",
@@ -1310,6 +1370,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -1563,6 +1630,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_500",
@@ -1634,6 +1708,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_500",
@@ -1697,6 +1778,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -1782,6 +1870,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_500",
@@ -1856,6 +1951,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -1935,6 +2037,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -1999,6 +2108,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -2058,6 +2174,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2017,
+            "city": "Chennai",
+            "country_code": "IND",
+            "source_url": "https://scroll.in/field/844022/"
+          },
+          {
             "year": 2018,
             "city": "Pune",
             "country_code": "IND",
@@ -2094,7 +2216,7 @@
             "source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024"
           }
         ],
-        "identity_review_note": "ATP announced Pune (IMG) ATP Tour 250 licence relocating to Hong Kong for 2024. Preserve same Series source identity from Pune 2022/23 to Hong Kong 2024–26; older 1990–2002 Hong Kong Tour event may be distinct and remains unassigned.",
+        "identity_review_note": "Chennai Open 2017 transferred to Pune for 2018 by IMG, and Pune 2022-23 transferred to Hong Kong for 2024. Stable ATP Series ID preserved; pre-2017 history requires further audit.",
         "historical_licence_source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024"
       },
       "references": [
@@ -2196,6 +2318,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -2273,6 +2402,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -2366,6 +2502,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -2457,6 +2600,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -2678,6 +2828,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -2767,6 +2924,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -2844,6 +3008,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -2930,6 +3101,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -3014,6 +3192,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -3164,6 +3349,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -3248,6 +3440,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -3334,6 +3533,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -3419,6 +3625,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -3503,6 +3716,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -3596,6 +3816,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -3673,6 +3900,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -3759,6 +3993,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -3843,6 +4084,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -4176,6 +4424,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -4242,6 +4497,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2017,
+            "city": "Antwerp",
+            "country_code": "BEL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017"
+          },
+          {
             "year": 2018,
             "city": "Antwerp",
             "country_code": "BEL",
@@ -4293,6 +4554,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -4368,6 +4636,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2017,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017"
+          },
+          {
             "year": 2018,
             "city": "Marseille",
             "country_code": "FRA",
@@ -4431,6 +4705,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
           },
           {
             "from": 2018,
@@ -4758,7 +5039,15 @@
           "effective_from": 2022,
           "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
           "notes": "Permanent ATP membership transferred to Astana in 2022; no simultaneous St Petersburg edition asserted"
-        }
+        },
+        "historical_host_change": [
+          {
+            "year": 2017,
+            "city": "Saint Petersburg",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017"
+          }
+        ]
       },
       "references": [
         {
@@ -4808,6 +5097,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -4860,6 +5156,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2017,
+            "city": "Quito",
+            "country_code": "ECU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017"
+          },
+          {
             "year": 2018,
             "city": "Quito",
             "country_code": "ECU",
@@ -4905,6 +5207,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -4980,6 +5289,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -5053,6 +5369,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -5173,6 +5496,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -5363,6 +5693,13 @@
         "not_squash_rules": true,
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -5986,6 +6323,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -6009,6 +6353,12 @@
         ],
         "identity_review_note": "ATP states 2019 Budapest Hungarian Open licence relocated to April 2021 Belgrade. Subsequent 2022 Belgrade/Banja Luka licence relation is not established by this source.",
         "historical_host_change": [
+          {
+            "year": 2017,
+            "city": "Budapest",
+            "country_code": "HUN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017"
+          },
           {
             "year": 2018,
             "city": "Budapest",
@@ -6177,6 +6527,13 @@
         "not_squash_rules": true,
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -6352,6 +6709,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -6398,6 +6762,13 @@
         "not_squash_rules": true,
         "history_scope": "verified_2018_2019_250_only_next_license_location_not_yet_certified",
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,
@@ -6446,6 +6817,13 @@
         "history_scope": "verified_2018_2019_grass_250_only_not_assumed_same_as_2021_hard",
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -6493,6 +6871,13 @@
         "history_scope": "verified_2018_ATP_250_not_inferred_earlier_or_later",
         "history_periods": [
           {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
+          {
             "from": 2018,
             "to": 2018,
             "category_id": "atp_250",
@@ -6532,6 +6917,13 @@
         "not_squash_rules": true,
         "history_scope": "verified_2018_ATP_250_not_inferred_earlier_or_later",
         "history_periods": [
+          {
+            "from": 2017,
+            "to": 2017,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+            "notes": "Played 2017 ATP World Tour event, supported by official 2017 results archive; do not extrapolate unverified adjacent seasons"
+          },
           {
             "from": 2018,
             "to": 2018,

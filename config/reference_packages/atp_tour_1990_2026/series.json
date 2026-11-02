@@ -378,9 +378,50 @@
       ],
       "documented_played_gold_count": 9,
       "upper_tier_masters_membership_count": 9,
-      "lower_international_series_census_status": "NOT_COMPLETE",
+      "lower_international_series_census_status": "COMPLETE_2008_PLAYED",
       "category_note": "Gold tier must NOT be retroactively re-labelled ATP 500 before 2009",
-      "scope": "2008 ATP International Series Gold only plus separately known Masters identity; not a complete 2008 Tour event census"
+      "scope": "2008 ATP International Series Gold only plus separately known Masters identity; not a complete 2008 Tour event census",
+      "complete_2008_evidence_note": "42 played ordinary International Series; planned Mumbai/Bangalore never held; played Warsaw instead of proposed Sopot"
+    },
+    "calendar_validation_2008": {
+      "official_calendar_snapshot_url": "https://ftpmirror.your.org/pub/wikimedia/images/wikipedia/commons/archive/9/93/20071121060750%21ATP_Calendar_2008.pdf",
+      "official_played_results_archive_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+      "played_masters_series_count": 9,
+      "played_international_series_gold_count": 9,
+      "played_international_series_count": 42,
+      "known_cancelled_international_series_ids": [
+        "bangalore_2008"
+      ],
+      "scheduled_international_series_identity_count": 43,
+      "atp_finals_played": true,
+      "scope": "2008 actual ATP 61 events: 9 Masters + 9 Gold + 42 International + 1 ATP Finals; cancel Bangalore excluded, also exclude Grand Slams/Olympics/World Team Cup/Davis",
+      "verified_relocations": [
+        {
+          "source": "Sopot",
+          "destination": "Warsaw",
+          "year": 2008,
+          "source_url": "https://www.atptour.com/en/tournaments/warsaw/475/overview"
+        },
+        {
+          "source": "Mumbai",
+          "destination": "Bangalore",
+          "year": 2008,
+          "status": "cancelled",
+          "source_url": "https://www.skysports.com/tennis/news/4050908/bangalore-open-cancelled"
+        },
+        {
+          "source": "Amersfoort",
+          "destination": "Belgrade",
+          "year": 2009,
+          "source_url": "https://sports.rediff.com/sports/report/belgrade-replaces-amersfoort-on-atp-calendar/20090102.htm"
+        },
+        {
+          "source": "Adelaide",
+          "destination": "Brisbane",
+          "year": 2009,
+          "source_url": "https://www.abc.net.au/news/2006-07-07/brisbane-to-host-mens-hard-court-champs-from-2009/1796818"
+        }
+      ]
     }
   },
   "explicit_scope": [
@@ -1374,6 +1415,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -1505,6 +1553,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -2047,6 +2101,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -2173,6 +2234,12 @@
           "source_entity_id": "atp_500",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -2256,6 +2323,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2014,
             "category_id": "atp_250",
@@ -2289,6 +2363,12 @@
           "source_entity_id": "atp_500",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -2309,6 +2389,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2014,
@@ -2343,6 +2430,12 @@
           "source_entity_id": "atp_500",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -2363,6 +2456,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -2475,6 +2575,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -2646,6 +2752,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_500",
@@ -2772,6 +2885,12 @@
           "source_entity_id": "atp_500",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -2792,6 +2911,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -2908,6 +3034,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -3136,6 +3268,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.abc.net.au/news/2006-07-07/brisbane-to-host-mens-hard-court-champs-from-2009/1796818",
+            "notes": "Adelaide men's hardcourt Tour event relocated to Brisbane in 2009"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -3234,12 +3373,27 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2008,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://www.abc.net.au/news/2006-07-07/brisbane-to-host-mens-hard-court-champs-from-2009/1796818"
+          }
+        ],
+        "identity_review_note": "Adelaide men's Australian Hardcourt ATP event 2008 transferred to Brisbane for 2009. Current Adelaide International from 2020 is a later separate tournament."
       },
       "references": [
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -3262,6 +3416,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -3385,6 +3546,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Chennai",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Chennai",
             "country_code": "IND",
@@ -3484,6 +3651,12 @@
           "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -3576,6 +3749,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -3697,6 +3877,12 @@
           "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -3717,6 +3903,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -3840,6 +4033,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Lyon",
             "country_code": "FRA",
@@ -3847,12 +4046,18 @@
           }
         ],
         "historical_licence_source_url": "https://www.lequipe.fr/Tennis/Actualites/Montpellier-remplace-lyon/105494",
-        "identity_review_note": "Grand Prix de Lyon indoor ATP 250 held in 2009 was officially relocated to Montpellier in 2010. Do not conflate with Nice→Lyon clay 2017 or Marseille→Lyon indoor 2026."
+        "identity_review_note": "Grand Prix de Lyon indoor ATP Tour in 2008–2009 transferred to Montpellier in 2010; separate from Lyon clay 2017 and Marseille moved to Lyon 2026."
       },
       "references": [
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -3876,6 +4081,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -4010,6 +4222,12 @@
           "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -4030,6 +4248,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -4163,6 +4388,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -4314,6 +4545,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -4445,6 +4683,12 @@
           "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -4465,6 +4709,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -4581,6 +4832,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Casablanca",
             "country_code": "MAR",
@@ -4635,6 +4892,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -4969,6 +5232,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -5089,6 +5359,12 @@
           "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -5180,6 +5456,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -5303,6 +5586,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Nottingham",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Eastbourne",
             "country_code": "GBR",
@@ -5365,6 +5654,12 @@
           "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -5385,6 +5680,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -5511,6 +5813,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -5534,6 +5842,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -5661,6 +5976,12 @@
           "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -5681,6 +6002,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -5807,6 +6135,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -5999,6 +6333,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -6156,6 +6497,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -6319,6 +6666,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -6441,6 +6795,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "New Haven",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "New Haven",
             "country_code": "USA",
@@ -6460,6 +6820,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -6929,6 +7295,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_500",
@@ -7058,6 +7431,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Valencia",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Valencia",
             "country_code": "ESP",
@@ -7150,6 +7529,12 @@
           "source_entity_id": "atp_500",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -7170,6 +7555,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -7308,6 +7700,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Marseille",
             "country_code": "FRA",
@@ -7399,6 +7797,12 @@
           "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -7425,6 +7829,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
           },
           {
             "from": 2009,
@@ -7559,6 +7970,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -7874,6 +8291,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -7988,6 +8412,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Viña del Mar",
+            "country_code": "CHL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Viña del Mar",
             "country_code": "CHL",
@@ -8061,6 +8491,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -8269,6 +8705,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -8381,6 +8824,12 @@
           "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -8405,6 +8854,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -8513,6 +8969,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Indianapolis",
             "country_code": "USA",
@@ -8526,6 +8988,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -8598,6 +9066,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -8716,6 +9191,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -8852,6 +9333,13 @@
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -8959,6 +9447,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Zagreb",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Zagreb",
             "country_code": "HRV",
@@ -9013,6 +9507,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -9588,6 +10088,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -9675,6 +10182,12 @@
         "identity_review_note": "Bucharest 2015–16 Tour licence transferred Budapest 2017–19 then Belgrade 2021; Bucharest 2024+ tracked as a distinct Tour licence without unproven merger.",
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Bucharest",
+            "country_code": "ROU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Bucharest",
             "country_code": "ROU",
@@ -9752,6 +10265,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -9897,6 +10416,13 @@
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -9987,6 +10513,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -10134,6 +10666,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -10219,6 +10758,12 @@
           "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -10243,6 +10788,13 @@
         "not_squash_rules": true,
         "history_scope": "verified_2018_2019_250_only_next_license_location_not_yet_certified",
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -10324,6 +10876,12 @@
         "identity_review_note": "Costa do Sauípe ATP Tour Brasil Open event 2011 moved to São Paulo from 2012, played through 2019. Tournament venue changed, not a new Tour series.",
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Costa do Sauípe",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Costa do Sauípe",
             "country_code": "BRA",
@@ -10353,6 +10911,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -10610,6 +11174,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -10651,6 +11222,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -10678,6 +11255,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -10719,6 +11303,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -10746,6 +11336,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -10789,6 +11386,12 @@
           "source_entity_id": "atp_250",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -10813,6 +11416,13 @@
         "not_squash_rules": true,
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://sports.rediff.com/sports/report/belgrade-replaces-amersfoort-on-atp-calendar/20090102.htm",
+            "notes": "Amersfoort 2008 sanction sold to Belgrade for 2009, ATP Board-approved"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -10842,8 +11452,14 @@
             "notes": "ATP official 2012 results archive corroborates played main Tour event and historical category"
           }
         ],
-        "identity_review_note": "Serbia Open 2010–2012 ATP Tour 250, no played 2013 edition; no legal licence merger with modern Belgrade tournaments inferred.",
+        "identity_review_note": "Dutch Open Amersfoort 2008 ATP sanction sold with ATP Board approval to Belgrade and played as Serbia Open 2009–2012. Separate Budapest 2021 Belgrade licence.",
         "historical_host_change": [
+          {
+            "year": 2008,
+            "city": "Amersfoort",
+            "country_code": "NLD",
+            "source_url": "https://sports.rediff.com/sports/report/belgrade-replaces-amersfoort-on-atp-calendar/20090102.htm"
+          },
           {
             "year": 2009,
             "city": "Belgrade",
@@ -10874,6 +11490,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -10928,6 +11550,170 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "las_vegas_2008",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Tennis Channel Open Las Vegas",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Las Vegas",
+        "historical_country_code": "USA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2008_International_Series_only_and_legal_sanction_history_not_backfilled",
+        "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          }
+        ],
+        "identity_review_note": "2008 Tour event only; earlier or later licence continuity needs dated evidence"
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "poertschach_2008",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Hypo Group Tennis International Pörtschach",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Pörtschach",
+        "historical_country_code": "AUT",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2008_International_Series_only_and_legal_sanction_history_not_backfilled",
+        "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          }
+        ],
+        "identity_review_note": "2008 Tour event only; earlier or later licence continuity needs dated evidence"
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "warsaw_2008",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Orange Warsaw Open 2008 (Sopot successor)",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Warsaw",
+        "historical_country_code": "POL",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2008_International_Series_only_and_legal_sanction_history_not_backfilled",
+        "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/tournaments/warsaw/475/overview",
+            "notes": "Warsaw Open played 2008 after prospective Sopot listing"
+          }
+        ],
+        "identity_review_note": "2008 Warsaw ATP International Series succeeded Sopot and was played. Original ATP prospective calendar still showed Sopot. 2007 Sopot history not yet loaded."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "bangalore_2008",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Bangalore Open (moved from Mumbai, cancelled 2008)",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Bangalore",
+        "historical_country_code": "IND",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2008_International_Series_only_and_legal_sanction_history_not_backfilled",
+        "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.skysports.com/tennis/news/4050908/bangalore-open-cancelled",
+            "notes": "Bangalore 2008 scheduled after Mumbai change, but cancelled before play; excluded from played events"
+          }
+        ],
+        "identity_review_note": "Moved from Mumbai to Bangalore in 2008 but cancelled for security reasons. Not a played 2008 Tour event.",
+        "not_held_years_known": [
+          2008
+        ],
+        "known_nonheld_source": "https://www.skysports.com/tennis/news/4050908/bangalore-open-cancelled"
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }

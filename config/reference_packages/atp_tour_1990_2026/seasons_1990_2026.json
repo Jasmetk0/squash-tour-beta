@@ -555,15 +555,15 @@
       "era": "tennis_masters_and_international_series",
       "known_not_held_series_ids": [],
       "played_tier_roster_validation": {
-        "status": "played_tour_tiers_reconciled_to_atp_results_archive",
-        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+        "not_an_edition_calendar": true,
         "played_counts": {
-          "tennis_masters_series": 9,
+          "atp_international_series": 43,
           "atp_international_series_gold": 9,
-          "atp_international_series": 43
+          "tennis_masters_series": 9
         },
         "scope": "ATP Tennis Masters Series / International Series Gold / International Series; excludes Finals, Olympics and team events",
-        "not_an_edition_calendar": true
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+        "status": "played_tour_tiers_reconciled_to_atp_results_archive"
       },
       "series_category_ids": {
         "acapulco": "atp_international_series_gold",

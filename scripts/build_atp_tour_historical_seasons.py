@@ -21,6 +21,16 @@ FIRST, LAST = 1990, 2026
 # describe *played events* (never cancelled Series identities), and are
 # intentionally NOT backfilled from any present-day calendar to older years.
 # Official archive: https://www.atptour.com/en/scores/results-archive?year=YYYY
+# 2008 predates the ATP 1000/500/250 tier rebrand. Do not map Gold
+# into 500 or International into 250; evidence is category-effective.
+HISTORIC_PLAYED_TIER_COUNTS: dict[int, dict[str, int]] = {
+    2008: {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 42,
+    },
+}
+
 PLAYED_TIER_COUNTS: dict[int, dict[str, int]] = {
     2009: {"atp_masters_1000": 9, "atp_500": 11, "atp_250": 40},
     2010: {"atp_masters_1000": 9, "atp_500": 11, "atp_250": 40},
@@ -128,8 +138,11 @@ def build(
             x["source_entity_id"] for x in series_doc["entities"]
             if year in x["payload"].get("not_held_years_known", [])
         )
-        if year in PLAYED_TIER_COUNTS:
-            expected = PLAYED_TIER_COUNTS[year]
+        if year in PLAYED_TIER_COUNTS or year in HISTORIC_PLAYED_TIER_COUNTS:
+            expected = (
+                PLAYED_TIER_COUNTS.get(year)
+                or HISTORIC_PLAYED_TIER_COUNTS[year]
+            )
             actual = {
                 category: sum(
                     tier == category and series_id not in nonheld
@@ -146,7 +159,12 @@ def build(
                 "status": "played_tour_tiers_reconciled_to_atp_results_archive",
                 "source_url": f"https://www.atptour.com/en/scores/results-archive?year={year}",
                 "played_counts": expected,
-                "scope": "ATP Masters 1000, ATP 500, ATP 250; excludes Finals and team events",
+                "scope": (
+                    "ATP Tennis Masters Series / International Series Gold / "
+                    "International Series; excludes Finals, Olympics and team events"
+                    if year in HISTORIC_PLAYED_TIER_COUNTS else
+                    "ATP Masters 1000, ATP 500, ATP 250; excludes Finals and team events"
+                ),
                 "not_an_edition_calendar": True,
             }
         else:

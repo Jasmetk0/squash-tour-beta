@@ -4065,6 +4065,12 @@
             "city": "Nottingham",
             "country_code": "GBR",
             "source_url": "https://www.lta.org.uk/news/2016/april/british-grass-court-season-announced-for-2017/"
+          },
+          {
+            "year": 2017,
+            "city": "Eastbourne",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017"
           }
         ],
         "identity_review_note": "Nottingham ATP 250 grass 2016 relocated to Eastbourne 2017; the 2017+ Nottingham men's event was Challenger level, not this Tour 250."
@@ -6315,6 +6321,12 @@
             "city": "Nice",
             "country_code": "FRA",
             "source_url": "https://www.lequipe.fr/Tennis/Actualites/Un-nouveau-tournoi-atp-a-lyon-la-semaine-avant-roland-garros/748030"
+          },
+          {
+            "year": 2017,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017"
           }
         ],
         "identity_review_note": "Nice ATP 250 of 2016 relocated to Lyon clay ATP 250 from 2017; separate from Marseille licence relocated to Lyon in 2026."

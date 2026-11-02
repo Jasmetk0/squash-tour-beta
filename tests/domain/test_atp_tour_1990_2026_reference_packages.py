@@ -38,7 +38,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 101
+    assert len(series["entities"]) == 105
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -528,11 +528,11 @@ def test_coverage_gates_reject_false_historical_completeness() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     rows = {s["year"]: s for s in build(categories, source)["seasons"]}
-    for year in range(1990, 2009):
+    for year in range(1990, 2008):
         assert rows[year]["played_tier_roster_validation"]["status"] == "unverified_incomplete"
         assert rows[year]["played_tier_roster_validation"]["played_counts"] is None
     assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
-    for year in range(2009, 2026):
+    for year in range(2008, 2026):
         assert rows[year]["played_tier_roster_validation"]["status"] == (
             "played_tour_tiers_reconciled_to_atp_results_archive"
         )
@@ -1143,8 +1143,8 @@ def test_2008_international_series_gold_has_nine_historic_tier_members() -> None
     years = {row["year"]: row for row in
              build(_source("category"), _source("series"))["seasons"]}
     old = years[2008]
-    assert old["played_tier_roster_validation"]["status"] == "unverified_incomplete"
-    assert old["played_tier_roster_validation"]["played_counts"] is None
+    assert old["played_tier_roster_validation"]["status"] == "played_tour_tiers_reconciled_to_atp_results_archive"
+    assert old["played_tier_roster_validation"]["played_counts"] == {"tennis_masters_series": 9, "atp_international_series_gold": 9, "atp_international_series": 42}
     gold = {
         series_id for series_id, category in old["series_category_ids"].items()
         if category == "atp_international_series_gold"
@@ -1159,7 +1159,7 @@ def test_2008_international_series_gold_has_nine_historic_tier_members() -> None
     assert "shanghai" not in old["series_category_ids"]
     provenance = _source("series")["provenance"]["calendar_validation_2008_partial"]
     assert provenance["documented_played_gold_count"] == 9
-    assert provenance["lower_international_series_census_status"] == "NOT_COMPLETE"
+    assert provenance["lower_international_series_census_status"] == "COMPLETE_2008_PLAYED"
     assert "atptour.com" in provenance["official_results_archive_url"]
 
 
@@ -1176,3 +1176,74 @@ def test_2008_historic_gold_cannot_be_retroactively_called_2009_500() -> None:
     assert years[2008]["era"] == "tennis_masters_and_international_series"
     assert years[2009]["era"] == "atp_masters_1000_500_250"
     assert years[2008]["edition_assertion"].startswith("none;")
+
+
+def test_2008_original_atp_masters_gold_and_international_played_census() -> None:
+    rows = {r["year"]: r for r in
+            build(_source("category"), _source("series"))["seasons"]}
+    year = rows[2008]
+    assert Counter(year["series_category_ids"].values()) == {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 43, # Includes CANCELLED Bangalore
+        "atp_finals": 1,
+    }
+    assert len(year["series_category_ids"]) == 62
+    assert year["known_not_held_series_ids"] == ["bangalore_2008"]
+    assert year["played_tier_roster_validation"]["played_counts"] == {
+        "tennis_masters_series": 9, "atp_international_series_gold": 9,
+        "atp_international_series": 42,
+    }
+    assert sum(
+        tier == "atp_international_series" and series_id != "bangalore_2008"
+        for series_id, tier in year["series_category_ids"].items()
+    ) == 42
+    assert year["played_tier_roster_validation"]["not_an_edition_calendar"]
+    source = _source("series")["provenance"]["calendar_validation_2008"]
+    assert source["played_international_series_count"] == 42
+    assert source["scheduled_international_series_identity_count"] == 43
+    assert "atptour.com" in source["official_played_results_archive_url"]
+    assert ".pdf" in source["official_calendar_snapshot_url"]
+
+
+def test_2008_warsaw_not_prospective_sopot_and_bangalore_cancelled() -> None:
+    source = _source("series")
+    rows = {r["year"]: r for r in
+            build(_source("category"), source)["seasons"]}
+    assert rows[2008]["series_category_ids"]["warsaw_2008"] == "atp_international_series"
+    assert "sopot_2008" not in rows[2008]["series_category_ids"]
+    assert rows[2008]["series_category_ids"]["bangalore_2008"] == "atp_international_series"
+    assert rows[2008]["known_not_held_series_ids"] == ["bangalore_2008"]
+    assert "bangalore_2008" not in rows[2009]["series_category_ids"]
+    for excluded in ("mumbai_2008_played", "beijing_olympics_2008",
+                     "world_team_cup", "davis_cup", "wimbledon"):
+        assert excluded not in rows[2008]["series_category_ids"]
+    by = {e["source_entity_id"]: e["payload"] for e in source["entities"]}
+    assert by["bangalore_2008"]["not_held_years_known"] == [2008]
+    assert "skysports.com" in by["bangalore_2008"]["known_nonheld_source"]
+
+
+def test_2008_amersfoort_to_2009_belgrade_and_adelaide_to_brisbane() -> None:
+    source = _source("series")
+    rows = {r["year"]: r["series_category_ids"] for r in
+            build(_source("category"), source)["seasons"]}
+    for id in ("belgrade_2012", "brisbane"):
+        assert rows[2008][id] == "atp_international_series"
+        assert rows[2009][id] == "atp_250"
+    by = {e["source_entity_id"]: e["payload"] for e in source["entities"]}
+    assert _host_by_year(by["belgrade_2012"])[2008] == "Amersfoort"
+    assert _host_by_year(by["belgrade_2012"])[2009] == "Belgrade"
+    assert _host_by_year(by["brisbane"])[2008] == "Adelaide"
+    assert _host_by_year(by["brisbane"])[2009] == "Brisbane" if (
+        2009 in _host_by_year(by["brisbane"])
+    ) else rows[2009]["brisbane"] == "atp_250"
+
+
+def test_2008_source_gate_refuses_false_played_result() -> None:
+    import copy
+    source = copy.deepcopy(_source("series"))
+    warsaw = next(e for e in source["entities"]
+                  if e["source_entity_id"] == "warsaw_2008")
+    warsaw["payload"]["not_held_years_known"] = [2008]
+    with pytest.raises(ValueError, match="played-tier roster mismatch"):
+        build(_source("category"), source)

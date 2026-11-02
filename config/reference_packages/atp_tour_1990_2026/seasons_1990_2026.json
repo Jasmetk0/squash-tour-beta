@@ -593,17 +593,26 @@
         "status": "unverified_incomplete"
       },
       "series_category_ids": {
+        "acapulco": "atp_international_series_gold",
         "atp_finals": "atp_finals",
+        "barcelona": "atp_international_series_gold",
         "canadian_open": "tennis_masters_series",
         "cincinnati": "tennis_masters_series",
+        "dallas": "atp_international_series_gold",
+        "dubai": "atp_international_series_gold",
         "hamburg": "tennis_masters_series",
         "indian_wells": "tennis_masters_series",
+        "kitzbuhel": "atp_international_series_gold",
         "madrid": "tennis_masters_series",
         "miami": "tennis_masters_series",
         "monte_carlo": "tennis_masters_series",
         "paris_masters": "tennis_masters_series",
         "rome": "tennis_masters_series",
-        "st_petersburg": "atp_international_series"
+        "rotterdam": "atp_international_series_gold",
+        "st_petersburg": "atp_international_series",
+        "stuttgart": "atp_international_series_gold",
+        "tokyo": "atp_international_series_gold",
+        "vienna": "atp_international_series_gold"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2008

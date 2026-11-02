@@ -1061,8 +1061,8 @@ Lyon indoor and Valencia licence tracks. These are source-history
 links, *not* played Edition objects and *not* proof of every prior
 or subsequent year in any Series.
 
-**Coverage boundary after this expansion:** **21 consecutive played-tier
-seasons (2005–2025)**, with 1990–2004 still incomplete, 2026
+**Coverage boundary after this expansion:** **22 consecutive played-tier
+seasons (2004–2025)**, with 1990–2003 still incomplete, 2026
 provisional, and the entire runtime Category/Series import/Save/Calendar
 adapter unimplemented. No title points, draws, qualification or
 match/player data was added. Keep this PR Draft.
@@ -1133,3 +1133,34 @@ Challenger. Played Palermo 2005 extends the existing 2006 source.
 1990–2004 remain incomplete, 2026 provisional. Source documents do not
 include actual Edition draws, player results, per-round award point tables,
 or production Package Apply/Run/Save. Keep Draft.
+
+
+## ATP Tour 2004 original played categories (2026-11-02)
+
+The 2004 main ATP Tour (not pre-1990 tennis, Challenger/ITF or Grand Slams)
+played **9 Tennis Masters Series + 9 International Series Gold +
+44 International Series**, plus the separate Tennis Masters Cup (Houston).
+The 2004 ATP annual schedule has four Slams and a World Team Cup: those are
+outside this reference Package scope. This makes exactly **63 source Series
+identities** for the 2004 ATP main Tour-only census.
+
+- [Official ATP played results archive 2004](https://www.atptour.com/en/scores/results-archive?year=2004)
+- [2004 original Category classification and city-by-city schedule](https://de.wikipedia.org/wiki/ATP_Tour_2004)
+- [2004 ATP Tour tier counts](https://en.wikipedia.org/wiki/2004_ATP_Tour)
+- [ATP 2005 Shanghai → Ho Chi Minh City tournament licence announcement](https://www.abc.net.au/news/2005-04-27/vietnam-to-stage-its-first-atp-event/1559488)
+- [ATP Long Island → New Haven 2005 licence transfer reporting](https://www.nhregister.com/news/article/Pilot-Pen-wants-to-add-men-s-tourney-in-August-11652949.php)
+
+Two important correctly shared stable Series, not double-counted places:
+- `bangalore_2008`: *Shanghai regular International Series 2004* →
+  Vietnam Open in Ho Chi Minh City 2005 → Mumbai 2006–07 →
+  cancelled Bangalore 2008. **Distinct from the ATP Finals**, which
+  took place in Houston in 2004 and Shanghai in 2005–08.
+- `winston_salem`: Long Island 2004 → New Haven 2005–10 →
+  Winston-Salem 2011 and onward. All hosts belong to the documented
+  licensed historical Series, no fictitious extra annual event.
+
+The generator now verifies **22 consecutive played-category rosters
+(2004–2025)** in the correct historic tiers. 1990–2003 remains incomplete,
+2026 remains provisional; the source does not implement live Package
+Catalog, native sporting Editions, match/draw/point data, Apply, or Saved
+Run integration. Keep this existing PR Draft until latest-head CI passes.

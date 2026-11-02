@@ -38,7 +38,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 110
+    assert len(series["entities"]) == 113
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -529,7 +529,7 @@ def test_coverage_gates_reject_false_historical_completeness() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     rows = {s["year"]: s for s in build(categories, source)["seasons"]}
-    for year in range(1990, 2001):
+    for year in range(1990, 2000):
         assert rows[year]["played_tier_roster_validation"]["status"] == "unverified_incomplete"
         assert rows[year]["played_tier_roster_validation"]["played_counts"] is None
     assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
@@ -1650,3 +1650,63 @@ def test_2001_false_bogota_cancellation_rejected() -> None:
     entity["payload"]["not_held_years_known"] = [2001]
     with pytest.raises(ValueError, match="played-tier roster mismatch in 2001"):
         build(_source("category"), source)
+
+
+def test_2000_original_9_11_44_tour_tiers_and_reclassification() -> None:
+    yrs = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    r = yrs[2000]
+    assert r["played_tier_roster_validation"]["played_counts"] == {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 11,
+        "atp_international_series": 44,
+    }
+    assert Counter(r["series_category_ids"].values()) == {
+        "tennis_masters_series": 9, "atp_international_series_gold": 11,
+        "atp_international_series": 44, "atp_finals": 1,
+    }
+    assert len(r["series_category_ids"]) == 65
+    for id in ("sofia", "atlanta", "washington"):
+        assert r["series_category_ids"][id] == "atp_international_series_gold"
+        assert yrs[2001]["series_category_ids"][id] == "atp_international_series"
+    assert r["series_category_ids"]["dubai"] == "atp_international_series"
+    assert yrs[2001]["series_category_ids"]["dubai"] == "atp_international_series_gold"
+    for id in ("san_marino_2000", "toulouse_2000", "brighton_2000"):
+        assert r["series_category_ids"][id] == "atp_international_series"
+        assert id not in yrs[2001]["series_category_ids"]
+
+
+def test_2000_original_hosts_and_two_distinct_london_events() -> None:
+    src = _source("series")
+    by = {e["source_entity_id"]: e["payload"] for e in src["entities"]}
+    city = lambda sid, year: _host_by_year(by[sid])[year]
+    assert city("atp_finals", 2000) == "Lisbon"
+    assert city("atp_finals", 2001) == "Sydney"
+    assert city("sofia", 2000) == "London"
+    assert city("sofia", 2001) == "Milan"
+    assert city("queens_club", 2000) == "London"
+    assert city("houston", 2000) == "Orlando"
+    assert city("houston", 2001) == "Houston"
+    assert city("acapulco", 2000) == "Mexico City"
+    assert city("acapulco", 2001) == "Acapulco"
+    assert city("cordoba", 2000) == "Santiago"
+    assert city("cordoba", 2001) == "Viña del Mar"
+    assert city("belgrade_2012", 2000) == "Amsterdam"
+    assert city("belgrade_2012", 2001) == "Amersfoort"
+    assert city("canadian_open", 2000) == "Toronto"
+    assert city("stuttgart_indoor_masters", 2000) == "Stuttgart"
+    assert city("stuttgart", 2000) == "Stuttgart"
+    assert city("hong_kong_salem_2002", 2000) == "Hong Kong"
+    assert city("hong_kong", 2000) == "Chennai"
+    p = src["provenance"]["calendar_validation_2000"]
+    assert p["played_international_series_gold_count"] == 11
+    assert p["doubles_only_world_championship_host"] == "Bengaluru"
+    assert "independent.co.uk" in p["verified_london_gold_to_milan_international_url"]
+
+
+def test_2000_cancelled_brighton_should_fail_category_census() -> None:
+    import copy
+    data = copy.deepcopy(_source("series"))
+    x = next(e for e in data["entities"] if e["source_entity_id"] == "brighton_2000")
+    x["payload"]["not_held_years_known"] = [2000]
+    with pytest.raises(ValueError, match="played-tier roster mismatch in 2000"):
+        build(_source("category"), data)

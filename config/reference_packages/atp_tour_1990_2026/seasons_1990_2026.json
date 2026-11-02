@@ -15,6 +15,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_tour_championship_and_world_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_championship_single_week",
@@ -40,6 +46,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_tour_championship_and_world_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_championship_single_week",
@@ -65,6 +77,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_tour_championship_and_world_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_championship_single_week",
@@ -90,6 +108,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_tour_championship_and_world_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_championship_single_week",
@@ -115,6 +139,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_tour_championship_and_world_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_championship_single_week",
@@ -140,6 +170,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_tour_championship_and_world_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_championship_single_week",
@@ -166,6 +202,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_tour_championship_and_world_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_championship_single_week",
@@ -192,6 +234,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_tour_championship_and_world_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_championship_single_week",
@@ -218,6 +266,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_tour_championship_and_world_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_championship_single_week",
@@ -244,6 +298,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_tour_championship_and_world_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_championship_single_week",
@@ -270,6 +330,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "tennis_masters_and_international_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "tennis_masters_series",
@@ -296,6 +362,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "tennis_masters_and_international_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "tennis_masters_series",
@@ -322,6 +394,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "tennis_masters_and_international_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "tennis_masters_series",
@@ -348,6 +426,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "tennis_masters_and_international_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "tennis_masters_series",
@@ -374,6 +458,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "tennis_masters_and_international_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "tennis_masters_series",
@@ -400,6 +490,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "tennis_masters_and_international_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "tennis_masters_series",
@@ -426,6 +522,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "tennis_masters_and_international_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "tennis_masters_series",
@@ -452,6 +554,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "tennis_masters_and_international_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "tennis_masters_series",
@@ -478,6 +586,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "tennis_masters_and_international_series",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "tennis_masters_series",
@@ -504,6 +618,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_masters_1000",
@@ -533,6 +653,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_masters_1000",
@@ -562,6 +688,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_masters_1000",
@@ -591,6 +723,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_masters_1000",
@@ -620,6 +758,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_masters_1000",
@@ -649,6 +793,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_masters_1000",
@@ -678,6 +828,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_masters_1000",
@@ -708,6 +864,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_masters_1000",
@@ -739,6 +901,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_masters_1000",
@@ -771,6 +939,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_masters_1000",
@@ -803,6 +977,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "unverified_incomplete"
+      },
       "series_category_ids": {
         "atp_finals": "atp_finals",
         "canadian_open": "atp_masters_1000",
@@ -848,26 +1028,59 @@
         "queens_club",
         "shanghai"
       ],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": {
+          "atp_250": 18,
+          "atp_500": 7,
+          "atp_masters_1000": 3
+        },
+        "scope": "ATP Masters 1000, ATP 500, ATP 250; excludes Finals and team events",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "status": "played_tour_tiers_reconciled_to_atp_results_archive"
+      },
       "series_category_ids": {
+        "acapulco": "atp_500",
+        "adelaide": "atp_250",
+        "almaty": "atp_250",
         "atp_finals": "atp_finals",
+        "auckland": "atp_250",
         "beijing": "atp_500",
+        "brussels": "atp_250",
+        "buenos_aires": "atp_250",
         "canadian_open": "atp_masters_1000",
         "chengdu": "atp_250",
         "cincinnati": "atp_masters_1000",
+        "cologne_1_2020": "atp_250",
+        "cologne_2_2020": "atp_250",
+        "cordoba": "atp_250",
+        "dallas": "atp_250",
+        "delray_beach": "atp_250",
+        "doha": "atp_250",
+        "dubai": "atp_500",
         "halle": "atp_500",
         "hamburg": "atp_500",
         "hangzhou": "atp_250",
+        "hong_kong": "atp_250",
         "indian_wells": "atp_masters_1000",
+        "kitzbuhel": "atp_250",
+        "lyon": "atp_250",
         "madrid": "atp_masters_1000",
         "miami": "atp_masters_1000",
         "monte_carlo": "atp_masters_1000",
+        "montpellier": "atp_250",
         "next_gen_atp_finals": "next_gen_finals",
         "paris_masters": "atp_masters_1000",
         "queens_club": "atp_500",
         "rio": "atp_500",
         "rome": "atp_masters_1000",
+        "rotterdam": "atp_500",
+        "santiago": "atp_250",
+        "sardinia_2020": "atp_250",
         "shanghai": "atp_masters_1000",
-        "st_petersburg": "atp_500"
+        "sofia": "atp_250",
+        "st_petersburg": "atp_500",
+        "vienna": "atp_500"
       },
       "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
       "year": 2020
@@ -891,6 +1104,17 @@
         "rio",
         "shanghai"
       ],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": {
+          "atp_250": 39,
+          "atp_500": 9,
+          "atp_masters_1000": 8
+        },
+        "scope": "ATP Masters 1000, ATP 500, ATP 250; excludes Finals and team events",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+        "status": "played_tour_tiers_reconciled_to_atp_results_archive"
+      },
       "series_category_ids": {
         "acapulco": "atp_500",
         "almaty": "atp_250",
@@ -977,6 +1201,17 @@
         "hangzhou",
         "shanghai"
       ],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": {
+          "atp_250": 42,
+          "atp_500": 13,
+          "atp_masters_1000": 8
+        },
+        "scope": "ATP Masters 1000, ATP 500, ATP 250; excludes Finals and team events",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "status": "played_tour_tiers_reconciled_to_atp_results_archive"
+      },
       "series_category_ids": {
         "acapulco": "atp_500",
         "adelaide": "atp_250",
@@ -1062,6 +1297,17 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": {
+          "atp_250": 38,
+          "atp_500": 13,
+          "atp_masters_1000": 9
+        },
+        "scope": "ATP Masters 1000, ATP 500, ATP 250; excludes Finals and team events",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+        "status": "played_tour_tiers_reconciled_to_atp_results_archive"
+      },
       "series_category_ids": {
         "acapulco": "atp_500",
         "adelaide": "atp_250",
@@ -1140,6 +1386,17 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": {
+          "atp_250": 38,
+          "atp_500": 13,
+          "atp_masters_1000": 9
+        },
+        "scope": "ATP Masters 1000, ATP 500, ATP 250; excludes Finals and team events",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+        "status": "played_tour_tiers_reconciled_to_atp_results_archive"
+      },
       "series_category_ids": {
         "acapulco": "atp_500",
         "adelaide": "atp_250",
@@ -1218,6 +1475,17 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": {
+          "atp_250": 30,
+          "atp_500": 16,
+          "atp_masters_1000": 9
+        },
+        "scope": "ATP Masters 1000, ATP 500, ATP 250; excludes Finals and team events",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+        "status": "played_tour_tiers_reconciled_to_atp_results_archive"
+      },
       "series_category_ids": {
         "acapulco": "atp_500",
         "adelaide": "atp_250",
@@ -1291,6 +1559,12 @@
       "edition_assertion": "none; reference membership does not prove played annual edition",
       "era": "atp_masters_1000_500_250",
       "known_not_held_series_ids": [],
+      "played_tier_roster_validation": {
+        "not_an_edition_calendar": true,
+        "played_counts": null,
+        "scope": "No complete played ATP 1000/500/250 event census established",
+        "status": "provisional_calendar_not_final_results"
+      },
       "series_category_ids": {
         "acapulco": "atp_500",
         "adelaide": "atp_250",

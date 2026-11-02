@@ -16,7 +16,7 @@
     "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
     "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
     "notes": [
-      "Source-backed played main ATP Tour category rosters are reconciled for 2006–2025; 1990–2005 remain incomplete, 2026 provisional. These do not constitute full playable Editions.",
+      "Actual played ATP Tour original category rosters reconciled 2005–2025; historical 1990–2004 incomplete and 2026 provisional. No played Edition semantics implied.",
       "2026 date/host fields are not assumed for earlier seasons.",
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
@@ -452,6 +452,41 @@
         "2006 Palermo (ATP Tour ID 325) was played, is not a 2007 ATP International Series edition, and older Palermo years require independent backfill.",
         "2006 Zagreb, Valencia, Nottingham, Lyon indoor, Amersfoort, Indianapolis, Sopot and Mumbai reuse existing source identities with explicit dated host names.",
         "Preliminary 2006 calendar listings may show Milan or Ho Chi Minh City: do NOT import them without actual played-2006 archive proof; the year-2006 played list uses Zagreb/Mumbai and the source year counts instead."
+      ]
+    },
+    "calendar_validation_2005": {
+      "official_played_results_archive_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+      "historic_category_calendar_url": "https://de.wikipedia.org/wiki/ATP_Tour_2005",
+      "played_masters_series_count": 9,
+      "played_international_series_gold_count": 9,
+      "played_international_series_count": 44,
+      "atp_finals_played": true,
+      "scope": "2005 ATP main Tour: 9 Masters, 9 Gold, 44 International Series and one separate Finals; Grand Slams, Challengers and team events excluded",
+      "verified_licence_relocations": [
+        {
+          "series_id": "sofia",
+          "host_2005": "Milan",
+          "host_2006": "Zagreb",
+          "source_url": "https://www.eurosport.it/tennis/atp-milano/2005/_sto787065/story.shtml"
+        },
+        {
+          "series_id": "las_vegas_2008",
+          "host_2005": "Scottsdale",
+          "host_2006": "Las Vegas",
+          "source_url": "https://lasvegassun.com/news/2005/oct/19/columnist-ron-kantowski-dont-turn-channel-for-andr/"
+        },
+        {
+          "series_id": "bangalore_2008",
+          "host_2005": "Ho Chi Minh City",
+          "host_2006": "Mumbai",
+          "source_url": "https://vnexpress.net/giai-quan-vot-mumbai-open-se-thay-the-vietnam-open-1189362.html"
+        },
+        {
+          "series_id": "poertschach_2008",
+          "host_2005": "St. Pölten",
+          "host_2006": "Pörtschach",
+          "source_url": "https://www.derstandard.at/story/2389037/poertschach-bekommt-stpoelten-lizenz"
+        }
       ]
     }
   },
@@ -1037,6 +1072,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series_gold",
@@ -1172,6 +1214,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Memphis",
@@ -1310,6 +1358,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series_gold",
@@ -1446,6 +1501,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Rotterdam",
             "country_code": "NLD",
@@ -1497,6 +1558,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -1641,6 +1709,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Doha",
+            "country_code": "QAT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Doha",
             "country_code": "QAT",
@@ -1733,6 +1807,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series_gold",
@@ -1868,6 +1949,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Acapulco",
+            "country_code": "MEX",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Acapulco",
@@ -1921,6 +2008,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series_gold",
@@ -2057,6 +2151,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Dubai",
+            "country_code": "ARE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Dubai",
             "country_code": "ARE",
@@ -2108,6 +2208,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -2238,6 +2345,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Barcelona",
             "country_code": "ESP",
@@ -2289,6 +2402,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -2426,6 +2546,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Munich",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Munich",
             "country_code": "DEU",
@@ -2540,6 +2666,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -2582,6 +2715,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Halle ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Halle",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Halle",
@@ -2635,6 +2774,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -2677,6 +2823,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "London",
@@ -2729,6 +2881,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -2859,6 +3018,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Washington",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Washington",
             "country_code": "USA",
@@ -2904,6 +3069,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -3027,6 +3199,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Tokyo",
             "country_code": "JPN",
@@ -3078,6 +3256,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -3221,6 +3406,12 @@
         "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Beijing",
+            "country_code": "CHN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Beijing",
             "country_code": "CHN",
@@ -3266,6 +3457,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -3400,6 +3598,12 @@
         "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Basel",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Basel",
             "country_code": "CHE",
@@ -3445,6 +3649,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -3582,6 +3793,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Vienna",
             "country_code": "AUT",
@@ -3676,6 +3893,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -3799,6 +4023,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Adelaide",
             "country_code": "AUS",
@@ -3857,6 +4087,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -4000,6 +4237,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Chennai",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Chennai",
@@ -4217,6 +4460,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -4353,6 +4603,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Auckland",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Auckland",
             "country_code": "NZL",
@@ -4398,6 +4654,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -4542,6 +4805,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Lyon",
             "country_code": "FRA",
@@ -4602,6 +4871,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -4751,6 +5027,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Buenos Aires",
+            "country_code": "ARG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Buenos Aires",
@@ -4798,6 +5080,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -4947,6 +5236,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Delray Beach",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Delray Beach",
@@ -5122,6 +5417,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -5269,6 +5571,12 @@
         "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Houston",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Houston",
             "country_code": "USA",
@@ -5314,6 +5622,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -5450,6 +5765,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Casablanca",
@@ -5658,6 +5979,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series_gold",
@@ -5801,6 +6129,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -5888,6 +6222,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -6025,6 +6366,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "'s-Hertogenbosch",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "'s-Hertogenbosch",
             "country_code": "NLD",
@@ -6141,6 +6488,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -6285,6 +6639,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Nottingham",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Nottingham",
             "country_code": "GBR",
@@ -6392,6 +6752,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -6534,6 +6901,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Båstad",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Båstad",
@@ -6581,6 +6954,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -6723,6 +7103,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Gstaad",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Gstaad",
@@ -6770,6 +7156,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -6913,6 +7306,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Umag",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Umag",
             "country_code": "HRV",
@@ -6958,6 +7357,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -7102,6 +7508,12 @@
         "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Kitzbühel",
             "country_code": "AUT",
@@ -7153,6 +7565,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -7289,6 +7708,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Estoril",
@@ -7513,6 +7938,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -7655,6 +8087,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "New Haven",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "New Haven",
@@ -8168,6 +8606,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -8318,6 +8763,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Valencia",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Valencia",
             "country_code": "ESP",
@@ -8454,6 +8905,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -8613,6 +9071,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Marseille",
             "country_code": "FRA",
@@ -8754,6 +9218,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
           },
           {
             "from": 2006,
@@ -8899,6 +9370,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit.",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Stockholm",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Stockholm",
@@ -9188,6 +9665,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Saint Petersburg",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Saint Petersburg",
             "country_code": "RUS",
@@ -9255,6 +9738,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -9390,6 +9880,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Viña del Mar",
+            "country_code": "CHL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Viña del Mar",
@@ -9696,6 +10192,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -9824,6 +10327,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Newport",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Newport",
             "country_code": "USA",
@@ -9873,6 +10382,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -10002,6 +10518,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Indianapolis",
             "country_code": "USA",
@@ -10111,6 +10633,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -10246,6 +10775,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Metz",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Metz",
@@ -10403,8 +10938,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "2023_actual_edition_evidence_only",
+        "history_scope": "2005_milan_2006_2015_zagreb_2016_sofia",
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.eurosport.it/tennis/atp-milano/2005/_sto787065/story.shtml",
+            "notes": "Contemporary evidence of 2005 source Series moving to its 2006 host under a continuous ATP calendar licence"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -10534,6 +11076,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Milan",
+            "country_code": "ITA",
+            "source_url": "https://www.eurosport.it/tennis/atp-milano/2005/_sto787065/story.shtml"
+          },
+          {
             "year": 2006,
             "city": "Zagreb",
             "country_code": "HRV",
@@ -10600,7 +11148,7 @@
             "source_url": "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars"
           }
         ],
-        "identity_review_note": "Zagreb indoor ATP 250 2015 relocated to Sofia in 2016; official ATP 2017–2018 calendar announcement. Does not imply an additional Zagreb edition in 2016."
+        "identity_review_note": "2005 Milan Indoors ATP slot moved to Zagreb for 2006, and Zagreb to Sofia in 2016; year-specific identity rather than duplicate locations."
       },
       "references": [
         {
@@ -11187,6 +11735,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -11294,6 +11849,12 @@
         ],
         "identity_review_note": "Bucharest 2015–16 Tour licence transferred Budapest 2017–19 then Belgrade 2021; Bucharest 2024+ tracked as a distinct Tour licence without unproven merger.",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Bucharest",
+            "country_code": "ROU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Bucharest",
@@ -11541,6 +12102,13 @@
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -11648,6 +12216,12 @@
         ],
         "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played.",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Moscow",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Moscow",
@@ -11819,6 +12393,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -11920,6 +12501,12 @@
         "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined.",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Sydney",
             "country_code": "AUS",
@@ -11969,6 +12556,13 @@
         "not_squash_rules": true,
         "history_scope": "verified_2018_2019_250_only_next_license_location_not_yet_certified",
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -12070,6 +12664,12 @@
         ],
         "identity_review_note": "Costa do Sauípe ATP Tour Brasil Open event 2011 moved to São Paulo from 2012, played through 2019. Tournament venue changed, not a new Tour series.",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Costa do Sauípe",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Costa do Sauípe",
@@ -12381,6 +12981,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -12439,6 +13046,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "San Jose",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "San Jose",
@@ -12490,6 +13103,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -12548,6 +13168,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Los Angeles",
@@ -12599,6 +13225,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -12658,6 +13291,12 @@
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Bangkok",
+            "country_code": "THA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Bangkok",
             "country_code": "THA",
@@ -12707,6 +13346,13 @@
         "not_squash_rules": true,
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -12759,6 +13405,12 @@
         ],
         "identity_review_note": "Dutch Open Amersfoort 2008 ATP sanction sold with ATP Board approval to Belgrade and played as Serbia Open 2009–2012. Separate Budapest 2021 Belgrade licence.",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Amersfoort",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Amersfoort",
@@ -12891,8 +13543,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "2007_2008_international_series_year_evidenced_only_other_seasons_not_backfilled",
+        "history_scope": "2005_scottsdale_2006_2008_las_vegas",
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://lasvegassun.com/news/2005/oct/19/columnist-ron-kantowski-dont-turn-channel-for-andr/",
+            "notes": "Contemporary evidence of 2005 source Series moving to its 2006 host under a continuous ATP calendar licence"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -12915,8 +13574,14 @@
             "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
           }
         ],
-        "identity_review_note": "Played ATP International Series in 2007 and 2008; licence continuity outside these years remains unverified.",
+        "identity_review_note": "2005 Tennis Channel Open in Scottsdale transferred to Las Vegas in 2006, played there through 2008; earlier Scottsdale years not imported.",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Scottsdale",
+            "country_code": "USA",
+            "source_url": "https://lasvegassun.com/news/2005/oct/19/columnist-ron-kantowski-dont-turn-channel-for-andr/"
+          },
           {
             "year": 2006,
             "city": "Las Vegas",
@@ -12959,8 +13624,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "2007_2008_international_series_year_evidenced_only_other_seasons_not_backfilled",
+        "history_scope": "2005_st_poelten_2006_2008_poertschach",
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.derstandard.at/story/2389037/poertschach-bekommt-stpoelten-lizenz",
+            "notes": "Contemporary evidence of 2005 source Series moving to its 2006 host under a continuous ATP calendar licence"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -12983,8 +13655,14 @@
             "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
           }
         ],
-        "identity_review_note": "Played ATP International Series in 2007 and 2008; licence continuity outside these years remains unverified.",
+        "identity_review_note": "2005 St. Pölten ATP event licence moved to Pörtschach from 2006, played there through 2008.",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "St. Pölten",
+            "country_code": "AUT",
+            "source_url": "https://www.derstandard.at/story/2389037/poertschach-bekommt-stpoelten-lizenz"
+          },
           {
             "year": 2006,
             "city": "Pörtschach",
@@ -13030,6 +13708,13 @@
         "history_scope": "2007_2008_international_series_year_evidenced_only_other_seasons_not_backfilled",
         "history_periods": [
           {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
             "from": 2006,
             "to": 2006,
             "category_id": "atp_international_series",
@@ -13053,6 +13738,12 @@
         ],
         "identity_review_note": "Sopot 2007 ATP International Series relocated to Warsaw and was played in 2008. Neither historic Sopot and Warsaw host is a parallel 2008 Series. The earlier prospective 2008 calendar still listed Sopot.",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Sopot",
+            "country_code": "POL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
           {
             "year": 2006,
             "city": "Sopot",
@@ -13101,8 +13792,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "2007_2008_international_series_year_evidenced_only_other_seasons_not_backfilled",
+        "history_scope": "2005_vietnam_2006_2007_mumbai_2008_bangalore_cancelled",
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://vnexpress.net/giai-quan-vot-mumbai-open-se-thay-the-vietnam-open-1189362.html",
+            "notes": "Contemporary evidence of 2005 source Series moving to its 2006 host under a continuous ATP calendar licence"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -13125,12 +13823,18 @@
             "notes": "Bangalore 2008 scheduled after Mumbai change, but cancelled before play; excluded from played events"
           }
         ],
-        "identity_review_note": "Mumbai 2007 ATP International Series was played. The tournament moved to Bangalore for planned 2008 play but was cancelled for security reasons; 2008 is a non-held Series year, not a played tournament.",
+        "identity_review_note": "2005 Vietnam Open Ho Chi Minh City moved with ATP approval to Mumbai in 2006 (played 2006 and 2007); planned Bangalore 2008 was cancelled, not played.",
         "not_held_years_known": [
           2008
         ],
         "known_nonheld_source": "https://www.skysports.com/tennis/news/4050908/bangalore-open-cancelled",
         "historical_host_change": [
+          {
+            "year": 2005,
+            "city": "Ho Chi Minh City",
+            "country_code": "VNM",
+            "source_url": "https://vnexpress.net/giai-quan-vot-mumbai-open-se-thay-the-vietnam-open-1189362.html"
+          },
           {
             "year": 2006,
             "city": "Mumbai",
@@ -13173,8 +13877,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "2006_played_international_series_only_earlier_1990_2005_years_not_backfilled",
+        "history_scope": "2005_2006_played_tour_only_older_seasons_not_backfilled",
         "history_periods": [
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
           {
             "from": 2006,
             "to": 2006,
@@ -13185,13 +13896,19 @@
         ],
         "historical_host_change": [
           {
+            "year": 2005,
+            "city": "Palermo",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
             "year": 2006,
             "city": "Palermo",
             "country_code": "ITA",
             "source_url": "https://www.atptour.com/en/tournaments/palermo/325/overview"
           }
         ],
-        "identity_review_note": "Palermo existed in earlier ATP Tour seasons; only its played 2006 Category is currently imported. Do not assert 2007, a licence transfer, or earlier annual coverage without dedicated evidence."
+        "identity_review_note": "2005 and 2006 Palermo ATP main Tour International Series played editions verified; do not infer older annual history or post-2006 license successors."
       },
       "references": [
         {

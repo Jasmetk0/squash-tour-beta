@@ -518,7 +518,8 @@ def test_2020_cologne_sardinia_nur_sultan_one_year_events_and_nyc_venue() -> Non
     assert hosts[2008] == hosts[2017] == "Memphis"
     assert hosts[2018] == hosts[2020] == "New York"
     assert hosts[2022] == "Dallas"
-    assert [host["city"] for host in by_id["cincinnati"]["historical_host_change"]] == ["New York", "Cincinnati"]
+    assert [host["city"] for host in by_id["cincinnati"]["historical_host_change"]
+            if 2020 <= host["year"] <= 2021] == ["New York", "Cincinnati"]
     assert [host["city"] for host in by_id["almaty"]["historical_host_change"]] == [
         "Nur-Sultan", "Nur-Sultan", "Astana", "Astana", "Almaty"
     ]

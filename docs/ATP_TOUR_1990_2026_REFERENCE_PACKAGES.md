@@ -1,16 +1,16 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **107** Series identities and 37 generated annual reference rows.
-> The **23 played main ATP Tour tier rosters 2003–2025** have source-backed
-> original year-effective categories. **1990–2002 are incomplete; 2026 is
+> **108** Series identities and 37 generated annual reference rows.
+> The **24 played main ATP Tour tier rosters 2002–2025** have source-backed
+> original year-effective categories. **1990–2001 are incomplete; 2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
 >
 > Sections below preserve dated incremental research checkpoints. Statements
 > about older incomplete year ranges (e.g. `1990–2007`) describe the state
-> **at those earlier checkpoints**, not the current 2003–2025 coverage.
+> **at those earlier checkpoints**, not the current 2002–2025 coverage.
 > Read the most recent dated historical appendix for up-to-date provenance.
 
 
@@ -1075,8 +1075,8 @@ Lyon indoor and Valencia licence tracks. These are source-history
 links, *not* played Edition objects and *not* proof of every prior
 or subsequent year in any Series.
 
-**Coverage boundary after this expansion:** **23 consecutive played-tier
-seasons (2003–2025)**, with 1990–2002 still incomplete, 2026
+**Coverage boundary after this expansion:** **24 consecutive played-tier
+seasons (2002–2025)**, with 1990–2001 still incomplete, 2026
 provisional, and the entire runtime Category/Series import/Save/Calendar
 adapter unimplemented. No title points, draws, qualification or
 match/player data was added. Keep this PR Draft.
@@ -1208,3 +1208,46 @@ This raises the category-census coverage to **23 consecutive actual
 played years, 2003–2025**. Still source-only, no per-round historic
 point matrices, Draw/Edition/Result objects, Run Apply/Save or production
 Package adapter. **1990–2002 remain incomplete; 2026 provisional.**
+
+
+## ATP 2002 Tour-only played original tier roster — source audit 2026-11-02
+
+**Played main ATP Tour 2002:** 9 Tennis Masters Series,
+9 International Series Gold, **43 International Series** and one
+separate Tennis Masters Cup (Shanghai): **62 source Series identities**.
+The four Grand Slams, the World Team Cup in Düsseldorf, Davis Cup
+and Challenger/ITF are excluded. This difference from 2003's 44
+International Series is **real**, not silently completed by carrying
+2003's Metz or Shanghai regular Tour event into 2002.
+
+Sources:
+- [ATP official actual played Results Archive 2002](https://www.atptour.com/en/scores/results-archive?year=2002)
+- [Historical 2002 Category/calendar cross-check](https://de.wikipedia.org/wiki/ATP_Tour_2002)
+- [Mallorca venue/licence → Valencia 2003, contemporary ATP board decision](https://as.com/masdeporte/2003/03/24/polideportivo/1048460403_850215.html)
+- [ATP-authorised Tashkent President's Cup → Bangkok 2003](https://www.sports.ru/tennis/2875657.html)
+- [2002 Hong Kong Salem Open finale and proposed Beijing move](https://www.scmp.com/article/392880/juan-last-hurrah-curtain-falls-open)
+- [Official ATP report of the 2002 Tennis Masters Cup in Shanghai](https://www.atptour.com/en/news/nitto-atp-finals-50th-anniversary-shanghai-feature)
+
+The 2002 Mallorca ATP International Series is **not** the separate
+post-2021 Mallorca grass Tour event. It is attached to Valencia's
+historically continuous licensed source identity `brussels`. Similarly,
+`bangkok_2013` had the 2002 Tashkent ATP Tour event as its authorised
+licence predecessor.
+
+**Hong Kong name collision:** The `hong_kong` source played **in
+Chennai, India** in 2002. The concurrent Salem Open was played **in
+Hong Kong**; it uses a separate year-specific source
+`hong_kong_salem_2002`. Do not link the two. Contemporary plans
+to move the Salem Open to Beijing in 2003 did **not** result in
+a played ATP 2003 Beijing edition; a 2004 legal connection is not
+asserted without direct evidence.
+
+**Archive correction:** Toronto hosted the 2002 Canadian Masters,
+not Montreal as described in some secondary 2002 calendar summaries.
+The 2002 Tennis Masters Cup was played in Shanghai, separately
+from the Shanghai regular ATP International Series played 2003–04.
+
+**24 consecutive source-reconciled played Tier rosters (2002–2025)**.
+1990–2001 are incomplete, 2026 provisional. These are source data
+only and do not import real annual Editions, draws, per-round points,
+or production Apply/Save to Squash Engine. Keep the PR Draft.

@@ -32,7 +32,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**93 identities** across 2026 ATP Tour fixtures and selected older masters.
+**95 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -515,10 +515,10 @@ Source identity continuity was reconciled as follows:
 The deterministic source resolver now emits
 `played_tier_roster_validation` for every annual snapshot:
 
-- **2019–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
+- **2018–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
   with year-specific reference counts independently asserted against
   played (category-effective minus known-cancelled) identities.
-- **1990–2018**: `unverified_incomplete`. No invented total
+- **1990–2017**: `unverified_incomplete`. No invented total
   or assumption that present-day event structure already existed.
 - **2026**: `provisional_calendar_not_final_results`; ATP
   calendar changes and remaining matches are not misreported as
@@ -529,7 +529,7 @@ counts raises a `ValueError` before a stale annual reference
 can pass the source generator's `--check`. Tests additionally
 assert 2020 one-off events, Category references and location changes.
 
-**Remaining gap:** 1990–2018 lower Tour tiers are not fully reconstructed
+**Remaining gap:** 1990–2017 lower Tour tiers are not fully reconstructed
 and still require ATP results archive research. Runtime integration
 into the Squash Engine Packages library and sporting Calendar is still
 absent, and no source file implies a playable tennis simulation.
@@ -589,7 +589,56 @@ even when the JSON remains syntactically valid.
 | 2024 | 9 | 13 | 38 | 2 | ATP 2024 results |
 | 2025 | 9 | 16 | 30 | 2 | ATP 2025 results |
 
-These seven year-specific rosters are source-level and **NOT**
+These eight year-specific rosters are source-level and **NOT**
 Calendar Edition packages, complete points/format histories or
-full tournament draw result archives. **1990–2018 remains
+full tournament draw result archives. **1990–2017 remains
 historically incomplete**, and 2026 remains provisional.
+
+## 2018 official ATP Tour calendar: 64 identities with verified tiers
+
+The ATP's own
+[2018 ATP World Tour Calendar](https://www.atptour.com/-/media/files/partnerships/about-2018-atp-world-tour.pdf)
+lists **9 Masters 1000, 13 ATP 500 and 40 ATP 250 events**
+plus the Nitto ATP Finals and Next Gen ATP Finals — **64 ATP
+competition identities** in the tournament schedule. The ATP's
+[2018 Results Archive](https://www.atptour.com/en/scores/results-archive?year=2018)
+corroborates the played competitions. Grand Slam and Davis Cup
+entries appear separately in ATP publications and are **excluded**
+from this ATP-only source model.
+
+For 2018, these historical Series identities have been explicitly
+preserved or differentiated:
+
+- The last **Quito 250** held in 2018, followed by
+  **Córdoba 250 in 2019**, shares the transferable tour-calendar
+  licence/slot; the documented sale and replacement is described
+  by the contemporary
+  [La Nación report](https://www.lanacion.com.ar/deportes/tenis/historico-argentina-organizara-segundo-torneo-atp-2019-nid2165990/).
+  The `cordoba` ID has host Quito in 2018 and Córdoba in 2019.
+  This is an economically documented transfer, not a mere guess
+  based on adjacent weeks.
+- The **2018 Shenzhen ATP 250** is a separate identity
+  `shenzhen_2018` and is not silently merged into the new
+  Zhuhai 2019 event. An equivalent competition category and
+  China venue alone does not establish common legal licence.
+- The **2018 Istanbul 250** source is independently retained
+  without inventing a played 2019 edition.
+- **Sydney 2018 and 2019** share their verified venue-event
+  identity, as do grass **Antalya 2018 and 2019**. Separate
+  COVID-era 2021 Antalya and 2022 Sydney licences remain
+  distinct pending explicit legal transfer evidence.
+- **Budapest 2018–19** remains one identity with its ATP-approved
+  relocation to Belgrade in 2021, not a parallel created series.
+- **New York 2018–20 → Dallas from 2022**, and **Pune
+  2018–20, 2022–23 → Hong Kong from 2024**, are tracked
+  through their historical host changes rather than rebranding
+  retroactively.
+
+The 2018 annual Category roster is now included in the generator's
+fail-closed source validation (9/13/40). The year-resolved
+record does not contain players, scores, tournament draw results,
+qualification details or a tennis sporting engine.
+
+**2018–2025** are the eight consecutive ATP years reconciled at
+the played Tour Category level. **1990–2017** lower-tier event
+Series remain incomplete; the 2026 roster is provisional.

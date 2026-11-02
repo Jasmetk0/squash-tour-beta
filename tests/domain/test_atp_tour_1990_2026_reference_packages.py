@@ -31,7 +31,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 93
+    assert len(series["entities"]) == 95
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -446,7 +446,7 @@ def test_pune_to_hong_kong_retains_one_series_id_from_2022_to_2026() -> None:
     hong_kong = next(e for e in source["entities"]
                      if e["source_entity_id"] == "hong_kong")["payload"]
     assert [row["city"] for row in hong_kong["historical_host_change"]] == [
-        "Pune", "Pune", "Pune", "Pune", "Hong Kong"
+        "Pune", "Pune", "Pune", "Pune", "Pune", "Hong Kong"
     ]
     assert "atptour.com" in hong_kong["historical_licence_source_url"]
 
@@ -506,7 +506,7 @@ def test_2020_cologne_sardinia_nur_sultan_one_year_events_and_nyc_venue() -> Non
     assert y2020["cincinnati"] == "atp_masters_1000"
     series = _source("series")
     by_id = {x["source_entity_id"]: x["payload"] for x in series["entities"]}
-    assert [host["city"] for host in by_id["dallas"]["historical_host_change"]] == ["New York", "New York", "Dallas"]
+    assert [host["city"] for host in by_id["dallas"]["historical_host_change"]] == ["New York", "New York", "New York", "Dallas"]
     assert [host["city"] for host in by_id["cincinnati"]["historical_host_change"]] == ["New York", "Cincinnati"]
     assert [host["city"] for host in by_id["almaty"]["historical_host_change"]] == [
         "Nur-Sultan", "Nur-Sultan", "Astana", "Astana", "Almaty"
@@ -517,11 +517,11 @@ def test_coverage_gates_reject_false_historical_completeness() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     rows = {s["year"]: s for s in build(categories, source)["seasons"]}
-    for year in range(1990, 2019):
+    for year in range(1990, 2018):
         assert rows[year]["played_tier_roster_validation"]["status"] == "unverified_incomplete"
         assert rows[year]["played_tier_roster_validation"]["played_counts"] is None
     assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
-    for year in range(2019, 2026):
+    for year in range(2018, 2026):
         assert rows[year]["played_tier_roster_validation"]["status"] == (
             "played_tour_tiers_reconciled_to_atp_results_archive"
         )
@@ -578,10 +578,10 @@ def test_2019_venue_licence_boundary_for_budapest_new_york_and_antalya() -> None
     source = _source("series")
     by_id = {e["source_entity_id"]: e["payload"] for e in source["entities"]}
     assert [r["city"] for r in by_id["belgrade_clay_2021"]["historical_host_change"]] == [
-        "Budapest", "Belgrade"
+        "Budapest", "Budapest", "Belgrade"
     ]
     assert [r["city"] for r in by_id["dallas"]["historical_host_change"]] == [
-        "New York", "New York", "Dallas"
+        "New York", "New York", "New York", "Dallas"
     ]
 
 
@@ -591,5 +591,62 @@ def test_explicit_played_roster_gate_rejects_fabricated_2019_cancellation() -> N
     source = copy.deepcopy(_source("series"))
     entity = next(e for e in source["entities"] if e["source_entity_id"] == "sao_paulo")
     entity["payload"]["not_held_years_known"] = [2019]
+    with pytest.raises(ValueError, match="played-tier roster mismatch"):
+        build(categories, source)
+
+
+def test_2018_atp_official_calendar_reconciles_all_64_atp_series() -> None:
+    seasons = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    y2018 = seasons[2018]
+    assert Counter(y2018["series_category_ids"].values()) == {
+        "atp_masters_1000": 9,
+        "atp_500": 13,
+        "atp_250": 40,
+        "atp_finals": 1,
+        "next_gen_finals": 1,
+    }
+    assert len(y2018["series_category_ids"]) == 64
+    assert y2018["known_not_held_series_ids"] == []
+    assert y2018["played_tier_roster_validation"]["played_counts"] == {
+        "atp_masters_1000": 9, "atp_500": 13, "atp_250": 40,
+    }
+    assert y2018["played_tier_roster_validation"]["status"] == (
+        "played_tour_tiers_reconciled_to_atp_results_archive"
+    )
+    source = _source("series")["provenance"]["calendar_validation_2018"]
+    assert "atptour.com" in source["official_calendar_url"]
+    assert source["played_atp_250_count"] == 40
+    assert source["played_atp_500_count"] == 13
+
+
+def test_2018_quito_to_2019_cordoba_and_distinct_southern_venues() -> None:
+    years = {r["year"]: r["series_category_ids"]
+             for r in build(_source("category"), _source("series"))["seasons"]}
+    d18, d19 = years[2018], years[2019]
+    assert d18["cordoba"] == "atp_250"  # Quito 2018
+    assert d19["cordoba"] == "atp_250"  # Cordoba 2019
+    assert d18["shenzhen_2018"] == "atp_250"
+    assert "shenzhen_2018" not in d19
+    assert d19["hangzhou"] == "atp_250"  # Zhuhai 2019
+    assert d18["istanbul_2018"] == "atp_250"
+    assert "istanbul_2018" not in d19
+    assert d18["sydney_2019"] == d19["sydney_2019"] == "atp_250"
+    assert d18["antalya_2019"] == d19["antalya_2019"] == "atp_250"
+    assert d18["belgrade_clay_2021"] == d19["belgrade_clay_2021"] == "atp_250"
+    doc = _source("series")
+    by = {e["source_entity_id"]: e["payload"] for e in doc["entities"]}
+    assert [p["city"] for p in by["cordoba"]["historical_host_change"]] == [
+        "Quito", "Córdoba"
+    ]
+    assert [p["city"] for p in by["dallas"]["historical_host_change"]] == [
+        "New York", "New York", "New York", "Dallas"
+    ]
+
+
+def test_2018_census_rejects_false_cancellation() -> None:
+    import copy
+    categories, source = _source("category"), copy.deepcopy(_source("series"))
+    entity = next(e for e in source["entities"] if e["source_entity_id"] == "shenzhen_2018")
+    entity["payload"]["not_held_years_known"] = [2018]
     with pytest.raises(ValueError, match="played-tier roster mismatch"):
         build(categories, source)

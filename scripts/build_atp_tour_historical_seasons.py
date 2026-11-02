@@ -21,9 +21,14 @@ FIRST, LAST = 1990, 2026
 # describe *played events* (never cancelled Series identities), and are
 # intentionally NOT backfilled from any present-day calendar to older years.
 # Official archive: https://www.atptour.com/en/scores/results-archive?year=YYYY
-# 2008 predates the ATP 1000/500/250 tier rebrand. Do not map Gold
+# 2007–2008 predate the ATP 1000/500/250 tier rebrand. Do not map Gold
 # into 500 or International into 250; evidence is category-effective.
 HISTORIC_PLAYED_TIER_COUNTS: dict[int, dict[str, int]] = {
+    2007: {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 43,
+    },
     2008: {
         "tennis_masters_series": 9,
         "atp_international_series_gold": 9,
@@ -218,7 +223,7 @@ def main() -> int:
         if not TARGET.is_file() or TARGET.read_text(encoding="utf-8") != payload:
             print("Historical seasons stale; run --write")
             return 1
-        print("ATP Tour reference 1990–2026: 37 seasons verified (partial historical Series coverage)")
+        print("ATP Tour reference 1990–2026: 37 seasons derived; complete played-tier rosters 2007–2025, historical 1990–2006 incomplete, 2026 provisional")
         return 0
     TARGET.write_text(payload, encoding="utf-8")
     print("Created", TARGET)

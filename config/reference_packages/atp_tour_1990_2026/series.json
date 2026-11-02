@@ -12258,7 +12258,7 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "2008_International_Series_only_and_legal_sanction_history_not_backfilled",
+        "history_scope": "2007_2008_international_series_year_evidenced_only_other_seasons_not_backfilled",
         "history_periods": [
           {
             "from": 2007,
@@ -12275,7 +12275,7 @@
             "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
           }
         ],
-        "identity_review_note": "2008 Tour event only; earlier or later licence continuity needs dated evidence",
+        "identity_review_note": "Played ATP International Series in 2007 and 2008; licence continuity outside these years remains unverified.",
         "historical_host_change": [
           {
             "year": 2007,
@@ -12313,7 +12313,7 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "2008_International_Series_only_and_legal_sanction_history_not_backfilled",
+        "history_scope": "2007_2008_international_series_year_evidenced_only_other_seasons_not_backfilled",
         "history_periods": [
           {
             "from": 2007,
@@ -12330,7 +12330,7 @@
             "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
           }
         ],
-        "identity_review_note": "2008 Tour event only; earlier or later licence continuity needs dated evidence",
+        "identity_review_note": "Played ATP International Series in 2007 and 2008; licence continuity outside these years remains unverified.",
         "historical_host_change": [
           {
             "year": 2007,
@@ -12368,7 +12368,7 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "2008_International_Series_only_and_legal_sanction_history_not_backfilled",
+        "history_scope": "2007_2008_international_series_year_evidenced_only_other_seasons_not_backfilled",
         "history_periods": [
           {
             "from": 2007,
@@ -12385,7 +12385,7 @@
             "notes": "Warsaw Open played 2008 after prospective Sopot listing"
           }
         ],
-        "identity_review_note": "2008 Warsaw ATP International Series succeeded Sopot and was played. Original ATP prospective calendar still showed Sopot. 2007 Sopot history not yet loaded.",
+        "identity_review_note": "Sopot 2007 ATP International Series relocated to Warsaw and was played in 2008. Neither historic Sopot and Warsaw host is a parallel 2008 Series. The earlier prospective 2008 calendar still listed Sopot.",
         "historical_host_change": [
           {
             "year": 2007,
@@ -12429,7 +12429,7 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "2008_International_Series_only_and_legal_sanction_history_not_backfilled",
+        "history_scope": "2007_2008_international_series_year_evidenced_only_other_seasons_not_backfilled",
         "history_periods": [
           {
             "from": 2007,
@@ -12446,7 +12446,7 @@
             "notes": "Bangalore 2008 scheduled after Mumbai change, but cancelled before play; excluded from played events"
           }
         ],
-        "identity_review_note": "Moved from Mumbai to Bangalore in 2008 but cancelled for security reasons. Not a played 2008 Tour event.",
+        "identity_review_note": "Mumbai 2007 ATP International Series was played. The tournament moved to Bangalore for planned 2008 play but was cancelled for security reasons; 2008 is a non-held Series year, not a played tournament.",
         "not_held_years_known": [
           2008
         ],

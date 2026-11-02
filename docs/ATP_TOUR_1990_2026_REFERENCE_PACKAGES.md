@@ -1,16 +1,16 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **108** Series identities and 37 generated annual reference rows.
-> The **24 played main ATP Tour tier rosters 2002–2025** have source-backed
-> original year-effective categories. **1990–2001 are incomplete; 2026 is
+> **110** Series identities and 37 generated annual reference rows.
+> The **25 played main ATP Tour tier rosters 2001–2025** have source-backed
+> original year-effective categories. **1990–2000 are incomplete; 2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
 >
 > Sections below preserve dated incremental research checkpoints. Statements
 > about older incomplete year ranges (e.g. `1990–2007`) describe the state
-> **at those earlier checkpoints**, not the current 2002–2025 coverage.
+> **at those earlier checkpoints**, not the current 2001–2025 coverage.
 > Read the most recent dated historical appendix for up-to-date provenance.
 
 
@@ -1251,3 +1251,43 @@ from the Shanghai regular ATP International Series played 2003–04.
 1990–2001 are incomplete, 2026 provisional. These are source data
 only and do not import real annual Editions, draws, per-round points,
 or production Apply/Save to Squash Engine. Keep the PR Draft.
+
+
+## ATP Tour 2001 original played levels — source audit 2026-11-02
+
+2001 actual Tour-only main tiers: **9 Tennis Masters Series,
+9 International Series Gold, 46 International Series**, plus separate
+Tennis Masters Cup in Sydney: **65 annual ATP-only Series identities**.
+Four Grand Slams, ATP World Team Cup, Davis Cup, Challenger/ITF excluded.
+
+Sources: ATP official results archive https://www.atptour.com/en/scores/results-archive?year=2001 ;
+historical original ATP Category annual listing https://de.wikipedia.org/wiki/ATP_Tour_2001 ;
+contemporary 2001 Stuttgart Masters → Madrid 2002 licence transfer
+https://www.emol.com/noticias/deportes/2001/12/20/74392/tenis-masters-series-de-stuttgart-se-muda-a-madrid.html ;
+2001 Roddick first title at Atlanta Verizon Challenge
+https://www.upi.com/Archives/2001/04/29/Roddick-wins-first-pro-title/1182988516800/ ;
+2001 Bogotá tournament and 2002 ATP cancellation for safety
+https://www.eltiempo.com/archivo/documento/mam-1352814 .
+
+Original source identities: `stuttgart_indoor_masters` played the
+2001 indoor Masters, while the `stuttgart` Mercedes Cup was a distinct
+outdoor clay International Series Gold concurrently played in 2001.
+2002 Madrid Masters is a separate historic host identity `madrid`
+with sourced Stuttgart transfer metadata, respecting existing reference
+design and preventing a fictitious played 2001 Madrid event.
+
+Two separate played 2001 US Tour events were Atlanta's clay Verizon
+Challenge (`atlanta_verizon_2001`, final edition) and Indianapolis
+(`atlanta`, original Indy licence). Bogota `bogota_colombia_2001`
+was played then its planned 2002 Tour event cancelled for security;
+Challenger fixtures are excluded.
+
+The ordinary Shanghai Heineken Open was played in 2001 and again
+2003–04 under `bangalore_2008`, while the 2001 year-end Finals were
+held in Sydney. 2002 Shanghai hosted the Masters Cup instead of
+Shanghai regular Tour, not a double-counted simultaneous fixture.
+
+**25 played ATP-only original/rebranded tier rosters 2001–2025** have
+year-count validation gates. 1990–2000 incomplete; 2026 provisional.
+These remain source-only Category/Series, not playable historical
+Edition objects, ranking rules, or production Run Apply/Save.

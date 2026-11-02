@@ -31,7 +31,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 87
+    assert len(series["entities"]) == 90
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -297,7 +297,7 @@ def test_2023_two_adelaide_events_and_2024_venue_moves_keep_stable_identity() ->
     doc = _source("series")
     by_id = {e["source_entity_id"]: e["payload"] for e in doc["entities"]}
     assert [row["city"] for row in by_id["hangzhou"]["historical_host_change"]] == ["Zhuhai", "Hangzhou"]
-    assert [row["city"] for row in by_id["almaty"]["historical_host_change"]] == ["Nur-Sultan", "Astana", "Astana", "Almaty"]
+    assert [row["city"] for row in by_id["almaty"]["historical_host_change"]] == ["Nur-Sultan", "Nur-Sultan", "Astana", "Astana", "Almaty"]
     assert d23["lyon_old"] == "atp_250"  # Original Lyon clay event
     assert d23["lyon"] == "atp_250"  # Marseille event (later moved to Lyon)
 
@@ -430,7 +430,7 @@ def test_2021_two_belgrade_and_two_melbourne_events_remain_distinct() -> None:
     source = _source("series")
     by_id = {e["source_entity_id"]: e["payload"] for e in source["entities"]}
     assert [row["city"] for row in by_id["almaty"]["historical_host_change"]] == [
-        "Nur-Sultan", "Astana", "Astana", "Almaty"
+        "Nur-Sultan", "Nur-Sultan", "Astana", "Astana", "Almaty"
     ]
 
 
@@ -446,7 +446,7 @@ def test_pune_to_hong_kong_retains_one_series_id_from_2022_to_2026() -> None:
     hong_kong = next(e for e in source["entities"]
                      if e["source_entity_id"] == "hong_kong")["payload"]
     assert [row["city"] for row in hong_kong["historical_host_change"]] == [
-        "Pune", "Pune", "Hong Kong"
+        "Pune", "Pune", "Pune", "Hong Kong"
     ]
     assert "atptour.com" in hong_kong["historical_licence_source_url"]
 
@@ -465,3 +465,70 @@ def test_belgrade_2022_to_banja_luka_2023_is_one_series() -> None:
         "Belgrade", "Banja Luka"
     ]
     assert "atptour.com" in source["payload"]["historical_licence_source_url"]
+
+
+def test_2020_played_tour_tier_roster_from_official_atp_archive() -> None:
+    by_year = {s["year"]: s for s in build(_source("category"), _source("series"))["seasons"]}
+    y2020 = by_year[2020]
+    actual = Counter({
+        tier: sum(
+            category == tier and series_id not in y2020["known_not_held_series_ids"]
+            for series_id, category in y2020["series_category_ids"].items()
+        )
+        for tier in ("atp_250", "atp_500", "atp_masters_1000")
+    })
+    assert actual == {"atp_250": 18, "atp_500": 7, "atp_masters_1000": 3}
+    assert y2020["played_tier_roster_validation"]["played_counts"] == {
+        "atp_250": 18, "atp_500": 7, "atp_masters_1000": 3
+    }
+    assert y2020["played_tier_roster_validation"]["status"] == (
+        "played_tour_tiers_reconciled_to_atp_results_archive"
+    )
+    source = _source("series")["provenance"]["calendar_validation_2020"]
+    assert source["played_atp_250_count"] == 18
+    assert source["played_atp_500_count"] == 7
+    assert source["played_masters_count"] == 3
+    assert "atptour.com" in source["results_archive_url"]
+    assert y2020["edition_assertion"].startswith("none;")
+
+
+def test_2020_cologne_sardinia_nur_sultan_one_year_events_and_nyc_venue() -> None:
+    by_year = {s["year"]: s for s in build(_source("category"), _source("series"))["seasons"]}
+    y2019, y2020, y2021 = (by_year[y]["series_category_ids"] for y in (2019, 2020, 2021))
+    for identity in ("cologne_1_2020", "cologne_2_2020", "sardinia_2020"):
+        assert y2020[identity] == "atp_250"
+        assert identity not in y2019
+        assert identity not in y2021
+    assert y2020["almaty"] == "atp_250"  # Played in Nur-Sultan, not Almaty
+    assert y2020["dallas"] == "atp_250"  # New York licence, moved to Dallas 2022
+    assert y2020["hong_kong"] == "atp_250"  # Pune licence, moved to Hong Kong 2024
+    assert y2020["st_petersburg"] == "atp_500"  # Temporary pandemic promotion
+    assert y2020["cincinnati"] == "atp_masters_1000"
+    series = _source("series")
+    by_id = {x["source_entity_id"]: x["payload"] for x in series["entities"]}
+    assert [host["city"] for host in by_id["dallas"]["historical_host_change"]] == ["New York", "Dallas"]
+    assert [host["city"] for host in by_id["cincinnati"]["historical_host_change"]] == ["New York", "Cincinnati"]
+    assert [host["city"] for host in by_id["almaty"]["historical_host_change"]] == [
+        "Nur-Sultan", "Nur-Sultan", "Astana", "Astana", "Almaty"
+    ]
+
+
+def test_coverage_gates_reject_false_historical_completeness() -> None:
+    import copy
+    categories, source = _source("category"), _source("series")
+    rows = {s["year"]: s for s in build(categories, source)["seasons"]}
+    for year in range(1990, 2020):
+        assert rows[year]["played_tier_roster_validation"]["status"] == "unverified_incomplete"
+        assert rows[year]["played_tier_roster_validation"]["played_counts"] is None
+    assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
+    for year in range(2020, 2026):
+        assert rows[year]["played_tier_roster_validation"]["status"] == (
+            "played_tour_tiers_reconciled_to_atp_results_archive"
+        )
+        assert rows[year]["played_tier_roster_validation"]["not_an_edition_calendar"] is True
+
+    corrupted = copy.deepcopy(source)
+    unheld = next(e for e in corrupted["entities"] if e["source_entity_id"] == "cologne_2_2020")
+    unheld["payload"]["not_held_years_known"] = [2020]
+    with pytest.raises(ValueError, match="played-tier roster mismatch"):
+        build(categories, corrupted)

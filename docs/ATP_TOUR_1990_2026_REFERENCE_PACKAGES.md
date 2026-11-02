@@ -1,16 +1,16 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **110** Series identities and 37 generated annual reference rows.
-> The **25 played main ATP Tour tier rosters 2001–2025** have source-backed
-> original year-effective categories. **1990–2000 are incomplete; 2026 is
+> **113** Series identities and 37 generated annual reference rows.
+> The **26 played main ATP Tour tier rosters 2000–2025** have source-backed
+> original year-effective categories. **1990–1999 are incomplete; 2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
 >
 > Sections below preserve dated incremental research checkpoints. Statements
 > about older incomplete year ranges (e.g. `1990–2007`) describe the state
-> **at those earlier checkpoints**, not the current 2001–2025 coverage.
+> **at those earlier checkpoints**, not the current 2000–2025 coverage.
 > Read the most recent dated historical appendix for up-to-date provenance.
 
 
@@ -1291,3 +1291,60 @@ Shanghai regular Tour, not a double-counted simultaneous fixture.
 year-count validation gates. 1990–2000 incomplete; 2026 provisional.
 These remain source-only Category/Series, not playable historical
 Edition objects, ranking rules, or production Run Apply/Save.
+
+## ATP Tour 2000 — played original categories and licensing (2026-11-02)
+
+The played original-category ATP Tour 2000 included **9 Tennis Masters
+Series, 11 International Series Gold and 44 International Series**,
+plus the year-end singles Tennis Masters Cup at **Lisbon, Portugal**.
+This represents **65 distinct ATP-only historical source Series
+identities for the 2000 calendar**. Separately organized Grand Slams,
+Sydney Olympic tennis, Davis Cup, World Team Cup and Challengers/ITF
+do not belong in this scoped source package.
+
+Sources:
+- Official played ATP Results Archive, year 2000:
+  https://www.atptour.com/en/scores/results-archive?year=2000
+- Actual original-category ATP annual event calendar:
+  https://de.wikipedia.org/wiki/ATP_Tour_2000
+- Contemporary provisional ATP 2000 fixture calendar:
+  https://www.record.pt/modalidades/tenis/detalhe/calendario-atp-tour-para-2000
+
+The **2000 London AXA Cup** was a played **International Series Gold**
+indoor event, distinct from the simultaneously played **Queen's Club**
+grass International Series. The indoor tournament license returned
+from London to its Milan owners for **Milan Indoors 2001** (then a lower
+International Series tier). The one historical reference identity
+is source ID sofia, with year-specific original Category references.
+Independent contemporary license report:
+https://www.independent.co.uk/sport/tennis/london-loses-atp-tour-event-to-milan-637139.html
+
+There are three further year-effective Category differences:
+- 2000 Washington was Gold; 2001 Washington was International Series.
+- 2000 Indianapolis was Gold; 2001 Indianapolis was International Series.
+- 2000 Dubai was International Series; 2001 Dubai was Gold.
+
+Original 2000 cities carried forward with the same historical sanction
+or competition identity: Mexico City to Acapulco in 2001; Orlando
+U.S. Men's Clay Court Championship to Houston in 2001;
+Chile Open Santiago to Viña del Mar in 2001; Dutch Open Amsterdam to
+Amersfoort in 2001. See original year archive and Orlando played draw:
+https://www.stevegtennis.com/draw-results/atp/U.S.%20Men%27s%20Clay%20Court%20Championships%20-%20Orlando/2000
+
+Three additionally played source Series in 2000 are introduced
+separately: **San Marino**, **Toulouse**, **Brighton**. None is fabricated
+as a 2001 event. The 2000 Toulouse ATP event was its last:
+https://en.wikipedia.org/wiki/2000_Adidas_Open_de_Toulouse
+
+Year-end separation is crucial: Singles Tennis Masters Cup in
+**Lisbon**, and doubles World Championships in **Bengaluru**.
+The source atp_finals represents singles only, not a fictitious
+2000 Bengaluru singles event. Source:
+https://en.wikipedia.org/wiki/2000_Tennis_Masters_Cup_and_ATP_Tour_World_Championships
+
+The 2000 main Tour category census is deterministically validated in
+the year resolver. **26 consecutive played original/rebranded ATP Tour
+Tier rosters (2000–2025)** are now included. **1990–1999 incomplete**,
+2026 provisional. References are source-only, not historical match
+Edtions, draw/result payloads, points tables, Package Catalog importer,
+or native Squash Engine Apply/Save. Keep Draft pending CI and review.

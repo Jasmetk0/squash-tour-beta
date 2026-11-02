@@ -16,7 +16,7 @@
     "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
     "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
     "notes": [
-      "Original ATP actual played 2000–2025 Tour tier rosters reconciled. 1990–1999 still incomplete; 2026 provisional. No playable Editions or Package apply.",
+      "Played main ATP Tour original tier rosters 1999–2025 source-reconciled; 1990–1998 incomplete and 2026 provisional. Source-only data without historical Edition/draw/result/Run Apply.",
       "2026 date/host fields are not assumed for earlier seasons.",
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
@@ -666,6 +666,52 @@
         "Shanghai regular International and Lisbon singles Finals",
         "Chennai International and Hong Kong Salem Open International"
       ]
+    },
+    "calendar_validation_1999": {
+      "atp_archive_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+      "original_tier_calendar_url": "https://de.wikipedia.org/wiki/ATP_Tour_1999",
+      "annual_tier_secondary_url": "https://en.wikipedia.org/wiki/1999_ATP_Tour",
+      "original_super_9_count": 9,
+      "original_championship_series_count": 11,
+      "original_world_series_count": 45,
+      "atp_finals_singles_played": true,
+      "atp_singles_finals_host": "Hannover",
+      "atp_doubles_worlds_host": "Hartford",
+      "original_categories": "1999 ATP Super 9, ATP Championship Series, ATP World Series; not 2000 Tennis Masters/International Gold/International tiers nor post-2009 ATP 1000/500/250 labels",
+      "documented_same_licence_1999_to_2000": [
+        {
+          "id": "brighton_2000",
+          "played_1999": "Bournemouth outdoor green clay",
+          "played_2000": "Brighton indoor hard",
+          "source_url": "https://en.wikipedia.org/wiki/Brighton_International"
+        }
+      ],
+      "played_1999_original_city_only": [
+        "Prague",
+        "Merano",
+        "Boston",
+        "Singapore"
+      ],
+      "prague_2000_cancelled_source_url": "https://cesky.radio.cz/zpravy-pondeli-03-cervence-2000-8056454",
+      "singular_yearend_singles_source_url": "https://www.atptour.com/-/media/23da5115363646fd89d16716e5b35a2e.pdf",
+      "excluded_events": [
+        "Australian Open",
+        "Roland Garros",
+        "Wimbledon",
+        "US Open",
+        "1999 Grand Slam Cup in Munich",
+        "Davis Cup",
+        "World Team Cup",
+        "Hopman Cup",
+        "ATP World Doubles Championships Hartford",
+        "Challenger/ITF"
+      ],
+      "caveats": [
+        "ATP archive's present-day Masters 1000 name is retrospective; keep original 1999 Super 9 classification",
+        "Copenhagen 1999 not asserted legally transferred to Beijing 2004",
+        "1999 Bournemouth belongs to 2000 Brighton source licence, not separate concurrent tournament",
+        "Prague 2000 not played, no fabricated edition"
+      ]
     }
   },
   "explicit_scope": [
@@ -716,6 +762,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Indian Wells",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
           {
             "year": 2000,
             "city": "Indian Wells",
@@ -815,6 +867,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Miami",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Miami",
             "country_code": "USA",
@@ -912,6 +970,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Monte Carlo",
+            "country_code": "MCO",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
           {
             "year": 2000,
             "city": "Monte Carlo",
@@ -1081,6 +1145,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Rome",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Rome",
             "country_code": "ITA",
@@ -1180,6 +1250,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Montreal",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Toronto",
             "country_code": "CAN",
@@ -1273,6 +1349,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Cincinnati",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
           {
             "year": 2000,
             "city": "Cincinnati",
@@ -1423,6 +1505,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Paris",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Paris",
             "country_code": "FRA",
@@ -1492,6 +1580,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -1671,6 +1766,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Memphis",
             "country_code": "USA",
@@ -1823,6 +1924,12 @@
           "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -1843,6 +1950,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -2022,6 +2136,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Rotterdam",
             "country_code": "NLD",
@@ -2089,6 +2209,12 @@
           "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -2109,6 +2235,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -2295,6 +2428,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Doha",
+            "country_code": "QAT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Doha",
             "country_code": "QAT",
@@ -2360,6 +2499,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -2690,6 +2835,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -2868,6 +3020,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Dubai",
+            "country_code": "ARE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Dubai",
             "country_code": "ARE",
@@ -2941,6 +3099,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -2961,6 +3125,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -3133,6 +3304,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Barcelona",
             "country_code": "ESP",
@@ -3200,6 +3377,12 @@
           "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -3220,6 +3403,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -3399,6 +3589,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Munich",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Munich",
             "country_code": "DEU",
@@ -3466,6 +3662,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -3510,6 +3712,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Hamburg",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
           {
             "year": 2000,
             "city": "Hamburg",
@@ -3580,6 +3788,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -3666,6 +3881,12 @@
         "identity_review_note": "Halle ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Halle",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Halle",
             "country_code": "DEU",
@@ -3733,6 +3954,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -3753,6 +3980,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -3839,6 +4073,12 @@
         "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "London",
             "country_code": "GBR",
@@ -3906,6 +4146,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -3926,6 +4172,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -4098,6 +4351,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Washington",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Washington",
             "country_code": "USA",
@@ -4165,6 +4424,12 @@
           "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -4185,6 +4450,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -4350,6 +4622,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Tokyo",
             "country_code": "JPN",
@@ -4415,6 +4693,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series_gold",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -4652,6 +4936,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -4827,6 +5118,12 @@
         "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Basel",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Basel",
             "country_code": "CHE",
@@ -4888,6 +5185,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -4908,6 +5211,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -5087,6 +5397,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Vienna",
             "country_code": "AUT",
@@ -5197,6 +5513,12 @@
           "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -5217,6 +5539,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -5382,6 +5711,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Adelaide",
             "country_code": "AUS",
@@ -5456,6 +5791,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -5476,6 +5817,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -5662,6 +6010,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Chennai",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Chennai",
             "country_code": "IND",
@@ -5821,6 +6175,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -5913,6 +6273,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -6092,6 +6459,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Auckland",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Auckland",
             "country_code": "NZL",
@@ -6153,6 +6526,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -6173,6 +6552,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -6359,6 +6745,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Lyon",
             "country_code": "FRA",
@@ -6432,6 +6824,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -6716,6 +7114,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -6908,6 +7313,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Delray Beach",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Delray Beach",
             "country_code": "USA",
@@ -6967,6 +7378,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -7117,6 +7534,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -7307,6 +7731,12 @@
         "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Orlando",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Orlando",
             "country_code": "USA",
@@ -7369,6 +7799,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -7389,6 +7825,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -7568,6 +8011,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Casablanca",
             "country_code": "MAR",
@@ -7682,6 +8131,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -7810,6 +8265,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -7996,6 +8458,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -8099,6 +8567,12 @@
           "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -8119,6 +8593,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -8298,6 +8779,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "'s-Hertogenbosch",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "'s-Hertogenbosch",
             "country_code": "NLD",
@@ -8357,6 +8844,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -8450,6 +8943,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -8636,6 +9136,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Nottingham",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Nottingham",
             "country_code": "GBR",
@@ -8758,6 +9264,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -8778,6 +9290,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -8964,6 +9483,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Båstad",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Båstad",
             "country_code": "SWE",
@@ -9023,6 +9548,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -9046,6 +9577,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -9231,6 +9769,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Gstaad",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Gstaad",
             "country_code": "CHE",
@@ -9290,6 +9834,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -9313,6 +9863,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -9498,6 +10055,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Umag",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Umag",
             "country_code": "HRV",
@@ -9559,6 +10122,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -9579,6 +10148,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -9765,6 +10341,12 @@
         "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Kitzbühel",
             "country_code": "AUT",
@@ -9832,6 +10414,12 @@
           "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -9852,6 +10440,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -10031,6 +10626,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Estoril",
             "country_code": "PRT",
@@ -10127,6 +10728,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -10289,6 +10896,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -10475,6 +11089,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Long Island",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Long Island",
             "country_code": "USA",
@@ -10554,6 +11174,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -11023,6 +11649,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -11215,6 +11848,12 @@
         "history_scope": "original_2002_mallorca_2003_valencia_then_documented_2009_plus_history",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Mallorca",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Mallorca",
             "country_code": "ESP",
@@ -11367,6 +12006,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -11387,6 +12032,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -11588,6 +12240,12 @@
         },
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Marseille",
             "country_code": "FRA",
@@ -11739,6 +12397,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -11765,6 +12429,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
           },
           {
             "from": 2000,
@@ -11953,6 +12624,12 @@
         "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit.",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Stockholm",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Stockholm",
             "country_code": "SWE",
@@ -12020,6 +12697,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -12065,6 +12748,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Hannover",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/-/media/23da5115363646fd89d16716e5b35a2e.pdf"
+          },
+          {
             "year": 2000,
             "city": "Lisbon",
             "country_code": "PRT",
@@ -12095,7 +12784,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2004"
           }
         ],
-        "identity_review_note": "2000 Tennis Masters Cup singles played Lisbon, Portugal, while doubles World Championships played separately in Bengaluru, India. ATP Finals Series tracks singles."
+        "identity_review_note": "1999 ATP Tour World Championships singles played Hannover, Germany (Pete Sampras beat Andre Agassi); doubles year-end championships played in Hartford, USA separately. 2000 singles Masters Cup was held in Lisbon, Portugal."
       },
       "references": [
         {
@@ -12223,6 +12912,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -12324,6 +13019,12 @@
           "notes": "Permanent ATP membership transferred to Astana in 2022; no simultaneous St Petersburg edition asserted"
         },
         "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Saint Petersburg",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
           {
             "year": 2000,
             "city": "Saint Petersburg",
@@ -12947,6 +13648,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -13117,6 +13825,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Newport",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Newport",
             "country_code": "USA",
@@ -13178,6 +13892,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -13202,6 +13922,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -13373,6 +14100,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Indianapolis",
             "country_code": "USA",
@@ -13452,6 +14185,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series_gold",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -13858,6 +14597,13 @@
         "history_scope": "2000_london_axa_gold_2001_milan_is_2005_milan_2006_zagreb_2016_sofia",
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "Played 1999 London Guardian Direct Cup indoor Championship Series, same London AXA venue through 2000 before 2001 Milan return"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series_gold",
@@ -14028,6 +14774,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "London",
             "country_code": "GBR",
@@ -14130,7 +14882,7 @@
             "source_url": "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars"
           }
         ],
-        "identity_review_note": "2000 London AXA Cup Gold originated as leased Milan tournament, returned to Milan as International Series 2001; historically source identity continues to Zagreb and Sofia. Queen's 2000 is separate grass Series."
+        "identity_review_note": "1999 London Guardian Direct Cup original Championship Series (not 1999 Queen's grass World Series), same licensed London indoor tournament in 2000 as Gold AXA Cup, then returned to Milan 2001 as International Series. Milan later moved to Zagreb and Sofia."
       },
       "references": [
         {
@@ -14148,6 +14900,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series_gold",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -14723,6 +15481,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -14873,6 +15638,12 @@
         "identity_review_note": "Bucharest 2015–16 Tour licence transferred Budapest 2017–19 then Belgrade 2021; Bucharest 2024+ tracked as a distinct Tour licence without unproven merger.",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Bucharest",
+            "country_code": "ROU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Bucharest",
             "country_code": "ROU",
@@ -15010,6 +15781,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -15154,6 +15931,13 @@
         "not_squash_rules": true,
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -15305,6 +16089,12 @@
         "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played.",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Moscow",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Moscow",
             "country_code": "RUS",
@@ -15364,6 +16154,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -15511,6 +16307,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -15654,6 +16457,12 @@
         "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined.",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Sydney",
             "country_code": "AUS",
@@ -15713,6 +16522,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -16216,6 +17031,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -16317,6 +17139,12 @@
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "San Jose",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "San Jose",
             "country_code": "USA",
@@ -16376,6 +17204,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -16403,6 +17237,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -16504,6 +17345,12 @@
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Los Angeles",
             "country_code": "USA",
@@ -16565,6 +17412,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -16589,6 +17442,13 @@
         "not_squash_rules": true,
         "history_scope": "played_2002_tashkent_2003_bangkok_historically_verified_older_years_unverified",
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -16691,6 +17551,12 @@
         "identity_review_note": "2002 Tashkent President's Cup ATP International Series sanction moved with ATP approval to Bangkok for 2003. Keep one Series identity; do not invent 2003 Tashkent ATP main Tour event.",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Tashkent",
+            "country_code": "UZB",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Tashkent",
             "country_code": "UZB",
@@ -16752,6 +17618,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -16776,6 +17648,13 @@
         "not_squash_rules": true,
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -16871,6 +17750,12 @@
         "identity_review_note": "2000 Dutch Open Amsterdam, 2001 Amersfoort; later Serbia names must not overwrite original Dutch city.",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Amsterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Amsterdam",
             "country_code": "NLD",
@@ -16962,6 +17847,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -17041,6 +17932,13 @@
         "history_scope": "2005_scottsdale_2006_2008_las_vegas",
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -17107,6 +18005,12 @@
         "identity_review_note": "2005 Tennis Channel Open in Scottsdale transferred to Las Vegas in 2006, played there through 2008; earlier Scottsdale years not imported.",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Scottsdale",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Scottsdale",
             "country_code": "USA",
@@ -17162,6 +18066,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -17186,6 +18096,13 @@
         "not_squash_rules": true,
         "history_scope": "2005_st_poelten_2006_2008_poertschach",
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -17253,6 +18170,12 @@
         "identity_review_note": "2005 St. Pölten ATP event licence moved to Pörtschach from 2006, played there through 2008.",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "St. Pölten",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "St. Pölten",
             "country_code": "AUT",
@@ -17306,6 +18229,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -17472,6 +18401,13 @@
         "history_scope": "2001_then_2003_2004_shanghai_reg_2002_absent_2005_vietnam_2006_2007_mumbai_2008_canceled",
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -17535,6 +18471,12 @@
         "known_nonheld_source": "https://www.skysports.com/tennis/news/4050908/bangalore-open-cancelled",
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Shanghai",
+            "country_code": "CHN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Shanghai",
             "country_code": "CHN",
@@ -17584,6 +18526,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -17608,6 +18556,13 @@
         "not_squash_rules": true,
         "history_scope": "2005_2006_played_tour_only_older_seasons_not_backfilled",
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -17660,6 +18615,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Palermo",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
             "year": 2000,
             "city": "Palermo",
             "country_code": "ITA",
@@ -17710,6 +18671,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -17734,6 +18701,13 @@
         "not_squash_rules": true,
         "history_scope": "played_2001_2003_copenhagen_earlier_years_unverified",
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -17764,6 +18738,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Copenhagen",
+            "country_code": "DNK",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
           {
             "year": 2000,
             "city": "Copenhagen",
@@ -17797,6 +18777,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -17822,6 +18808,13 @@
         "history_scope": "played_2001_2002_hong_kong_salem_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -17844,6 +18837,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Hong Kong",
+            "country_code": "HKG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
           {
             "year": 2000,
             "city": "Hong Kong",
@@ -17869,6 +18868,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -17957,6 +18962,13 @@
         "history_scope": "played_2001_atp_international_series_only_older_1990_2000_not_imported",
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -17972,6 +18984,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Atlanta",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
           {
             "year": 2000,
             "city": "Atlanta",
@@ -17991,6 +19009,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -18018,6 +19042,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -18026,6 +19057,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "San Marino",
+            "country_code": "SMR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
           {
             "year": 2000,
             "city": "San Marino",
@@ -18039,6 +19076,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -18066,6 +19109,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -18074,6 +19124,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Toulouse",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
           {
             "year": 2000,
             "city": "Toulouse",
@@ -18087,6 +19143,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -18111,8 +19173,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
+        "history_scope": "1999_bournemouth_2000_brighton_same_historical_atp_license_1996_1998_unverified",
         "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://en.wikipedia.org/wiki/Brighton_International",
+            "notes": "Played 1999 Bournemouth World Series on outdoor American green clay, same tournament relocated for 2000 indoor Brighton International Series"
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -18123,18 +19192,242 @@
         ],
         "historical_host_change": [
           {
+            "year": 1999,
+            "city": "Bournemouth",
+            "country_code": "GBR",
+            "source_url": "https://en.wikipedia.org/wiki/Brighton_International"
+          },
+          {
             "year": 2000,
             "city": "Brighton",
             "country_code": "GBR",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
           }
         ],
-        "identity_review_note": "Played 2000 Brighton ATP International Series, Tim Henman singles champion, not London's AXA Cup Gold."
+        "identity_review_note": "Men's British Hard Court / Samsung ATP World Series played Bournemouth on green outdoor clay in 1999, relocated under same tournament sanction to Brighton indoor hard for its 2000 final edition. Never invent concurrently played 1999 Brighton or 2000 Bournemouth fixtures.",
+        "historical_surface_change": [
+          {
+            "year": 1999,
+            "surface": "green_clay_outdoor",
+            "city": "Bournemouth",
+            "source_url": "https://en.wikipedia.org/wiki/Brighton_International"
+          },
+          {
+            "year": 2000,
+            "surface": "hard_indoor",
+            "city": "Brighton",
+            "source_url": "https://en.wikipedia.org/wiki/Brighton_International"
+          }
+        ]
       },
       "references": [
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "singapore_1999",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Heineken Open Singapore",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Singapore",
+        "historical_country_code": "SGP",
+        "historical_surface": "hard_indoor",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
+        "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/tournaments/singapore/326/overview",
+            "notes": "1999 Singapore indoor Heineken Open was ATP Championship Series (equivalent original tier to International Series Gold after reform); 2000 ATP Singapore event not played. Former 1996–98 years to be researched independently."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Singapore",
+            "country_code": "SGP",
+            "source_url": "https://www.atptour.com/en/tournaments/singapore/326/overview"
+          }
+        ],
+        "identity_review_note": "Singapore indoor Heineken Open played original ATP Championship Series in 1999, Marcello Rios singles champion. 2000 Singapore not played; source is distinct from current 2021 Singapore ATP 250 until licence lineage proven."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "prague_1999",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Tento Czech Open Prague",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Prague",
+        "historical_country_code": "CZE",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
+        "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/tournaments/-/379/overview",
+            "notes": "1999 actual ATP World Series tournament in Prague, winner Dominik Hrbaty. Planned 2000 Czech Open cancelled after organizers failed ATP financial guarantee; no fictional 2000 played edition."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Prague",
+            "country_code": "CZE",
+            "source_url": "https://www.atptour.com/en/tournaments/-/379/overview"
+          }
+        ],
+        "identity_review_note": "1999 actual ATP World Series tournament in Prague, winner Dominik Hrbaty. Planned 2000 Czech Open cancelled after organizers failed ATP financial guarantee; no fictional 2000 played edition.",
+        "cancelled_following_year": {
+          "year": 2000,
+          "reason": "Missing ATP financial guarantee / 2000 Czech Open cancelled before play",
+          "source_url": "https://cesky.radio.cz/zpravy-pondeli-03-cervence-2000-8056454",
+          "not_an_edition": true
+        }
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "merano_1999",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Merano Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Merano",
+        "historical_country_code": "ITA",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
+        "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/tournaments/crans-montana/473/overview",
+            "notes": "1999 played Merano ATP World Series (Fernando Vicente winner). Tournament had historical predecessor Bologna, but legal licence continuity not asserted; no invented 2000 edition."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Merano",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/tournaments/crans-montana/473/overview"
+          }
+        ],
+        "identity_review_note": "1999 played Merano ATP World Series (Fernando Vicente winner). Tournament had historical predecessor Bologna, but legal licence continuity not asserted; no invented 2000 edition."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "boston_1999",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "MFS Pro Tennis Championships Boston",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Boston",
+        "historical_country_code": "USA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
+        "history_periods": [
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/tournaments/boston/80/overview",
+            "notes": "Played 1999 ATP World Series Boston, winner Marat Safin; do not infer 2000 Boston Tour event or confuse with Challenger events."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1999,
+            "city": "Boston",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/tournaments/boston/80/overview"
+          }
+        ],
+        "identity_review_note": "Played 1999 ATP World Series Boston, winner Marat Safin; do not infer 2000 Boston Tour event or confuse with Challenger events."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }

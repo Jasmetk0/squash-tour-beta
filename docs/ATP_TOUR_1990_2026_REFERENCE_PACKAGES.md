@@ -931,3 +931,42 @@ licence transaction documentation across every decade, or a
 registered and applicable Squash Engine production Package.
 Source arrays and tests are a historical research layer pending
 semantic Package integration.
+
+## 2008 historical Category transition — researched subset, not complete
+
+At the **2008→2009 ATP structural boundary**, the same
+tournament cannot be called an `ATP 500` or `ATP 250` in 2008.
+The pre-2009 official tier was **ATP International Series Gold**,
+with ordinary **ATP International Series** as the separate lower
+classification. The 2008 record now documents **nine Gold Series**:
+
+| ATP International Series Gold, 2008 | Classification in 2009 |
+| --- | --- |
+| Rotterdam, Memphis, Dubai, Acapulco, Barcelona, Tokyo | ATP 500 |
+| Stuttgart, Kitzbühel, Vienna | ATP 250 |
+
+Evidence: [2008 historical International Series Gold
+membership](https://en.wikipedia.org/wiki/ATP_International_Series_Gold)
+corroborated with the official
+[ATP 2008 results archive](https://www.atptour.com/en/scores/results-archive?year=2008).
+
+The year also preserves the existing **nine 2008 Tennis
+Masters Series identities**: Hamburg was a Masters,
+Madrid was still an indoor autumn Masters, and
+Shanghai **was not yet** an ATP Masters 1000 tournament.
+That 2008 tour-level Masters category is different from the
+2009 schedule in which Shanghai replaced Hamburg in
+the Masters line-up and Madrid moved to clay.
+
+**Critical source-audit boundary:** Nine documented Gold events
+plus nine Masters is **NOT** a complete 2008 ATP Tour
+Category+Series census. The 2008 ordinary International Series
+membership remains incomplete, so `played_tier_roster_validation.status`
+remains `unverified_incomplete` for 2008. Do not assert
+the number of ordinary ATP International Series events from
+the subset or fabricate missing identities to match a presumed total.
+
+A complete 2000–2008 archival classification requires accurate
+year-by-year **International Series Gold** and **International Series**
+membership. The same diligence will be needed for
+1990–1999 **ATP Championship Series** and **ATP World Series**.

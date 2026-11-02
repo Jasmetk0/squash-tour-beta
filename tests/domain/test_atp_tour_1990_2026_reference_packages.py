@@ -38,7 +38,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 113
+    assert len(series["entities"]) == 117
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -529,7 +529,7 @@ def test_coverage_gates_reject_false_historical_completeness() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     rows = {s["year"]: s for s in build(categories, source)["seasons"]}
-    for year in range(1990, 2000):
+    for year in range(1990, 1999):
         assert rows[year]["played_tier_roster_validation"]["status"] == "unverified_incomplete"
         assert rows[year]["played_tier_roster_validation"]["played_counts"] is None
     assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
@@ -1710,3 +1710,66 @@ def test_2000_cancelled_brighton_should_fail_category_census() -> None:
     x["payload"]["not_held_years_known"] = [2000]
     with pytest.raises(ValueError, match="played-tier roster mismatch in 2000"):
         build(_source("category"), data)
+
+
+def test_1999_super9_championship_world_series_original_played_roster() -> None:
+    source = _source("series")
+    rows = {r["year"]: r for r in build(_source("category"), source)["seasons"]}
+    old, modern = rows[1999], rows[2000]
+    assert old["played_tier_roster_validation"]["status"] == (
+        "played_tour_tiers_reconciled_to_atp_results_archive"
+    )
+    assert old["played_tier_roster_validation"]["played_counts"] == {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 11,
+        "atp_world_series": 45,
+    }
+    assert Counter(old["series_category_ids"].values()) == {
+        "atp_championship_single_week": 9, "atp_championship_series": 11,
+        "atp_world_series": 45, "atp_finals": 1,
+    }
+    assert len(old["series_category_ids"]) == 66
+    assert "Super 9" in old["played_tier_roster_validation"]["scope"]
+    assert old["series_category_ids"]["sofia"] == "atp_championship_series"
+    assert modern["series_category_ids"]["sofia"] == "atp_international_series_gold"
+    assert old["series_category_ids"]["singapore_1999"] == "atp_championship_series"
+    for absent in ("australian_open", "wimbledon", "roland_garros", "us_open",
+                   "grand_slam_cup", "davis_cup", "world_team_cup",
+                   "atp_world_doubles_championships"):
+        assert absent not in old["series_category_ids"]
+
+
+def test_1999_bournemouth_to_2000_brighton_and_hannover_singles() -> None:
+    source = _source("series")
+    by_id = {e["source_entity_id"]: e["payload"] for e in source["entities"]}
+    bournemouth = by_id["brighton_2000"]
+    hosts = _host_by_year(bournemouth)
+    assert hosts[1999] == "Bournemouth"
+    assert hosts[2000] == "Brighton"
+    assert [row["surface"] for row in bournemouth["historical_surface_change"]] == [
+        "green_clay_outdoor", "hard_indoor"
+    ]
+    assert _host_by_year(by_id["atp_finals"])[1999] == "Hannover"
+    assert _host_by_year(by_id["atp_finals"])[2000] == "Lisbon"
+    assert _host_by_year(by_id["canadian_open"])[1999] == "Montreal"
+    assert _host_by_year(by_id["canadian_open"])[2000] == "Toronto"
+    assert _host_by_year(by_id["sofia"])[1999] == "London"
+    assert _host_by_year(by_id["sofia"])[2000] == "London"
+    evidence = source["provenance"]["calendar_validation_1999"]
+    assert evidence["atp_singles_finals_host"] == "Hannover"
+    assert evidence["atp_doubles_worlds_host"] == "Hartford"
+    assert len(evidence["documented_same_licence_1999_to_2000"]) == 1
+    assert _host_by_year(by_id["prague_1999"])[1999] == "Prague"
+    assert by_id["prague_1999"]["cancelled_following_year"]["year"] == 2000
+    assert "prague_1999" not in {
+        sid for sid in build(_source("category"), source)["seasons"][10]["series_category_ids"]
+    }
+
+
+def test_1999_source_tier_gate_refuses_cancelled_played_singapore() -> None:
+    import copy
+    source = copy.deepcopy(_source("series"))
+    event = next(e for e in source["entities"] if e["source_entity_id"] == "singapore_1999")
+    event["payload"]["not_held_years_known"] = [1999]
+    with pytest.raises(ValueError, match="played-tier roster mismatch in 1999"):
+        build(_source("category"), source)

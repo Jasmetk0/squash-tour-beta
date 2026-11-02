@@ -528,7 +528,7 @@ def test_coverage_gates_reject_false_historical_completeness() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     rows = {s["year"]: s for s in build(categories, source)["seasons"]}
-    for year in range(1990, 2006):
+    for year in range(1990, 2005):
         assert rows[year]["played_tier_roster_validation"]["status"] == "unverified_incomplete"
         assert rows[year]["played_tier_roster_validation"]["played_counts"] is None
     assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
@@ -1388,3 +1388,51 @@ def test_2006_rejects_a_mutated_played_tier_as_complete() -> None:
     entity["payload"]["not_held_years_known"] = [2006]
     with pytest.raises(ValueError, match="played-tier roster mismatch in 2006"):
         build(_source("category"), broken)
+
+def test_2005_historical_played_tiers_and_stable_series() -> None:
+    rows = {s["year"]: s for s in build(_source("category"), _source("series"))["seasons"]}
+    old, next_year = rows[2005], rows[2006]
+    assert old["played_tier_roster_validation"]["played_counts"] == {
+        "tennis_masters_series": 9, "atp_international_series_gold": 9,
+        "atp_international_series": 44,
+    }
+    assert old["played_tier_roster_validation"]["status"] == (
+        "played_tour_tiers_reconciled_to_atp_results_archive"
+    )
+    assert Counter(old["series_category_ids"].values()) == {
+        "tennis_masters_series": 9, "atp_international_series_gold": 9,
+        "atp_international_series": 44, "atp_finals": 1,
+    }
+    assert len(old["series_category_ids"]) == 63
+    assert old["series_category_ids"] == next_year["series_category_ids"]
+    assert not old["known_not_held_series_ids"]
+    for impossible in ("milan_2005", "vietnam_open_2005", "scottsdale_2005"):
+        assert impossible not in old["series_category_ids"]
+
+
+def test_2005_to_2006_real_licence_moves_keep_single_identity() -> None:
+    source = _source("series")
+    by_id = {e["source_entity_id"]: e["payload"] for e in source["entities"]}
+    moves = {
+        "sofia": ("Milan", "Zagreb"),
+        "las_vegas_2008": ("Scottsdale", "Las Vegas"),
+        "bangalore_2008": ("Ho Chi Minh City", "Mumbai"),
+        "poertschach_2008": ("St. Pölten", "Pörtschach"),
+    }
+    for id, (from_city, to_city) in moves.items():
+        hosts = _host_by_year(by_id[id])
+        assert hosts[2005] == from_city
+        assert hosts[2006] == to_city
+    assert [p["from"] for p in by_id["palermo"]["history_periods"]] == [2005, 2006]
+    refs = source["provenance"]["calendar_validation_2005"]["verified_licence_relocations"]
+    assert len(refs) == 4
+    assert {r["series_id"] for r in refs} == set(moves)
+
+
+def test_2005_fake_cancellation_breaks_played_tier_gate() -> None:
+    import copy
+    source = copy.deepcopy(_source("series"))
+    palermo = next(e for e in source["entities"] if e["source_entity_id"] == "palermo")
+    palermo["payload"]["not_held_years_known"] = [2005]
+    with pytest.raises(ValueError, match="played-tier roster mismatch in 2005"):
+        build(_source("category"), source)

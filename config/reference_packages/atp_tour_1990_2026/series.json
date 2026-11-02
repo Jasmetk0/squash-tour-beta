@@ -159,6 +159,16 @@
       ],
       "played_team_atp_cup": "out_of_scope_team_competition",
       "source_scope_note": "Full played singles main ATP Tour tier roster, not a complete census of cancelled planned ATP Tour events; ranking/events not simulated"
+    },
+    "calendar_validation_2019": {
+      "archive_source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+      "calendar_announcement_url": "https://www.atptour.com/en/news/atp-announces-2019-atp-world-tour-calendar",
+      "played_atp_masters_1000_count": 9,
+      "played_atp_500_count": 13,
+      "played_atp_250_count": 39,
+      "atp_finals_played": true,
+      "next_gen_finals_played": true,
+      "scope": "Verified ATP Tour 2019 played singles tier roster; unrelated Grand Slams excluded; no full Calendar Editions or player results imported"
     }
   },
   "explicit_scope": [
@@ -743,6 +753,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2020,
             "to": 2020,
             "category_id": "atp_250",
@@ -780,6 +797,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2019,
+            "city": "New York",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/news/fritz-dallas-2025-preview"
+          },
           {
             "year": 2020,
             "city": "New York",
@@ -827,6 +850,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2020,
             "to": 2020,
@@ -891,6 +921,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2020,
             "to": 2020,
@@ -1009,6 +1046,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2020,
             "to": 2020,
             "category_id": "atp_500",
@@ -1072,6 +1116,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2020,
             "to": 2020,
@@ -1137,6 +1188,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_500",
@@ -1193,6 +1251,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -1432,6 +1497,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_500",
@@ -1489,6 +1561,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_500",
@@ -1538,6 +1617,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2020,
             "to": 2020,
@@ -1609,6 +1695,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_500",
@@ -1669,6 +1762,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2020,
             "to": 2020,
@@ -1734,6 +1834,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2024,
             "to": 2024,
             "category_id": "atp_250",
@@ -1784,6 +1891,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2020,
             "to": 2020,
             "category_id": "atp_250",
@@ -1828,6 +1942,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2019,
+            "city": "Pune",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024"
+          },
           {
             "year": 2020,
             "city": "Pune",
@@ -1955,6 +2075,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2020,
             "to": 2020,
             "category_id": "atp_250",
@@ -2018,6 +2145,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2020,
             "to": 2020,
@@ -2097,6 +2231,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2020,
             "to": 2020,
             "category_id": "atp_250",
@@ -2174,6 +2315,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2020,
             "to": 2020,
@@ -2381,6 +2529,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -2456,6 +2611,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -2519,6 +2681,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -2591,6 +2760,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -2661,6 +2837,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -2797,6 +2980,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -2867,6 +3057,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -2939,6 +3136,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -3010,6 +3214,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -3080,6 +3291,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2020,
             "to": 2020,
@@ -3159,6 +3377,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -3222,6 +3447,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -3294,6 +3526,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -3364,6 +3603,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2020,
             "to": 2020,
@@ -3448,6 +3694,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2020,
             "to": 2020,
@@ -3676,6 +3929,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2020,
             "to": 2020,
             "category_id": "atp_250",
@@ -3728,6 +3988,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2019,
+            "city": "Antwerp",
+            "country_code": "BEL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019"
+          },
+          {
             "year": 2024,
             "city": "Antwerp",
             "country_code": "BEL",
@@ -3767,6 +4033,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2020,
             "to": 2020,
@@ -3828,6 +4101,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2019,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019"
+          },
+          {
             "year": 2024,
             "city": "Marseille",
             "country_code": "FRA",
@@ -3879,6 +4158,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
           },
           {
             "from": 2021,
@@ -4243,6 +4529,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2020,
             "to": 2020,
             "category_id": "atp_250",
@@ -4310,6 +4603,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -4370,6 +4670,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -4429,6 +4736,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -4535,6 +4849,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -4711,6 +5032,13 @@
         "not_squash_rules": true,
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2020,
             "to": 2020,
@@ -5320,6 +5648,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -5327,7 +5662,21 @@
             "notes": "Played ATP Tour event in official 2021 Results Archive"
           }
         ],
-        "identity_review_note": "First of two Belgrade 2021 ATP250 events; licensed Budapest relocation, legal continuity with 2022 Belgrade/2023 Banja Luka unresolved."
+        "identity_review_note": "ATP states 2019 Budapest Hungarian Open licence relocated to April 2021 Belgrade. Subsequent 2022 Belgrade/Banja Luka licence relation is not established by this source.",
+        "historical_host_change": [
+          {
+            "year": 2019,
+            "city": "Budapest",
+            "country_code": "HUN",
+            "source_url": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events"
+          },
+          {
+            "year": 2021,
+            "city": "Belgrade",
+            "country_code": "SRB",
+            "source_url": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events"
+          }
+        ]
       },
       "references": [
         {
@@ -5458,7 +5807,7 @@
       "valid": true
     },
     {
-      "source_entity_id": "moscow_2021",
+      "source_entity_id": "moscow",
       "entity_kind": "tennis.series.reference.v1",
       "entity_schema_version": 1,
       "scope": "tennis.atp_tour.series.reference.1990_2026",
@@ -5475,8 +5824,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
+        "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -5484,7 +5840,8 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
             "notes": "Played ATP Tour event in official 2021 Results Archive"
           }
-        ]
+        ],
+        "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played."
       },
       "references": [
         {
@@ -5605,6 +5962,126 @@
           }
         ],
         "identity_review_note": "2020 one-year licence; no continuing Series identity or other venue continuity inferred"
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "sydney_2019",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Sydney International 2019",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Sydney",
+        "historical_country_code": "AUS",
+        "historical_surface": "hard",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "evidence_backed_2019_250_only_no_unverified_licence_continuity",
+        "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          }
+        ],
+        "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "sao_paulo",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Brasil Open São Paulo",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "São Paulo",
+        "historical_country_code": "BRA",
+        "historical_surface": "indoor_clay",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "evidence_backed_2019_250_only_no_unverified_licence_continuity",
+        "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          }
+        ],
+        "identity_review_note": "Played 2019 Brasil Open at Sao Paulo, ATP 250. No later played year is inferred."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "antalya_2019",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Antalya Open 2019 (grass)",
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Antalya",
+        "historical_country_code": "TUR",
+        "historical_surface": "grass",
+        "reference_year": null,
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "evidence_backed_2019_250_only_no_unverified_licence_continuity",
+        "history_periods": [
+          {
+            "from": 2019,
+            "to": 2019,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+            "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
+          }
+        ],
+        "identity_review_note": "Grass Antalya 2019; ATP granted a new one-year 2021 Antalya hard-court tournament, continuity NOT presumed."
       },
       "references": [
         {

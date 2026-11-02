@@ -515,10 +515,10 @@ Source identity continuity was reconciled as follows:
 The deterministic source resolver now emits
 `played_tier_roster_validation` for every annual snapshot:
 
-- **2009–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
+- **2008–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
   with year-specific reference counts independently asserted against
   played (category-effective minus known-cancelled) identities.
-- **1990–2008**: `unverified_incomplete`. No invented total
+- **1990–2007**: `unverified_incomplete`. No invented total
   or assumption that present-day event structure already existed.
 - **2026**: `provisional_calendar_not_final_results`; ATP
   calendar changes and remaining matches are not misreported as
@@ -529,7 +529,7 @@ counts raises a `ValueError` before a stale annual reference
 can pass the source generator's `--check`. Tests additionally
 assert 2020 one-off events, Category references and location changes.
 
-**Remaining gap:** 1990–2008 lower Tour tiers are not fully reconstructed
+**Remaining gap:** 1990–2007 lower Tour tiers are not fully reconstructed
 and still require ATP results archive research. Runtime integration
 into the Squash Engine Packages library and sporting Calendar is still
 absent, and no source file implies a playable tennis simulation.
@@ -591,7 +591,7 @@ even when the JSON remains syntactically valid.
 
 These ten year-specific rosters are source-level and **NOT**
 Calendar Edition packages, complete points/format histories or
-full tournament draw result archives. **1990–2008 remains
+full tournament draw result archives. **1990–2007 remains
 historically incomplete**, and 2026 remains provisional.
 
 ## 2018 official ATP Tour calendar: 64 identities with verified tiers
@@ -639,8 +639,8 @@ fail-closed source validation (9/13/40). The year-resolved
 record does not contain players, scores, tournament draw results,
 qualification details or a tennis sporting engine.
 
-**2009–2025** are the seventeen consecutive ATP years reconciled at
-the played Tour Category level. **1990–2008** lower-tier event
+**2008–2025** are the eighteen consecutive ATP years reconciled at
+the played Tour Category level. **1990–2007** lower-tier event
 Series remain incomplete; the 2026 roster is provisional.
 
 ## 2016 and 2017 ATP Tour category coverage: complete official played-year rosters
@@ -692,14 +692,14 @@ but are explicitly excluded from this strictly ATP Tour source package.
   Nottingham's subsequent men's Challenger is **not** represented
   as an ATP Tour 250 and is not a parallel Tour Series.
 
-For all seventeen **2009–2025** completed seasons, the annual resolver now
+For all eighteen **2008–2025** completed seasons, the annual resolver now
 rejects source changes that corrupt the count of actually played
 Masters/500/250 tournaments. This is verified **source identity/category
 reconstruction**, not a historic Calendar Package with draw dates,
 licence transaction registry, match results or player ranking points
 by round.
 
-**Remaining scope:** precisely **1990–2008** lack complete lower-tier
+**Remaining scope:** precisely **1990–2007** lack complete lower-tier
 Series coverage; **2026** is a provisional Tour calendar. Current
 files are not yet integrated into the Squash Engine's production
 Package catalog or Run-application workflow.
@@ -746,7 +746,7 @@ tier census for each of the **11 complete consecutive years
 2015–2025** (inclusive), with source-specific upper-tier and lower
 tier counts and automated rejection on conflicting changes.
 
-The remaining **19 seasons 1990–2008** have incomplete ATP 500/250
+The remaining **19 seasons 1990–2007** have incomplete ATP 500/250
 Series coverage, despite the nine top-tier historical Masters
 identities and era-specific Category names. They require
 independent tournament-by-tournament audit and cannot be
@@ -796,10 +796,10 @@ Historical classification matters more than present-day event names:
 | 2016 | 9 | 13 | 39 | 1 | 62 |
 | 2017 | 9 | 13 | 40 | 2 | 64 |
 
-**2009–2025 now have 17 consecutive year-level ATP Tier rosters
+**2008–2025 now have 18 consecutive year-level ATP Tier rosters
 validated against official results archives.** The source model
 covers 37 labelled reference years 1990–2026, but the remaining
-**1990–2008** years still lack comprehensive lower-category
+**1990–2007** years still lack comprehensive lower-category
 Series histories and cannot be declared complete. The 2026
 calendar is provisional. Production Package Catalog integration,
 applicable historic Calendar Editions and audited historical
@@ -845,8 +845,8 @@ as well as the other year-specific complete top Tour tier rosters
 through 2025, without importing any tennis player results,
 ranking-point records or actual Calendar Editions.
 
-**2009–2025** are now seventeen consecutive completed year-level
-main ATP Tour category/Series rosters; **1990–2008** still have
+**2008–2025** are now eighteen consecutive completed year-level
+main ATP Tour category/Series rosters; **1990–2007** still have
 incomplete lower tiers, and 2026 remains provisional.
 
 ## New archive-backed early-modern ATP Tour years: 2009, 2010, 2011 and 2012
@@ -915,12 +915,12 @@ current 2026 Series copied blindly.
 
 ### Updated coverage status and audit limitations
 
-The deterministic generator now checks **17 consecutive played
-ATP Tour tier rosters, 2009–2025**. Its source references still
-span all **37 years 1990–2026**, but **1990–2008** need
+The deterministic generator now checks **18 consecutive played
+ATP Tour tier rosters, 2008–2025**, respecting the original historical tier names. Its source references still
+span all **37 years 1990–2026**, but **1990–2007** need
 separate researched Category/Series identities for the pre-2009
 International/Championship/World Series structure. Those
-19 years are explicitly marked `unverified_incomplete`
+18 years are explicitly marked `unverified_incomplete`
 rather than inferred from a 2009–2026 classification.
 The 2026 reference remains provisional.
 
@@ -932,41 +932,97 @@ registered and applicable Squash Engine production Package.
 Source arrays and tests are a historical research layer pending
 semantic Package integration.
 
-## 2008 historical Category transition — researched subset, not complete
 
-At the **2008→2009 ATP structural boundary**, the same
-tournament cannot be called an `ATP 500` or `ATP 250` in 2008.
-The pre-2009 official tier was **ATP International Series Gold**,
-with ordinary **ATP International Series** as the separate lower
-classification. The 2008 record now documents **nine Gold Series**:
+## 2008 ATP Tour — complete played historical Tier roster and corrections
 
-| ATP International Series Gold, 2008 | Classification in 2009 |
-| --- | --- |
-| Rotterdam, Memphis, Dubai, Acapulco, Barcelona, Tokyo | ATP 500 |
-| Stuttgart, Kitzbühel, Vienna | ATP 250 |
+The [2008 ATP official published calendar](https://ftpmirror.your.org/pub/wikimedia/images/wikipedia/commons/archive/9/93/20071121060750%21ATP_Calendar_2008.pdf)
+and the [ATP 2008 Results Archive](https://www.atptour.com/en/scores/results-archive?year=2008)
+have been compared event-by-event. The scheduled calendar is not a played
+results census. A crucial difference is that its advertised Sopot slot was
+**played in Warsaw**, while the planned Mumbai/Bangalore tournament was
+**cancelled** for security reasons.
 
-Evidence: [2008 historical International Series Gold
-membership](https://en.wikipedia.org/wiki/ATP_International_Series_Gold)
-corroborated with the official
-[ATP 2008 results archive](https://www.atptour.com/en/scores/results-archive?year=2008).
+| 2008 historical ATP Tour category | Actually played | Known cancelled/scheduled |
+| --- | ---: | --- |
+| Tennis Masters Series | **9** | — |
+| International Series Gold | **9** | — |
+| International Series | **42** | Bangalore (formerly Mumbai) |
+| Tennis Masters Cup / ATP Finals | **1** | — |
+| **Total** | **61** | **1** |
 
-The year also preserves the existing **nine 2008 Tennis
-Masters Series identities**: Hamburg was a Masters,
-Madrid was still an indoor autumn Masters, and
-Shanghai **was not yet** an ATP Masters 1000 tournament.
-That 2008 tour-level Masters category is different from the
-2009 schedule in which Shanghai replaced Hamburg in
-the Masters line-up and Madrid moved to clay.
+The 2008 source Category/Series reference now contains **62 effective
+identities**, exactly one of which is explicitly `known_not_held`.
+The generator's played-roster validation checks **9 + 9 + 42**
+excluding the cancelled Bangalore slot and treats the Finals separately.
+The source includes **no Olympic event**, Grand Slams, Davis Cup,
+Düsseldorf team cup, Challengers or ITF events. This is a complete
+ATP Tour-owned *played tier identity roster*, not a match-results import,
+edition calendar, draw-size registry or ranking-point ledger.
 
-**Critical source-audit boundary:** Nine documented Gold events
-plus nine Masters is **NOT** a complete 2008 ATP Tour
-Category+Series census. The 2008 ordinary International Series
-membership remains incomplete, so `played_tier_roster_validation.status`
-remains `unverified_incomplete` for 2008. Do not assert
-the number of ordinary ATP International Series events from
-the subset or fabricate missing identities to match a presumed total.
+### Actual historical category transition — no backdated 500/250
 
-A complete 2000–2008 archival classification requires accurate
-year-by-year **International Series Gold** and **International Series**
-membership. The same diligence will be needed for
-1990–1999 **ATP Championship Series** and **ATP World Series**.
+The 2008 **International Series Gold** consisted of exactly nine played
+events: **Rotterdam, Memphis, Dubai, Acapulco, Barcelona, Stuttgart,
+Kitzbühel, Tokyo and Vienna**. Cross-check historical
+[Gold membership](https://en.wikipedia.org/wiki/ATP_International_Series_Gold)
+against the official ATP 2008 archive. When 2009 launched
+the ATP 500/250 terminology, Rotterdam, Memphis, Dubai,
+Acapulco, Barcelona and Tokyo became ATP 500; Stuttgart,
+Kitzbühel and Vienna were ATP 250. Those 2008 Gold events
+must **not** carry 2009 tier labels.
+
+The Masters tier in **2008** still included **Hamburg** and
+**Madrid as an autumn indoor tournament**, not Shanghai.
+Shanghai became Masters from 2009, replacing Hamburg, while
+Madrid's category/venue era shifted.
+
+### Actual played venues and tournament licence evidence
+
+- The original ATP PDF named **Sopot**, but the actual played
+  2008 Polish International Series was the
+  [Warsaw Open](https://www.atptour.com/en/tournaments/warsaw/475/overview),
+  continuing Sopot's Tour slot after an emergency relocation.
+  The source identity `warsaw_2008` records the actual city
+  and does **not** assert a second played Sopot event.
+  [Contemporaneous Polish report](https://sport.rp.pl/tenis/art16231731-ciag-dalszy-nastapil)
+  explains the relocation.
+- The original ATP PDF scheduled a **Mumbai** ATP International event.
+  It was moved to Bangalore and then **cancelled** in August 2008
+  for security reasons. The technical reference
+  `bangalore_2008` has a year-effective Category with
+  `not_held_years_known=[2008]`, never a fabricated played
+  tournament. [2008 cancellation report](https://www.skysports.com/tennis/news/4050908/bangalore-open-cancelled).
+- **2008 Amersfoort → 2009 Belgrade** was an
+  [ATP Board-approved sale of the Dutch tournament sanction](https://sports.rediff.com/sports/report/belgrade-replaces-amersfoort-on-atp-calendar/20090102.htm).
+  The stable `belgrade_2012` reference now spans actual
+  **Amersfoort 2008** and **Serbia Open Belgrade 2009–12**.
+  The later independent Budapest→Belgrade licence is separate.
+- **2008 Adelaide men's hardcourt event → 2009 Brisbane** is
+  documented by
+  [contemporary Australian reporting](https://www.abc.net.au/news/2006-07-07/brisbane-to-host-mens-hard-court-champs-from-2009/1796818).
+  The stable `brisbane` reference has Adelaide as its
+  actual 2008 host; the modern Adelaide tournament's
+  return from 2020 is not automatically a continuous licence.
+- 2008 **Indianapolis** continued under `atlanta` from its
+  transfer to Atlanta 2010; 2008 **Nottingham** is recorded
+  as the earlier host of the `eastbourne` source, and
+  2008 **Lyon indoor** as the earlier host of `montpellier`.
+  Venue equality between multiple later Lyon events is
+  explicitly **not** treated as proof of identical licensing.
+- **Las Vegas** and **Pörtschach** remain separate 2008
+  sources. Their later licenses have not been extrapolated.
+
+### Completeness boundary
+
+The generator now independently validates **18 played year-specific
+ATP Tour top-tier rosters, 2008–2025**, using the **correct original
+2008 category names**. The older years **1990–2007** remain
+`unverified_incomplete`, despite their selected older Masters
+identities. The still-evolving 2026 roster remains
+`provisional_calendar_not_final_results`.
+
+All historical roster assertions remain **source-level**, not
+evidence of fully modelled tournament editions, formats, points
+by round, qualifiers, draws, seeds, players or game rules. Real
+Squash Engine production Package catalogue and Run Apply/Save
+integration are separate release requirements.

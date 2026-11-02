@@ -16,7 +16,7 @@
     "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
     "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
     "notes": [
-      "2026 official main ATP Tour event roster plus a small set of verified historical top-tier events, not all ATP Tour tournaments 1990–2025.",
+      "Actual played main Tour tier rosters are verified for 2007–2025; the years 1990–2006 remain historically incomplete and 2026 is provisional.",
       "2026 date/host fields are not assumed for earlier seasons.",
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
@@ -421,6 +421,21 @@
           "year": 2009,
           "source_url": "https://www.abc.net.au/news/2006-07-07/brisbane-to-host-mens-hard-court-champs-from-2009/1796818"
         }
+      ]
+    },
+    "calendar_validation_2007": {
+      "official_played_results_archive_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+      "historical_category_calendar_url": "https://en.wikipedia.org/wiki/2007_ATP_Tour",
+      "played_masters_series_count": 9,
+      "played_international_series_gold_count": 9,
+      "played_international_series_count": 43,
+      "atp_finals_played": true,
+      "scope": "2007 actual played ATP Tour 9 Masters Series + 9 International Series Gold + 43 International Series, with separate ATP Finals. Excludes 4 Grand Slams, Davis Cup, Hopman Cup and World Team Cup.",
+      "identity_notes": [
+        "2007 Sopot is the historical host of the Warsaw 2008 source identity.",
+        "2007 Mumbai is the played predecessor of the Bangalore 2008 cancelled fixture; Bangalore 2008 is not played.",
+        "2007 Indianapolis/New Haven/Amersfoort/Adelaide/Chennai/Zagreb/Valencia/Lyon indoor inherit known already-tracked Series identities.",
+        "The 2007 Bucharest identity is belgrade_clay_2021; the 2024 Bucharest event stays distinct."
       ]
     }
   },
@@ -1006,6 +1021,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series_gold",
@@ -1127,6 +1149,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
           {
             "year": 2008,
             "city": "Memphis",
@@ -1253,6 +1281,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series_gold",
@@ -1375,6 +1410,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Rotterdam",
             "country_code": "NLD",
@@ -1414,6 +1455,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -1541,7 +1589,15 @@
             "notes": "Upgrade effective 2025"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Doha",
+            "country_code": "QAT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -1622,6 +1678,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series_gold",
@@ -1743,6 +1806,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Acapulco",
+            "country_code": "MEX",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
           {
             "year": 2008,
             "city": "Acapulco",
@@ -1784,6 +1853,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series_gold",
@@ -1906,6 +1982,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Dubai",
+            "country_code": "ARE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Dubai",
             "country_code": "ARE",
@@ -1945,6 +2027,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -2061,6 +2150,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Barcelona",
             "country_code": "ESP",
@@ -2100,6 +2195,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -2220,7 +2322,15 @@
             "notes": "Upgrade effective 2025"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Munich",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -2323,6 +2433,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -2349,7 +2466,15 @@
           2020
         ],
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
-        "identity_review_note": "Halle ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled."
+        "identity_review_note": "Halle ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Halle",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -2390,6 +2515,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -2416,7 +2548,15 @@
           2020
         ],
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
-        "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled."
+        "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -2456,6 +2596,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -2569,7 +2716,15 @@
             "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Washington",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -2603,6 +2758,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -2712,6 +2874,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Tokyo",
             "country_code": "JPN",
@@ -2751,6 +2919,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -2877,7 +3052,15 @@
           2021,
           2022
         ],
-        "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf"
+        "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Beijing",
+            "country_code": "CHN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -2911,6 +3094,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -3028,7 +3218,15 @@
         "not_held_years_known": [
           2021
         ],
-        "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php"
+        "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Basel",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -3062,6 +3260,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -3185,6 +3390,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Vienna",
             "country_code": "AUT",
@@ -3267,6 +3478,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -3376,6 +3594,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Adelaide",
             "country_code": "AUS",
@@ -3422,6 +3646,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -3551,6 +3782,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Chennai",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
           {
             "year": 2008,
             "city": "Chennai",
@@ -3756,6 +3993,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -3875,7 +4119,15 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Auckland",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -3909,6 +4161,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -4039,6 +4298,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Lyon",
             "country_code": "FRA",
@@ -4087,6 +4352,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -4220,7 +4492,15 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Buenos Aires",
+            "country_code": "ARG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -4255,6 +4535,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -4388,7 +4675,15 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Delray Beach",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -4551,6 +4846,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -4681,7 +4983,15 @@
         "not_held_years_known": [
           2021
         ],
-        "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events"
+        "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Houston",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -4715,6 +5025,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -4837,6 +5154,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
           {
             "year": 2008,
             "city": "Casablanca",
@@ -5033,6 +5356,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series_gold",
@@ -5162,6 +5492,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -5237,6 +5573,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -5357,7 +5700,15 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "'s-Hertogenbosch",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -5462,6 +5813,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -5592,6 +5950,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Nottingham",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Nottingham",
             "country_code": "GBR",
@@ -5687,6 +6051,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -5813,7 +6184,15 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Båstad",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -5848,6 +6227,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -5974,7 +6360,15 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Gstaad",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -6009,6 +6403,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -6135,7 +6536,15 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Umag",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -6169,6 +6578,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -6299,6 +6715,12 @@
         "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Kitzbühel",
             "country_code": "AUT",
@@ -6338,6 +6760,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -6460,6 +6889,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
           {
             "year": 2009,
             "city": "Estoril",
@@ -6672,6 +7107,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -6800,6 +7242,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "New Haven",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
           {
             "year": 2008,
             "city": "New Haven",
@@ -7301,6 +7749,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -7437,6 +7892,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Valencia",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Valencia",
             "country_code": "ESP",
@@ -7561,6 +8022,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -7706,6 +8174,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Marseille",
             "country_code": "FRA",
@@ -7837,6 +8311,13 @@
             "notes": ""
           },
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -7964,7 +8445,15 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
-        "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit."
+        "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit.",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Stockholm",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -8241,6 +8730,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Saint Petersburg",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2017,
             "city": "Saint Petersburg",
             "country_code": "RUS",
@@ -8296,6 +8791,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -8417,6 +8919,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Viña del Mar",
+            "country_code": "CHL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
           {
             "year": 2008,
             "city": "Viña del Mar",
@@ -8711,6 +9219,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -8822,6 +9337,14 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
             "notes": "ATP official result archive confirms this Tour 250 event in the given year"
           }
+        ],
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Newport",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
         ]
       },
       "references": [
@@ -8860,6 +9383,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -8975,6 +9505,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2007,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
             "year": 2008,
             "city": "Indianapolis",
             "country_code": "USA",
@@ -9072,6 +9608,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -9190,6 +9733,14 @@
             "category_id": "atp_250",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
             "notes": "ATP official result archive confirms this Tour 250 event in the given year"
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Metz",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
           }
         ]
       },
@@ -9339,6 +9890,13 @@
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -9452,6 +10010,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Zagreb",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
           {
             "year": 2008,
             "city": "Zagreb",
@@ -10094,6 +10658,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -10187,6 +10758,12 @@
         ],
         "identity_review_note": "Bucharest 2015–16 Tour licence transferred Budapest 2017–19 then Belgrade 2021; Bucharest 2024+ tracked as a distinct Tour licence without unproven merger.",
         "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Bucharest",
+            "country_code": "ROU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
           {
             "year": 2008,
             "city": "Bucharest",
@@ -10422,6 +10999,13 @@
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -10513,7 +11097,15 @@
             "notes": "Played ATP Tour event in official 2021 Results Archive"
           }
         ],
-        "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played."
+        "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played.",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Moscow",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -10672,6 +11264,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -10756,7 +11355,15 @@
             "notes": "ATP 2019 official Results Archive: played Tour event; source category independently corroborated by ATP published 2019 tier roster"
           }
         ],
-        "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined."
+        "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined.",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -10794,6 +11401,13 @@
         "not_squash_rules": true,
         "history_scope": "verified_2018_2019_250_only_next_license_location_not_yet_certified",
         "history_periods": [
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
           {
             "from": 2008,
             "to": 2008,
@@ -10881,6 +11495,12 @@
         ],
         "identity_review_note": "Costa do Sauípe ATP Tour Brasil Open event 2011 moved to São Paulo from 2012, played through 2019. Tournament venue changed, not a new Tour series.",
         "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Costa do Sauípe",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
           {
             "year": 2008,
             "city": "Costa do Sauípe",
@@ -11180,6 +11800,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -11222,7 +11849,15 @@
             "notes": "Detailed contemporary NOS ATP 2013 schedule confirms event city/date/tier; ATP 2013 archive listed for results cross-reference"
           }
         ],
-        "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source"
+        "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "San Jose",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -11261,6 +11896,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -11303,7 +11945,15 @@
             "notes": "Detailed contemporary NOS ATP 2013 schedule confirms event city/date/tier; ATP 2013 archive listed for results cross-reference"
           }
         ],
-        "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source"
+        "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -11342,6 +11992,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -11384,7 +12041,15 @@
             "notes": "Detailed contemporary NOS ATP 2013 schedule confirms event city/date/tier; ATP 2013 archive listed for results cross-reference"
           }
         ],
-        "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source"
+        "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Bangkok",
+            "country_code": "THA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -11423,6 +12088,13 @@
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -11460,6 +12132,12 @@
         ],
         "identity_review_note": "Dutch Open Amersfoort 2008 ATP sanction sold with ATP Board approval to Belgrade and played as Serbia Open 2009–2012. Separate Budapest 2021 Belgrade licence.",
         "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Amersfoort",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
           {
             "year": 2008,
             "city": "Amersfoort",
@@ -11583,6 +12261,13 @@
         "history_scope": "2008_International_Series_only_and_legal_sanction_history_not_backfilled",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -11590,7 +12275,15 @@
             "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
           }
         ],
-        "identity_review_note": "2008 Tour event only; earlier or later licence continuity needs dated evidence"
+        "identity_review_note": "2008 Tour event only; earlier or later licence continuity needs dated evidence",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Las Vegas",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -11623,6 +12316,13 @@
         "history_scope": "2008_International_Series_only_and_legal_sanction_history_not_backfilled",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -11630,7 +12330,15 @@
             "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
           }
         ],
-        "identity_review_note": "2008 Tour event only; earlier or later licence continuity needs dated evidence"
+        "identity_review_note": "2008 Tour event only; earlier or later licence continuity needs dated evidence",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Pörtschach",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -11663,6 +12371,13 @@
         "history_scope": "2008_International_Series_only_and_legal_sanction_history_not_backfilled",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -11670,7 +12385,15 @@
             "notes": "Warsaw Open played 2008 after prospective Sopot listing"
           }
         ],
-        "identity_review_note": "2008 Warsaw ATP International Series succeeded Sopot and was played. Original ATP prospective calendar still showed Sopot. 2007 Sopot history not yet loaded."
+        "identity_review_note": "2008 Warsaw ATP International Series succeeded Sopot and was played. Original ATP prospective calendar still showed Sopot. 2007 Sopot history not yet loaded.",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Sopot",
+            "country_code": "POL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {
@@ -11703,6 +12426,13 @@
         "history_scope": "2008_International_Series_only_and_legal_sanction_history_not_backfilled",
         "history_periods": [
           {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
             "from": 2008,
             "to": 2008,
             "category_id": "atp_international_series",
@@ -11714,7 +12444,15 @@
         "not_held_years_known": [
           2008
         ],
-        "known_nonheld_source": "https://www.skysports.com/tennis/news/4050908/bangalore-open-cancelled"
+        "known_nonheld_source": "https://www.skysports.com/tennis/news/4050908/bangalore-open-cancelled",
+        "historical_host_change": [
+          {
+            "year": 2007,
+            "city": "Mumbai",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          }
+        ]
       },
       "references": [
         {

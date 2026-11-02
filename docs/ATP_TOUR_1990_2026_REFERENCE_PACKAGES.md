@@ -1,16 +1,16 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **113** Series identities and 37 generated annual reference rows.
-> The **26 played main ATP Tour tier rosters 2000–2025** have source-backed
-> original year-effective categories. **1990–1999 are incomplete; 2026 is
+> **117** Series identities and 37 generated annual reference rows.
+> The **27 played main ATP Tour tier rosters 1999–2025** have source-backed
+> original year-effective categories. **1990–1998 are incomplete; 2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
 >
 > Sections below preserve dated incremental research checkpoints. Statements
 > about older incomplete year ranges (e.g. `1990–2007`) describe the state
-> **at those earlier checkpoints**, not the current 2000–2025 coverage.
+> **at those earlier checkpoints**, not the current 1999–2025 coverage.
 > Read the most recent dated historical appendix for up-to-date provenance.
 
 
@@ -1348,3 +1348,59 @@ Tier rosters (2000–2025)** are now included. **1990–1999 incomplete**,
 2026 provisional. References are source-only, not historical match
 Edtions, draw/result payloads, points tables, Package Catalog importer,
 or native Squash Engine Apply/Save. Keep Draft pending CI and review.
+
+
+## ATP Tour 1999 — original Super 9 / Championship / World Series (2026-11-02)
+
+In 1999 the real main ATP Tour used its original native tier labels, **not**
+the 2000 Masters/International split nor modern ATP 1000/500/250. The
+**played** 1999 men's ATP Tour census is **9 ATP Super 9, 11 ATP
+Championship Series, 45 ATP World Series**, plus the single separate
+singles ATP Tour World Championships in **Hannover**. There are therefore
+**66 Tour-only annual source Series identities**. 1999's Grand Slam Cup,
+the four majors, the World Team Cup, Davis Cup, Hopman Cup and
+doubles-only Worlds in Hartford are outside this singles Tour roster.
+
+Original sources:
+- Official 1999 ATP played archive: https://www.atptour.com/en/scores/results-archive?year=1999
+- Historical 1999 original-tier tournament listing: https://de.wikipedia.org/wiki/ATP_Tour_1999
+- 1999 ATP tier aggregates / calendar: https://en.wikipedia.org/wiki/1999_ATP_Tour
+- ATP original 1999 singles World Championships at Hannover:
+  https://www.atptour.com/-/media/23da5115363646fd89d16716e5b35a2e.pdf
+- 1999 separate year-end doubles at Hartford:
+  https://www.atptour.com/-/media/08887c4b3be347dd8a2d701c23fcd587.pdf
+
+**1999 historic source identities:** `singapore_1999` is the 1999
+Heineken Singapore indoor **Championship Series** (not World Series
+and not a played 2000 Singapore). `prague_1999`, `merano_1999`,
+and `boston_1999` are played **World Series** events: Prague was
+cancelled for 2000 because organisers did not deposit the ATP-required
+financial guarantee; this is not a fictional 2000 ATP Czech Open.
+- ATP Singapore original edition: https://www.atptour.com/en/tournaments/singapore/326/overview
+- ATP Prague 1999: https://www.atptour.com/en/tournaments/-/379/overview
+- Contemporary Prague 2000 Tour cancellation:
+  https://cesky.radio.cz/zpravy-pondeli-03-cervence-2000-8056454
+- ATP Merano 1999: https://www.atptour.com/en/tournaments/crans-montana/473/overview
+- ATP Boston 1999: https://www.atptour.com/en/tournaments/boston/80/overview
+
+One material licence move: the 1999 **Bournemouth Samsung Open** was
+played on **green outdoor clay**, then transferred as the **same ATP
+Tour Series identity** to **Brighton 2000**, played indoors on hard.
+The `brighton_2000` source now holds BOTH years with host/surface
+history; there must not be a duplicate 1999 Brighton or 2000
+Bournemouth annual Series.
+- Original tournament history: https://en.wikipedia.org/wiki/Brighton_International
+
+The 1999 London indoor **Guardian Direct Cup** was a Championship
+Series tournament under historical `sofia`; the distinct grass
+**Queen's Club** was World Series. In 2000 the London indoor AXA Cup
+became International Series Gold; the historical source licence
+eventually returned to Milan 2001 and later Zagreb/Sofia. Historic
+year-effective Category transitions are intentional, not a score
+or points equivalence.
+
+**27 consecutive played ATP Tour source tier rosters 1999–2025** are
+now gated with historical category names. 1990–1998 remain incomplete;
+2026 is provisional. This reference data does not create playable
+historical Edtions, draws, results, points, or native Package Apply/Save.
+Keep existing owner-only Draft PR until latest-head CI and review.

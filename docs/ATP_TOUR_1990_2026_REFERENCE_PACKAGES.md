@@ -515,10 +515,10 @@ Source identity continuity was reconciled as follows:
 The deterministic source resolver now emits
 `played_tier_roster_validation` for every annual snapshot:
 
-- **2018–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
+- **2016–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
   with year-specific reference counts independently asserted against
   played (category-effective minus known-cancelled) identities.
-- **1990–2017**: `unverified_incomplete`. No invented total
+- **1990–2015**: `unverified_incomplete`. No invented total
   or assumption that present-day event structure already existed.
 - **2026**: `provisional_calendar_not_final_results`; ATP
   calendar changes and remaining matches are not misreported as
@@ -529,7 +529,7 @@ counts raises a `ValueError` before a stale annual reference
 can pass the source generator's `--check`. Tests additionally
 assert 2020 one-off events, Category references and location changes.
 
-**Remaining gap:** 1990–2017 lower Tour tiers are not fully reconstructed
+**Remaining gap:** 1990–2015 lower Tour tiers are not fully reconstructed
 and still require ATP results archive research. Runtime integration
 into the Squash Engine Packages library and sporting Calendar is still
 absent, and no source file implies a playable tennis simulation.
@@ -589,9 +589,9 @@ even when the JSON remains syntactically valid.
 | 2024 | 9 | 13 | 38 | 2 | ATP 2024 results |
 | 2025 | 9 | 16 | 30 | 2 | ATP 2025 results |
 
-These eight year-specific rosters are source-level and **NOT**
+These ten year-specific rosters are source-level and **NOT**
 Calendar Edition packages, complete points/format histories or
-full tournament draw result archives. **1990–2017 remains
+full tournament draw result archives. **1990–2015 remains
 historically incomplete**, and 2026 remains provisional.
 
 ## 2018 official ATP Tour calendar: 64 identities with verified tiers
@@ -639,6 +639,67 @@ fail-closed source validation (9/13/40). The year-resolved
 record does not contain players, scores, tournament draw results,
 qualification details or a tennis sporting engine.
 
-**2018–2025** are the eight consecutive ATP years reconciled at
-the played Tour Category level. **1990–2017** lower-tier event
+**2016–2025** are the ten consecutive ATP years reconciled at
+the played Tour Category level. **1990–2015** lower-tier event
 Series remain incomplete; the 2026 roster is provisional.
+
+## 2016 and 2017 ATP Tour category coverage: complete official played-year rosters
+
+[ATP 2016 Results Archive](https://www.atptour.com/en/scores/results-archive?year=2016)
+and the [2016 ATP media guide](https://www.atptour.com/-/media/files/media-guide/2016/atp2016_media_guide.pdf)
+document **9 Masters 1000, 13 ATP 500, 39 ATP 250 and one ATP Finals
+event**: **62 ATP Tour identities**. The 2016 Rio Olympics and four
+Grand Slams are *not* ATP Tour event Series in this model, even though
+some results count in the external ATP ranking.
+
+[ATP 2017 Results Archive](https://www.atptour.com/en/scores/results-archive?year=2017)
+and [ATP calendar release](https://www.atptour.com/en/news/atp-announces-2017-2018-calendars)
+document **9 Masters, 13 ATP 500, 40 ATP 250** plus ATP Finals
+and the inaugural Next Gen ATP Finals: **64 ATP Tour identities**.
+The Laver Cup and Davis Cup appear in some public calendar archives
+but are explicitly excluded from this strictly ATP Tour source package.
+
+| Year | Played Masters | Played ATP 500 | Played ATP 250 | ATP Finals | Next Gen Finals | Source Series |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 2016 | 9 | 13 | 39 | 1 | 0 (not yet created) | **62** |
+| 2017 | 9 | 13 | 40 | 1 | 1 | **64** |
+
+**2016–2017 important real Tour Series licence moves:**
+- **Chennai 2016–2017 → Pune 2018 → Hong Kong 2024:**
+  contemporaneous [Indian tennis reporting](https://scroll.in/field/844022/)
+  confirms Chennai's move to Pune, and the
+  [ATP Hong Kong 2024 release](https://www.atptour.com/en/news/hong-kong-atp-250-2024)
+  confirms Pune's later move. One identity `hong_kong` is
+  preserved without creating parallel permanent City Series.
+- **Memphis 2016–2017 → Long Island/New York 2018 → Dallas 2022:**
+  [official ATP New York press notes](https://www.atptour.com/-/media/931dfc248f6e4ccbba6e75cf4020fd44.pdf)
+  describe Memphis-to-Long-Island; the same source identity `dallas`
+  later changes tier to ATP 500 in 2025.
+- **Bucharest 2016 → Budapest 2017–2019 → Belgrade 2021:**
+  [2016 licence announcement](https://www.profit.ro/stiri/social/tiriac-anunta-ca-turneul-atp-de-la-bucuresti-se-muta-la-budapesta-jucam-in-tiganie-15501062)
+  establishes the 2016 departure from Bucharest. The later
+  **2024+ Bucharest** tournament is not automatically assumed to
+  be the same licence: the source distinguishes `bucharest`
+  from the 2016–2021 historical identity `belgrade_clay_2021`.
+- **Nice 2016 → Lyon 2017**: the ATP 250 Nice clay tournament
+  moved to Lyon, as independently
+  [reported in November 2016](https://www.lequipe.fr/Tennis/Actualites/Un-nouveau-tournoi-atp-a-lyon-la-semaine-avant-roland-garros/748030).
+  The `lyon_old` ID spans both hosts, and is **separate** from
+  the Marseille licence that moved to Lyon for 2026.
+- **Nottingham 2016 → Eastbourne 2017**:
+  [LTA's official grass calendar](https://www.lta.org.uk/news/2016/april/british-grass-court-season-announced-for-2017/)
+  confirms the ATP 250 moved to Eastbourne in 2017.
+  Nottingham's subsequent men's Challenger is **not** represented
+  as an ATP Tour 250 and is not a parallel Tour Series.
+
+For all ten **2016–2025** completed seasons, the annual resolver now
+rejects source changes that corrupt the count of actually played
+Masters/500/250 tournaments. This is verified **source identity/category
+reconstruction**, not a historic Calendar Package with draw dates,
+licence transaction registry, match results or player ranking points
+by round.
+
+**Remaining scope:** precisely **1990–2015** lack complete lower-tier
+Series coverage; **2026** is a provisional Tour calendar. Current
+files are not yet integrated into the Squash Engine's production
+Package catalog or Run-application workflow.

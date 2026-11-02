@@ -16,7 +16,7 @@
     "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
     "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
     "notes": [
-      "Played main ATP Tour tier rosters source-reconciled for 2004–2025; 1990–2003 remain incomplete, 2026 provisional. Historical source references do not construct calendar Editions.",
+      "Actual original-category ATP main Tour played rosters reconciled for 2003–2025; 1990–2002 remain incomplete, 2026 provisional. No inferred played Editions/points.",
       "2026 date/host fields are not assumed for earlier seasons.",
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
@@ -512,6 +512,33 @@
         }
       ],
       "safety_note": "Not the 2004 Masters Cup in Houston (source atp_finals) nor 2005 Masters Cup in Shanghai; previous 2004 ATP Shanghai standard tour Series is different from year-end finals."
+    },
+    "calendar_validation_2003": {
+      "official_played_results_archive_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+      "historical_category_schedule_url": "https://de.wikipedia.org/wiki/ATP_Tour_2003",
+      "copenhagen_tournament_source_url": "https://www.atptour.com/en/tournaments/copenhagen/481/overview",
+      "played_masters_series_count": 9,
+      "played_international_series_gold_count": 9,
+      "played_international_series_count": 44,
+      "atp_finals_played": true,
+      "scope": "9 Masters Series + 9 International Series Gold + 44 International Series plus 2003 Tennis Masters Cup at Houston. Grand Slams, World Team Cup, Davis Cup, Challengers excluded.",
+      "verified_year_specific_identity_changes": [
+        {
+          "year": 2003,
+          "source_id": "copenhagen_2003",
+          "city": "Copenhagen",
+          "source_url": "https://www.atptour.com/en/tournaments/copenhagen/481/overview"
+        },
+        {
+          "year": 2004,
+          "source_id": "beijing",
+          "city": "Beijing",
+          "source_url": "https://www.atptour.com/en/tournaments/beijing/590/overview"
+        }
+      ],
+      "legal_continuity": "Copenhagen 2003 vs Beijing 2004 explicitly NOT linked; their distinct original source IDs are retained pending direct licensing evidence.",
+      "canada_masters_2003": "Montreal",
+      "finals_host_2003": "Houston"
     }
   },
   "explicit_scope": [
@@ -562,6 +589,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Indian Wells",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Indian Wells",
@@ -637,6 +670,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Miami",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Miami",
             "country_code": "USA",
@@ -711,6 +750,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Monte Carlo",
+            "country_code": "MCO",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Monte Carlo",
             "country_code": "MCO",
@@ -778,6 +823,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Madrid",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Madrid",
             "country_code": "ESP",
@@ -841,6 +892,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Rome",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Rome",
@@ -917,6 +974,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Montreal",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Toronto",
             "country_code": "CAN",
@@ -986,6 +1049,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Cincinnati",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Cincinnati",
@@ -1112,6 +1181,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Paris",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Paris",
             "country_code": "FRA",
@@ -1157,6 +1232,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -1308,6 +1390,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Memphis",
             "country_code": "USA",
@@ -1456,6 +1544,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -1607,6 +1702,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Rotterdam",
             "country_code": "NLD",
@@ -1670,6 +1771,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -1828,6 +1936,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Doha",
+            "country_code": "QAT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Doha",
             "country_code": "QAT",
@@ -1932,6 +2046,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series_gold",
@@ -2081,6 +2202,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Acapulco",
+            "country_code": "MEX",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Acapulco",
@@ -2146,6 +2273,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series_gold",
@@ -2296,6 +2430,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Dubai",
+            "country_code": "ARE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Dubai",
             "country_code": "ARE",
@@ -2359,6 +2499,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -2503,6 +2650,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Barcelona",
             "country_code": "ESP",
@@ -2566,6 +2719,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -2717,6 +2877,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Munich",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Munich",
             "country_code": "DEU",
@@ -2805,6 +2971,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Hamburg",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Hamburg",
             "country_code": "DEU",
@@ -2850,6 +3022,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -2907,6 +3086,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Halle ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Halle",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Halle",
@@ -2972,6 +3157,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -3028,6 +3220,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "London",
@@ -3092,6 +3290,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -3236,6 +3441,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Washington",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Washington",
             "country_code": "USA",
@@ -3293,6 +3504,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -3429,6 +3647,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Tokyo",
@@ -3708,6 +3932,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -3855,6 +4086,12 @@
         "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Basel",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Basel",
             "country_code": "CHE",
@@ -3912,6 +4149,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -4063,6 +4307,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Vienna",
             "country_code": "AUT",
@@ -4169,6 +4419,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -4306,6 +4563,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Adelaide",
             "country_code": "AUS",
@@ -4376,6 +4639,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -4533,6 +4803,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Chennai",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Chennai",
@@ -4762,6 +5038,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -4912,6 +5195,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Auckland",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Auckland",
             "country_code": "NZL",
@@ -4969,6 +5258,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -5127,6 +5423,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Lyon",
             "country_code": "FRA",
@@ -5199,6 +5501,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -5362,6 +5671,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Buenos Aires",
+            "country_code": "ARG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Buenos Aires",
@@ -5421,6 +5736,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -5584,6 +5906,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Delray Beach",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Delray Beach",
@@ -5771,6 +6099,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -5932,6 +6267,12 @@
         "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Houston",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Houston",
             "country_code": "USA",
@@ -5989,6 +6330,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -6139,6 +6487,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Casablanca",
@@ -6359,6 +6713,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series_gold",
@@ -6516,6 +6877,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -6615,6 +6982,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -6766,6 +7140,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "'s-Hertogenbosch",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "'s-Hertogenbosch",
             "country_code": "NLD",
@@ -6894,6 +7274,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -7052,6 +7439,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Nottingham",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Nottingham",
             "country_code": "GBR",
@@ -7171,6 +7564,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -7327,6 +7727,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Båstad",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Båstad",
@@ -7386,6 +7792,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -7542,6 +7955,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Gstaad",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Gstaad",
@@ -7601,6 +8020,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -7758,6 +8184,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Umag",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Umag",
             "country_code": "HRV",
@@ -7815,6 +8247,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -7973,6 +8412,12 @@
         "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Kitzbühel",
             "country_code": "AUT",
@@ -8036,6 +8481,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -8186,6 +8638,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Estoril",
@@ -8422,6 +8880,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -8578,6 +9043,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Long Island",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Long Island",
@@ -9103,6 +9574,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -9267,6 +9745,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Valencia",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Valencia",
             "country_code": "ESP",
@@ -9415,6 +9899,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -9588,6 +10079,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Marseille",
             "country_code": "FRA",
@@ -9741,6 +10238,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
           },
           {
             "from": 2004,
@@ -9901,6 +10405,12 @@
         "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit.",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Stockholm",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Stockholm",
             "country_code": "SWE",
@@ -9988,6 +10498,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Houston",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Houston",
@@ -10209,6 +10725,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Saint Petersburg",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Saint Petersburg",
             "country_code": "RUS",
@@ -10288,6 +10810,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -10437,6 +10966,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Viña del Mar",
+            "country_code": "CHL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Viña del Mar",
@@ -10755,6 +11290,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -10897,6 +11439,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Newport",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Newport",
             "country_code": "USA",
@@ -10958,6 +11506,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -11101,6 +11656,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Indianapolis",
             "country_code": "USA",
@@ -11222,6 +11783,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -11371,6 +11939,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Metz",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Metz",
@@ -11543,6 +12117,13 @@
         "history_scope": "2005_milan_2006_2015_zagreb_2016_sofia",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -11684,6 +12265,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Milan",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Milan",
@@ -12350,6 +12937,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -12471,6 +13065,12 @@
         ],
         "identity_review_note": "Bucharest 2015–16 Tour licence transferred Budapest 2017–19 then Belgrade 2021; Bucharest 2024+ tracked as a distinct Tour licence without unproven merger.",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Bucharest",
+            "country_code": "ROU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Bucharest",
@@ -12730,6 +13330,13 @@
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -12851,6 +13458,12 @@
         ],
         "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played.",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Moscow",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Moscow",
@@ -13034,6 +13647,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -13149,6 +13769,12 @@
         "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined.",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Sydney",
             "country_code": "AUS",
@@ -13210,6 +13836,13 @@
         "not_squash_rules": true,
         "history_scope": "verified_2018_2019_250_only_next_license_location_not_yet_certified",
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -13325,6 +13958,12 @@
         ],
         "identity_review_note": "Costa do Sauípe ATP Tour Brasil Open event 2011 moved to São Paulo from 2012, played through 2019. Tournament venue changed, not a new Tour series.",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Costa do Sauípe",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Costa do Sauípe",
@@ -13648,6 +14287,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -13720,6 +14366,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "San Jose",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "San Jose",
@@ -13783,6 +14435,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -13855,6 +14514,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Los Angeles",
@@ -13918,6 +14583,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -13991,6 +14663,12 @@
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Bangkok",
+            "country_code": "THA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Bangkok",
             "country_code": "THA",
@@ -14052,6 +14730,13 @@
         "not_squash_rules": true,
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
           {
             "from": 2004,
             "to": 2004,
@@ -14118,6 +14803,12 @@
         ],
         "identity_review_note": "Dutch Open Amersfoort 2008 ATP sanction sold with ATP Board approval to Belgrade and played as Serbia Open 2009–2012. Separate Budapest 2021 Belgrade licence.",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Amersfoort",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Amersfoort",
@@ -14265,6 +14956,13 @@
         "history_scope": "2005_scottsdale_2006_2008_las_vegas",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -14302,6 +15000,12 @@
         ],
         "identity_review_note": "2005 Tennis Channel Open in Scottsdale transferred to Las Vegas in 2006, played there through 2008; earlier Scottsdale years not imported.",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Scottsdale",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Scottsdale",
@@ -14359,6 +15063,13 @@
         "history_scope": "2005_st_poelten_2006_2008_poertschach",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -14396,6 +15107,12 @@
         ],
         "identity_review_note": "2005 St. Pölten ATP event licence moved to Pörtschach from 2006, played there through 2008.",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "St. Pölten",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "St. Pölten",
@@ -14453,6 +15170,13 @@
         "history_scope": "2007_2008_international_series_year_evidenced_only_other_seasons_not_backfilled",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -14490,6 +15214,12 @@
         ],
         "identity_review_note": "Sopot 2007 ATP International Series relocated to Warsaw and was played in 2008. Neither historic Sopot and Warsaw host is a parallel 2008 Series. The earlier prospective 2008 calendar still listed Sopot.",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Sopot",
+            "country_code": "POL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Sopot",
@@ -14553,6 +15283,13 @@
         "history_scope": "2004_shanghai_2005_vietnam_2006_2007_mumbai_2008_bangalore_cancelled",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -14594,6 +15331,12 @@
         ],
         "known_nonheld_source": "https://www.skysports.com/tennis/news/4050908/bangalore-open-cancelled",
         "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Shanghai",
+            "country_code": "CHN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
           {
             "year": 2004,
             "city": "Shanghai",
@@ -14651,6 +15394,13 @@
         "history_scope": "2005_2006_played_tour_only_older_seasons_not_backfilled",
         "history_periods": [
           {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
             "from": 2004,
             "to": 2004,
             "category_id": "atp_international_series",
@@ -14674,6 +15424,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2003,
+            "city": "Palermo",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
             "year": 2004,
             "city": "Palermo",
             "country_code": "ITA",
@@ -14693,6 +15449,54 @@
           }
         ],
         "identity_review_note": "2005 and 2006 Palermo ATP main Tour International Series played editions verified; do not infer older annual history or post-2006 license successors."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "copenhagen_2003",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Copenhagen Open (2003 ATP Tour)",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Copenhagen",
+        "historical_country_code": "DNK",
+        "historical_surface": "hard_indoor",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2003_atp_international_series_earlier_years_unverified",
+        "history_periods": [
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/tournaments/copenhagen/481/overview",
+            "notes": "Official ATP 2003 Copenhagen played edition, International Series; no unsupported licence transfer to 2004 Beijing"
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 2003,
+            "city": "Copenhagen",
+            "country_code": "DNK",
+            "source_url": "https://www.atptour.com/en/tournaments/copenhagen/481/overview"
+          }
+        ],
+        "identity_review_note": "Played 2003 Copenhagen Open ATP International Series. 2004 Beijing joins ATP calendar while Copenhagen disappears; the transition alone is not evidence of legal licence continuity. No earlier Copenhagen years automatically implied."
       },
       "references": [
         {

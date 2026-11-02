@@ -1234,9 +1234,7 @@ def test_2008_amersfoort_to_2009_belgrade_and_adelaide_to_brisbane() -> None:
     assert _host_by_year(by["belgrade_2012"])[2008] == "Amersfoort"
     assert _host_by_year(by["belgrade_2012"])[2009] == "Belgrade"
     assert _host_by_year(by["brisbane"])[2008] == "Adelaide"
-    assert _host_by_year(by["brisbane"])[2009] == "Brisbane" if (
-        2009 in _host_by_year(by["brisbane"])
-    ) else rows[2009]["brisbane"] == "atp_250"
+    assert _host_by_year(by["brisbane"])[2009] == "Brisbane"
 
 
 def test_2008_source_gate_refuses_false_played_result() -> None:

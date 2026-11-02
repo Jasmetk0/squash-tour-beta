@@ -528,7 +528,7 @@ def test_coverage_gates_reject_false_historical_completeness() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     rows = {s["year"]: s for s in build(categories, source)["seasons"]}
-    for year in range(1990, 2005):
+    for year in range(1990, 2004):
         assert rows[year]["played_tier_roster_validation"]["status"] == "unverified_incomplete"
         assert rows[year]["played_tier_roster_validation"]["played_counts"] is None
     assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
@@ -1436,3 +1436,51 @@ def test_2005_fake_cancellation_breaks_played_tier_gate() -> None:
     palermo["payload"]["not_held_years_known"] = [2005]
     with pytest.raises(ValueError, match="played-tier roster mismatch in 2005"):
         build(_source("category"), source)
+
+
+def test_2004_source_census_full_original_categories_and_no_external_events() -> None:
+    row = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}[2004]
+    assert row["played_tier_roster_validation"]["status"] == (
+        "played_tour_tiers_reconciled_to_atp_results_archive"
+    )
+    assert row["played_tier_roster_validation"]["played_counts"] == {
+        "tennis_masters_series": 9, "atp_international_series_gold": 9,
+        "atp_international_series": 44,
+    }
+    assert Counter(row["series_category_ids"].values()) == {
+        "tennis_masters_series": 9, "atp_international_series_gold": 9,
+        "atp_international_series": 44, "atp_finals": 1,
+    }
+    assert len(row["series_category_ids"]) == 63
+    assert row["known_not_held_series_ids"] == []
+    for not_tour in ("australian_open", "wimbledon", "us_open", "roland_garros",
+                     "world_team_cup", "athens_olympics", "davis_cup"):
+        assert not_tour not in row["series_category_ids"]
+
+
+def test_2004_shanghai_and_long_island_hosted_actual_source_series() -> None:
+    entities = {e["source_entity_id"]: e["payload"] for e in _source("series")["entities"]}
+    history = _host_by_year(entities["bangalore_2008"])
+    assert history[2004] == "Shanghai"
+    assert history[2005] == "Ho Chi Minh City"
+    assert history[2006] == "Mumbai"
+    history = _host_by_year(entities["winston_salem"])
+    assert history[2004] == "Long Island"
+    assert history[2005] == "New Haven"
+    assert history[2010] == "New Haven"
+    assert "atp_finals" != "bangalore_2008"
+    assert _host_by_year(entities["atp_finals"])[2004] == "Houston"
+    for id in ("bangalore_2008", "winston_salem"):
+        assert [p for p in entities[id]["history_periods"]
+                if p["from"] <= 2004 <= p["to"]][0]["category_id"] == (
+                    "atp_international_series"
+                )
+
+
+def test_2004_false_cancelled_tour_event_fails_historical_tier_gate() -> None:
+    import copy
+    series = copy.deepcopy(_source("series"))
+    entity = next(e for e in series["entities"] if e["source_entity_id"] == "palermo")
+    entity["payload"]["not_held_years_known"] = [2004]
+    with pytest.raises(ValueError, match="played-tier roster mismatch in 2004"):
+        build(_source("category"), series)

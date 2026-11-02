@@ -32,7 +32,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**105 identities** across 2026 ATP Tour fixtures and selected older masters.
+**106 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -1061,8 +1061,45 @@ Lyon indoor and Valencia licence tracks. These are source-history
 links, *not* played Edition objects and *not* proof of every prior
 or subsequent year in any Series.
 
-**Coverage boundary after this expansion:** **19 consecutive played-tier
-seasons (2007–2025)**, with 1990–2006 still incomplete, 2026
+**Coverage boundary after this expansion:** **20 consecutive played-tier
+seasons (2006–2025)**, with 1990–2005 still incomplete, 2026
 provisional, and the entire runtime Category/Series import/Save/Calendar
 adapter unimplemented. No title points, draws, qualification or
 match/player data was added. Keep this PR Draft.
+
+
+## 2006 played ATP Tour tiers, source-verified (2026-11-02)
+
+**2006 historical ATP-only roster:** nine Tennis Masters Series,
+nine International Series Gold, 44 International Series and the
+separate Tennis Masters Cup; **63 source Series identities**.
+The 44th International Series event, which was absent from the
+2007 played main Tour calendar, is **Palermo, Italy**.
+
+- Official ATP 2006 results archive:
+  https://www.atptour.com/en/scores/results-archive?year=2006
+- Official ATP Palermo 2006 edition (tournament identifier 325):
+  https://www.atptour.com/en/tournaments/palermo/325/overview
+- [2006 ATP Tour year and complete played category calendar](https://de.wikipedia.org/wiki/ATP_Tour_2006)
+  (independent secondary classification cross-check).
+- [Contemporary ATP 2006 calendar discussion](https://www.forodeltenis.com/noticias-de-tenis-y-tenis-en-general/calendario-atp-2006/)
+  is *prospective only*: e.g. Milan/Ho Chi Minh City can appear on preliminary listings
+  even though the final played season used Zagreb/Mumbai. The prospective listing
+  must never override results-backed played membership.
+
+The existing Series identities connect all 43 played 2007 International
+Series to their evidence-supported 2006 predecessors. No fictitious second
+Mumbai/Bangalore, Sopot/Warsaw, Chennai/Pune, Valencia/Antwerp, or
+Nice/Lyon/Marseille lineage is minted. **Palermo** is a new, separately
+sourced Series reference; its actual earlier ATP years remain to be
+researched and must not be extrapolated from the 2006 success.
+
+The generator now independently count-gates **20 consecutive played
+ATP Tour tier rosters 2006–2025** with original era categories. The year
+2006 has **44** International Series (2007 has **43**), and ATP Finals is
+tracked separately from counted tiers. Grand Slams, World Team Cup,
+Davis Cup, Challenger/ITF and incomplete 2006 preliminary events are excluded.
+
+**Remaining work:** 1990–2005 incompletely sourced, 2026 provisional,
+historical draws/points/rounds not imported, and no production Package
+Catalog/Run Apply/Save semantic integration. Source-only, keep Draft.

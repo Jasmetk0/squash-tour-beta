@@ -1008,9 +1008,9 @@ def test_2011_event_families_before_2012_relocations_remain_distinct() -> None:
     chile_hosts = {p["year"]: p["city"] for p in by_id["cordoba"]["historical_host_change"]}
     assert chile_hosts[2011] == "Santiago"
     assert chile_hosts[2012] == "Viña del Mar"
-    assert [p["year"] for p in by_id["belgrade_2012"]["historical_host_change"]] == [
-        2009, 2010, 2011, 2012
-    ]
+    belgrade_hosts = _host_by_year(by_id["belgrade_2012"])
+    assert belgrade_hosts[2008] == "Amersfoort"
+    assert all(belgrade_hosts[year] == "Belgrade" for year in range(2009, 2013))
 
 
 def test_2011_tour_finals_and_world_team_cup_scope_is_strict() -> None:

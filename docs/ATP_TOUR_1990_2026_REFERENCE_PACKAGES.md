@@ -32,7 +32,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**90 identities** across 2026 ATP Tour fixtures and selected older masters.
+**93 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -515,10 +515,10 @@ Source identity continuity was reconciled as follows:
 The deterministic source resolver now emits
 `played_tier_roster_validation` for every annual snapshot:
 
-- **2020–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
+- **2019–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
   with year-specific reference counts independently asserted against
   played (category-effective minus known-cancelled) identities.
-- **1990–2019**: `unverified_incomplete`. No invented total
+- **1990–2018**: `unverified_incomplete`. No invented total
   or assumption that present-day event structure already existed.
 - **2026**: `provisional_calendar_not_final_results`; ATP
   calendar changes and remaining matches are not misreported as
@@ -529,7 +529,67 @@ counts raises a `ValueError` before a stale annual reference
 can pass the source generator's `--check`. Tests additionally
 assert 2020 one-off events, Category references and location changes.
 
-**Remaining gap:** 1990–2019 lower Tour tiers are not fully reconstructed
+**Remaining gap:** 1990–2018 lower Tour tiers are not fully reconstructed
 and still require ATP results archive research. Runtime integration
 into the Squash Engine Packages library and sporting Calendar is still
 absent, and no source file implies a playable tennis simulation.
+
+## 2019 complete ATP Tour tier roster (year-resolved Series references)
+
+Official [ATP 2019 Results Archive](https://www.atptour.com/en/scores/results-archive?year=2019)
+and [ATP 2019 Tour calendar announcement](https://www.atptour.com/en/news/atp-announces-2019-atp-world-tour-calendar)
+independently confirm that the 2019 men's main Tour consisted of
+**9 ATP Masters 1000 + 13 ATP 500 + 39 ATP 250** competitions;
+together with ATP Finals and Next Gen Finals, this is **63 source
+Series identities** for that single season. No Grand Slam, Davis Cup,
+Challenger or ITF event is included.
+
+ATP's archive lists the 2019 main Tour tournaments by their **then
+current venue and sponsor title**. This is not a licence to assume
+those cities are permanent Series identifiers. The new year-effective
+2019 assignments preserve important transitions:
+
+- **2019 Budapest Hungarian Open → 2021 Belgrade ATP 250**:
+  ATP [approved the Budapest relocation for 2021](https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events).
+  The source identity `belgrade_clay_2021` now contains both
+  verified year-effective events. The absent 2020 played edition
+  is not fabricated. The further precise licence relationships
+  with 2022 Belgrade / 2023 Banja Luka remain reviewable.
+- **2019 New York Open** and **2020 New York Open** continue under
+  the `dallas` Series: the same licence
+  [moved to Dallas in 2022](https://www.atptour.com/en/news/fritz-dallas-2025-preview).
+  Its 2025 upgrade to 500 remains within this single Series ID.
+- **2019 Pune** and **2020 Pune** remain under `hong_kong`,
+  the later relocated Tour 250 licence. Its previous pre-2019
+  locations are not automatically inferred.
+- **2019 Sydney International** is a separate source identity
+  from the special 2022 Sydney Tennis Classic pending definitive
+  licence-continuity evidence; equal city is not enough.
+- **2019 grass Antalya** is kept separate from the independently
+  granted **2021 temporary hard-court Antalya** event; no unverified
+  permanent same-Series identity.
+- **2019 Kremlin Cup Moscow** and **2021 Moscow** use one stable
+  Series ID `moscow`. The 2020 Tour played record does not contain
+  a Moscow tournament and is left absent, not a fabricated edition.
+- The final Tour 250 **São Paulo Brasil Open 2019** is preserved as
+  a source identity with no inferred continuation thereafter.
+
+The historical ATP 2019 tier census is included in the generator's
+fail-closed played-tier validation: any source mutation that silently
+removes or reclassifies one of those 63 identities rejects regeneration,
+even when the JSON remains syntactically valid.
+
+| Year | Played Masters | Played 500 | Played 250 | Finals identities | Tier roster evidence |
+| --- | ---: | ---: | ---: | ---: | --- |
+| **2019** | **9** | **13** | **39** | 2 | ATP 2019 results |
+| 2020 | 3 | 7 | 18 | ATP Finals only; Next Gen cancelled | ATP 2020 results |
+| 2021 | 8 | 9 | 39 | 2 | ATP 2021 results |
+| 2022 | 8 | 13 | 42 | 2 | ATP 2022 results |
+| 2023 | 9 | 13 | 38 | 2 | ATP 2023 results |
+| 2024 | 9 | 13 | 38 | 2 | ATP 2024 results |
+| 2025 | 9 | 16 | 30 | 2 | ATP 2025 results |
+
+These seven year-specific rosters are source-level and **NOT**
+Calendar Edition packages, complete points/format histories or
+full tournament draw result archives. **1990–2018 remains
+historically incomplete**, and 2026 remains provisional.

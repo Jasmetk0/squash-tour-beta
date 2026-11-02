@@ -192,6 +192,36 @@
       "identity_source_chennai_to_pune": "https://scroll.in/field/844022/",
       "identity_source_memphis_to_new_york": "https://www.atptour.com/-/media/931dfc248f6e4ccbba6e75cf4020fd44.pdf",
       "scope": "2017 played men's ATP World Tour Tier roster, excluding Slams/ITF/Davis Cup and Laver Cup; match results not imported"
+    },
+    "calendar_validation_2016": {
+      "archive_source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+      "media_guide_url": "https://www.atptour.com/-/media/files/media-guide/2016/atp2016_media_guide.pdf",
+      "played_atp_masters_1000_count": 9,
+      "played_atp_500_count": 13,
+      "played_atp_250_count": 39,
+      "atp_finals_played": true,
+      "next_gen_finals_did_not_exist": true,
+      "source_relocations": [
+        {
+          "identity": "belgrade_clay_2021",
+          "from": "Bucharest 2016",
+          "to": "Budapest 2017",
+          "source_url": "https://www.profit.ro/stiri/social/tiriac-anunta-ca-turneul-atp-de-la-bucuresti-se-muta-la-budapesta-jucam-in-tiganie-15501062"
+        },
+        {
+          "identity": "lyon_old",
+          "from": "Nice 2016",
+          "to": "Lyon 2017",
+          "source_url": "https://www.lequipe.fr/Tennis/Actualites/Un-nouveau-tournoi-atp-a-lyon-la-semaine-avant-roland-garros/748030"
+        },
+        {
+          "identity": "eastbourne",
+          "from": "Nottingham 2016",
+          "to": "Eastbourne 2017",
+          "source_url": "https://www.lta.org.uk/news/2016/april/british-grass-court-season-announced-for-2017/"
+        }
+      ],
+      "scope": "Official ATP Tour singles 2016 calendar and played results, excludes 2016 Rio Olympics, Grand Slams, team/ITF/Challenger events"
     }
   },
   "explicit_scope": [
@@ -776,6 +806,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -834,6 +871,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2016,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016"
+          },
           {
             "year": 2017,
             "city": "Memphis",
@@ -899,6 +942,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -984,6 +1034,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -1123,6 +1180,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_500",
@@ -1207,6 +1271,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -1293,6 +1364,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_500",
@@ -1370,6 +1448,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -1630,6 +1715,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_500",
@@ -1708,6 +1800,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_500",
@@ -1778,6 +1877,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -1870,6 +1976,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_500",
@@ -1951,6 +2064,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -2037,6 +2157,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -2108,6 +2235,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -2173,6 +2307,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2016,
+            "city": "Chennai",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016"
+          },
           {
             "year": 2017,
             "city": "Chennai",
@@ -2318,6 +2458,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -2402,6 +2549,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -2502,6 +2656,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -2600,6 +2761,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -2828,6 +2996,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -2924,6 +3099,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -3008,6 +3190,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -3101,6 +3290,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -3192,6 +3388,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -3349,6 +3552,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.lta.org.uk/news/2016/april/british-grass-court-season-announced-for-2017/",
+            "notes": "ATP Nottingham grass 250 in 2016 before tournament returned to Eastbourne in 2017"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -3412,7 +3622,16 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2016,
+            "city": "Nottingham",
+            "country_code": "GBR",
+            "source_url": "https://www.lta.org.uk/news/2016/april/british-grass-court-season-announced-for-2017/"
+          }
+        ],
+        "identity_review_note": "Nottingham ATP 250 grass 2016 relocated to Eastbourne 2017; the 2017+ Nottingham men's event was Challenger level, not this Tour 250."
       },
       "references": [
         {
@@ -3440,6 +3659,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -3533,6 +3759,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -3625,6 +3858,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -3716,6 +3956,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -3816,6 +4063,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -3900,6 +4154,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -3993,6 +4254,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -4084,6 +4352,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -4424,6 +4699,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -4497,6 +4779,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2016,
+            "city": "Antwerp",
+            "country_code": "BEL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016"
+          },
+          {
             "year": 2017,
             "city": "Antwerp",
             "country_code": "BEL",
@@ -4554,6 +4842,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -4636,6 +4931,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2016,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016"
+          },
+          {
             "year": 2017,
             "city": "Marseille",
             "country_code": "FRA",
@@ -4705,6 +5006,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
           },
           {
             "from": 2017,
@@ -5098,6 +5406,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -5156,6 +5471,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2016,
+            "city": "Quito",
+            "country_code": "ECU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016"
+          },
+          {
             "year": 2017,
             "city": "Quito",
             "country_code": "ECU",
@@ -5208,6 +5529,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.lequipe.fr/Tennis/Actualites/Un-nouveau-tournoi-atp-a-lyon-la-semaine-avant-roland-garros/748030",
+            "notes": "Nice ATP 250 in 2016 before Tour licence transfer to Lyon in 2017"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -5256,7 +5584,16 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
             "notes": "ATP official result archive confirms this Tour 250 event in the given year"
           }
-        ]
+        ],
+        "historical_host_change": [
+          {
+            "year": 2016,
+            "city": "Nice",
+            "country_code": "FRA",
+            "source_url": "https://www.lequipe.fr/Tennis/Actualites/Un-nouveau-tournoi-atp-a-lyon-la-semaine-avant-roland-garros/748030"
+          }
+        ],
+        "identity_review_note": "Nice ATP 250 of 2016 relocated to Lyon clay ATP 250 from 2017; separate from Marseille licence relocated to Lyon in 2026."
       },
       "references": [
         {
@@ -5288,6 +5625,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -5369,6 +5713,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -5496,6 +5847,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -5693,6 +6051,13 @@
         "not_squash_rules": true,
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -6323,6 +6688,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.profit.ro/stiri/social/tiriac-anunta-ca-turneul-atp-de-la-bucuresti-se-muta-la-budapesta-jucam-in-tiganie-15501062",
+            "notes": "BRD Nastase Tiriac Trophy, Bucharest 2016, licence transferred to Budapest in 2017"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -6351,8 +6723,14 @@
             "notes": "Played ATP Tour event in official 2021 Results Archive"
           }
         ],
-        "identity_review_note": "ATP states 2019 Budapest Hungarian Open licence relocated to April 2021 Belgrade. Subsequent 2022 Belgrade/Banja Luka licence relation is not established by this source.",
+        "identity_review_note": "2016 Bucharest ATP 250 licence transferred to Budapest 2017; Bucharest 2024+ is distinct as historical licence not automatically inferred. Budapest 2017-2019, then Belgrade 2021. Precise licence continuity beyond 2021 unresolved.",
         "historical_host_change": [
+          {
+            "year": 2016,
+            "city": "Bucharest",
+            "country_code": "ROU",
+            "source_url": "https://www.profit.ro/stiri/social/tiriac-anunta-ca-turneul-atp-de-la-bucuresti-se-muta-la-budapesta-jucam-in-tiganie-15501062"
+          },
           {
             "year": 2017,
             "city": "Budapest",
@@ -6527,6 +6905,13 @@
         "not_squash_rules": true,
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -6709,6 +7094,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -6762,6 +7154,13 @@
         "not_squash_rules": true,
         "history_scope": "verified_2018_2019_250_only_next_license_location_not_yet_certified",
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,
@@ -6871,6 +7270,13 @@
         "history_scope": "verified_2018_ATP_250_not_inferred_earlier_or_later",
         "history_periods": [
           {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
+          {
             "from": 2017,
             "to": 2017,
             "category_id": "atp_250",
@@ -6917,6 +7323,13 @@
         "not_squash_rules": true,
         "history_scope": "verified_2018_ATP_250_not_inferred_earlier_or_later",
         "history_periods": [
+          {
+            "from": 2016,
+            "to": 2016,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2016",
+            "notes": "Played 2016 ATP Tour 250/500 documented in official ATP results archive"
+          },
           {
             "from": 2017,
             "to": 2017,

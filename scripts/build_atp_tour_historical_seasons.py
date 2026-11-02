@@ -22,6 +22,7 @@ FIRST, LAST = 1990, 2026
 # intentionally NOT backfilled from any present-day calendar to older years.
 # Official archive: https://www.atptour.com/en/scores/results-archive?year=YYYY
 PLAYED_TIER_COUNTS: dict[int, dict[str, int]] = {
+    2009: {"atp_masters_1000": 9, "atp_500": 11, "atp_250": 40},
     2010: {"atp_masters_1000": 9, "atp_500": 11, "atp_250": 40},
     2011: {"atp_masters_1000": 9, "atp_500": 11, "atp_250": 40},
     2012: {"atp_masters_1000": 9, "atp_500": 11, "atp_250": 40},

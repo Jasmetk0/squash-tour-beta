@@ -1,5 +1,19 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
+> **Current verified source state (2026-11-02):** 11 Category identities,
+> **107** Series identities and 37 generated annual reference rows.
+> The **23 played main ATP Tour tier rosters 2003–2025** have source-backed
+> original year-effective categories. **1990–2002 are incomplete; 2026 is
+> provisional** until final results. This is source-only and is **not**
+> a production Package Catalog, import adapter, playable Edition calendar,
+> historical ranking system or Saved Run Apply/Save integration.
+>
+> Sections below preserve dated incremental research checkpoints. Statements
+> about older incomplete year ranges (e.g. `1990–2007`) describe the state
+> **at those earlier checkpoints**, not the current 2003–2025 coverage.
+> Read the most recent dated historical appendix for up-to-date provenance.
+
+
 **Scope:** the Association of Tennis Professionals' men's top-level **ATP Tour
 since 1 January 1990**, not the entire history of men's tennis. The Category
 and Series Package are optional **source-only historical references** for
@@ -32,7 +46,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**106 identities** across 2026 ATP Tour fixtures and selected older masters.
+**107 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`

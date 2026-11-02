@@ -497,7 +497,7 @@
           "atp_international_series_gold": 9,
           "tennis_masters_series": 9
         },
-        "scope": "ATP Masters Series, International Series Gold, International Series; excludes Finals and team events",
+        "scope": "ATP Tennis Masters Series / International Series Gold / International Series; excludes Finals, Olympics and team events",
         "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
         "status": "played_tour_tiers_reconciled_to_atp_results_archive"
       },

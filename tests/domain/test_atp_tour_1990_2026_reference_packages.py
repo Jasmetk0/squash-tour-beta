@@ -528,7 +528,7 @@ def test_coverage_gates_reject_false_historical_completeness() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     rows = {s["year"]: s for s in build(categories, source)["seasons"]}
-    for year in range(1990, 2008):
+    for year in range(1990, 2007):
         assert rows[year]["played_tier_roster_validation"]["status"] == "unverified_incomplete"
         assert rows[year]["played_tier_roster_validation"]["played_counts"] is None
     assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
@@ -1245,3 +1245,74 @@ def test_2008_source_gate_refuses_false_played_result() -> None:
     warsaw["payload"]["not_held_years_known"] = [2008]
     with pytest.raises(ValueError, match="played-tier roster mismatch"):
         build(_source("category"), source)
+
+
+def test_2007_complete_actual_played_historical_tier_roster_and_distinct_finals() -> None:
+    """All 61 played 2007 singles ATP Tour main-circuit tier events, plus Finals."""
+    categories, series = _source("category"), _source("series")
+    row = next(s for s in build(categories, series)["seasons"] if s["year"] == 2007)
+    assert row["played_tier_roster_validation"]["status"] == (
+        "played_tour_tiers_reconciled_to_atp_results_archive"
+    )
+    assert row["played_tier_roster_validation"]["played_counts"] == {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 43,
+    }
+    assert Counter(row["series_category_ids"].values()) == {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 43,
+        "atp_finals": 1,
+    }
+    assert len(row["series_category_ids"]) == 62
+    assert "next_gen_atp_finals" not in row["series_category_ids"]
+    assert not any(event in row["series_category_ids"] for event in (
+        "australian_open", "roland_garros", "wimbledon", "us_open",
+        "davis_cup", "hopman_cup", "world_team_cup",
+    ))
+    gold_ids = {id for id, tier in row["series_category_ids"].items()
+                if tier == "atp_international_series_gold"}
+    assert gold_ids == {
+        "rotterdam", "dallas", "dubai", "acapulco", "barcelona",
+        "stuttgart", "kitzbuhel", "tokyo", "vienna",
+    }
+    provenance = series["provenance"]["calendar_validation_2007"]
+    assert provenance["played_international_series_count"] == 43
+    assert provenance["historical_category_calendar_url"].startswith("https://")
+    assert row["edition_assertion"].startswith("none;")
+
+
+def test_2007_historical_hosts_and_2008_cancelled_bangalore_not_played() -> None:
+    source = _source("series")
+    by_id = {e["source_entity_id"]: e["payload"] for e in source["entities"]}
+    expected_hosts = {
+        "warsaw_2008": ("Sopot", "Warsaw"),
+        "bangalore_2008": ("Mumbai", None),
+        "brisbane": ("Adelaide", "Adelaide"),
+        "hong_kong": ("Chennai", "Chennai"),
+        "belgrade_2012": ("Amersfoort", "Amersfoort"),
+        "atlanta": ("Indianapolis", "Indianapolis"),
+        "winston_salem": ("New Haven", "New Haven"),
+        "montpellier": ("Lyon", "Lyon"),
+        "brussels": ("Valencia", "Valencia"),
+        "belgrade_clay_2021": ("Bucharest", "Bucharest"),
+    }
+    for id, (city_2007, city_2008) in expected_hosts.items():
+        hosts = _host_by_year(by_id[id])
+        assert hosts[2007] == city_2007
+        if city_2008 is not None:
+            assert hosts[2008] == city_2008
+    assert by_id["bangalore_2008"]["not_held_years_known"] == [2008]
+    years = {s["year"]: s for s in build(_source("category"), source)["seasons"]}
+    assert "bangalore_2008" in years[2007]["series_category_ids"]
+    assert "bangalore_2008" in years[2008]["known_not_held_series_ids"]
+
+
+def test_2007_missing_gold_or_misreported_event_is_rejected() -> None:
+    import copy
+    bad = copy.deepcopy(_source("series"))
+    item = next(e for e in bad["entities"] if e["source_entity_id"] == "dallas")
+    item["payload"]["not_held_years_known"] = [2007]
+    with pytest.raises(ValueError, match="played-tier roster mismatch in 2007"):
+        build(_source("category"), bad)

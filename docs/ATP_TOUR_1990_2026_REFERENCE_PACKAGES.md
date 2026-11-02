@@ -32,7 +32,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**87 identities** across 2026 ATP Tour fixtures and selected older masters.
+**90 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -462,3 +462,74 @@ Series source identities** and 37 annual snapshots. Among those
 snapshots, Masters/ATP500/ATP250 **2021–2025** played rosters have been
 reconciled with ATP Results Archive; **1990–2020** lower tiers remain
 incomplete and the 2026 roster is still provisional.
+
+
+## Completed ATP Tour played-tier roster for the exceptional 2020 season
+
+The [ATP 2020 Results Archive](https://www.atptour.com/en/scores/results-archive?year=2020)
+establishes the played men's main Tour singles tournament inventory:
+**3 ATP Masters 1000, 7 ATP 500, 18 ATP 250**, and the played ATP Finals.
+The Next Gen Finals were **not held** in 2020. This is *not* a count of
+Grand Slams, ATP Cup team events, Challenger events, ITF or Davis Cup.
+
+| 2020 Tier | Played | Known cancelled in Category references | Category-effective source IDs |
+| --- | ---: | ---: | ---: |
+| ATP Masters 1000 | **3** | 6 | 9 |
+| ATP 500 | **7** | Halle, Queen's, Beijing | 10 |
+| ATP 250 | **18** | Zhuhai, Chengdu | 20 |
+| ATP Finals | **1** | — | 1 |
+| Next Gen Finals | **0** | Yes | 1 |
+
+Other 2020 cancellations are intentionally not claimed to be an
+exhaustive roster of every originally planned tournament. The 2020
+ATP Cup was a separately formatted team competition and remains
+outside these Category/Series singles Tour packages.
+
+The 2020 singles ATP 250 field includes separately identified
+**Cologne 1**, **Cologne 2** and **Sardinia**, all one-year
+replacements. ATP's [10 September 2020 official release](https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/10-september-2020-atp-announces-four-new-events.pdf)
+also confirms a *one-year Nur-Sultan ATP 250* that year; the
+source retains a Nur-Sultan 2020 row under the Kazakhstan venue-family
+identity while explicitly warning that the later permanent Astana
+membership has a different legal licence ancestry.
+
+Source identity continuity was reconciled as follows:
+
+- **New York Open 2020 → Dallas Open from 2022**, one continuous
+  ATP 250 licence, subsequently upgraded to ATP 500 in 2025:
+  [ATP 2025 Dallas history](https://www.atptour.com/en/news/fritz-dallas-2025-preview).
+- **Cincinnati Masters played at New York/Flushing Meadows in 2020**
+  due to COVID, rather than minting a second New York Masters Series:
+  [ATP chairman's chronology](https://www.atptour.com/en/news/andrea-gaudenzi-chairman-q-and-a-march-2021/).
+- The two Cologne weeks were independent tournaments with independent
+  winners' draws, not one tournament counted once or an assumed
+  permanent Cologne Series.
+- **2020 St Petersburg ATP 500** was a temporary elevation,
+  not the start of a permanent 500 category.
+- The **Sardinia 2020** clay ATP 250 is not silently merged
+  with the distinct **Cagliari 2021** event licence without a
+  sourced same-licence record.
+
+### Explicit completeness / rejection gate
+
+The deterministic source resolver now emits
+`played_tier_roster_validation` for every annual snapshot:
+
+- **2020–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
+  with year-specific reference counts independently asserted against
+  played (category-effective minus known-cancelled) identities.
+- **1990–2019**: `unverified_incomplete`. No invented total
+  or assumption that present-day event structure already existed.
+- **2026**: `provisional_calendar_not_final_results`; ATP
+  calendar changes and remaining matches are not misreported as
+  completed historical facts.
+
+A source mutation that breaks one of the validated played-year
+counts raises a `ValueError` before a stale annual reference
+can pass the source generator's `--check`. Tests additionally
+assert 2020 one-off events, Category references and location changes.
+
+**Remaining gap:** 1990–2019 lower Tour tiers are not fully reconstructed
+and still require ATP results archive research. Runtime integration
+into the Squash Engine Packages library and sporting Calendar is still
+absent, and no source file implies a playable tennis simulation.

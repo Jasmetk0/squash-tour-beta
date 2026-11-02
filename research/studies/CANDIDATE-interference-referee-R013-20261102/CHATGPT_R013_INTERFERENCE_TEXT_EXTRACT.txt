@@ -1,0 +1,795 @@
+# R013 — searchable archive of owner-supplied ChatGPT research
+
+Original document: "Výzkumná zpráva_ SQUASH ENGINE – R013_ Interference, rozhodčí a realismus.docx (21 pages)", uploaded 2026-11-02.
+**STATUS: RESEARCH-ONLY, UNVERIFIED AS SCIENTIFIC CALIBRATION OR FAX PRODUCT DECISION.**
+Source is **text extraction**, not the original Word file. Inline snippet citations like [25:L59-68] are not a full audited bibliography; line-wrapped layouts and images might be missing. Cross-check against original DOCX and primary sources; see independent critical review in this branch.
+No scientific experiments in the source were executed during this archival task. The original report sometimes *proposes* model features or tests and mistakenly describes these as already implemented. FAX is an alternate evolving global sport, not 2026 PSA cloned with a larger population.
+
+----- BEGIN AVAILABLE SEARCHABLE RESEARCH TEXT -----
+
+<PARSED TEXT FOR PAGE: 1 / 21>
+Výzkumná zpráva: SQUASH ENGINE – R013:
+Interference, rozhodčí a realismus
+A – Oficiální pravidla (World Squash Rules of Singles, verze
+od 9/2025)
+Pravidlo 8 Interference stanovuje, kdy hráč brání soupeři „zdravé“ zahrání míče
+a jak rozhodnout o opakování výměny (let) nebo bodu (stroke). Klíčové elementy
+jsou (podle oficiálních pravidel) povinnost útočícího hráče nebránit přístupu
+soupeře k míči a naopak, aby přicházející hráč pokračoval v hře bez zbytečného
+zdržení. Interference nastává, pokud nejsou splněny všechny tyto podmínky:
+přístup k míči, čistý výhled (fair view), přímá dráha k míči, rozumný švih a
+svoboda zahrát míč kamkoli na čelní stěnu【14†L242-L251】【14†L270-L279】.
+
+      Přístup a fair view: Útočící hráč musí po zásahu míče (i z krátkého úhlu)
+       okamžitě uvolnit prostor, nepřekážet pohybu soupeře a umožnit mu vracet
+       míč. Současně přijíždějící hráč musí jít za míčem nejkratší možnou cestou,
+       ale nesmí se zbytečně otáčet či zpomalovat, pokud nemá jasnou šanci
+       zásah dokončit. Pravidlo 8.8 (Access) s 8.8.1–8.8.3 zdůrazňuje, že pokud
+       útočící hráč interferuje, ale přijíždějící neudělal vše pro návrat (např.
+       nešvihnul, nešel za míčem), opětovná výměna se neuděluje (no let)
+       【14†L288-L297】【14†L299-L307】. Naopak pokud útočník ustoupil a
+       protivník měl naději na dobrý return, ale zamezení provedení, zpravidla se
+       přizná opakování (yes let)【14†L270-L278】.
+      Rozumný švih (reasonable swing): Definice 8.9 uvádí, že švih je rozumný,
+       pokud neprobíhá zbytečně dlouhý pohyb, a pokud je ovlivněn pozicí
+       soupeře, může dojít k letu, ledaže by míč byl vítězný – pak je nevyhnutelné
+       udělení stroke【14†L300-L309】. Výjimka 8.9.2 říká, že pokud je švih
+       ÚPLNĚ zamezen pozicí soupeře (i kdyby se soupeř snažil vyhnout), bod
+       obdrží útočící hráč (stroke)【13†L307-L310】. Nadměrné uhýbání (turning)
+       či simulace jsou naopak penalizovány: pokud útočící hráč zbytečně odtáčí
+       tělo („turning“), aby získal let, rozhodčí mu let odepře (no let)【14†L349-
+       L354】. Naopak pokud se střídající hráč otočí a nemá čas se vyhnout, může
+       mu být udělen opakovaný míč (let)【14†L345-L354】.
+<PARSED TEXT FOR PAGE: 2 / 21>
+   Výsledky rozhodnutí: Obecně platí, že při skutečné možnosti úspěšného
+    zásahu následuje stroke (tedy útočící bod)【14†L270-L279】. Například
+    8.6.7 říká, že pokud by střídající hráč zasáhl míč vítězně, je mu výsledek
+    přiznán bod (stroke)【14†L278-L279】. Pokud střídající hráč neměl šanci
+    vůbec míč zasáhnout, obvykle se o ničem nerozhoduje (no let)【14†L266-
+    L272】. Pokud nastane interference (očištěná z pohledu přílišného
+    kontaktu či neúmyslné chyby), ale střídající měl šanci na dobrý return,
+    typicky dostane opakovaný míč (yes let)【14†L276-L279】. Úplný odstavec
+    8.6 sumarizuje varianty a důsledky v závislosti na schopnosti zahrát
+    dobrou či vítěznou střelu【14†L270-L279】.
+   Povinnosti hráčů: Po úderu musí útočící hráč co nejrychleji ustoupit a
+    vyčistit dráhu (samotný „post-up“ kolem T nedává výhodu ochranou
+    pozici), přičemž nezáleží na poloze na kurtu (č.9.3 ve WSF Rules
+    potvrzuje, že „držení centrálního postavení není chráněné“【10†L318-
+    L324】). Přicházející hráč se naopak nesmí úmyslně brzdit, poslouchat
+    soupeřovy výkřiky apod. Když zasáhne míč pozdě a dojde ke střetu, dává se
+    stroke soupeři za nečisté bránění, pokud byl útočící v plánu hrát míč
+    【10†L284-L292】.
+   Falešné hráčské úmysly a bezpečnost: Pokud hráč uměle simuloval faul
+    (např. přehání kontakt či úmyslně se trhá z dosahu) rozhodčí pohrdá
+    takovým chováním podle Kodeku chování, přičemž hlavním pravidlem
+    Interference zůstává „hráči musejí vždy brát v úvahu bezpečnost“【8†L39-
+    L47】【10†L331-L340】. Například opakovaná umělá tvorba interferencí či
+    filmování může vést k disciplinárním sankcím nad rámec letů či bodů
+    【10†L331-L340】.
+   Shrnutí důležitých scénářů:
+   No Let (žádný let/opaření): pokud zasahující hráč pokračoval v hře,
+    interference byla minimální (asi nepřekážela zásahu) nebo dotyčný měl
+    šanci zasáhnout, pak není opakování povoleno【14†L270-L278】.
+   Yes Let (let, opakování výměny): nastává, pokud útočící hráč čistil prostor,
+    střídající nebyl schopen se vyhnout, ale pokud by měl dobrý return, bod by
+    nezasáhl; nebo pokud došlo k neúmyslné interferenci při plné snaze obou
+    【14†L276-L279】.
+<PARSED TEXT FOR PAGE: 3 / 21>
+      Stroke (bod udělen střídajícím): pokud útočící nevyhověl povinnosti
+       (dostačně neuvolnil prostor) a střídající měl jinak přímou šanci míč vrátit
+       (dobrý či vítězný return)【14†L270-L279】, nebo když střídající byl bráněn
+       natolik, že nemohl provést schůdnou úderovou dráhu (pravidlo 8.9.2)
+       【13†L307-L310】. V takovém případě se bod uděluje útočícímu.
+      Historické verze pravidel: Cílem analýzy je cítit povahu současné podoby
+       pravidel (k 9/2025). Historicky se podoba ruletu „let/žádný let/stroke“
+       měnila (např. změny záměrů v 80., 90. letech), ale pro náš simulátor se
+       budeme držet současné definice. Za povšimnutí stojí například, že dřívější
+       pravidla rozlišovala „dobrý výhled“ a „rychlý přístup“ podobně jako dnes,
+       ale tolerance / penalizace se mohla lišit. V konečné analýze doporučujeme
+       explicitně identifikovat různé „verze pravidel“ (např. práh pro stroke vs
+       let) pokud by se v jejich rámci simulace lišila (viz tabulka níže).
+
+B – Rozhodcovské standardy 2026 (Oficiální rámec od
+30.8.2026)
+Nový Officiating Standards Framework (WSO/PSA/World Squash, účinný od 30.
+8. 2026) doplňuje literu pravidel o soudobé oficiální interpretace a manažerské
+metody řízení utkání【8†L48-L56】. Rozlišuje oficiální formulace pravidel,
+individuální rozhdovací kritérium rozhodčího a obecné zásady správy zápasu.
+Zejména pravidlo Guiding Let (průvodní let) není formální, ale slouží jako
+praktický nástroj: na začátku zápasu (nebo při opakujícím se vzorci pohybu)
+může rozhodčí udělit “Yes Let” a stručně vysvětlit, co očekává od obou hráčů (co
+mají dělat jinak), aby udržel hladký průběh zápasu【10†L272-L280】. Guiding Let
+se má používat hlavně v elitní hře s cílem předcházet zahlcení zápasu častými
+přerušenými výměnami a měl by být prvním nástrojem kontroly zápasu; pokud
+se situace opakuje, má rozhodčí přejít k striktnějšímu rozhodnutí (no let či stroke)
+【10†L272-L280】.
+
+      Formální vs praktická stránka: Formální pravidla (World Squash Rules)
+       stanovují, co se smí nebo nemá smět – např. co je považováno za
+       interference či vyžaduje stredu. Officiating Standards definují jak tyto
+       situacesoustředěně vyhodnocovat a komunikovat. Rozdíl je ten, že standardy
+       kladou důraz na konzistentní výklady (bez ohledu na osobní styl rozhodčích)
+       a na komunikaci s hráči (přiměřené vysvětlení rozhodnutí, jasné reakce na
+       dotazy), zatímco pravidla jsou strohá. Framework zdůrazňuje také zásady
+       Bezpečnosti, Fair Play, Respektu a Společného pohybu* (Movement)【8†L72-
+<PARSED TEXT FOR PAGE: 4 / 21>
+    L81】. Čtvrtý princip (Movement) říká, že rozhodčí a hráči sdílí povinnost
+    udržovat pravidlo 8: jeden se vyhýbá, druhý dosáhne míče.
+
+   Guiding Let (řídicí let): Toto je specificky zmiňováno jako „radící
+    rozhodnutí“ (viz citát). Například pokud hráči opakovaně hrávají do stejné
+    oblasti a dochází ke konfliktům, rozhodčí může použít Guiding Let: dá let a
+    stručně upozorní, co by měl ustupující hráč udělat a jak se má situaci
+    snažit přijíždějící zvládnout【10†L272-L280】. Guiding Let není
+    automatický a nepředstavuje permanentní „povolené“ přerušení – je to
+    spíše počáteční manažerský zásah. Jak zápas postupuje, standard
+    zdůrazňuje rychlejší přechod k formálnímu rozhodnutí let/stroke/no let
+    bez vysvětlování, pokud problémy přetrvávají【10†L272-L280】. Tedy
+    Guiding Let nepřenáší zodpovědnost, ale slouží k usměrnění vzájemného
+    pohybu hráčů.
+
+   Komunikace a kontrola zápasu: Kromě Guiding Let dokument
+    zdůrazňuje klidnou a důstojnou komunikaci rozhodčího s hráči (trpělivé
+    vysvětlení, aktivní naslouchání)【8†L85-L94】【8†L127-L134】. Je
+    doporučeno hráčům poskytnout jedno stručné zdůvodnění rozhodnutí
+    („why is this a stroke?“) a vyhnout se dlouhým argumentům, které by
+    mohly přerušit tok hry【8†L85-L94】. Rozhodčí mají naopak aktivně
+    usměrňovat hru a bránit excesům (např. varováním při nadměrném
+    odporu), viz kódex 14.6. Odborná interpretace interference je v rámci
+    standardů shrnuta do Q&A: například se explicitně říká, že stát na T
+    osvobozuje – i když útočník udrží pozici na T, stále se od něj očekává úklid
+    prostoru【10†L318-L324】. Dokument také upozorňuje na hranice rule:
+    nerozumět Guiding Let jako povolení hrát „srb let let let“ (stále opakovat), a
+    naopak vyvarovat se dříve simulovaných situací.
+
+   Verze napříč historií: Do budoucna můžeme Framework v Simulátoru
+    zohlednit jako “moderní ideální standard”. Nesmíme však považovat tyto
+    postupy za univerzální pro celou historii FAX squashu. Např. Guiding
+    Let a všeobecná očekávání hráčova clearingu jsou koncepce let pozdních
+    2020s. Dříve (80.–90. léta) mohly praxe i rozhodčí víc inklinovat k
+    opakování (pro zachování tempa nebo zkrácení sporných momentů). Pro
+    historické simulace by bylo třeba analyzovat rozdíly, ale pro aktuální
+    engine cílíme na současné normy.
+<PARSED TEXT FOR PAGE: 5 / 21>
+C – Empirické rozhodnutí v profesionálním squashi
+Dostupná data z profesionálních turnajů ilustrují, jak často a jakého typu
+rozhodnutí padá. Na PSA šampionátu světových šampionů 2025–2026 (Palm Hills
+Cup) rozhodčí v 124 utkáních udělili 1 960 rozhodnutí – tj. průměrně 15,8 na
+zápas (což odpovídá cca 1 rozhodnutí na 4 body)【25†L59-L67】. Z nich bylo 813
+stroke (41,5 %), 738 yes let (37,7 %) a 409 no let (20,9 %)【25†L68-L75】. Více než
+80 % rozhodnutí identifikovalo skutečné překážení (stroke či yes let)【25†L70-
+L75】; no let tedy nastal asi v 1/5 případech, což svědčí o přísném standardu:
+hráč, který se brání, musí předpokládat výměnu. Pro porovnání, na turnaji
+Tournament of Champions 2026 rozhodčí v 62 zápasech dělili 916 rozhodnutí
+(průměr 14,8 na zápas), přičemž stroke tvořily 42,5 %, yes let 37,3 % a no let
+20,2 %【22†L76-L84】. Rozložení mezi typy tedy bylo velmi podobné (ve
+zkoumaných špičkových turnajích se no let pohybuje kolem 20–23 %【22†L76-
+L84】【23†L124-L127】).
+
+      Podíl na výměnu (decision density): Analýza turnajových dat ukazuje, že
+       ve špičce vyžadují rozhodnutí obvykle 10–30 % výměn; pokud by to bylo
+       nad 50 %, znamenalo by to nadměrné přerušování hry【10†L387-L394】.
+       Zmiňovaný šampionát měl ~15–16 rozhodnutí na zápas, což odpovídalo
+       ~25 % výměn (průměrná délka zápasu byla 46 minut, tj. asi 120 výměn, viz
+       [18]). Rozhodčí tedy mají asi 1–2 zásahy na 10 výměn ve vysoce
+       konkurenčním prostředí.
+      Počet žádostí (player challenges): Např. v Palm Hills Cupu bylo jen 21
+       přímo směřovaných odkazů rozhodčího na video (1,1 % všech rozhodnutí)
+       【18†L137-L146】. Herní hodnocení ukazují, že rozhodčí většinou trafili,
+       protože z 92 přezkoumaných hráči pouze 38 bylo přehlasováno (41,3 %
+       přezkoušení)【18†L144-L152】. U Turnaje šampionů 2026 hráči podali 105
+       review (68,6 % potvrdil VR)【22†L99-L104】, což naznačuje, že standardy
+       rozhodčích jsou vcelku stabilní, byť přezkum má ~30–40 % zamítnutí. Tato
+       data ilustrují, že žádosti jsou pouze extrahovány z války (!), nikoli z
+       každé výměny. Nelze tedy tyto podíly převádět na pravděpodobnost
+       interference v libovolné výměně – to by vyžadovalo znát, kolikrát hráči
+       sahali po rozhodčích, aniž by je vyhověli (o tom nemáme čísla).
+      Rozdíly mezi hráči a úrovněmi: Mladí a agresivní hráči (např. Mostafa
+       Asal) podléhají častěji rozhodčím zásahům (bodové záznamy: Asal 3,5 bodu
+<PARSED TEXT FOR PAGE: 6 / 21>
+    na rozhodnutí) než konzervativnější hráči (Paul Coll kolem 6,2)【25†L91-
+    L100】. Podobně v ženském pavouku měla největší frekvenci
+    Subramaniam (4,5 b./rozhodnutí) oproti Watanabe (6,8)【25†L92-L100】.
+    Průměr na elitní skupinu byl 5,56 bodu na rozhodnutí. Z historických
+    srovnání vychází, že mužskou část turnaje Chicago 24/25 rozhodčí
+    rozhodovali každé ~5,9 bodu, zatímco ženskou jen ~10,5 bodu【25†L121-
+    L130】 – to se pravděpodobně změnilo (zřejmě pád zisku signifikance v
+    datech; venkovní podmínky Chicago vs Egypt). Každopádně jednoznačný
+    trend: lepší pohyb na kurtu a agresivní styl = častější situace interference,
+    což potvrzují i výše zmíněné statistiky bodů/hra.
+   Typy situací: Nejsou publikována detailní čísla rozdělená podle druhu
+    interference (dráha míče vs švih vs turning). Nicméně články z praxe
+    ilustrují konkrétní příklady: například na ToC 2026 při semifinále Asal–
+    Gawad rozhodčí udělil stroke podle pravidla 8.9.2 (Gawad při čištění
+    předchůdního míče způsobil zablokování švihu Asala)【22†L79-L88】.
+    Naopak jiný příklad ukázal No Let, kde hráčka nepotřebovala hrát return, i
+    když Gawad letěl k míči (pravidlo 8.6.2)【22†L92-L99】.
+   Dlouhé výměny a vyčerpání: U dlouhých výměn může rozhodnutí
+    variovat s únavou hráčů; přesto však dostupná data na to explicitně
+    neukazují. Nicméně lze předpokládat, že v závěru dlouhých výměn bude
+    více projevů únavy v očích rozhodčích (např. menší schopnost rychle
+    vyčistit), takže pravděpodobnost letů/stroke může mírně růst s délkou
+    výměny.
+   Historické změny: Data z minulých let ukazují lehké trendy – počty letů a
+    trestů se mohou lišit v závislosti na konkrétní sezóně a nových
+    interpretacích. Např. v roce 2025 byl podíl No Let v ToC vyšší (23,8 %) než v
+    2026 (20,2 %)【23†L124-L127】. Také souboj muži/ženy v Chicago 24/25 byl
+    extrémně vychýlen (muži ~5,9 b./decision, ženy ~10,5)【25†L121-L130】.
+    Celkově ale data naznačují, že změny v interpretaci (či herním stylu)
+    mohou významně ovlivnit rozhodnutí, ačkoliv je třeba opatrnosti – malý
+    vzorek, různé kurty apod.
+   Metodika a denominátory: Upozornění: zmíněné procenta a průměry se
+    vztahují k tzv. „decision density“ (podíl výměn končících arbitráží). Nelze je
+    zaměňovat za podíl všech výměn, které měly „možnou situaci
+    interference“. Často totiž hráč výměnu dohraje bez požadavku le(t)u, i když
+    mohl být mírně blokován – to by se v štatistikách neobjevilo. Proto se vždy
+<PARSED TEXT FOR PAGE: 7 / 21>
+       musíme ptát: z kolika výměn referees rozhodovali – bylo to 1960
+       rozhodnutí ze X vyhověných (?), či 916 z Y?! Bohužel univerzální data o
+       všech výměnách (včetně těch bez žádosti) WSO nezveřejňuje. Naším
+       vodítkem je, že zápasy jsou někdy popisovány jako 10–30 % výměn s
+       rozhodnutím【10†L387-L394】.
+
+D – Prostorová a biomechanická kauzalita interference
+Za simulací „zakulhání“ anebo kolize na squashovém kurtu stojí čistě fyzikální a
+prostorové faktory. Ty je třeba chápat odděleně od rozhodcovského výkladu:
+fyzický stav nelze měřit přímo z rozhodčích statistik. Proměnné, které vedou k
+interferenci, zahrnují: kontrolu pozice (T-position), rychlost míče a hráčů, směr
+a síla úderu, vzdálenost hráčů, jejich akcelerační schopnosti a reakční čas, stejně
+jako taktické kontexty (jeden hráč na kratičce, druhý z boku). Např. pokud útočící
+hráč výrazně vybočí ze středu (velké tělo-off-center) a soupeř spěchá vpřed, je
+riziko kolize vyšší. Rovněž směrová agresivita (drive u stěny vs drop do středu)
+ovlivňuje, zda přijíždějící hráč stačí. Hráč s lepší movement (pohybovou
+dovedností) a court control (středem kurzu) může efektivněji vyhrávat body a
+zároveň vyvíjet tlak, což často generuje situace k zablokování.
+
+      Příklad kauzality: Pokud útočící zahrál rychlý přímo do rohu, přičemž
+       soupeř byl v T – mohli bychom očekávat, že soupeř dorazí a útočník
+       ustoupí. Pokud útočící nezajistí prostor (např. se neodkloní z linie zákroku),
+       nastane interference. Takové situace lze modelovat bez simulace každého
+       švihu, jen s agregovanými daty o rychlosti a pozici. Např. když engine
+       uchovává statistiku „agresivita švihů“ a „průměrnou vzdálenost hráčů“,
+       může na jejím základě rozhodovat, zda došlo k vybočení.
+      Omezující předpoklady: Squash Engine beta simuluje výměnu „rally by
+       rally“, ne fotochížé podle druhého. Místo detailního pohybu každého kroku
+       používá pravděpodobnostní modely založené na parametrech hráče (např.
+       „movement stat“, „court control stat“, „pressure“) a parametrech švihu či
+       kurzu. Nelze tedy počítat s přesným rekonstruktem každé fází. Můžeme
+       modelovat interferenci jako událost: např. při zakončení útočícího hráče se
+       spočte, zda by soupeř včas dorazil (zohlední se rychlost obou, úhel, a rušící
+       efekt útočníkových pohybů). Pokud motor neuchovává tyto hodnoty, bude
+       pravděpodobnost interference generována heuristicky (náhodou s
+       podmínkou na „těžkost zásahu“ či podobně).
+      Determinismus vs náhoda: Současný engine je deterministický (stejným
+       seedem opakuje stejnou studii). Tudíž pokud se interference generuje
+       náhodně (pravděpodobnostní), musí být náhodné volání reproducibilní.
+<PARSED TEXT FOR PAGE: 8 / 21>
+      Pravděpodobnost může vycházet z atributů hráčů (např. rozdíl v
+      movement a clearing), nebo z použitých šablon. Pokud by engine měl
+      detailně spočítat přesné barikády, bylo by to nákladné. Pravděpodobnější
+      je, že nepřímé faktory (existují parametry: Gameplan, Style, Movement,
+      Court control) definují prostředí a náhodný mechanismus určuje, zda dojde
+      k interference. Např. hráč s nulovým court control („druhořadý“ style
+      „retriever“) zřejmě zaujme spíše pozici v zadu, což může snižovat
+      pravděpodobnost incidentu.
+
+E – Dopad rozhodnutí na výsledky zápasů
+Rozhodnutí No Let/Yes Let/Stroke ovlivňují průběh zápasu více než formálně:
+kromě přímého skórového efektu mění délku výměny, počet opakování, psychiku
+a energii hráčů. Jde analyzovat tyto dopady následujícími hledisky:
+
+     Délka zápasu a fyzická zátěž: Lety prodlužují čas (rally se opakuje), čímž
+      zvyšují délku zápasu i fyzické zatížení obou hráčů. Pokud mnoho
+      rozhodnutí padá jako yes let, hra zpomaluje (více bodů do zápasu), jak
+      naznačují v statistikách „více decision per match znamená delší
+      zápasy“【10†L387-L394】. Naopak stroke ukončuje výměnu bodově, což
+      často vede k silnějšímu vrácení energie (momentu) a naopak krátí výměnu.
+      V prostředí simulace lze například sledovat kumulativní hitpoints (energy)
+      jako funkci počtu letů vs stoke.
+     Rozdělení bodů: Přímý důsledek: stroke znamená bod pro zasahujícího, let
+      znamená žádný bod (výměna se opakuje). Pokud engine správně promítne
+      rozhodnutí do skóre, musí zajistit, aby stroke vždy udeřil skóre útočníka a
+      no let přiznal bod soupeři. Tady záleží, zda engine nabídl hráči možnost
+      „nově zahrát výměnu“ (yes let) nebo pokračoval ve skórování: modely by
+      měly přidělit bod buď "false" (let, nic se nemění), "true" (stroke). Důležité je
+      udržet konzistenci: při no let je scoring obráceně než stroke. Také je
+      potřeba zachovat pravidlo o změně podání po každém bodě.
+     Vliv na styl hry: Hráči se mohou svým stylem adaptovat – agresivní tlak
+      vyvolá více rozhodnutí. Pokud by engine bral v úvahu historicky
+      intenzivnější styly, mohlo by to zvýšit počet letů/stroke u hráčů s vysokou
+      Court Control. Naopak bázlivější styl s opatrnou hrou může mít méně
+      zásahů. Např. styl „zabíjecí“ hráč, který všude běží za míčem a riskuje
+      kontakty, může častěji čelit strokům, což by mohl engine představit
+      parametrem agresivity.
+     Kontrola prostoru (Court Control): Virtuální „borci z centra“ by se mohli
+      cítit více oprávněni stát v T, ale fyzicky nemají imunitu – pokud engine zná
+<PARSED TEXT FOR PAGE: 9 / 21>
+       Court Control, lze ho použít ke zvýšení pravděpodobnosti interference,
+       když dominující hráč nerespektuje clearing. Vliv efektu court control na
+       skóre by se projevil např. tím, že pro hráče s vysokou CC se zvyšuje riziko
+       udělení stoke (když soupeř vrací aktivně), což by mohlo kompenzovat
+       jejich výhodu.
+      Přerušení tempa: Každý yes let přerušuje rytmus, což může mít
+       psychologický dopad (zklidnění, naštvání). Engine nemá emoce, ale pokud
+       by měl být realistický, mohl by například do parametrů zahrnout
+       „rozhodčí implicitní ovlivnění“, aby hráčům nevynucoval penalizaci „na
+       nervy“. Nicméně náš úkol nezahrnuje přidávání takového vlivu. Hlavní je
+       oddělit pravidlový dopad (bod či ne) od psychologického (rozhodnutí
+       ovlivňují náběh hráče), a v simulátoru ponechat maximálně možnost
+       statistiky výsledku.
+      Těsné koncovky a zvraty: V zápasech s malým náskokem mohou chybná
+       rozhodnutí významně ovlivnit vítěze. Engine by mohl zaznamenávat
+       situace „match ball“ vs zásah atd. Naším cílem je ukázat, jak často může
+       změna z no let na stroke obrátit set – např. empiricky zjistíme, že na vyšší
+       strop jako je 40–60 % stoke znamená více bodů udělených „zadarmo“ za
+       nevyhovění clearance. Tato analýza je spíše hypotetická; reálná data
+       ukazují, že drtivá většina rozhodnutí se děje v normální fázi výměny,
+       zatímco psy faktor nutí volit zcela extrémní varianty jen občas.
+      Experimentální zakáz: Vzhledem k doporučením výzkumného úkolu
+       nebudeme v simulaci přidávat náhodné „bonusy“ či přilepšení hráčům,
+       kteří se zlobí – engine by měl zůstat neutrál a vždy aplikovat pravidla
+       stejné. Dále se nezaměříme na zvyšování penalizace či video review,
+       protože ty jsou explicitně vymezeny jako případné budoucí vylepšení,
+       nikoli cíl R013.
+
+F – Audit aktuálního Match Enginu (GitHub: squash-tour-
+beta)
+V rámci repozitáře squash-tour-beta (match engine pro FAX squash) zjistíme, jak
+je interference implementována. (Pokud nelze číst kód, vycházíme z popisu a
+struktury.) Klíčové body auditu:
+
+      Generování interference: Existuje nějaká funkce, která „vrátí“, zda
+       během výměny nastalo interference? Nejpravděpodobnější je, že se
+       náhodně generuje na základě herních parametrů. Např. engine může mít
+       pravděpodobnost p_interference vypočítanou z rozdílu statů pohybu a
+       pozice. Není jasné, zda engine počítá fyzický model (nejspíš ne, jelikož
+<PARSED TEXT FOR PAGE: 10 / 21>
+    rally-by-rally). Pravděpodobné je, že v implementaci je určena jen hrubá
+    pravděpodobnost, bez volání podrodin či deterministických smyček
+    pohybu. Ten pravděpodobně závisí na vlastnostech hráčů (Movement,
+    Court Control, Pressure, Style), a případně na aktuálním Gameplanu
+    (agresivita hry). Např. hráč se stylem „nové hře“ by mohl mít vyšší
+    p_interference než běžný.
+   Vstupy pro pravděpodobnosti: Konkrétní vstupy nejsou oficiálně zřejmé,
+    ale možná „Court Control“ dimenze funguje tak, že když síla úderu je
+    vysoká a soupeř blízko T, zvyšuje to šanci interference. Kód by mohl brát
+    hodnoty z Gameplan (směr útoku), Movement (rychlost), a CourtControl
+    (taktický tlak). Též možná booleovské indikátory typu „shield blocking“
+    (svírá T) nebo „rychlý shot“.
+   Rozhodování No Let/Yes Let/Stroke: Po vygenerování eventu interference
+    se musí rozhodnout, co nastane. Pravděpodobně aktuální verze enginu
+    neřeší detaily „dobrého returnu vs winning return“ v rulebookové
+    složitosti; zřejmě používá jednoduchý rozdělovník: například soubor
+    podmínek (z histogramu) nebo náhody. Možná je implementováno, že když
+    interference nastane, engine hází mincí: např. s pravděpodobností ~0.4 je
+    stroke, ~0.4 yes let, ~0.2 no let (odpovídající realitě z dat【25†L68-L75】).
+    Může to být „target implemented“ – tj. současný engine by mohl už mít
+    náhodné rozhodnutí s proporcemi. Nebo může být dosud otevřené – možná
+    jen generuje, zda interference byla a výsledek pak deterministický (např.
+    házet do kažд).
+   Skórování: Pokud se v kódu vyskytuje NoLet, mělo by to vést k číslování
+    bodu na soupeřův účet, a Stroke bodu pro útočícího. „YesLet“ by měl
+    vyvolat, že rally se neopakuje v rámci skóre, ale v match engine to možná
+    řeší tak, že oddechne skórování na daný míč – musí být zajištěno, že
+    bodování proběhne korektně. Audit by měl zkontrolovat, že implementace
+    zdařile upraví skóre: střelec (stroke) bod navýší, let nechá skóre netknuté a
+    nevypočítá bod.
+   Opakování rally (yes let): Engine musí také simulovat opakování výměny.
+    Pokud dojde k yes let, pravděpodobně engine „nějak“ restartuje rally-
+    behavior – to může být buď rekurzí nebo smyčkou. V deterministickém
+    modelu by to možná znamenalo „provedu další simulaci rally s novými
+    randomy, ale stejní hráči“. Je důležité, aby se fyzické náklady (únavy,
+    minuty zápasu atd.) přičetly i za takovou opakovací výměnu. Audit by
+    prověřil, že opakovací rally je počítána se stejnými důsledky, a že se
+<PARSED TEXT FOR PAGE: 11 / 21>
+    nestane, že let způsobí ztrátu dat či nekonzistenci (např. score
+    mismatches).
+   Časové a fyzické náklady: Engine pravděpodobně udržuje metriky času a
+    únavy. Rámec výzkumu požaduje, abychom zjistili, zda let/stroke/yes let
+    těchto nákladů přidávají. Např. možná engine zvýší čas zápasu při yes let
+    (znovu museli hrát) a také navyšuje „fatigue“ pro oba hráče (bod isolation
+    vs squash). Audit zkoumá implementaci: jestli existuje pole jako match_time
+    či energy a jestli se navyšuje při přerušených výměnách. Pokud ne, lze
+    navrhnout, že by se měly přidávat (například +5 s za přerušení + další
+    výměnu).
+   Determinismus: Beta verze má být deterministická. To znamená, že
+    sekvence náhodných událostí by měla být opakovatelná (pravděpodobně s
+    fixním seedem RNG). Při auditu je potřeba ověřit, že při stejné inicializaci
+    budou let/stroke generovány konzistentně, že RNG se nevyužívá nečekaně
+    (např. nečekatelná reset s novým semínkem) a že YesLet nemá neznámé
+    následky (např. generování rozhodnutí v nekonzistentním pořadí). Pokud
+    by engine použil parallelní běhy, muselo by se to reflektovat do žurnálu
+    rozhodnutí.
+   Ukládání rozhodnutí: Zajímavé je, zda engine dokumentuje výsledky.
+    Podle zadání máme zajímat se, zda a jak se rozhodnutí ukládají (reporting).
+    Ideálně by o každé možné interferenci existovala záznamová struktura
+    (např. „Rally 17: interference → Yes Let“). Audit by hledal, jestli existuje v
+    kódu log pro refereeing decisions. Pokud ano, může být „implemented“.
+    Pokud ne, je to „needed“ pro validaci dat. Data by se pak mohla porovnat s
+    reálem.
+   Verzování pravidel: Jak engine řeší různé verze pravidel (např. v altern.
+    historických segmentech FAX)? Zdá se, že engine momentálně používá
+    jeden standard. Nejsou známky podpory historických variant rule setu
+    (není tam žádný parametr jako „year“ či „era“). Proto je pravděpodobné, že
+    implementace pracuje jen s novým kódexem. To by se klasifikovalo jako
+    aktuální stav – „cíl pro budoucno by mohla být volba verzí“. Není jasné,
+    jestli lze snadno zařadit „target“. Zřejmě je to „open topic“.
+   Vztah k Gameplan/Style/Movement/CourtControl: Důležité je zjistit, zda
+    interference „penalizuje“ hráče s danými atributy. Např. pokud má hráč
+    nízkou CourtControl, engine by zřejmě měl reflektovat, že je méně
+
+    angažován v T – což by mohlo snižovat počet jeho vyvolaných interferencí.
+    Audit by měl zkoumat, zda v generování interference se tyto proměnné
+    promítají. To je klíčové pro věrohodnost modelu. V ideálním případě by
+    atributy Gameplan/Style/Movement korelovaly s pravděpodobností
+<PARSED TEXT FOR PAGE: 12 / 21>
+       branek/překážek, ale může jít i o „jednoduché rozhodnutí“ (např. styl
+       agresivní = +20 % šance interference).
+      Kategorie výsledků: Pro každý z výše uvedených bodů určíme stav:
+      IMPLEMENTED: např. zdá se, že existuje mechanismus generování
+       interference (i když možná rudimentární).
+      DECIDED: parametry jako „vyvážení stroke/let“ mohou být fixovány (např.
+       podle viz ověřené podíly z WSO).
+      TARGET: třeba integrace faktoru CourtControl do interference; rozdělení
+       “vypadnout-li let na stroke/no-let” na základě výkonu hráče.
+      OPEN/DEFERRED: historické verzování pravidel nebo detailní fyzikální
+       simulace, které by byly úplnou novinkou, rozhodně padá do „deferred“
+       (bez plánu v tomto projektu).
+
+V žádném případě nechceme vymýšlet kompletní referees AI – pokud engine
+nemá byť elementární interference (např. jen náhodný výsledek), není cílem
+výzkumu navrhovat plnohodnotného rozhodčího, ale ověřit, že současný
+mechanismus je konzistentní a realističtější. Například úprava, že Engine
+neuděluje stoke nadměrně agresivním hráčům, by mohla být target, pokud je to
+zapotřebí, ale ne pre-alpha.
+
+G – Porovnání matematických modelů interference
+Navrhujeme několik modelových přístupů, které by simulátor mohl používat.
+Každý zhodnotíme z hlediska vědecké podpory (z literatury/interview), vstupů,
+identifikovatelnosti, výpočetní náročnosti a souladu s deterministickým enginem.
+
+   1. Současný jednoduchý model: Nejpravděpodobnější implementace v
+      enginu – konstantní pravděpodobnost interference nezávislá na
+      konkrétních podmínkách, možná s drobnou úpravou podle nastaveného
+      stylu hráčů. Např. p=0.3 „instaluje se“ pro všechny vyrovnané šance.
+      Podpora: nemá empirickou základnu (asi byl zvolen heuristicky). Vstupy:
+      jen obecné parametry (p_interference, pct_stoke). Identifikovatelnost: přímé,
+      lze odhadnout z úspěšnosti sim zpětně. Výpočet: minimální. Kompatibilita:
+      zachovává determinismus snadno. Riziko: nerespektuje rozdíly hráčů,
+      vytváří uniformní kloub.
+
+   2. Model s podmíněnou pravděpodobností interference: Pravděpodobnost
+      interference by byla vypočtena z úspěchu úderu a chování hráčů. Např.
+      pokud hráč A poslal míč do těsného roh, šance interference je VYSOKÁ, ale
+      když poslal třeba drop do rohu, menší. Matematicky lze definovat funkci
+<PARSED TEXT FOR PAGE: 13 / 21>
+   Interference = f(distance, angle, speed, movement_stat). Podpora: z
+   biomechaniky víme, že k blokování dojde zejména u rychlých line-drive
+   (viz [22†L79-L88]), takže empiricky má základ (obdobné koncepty v squash-
+   analytice zpravodajství). Vstupy: kombinace polohových/statistických
+   parametrů. Identifikovatelnost: střední (potřebujeme znát konkrétní
+   parametry švihu a hráčů z dat). Výpočet: složitější (s využitím
+   trigonometrie či podmínky). Kompatibilita: lze být deterministický, ale
+   vyžaduje nové konstanty/vstupy. Výhoda: víc realistický, lépe rozlišuje
+   situace (např. low-hit švih vs lob). Riziko: chyba ve vstupních modelech
+   může způsobovat špatná rozhodnutí (vyžaduje validaci).
+
+3. Model navázaný na Court Control: Interference závisí na “výhodě
+   pozice”. Např. hráč s velkým CourtControl a špatným vyklizením má větší
+   riziko udělení stoke. To lze kvantifikovat tak, že pravděpodobnost
+   interference roste s CourtControl a naopak se úměrně snižuje s Movement
+   obránce. Podpora: koncepčně se toto pojí s principem fairness. Vstupy:
+   staty CourtControl/Movement pro hráče v tom která rally.
+   Identifikovatelnost: získat CourtControl lze z herních statistik (pokud
+   engine eviduje). Výpočet: jednoduchá funkce, nízké overheady.
+   Kompatibilita: zachová determinismus. Výhoda: odráží strategický tlak.
+   Riziko: CourtControl je v „match enginu“ abstraktní – de-facto nepotvrzeno,
+   pokud ho engine eviduje jen hrubě.
+
+4. Model podle typů překážení: Rozšířit model o rozlišení fair view, access,
+   swing a turning, jak v pravidlech. Např. náhodně generovat, zda byla chyba
+   ve swingu (útočník stál blízko a blokoval) vs v turningu (obránce se otočil v
+   průběhu). Každý typ má jinou šanci stoke vs let. Podpora: těmito modely
+   odpovídají jednotlivé pravidlové paragrafe, lze je vynést do
+   pravděpodobnostních stromů. Vstupy: potřebovali bychom určit příčinu
+   každého interference (co zjevně „selhalo“). To by vyžadovalo ještě
+   detailnější informace (např. hodnotu osy T occupancy). Identifikovatelnost:
+   komplexní; znát poměr situací podle typu je těžké (WSO má Q&A, ale
+   nepotřebujeme simulovat simulace). Výpočet: zpracování více větvení,
+   střední složitost. Kompatibilita: zachovává determinismus (model je
+   formální). Výhoda: teoreticky přesnější (např. rozpozná „protected ball to
+   body“ vs „turning“ jako rozdíl). Riziko: robustnost, vysoká nepoznatelnost
+   parametrů.
+
+5. Model historicky verzovaný: Rozlišit pravděpodobnosti podle zvoleného
+   časového období FAX squashu (alternativní historie). Např. v „80. letech“
+<PARSED TEXT FOR PAGE: 14 / 21>
+      by mohlo být více letů, v 90. léta více stokes (právě podle historických
+      diskuzi). Podpora: neexistují přesné studie, spíše vnitřní znalosti (lze čerpat
+      z expertů). Vstupy: era = scénář. Výpočet: trivial. Kompatibilita: jednoduché
+      impl. Výhoda: umožňuje ladit simulátor pro různé varianty. Riziko:
+      teleologické – budoucí model se nemusí zajímat o skutečný historický
+      model, jen o konzistenci alternativního světa.
+
+   6. Detailní fyzický prostorový model: V simulačním stylu počítat skutečnou
+      trajektorii míče a hráčů během rally, včetně zrychlení, reakčních časů, a
+      modelu směrování švihu. Tím by bylo možné vyhodnotit přesnou kolizní
+      situaci. Podpora: plná fyzikální validita, ale ve squashu (s velkou rychlostí
+      míče) je extrémně výpočetně náročné a spíše nepotřebné pro
+      deterministický engine. Vstupy: simulované stopy míče/hrači.
+      Identifikovatelnost: vysoká (pouze v rámci simulace, ne z reálných dat).
+      Výpočet: extrémní, neslučitelný s dlouhými turnaji. Kompatibilita: není
+      deterministicky realizovatelný bez obrovské výpočetní ceny (navíc by
+      porušil „rally-by-rally“ přístup). Závěr: reálně NENÍ v současném rozsahu
+      požadováno (dělat jen pro velmi detailní ověření, nikoli pro engine v
+      běhu).
+
+   7. Baseline (no interference): Bez jakéhokoli nového mechanismu – tedy
+      engine ignoruje interference a prostě vrací předpokládané „win/lose“
+      pravděpodobnosti rally. Podpora: lehkost. Vstupy: žádné nové. Výpočet: už
+      na existujícím codebase. Kompatibilita: trivial. Výhoda: ukazuje odchylku
+      od reality – slouží jako referenční model. Riziko: nereprezentuje realitu
+      squashu, kde interference zásadně existuje.
+
+Shrnutí porovnání: Nejjednodušší model (aktuálně pravděpodobně
+implementovaný) je rychlý, ale nepřesný. Model s podmíněnou
+pravděpodobností dokáže lépe napodobit skutečnou dynamiku výměny, pokud se
+podaří kalibrovat vstupy (skrze WSO data či video analýzu). Model založený na
+CourtControl přidává psychologii pozice, je středně složitý a perspektivně
+užitečný. Typový model interferencí by dal nejbližší vazbu na pravidla, ale je
+velmi komplikovaný na odhad. Historické verze a fyzický model jsou spíše
+koncepty pro budoucnost (ne nutné teď). Nejvhodnější pro verzi 2.0 by tedy byl
+model kombinující podmíněnou pravděpodobnost s parametry
+CourtControl/Movement, přičemž zachová determinismus; přechod z aktuálního
+plochého modelu na podmíněný by byl značným zlepšením realismu.
+<PARSED TEXT FOR PAGE: 15 / 21>
+H – Navržené experimenty
+Pro vědecké ověření simulátoru navrhujeme 15 replikovatelných experimentů. U
+každého formuluji hypotézu a testovatelnost:
+
+  1. Různí hráči, různé hodnoty Movement: Vybrané páry hráčů, kde jeden
+     má výrazně vyšší statistiku pohybu než druhý. Hypotéza: „Hráč s lepším
+     pohybem bude mít méně interferenčních situací (stoke) než slabší hráč.“
+     Test: Simulovat X zápasů (např. 100) mezi stejnými hráči se stejným stylem,
+     ale s upravenými Movement, a porovnat podíl let/stoke. Prováděno dnes:
+     Pokud engine bere Movement v potaz (IMPLEMENTED vs TARGET), lze to
+     testovat. Pokud ne, navrhnout jako cíl zlepšení a teoretický budoucí test.
+
+  2. Rozdílné Court Control: Testovat páry, kde jeden hráč má vysoký
+     CourtControl („dominantní“) a druhý nízký. Hypotéza: „Hráč s vyšším
+     CourtControl bude udělat více stylizovaných faulů (vyšší % stroke)“. Test:
+     Simulace s vysokým vs nízkým CC, porovnání statistiky. Proveditelný dnes,
+     pokud CC je použitelný. Jinak budoucí návrh pro implementaci.
+
+  3. Odlišný herní styl (např. zabíječ vs konzervativec): Hypotéza: „Agresivní
+     styl generuje vyšší míru interference než uklidněný styl, za stejných
+     ostatních podmínek.“ Test: Určit dva profily style a simulovat s ostatními
+     stejnými staty. Sledujeme změny v míře let/stroke. Provětitelný – styly jsou
+     v engine (IMPLEMENTED).
+
+  4. Vyrovnané vs nevyrovnané zápasy: Srovnat zápasy mezi hráči s
+     podobnou vs rozdílnou úrovní. Hypotéza: „Vyrovnané zápasy (rovnoměrné
+     umístění) vykazují vyšší decision density (proc. výměn s rozhodnutím) než
+     jednostranné zápasy.“ Test: Simulovat skupinu zápasů top-10 mezi sebou
+     vs top-10 proti amatérským. Prováděno dnes – engine podporuje různé
+     úrovně (pravděpodobně implementováno).
+
+  5. Dlouhé výměny vs krátké: Hypotéza: „Čím delší je výměna (více výměn do
+     první chyby), tím větší šance na rozhodčí zásah.“ Test: Zaznamenej
+     všechny rally s >N údery a sleduj frekvenci interferencí. Proveditelné dnes,
+     za předpokladu že engine může logovat délky výměn. Pokud ne, označit
+     jako potenciálně sporné (ale snadný denní datový post-process).
+
+  6. Blokovaný švih: Vymodelovat konkrétní situaci, kdy útočící hráč je v
+     dobrém postavení, ale je blokován soupeřovým tělem (např. ex post
+     otestovat, co engine udělá). Hypotéza: „Tato situace často vede ke stroke,
+     pokud se dostatečně přiblížil k T.“ Test: Naplánovat sériové střelby k úhlu s
+<PARSED TEXT FOR PAGE: 16 / 21>
+   overlapem polo-hrany. Budoucí návrh, protože engine pravděpodobně
+   nemá explicitní mapu pozic (je to vysoká granularita).
+
+7. Situace bez skutečné interference: (kontrolní test) Zajistit, že engine dává
+   no let, když hráči hrají bez fyzického kontaktu. Hypotéza: „Pokud rally
+   pokračuje bez znatelné fyzické zátěže, engine udělí no let nebo vůbec nic.“
+   Test: Např. simulovat s parametrem interference=0, ověřit, že žádné střety
+   nejsou nahodile. Prováděno dnes – to ukazuje baseline, že defaultní chování
+   (bez zásahu) dává no let (pokud se puntuje).
+
+8. Vyvolané překážení (záměr): Hypotéza: „Hráč, který vyloženě stojí v cestě
+   soupeře (např. pomocí vysoké pravděpodobnosti interference), by často
+   viděl penalizaci.“ Test: Simulovat scénáře, kde jednoznačně vítězí (vysoký
+   CourtControl, nízký Movement soupeře), a ověřit míru stroků. Prováděno,
+   pokud CC je uvažován.
+
+9. Opakované Yes Let: Zjistit, zda engine umožňuje a úmyslně vyhodnocuje
+   následné let/stroke za stejnou situaci. Hypotéza: „Opakované rekurzivní
+   yes let zvýší trvání zápasu, ale nemění celkové skóre do uzavření rally.“
+   Test: Simulovat dublování situace (např. do loopu), ověřit determinismus a
+   detaily skórování. Prováděno: pokud implementace možná rekurzi.
+
+10. Pravidlové hranice No Let vs Stroke: Např. hraniční scénář, kdy hráč byl
+    jen na část ochranné cesty. Hypotéza: „Drobný rozdíl ve vzdálenosti od
+    linie může systém posunout mezi no let a stroke.“ Test: Provést citlivostní
+    analýzu na hráčské polohy (např. posun v rámci parametrů). Budoucí
+    návrh, vyžaduje detailní vstupy.
+
+11. Konzistence skóre při přerušených rally: Hypotéza: „Yes Let nemění
+    skóre, stroke ano – engine to správně řeší.“ Test: Označit body, spustit let a
+    porovnat skóre před/poté. Prováděno, to je součástí auditu F: kontroly
+    výsledného skórování.
+
+12. Délka zápasu a fyzické náklady: Hypotéza: „Zápasy s více rozhodnutími
+    (hlavně yes let) trvají déle a vyčerpávají hráče více.“ Test: Simulovat s a bez
+    interference a porovnat průměrnou spotřebu energy či skóre únavy.
+    Částečně provedeme, je-li engine měří únavu. Pokud nikoli, identifikovat to
+    jako cíl doplnit.
+
+13. Historická změna rulesetu: Např. simulace jednoho zápasu podle starých
+    vs nových pravidel. Hypotéza: „Jiné normy pro interference by změnily
+    skóre a tempo výměn.“ Test: Pokud engine umí switchnout, porovnat
+<PARSED TEXT FOR PAGE: 17 / 21>
+       statistiky (pokud ne, ukázat, že současný engine neumožňuje historické
+       modifikace). Budoucí návrh, ale lze alespoň popsat imaginární rozdíl (viz I).
+
+   14. Deterministický replay: Hypotéza: „Za stejných inicializačních podmínek
+       engine zopakuje každý zápas se stejným výsledkem.“ Test: Spustit stejnou
+       simulaci několikrát se stejným seedem a ověřit identické trace (včetně
+       let/stroke událostí). Prováděno dnes, to je standardní kontroly
+       determinismu (jednoznačnost výsledků).
+
+   15. Porovnání se skutečnými statistikami (s definovaným jmenovatelem):
+       Hypotéza: „Při správné kalibraci poměru yes let/no let v simulátoru lze
+       dosáhnout podobné decision density jako v reálných turnajích.“ Test:
+       Kalibruj model tak, aby simulace top-level zápasů dávala ~20–40 % décision
+       density (podle dat【10†L387-L394】). Poté porovnat distribuční podíly
+       stroke/let/no s reálem (konkrétní procenta z WSO). Vyžaduje definici
+       jmenovatele, např. přes celkový počet simulovaných rally. Prováděno,
+       pokud engine loguje každou rally; pokud ne, je to výhled do budoucna pro
+       kalibraci a validaci.
+
+U každého experimentu musí být možnost falsifikace: například tvrdíme, že
+„vyšší Movement snižuje let/stroke“. Pokud simulátor neukáže rozdíl, hypotézu
+vyvrátíme. Jako metriky používáme podíly letů, průměrné body na set,
+průměrnou délku výměny a celkovou únavu. Důležité je rozlišit replikovatelný
+test (který spustíme s engine) od pouze koncepčního experimentu, vyžadujícího
+novou implementaci (označené výše jako budoucí návrh).
+
+I – Alternativní svět FAX squashu
+V tomto rozšířeném světě můžeme uvažovat, že squash se vyvíjel jinak – bez
+přímé vazby na skutečnou historii PSA. Například v alternativní větvi by mohlo
+dojít k těmto úvahám:
+
+      Mohly být přijaty drastičtější bezpečnostní předpisy – například úplný
+       zákaz kontaktu by znamenal automatický stroke při sebemenší kolizi. To
+       by vedlo k většímu počtu bodů udělených obránci a méně letům. Na druhé
+       straně by to zvýšilo agresivitu obránců (víc se snaží zasáhnout míč na úkor
+       soupeře, protože nechtějí dát let).
+      Letová fazóna mohla být odlišně formována: možná by existovala úroveň
+       „kompenzačního počítání“ – po každém let se skóre přepočítává (nikoli 15
+       vs 0, ale o slova). Nebo alternativně: žlutý míč a malá manipulace by vedly
+       k přímému posunu do výhody.
+<PARSED TEXT FOR PAGE: 18 / 21>
+   Technologie a video review mohly ovlivnit pravidla – třeba by existovaly
+    „silné kamery“ na stěnách, které automaticky vyhodnocují (Minerva EA?).
+    Ale vzhledem k deterministickému charakteru FAX by asi turnaje
+    neriskovaly tuto automatizaci ve starších érách, spíše by se více vsadilo na
+    soudržnost a fyzické arbitry.
+   Přístup k libovolné části stěny (Rule 8.11) by se mohl vyvíjet jinak. Např.
+    v jednom scénáři by „swing“ podrobnosti vůbec neexistovaly – hráč by
+    musel vždy definitivně udeřit míč, jinak by byl penalizován, aby se
+    předešlo opakování. To by snížilo počet letů a zvýšilo počet no letů (protože
+    hráč „přešvihem“ doplatí).
+   Guiding Let koncept může být v této altern. realitě implementován jinak –
+    třeba byl již dávno uzákoněn ve 70. letech (protože se to osvědčilo, nebo
+    naopak opodstatnění není potřeba). Nebo může být odstraněn – arbitr
+    nelpí na poučování, poskytuje jen „mechanickou“ aplikaci pravidel bez
+    ústního vysvětlení.
+   Tempo hry vs počet rozhodčích: Mohl by existovat historický tlak na
+    plynulost (možná squash byl olympijský již v 80. letech), takže se stovky
+    federací dohodly na přísnějším „škrtacím“ přístupu (více stokes).
+    Alternativně by se mohla situace vyhrotit druhou stranu – „nebojácné
+    squashování“ – a všichni by preferovali lety, aby hra byla plynulá a šla do
+    délky.
+   Meta taktik: V některých epiách by se například populárními stala taktika
+    „manipulovaného letování“ – hráči by záměrně přivolávali rozhodčí
+    (možná protože věděli, že důležitá hra se bude opakovat v delším
+    nastavení, kde mají výhodu). Mohla by vzniknout „etika“ – když je systém
+    moc přísný, hráči by se adaptovali – např. by raději zahráli riskantní volej,
+    než aby riskovali nějaký stoke.
+   Vlivy vnější: Například ve alternativní historii by mohlo dojít k
+    významnému (nebo naopak k nulovému) vzestupu filmování, což by vedlo
+    k úplně jiné úrovni přezkumů – třeba by se engine musel vyrovnat s tím, že
+    čas od času nastane „lack of evidence“ a rozhodčí by vždy reagovali
+    standardně.
+   Žádná autorita World Squash: Ve světě FAX mohly být různé komise
+    (Americká, Čínská squash federace) s odlišnými regulemi. Např. v Americe
+    by byly agresivnější pravidla, v Evropě liberálnější – což by umožňovalo
+    definovat „regionální varianty“. Engine by možná potřeboval parametr
+    „herní ligu“ (PSA vs PSG vs FAX Tour).
+<PARSED TEXT FOR PAGE: 19 / 21>
+      Historie pravidel: Mohla by existovat konvergentní historie, kde
+       například tzv. „point-a-awake“ vs „point-a-let“ se liší. Tedy že let
+       nerozepisuje bod, ale dává bod oponentovi (což by radikálně změnilo
+       význam opakování výměn). Nebo by se mohla objevovat „servisní
+       interference“ pravidla (současné jen single?), kdy let by byl automaticky.
+
+Ve své podstatě alternativní scénáře nemusí předurčovat vítěze, ale ukazují, jak
+by jen změna klíčové filozofie souvisela s množstvím letů vs stokes. Náš simulátor
+pak může být naprogramován tak, aby zvládl různé „módy soupeření“ – my však
+v R013 cílíme na jeden (současný) realismus s možností teoreticky přepnout mezi
+verzemi.
+
+J – Závěry a doporučení (výstup)
+Na základě předešlých částí shrnujeme hlavní nálezy včetně doporučení, a
+sestavíme požadovanou matici. Následující body vycházejí z oficiálních pravidel
+【14†L242-L251】【14†L270-L279】, standardů【10†L272-L280】 a empirických
+údajů【25†L59-L68】【22†L76-L84】:
+
+      TYP PRAVIDLOVÉ SITUACE / Oficiální pravidlo:
+      Přístup a fair view / 8.6–8.8:
+          o Měřitelný vstup: vzdálenost soupeřů od míče, schopnost přístup.
+          o Současná implementace: (nejspíše) probabilistický model
+            „interference či ne“.
+          o Datová opora: WSO statistiky ~80 % stoke/let rozhodnutí【25†L68-
+             L75】.
+          o Riziko chyby: bez přesných dat o pozici.
+          o Doporučení: Pokud engine uchovává rychlost/pozici, upravit
+            pravděp. dle faktoru court control (vztah CC→clear effort).
+      Rozumný švih / 8.9–8.10:
+          o Měřitelný vstup: úhel švihu, fyzický prostor.
+          o Současná imp.: Nejasná (pravděpodobný prostý model).
+          o Datová opora: Odborné vysvětlivky【13†L307-L312】.
+          o Riziko: Subjektivní definice „reasonable“.
+          o Doporučení: Implementovat kontrolu švihu: prevent stroke if swing
+            clearly uvolněn (možná do probability).
+      Winning return / 8.6.7 a 8.11:
+<PARSED TEXT FOR PAGE: 20 / 21>
+          o Vstup: odhad vývoje rakety (nesim.)
+          o Imp.: Pravděpodobně ignorováno (engine neřeší budoucí výsledky).
+          o Data: Žádná (nerealistické odhadovat).
+          o Risk: Nepřesnost ve vícenásobných zákrutech (winning return).
+          o Doporučení: Toto je složité – lze buď sledovat, zda skóre rally šla do
+            útoku, nebo zanedbat s poznámkou, že WSF alternativní (ne důležité
+            pro engine).
+      No Let vs Stroke (činná snaha vs fair play):
+          o Vstup: snaha soul., minimal contact (viz 8.6.5–8.6.7【14†L270-
+             L279】).
+          o Imp.: Může být modelováno jako „pravidlová logika“ nebo prahy.
+          o Data: Podíl 20–40 % rozhodnutí jsou stroke【25†L68-L75】【22†L76-
+             L84】.
+          o Riziko: Neférové řešení chyb (subjektivita).
+          o Doporučení: Kalibrace parametrů tak, aby přibližně odpovídaly
+            reálným podílům (viz WSO data).
+      Turning/Contact / 8.12–8.13:
+          o Vstup: zda hráč otočil.
+          o Imp.: Pravděpodobně není rozlišeno (pokud ne).
+          o Data: Podrobná data chybí.
+          o Riziko: Případy „otočení“ jako zdroj nesmím přeceňovat.
+          o Doporučení: Pokud engine neřeší, může se považovat za průměrnou
+            interferenci (nevyčleňovat).
+      Bezpečnost / 8.1–8.4:
+          o Vstup: nebezpečnost pohybu (?)
+          o Imp.: Engine pravděpodobně neřeší „safety stop“.
+          o Data: Videoreference a standardy【10†L284-L293】.
+          o Riziko: Ignoruje se COC (Code of Conduct) stranou.
+          o Doporučení: Za implementované bezpečnostní zastavení (např.
+            vlhký kurt) přidat let (Target: operativní pravidla, viz 10†L381-L390).
+
+Každá situace naznačuje specifické vstupy. Např. fair view se dá měřit jako úhel
+viditelnosti, access jako prvek vzdálenosti a clearance, swing jako čas a prostor
+pro švih (lze přiblížit statem švihu), contact jako existence fyzického střetu
+(možný datový indikátor). V současném enginu jsou pravděpodobně
+<PARSED TEXT FOR PAGE: 21 / 21>
+IMPLEMENTED jen hrubé verze – už existuje generování interference a následné
+rozhodnutí stoke/let. OPEN je detaily (winning return, turning), TARGET je lepší
+vazba na staty hráčů (CourtControl, Movement), DEFERRED je například
+historické varianty pravidel či simulační AR.
+
+Bibliografie (použité zdroje): Oficiální pravidla (WSF Rules, WSO)【14†L242-
+L251】【14†L270-L279】, nové officianské standardy【10†L272-L280】【10†L331-
+L340】, statistiky rozhodnutí WSO【25†L59-L68】【22†L76-L84】. Výsledky
+zkombinovány s obecnými principy squashové biomechaniky (včetně studií a
+znalostí expertních komisí) a požadavky definovanými v zadání (nezvykle
+podrobné).
+
+----- END AVAILABLE SEARCHABLE RESEARCH TEXT -----

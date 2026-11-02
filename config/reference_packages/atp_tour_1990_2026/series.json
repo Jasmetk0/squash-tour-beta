@@ -16,7 +16,7 @@
     "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
     "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
     "notes": [
-      "Actual original-category ATP main Tour played rosters reconciled for 2003–2025; 1990–2002 remain incomplete, 2026 provisional. No inferred played Editions/points.",
+      "Actual ATP main Tour original played-tier rosters 2002–2025 are reconciled; historical 1990–2001 incomplete, 2026 provisional. This is source-only: neither full annual played Editions nor ranking rules.",
       "2026 date/host fields are not assumed for earlier seasons.",
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
@@ -539,6 +539,50 @@
       "legal_continuity": "Copenhagen 2003 vs Beijing 2004 explicitly NOT linked; their distinct original source IDs are retained pending direct licensing evidence.",
       "canada_masters_2003": "Montreal",
       "finals_host_2003": "Houston"
+    },
+    "calendar_validation_2002": {
+      "official_played_results_archive_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+      "year_specific_original_category_calendar_url": "https://de.wikipedia.org/wiki/ATP_Tour_2002",
+      "played_masters_series_count": 9,
+      "played_international_series_gold_count": 9,
+      "played_international_series_count": 43,
+      "atp_finals_played": true,
+      "finals_host_2002": "Shanghai",
+      "canada_masters_host_2002": "Toronto",
+      "scope": "2002 played main ATP Tour: 9 Masters Series, 9 International Series Gold, 43 International Series, distinct Tennis Masters Cup in Shanghai. Four majors, World Team Cup and Davis Cup excluded.",
+      "verified_licence_moves": [
+        {
+          "source_id": "brussels",
+          "from_city": "Mallorca",
+          "to_city": "Valencia",
+          "year_of_move": 2003,
+          "source_url": "https://as.com/masdeporte/2003/03/24/polideportivo/1048460403_850215.html"
+        },
+        {
+          "source_id": "bangkok_2013",
+          "from_city": "Tashkent",
+          "to_city": "Bangkok",
+          "year_of_move": 2003,
+          "source_url": "https://www.sports.ru/tennis/2875657.html"
+        }
+      ],
+      "distinct_concurrent_2002_hong_kong": [
+        {
+          "source_id": "hong_kong",
+          "city": "Chennai",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+        },
+        {
+          "source_id": "hong_kong_salem_2002",
+          "city": "Hong Kong",
+          "source_url": "https://www.scmp.com/article/392880/juan-last-hurrah-curtain-falls-open"
+        }
+      ],
+      "red_flags": [
+        "The 2002 Canadian ATP Masters event was in Toronto per official played Results Archive; a legacy calendar labels it Montreal incorrectly.",
+        "2002 Tennis Masters Cup was in Shanghai, while 2002 Shanghai regular Tour International Series is NOT asserted played.",
+        "Some contemporary reports planned to move 2002 Hong Kong Salem Open to Beijing for 2003, but 2003 Beijing was NOT played; no final legal linkage inferred."
+      ]
     }
   },
   "explicit_scope": [
@@ -589,6 +633,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Indian Wells",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Indian Wells",
@@ -670,6 +720,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Miami",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Miami",
             "country_code": "USA",
@@ -750,6 +806,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Monte Carlo",
+            "country_code": "MCO",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Monte Carlo",
             "country_code": "MCO",
@@ -823,6 +885,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Madrid",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Madrid",
             "country_code": "ESP",
@@ -892,6 +960,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Rome",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Rome",
@@ -974,6 +1048,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Toronto",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Montreal",
             "country_code": "CAN",
@@ -1049,6 +1129,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Cincinnati",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Cincinnati",
@@ -1181,6 +1267,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Paris",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Paris",
             "country_code": "FRA",
@@ -1232,6 +1324,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -1390,6 +1489,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Memphis",
             "country_code": "USA",
@@ -1544,6 +1649,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -1702,6 +1814,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Rotterdam",
             "country_code": "NLD",
@@ -1771,6 +1889,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -1936,6 +2061,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Doha",
+            "country_code": "QAT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Doha",
             "country_code": "QAT",
@@ -2046,6 +2177,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series_gold",
@@ -2202,6 +2340,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Acapulco",
+            "country_code": "MEX",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Acapulco",
@@ -2273,6 +2417,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series_gold",
@@ -2430,6 +2581,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Dubai",
+            "country_code": "ARE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Dubai",
             "country_code": "ARE",
@@ -2499,6 +2656,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -2650,6 +2814,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Barcelona",
             "country_code": "ESP",
@@ -2719,6 +2889,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -2877,6 +3054,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Munich",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Munich",
             "country_code": "DEU",
@@ -2971,6 +3154,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Hamburg",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Hamburg",
             "country_code": "DEU",
@@ -3022,6 +3211,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -3086,6 +3282,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Halle ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Halle",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Halle",
@@ -3157,6 +3359,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -3220,6 +3429,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "London",
@@ -3290,6 +3505,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -3441,6 +3663,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Washington",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Washington",
             "country_code": "USA",
@@ -3504,6 +3732,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -3647,6 +3882,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Tokyo",
@@ -3932,6 +4173,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -4086,6 +4334,12 @@
         "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Basel",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Basel",
             "country_code": "CHE",
@@ -4149,6 +4403,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -4307,6 +4568,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Vienna",
             "country_code": "AUT",
@@ -4419,6 +4686,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -4563,6 +4837,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Adelaide",
             "country_code": "AUS",
@@ -4639,6 +4919,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -4803,6 +5090,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Chennai",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Chennai",
@@ -5038,6 +5331,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -5195,6 +5495,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Auckland",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Auckland",
             "country_code": "NZL",
@@ -5258,6 +5564,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -5423,6 +5736,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Lyon",
             "country_code": "FRA",
@@ -5501,6 +5820,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -5671,6 +5997,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Buenos Aires",
+            "country_code": "ARG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Buenos Aires",
@@ -5736,6 +6068,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -5906,6 +6245,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Delray Beach",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Delray Beach",
@@ -6099,6 +6444,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -6267,6 +6619,12 @@
         "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Houston",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Houston",
             "country_code": "USA",
@@ -6330,6 +6688,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -6487,6 +6852,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Casablanca",
@@ -6713,6 +7084,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series_gold",
@@ -6877,6 +7255,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -6982,6 +7366,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -7140,6 +7531,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "'s-Hertogenbosch",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "'s-Hertogenbosch",
             "country_code": "NLD",
@@ -7274,6 +7671,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -7439,6 +7843,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Nottingham",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Nottingham",
             "country_code": "GBR",
@@ -7564,6 +7974,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -7727,6 +8144,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Båstad",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Båstad",
@@ -7792,6 +8215,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -7955,6 +8385,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Gstaad",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Gstaad",
@@ -8020,6 +8456,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -8184,6 +8627,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Umag",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Umag",
             "country_code": "HRV",
@@ -8247,6 +8696,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -8412,6 +8868,12 @@
         "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Kitzbühel",
             "country_code": "AUT",
@@ -8481,6 +8943,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -8638,6 +9107,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Estoril",
@@ -8880,6 +9355,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -9043,6 +9525,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Long Island",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Long Island",
@@ -9574,6 +10062,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://as.com/masdeporte/2003/03/24/polideportivo/1048460403_850215.html",
+            "notes": "Played 2002 ATP International Series; continued under 2003 venue as verified by contemporary ATP transfer reporting"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -9742,8 +10237,14 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "history_scope": "original_2002_mallorca_2003_valencia_then_documented_2009_plus_history",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Mallorca",
+            "country_code": "ESP",
+            "source_url": "https://as.com/masdeporte/2003/03/24/polideportivo/1048460403_850215.html"
+          },
           {
             "year": 2003,
             "city": "Valencia",
@@ -9859,7 +10360,7 @@
             "source_url": "https://www.atptour.com/en/news/what-is-the-2025-atp-tour-calendar"
           }
         ],
-        "identity_review_note": "2013/2014 Valencia ATP 500 -> 2015 Valencia 250 -> 2016 Antwerp 250 -> Brussels 2025 under European Open Tour licence, effective categories not backprojected."
+        "identity_review_note": "2002 Mallorca Open ATP International Series was explicitly moved by ATP to Valencia for 2003; the single licensed Tour Series later played Valencia. Must not mix up revived 2021-onward Mallorca grass tournament."
       },
       "references": [
         {
@@ -9899,6 +10400,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -10079,6 +10587,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Marseille",
             "country_code": "FRA",
@@ -10238,6 +10752,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
           },
           {
             "from": 2003,
@@ -10405,6 +10926,12 @@
         "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit.",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Stockholm",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Stockholm",
             "country_code": "SWE",
@@ -10498,6 +11025,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Shanghai",
+            "country_code": "CHN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Houston",
@@ -10725,6 +11258,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Saint Petersburg",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Saint Petersburg",
             "country_code": "RUS",
@@ -10810,6 +11349,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -10966,6 +11512,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Viña del Mar",
+            "country_code": "CHL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Viña del Mar",
@@ -11290,6 +11842,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -11439,6 +11998,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Newport",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Newport",
             "country_code": "USA",
@@ -11506,6 +12071,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -11655,6 +12227,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Indianapolis",
@@ -12117,6 +12695,13 @@
         "history_scope": "2005_milan_2006_2015_zagreb_2016_sofia",
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -12265,6 +12850,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Milan",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Milan",
@@ -12937,6 +13528,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -13065,6 +13663,12 @@
         ],
         "identity_review_note": "Bucharest 2015–16 Tour licence transferred Budapest 2017–19 then Belgrade 2021; Bucharest 2024+ tracked as a distinct Tour licence without unproven merger.",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Bucharest",
+            "country_code": "ROU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Bucharest",
@@ -13330,6 +13934,13 @@
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -13458,6 +14069,12 @@
         ],
         "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played.",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Moscow",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Moscow",
@@ -13647,6 +14264,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -13769,6 +14393,12 @@
         "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined.",
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
             "year": 2003,
             "city": "Sydney",
             "country_code": "AUS",
@@ -13836,6 +14466,13 @@
         "not_squash_rules": true,
         "history_scope": "verified_2018_2019_250_only_next_license_location_not_yet_certified",
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -13958,6 +14595,12 @@
         ],
         "identity_review_note": "Costa do Sauípe ATP Tour Brasil Open event 2011 moved to São Paulo from 2012, played through 2019. Tournament venue changed, not a new Tour series.",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Costa do Sauipe",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Costa do Sauípe",
@@ -14287,6 +14930,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -14366,6 +15016,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "San Jose",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "San Jose",
@@ -14435,6 +15091,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -14514,6 +15177,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Los Angeles",
@@ -14580,8 +15249,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
+        "history_scope": "played_2002_tashkent_2003_bangkok_historically_verified_older_years_unverified",
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.sports.ru/tennis/2875657.html",
+            "notes": "Played 2002 ATP International Series; continued under 2003 venue as verified by contemporary ATP transfer reporting"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -14660,8 +15336,14 @@
             "notes": "Detailed contemporary NOS ATP 2013 schedule confirms event city/date/tier; ATP 2013 archive listed for results cross-reference"
           }
         ],
-        "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
+        "identity_review_note": "2002 Tashkent President's Cup ATP International Series sanction moved with ATP approval to Bangkok for 2003. Keep one Series identity; do not invent 2003 Tashkent ATP main Tour event.",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Tashkent",
+            "country_code": "UZB",
+            "source_url": "https://www.sports.ru/tennis/2875657.html"
+          },
           {
             "year": 2003,
             "city": "Bangkok",
@@ -14730,6 +15412,13 @@
         "not_squash_rules": true,
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -14803,6 +15492,12 @@
         ],
         "identity_review_note": "Dutch Open Amersfoort 2008 ATP sanction sold with ATP Board approval to Belgrade and played as Serbia Open 2009–2012. Separate Budapest 2021 Belgrade licence.",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Amersfoort",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Amersfoort",
@@ -14956,6 +15651,13 @@
         "history_scope": "2005_scottsdale_2006_2008_las_vegas",
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -15000,6 +15702,12 @@
         ],
         "identity_review_note": "2005 Tennis Channel Open in Scottsdale transferred to Las Vegas in 2006, played there through 2008; earlier Scottsdale years not imported.",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Scottsdale",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Scottsdale",
@@ -15063,6 +15771,13 @@
         "history_scope": "2005_st_poelten_2006_2008_poertschach",
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -15107,6 +15822,12 @@
         ],
         "identity_review_note": "2005 St. Pölten ATP event licence moved to Pörtschach from 2006, played there through 2008.",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "St. Pölten",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "St. Pölten",
@@ -15170,6 +15891,13 @@
         "history_scope": "2007_2008_international_series_year_evidenced_only_other_seasons_not_backfilled",
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -15214,6 +15942,12 @@
         ],
         "identity_review_note": "Sopot 2007 ATP International Series relocated to Warsaw and was played in 2008. Neither historic Sopot and Warsaw host is a parallel 2008 Series. The earlier prospective 2008 calendar still listed Sopot.",
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Sopot",
+            "country_code": "POL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Sopot",
@@ -15394,6 +16128,13 @@
         "history_scope": "2005_2006_played_tour_only_older_seasons_not_backfilled",
         "history_periods": [
           {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
             "from": 2003,
             "to": 2003,
             "category_id": "atp_international_series",
@@ -15423,6 +16164,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Palermo",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
           {
             "year": 2003,
             "city": "Palermo",
@@ -15478,8 +16225,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "played_2003_atp_international_series_earlier_years_unverified",
+        "history_scope": "played_2002_2003_copenhagen_international_series_earlier_years_unverified",
         "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/tournaments/copenhagen/481/overview",
+            "notes": "Played 2002 ATP International Series; continued under 2003 venue as verified by contemporary ATP transfer reporting"
+          },
           {
             "from": 2003,
             "to": 2003,
@@ -15490,13 +16244,67 @@
         ],
         "historical_host_change": [
           {
+            "year": 2002,
+            "city": "Copenhagen",
+            "country_code": "DNK",
+            "source_url": "https://www.atptour.com/en/tournaments/copenhagen/481/overview"
+          },
+          {
             "year": 2003,
             "city": "Copenhagen",
             "country_code": "DNK",
             "source_url": "https://www.atptour.com/en/tournaments/copenhagen/481/overview"
           }
         ],
-        "identity_review_note": "Played 2003 Copenhagen Open ATP International Series. 2004 Beijing joins ATP calendar while Copenhagen disappears; the transition alone is not evidence of legal licence continuity. No earlier Copenhagen years automatically implied."
+        "identity_review_note": "Played Copenhagen Open ATP International Series in 2002 and 2003. Copenhagen disappears from the played 2004 calendar; Beijing appears 2004 but no source has established direct Copenhagen→Beijing licence continuity."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "hong_kong_salem_2002",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Salem Open (Hong Kong 2002)",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Hong Kong",
+        "historical_country_code": "HKG",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_2002_salem_open_older_1990_2001_years_not_yet_backfilled",
+        "history_periods": [
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.scmp.com/article/392880/juan-last-hurrah-curtain-falls-open",
+            "notes": "Played ATP Salem Open in Hong Kong 23–29 September 2002. Last played edition, not 2002 Chennai or 2024/26 revived Hong Kong Tour licence."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 2002,
+            "city": "Hong Kong",
+            "country_code": "HKG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          }
+        ],
+        "identity_review_note": "Last played 2002 Salem Open was in Hong Kong while Chennai ATP event was separately held during same 2002 season. Contemporary promoters applied to move the sanction to Beijing for 2003, but no Beijing played 2003 record is supported. Do not assert a played Beijing 2003 or 2004 legal continuity until independently verified. Earlier Hong Kong ATP years 1990–2001 are not yet backfilled."
       },
       "references": [
         {

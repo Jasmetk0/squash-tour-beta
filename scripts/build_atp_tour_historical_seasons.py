@@ -17,6 +17,20 @@ SOURCE = ROOT / "config" / "reference_packages" / "atp_tour_1990_2026"
 TARGET = SOURCE / "seasons_1990_2026.json"
 FIRST, LAST = 1990, 2026
 
+# Source-backed ATP singles main Tour tier rosters. These expected counts
+# describe *played events* (never cancelled Series identities), and are
+# intentionally NOT backfilled from any present-day calendar to older years.
+# Official archive: https://www.atptour.com/en/scores/results-archive?year=YYYY
+PLAYED_TIER_COUNTS: dict[int, dict[str, int]] = {
+    2020: {"atp_masters_1000": 3, "atp_500": 7, "atp_250": 18},
+    2021: {"atp_masters_1000": 8, "atp_500": 9, "atp_250": 39},
+    2022: {"atp_masters_1000": 8, "atp_500": 13, "atp_250": 42},
+    2023: {"atp_masters_1000": 9, "atp_500": 13, "atp_250": 38},
+    2024: {"atp_masters_1000": 9, "atp_500": 13, "atp_250": 38},
+    2025: {"atp_masters_1000": 9, "atp_500": 16, "atp_250": 30},
+}
+
+
 
 def _active(periods: list[dict[str, Any]], year: int) -> list[dict[str, Any]]:
     return [p for p in periods if p["from"] <= year <= p["to"]]
@@ -99,15 +113,48 @@ def build(
             if _active(x["payload"]["history_periods"], year)
         }
         active_series = dict(sorted(active_series.items()))
+        nonheld = sorted(
+            x["source_entity_id"] for x in series_doc["entities"]
+            if year in x["payload"].get("not_held_years_known", [])
+        )
+        if year in PLAYED_TIER_COUNTS:
+            expected = PLAYED_TIER_COUNTS[year]
+            actual = {
+                category: sum(
+                    tier == category and series_id not in nonheld
+                    for series_id, tier in active_series.items()
+                )
+                for category in expected
+            }
+            if actual != expected:
+                raise ValueError(
+                    f"ATP played-tier roster mismatch in {year}: "
+                    f"expected {expected}, observed {actual}"
+                )
+            played_roster = {
+                "status": "played_tour_tiers_reconciled_to_atp_results_archive",
+                "source_url": f"https://www.atptour.com/en/scores/results-archive?year={year}",
+                "played_counts": expected,
+                "scope": "ATP Masters 1000, ATP 500, ATP 250; excludes Finals and team events",
+                "not_an_edition_calendar": True,
+            }
+        else:
+            played_roster = {
+                "status": (
+                    "provisional_calendar_not_final_results"
+                    if year == 2026 else "unverified_incomplete"
+                ),
+                "played_counts": None,
+                "scope": "No complete played ATP 1000/500/250 event census established",
+                "not_an_edition_calendar": True,
+            }
         rows.append({
             "year": year,
             "era": _era(year),
             "category_ids": active_cats,
             "series_category_ids": active_series,
-            "known_not_held_series_ids": sorted(
-                x["source_entity_id"] for x in series_doc["entities"]
-                if year in x["payload"].get("not_held_years_known", [])
-            ),
+            "known_not_held_series_ids": nonheld,
+            "played_tier_roster_validation": played_roster,
             "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
             "edition_assertion": "none; reference membership does not prove played annual edition",
         })

@@ -38,7 +38,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 108
+    assert len(series["entities"]) == 110
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -529,7 +529,7 @@ def test_coverage_gates_reject_false_historical_completeness() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     rows = {s["year"]: s for s in build(categories, source)["seasons"]}
-    for year in range(1990, 2002):
+    for year in range(1990, 2001):
         assert rows[year]["played_tier_roster_validation"]["status"] == "unverified_incomplete"
         assert rows[year]["played_tier_roster_validation"]["played_counts"] is None
     assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
@@ -1598,4 +1598,55 @@ def test_2002_fake_salems_cancelled_not_mistaken_for_chennai() -> None:
     )
     hong_kong["payload"]["not_held_years_known"] = [2002]
     with pytest.raises(ValueError, match="played-tier roster mismatch in 2002"):
+        build(_source("category"), source)
+
+
+def test_2001_historical_played_original_9_9_46_census() -> None:
+    rows = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    r = rows[2001]
+    assert r["played_tier_roster_validation"]["played_counts"] == {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 46,
+    }
+    assert Counter(r["series_category_ids"].values()) == {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 46, "atp_finals": 1,
+    }
+    assert len(r["series_category_ids"]) == 65
+    assert r["series_category_ids"]["stuttgart_indoor_masters"] == "tennis_masters_series"
+    assert r["series_category_ids"]["stuttgart"] == "atp_international_series_gold"
+    assert "madrid" not in r["series_category_ids"]
+    assert r["series_category_ids"]["atlanta"] == "atp_international_series"
+    assert r["series_category_ids"]["atlanta_verizon_2001"] == "atp_international_series"
+    assert r["series_category_ids"]["bogota_colombia_2001"] == "atp_international_series"
+    for id in ("bogota_colombia_2001", "atlanta_verizon_2001", "bangalore_2008"):
+        assert id not in rows[2002]["series_category_ids"]
+
+
+def test_2001_stuttgart_masters_vs_clay_gold_and_sydney_finals() -> None:
+    series = _source("series")
+    by_id = {e["source_entity_id"]: e["payload"] for e in series["entities"]}
+    assert _host_by_year(by_id["stuttgart_indoor_masters"])[2001] == "Stuttgart"
+    assert _host_by_year(by_id["madrid"])[2002] == "Madrid"
+    assert _host_by_year(by_id["stuttgart"])[2001] == "Stuttgart"
+    assert _host_by_year(by_id["atp_finals"])[2001] == "Sydney"
+    assert _host_by_year(by_id["atp_finals"])[2002] == "Shanghai"
+    assert _host_by_year(by_id["canadian_open"])[2001] == "Montreal"
+    assert _host_by_year(by_id["canadian_open"])[2002] == "Toronto"
+    assert _host_by_year(by_id["bangalore_2008"])[2001] == "Shanghai"
+    assert 2002 not in _host_by_year(by_id["bangalore_2008"])
+    source = series["provenance"]["calendar_validation_2001"]["indoor_masters_license_transition"]
+    assert source["source_id_2001"] == "stuttgart_indoor_masters"
+    assert source["source_id_2002"] == "madrid"
+    assert "emol.com" in source["source_url"]
+
+
+def test_2001_false_bogota_cancellation_rejected() -> None:
+    import copy
+    source = copy.deepcopy(_source("series"))
+    entity = next(e for e in source["entities"] if e["source_entity_id"] == "bogota_colombia_2001")
+    entity["payload"]["not_held_years_known"] = [2001]
+    with pytest.raises(ValueError, match="played-tier roster mismatch in 2001"):
         build(_source("category"), source)

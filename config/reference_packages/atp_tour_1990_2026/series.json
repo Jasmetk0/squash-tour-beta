@@ -169,6 +169,17 @@
       "atp_finals_played": true,
       "next_gen_finals_played": true,
       "scope": "Verified ATP Tour 2019 played singles tier roster; unrelated Grand Slams excluded; no full Calendar Editions or player results imported"
+    },
+    "calendar_validation_2018": {
+      "archive_source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+      "official_calendar_url": "https://www.atptour.com/-/media/files/partnerships/about-2018-atp-world-tour.pdf",
+      "played_atp_masters_1000_count": 9,
+      "played_atp_500_count": 13,
+      "played_atp_250_count": 40,
+      "atp_finals_played": true,
+      "next_gen_finals_played": true,
+      "scope": "2018 64 ATP Tour events (9 Masters,13 500,40 250 and both Finals); no Grand Slams, ITF or team events",
+      "source_note": "Official 2018 brochure/calendar identifies each Tier; ATP archive documents played editions. Quito→Córdoba licence transfer uses contemporaneous independent reporting."
     }
   },
   "explicit_scope": [
@@ -753,6 +764,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -797,6 +815,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2018,
+            "city": "New York",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018"
+          },
           {
             "year": 2019,
             "city": "New York",
@@ -850,6 +874,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -921,6 +952,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -1046,6 +1084,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_500",
@@ -1116,6 +1161,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -1188,6 +1240,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_500",
@@ -1251,6 +1310,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -1497,6 +1563,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_500",
@@ -1561,6 +1634,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_500",
@@ -1617,6 +1697,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -1695,6 +1782,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_500",
@@ -1762,6 +1856,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -1834,6 +1935,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -1891,6 +1999,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -1942,6 +2057,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2018,
+            "city": "Pune",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018"
+          },
           {
             "year": 2019,
             "city": "Pune",
@@ -2075,6 +2196,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -2145,6 +2273,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -2231,6 +2366,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -2315,6 +2457,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -2529,6 +2678,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -2611,6 +2767,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -2681,6 +2844,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -2760,6 +2930,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -2837,6 +3014,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -2980,6 +3164,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -3057,6 +3248,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -3136,6 +3334,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -3214,6 +3419,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -3291,6 +3503,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -3377,6 +3596,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -3447,6 +3673,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -3526,6 +3759,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -3603,6 +3843,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -3929,6 +4176,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -3988,6 +4242,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2018,
+            "city": "Antwerp",
+            "country_code": "BEL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018"
+          },
+          {
             "year": 2019,
             "city": "Antwerp",
             "country_code": "BEL",
@@ -4033,6 +4293,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -4101,6 +4368,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2018,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018"
+          },
+          {
             "year": 2019,
             "city": "Marseille",
             "country_code": "FRA",
@@ -4158,6 +4431,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
           },
           {
             "from": 2019,
@@ -4529,6 +4809,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -4570,7 +4857,23 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
             "notes": "ATP official result archive confirms this Tour 250 event in the given year"
           }
-        ]
+        ],
+        "historical_host_change": [
+          {
+            "year": 2018,
+            "city": "Quito",
+            "country_code": "ECU",
+            "source_url": "https://www.lanacion.com.ar/deportes/tenis/historico-argentina-organizara-segundo-torneo-atp-2019-nid2165990/"
+          },
+          {
+            "year": 2019,
+            "city": "Córdoba",
+            "country_code": "ARG",
+            "source_url": "https://www.lanacion.com.ar/deportes/tenis/historico-argentina-organizara-segundo-torneo-atp-2019-nid2165990/"
+          }
+        ],
+        "identity_review_note": "Quito 2018 ATP 250 tournament licence/slot acquired for Cordoba 2019 by organizers; same source identity, not simultaneously played Quito+Cordoba.",
+        "historical_licence_source_url": "https://www.lanacion.com.ar/deportes/tenis/historico-argentina-organizara-segundo-torneo-atp-2019-nid2165990/"
       },
       "references": [
         {
@@ -4602,6 +4905,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -4670,6 +4980,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -4736,6 +5053,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -4849,6 +5173,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -5032,6 +5363,13 @@
         "not_squash_rules": true,
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -5648,6 +5986,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
+          {
             "from": 2019,
             "to": 2019,
             "category_id": "atp_250",
@@ -5664,6 +6009,12 @@
         ],
         "identity_review_note": "ATP states 2019 Budapest Hungarian Open licence relocated to April 2021 Belgrade. Subsequent 2022 Belgrade/Banja Luka licence relation is not established by this source.",
         "historical_host_change": [
+          {
+            "year": 2018,
+            "city": "Budapest",
+            "country_code": "HUN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018"
+          },
           {
             "year": 2019,
             "city": "Budapest",
@@ -5826,6 +6177,13 @@
         "not_squash_rules": true,
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -5991,8 +6349,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "evidence_backed_2019_250_only_no_unverified_licence_continuity",
+        "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -6031,8 +6396,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "evidence_backed_2019_250_only_no_unverified_licence_continuity",
+        "history_scope": "verified_2018_2019_250_only_next_license_location_not_yet_certified",
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -6071,8 +6443,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "evidence_backed_2019_250_only_no_unverified_licence_continuity",
+        "history_scope": "verified_2018_2019_grass_250_only_not_assumed_same_as_2021_hard",
         "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          },
           {
             "from": 2019,
             "to": 2019,
@@ -6082,6 +6461,86 @@
           }
         ],
         "identity_review_note": "Grass Antalya 2019; ATP granted a new one-year 2021 Antalya hard-court tournament, continuity NOT presumed."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "istanbul_2018",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Istanbul Open (2018)",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Istanbul",
+        "historical_country_code": "TUR",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "verified_2018_ATP_250_not_inferred_earlier_or_later",
+        "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          }
+        ],
+        "identity_review_note": "Verified 2018 ATP 250 event. No legally proven continuing post-2018 Series licence is inferred."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "shenzhen_2018",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Shenzhen Open (2018)",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Shenzhen",
+        "historical_country_code": "CHN",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "verified_2018_ATP_250_not_inferred_earlier_or_later",
+        "history_periods": [
+          {
+            "from": 2018,
+            "to": 2018,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2018",
+            "notes": "2018 ATP official played Results Archive; 2018 ATP calendar verifies this event's Tier; venue names not treated as permanent identities"
+          }
+        ],
+        "identity_review_note": "Verified 2018 ATP 250 event. No legally proven continuing post-2018 Series licence is inferred."
       },
       "references": [
         {

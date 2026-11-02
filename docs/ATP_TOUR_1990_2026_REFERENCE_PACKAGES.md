@@ -1061,8 +1061,8 @@ Lyon indoor and Valencia licence tracks. These are source-history
 links, *not* played Edition objects and *not* proof of every prior
 or subsequent year in any Series.
 
-**Coverage boundary after this expansion:** **20 consecutive played-tier
-seasons (2006–2025)**, with 1990–2005 still incomplete, 2026
+**Coverage boundary after this expansion:** **21 consecutive played-tier
+seasons (2005–2025)**, with 1990–2004 still incomplete, 2026
 provisional, and the entire runtime Category/Series import/Save/Calendar
 adapter unimplemented. No title points, draws, qualification or
 match/player data was added. Keep this PR Draft.
@@ -1103,3 +1103,33 @@ Davis Cup, Challenger/ITF and incomplete 2006 preliminary events are excluded.
 **Remaining work:** 1990–2005 incompletely sourced, 2026 provisional,
 historical draws/points/rounds not imported, and no production Package
 Catalog/Run Apply/Save semantic integration. Source-only, keep Draft.
+
+## ATP Tour 2005 actual original tiers: source reconciliation (2026-11-02)
+
+2005 played original ATP Tour events: **9 Tennis Masters Series,
+9 International Series Gold, 44 International Series and a separate
+Tennis Masters Cup**. Four Grand Slams, Davis Cup, World Team Cup and
+Challengers/ITF are outside Package scope.
+
+Source: https://www.atptour.com/en/scores/results-archive?year=2005
+Historical category/calendar cross-check:
+https://de.wikipedia.org/wiki/ATP_Tour_2005
+
+Verified venue/licence transitions to played 2006:
+- Milan to Zagreb (same source ID sofia):
+  https://www.eurosport.it/tennis/atp-milano/2005/_sto787065/story.shtml
+- Scottsdale to Las Vegas (las_vegas_2008):
+  https://lasvegassun.com/news/2005/oct/19/columnist-ron-kantowski-dont-turn-channel-for-andr/
+- Ho Chi Minh City to Mumbai (bangalore_2008):
+  https://vnexpress.net/giai-quan-vot-mumbai-open-se-thay-the-vietnam-open-1189362.html
+- St. Pölten to Pörtschach (poertschach_2008):
+  https://www.derstandard.at/story/2389037/poertschach-bekommt-stpoelten-lizenz
+
+Milan 2005 and Zagreb 2006 refer to one sanctioned Series, not two
+annual events; the 2005 Vietnam Open is ATP main Tour, NOT a Vietnamese
+Challenger. Played Palermo 2005 extends the existing 2006 source.
+
+**21 consecutive played-tier year rosters 2005–2025** now source-gated.
+1990–2004 remain incomplete, 2026 provisional. Source documents do not
+include actual Edition draws, player results, per-round award point tables,
+or production Package Apply/Run/Save. Keep Draft.

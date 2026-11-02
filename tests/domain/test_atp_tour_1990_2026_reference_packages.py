@@ -1056,8 +1056,9 @@ def test_2010_new_haven_is_same_licence_as_2011_winston_salem() -> None:
     host_rows = {p["year"]: p["city"] for p in
                  by_id["winston_salem"]["historical_host_change"]}
     assert host_rows[2010] == "New Haven"
-    assert "godeacs.com" in by_id["winston_salem"]["historical_licence_source_url"]
+    assert "nhregister.com" in by_id["winston_salem"]["historical_licence_source_url"]
     evidence = source["provenance"]["calendar_validation_2010"]
+    assert "godeacs.com" in evidence["atp_ustatour_licence_transfer_url"]
     assert evidence["specific_transfer"]["source_id"] == "winston_salem"
 
 

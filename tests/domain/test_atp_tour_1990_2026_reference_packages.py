@@ -38,7 +38,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 106
+    assert len(series["entities"]) == 107
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -529,7 +529,7 @@ def test_coverage_gates_reject_false_historical_completeness() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     rows = {s["year"]: s for s in build(categories, source)["seasons"]}
-    for year in range(1990, 2004):
+    for year in range(1990, 2003):
         assert rows[year]["played_tier_roster_validation"]["status"] == "unverified_incomplete"
         assert rows[year]["played_tier_roster_validation"]["played_counts"] is None
     assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
@@ -1485,3 +1485,48 @@ def test_2004_false_cancelled_tour_event_fails_historical_tier_gate() -> None:
     entity["payload"]["not_held_years_known"] = [2004]
     with pytest.raises(ValueError, match="played-tier roster mismatch in 2004"):
         build(_source("category"), series)
+
+
+def test_2003_original_atp_tiers_with_copenhagen_not_beijing() -> None:
+    rows = {r["year"]: r for r in build(_source("category"), _source("series"))["seasons"]}
+    row = rows[2003]
+    assert row["played_tier_roster_validation"]["status"] == (
+        "played_tour_tiers_reconciled_to_atp_results_archive"
+    )
+    assert row["played_tier_roster_validation"]["played_counts"] == {
+        "tennis_masters_series": 9, "atp_international_series_gold": 9,
+        "atp_international_series": 44,
+    }
+    assert Counter(row["series_category_ids"].values()) == {
+        "tennis_masters_series": 9, "atp_international_series_gold": 9,
+        "atp_international_series": 44, "atp_finals": 1,
+    }
+    assert len(row["series_category_ids"]) == 63
+    assert row["series_category_ids"]["copenhagen_2003"] == "atp_international_series"
+    assert "beijing" not in row["series_category_ids"]
+    assert "copenhagen_2003" not in rows[2004]["series_category_ids"]
+    assert row["known_not_held_series_ids"] == []
+
+
+def test_2003_master_hosts_and_copenhagen_excludes_false_licence_link() -> None:
+    series = _source("series")
+    by_id = {e["source_entity_id"]: e["payload"] for e in series["entities"]}
+    assert _host_by_year(by_id["canadian_open"])[2003] == "Montreal"
+    assert _host_by_year(by_id["canadian_open"])[2004] == "Toronto"
+    assert _host_by_year(by_id["atp_finals"])[2003] == "Houston"
+    assert _host_by_year(by_id["bangalore_2008"])[2003] == "Shanghai"
+    assert _host_by_year(by_id["winston_salem"])[2003] == "Long Island"
+    copenhagen = by_id["copenhagen_2003"]
+    assert copenhagen["historical_host_city"] == "Copenhagen"
+    assert copenhagen["historical_country_code"] == "DNK"
+    assert [p["from"] for p in copenhagen["history_periods"]] == [2003]
+    assert "NOT linked" in series["provenance"]["calendar_validation_2003"]["legal_continuity"]
+
+
+def test_2003_fake_copenhagen_cancellation_rejected() -> None:
+    import copy
+    source = copy.deepcopy(_source("series"))
+    item = next(e for e in source["entities"] if e["source_entity_id"] == "copenhagen_2003")
+    item["payload"]["not_held_years_known"] = [2003]
+    with pytest.raises(ValueError, match="played-tier roster mismatch in 2003"):
+        build(_source("category"), source)

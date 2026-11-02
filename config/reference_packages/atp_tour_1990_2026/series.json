@@ -361,6 +361,26 @@
         "ATP Challenger"
       ],
       "scope": "2009 ATP World Tour 9/11/40 actual main singles roster, era 500/250 first year, no match data reused"
+    },
+    "calendar_validation_2008_partial": {
+      "official_results_archive_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+      "atp_historical_gold_tier_source_url": "https://en.wikipedia.org/wiki/ATP_International_Series_Gold",
+      "documented_played_gold_series_ids": [
+        "rotterdam",
+        "dallas",
+        "dubai",
+        "acapulco",
+        "barcelona",
+        "stuttgart",
+        "kitzbuhel",
+        "tokyo",
+        "vienna"
+      ],
+      "documented_played_gold_count": 9,
+      "upper_tier_masters_membership_count": 9,
+      "lower_international_series_census_status": "NOT_COMPLETE",
+      "category_note": "Gold tier must NOT be retroactively re-labelled ATP 500 before 2009",
+      "scope": "2008 ATP International Series Gold only plus separately known Masters identity; not a complete 2008 Tour event census"
     }
   },
   "explicit_scope": [
@@ -945,6 +965,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://en.wikipedia.org/wiki/ATP_International_Series_Gold",
+            "notes": "2008 ATP International Series Gold tournament listed in historic tier table, independently corroborated as played in official ATP 2008 results archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_500",
@@ -1060,6 +1087,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Memphis",
             "country_code": "USA",
@@ -1152,6 +1185,12 @@
           "source_entity_id": "atp_500",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -1172,6 +1211,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://en.wikipedia.org/wiki/ATP_International_Series_Gold",
+            "notes": "2008 ATP International Series Gold tournament listed in historic tier table, independently corroborated as played in official ATP 2008 results archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -1285,12 +1331,26 @@
             "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2008,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          }
+        ]
       },
       "references": [
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -1508,6 +1568,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://en.wikipedia.org/wiki/ATP_International_Series_Gold",
+            "notes": "2008 ATP International Series Gold tournament listed in historic tier table, independently corroborated as played in official ATP 2008 results archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_500",
@@ -1620,12 +1687,26 @@
             "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2008,
+            "city": "Acapulco",
+            "country_code": "MEX",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          }
+        ]
       },
       "references": [
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -1649,6 +1730,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://en.wikipedia.org/wiki/ATP_International_Series_Gold",
+            "notes": "2008 ATP International Series Gold tournament listed in historic tier table, independently corroborated as played in official ATP 2008 results archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_500",
@@ -1761,12 +1849,26 @@
             "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2008,
+            "city": "Dubai",
+            "country_code": "ARE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          }
+        ]
       },
       "references": [
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -1789,6 +1891,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://en.wikipedia.org/wiki/ATP_International_Series_Gold",
+            "notes": "2008 ATP International Series Gold tournament listed in historic tier table, independently corroborated as played in official ATP 2008 results archive"
+          },
           {
             "from": 2009,
             "to": 2009,
@@ -1895,12 +2004,26 @@
             "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2008,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          }
+        ]
       },
       "references": [
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -2375,6 +2498,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://en.wikipedia.org/wiki/ATP_International_Series_Gold",
+            "notes": "2008 ATP International Series Gold tournament listed in historic tier table, independently corroborated as played in official ATP 2008 results archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_500",
@@ -2473,12 +2603,26 @@
             "notes": "Category confirmed in final ATP 2024 calendar, 2025 incumbent ATP 500 roster and 2026 ATP calendar; not an edition-by-year proof"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2008,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          }
+        ]
       },
       "references": [
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_500",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -2787,6 +2931,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://en.wikipedia.org/wiki/ATP_International_Series_Gold",
+            "notes": "2008 ATP International Series Gold tournament listed in historic tier table, independently corroborated as played in official ATP 2008 results archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -2902,6 +3053,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Vienna",
             "country_code": "AUT",
@@ -2950,6 +3107,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -4601,6 +4764,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://en.wikipedia.org/wiki/ATP_International_Series_Gold",
+            "notes": "2008 ATP International Series Gold tournament listed in historic tier table, independently corroborated as played in official ATP 2008 results archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -4723,6 +4893,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2008,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
             "year": 2009,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -4764,6 +4940,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -5648,6 +5830,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://en.wikipedia.org/wiki/ATP_International_Series_Gold",
+            "notes": "2008 ATP International Series Gold tournament listed in historic tier table, independently corroborated as played in official ATP 2008 results archive"
+          },
+          {
             "from": 2009,
             "to": 2009,
             "category_id": "atp_250",
@@ -5767,12 +5956,26 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010"
+        "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
+        "historical_host_change": [
+          {
+            "year": 2008,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          }
+        ]
       },
       "references": [
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }

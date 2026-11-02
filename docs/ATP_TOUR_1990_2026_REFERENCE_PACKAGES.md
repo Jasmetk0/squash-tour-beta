@@ -32,7 +32,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**95 identities** across 2026 ATP Tour fixtures and selected older masters.
+**105 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -1026,3 +1026,43 @@ evidence of fully modelled tournament editions, formats, points
 by round, qualifiers, draws, seeds, players or game rules. Real
 Squash Engine production Package catalogue and Run Apply/Save
 integration are separate release requirements.
+
+
+## 2007 main Tour actual played-tier census — source-backed expansion (2026-11-02)
+
+A historical **2007 ATP Tour** layer has now been reconciled. The actual
+played event census is **9 Tennis Masters Series + 9 International Series
+Gold + 43 International Series = 61 tier events**, plus the distinct
+**Tennis Masters Cup (ATP Finals) = 62 ATP-only Series**. The 2007 calendar
+listing of **65 regular tournaments** includes four *Grand Slams*, which
+are intentionally NOT imported; no Davis Cup, World Team Cup or Hopman
+Cup identities are imported. The year 2007 is **not** labelled ATP
+1000/500/250, and no later point schedules are projected backwards.
+
+- Primary actual-results cross-check: [ATP 2007 Results Archive](https://www.atptour.com/en/scores/results-archive?year=2007).
+- Historical tier and 43-event denominator cross-check:
+  [2007 ATP Tour category and schedule](https://en.wikipedia.org/wiki/2007_ATP_Tour).
+- Secondary independently ordered calendar:
+  [2007 ATP event results](https://www.tenispain.com/en/tenis-internacional/atp/year-2007/).
+
+Nine historical Gold Series in 2007: Rotterdam, Memphis, Dubai,
+Acapulco, Barcelona, Stuttgart, Kitzbühel, Tokyo and Vienna. The
+generator gates all **61** played events at their actual historic
+Category and will reject accidental cancellations or swapped tier
+identities. The **2008 Bangalore non-held** Series remains excluded
+from the 2008 played count but the original **Mumbai 2007** event is
+correctly present.
+
+Year-specific host records now distinguish **Sopot 2007 → Warsaw
+2008**, **Mumbai 2007 → cancelled Bangalore 2008**, **Amersfoort →
+Belgrade**, **Adelaide → Brisbane**, **Chennai → Pune → Hong Kong**,
+**New Haven → Winston-Salem**, and the distinct historic Marseille,
+Lyon indoor and Valencia licence tracks. These are source-history
+links, *not* played Edition objects and *not* proof of every prior
+or subsequent year in any Series.
+
+**Coverage boundary after this expansion:** **19 consecutive played-tier
+seasons (2007–2025)**, with 1990–2006 still incomplete, 2026
+provisional, and the entire runtime Category/Series import/Save/Calendar
+adapter unimplemented. No title points, draws, qualification or
+match/player data was added. Keep this PR Draft.

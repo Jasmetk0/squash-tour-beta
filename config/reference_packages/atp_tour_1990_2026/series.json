@@ -16,7 +16,7 @@
     "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
     "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
     "notes": [
-      "Actual ATP original-category played main Tour rosters source-reconciled for 2001–2025; 1990–2000 partial, 2026 provisional. No full annual Edition/Draw/Ranking semantics.",
+      "Original ATP actual played 2000–2025 Tour tier rosters reconciled. 1990–1999 still incomplete; 2026 provisional. No playable Editions or Package apply.",
       "2026 date/host fields are not assumed for earlier seasons.",
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
@@ -613,6 +613,59 @@
         "2001 Bogotá played but ATP cancelled planned 2002 edition for security reasons.",
         "2001 Atlanta Verizon was last edition, distinct from Indianapolis; Shanghai 2001 ordinary International Series and Sydney Masters Cup were separate."
       ]
+    },
+    "calendar_validation_2000": {
+      "official_played_results_archive_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+      "original_year_calendar_url": "https://de.wikipedia.org/wiki/ATP_Tour_2000",
+      "played_masters_series_count": 9,
+      "played_international_series_gold_count": 11,
+      "played_international_series_count": 44,
+      "atp_finals_played": true,
+      "singles_finals_host": "Lisbon",
+      "doubles_only_world_championship_host": "Bengaluru",
+      "finals_source_url": "https://en.wikipedia.org/wiki/2000_Tennis_Masters_Cup_and_ATP_Tour_World_Championships",
+      "verified_london_gold_to_milan_international_url": "https://www.independent.co.uk/sport/tennis/london-loses-atp-tour-event-to-milan-637139.html",
+      "source_scope": "Original main ATP Tour tiers, excluding four Grand Slams, Sydney Olympics, Davis Cup, World Team Cup, Challengers/ITF, doubles-only World Championships.",
+      "historic_reclassification_ids": [
+        "sofia",
+        "dubai",
+        "washington",
+        "atlanta"
+      ],
+      "key_2000_2001_hosts": [
+        {
+          "id": "acapulco",
+          "from": "Mexico City",
+          "to": "Acapulco"
+        },
+        {
+          "id": "houston",
+          "from": "Orlando",
+          "to": "Houston"
+        },
+        {
+          "id": "cordoba",
+          "from": "Santiago",
+          "to": "Viña del Mar"
+        },
+        {
+          "id": "belgrade_2012",
+          "from": "Amsterdam",
+          "to": "Amersfoort"
+        },
+        {
+          "id": "sofia",
+          "from": "London",
+          "to": "Milan"
+        }
+      ],
+      "distinct_same_year_events": [
+        "London AXA Cup Gold and Queen's grass International",
+        "Stuttgart clay Gold and Stuttgart indoor Masters",
+        "Indianapolis Gold and Atlanta clay International",
+        "Shanghai regular International and Lisbon singles Finals",
+        "Chennai International and Hong Kong Salem Open International"
+      ]
     }
   },
   "explicit_scope": [
@@ -663,6 +716,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Indian Wells",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Indian Wells",
@@ -756,6 +815,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Miami",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Miami",
             "country_code": "USA",
@@ -847,6 +912,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Monte Carlo",
+            "country_code": "MCO",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Monte Carlo",
@@ -1010,6 +1081,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Rome",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Rome",
             "country_code": "ITA",
@@ -1103,6 +1180,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Toronto",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Montreal",
             "country_code": "CAN",
@@ -1190,6 +1273,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Cincinnati",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Cincinnati",
@@ -1334,6 +1423,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Paris",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Paris",
             "country_code": "FRA",
@@ -1397,6 +1492,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -1569,6 +1671,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Memphis",
             "country_code": "USA",
@@ -1735,6 +1843,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -1907,6 +2022,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Rotterdam",
             "country_code": "NLD",
@@ -1988,6 +2109,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -2167,6 +2295,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Doha",
+            "country_code": "QAT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Doha",
             "country_code": "QAT",
@@ -2289,6 +2423,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series_gold",
@@ -2460,6 +2601,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Mexico City",
+            "country_code": "MEX",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Acapulco",
             "country_code": "MEX",
@@ -2507,7 +2654,8 @@
             "country_code": "MEX",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
           }
-        ]
+        ],
+        "identity_review_note": "Played 2000 Mexico City Gold tournament later moved to Acapulco in 2001; original host preserved."
       },
       "references": [
         {
@@ -2542,6 +2690,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series_gold",
@@ -2713,6 +2868,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Dubai",
+            "country_code": "ARE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Dubai",
             "country_code": "ARE",
@@ -2774,6 +2935,12 @@
           "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -2794,6 +2961,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -2958,6 +3132,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Barcelona",
@@ -3040,6 +3220,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -3212,6 +3399,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Munich",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Munich",
             "country_code": "DEU",
@@ -3318,6 +3511,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Hamburg",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Hamburg",
             "country_code": "DEU",
@@ -3381,6 +3580,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -3459,6 +3665,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Halle ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Halle",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Halle",
@@ -3542,6 +3754,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -3619,6 +3838,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "London",
@@ -3701,6 +3926,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -3866,6 +4098,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Washington",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Washington",
             "country_code": "USA",
@@ -3921,6 +4159,12 @@
           "source_entity_id": "atp_international_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -3941,6 +4185,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -4098,6 +4349,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Tokyo",
@@ -4395,6 +4652,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -4563,6 +4827,12 @@
         "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Basel",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Basel",
             "country_code": "CHE",
@@ -4638,6 +4908,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -4810,6 +5087,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Vienna",
             "country_code": "AUT",
@@ -4934,6 +5217,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -5092,6 +5382,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Adelaide",
             "country_code": "AUS",
@@ -5180,6 +5476,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -5358,6 +5661,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Chennai",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Chennai",
@@ -5605,6 +5914,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -5776,6 +6092,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Auckland",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Auckland",
             "country_code": "NZL",
@@ -5851,6 +6173,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -6029,6 +6358,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Lyon",
@@ -6381,6 +6716,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -6565,6 +6907,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Delray Beach",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Delray Beach",
@@ -6770,6 +7118,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.stevegtennis.com/draw-results/atp/U.S.%20Men%27s%20Clay%20Court%20Championships%20-%20Orlando/2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -6952,6 +7307,12 @@
         "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Orlando",
+            "country_code": "USA",
+            "source_url": "https://www.stevegtennis.com/draw-results/atp/U.S.%20Men%27s%20Clay%20Court%20Championships%20-%20Orlando/2000"
+          },
+          {
             "year": 2001,
             "city": "Houston",
             "country_code": "USA",
@@ -6993,7 +7354,8 @@
             "country_code": "USA",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
           }
-        ]
+        ],
+        "identity_review_note": "2000 U.S. Men's Clay Court Championships held Orlando, relocated to Houston for 2001; maintain one historical sanction."
       },
       "references": [
         {
@@ -7027,6 +7389,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -7198,6 +7567,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Casablanca",
@@ -7436,6 +7811,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series_gold",
@@ -7614,6 +7996,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -7731,6 +8119,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -7903,6 +8298,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "'s-Hertogenbosch",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "'s-Hertogenbosch",
             "country_code": "NLD",
@@ -8049,6 +8450,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -8228,6 +8636,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Nottingham",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Nottingham",
             "country_code": "GBR",
@@ -8365,6 +8779,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -8542,6 +8963,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Båstad",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Båstad",
@@ -8619,6 +9046,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -8796,6 +9230,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Gstaad",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Gstaad",
@@ -8873,6 +9313,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -9051,6 +9498,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Umag",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Umag",
             "country_code": "HRV",
@@ -9126,6 +9579,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -9305,6 +9765,12 @@
         "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Kitzbühel",
             "country_code": "AUT",
@@ -9386,6 +9852,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -9557,6 +10030,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Estoril",
@@ -9811,6 +10290,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -9988,6 +10474,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Long Island",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Long Island",
@@ -10531,6 +11023,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -10716,6 +11215,12 @@
         "history_scope": "original_2002_mallorca_2003_valencia_then_documented_2009_plus_history",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Mallorca",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Mallorca",
             "country_code": "ESP",
@@ -10882,6 +11387,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -11076,6 +11588,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Marseille",
             "country_code": "FRA",
@@ -11247,6 +11765,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
           },
           {
             "from": 2001,
@@ -11428,6 +11953,12 @@
         "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit.",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Stockholm",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Stockholm",
             "country_code": "SWE",
@@ -11534,6 +12065,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Lisbon",
+            "country_code": "PRT",
+            "source_url": "https://en.wikipedia.org/wiki/2000_Tennis_Masters_Cup_and_ATP_Tour_World_Championships"
+          },
+          {
             "year": 2001,
             "city": "Sydney",
             "country_code": "AUS",
@@ -11557,7 +12094,8 @@
             "country_code": "USA",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2004"
           }
-        ]
+        ],
+        "identity_review_note": "2000 Tennis Masters Cup singles played Lisbon, Portugal, while doubles World Championships played separately in Bengaluru, India. ATP Finals Series tracks singles."
       },
       "references": [
         {
@@ -11685,6 +12223,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -11780,6 +12324,12 @@
           "notes": "Permanent ATP membership transferred to Astana in 2022; no simultaneous St Petersburg edition asserted"
         },
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Saint Petersburg",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Saint Petersburg",
@@ -11878,6 +12428,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -12049,6 +12606,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Santiago",
+            "country_code": "CHL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Viña del Mar",
             "country_code": "CHL",
@@ -12163,7 +12726,7 @@
             "source_url": "https://www.lanacion.com.ar/deportes/tenis/historico-argentina-organizara-segundo-torneo-atp-2019-nid2165990/"
           }
         ],
-        "identity_review_note": "2011 Santiago Chile ATP 250 (Chilean Open) later Viña del Mar 2012–14, Quito 2015–18 then Córdoba 2019; historic city changes not co-occurring events; licence history requires evidence per transfer.",
+        "identity_review_note": "Chile Open 2000 Santiago, 2001 Viña del Mar; unrelated to the later host Córdoba until 2019.",
         "historical_licence_source_url": "https://www.lanacion.com.ar/deportes/tenis/historico-argentina-organizara-segundo-torneo-atp-2019-nid2165990/"
       },
       "references": [
@@ -12384,6 +12947,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -12547,6 +13117,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Newport",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Newport",
             "country_code": "USA",
@@ -12626,6 +13202,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -12790,6 +13373,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Indianapolis",
             "country_code": "USA",
@@ -12857,6 +13446,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -13260,8 +13855,15 @@
         "sponsor_names_can_change": true,
         "not_calendar_editions": true,
         "not_squash_rules": true,
-        "history_scope": "2005_milan_2006_2015_zagreb_2016_sofia",
+        "history_scope": "2000_london_axa_gold_2001_milan_is_2005_milan_2006_zagreb_2016_sofia",
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series_gold",
+            "source_url": "https://www.independent.co.uk/sport/tennis/london-loses-atp-tour-event-to-milan-637139.html",
+            "notes": "London 2000 AXA Cup original Gold event; leased from Milan and played there as International Series in 2001"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -13426,6 +14028,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.independent.co.uk/sport/tennis/london-loses-atp-tour-event-to-milan-637139.html"
+          },
+          {
             "year": 2001,
             "city": "Milan",
             "country_code": "ITA",
@@ -13522,7 +14130,7 @@
             "source_url": "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars"
           }
         ],
-        "identity_review_note": "2005 Milan Indoors ATP slot moved to Zagreb for 2006, and Zagreb to Sofia in 2016; year-specific identity rather than duplicate locations."
+        "identity_review_note": "2000 London AXA Cup Gold originated as leased Milan tournament, returned to Milan as International Series 2001; historically source identity continues to Zagreb and Sofia. Queen's 2000 is separate grass Series."
       },
       "references": [
         {
@@ -13534,6 +14142,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -14109,6 +14723,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -14251,6 +14872,12 @@
         ],
         "identity_review_note": "Bucharest 2015–16 Tour licence transferred Budapest 2017–19 then Belgrade 2021; Bucharest 2024+ tracked as a distinct Tour licence without unproven merger.",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Bucharest",
+            "country_code": "ROU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Bucharest",
@@ -14528,6 +15155,13 @@
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -14670,6 +15304,12 @@
         ],
         "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played.",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Moscow",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Moscow",
@@ -14871,6 +15511,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -15006,6 +15653,12 @@
         ],
         "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined.",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Sydney",
@@ -15563,6 +16216,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -15656,6 +16316,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "San Jose",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "San Jose",
@@ -15737,6 +16403,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -15831,6 +16504,12 @@
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Los Angeles",
             "country_code": "USA",
@@ -15910,6 +16589,13 @@
         "not_squash_rules": true,
         "history_scope": "played_2002_tashkent_2003_bangkok_historically_verified_older_years_unverified",
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -16005,6 +16691,12 @@
         "identity_review_note": "2002 Tashkent President's Cup ATP International Series sanction moved with ATP approval to Bangkok for 2003. Keep one Series identity; do not invent 2003 Tashkent ATP main Tour event.",
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Tashkent",
+            "country_code": "UZB",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Tashkent",
             "country_code": "UZB",
@@ -16084,6 +16776,13 @@
         "not_squash_rules": true,
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
           {
             "from": 2001,
             "to": 2001,
@@ -16169,8 +16868,14 @@
             "notes": "ATP official 2012 results archive corroborates played main Tour event and historical category"
           }
         ],
-        "identity_review_note": "Dutch Open Amersfoort 2008 ATP sanction sold with ATP Board approval to Belgrade and played as Serbia Open 2009–2012. Separate Budapest 2021 Belgrade licence.",
+        "identity_review_note": "2000 Dutch Open Amsterdam, 2001 Amersfoort; later Serbia names must not overwrite original Dutch city.",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Amsterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Amersfoort",
@@ -16336,6 +17041,13 @@
         "history_scope": "2005_scottsdale_2006_2008_las_vegas",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -16394,6 +17106,12 @@
         ],
         "identity_review_note": "2005 Tennis Channel Open in Scottsdale transferred to Las Vegas in 2006, played there through 2008; earlier Scottsdale years not imported.",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Scottsdale",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Scottsdale",
@@ -16469,6 +17187,13 @@
         "history_scope": "2005_st_poelten_2006_2008_poertschach",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -16527,6 +17252,12 @@
         ],
         "identity_review_note": "2005 St. Pölten ATP event licence moved to Pörtschach from 2006, played there through 2008.",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "St. Pölten",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "St. Pölten",
@@ -16741,6 +17472,13 @@
         "history_scope": "2001_then_2003_2004_shanghai_reg_2002_absent_2005_vietnam_2006_2007_mumbai_2008_canceled",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -16796,6 +17534,12 @@
         ],
         "known_nonheld_source": "https://www.skysports.com/tennis/news/4050908/bangalore-open-cancelled",
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Shanghai",
+            "country_code": "CHN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Shanghai",
@@ -16865,6 +17609,13 @@
         "history_scope": "2005_2006_played_tour_only_older_seasons_not_backfilled",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -16908,6 +17659,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Palermo",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Palermo",
@@ -16978,6 +17735,13 @@
         "history_scope": "played_2001_2003_copenhagen_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -17000,6 +17764,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Copenhagen",
+            "country_code": "DNK",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Copenhagen",
@@ -17052,6 +17822,13 @@
         "history_scope": "played_2001_2002_hong_kong_salem_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -17067,6 +17844,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Hong Kong",
+            "country_code": "HKG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Hong Kong",
@@ -17113,6 +17896,13 @@
         "history_scope": "played_2001_atp_international_series_only_older_1990_2000_not_imported",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -17121,6 +17911,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Bogotá",
+            "country_code": "COL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
           {
             "year": 2001,
             "city": "Bogotá",
@@ -17161,6 +17957,13 @@
         "history_scope": "played_2001_atp_international_series_only_older_1990_2000_not_imported",
         "history_periods": [
           {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
             "from": 2001,
             "to": 2001,
             "category_id": "atp_international_series",
@@ -17170,6 +17973,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 2000,
+            "city": "Atlanta",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
             "year": 2001,
             "city": "Atlanta",
             "country_code": "USA",
@@ -17177,6 +17986,150 @@
           }
         ],
         "identity_review_note": "2001 Atlanta Verizon Tennis Challenge (Andy Roddick first Tour title) separate from concurrent Indianapolis ATP Tour, which is tracked by source atlanta due to later venue licence history; original Atlanta Verizon tournament last played 2001."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "san_marino_2000",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Internazionali di Tennis di San Marino",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "San Marino",
+        "historical_country_code": "SMR",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
+        "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "Played 2000 San Marino ATP Tour International Series, singles winner Alex Calatrava; earlier years unverified."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "San Marino",
+            "country_code": "SMR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          }
+        ],
+        "identity_review_note": "Played 2000 San Marino ATP Tour International Series, singles winner Alex Calatrava; earlier years unverified."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "toulouse_2000",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Adidas Open de Toulouse",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Toulouse",
+        "historical_country_code": "FRA",
+        "historical_surface": "hard_indoor",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
+        "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://en.wikipedia.org/wiki/2000_Adidas_Open_de_Toulouse",
+            "notes": "Played final 2000 Toulouse ATP Tour International Series, singles winner Alex Corretja, distinct from Lyon/Paris."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Toulouse",
+            "country_code": "FRA",
+            "source_url": "https://en.wikipedia.org/wiki/2000_Adidas_Open_de_Toulouse"
+          }
+        ],
+        "identity_review_note": "Played final 2000 Toulouse ATP Tour International Series, singles winner Alex Corretja, distinct from Lyon/Paris."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "brighton_2000",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Samsung Open Brighton",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Brighton",
+        "historical_country_code": "GBR",
+        "historical_surface": "hard_indoor",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
+        "history_periods": [
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "Played 2000 Brighton ATP International Series, Tim Henman singles champion, not London's AXA Cup Gold."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 2000,
+            "city": "Brighton",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          }
+        ],
+        "identity_review_note": "Played 2000 Brighton ATP International Series, Tim Henman singles champion, not London's AXA Cup Gold."
       },
       "references": [
         {

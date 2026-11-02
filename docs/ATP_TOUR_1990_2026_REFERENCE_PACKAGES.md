@@ -515,10 +515,10 @@ Source identity continuity was reconciled as follows:
 The deterministic source resolver now emits
 `played_tier_roster_validation` for every annual snapshot:
 
-- **2016–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
+- **2015–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
   with year-specific reference counts independently asserted against
   played (category-effective minus known-cancelled) identities.
-- **1990–2015**: `unverified_incomplete`. No invented total
+- **1990–2014**: `unverified_incomplete`. No invented total
   or assumption that present-day event structure already existed.
 - **2026**: `provisional_calendar_not_final_results`; ATP
   calendar changes and remaining matches are not misreported as
@@ -529,7 +529,7 @@ counts raises a `ValueError` before a stale annual reference
 can pass the source generator's `--check`. Tests additionally
 assert 2020 one-off events, Category references and location changes.
 
-**Remaining gap:** 1990–2015 lower Tour tiers are not fully reconstructed
+**Remaining gap:** 1990–2014 lower Tour tiers are not fully reconstructed
 and still require ATP results archive research. Runtime integration
 into the Squash Engine Packages library and sporting Calendar is still
 absent, and no source file implies a playable tennis simulation.
@@ -591,7 +591,7 @@ even when the JSON remains syntactically valid.
 
 These ten year-specific rosters are source-level and **NOT**
 Calendar Edition packages, complete points/format histories or
-full tournament draw result archives. **1990–2015 remains
+full tournament draw result archives. **1990–2014 remains
 historically incomplete**, and 2026 remains provisional.
 
 ## 2018 official ATP Tour calendar: 64 identities with verified tiers
@@ -639,8 +639,8 @@ fail-closed source validation (9/13/40). The year-resolved
 record does not contain players, scores, tournament draw results,
 qualification details or a tennis sporting engine.
 
-**2016–2025** are the ten consecutive ATP years reconciled at
-the played Tour Category level. **1990–2015** lower-tier event
+**2015–2025** are the eleven consecutive ATP years reconciled at
+the played Tour Category level. **1990–2014** lower-tier event
 Series remain incomplete; the 2026 roster is provisional.
 
 ## 2016 and 2017 ATP Tour category coverage: complete official played-year rosters
@@ -692,14 +692,65 @@ but are explicitly excluded from this strictly ATP Tour source package.
   Nottingham's subsequent men's Challenger is **not** represented
   as an ATP Tour 250 and is not a parallel Tour Series.
 
-For all ten **2016–2025** completed seasons, the annual resolver now
+For all eleven **2015–2025** completed seasons, the annual resolver now
 rejects source changes that corrupt the count of actually played
 Masters/500/250 tournaments. This is verified **source identity/category
 reconstruction**, not a historic Calendar Package with draw dates,
 licence transaction registry, match results or player ranking points
 by round.
 
-**Remaining scope:** precisely **1990–2015** lack complete lower-tier
+**Remaining scope:** precisely **1990–2014** lack complete lower-tier
 Series coverage; **2026** is a provisional Tour calendar. Current
 files are not yet integrated into the Squash Engine's production
 Package catalog or Run-application workflow.
+
+## 2015 ATP Tour: 62 played top-tier events and five explicit 2016 licence moves
+
+The official [2015 ATP Tour results archive](https://www.atptour.com/en/scores/results-archive?year=2015)
+supports **9 Masters 1000**, **13 ATP 500**, **39 ATP 250**
+and **one ATP Finals event**: 62 played ATP Tour source identities.
+Next Gen ATP Finals did not exist yet; the four independently
+governed Grand Slams and Davis Cup are outside this strict ATP Tour
+Category/Series model.
+
+The 2015 category-history source now identifies five *actual
+licensed Tour event moves* rather than minting unrelated city Series:
+
+| 2015 ATP Tour event location | 2016 location | Stable Series source ID | Evidence |
+| --- | --- | --- | --- |
+| Zagreb (Croatia) | Sofia (Bulgaria) | `sofia` | [ATP calendar announcement](https://www.atptour.com/en/news/atp-announces-2017-2018-calendars) |
+| Casablanca (Morocco) | Marrakech (Morocco) | `marrakech` | [Official ATP event profile](https://www.atptour.com/en/tournaments/casablanca/360/overview) |
+| Bogotá (Colombia) | Los Cabos (Mexico) | `los_cabos` | [ATP calendar announcement](https://www.atptour.com/en/news/atp-announces-2017-2018-calendars) |
+| Kuala Lumpur (Malaysia) | Chengdu (China) | `chengdu` | [ATP-approved relocation](https://www.ausleisure.com.au/news/malaysia-farewells-another-international-sporting-event) |
+| Valencia (Spain) | Antwerp (Belgium) | `brussels` | [ATP calendar announcement](https://www.atptour.com/en/news/atp-announces-2017-2018-calendars) |
+
+Three additional persistent families also preserve **2015**
+Chennai→Pune→Hong Kong, Memphis→New York→Dallas, and
+Bucharest→Budapest→Belgrade. The **2015 Nottingham**
+ATP 250 is one source Series as **2017 Eastbourne**, while
+**Nice 2015** is the historical predecessor of the
+**2017 Lyon clay** ATP 250.
+
+All these changes are explicitly dated and source-backed; the
+presence of one identity is **not** evidence of an annual played
+edition in its unverified earlier years. There is no invented
+separate `valencia_2015`, `kuala_lumpur_2015` etc.
+The 2024+ Bucharest Series is deliberately distinct from the
+pre-2017 Bucharest→Budapest licence, preserving uncertainty
+about its later legal continuity.
+
+### Updated verification boundary
+
+The deterministic source-builder has an explicit played ATP Tour
+tier census for each of the **11 complete consecutive years
+2015–2025** (inclusive), with source-specific upper-tier and lower
+tier counts and automated rejection on conflicting changes.
+
+The remaining **25 seasons 1990–2014** have incomplete ATP 500/250
+Series coverage, despite the nine top-tier historical Masters
+identities and era-specific Category names. They require
+independent tournament-by-tournament audit and cannot be
+released as a complete historical Tour. Current 2026 data are
+provisional. The read-only Category/Series Package documents
+still require semantic integration into the Squash Engine
+Package Catalogue and Admin/Run interfaces before use.

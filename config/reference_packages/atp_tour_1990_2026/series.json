@@ -3337,6 +3337,12 @@
             "city": "Casablanca",
             "country_code": "MAR",
             "source_url": "https://www.atptour.com/en/tournaments/casablanca/360/overview"
+          },
+          {
+            "year": 2016,
+            "city": "Marrakech",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/tournaments/casablanca/360/overview"
           }
         ],
         "identity_review_note": "Casablanca Grand Prix Hassan II ATP Tour event moved to Marrakech in 2016, according to official ATP event history."
@@ -4485,6 +4491,12 @@
             "city": "Bogotá",
             "country_code": "COL",
             "source_url": "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars"
+          },
+          {
+            "year": 2016,
+            "city": "Los Cabos",
+            "country_code": "MEX",
+            "source_url": "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars"
           }
         ],
         "identity_review_note": "Bogotá ATP Tour 250 licence relocated to Los Cabos in 2016. Later years remain same event family."
@@ -4718,6 +4730,12 @@
             "year": 2015,
             "city": "Kuala Lumpur",
             "country_code": "MYS",
+            "source_url": "https://www.ausleisure.com.au/news/malaysia-farewells-another-international-sporting-event"
+          },
+          {
+            "year": 2016,
+            "city": "Chengdu",
+            "country_code": "CHN",
             "source_url": "https://www.ausleisure.com.au/news/malaysia-farewells-another-international-sporting-event"
           }
         ],
@@ -6486,6 +6504,12 @@
             "year": 2015,
             "city": "Zagreb",
             "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars"
+          },
+          {
+            "year": 2016,
+            "city": "Sofia",
+            "country_code": "BGR",
             "source_url": "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars"
           }
         ],

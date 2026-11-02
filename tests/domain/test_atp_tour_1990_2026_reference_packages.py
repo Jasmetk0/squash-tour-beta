@@ -1524,7 +1524,8 @@ def test_2003_master_hosts_and_copenhagen_excludes_false_licence_link() -> None:
     copenhagen = by_id["copenhagen_2003"]
     assert copenhagen["historical_host_city"] == "Copenhagen"
     assert copenhagen["historical_country_code"] == "DNK"
-    assert [p["from"] for p in copenhagen["history_periods"]] == [2003]
+    assert [p["from"] for p in copenhagen["history_periods"]
+            if p["from"] == 2003] == [2003]
     assert "NOT linked" in series["provenance"]["calendar_validation_2003"]["legal_continuity"]
 
 

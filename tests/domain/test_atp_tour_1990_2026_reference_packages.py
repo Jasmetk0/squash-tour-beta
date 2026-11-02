@@ -1119,3 +1119,42 @@ def test_2009_kitzbuhel_2010_challenger_and_2011_tour_resume() -> None:
     assert years[2009]["winston_salem"] == "atp_250"  # New Haven
     assert years[2010]["winston_salem"] == "atp_250"  # New Haven
     assert years[2011]["winston_salem"] == "atp_250"  # Winston-Salem
+
+
+def test_2008_international_series_gold_has_nine_historic_tier_members() -> None:
+    years = {row["year"]: row for row in
+             build(_source("category"), _source("series"))["seasons"]}
+    old = years[2008]
+    assert old["played_tier_roster_validation"]["status"] == "unverified_incomplete"
+    assert old["played_tier_roster_validation"]["played_counts"] is None
+    gold = {
+        series_id for series_id, category in old["series_category_ids"].items()
+        if category == "atp_international_series_gold"
+    }
+    assert gold == {
+        "rotterdam", "dallas", "dubai", "acapulco", "barcelona",
+        "stuttgart", "kitzbuhel", "tokyo", "vienna",
+    }
+    assert len(gold) == 9
+    assert old["series_category_ids"]["hamburg"] == "tennis_masters_series"
+    assert old["series_category_ids"]["madrid"] == "tennis_masters_series"
+    assert "shanghai" not in old["series_category_ids"]
+    provenance = _source("series")["provenance"]["calendar_validation_2008_partial"]
+    assert provenance["documented_played_gold_count"] == 9
+    assert provenance["lower_international_series_census_status"] == "NOT_COMPLETE"
+    assert "atptour.com" in provenance["official_results_archive_url"]
+
+
+def test_2008_historic_gold_cannot_be_retroactively_called_2009_500() -> None:
+    years = {row["year"]: row for row in
+             build(_source("category"), _source("series"))["seasons"]}
+    for id in ("stuttgart", "kitzbuhel", "vienna"):
+        assert years[2008]["series_category_ids"][id] == "atp_international_series_gold"
+        assert years[2009]["series_category_ids"][id] == "atp_250"
+    for id in ("rotterdam", "dallas", "dubai", "acapulco",
+               "barcelona", "tokyo"):
+        assert years[2008]["series_category_ids"][id] == "atp_international_series_gold"
+        assert years[2009]["series_category_ids"][id] == "atp_500"
+    assert years[2008]["era"] == "tennis_masters_and_international_series"
+    assert years[2009]["era"] == "atp_masters_1000_500_250"
+    assert years[2008]["edition_assertion"].startswith("none;")

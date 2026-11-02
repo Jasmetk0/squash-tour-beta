@@ -328,6 +328,39 @@
         "approved_2010_12_13": true
       },
       "scope": "ATP men's main Tour results archive excludes Challenge, Slams, team and ITF"
+    },
+    "calendar_validation_2009": {
+      "archive_source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+      "played_atp_masters_1000_count": 9,
+      "played_atp_500_count": 11,
+      "played_atp_250_count": 40,
+      "atp_finals_played": true,
+      "next_gen_finals_did_not_exist": true,
+      "documented_licence_transfers": [
+        {
+          "year_from": 2009,
+          "old_host": "Indianapolis",
+          "year_to": 2010,
+          "new_host": "Atlanta",
+          "series_id": "atlanta",
+          "source_url": "https://www.ajc.com/sports/atlanta-athletic-club-chosen-site-for-pro-tennis-event/gYvoEEJE1Gr6pQan38h9NI/"
+        },
+        {
+          "year_from": 2009,
+          "old_host": "Lyon",
+          "year_to": 2010,
+          "new_host": "Montpellier",
+          "series_id": "montpellier",
+          "source_url": "https://www.lequipe.fr/Tennis/Actualites/Montpellier-remplace-lyon/105494"
+        }
+      ],
+      "excluded_events": [
+        "Grand Slams",
+        "Davis Cup",
+        "World Team Cup",
+        "ATP Challenger"
+      ],
+      "scope": "2009 ATP World Tour 9/11/40 actual main singles roster, era 500/250 first year, no match data reused"
     }
   },
   "explicit_scope": [
@@ -912,6 +945,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_500",
@@ -1020,6 +1060,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2009,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
+          {
             "year": 2010,
             "city": "Memphis",
             "country_code": "USA",
@@ -1126,6 +1172,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -1260,6 +1313,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -1448,6 +1508,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_500",
@@ -1581,6 +1648,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -1716,6 +1790,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_500",
@@ -1842,6 +1923,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -2153,6 +2241,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_500",
@@ -2280,6 +2375,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_500",
@@ -2399,6 +2501,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -2540,6 +2649,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_500",
@@ -2671,6 +2787,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -2779,6 +2902,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2009,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
+          {
             "year": 2010,
             "city": "Vienna",
             "country_code": "AUT",
@@ -2843,6 +2972,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -2964,6 +3100,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -3078,6 +3221,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2009,
+            "city": "Chennai",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
           {
             "year": 2010,
             "city": "Chennai",
@@ -3265,6 +3414,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -3399,6 +3555,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.lequipe.fr/Tennis/Actualites/Montpellier-remplace-lyon/105494",
+            "notes": "2009 Lyon indoor ATP250 relocated officially to Montpellier in 2010; distinct from Lyon clay and Marseille relocated Lyon 2026"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -3511,7 +3674,17 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2009,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.lequipe.fr/Tennis/Actualites/Montpellier-remplace-lyon/105494"
+          }
+        ],
+        "historical_licence_source_url": "https://www.lequipe.fr/Tennis/Actualites/Montpellier-remplace-lyon/105494",
+        "identity_review_note": "Grand Prix de Lyon indoor ATP 250 held in 2009 was officially relocated to Montpellier in 2010. Do not conflate with Nice→Lyon clay 2017 or Marseille→Lyon indoor 2026."
       },
       "references": [
         {
@@ -3539,6 +3712,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -3687,6 +3867,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -3964,6 +4151,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -4109,6 +4303,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -4216,6 +4417,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2009,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
           {
             "year": 2010,
             "city": "Casablanca",
@@ -4394,6 +4601,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -4509,6 +4723,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2009,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
+          {
             "year": 2010,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -4566,6 +4786,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -4772,6 +4999,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -4887,6 +5121,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2009,
+            "city": "Eastbourne",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
+          {
             "year": 2010,
             "city": "Eastbourne",
             "country_code": "GBR",
@@ -4963,6 +5203,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -5105,6 +5352,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -5245,6 +5499,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -5387,6 +5648,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2011,
             "to": 2011,
             "category_id": "atp_250",
@@ -5499,7 +5767,7 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010"
       },
       "references": [
         {
@@ -5527,6 +5795,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -5635,6 +5910,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2009,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
           {
             "year": 2010,
             "city": "Estoril",
@@ -5835,6 +6116,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -5950,6 +6238,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2009,
+            "city": "New Haven",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
+          {
             "year": 2010,
             "city": "New Haven",
             "country_code": "USA",
@@ -5985,6 +6279,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -6113,6 +6414,12 @@
         ],
         "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
         "historical_host_change": [
+          {
+            "year": 2009,
+            "city": "Kuala Lumpur",
+            "country_code": "MYS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
           {
             "year": 2010,
             "city": "Kuala Lumpur",
@@ -6419,6 +6726,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_500",
@@ -6541,6 +6855,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2009,
+            "city": "Valencia",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
+          {
             "year": 2010,
             "city": "Valencia",
             "country_code": "ESP",
@@ -6647,6 +6967,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -6778,6 +7105,12 @@
         },
         "historical_host_change": [
           {
+            "year": 2009,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
+          {
             "year": 2010,
             "city": "Marseille",
             "country_code": "FRA",
@@ -6889,6 +7222,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
           },
           {
             "from": 2010,
@@ -7331,6 +7671,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -7437,6 +7784,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2009,
+            "city": "Viña del Mar",
+            "country_code": "CHL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
           {
             "year": 2010,
             "city": "Santiago",
@@ -7713,6 +8066,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -7843,6 +8203,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.ajc.com/sports/atlanta-athletic-club-chosen-site-for-pro-tennis-event/gYvoEEJE1Gr6pQan38h9NI/",
+            "notes": "2009 Indianapolis ATP250 sanction moved to Atlanta 2010; continuous source identity"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -7940,7 +8307,17 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
             "notes": "ATP official result archive confirms this Tour 250 event in the given year"
           }
-        ]
+        ],
+        "historical_host_change": [
+          {
+            "year": 2009,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.ajc.com/sports/atlanta-athletic-club-chosen-site-for-pro-tennis-event/gYvoEEJE1Gr6pQan38h9NI/"
+          }
+        ],
+        "historical_licence_source_url": "https://www.ajc.com/sports/atlanta-athletic-club-chosen-site-for-pro-tennis-event/gYvoEEJE1Gr6pQan38h9NI/",
+        "identity_review_note": "Indianapolis ATP 250 event played 2009, ATP/USTA-approved sanction sold and relocated to Atlanta 2010; one persistent Source Series until Atlanta closure 2024."
       },
       "references": [
         {
@@ -8018,6 +8395,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -8265,6 +8649,13 @@
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -8364,6 +8755,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 2009,
+            "city": "Zagreb",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
           {
             "year": 2010,
             "city": "Zagreb",
@@ -8988,6 +9385,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -9067,6 +9471,12 @@
         ],
         "identity_review_note": "Bucharest 2015–16 Tour licence transferred Budapest 2017–19 then Belgrade 2021; Bucharest 2024+ tracked as a distinct Tour licence without unproven merger.",
         "historical_host_change": [
+          {
+            "year": 2009,
+            "city": "Bucharest",
+            "country_code": "ROU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
           {
             "year": 2010,
             "city": "Bucharest",
@@ -9283,6 +9693,13 @@
         "not_squash_rules": true,
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -9514,6 +9931,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -9617,6 +10041,13 @@
         "history_scope": "verified_2018_2019_250_only_next_license_location_not_yet_certified",
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -9689,6 +10120,12 @@
         ],
         "identity_review_note": "Costa do Sauípe ATP Tour Brasil Open event 2011 moved to São Paulo from 2012, played through 2019. Tournament venue changed, not a new Tour series.",
         "historical_host_change": [
+          {
+            "year": 2009,
+            "city": "Costa do Sauípe",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
           {
             "year": 2010,
             "city": "Costa do Sauípe",
@@ -9970,6 +10407,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -10030,6 +10474,13 @@
         "not_squash_rules": true,
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,
@@ -10092,6 +10543,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -10153,6 +10611,13 @@
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
           {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
             "from": 2010,
             "to": 2010,
             "category_id": "atp_250",
@@ -10176,6 +10641,12 @@
         ],
         "identity_review_note": "Serbia Open 2010–2012 ATP Tour 250, no played 2013 edition; no legal licence merger with modern Belgrade tournaments inferred.",
         "historical_host_change": [
+          {
+            "year": 2009,
+            "city": "Belgrade",
+            "country_code": "SRB",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
           {
             "year": 2010,
             "city": "Belgrade",
@@ -10226,6 +10697,13 @@
         "not_squash_rules": true,
         "history_scope": "2011_played_atp_250_no_licence_successor_assumed",
         "history_periods": [
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
           {
             "from": 2010,
             "to": 2010,

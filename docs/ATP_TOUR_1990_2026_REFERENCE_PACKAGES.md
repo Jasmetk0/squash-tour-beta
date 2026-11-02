@@ -1061,8 +1061,8 @@ Lyon indoor and Valencia licence tracks. These are source-history
 links, *not* played Edition objects and *not* proof of every prior
 or subsequent year in any Series.
 
-**Coverage boundary after this expansion:** **22 consecutive played-tier
-seasons (2004–2025)**, with 1990–2003 still incomplete, 2026
+**Coverage boundary after this expansion:** **23 consecutive played-tier
+seasons (2003–2025)**, with 1990–2002 still incomplete, 2026
 provisional, and the entire runtime Category/Series import/Save/Calendar
 adapter unimplemented. No title points, draws, qualification or
 match/player data was added. Keep this PR Draft.
@@ -1164,3 +1164,33 @@ The generator now verifies **22 consecutive played-category rosters
 2026 remains provisional; the source does not implement live Package
 Catalog, native sporting Editions, match/draw/point data, Apply, or Saved
 Run integration. Keep this existing PR Draft until latest-head CI passes.
+
+
+## ATP Tour 2003 historical original Category rosters (2026-11-02)
+
+Played Tour tiers were **9 Masters Series, 9 International Series Gold,
+44 International Series**, plus **one distinct Tennis Masters Cup in
+Houston**. The 2003 census contains 63 ATP-only source Series identities.
+Grand Slams, World Team Cup, Davis Cup and lower circuits are excluded.
+
+- [Official ATP 2003 played results archive](https://www.atptour.com/en/scores/results-archive?year=2003)
+- [Contemporary-era classification/calendar source](https://de.wikipedia.org/wiki/ATP_Tour_2003)
+- [ATP archive: Copenhagen played 2003](https://www.atptour.com/en/tournaments/copenhagen/481/overview)
+- [ATP archive: Beijing played 2004](https://www.atptour.com/en/tournaments/beijing/590/overview)
+- [Industry report, 2004 removed Copenhagen / added Beijing](https://www.sportscommissions.org/Portals/sportscommissions/Documents/Industry%20News/Sports%20Business%20International_The%20Bid%20Book_%20June%202013.pdf)
+
+Copenhagen played in 2003, Beijing joined the main Tour in 2004.
+No direct underlying ATP sanction/license transfer between the two has
+been verified; separate source identity `copenhagen_2003` is used,
+**not** an invented historical Beijing Series. Before 2003, Copenhagen
+Tournament years remain unverified in this Package.
+
+The Canadian Masters in 2003 had Montreal as its played host; 2004
+was Toronto. The 2003 Masters Cup was in Houston, and Shanghai was a
+regular International Series 2003/2004, **not** the city of the 2003
+year-end Finals. Existing source histories preserved.
+
+This raises the category-census coverage to **23 consecutive actual
+played years, 2003–2025**. Still source-only, no per-round historic
+point matrices, Draw/Edition/Result objects, Run Apply/Save or production
+Package adapter. **1990–2002 remain incomplete; 2026 provisional.**

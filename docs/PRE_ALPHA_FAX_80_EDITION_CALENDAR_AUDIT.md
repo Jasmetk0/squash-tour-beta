@@ -23,3 +23,9 @@ The source actively guards against corrupted environmental inputs, preserving cl
 - **Missing Templates:** If the underlying `TournamentTemplatesConfigService` returns no active `WORLD_TOUR` templates, the generator accurately interrupts execution with a precise error stating `"Pre-alpha FAX acceptance calendar requires at least one active WORLD_TOUR template"`.
 
 No existing sporting rules were modified or invented to make the audit tests pass. The pre-existing architecture accurately adheres to the 80 Edition FAX requirements.
+
+Coordinator review (2026-11-02): the two calendar tests are explicitly selected
+by Fast CI's `pr_critical` gate. The small existing Health test correction is a
+stale expectation repair: an unversioned discriminated payload is rejected with
+422; no Health runtime or sporting policy is changed. The calendar count is
+planning evidence only, never evidence that 80 tournaments were played.

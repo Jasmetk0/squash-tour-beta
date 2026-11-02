@@ -1,5 +1,7 @@
-import pytest
 from pathlib import Path
+from unittest.mock import patch
+
+import pytest
 
 from beta_engine.application.pre_alpha_fax_acceptance_calendar_source import (
     PRE_ALPHA_FAX_ACCEPTANCE_SEASON,
@@ -12,7 +14,8 @@ from beta_engine.application.season_category_points_service import (
 from beta_engine.application.tournament_templates_service import (
     TournamentTemplatesConfigService,
 )
-from unittest.mock import patch
+
+pytestmark = pytest.mark.pr_critical
 
 @pytest.fixture
 def calendar_source(tmp_path: Path) -> PreAlphaFaxAcceptanceCalendarSource:
@@ -63,6 +66,8 @@ def test_audit_damaged_inputs(calendar_source: PreAlphaFaxAcceptanceCalendarSour
         calendar_source.build_calendar("2001/2002")
 
     # Verify rejection when underlying templates are missing or damaged
-    with patch("beta_engine.application.tournament_templates_service.TournamentTemplatesConfigService.list_templates", return_value=[]):
-        with pytest.raises(ValueError, match="requires at least one active WORLD_TOUR template"):
-            calendar_source.build_calendar(PRE_ALPHA_FAX_ACCEPTANCE_SEASON)
+    with (
+        patch("beta_engine.application.tournament_templates_service.TournamentTemplatesConfigService.list_templates", return_value=[]),
+        pytest.raises(ValueError, match="requires at least one active WORLD_TOUR template"),
+    ):
+        calendar_source.build_calendar(PRE_ALPHA_FAX_ACCEPTANCE_SEASON)

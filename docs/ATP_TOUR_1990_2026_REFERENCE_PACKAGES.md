@@ -515,10 +515,10 @@ Source identity continuity was reconciled as follows:
 The deterministic source resolver now emits
 `played_tier_roster_validation` for every annual snapshot:
 
-- **2014–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
+- **2013–2025**: `played_tour_tiers_reconciled_to_atp_results_archive`,
   with year-specific reference counts independently asserted against
   played (category-effective minus known-cancelled) identities.
-- **1990–2013**: `unverified_incomplete`. No invented total
+- **1990–2012**: `unverified_incomplete`. No invented total
   or assumption that present-day event structure already existed.
 - **2026**: `provisional_calendar_not_final_results`; ATP
   calendar changes and remaining matches are not misreported as
@@ -529,7 +529,7 @@ counts raises a `ValueError` before a stale annual reference
 can pass the source generator's `--check`. Tests additionally
 assert 2020 one-off events, Category references and location changes.
 
-**Remaining gap:** 1990–2013 lower Tour tiers are not fully reconstructed
+**Remaining gap:** 1990–2012 lower Tour tiers are not fully reconstructed
 and still require ATP results archive research. Runtime integration
 into the Squash Engine Packages library and sporting Calendar is still
 absent, and no source file implies a playable tennis simulation.
@@ -591,7 +591,7 @@ even when the JSON remains syntactically valid.
 
 These ten year-specific rosters are source-level and **NOT**
 Calendar Edition packages, complete points/format histories or
-full tournament draw result archives. **1990–2013 remains
+full tournament draw result archives. **1990–2012 remains
 historically incomplete**, and 2026 remains provisional.
 
 ## 2018 official ATP Tour calendar: 64 identities with verified tiers
@@ -639,8 +639,8 @@ fail-closed source validation (9/13/40). The year-resolved
 record does not contain players, scores, tournament draw results,
 qualification details or a tennis sporting engine.
 
-**2014–2025** are the twelve consecutive ATP years reconciled at
-the played Tour Category level. **1990–2013** lower-tier event
+**2013–2025** are the thirteen consecutive ATP years reconciled at
+the played Tour Category level. **1990–2012** lower-tier event
 Series remain incomplete; the 2026 roster is provisional.
 
 ## 2016 and 2017 ATP Tour category coverage: complete official played-year rosters
@@ -692,14 +692,14 @@ but are explicitly excluded from this strictly ATP Tour source package.
   Nottingham's subsequent men's Challenger is **not** represented
   as an ATP Tour 250 and is not a parallel Tour Series.
 
-For all twelve **2014–2025** completed seasons, the annual resolver now
+For all thirteen **2013–2025** completed seasons, the annual resolver now
 rejects source changes that corrupt the count of actually played
 Masters/500/250 tournaments. This is verified **source identity/category
 reconstruction**, not a historic Calendar Package with draw dates,
 licence transaction registry, match results or player ranking points
 by round.
 
-**Remaining scope:** precisely **1990–2013** lack complete lower-tier
+**Remaining scope:** precisely **1990–2012** lack complete lower-tier
 Series coverage; **2026** is a provisional Tour calendar. Current
 files are not yet integrated into the Squash Engine's production
 Package catalog or Run-application workflow.
@@ -746,7 +746,7 @@ tier census for each of the **11 complete consecutive years
 2015–2025** (inclusive), with source-specific upper-tier and lower
 tier counts and automated rejection on conflicting changes.
 
-The remaining **24 seasons 1990–2013** have incomplete ATP 500/250
+The remaining **23 seasons 1990–2012** have incomplete ATP 500/250
 Series coverage, despite the nine top-tier historical Masters
 identities and era-specific Category names. They require
 independent tournament-by-tournament audit and cannot be
@@ -796,11 +796,55 @@ Historical classification matters more than present-day event names:
 | 2016 | 9 | 13 | 39 | 1 | 62 |
 | 2017 | 9 | 13 | 40 | 2 | 64 |
 
-**2014–2025 now have 12 consecutive year-level ATP Tier rosters
+**2013–2025 now have 13 consecutive year-level ATP Tier rosters
 validated against official results archives.** The source model
 covers 37 labelled reference years 1990–2026, but the remaining
-**1990–2013** years still lack comprehensive lower-category
+**1990–2012** years still lack comprehensive lower-category
 Series histories and cannot be declared complete. The 2026
 calendar is provisional. Production Package Catalog integration,
 applicable historic Calendar Editions and audited historical
 points tables are **still outstanding**.
+
+## 2013 ATP Tour results: 9 Masters, 11 ATP 500, 40 ATP 250
+
+The [2013 ATP Tour results archive](https://www.atptour.com/en/scores/results-archive?year=2013),
+the detailed contemporaneous
+[NOS 2013 Tour schedule](https://nos.nl/artikel/457783-atp-tenniskalender-2013),
+and an independent [2013 seasonal record](https://de.wikipedia.org/wiki/ATP_World_Tour_2013)
+agree on **9 ATP Masters 1000, 11 ATP 500, 40 ATP 250** and
+ATP World Tour Finals: 61 source Tour event identities.
+That 61 excludes the separately governed four Grand Slams
+and Davis Cup, and correctly excludes the ITF Hopman Cup.
+The Next Gen Finals were not established until 2017.
+
+Historic Tier relationships need to be explicit rather than
+retroactively inferred from the familiar 2026 category names:
+
+- **Memphis in 2013 was ATP 500**. It became a 250 in 2014,
+  moved to New York in 2018 and Dallas in 2022, then was
+  upgraded back to ATP 500 in 2025. The stable source identity
+  `dallas` preserves this *category timeline*.
+- **Valencia 2013–14 was ATP 500**; Valencia 2015 was a 250;
+  the licence transferred to Antwerp in 2016. This is one
+  time-effective `brussels` identity, not multiple invented events.
+- **Halle, Queen's Club and Vienna in 2013–14 were ATP 250**,
+  subsequently promoted to 500 for 2015, and must not have
+  modern tier labels applied to past years.
+- **Viña del Mar 2013–14** is referenced under `cordoba`,
+  followed by **Quito 2015–18** and **Córdoba 2019**.
+- Historic ATP 250s **San Jose, Los Angeles and Bangkok
+  (2013)** have separate Series references. Their legal successors
+  are not guessed and no 2014 events are fabricated under
+  those specific source identities.
+- **Düsseldorf 2013–14** remains a separate 250 Series from
+  2015 Geneva unless the transfer of the actual tournament
+  licence is independently documented.
+
+The annual source resolver validates the 2013 9/11/40 census,
+as well as the other year-specific complete top Tour tier rosters
+through 2025, without importing any tennis player results,
+ranking-point records or actual Calendar Editions.
+
+**2013–2025** are now thirteen consecutive completed year-level
+main ATP Tour category/Series rosters; **1990–2012** still have
+incomplete lower tiers, and 2026 remains provisional.

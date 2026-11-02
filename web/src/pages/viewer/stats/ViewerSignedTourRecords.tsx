@@ -79,6 +79,7 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
   })
   const selectedQuery = useQuery({
     queryKey: ['viewer-signed-tour-records', runId, branchId, 'selection',
+      baselineQuery.data?.saved_head_revision_id, baselineQuery.data?.source_tour_fingerprint,
       applied?.asOfSeason, applied?.fromSeason, applied?.countryCode],
     queryFn: ({ signal }) => getViewerSignedTourRecords(runId, applied ?? initial, signal),
     enabled: applied !== null,
@@ -105,9 +106,13 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
   const fromOptions = seasonOptions.filter(s => s <= target)
   const reportQuery = applied ? selectedQuery : baselineQuery
   const filters = applied ?? initial
-  const report = reportQuery.isSuccess
+  const candidate = reportQuery.isSuccess
     ? verifiedViewerSignedTourRecords(reportQuery.data, runId, branchId, filters)
     : null
+  // A filtered read and its season inventory must name the same Saved source.
+  // Same Branch alone does not fence a newer Save or a late cached response.
+  const report = candidate?.saved_head_revision_id === baseline.saved_head_revision_id
+    && candidate?.source_tour_fingerprint === baseline.source_tour_fingerprint ? candidate : null
 
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
@@ -175,9 +180,9 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
 
     {reportQuery.isPending || reportQuery.isFetching ? <p className="status" role="status">{t('loading')}</p> :
       reportQuery.isError ? <div role="alert"><p className="error">{t('unavailable')}</p>
-        <button type="button" onClick={() => void reportQuery.refetch()}>{t('retry')}</button></div> :
+        <button type="button" onClick={() => { void baselineQuery.refetch(); void reportQuery.refetch() }}>{t('retry')}</button></div> :
       !report ? <div role="alert"><p className="error">{t('invalid')}</p>
-        <button type="button" onClick={() => void reportQuery.refetch()}>{t('retry')}</button></div> :
+        <button type="button" onClick={() => { void baselineQuery.refetch(); void reportQuery.refetch() }}>{t('retry')}</button></div> :
       <RecordsReport report={report} runId={runId} link={link} t={t} />
     }
   </>

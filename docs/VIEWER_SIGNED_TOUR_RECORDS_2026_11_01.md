@@ -39,3 +39,9 @@ Focused checkout commands:
 Mocked frontend tests do not prove real HTTP/SQLite/Chromium. Actual Viewer browser acceptance, a Saved Viewer Branch switch, restart and all applicable pre-alpha gates must run against the final PR head before merge consideration. Draft CI skips are not passes. Only the owner merges; the PR remains Draft.
 
 Parallel PR #1704 owns App.tsx, api/client.ts and the Saved comparison backend and route; this PR touches none of those. Research PRs #1700, #1702, #1703, #1705 remain independent. No Master decision is changed.
+
+Coordinator source-fence repair (2026-11-02): filtered record responses must match
+both the Saved HEAD and Tour fingerprint of their independently loaded season
+inventory. A different Save cannot reuse older cached filter results under the
+same Branch. Retry refreshes both source inventory and the selected read; mocked
+regressions exercise both mismatched identities separately.

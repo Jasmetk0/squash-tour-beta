@@ -74,6 +74,22 @@ describe('Viewer signed native Tour record browser (mocked GET contract)', () =>
     expect(screen.queryByText('2000/01 – 2001/02')).not.toBeInTheDocument()
   })
 
+  it.each(['saved_head_revision_id', 'source_tour_fingerprint'] as const)(
+    'rejects a filtered response from a different %s than its season inventory', async field => {
+      records.getViewerSignedTourRecords.mockImplementation(async (_run, filter) => {
+        const base = signedRecordFixture()
+        return filter?.countryCode === 'CZE'
+          ? { ...base, country_code: 'CZE', [field]: field === 'source_tour_fingerprint' ? 'f'.repeat(64) : 'new-head' }
+          : base
+      })
+      renderRecords()
+      await screen.findByText('2000/01 – 2001/02')
+      fireEvent.change(screen.getByLabelText('ISO-3 country (optional)'), { target: { value: 'CZE' } })
+      fireEvent.click(screen.getByRole('button', { name: 'Show selected records' }))
+      expect(await screen.findByText(/historical evidence failed validation/)).toBeInTheDocument()
+      expect(screen.queryByText('2000/01 – 2001/02')).not.toBeInTheDocument()
+    })
+
   it('refuses a foreign Viewer context before issuing a records request', async () => {
     client.getViewerOfficialRunContext.mockResolvedValue({
       product_run_id: 'other run', official_branch_id: 'viewer-a'

@@ -142,7 +142,24 @@
         "source_url": "https://www.atptour.com/en/news/united-cup-to-kick-off-2023-tennis-season",
         "temporal_note": "Belgrade 2022 -> Banja Luka 2023"
       }
-    ]
+    ],
+    "calendar_validation_2020": {
+      "results_archive_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "one_year_250_press_release_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/10-september-2020-atp-announces-four-new-events.pdf",
+      "played_atp_250_count": 18,
+      "played_atp_500_count": 7,
+      "played_masters_count": 3,
+      "atp_finals_played": true,
+      "next_gen_finals_cancelled": true,
+      "four_new_one_year_events": [
+        "cologne_1_2020",
+        "cologne_2_2020",
+        "sardinia_2020",
+        "almaty"
+      ],
+      "played_team_atp_cup": "out_of_scope_team_competition",
+      "source_scope_note": "Full played singles main ATP Tour tier roster, not a complete census of cancelled planned ATP Tour events; ranking/events not simulated"
+    }
   },
   "explicit_scope": [
     "tennis.atp_tour.series.reference.1990_2026"
@@ -566,7 +583,22 @@
             "notes": "top-nine tour membership; annual holding separately subject to cancellation"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2020,
+            "city": "New York",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/news/andrea-gaudenzi-chairman-q-and-a-march-2021/"
+          },
+          {
+            "year": 2021,
+            "city": "Cincinnati",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/news/andrea-gaudenzi-chairman-q-and-a-march-2021/"
+          }
+        ],
+        "identity_review_note": "2020 Cincinnati Masters temporarily held at Flushing Meadows, New York, during COVID. This was a relocation for that edition, NOT a new Masters Series."
       },
       "references": [
         {
@@ -711,6 +743,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -739,7 +778,22 @@
             "notes": "Upgrade announced 2023, effective 2025"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_change": [
+          {
+            "year": 2020,
+            "city": "New York",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/news/fritz-dallas-2025-preview"
+          },
+          {
+            "year": 2022,
+            "city": "Dallas",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/news/fritz-dallas-2025-preview"
+          }
+        ],
+        "identity_review_note": "ATP confirms New York Open relocated to Dallas in 2022; source preserves a single Series across 2020 New York and 2022+ Dallas, earlier Memphis/San Jose lineage needs separate historical review."
       },
       "references": [
         {
@@ -773,6 +827,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -830,6 +891,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -941,6 +1009,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_500",
@@ -997,6 +1072,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -1588,6 +1670,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_500",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_500",
@@ -1695,6 +1784,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
+          {
             "from": 2022,
             "to": 2022,
             "category_id": "atp_250",
@@ -1732,6 +1828,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 2020,
+            "city": "Pune",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024"
+          },
           {
             "year": 2022,
             "city": "Pune",
@@ -1780,6 +1882,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
           {
             "from": 2022,
             "to": 2022,
@@ -1846,6 +1955,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
+          {
             "from": 2023,
             "to": 2023,
             "category_id": "atp_250",
@@ -1902,6 +2018,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -1974,6 +2097,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -2045,6 +2175,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -2115,6 +2252,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -2937,6 +3081,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -3401,6 +3552,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -3446,31 +3604,37 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 2020,
+            "city": "Nur-Sultan",
+            "country_code": "KAZ",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/10-september-2020-atp-announces-four-new-events.pdf"
+          },
+          {
             "year": 2021,
             "city": "Nur-Sultan",
             "country_code": "KAZ",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2021"
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020"
           },
           {
             "year": 2022,
             "city": "Astana",
             "country_code": "KAZ",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022"
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020"
           },
           {
             "year": 2023,
             "city": "Astana",
             "country_code": "KAZ",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023"
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020"
           },
           {
             "year": 2024,
             "city": "Almaty",
             "country_code": "KAZ",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2024"
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020"
           }
         ],
-        "identity_review_note": "Nur-Sultan 2021 temporary event, 2022 permanent Astana licence transferred from St Petersburg; 2024 move to Almaty. Exact pre-2022 legal licence identity is a review boundary.",
+        "identity_review_note": "2020 one-year Nur-Sultan licence explicitly documented by ATP; 2021 temporary event, 2022 permanent Astana membership from St Petersburg licence. Stable venue-family source ID exists, but legal Series licence continuity before 2022 is explicitly NOT certified.",
         "licence_lineage": {
           "predecessor_source_entity_id": "st_petersburg",
           "effective_from": 2022,
@@ -3511,6 +3675,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -3596,6 +3767,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -4065,6 +4243,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
+          {
             "from": 2021,
             "to": 2021,
             "category_id": "atp_250",
@@ -4526,6 +4711,13 @@
         "not_squash_rules": true,
         "history_scope": "2023_actual_edition_evidence_only",
         "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+            "notes": "2020 officially played ATP Tour event at documented tier; other years not inferred"
+          },
           {
             "from": 2021,
             "to": 2021,
@@ -5293,6 +5485,126 @@
             "notes": "Played ATP Tour event in official 2021 Results Archive"
           }
         ]
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "cologne_1_2020",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Cologne 1 (bett1HULKS Indoors 2020)",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Cologne",
+        "historical_country_code": "DEU",
+        "historical_surface": "indoor_hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "ATP_one_year_2020_250_replacement_licence",
+        "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/10-september-2020-atp-announces-four-new-events.pdf",
+            "notes": "ATP September 2020 official press release: standalone one-year ATP 250 licence, played according to official results archive"
+          }
+        ],
+        "identity_review_note": "2020 one-year licence; no continuing Series identity or other venue continuity inferred"
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "cologne_2_2020",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Cologne 2 (bett1HULKS Championships 2020)",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Cologne",
+        "historical_country_code": "DEU",
+        "historical_surface": "indoor_hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "ATP_one_year_2020_250_replacement_licence",
+        "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/10-september-2020-atp-announces-four-new-events.pdf",
+            "notes": "ATP September 2020 official press release: standalone one-year ATP 250 licence, played according to official results archive"
+          }
+        ],
+        "identity_review_note": "2020 one-year licence; no continuing Series identity or other venue continuity inferred"
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "sardinia_2020",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Forte Village Sardegna Open (2020)",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Santa Margherita di Pula",
+        "historical_country_code": "ITA",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "ATP_one_year_2020_250_replacement_licence",
+        "history_periods": [
+          {
+            "from": 2020,
+            "to": 2020,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/10-september-2020-atp-announces-four-new-events.pdf",
+            "notes": "ATP September 2020 official press release: standalone one-year ATP 250 licence, played according to official results archive"
+          }
+        ],
+        "identity_review_note": "2020 one-year licence; no continuing Series identity or other venue continuity inferred"
       },
       "references": [
         {

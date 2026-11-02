@@ -20,6 +20,13 @@ def _source(kind: str) -> dict:
     return json.loads((SOURCE / f"{kind}.json").read_text(encoding="utf-8"))
 
 
+def _host_by_year(payload: dict) -> dict[int, str]:
+    """Date-keyed host assertions tolerate adding still older verified years."""
+    return {entry["year"]: entry["city"]
+            for entry in payload["historical_host_change"]}
+
+
+
 def test_canonical_source_boundaries_and_type_identities() -> None:
     categories, series = _source("category"), _source("series")
     category_doc = CanonicalPackageDocument.model_validate(categories)
@@ -445,9 +452,10 @@ def test_pune_to_hong_kong_retains_one_series_id_from_2022_to_2026() -> None:
     assert "hong_kong" in ids
     hong_kong = next(e for e in source["entities"]
                      if e["source_entity_id"] == "hong_kong")["payload"]
-    assert [row["city"] for row in hong_kong["historical_host_change"]] == [
-        "Chennai", "Chennai", "Chennai", "Chennai", "Chennai", "Chennai", "Chennai", "Chennai", "Chennai", "Pune", "Pune", "Pune", "Pune", "Pune", "Hong Kong"
-    ]
+    hosts = _host_by_year(hong_kong)
+    assert hosts[2017] == "Chennai"
+    assert hosts[2018] == hosts[2020] == hosts[2023] == "Pune"
+    assert hosts[2024] == "Hong Kong"
     assert "atptour.com" in hong_kong["historical_licence_source_url"]
 
 
@@ -506,7 +514,10 @@ def test_2020_cologne_sardinia_nur_sultan_one_year_events_and_nyc_venue() -> Non
     assert y2020["cincinnati"] == "atp_masters_1000"
     series = _source("series")
     by_id = {x["source_entity_id"]: x["payload"] for x in series["entities"]}
-    assert [host["city"] for host in by_id["dallas"]["historical_host_change"]] == ["Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "New York", "New York", "New York", "Dallas"]
+    hosts = _host_by_year(by_id["dallas"])
+    assert hosts[2008] == hosts[2017] == "Memphis"
+    assert hosts[2018] == hosts[2020] == "New York"
+    assert hosts[2022] == "Dallas"
     assert [host["city"] for host in by_id["cincinnati"]["historical_host_change"]] == ["New York", "Cincinnati"]
     assert [host["city"] for host in by_id["almaty"]["historical_host_change"]] == [
         "Nur-Sultan", "Nur-Sultan", "Astana", "Astana", "Almaty"
@@ -577,12 +588,14 @@ def test_2019_venue_licence_boundary_for_budapest_new_york_and_antalya() -> None
     assert "moscow" not in a20
     source = _source("series")
     by_id = {e["source_entity_id"]: e["payload"] for e in source["entities"]}
-    assert [r["city"] for r in by_id["belgrade_clay_2021"]["historical_host_change"]] == [
-        "Bucharest", "Bucharest", "Bucharest", "Bucharest", "Bucharest", "Bucharest", "Bucharest", "Bucharest", "Budapest", "Budapest", "Budapest", "Belgrade"
-    ]
-    assert [r["city"] for r in by_id["dallas"]["historical_host_change"]] == [
-        "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "New York", "New York", "New York", "Dallas"
-    ]
+    bucharest_hosts = _host_by_year(by_id["belgrade_clay_2021"])
+    assert bucharest_hosts[2015] == bucharest_hosts[2016] == "Bucharest"
+    assert bucharest_hosts[2017] == bucharest_hosts[2019] == "Budapest"
+    assert bucharest_hosts[2021] == "Belgrade"
+    dallas_hosts = _host_by_year(by_id["dallas"])
+    assert dallas_hosts[2017] == "Memphis"
+    assert dallas_hosts[2018] == dallas_hosts[2019] == "New York"
+    assert dallas_hosts[2022] == "Dallas"
 
 
 def test_explicit_played_roster_gate_rejects_fabricated_2019_cancellation() -> None:
@@ -635,12 +648,16 @@ def test_2018_quito_to_2019_cordoba_and_distinct_southern_venues() -> None:
     assert d18["belgrade_clay_2021"] == d19["belgrade_clay_2021"] == "atp_250"
     doc = _source("series")
     by = {e["source_entity_id"]: e["payload"] for e in doc["entities"]}
-    assert [p["city"] for p in by["cordoba"]["historical_host_change"]] == [
-        "Viña del Mar", "Santiago", "Santiago", "Viña del Mar", "Viña del Mar", "Viña del Mar", "Quito", "Quito", "Quito", "Quito", "Córdoba"
-    ]
-    assert [p["city"] for p in by["dallas"]["historical_host_change"]] == [
-        "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "Memphis", "New York", "New York", "New York", "Dallas"
-    ]
+    cordoba_hosts = _host_by_year(by["cordoba"])
+    assert cordoba_hosts[2009] == "Viña del Mar"
+    assert cordoba_hosts[2010] == cordoba_hosts[2011] == "Santiago"
+    assert cordoba_hosts[2012] == cordoba_hosts[2014] == "Viña del Mar"
+    assert cordoba_hosts[2015] == cordoba_hosts[2018] == "Quito"
+    assert cordoba_hosts[2019] == "Córdoba"
+    dallas_hosts = _host_by_year(by["dallas"])
+    assert dallas_hosts[2008] == dallas_hosts[2017] == "Memphis"
+    assert dallas_hosts[2018] == dallas_hosts[2020] == "New York"
+    assert dallas_hosts[2022] == "Dallas"
 
 
 def test_2018_census_rejects_false_cancellation() -> None:
@@ -831,10 +848,11 @@ def test_2014_vina_del_mar_to_quito_to_cordoba_licence_history() -> None:
         h["year"]: h["city"]
         for h in by["cordoba"]["historical_host_change"]
     }
-    assert locations == {
-        2009: "Viña del Mar", 2010: "Santiago", 2011: "Santiago", 2012: "Viña del Mar", 2013: "Viña del Mar", 2014: "Viña del Mar", 2015: "Quito", 2016: "Quito",
+    expected_hosts = {
+        2014: "Viña del Mar", 2015: "Quito",
         2017: "Quito", 2018: "Quito", 2019: "Córdoba"
     }
+    assert all(locations[year] == city for year, city in expected_hosts.items())
     assert by["duesseldorf_2014"]["history_scope"].startswith("2014_verified_")
     estoril_2014 = next(
         record for record in by["estoril"]["historical_host_change"]

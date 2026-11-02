@@ -836,9 +836,12 @@ def test_2014_vina_del_mar_to_quito_to_cordoba_licence_history() -> None:
         2017: "Quito", 2018: "Quito", 2019: "Córdoba"
     }
     assert by["duesseldorf_2014"]["history_scope"].startswith("2014_verified_")
-    assert "atptour.com" in by["estoril"]["historical_host_change"][0]["source_url"] or (
-        "rtp.pt" in by["estoril"]["historical_host_change"][0]["source_url"]
+    estoril_2014 = next(
+        record for record in by["estoril"]["historical_host_change"]
+        if record["year"] == 2014
     )
+    assert estoril_2014["city"] == "Oeiras"
+    assert "rtp.pt" in estoril_2014["source_url"]
 
 
 def test_2013_top_level_atp_tour_61_played_events_and_correct_tiers() -> None:

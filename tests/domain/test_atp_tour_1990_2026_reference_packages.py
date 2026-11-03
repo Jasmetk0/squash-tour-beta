@@ -38,7 +38,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 167
+    assert len(series["entities"]) == 166
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -906,12 +906,28 @@ def test_2013_memphis_was_atp_500_and_2014_memphis_was_atp_250() -> None:
         assert years[2015][id] == "atp_500"
 
 
-def test_2013_san_jose_bangkok_and_los_angeles_are_not_backfilled() -> None:
+def test_2013_bogota_and_los_cabos_preserve_original_los_angeles_licence() -> None:
+    """2013 was played in Bogotá, not Los Angeles; one sanction across all moves."""
+    series = _source("series")
     years = {row["year"]: row["series_category_ids"] for row in
-             build(_source("category"), _source("series"))["seasons"]}
-    for id in ("san_jose_2013", "los_angeles_2013", "bangkok_2013"):
+             build(_source("category"), series)["seasons"]}
+    for id in ("san_jose_2013", "bangkok_2013"):
         assert years[2013][id] == "atp_250"
         assert id not in years[2014]
+    assert years[2012]["los_cabos"] == "atp_250"  # Los Angeles
+    assert years[2013]["los_cabos"] == "atp_250"  # Bogotá
+    assert years[2014]["los_cabos"] == "atp_250"  # Bogotá
+    assert years[2016]["los_cabos"] == "atp_250"  # Los Cabos
+    assert "los_angeles_2013" not in {
+        entity["source_entity_id"] for entity in series["entities"]
+    }
+    hosts = _host_by_year(next(
+        entity["payload"] for entity in series["entities"]
+        if entity["source_entity_id"] == "los_cabos"
+    ))
+    assert hosts[1990] == hosts[2012] == "Los Angeles"
+    assert hosts[2013] == hosts[2015] == "Bogotá"
+    assert hosts[2016] == "Los Cabos"
     assert years[2013]["duesseldorf_2014"] == "atp_250"
     assert years[2014]["duesseldorf_2014"] == "atp_250"
     assert years[2013]["cordoba"] == "atp_250"  # Viña del Mar

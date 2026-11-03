@@ -1,7 +1,7 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-03):** 11 Category identities,
-> **166** Series identities and 37 generated annual reference rows.
+> **165** Series identities and 37 generated annual reference rows.
 > The **36 played main ATP Tour tier rosters 1990–2025** have source-backed
 > original year-effective categories. **2026 is
 > provisional** until final results. This is source-only and is **not**
@@ -18,6 +18,42 @@
 since 1 January 1990**, not the entire history of men's tennis. The Category
 and Series Package are optional **source-only historical references** for
 Squash Engine's data-driven future, not tennis gameplay.
+
+## 2026-11-03 — corrected two independent 2013 → 2014 US licences (Memphis / San José)
+
+Independent contemporary licence reporting exposed a **substantive identity bug**:
+the earlier reference model treated **Memphis 2013 ATP 500** and **Memphis 2014
+ATP 250** as one Series while ending **San José 2013 ATP 250** as a separate
+historic Series. That preserves *tier counts* but **misrepresents two legally
+different ATP sanctions**.
+
+The actual ATP-approved transfers, in effect **2014**, are:
+
+| 2013 source event | 2014 successor | Continuing Series ID |
+| --- | --- | --- |
+| **Memphis ATP 500** | **Rio de Janeiro ATP 500** | `rio` |
+| **San José ATP 250** | **Memphis ATP 250** → New York 2018 → Dallas 2022 | `dallas` |
+
+The earlier `san_jose_2013` standalone ID was therefore eliminated;
+its 1990–2013 **San Francisco → San José** Category and host history was
+moved under `dallas` without changing any year-effective Category.
+The old 1990–2013 **Memphis Championship/Gold/500** Category and host
+history was moved under `rio`, retaining Rio's year-effective ATP 500
+membership from 2014 onward and 2021 known cancellation. Distinct
+`rio_carpet_1990` World Series remains **separate** from that licence.
+The reference now contains **165 Series**, and **all 37 derived annual
+Category counts remain unchanged**.
+
+Proof is unusually strong because it directly describes the *sanctions*
+rather than guessing continuity from a tournament name:
+
+- [Contemporary 23 April 2012 ATP Board-approved two-sanction agreement](https://www.sportsbusinessjournal.com/Daily/Issues/2012/04/24/Leagues-and-Governing-Bodies/ATP/)
+- [2012 Tennis.com report explicitly distinguishing San José→Memphis and Memphis→Rio](https://www.tennis.com/news/articles/san-jose-atp-tourney-to-close-rio-gets-event)
+- [2014 confirmation of the San José licence operating in Memphis](https://www.tennis.com/news/articles/usta-buying-memphis-tournament)
+- [ATP's 2014 Results Archive showing both Memphis and Rio as separate tournaments](https://www.atptour.com/en/scores/results-archive?year=2014)
+
+This correction does **not** backfill sporting results, historical ranking
+points, invented editions, live Run data or a Package Apply adapter.
 
 ## 2026-11-03 — recent Canadian Masters alternating hosts (2024–2026)
 
@@ -880,10 +916,13 @@ The Next Gen Finals were not established until 2017.
 Historic Tier relationships need to be explicit rather than
 retroactively inferred from the familiar 2026 category names:
 
-- **Memphis in 2013 was ATP 500**. It became a 250 in 2014,
-  moved to New York in 2018 and Dallas in 2022, then was
-  upgraded back to ATP 500 in 2025. The stable source identity
-  `dallas` preserves this *category timeline*.
+- **Two different ATP licences were present in Memphis across 2013–14.**
+  The **2013 Memphis ATP 500 licence** transferred to **Rio de Janeiro
+  for 2014**, and persists under source identity `rio`. The separate
+  **2013 San José ATP 250 licence** moved to Memphis for **2014**, then
+  New York in 2018 and Dallas in 2022, upgrading to 500 in 2025; that
+  continuous identity is `dallas`. A city staying on the calendar did
+  **not** mean that the same licence was downgraded.
 - **Valencia 2013–14 was ATP 500**; Valencia 2015 was a 250;
   the licence transferred to Antwerp in 2016. This is one
   time-effective `brussels` identity, not multiple invented events.
@@ -1595,7 +1634,7 @@ Added deterministic `PRE_2000_PLAYED_TIER_COUNTS[1991]` **9/12/54** count gate, 
 
 The original **1990 IBM ATP Tour**, its first season, contained **9 ATP Championship Single-Week (future Super 9), 12 ATP Championship Series, 53 ATP World Series and 1 ATP Tour World Championships singles final in Frankfurt**, amounting to **75 ATP-only individual men's singles Series**. The independent [1990 tournament inventory](https://tennis-db.com/tournaments?season=1990) shows 79 played events including four independently organized Grand Slams, which are excluded from this ATP-only source. The [original 1990 full year event calendar](https://en.wikipedia.org/wiki/1990_ATP_Tour), [German historic calendar with original tier/venue](https://de.wikipedia.org/wiki/ATP_Tour_1990), [ATP 1990 results archive](https://www.atptour.com/en/scores/results-archive?year=1990) and [official ATP Finals history](https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf) corroborate original tiers and finalists.
 
-Historical played-tier Category/Series reference coverage is therefore **36 consecutive complete past seasons 1990–2025** with **166 persistent source Series identities** in the 37-year 1990–2026 bounded source. **2026 remains provisional**, not a final played calendar. This is *not* a source of exact played Edition IDs, tournament draws/results, ranking point matrices, historic source rankings, native FAX rules, Run Apply/Save or import adapter.
+Historical played-tier Category/Series reference coverage is therefore **36 consecutive complete past seasons 1990–2025** with **165 persistent source Series identities** (as of the latest independent licence audit) in the 37-year 1990–2026 bounded source. **2026 remains provisional**, not a final played calendar. This is *not* a source of exact played Edition IDs, tournament draws/results, ranking point matrices, historic source rankings, native FAX rules, Run Apply/Save or import adapter.
 
 Five narrow historical source IDs were added: `toronto_indoor_1990`, `rio_carpet_1990`, `san_remo_1990`, `itaparica_1990`, `wembley_1990`. Historical Rio carpet World Series 1990 must not be equated with the modern Rio 500 clay licence launched in 2014; the other four historically played source identities have no invented future Editions or licence assertions.
 

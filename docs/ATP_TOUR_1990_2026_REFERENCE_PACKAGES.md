@@ -1,9 +1,9 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **145** Series identities and 37 generated annual reference rows.
-> The **32 played main ATP Tour tier rosters 1994–2025** have source-backed
-> original year-effective categories. **1990–1993 are incomplete; 2026 is
+> **148** Series identities and 37 generated annual reference rows.
+> The **33 played main ATP Tour tier rosters 1993–2025** have source-backed
+> original year-effective categories. **1990–1992 are incomplete; 2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
@@ -1494,3 +1494,19 @@ Original-year separation and provenance:
 - 1994 **Stockholm** was the ninth Super 9 (1995 moved to Essen, 1996 to Stuttgart indoors), not an additional World Series; 1994 Frankfurt singles Finals are not merged with Jakarta doubles Finals.
 
 `PRE_2000_PLAYED_TIER_COUNTS[1994]` enforces 9/12/63 with original vocabulary, rejects category mutation or fabricated cancellations, and regenerates the source-derived season map without altering any other year. This remains source-only Category/Series metadata: no player/results data, ranking points, native Run Apply/Save, playable historic FAX Editions, licence rights, or Tour gameplay added.
+
+
+## 2026-11-03 — 1993 ATP original played tiers, 33-year consecutive coverage
+
+Year **1993** reconciles to **9 ATP Super 9, 12 ATP Championship Series, 62 ATP World Series and one Frankfurt singles ATP Tour World Championship** = **84 ATP-only men’s singles source identities**. This extends completed played category source rosters to **33 consecutive years, 1993–2025**. The full [independent 1993 tournament list](https://tennis-db.com/tournaments?season=1993) has 88 events including four Grand Slams, which are **outside** the ATP-only source scope. **1990–1992 remain incomplete** and 2026 remains provisional. Sources: [1993 official ATP Results Archive](https://www.atptour.com/en/scores/results-archive?year=1993), [original 1993 Category totals](https://en.wikipedia.org/wiki/1993_ATP_Tour), [historic host change notes](https://de.wikipedia.org/wiki/ATP_Tour_1993), and [original 1993 statistics summary from contemporaneous sports guide](https://files.eric.ed.gov/fulltext/ED407914.pdf). Historical categories are never converted to 2026 ranking point values.
+
+Three historical IDs were added: **January Kuala Lumpur 1993**, **Bolzano 1993** and **São Paulo 1993**. Crucially, **Kuala Lumpur held *two separate* ATP World Series events in 1993**, January and late September–early October. They are represented independently rather than collapsing into one event or claiming the later Kuala Lumpur/Singapore licence staged a single tournament. 1993 São Paulo does not automatically prove legal continuity with the 2001-onward Brasil Open.
+
+Year-effective source identities and locations:
+- **1993 San Francisco → 1994 San José** (one original tournament family), **1993 Genova → 1994 St. Pölten** (clay), **1993 Durban → 1994 Sun City** (South African Open).
+- **1993 Charlotte → 1994 Birmingham Alabama** U.S. Men’s Clay Courts and **1993 Tampa → 1994 Pinehurst** USTA Clay Court Classic were two distinct *concurrently played* original ATP World Series licences, not the same tournament. Modern Birmingham UK labels are historically incorrect.
+- **1993 Vienna was World Series**, distinct original-year Championship Series tournaments remain **Stuttgart February indoor and July clay, Tokyo April and October indoor, and January Sydney World Series vs October Sydney Indoor Championship**.
+- **1993 Frankfurt singles Finals** is not the separate **Johannesburg doubles-only Finals**; four majors, Davis/team events, Grand Slam Cup and Challenger Tour excluded.
+- Other 1993 historical hosts retained without anachronistic current names: Coral Springs, Marseille, Manchester, Lyon, Kuala Lumpur, Nice, Durban, Frankfurt and San Francisco.
+
+Added 1993's deterministic **9/12/62** original-tier played-roster gate, the canonical 1993 derived yearly snapshot, tests rejecting fabricated cancellations/wrong categories and audit documents. This is historical Category/Series source metadata only, not operational ATP/FAX gameplay, results, ranking points, playable Editions or Run Apply/Save.

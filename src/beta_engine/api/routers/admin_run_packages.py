@@ -26,6 +26,9 @@ router = APIRouter(
     prefix="/admin/runs/{run_id}/branches/{branch_id}/packages",
     tags=["admin-run-packages"],
 )
+atp_reference_catalog_router = APIRouter(
+    prefix="/admin/reference-packages", tags=["admin-reference-packages"]
+)
 
 
 class EntryTimingPreviewRequest(BaseModel):
@@ -178,6 +181,7 @@ def confirm(
 
 
 
+@atp_reference_catalog_router.get("/atp-tour-1990-2026")
 @router.get("/source-atp-reference/catalog")
 def get_source_atp_reference_catalog():
     """Small, public source manifest; no Run or sporting-state mutation."""
@@ -197,8 +201,19 @@ def preview_source_atp_reference(
     try:
         document = ATPReferencePackageAdapter().build_document()
         result = service.preview(run_id=run_id, branch_id=branch_id, document=document)
-        return {**result.model_dump(mode="json"),
-                "preview_fingerprint": result.preview_fingerprint}
+        # Do not transmit the full historical JSON on every read-only
+        # preview. The CAS fingerprint still covers the frozen Setup and
+        # each source child; the client verifies this against the catalog.
+        return {
+            **result.model_dump(mode="json", exclude={"document"}),
+            "document_identity": {
+                "package_type": document.package_type.value,
+                "package_id": document.package_id,
+                "source_version": document.source_version,
+                "source_fingerprint": document.source_fingerprint,
+            },
+            "preview_fingerprint": result.preview_fingerprint,
+        }
     except (OSError, RunPackageConflictError, RunPackageNotFoundError, ValueError) as exc:
         raise HTTPException(409, str(exc)) from exc
 

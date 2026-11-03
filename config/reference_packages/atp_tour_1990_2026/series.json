@@ -15964,6 +15964,9 @@
           2022
         ],
         "known_nonheld_source": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
+        "historical_licence_source_urls": [
+          "https://www.denik.cz/tenis/teniste-uz-nebudou-hrat-v-kualu-lumpur-turnaj-se-stehuje-do-ccheng-tu-20160629.html"
+        ],
         "historical_host_change": [
           {
             "year": 2009,
@@ -16109,6 +16112,9 @@
           "source_url": "https://www.atptour.com/en/news/bublik-royer-hangzhou-2025-final",
           "reason": "2025 tournament completed, even though a brief overview page omitted it"
         },
+        "historical_licence_source_urls": [
+          "https://www.atptour.com/en/news/to"
+        ],
         "historical_host_change": [
           {
             "year": 2023,
@@ -16203,6 +16209,10 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_licence_source_urls": [
+          "https://www.atptour.com/en/news/2024-atp-calendar-update-gijon-almaty",
+          "https://ktf.kz/en/tournaments/ktt/news/?id=8708"
+        ],
         "historical_host_change": [
           {
             "year": 2020,
@@ -16502,6 +16512,10 @@
           }
         ],
         "history_scope": "original_2002_mallorca_2003_valencia_then_documented_2009_plus_history",
+        "historical_licence_source_urls": [
+          "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars",
+          "https://www.atptour.com/en/news/antwerp-brussels-relocation-2025"
+        ],
         "historical_host_change": [
           {
             "year": 1995,
@@ -16960,6 +16974,9 @@
           "new_host_city": "Lyon",
           "source_url": "https://www.atptour.com/en/news/marseille-lyon-relocation"
         },
+        "historical_licence_source_urls": [
+          "https://www.atptour.com/en/news/marseille-lyon-relocation"
+        ],
         "historical_host_change": [
           {
             "year": 1993,
@@ -20039,6 +20056,9 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
             "notes": "ATP 2023 official results archive verifies ATP Tour 250 event in this year"
           }
+        ],
+        "historical_licence_source_urls": [
+          "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars"
         ],
         "historical_host_change": [
           {

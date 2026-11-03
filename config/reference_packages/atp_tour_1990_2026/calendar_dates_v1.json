@@ -7,6 +7,412 @@
   "scope": "ATP Tour main singles categories plus ATP-operated Finals; other tennis events intentionally excluded",
   "legal_boundary": "Reference-only non-playable dates; published schedule does not establish match results or complete legal licence continuity",
   "year_sources": {
+    "2025": {
+      "status": "verified_results_archive",
+      "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "as_of": "2026-11-03",
+      "events": [
+        {
+          "series_id": "brisbane",
+          "start_date": "2024-12-29",
+          "end_date": "2025-01-05",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "hong_kong",
+          "start_date": "2024-12-30",
+          "end_date": "2025-01-05",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "adelaide",
+          "start_date": "2025-01-06",
+          "end_date": "2025-01-11",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "auckland",
+          "start_date": "2025-01-06",
+          "end_date": "2025-01-11",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "montpellier",
+          "start_date": "2025-01-27",
+          "end_date": "2025-02-02",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "dallas",
+          "start_date": "2025-02-03",
+          "end_date": "2025-02-09",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "rotterdam",
+          "start_date": "2025-02-03",
+          "end_date": "2025-02-09",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "buenos_aires",
+          "start_date": "2025-02-10",
+          "end_date": "2025-02-16",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "delray_beach",
+          "start_date": "2025-02-10",
+          "end_date": "2025-02-16",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "belgrade",
+          "start_date": "2025-11-02",
+          "end_date": "2025-11-08",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "doha",
+          "start_date": "2025-02-17",
+          "end_date": "2025-02-22",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "rio",
+          "start_date": "2025-02-17",
+          "end_date": "2025-02-23",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "acapulco",
+          "start_date": "2025-02-24",
+          "end_date": "2025-03-01",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "dubai",
+          "start_date": "2025-02-24",
+          "end_date": "2025-03-01",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "santiago",
+          "start_date": "2025-02-24",
+          "end_date": "2025-03-02",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "indian_wells",
+          "start_date": "2025-03-05",
+          "end_date": "2025-03-16",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "miami",
+          "start_date": "2025-03-19",
+          "end_date": "2025-03-30",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "bucharest",
+          "start_date": "2025-03-31",
+          "end_date": "2025-04-06",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "houston",
+          "start_date": "2025-03-31",
+          "end_date": "2025-04-06",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "marrakech",
+          "start_date": "2025-03-31",
+          "end_date": "2025-04-06",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "monte_carlo",
+          "start_date": "2025-04-06",
+          "end_date": "2025-04-13",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "barcelona",
+          "start_date": "2025-04-14",
+          "end_date": "2025-04-20",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "munich",
+          "start_date": "2025-04-14",
+          "end_date": "2025-04-20",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "madrid",
+          "start_date": "2025-04-23",
+          "end_date": "2025-05-04",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "rome",
+          "start_date": "2025-05-07",
+          "end_date": "2025-05-18",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "hamburg",
+          "start_date": "2025-05-18",
+          "end_date": "2025-05-24",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "geneva",
+          "start_date": "2025-05-18",
+          "end_date": "2025-05-24",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "lyon",
+          "start_date": "2025-05-18",
+          "end_date": "2025-05-24",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "stuttgart",
+          "start_date": "2025-06-09",
+          "end_date": "2025-06-15",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "s_hertogenbosch",
+          "start_date": "2025-06-09",
+          "end_date": "2025-06-15",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "halle",
+          "start_date": "2025-06-16",
+          "end_date": "2025-06-22",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "queens_club",
+          "start_date": "2025-06-16",
+          "end_date": "2025-06-22",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "mallorca",
+          "start_date": "2025-06-22",
+          "end_date": "2025-06-28",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "eastbourne",
+          "start_date": "2025-06-23",
+          "end_date": "2025-06-28",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "bastad",
+          "start_date": "2025-07-14",
+          "end_date": "2025-07-20",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "gstaad",
+          "start_date": "2025-07-14",
+          "end_date": "2025-07-20",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "los_cabos",
+          "start_date": "2025-07-14",
+          "end_date": "2025-07-19",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "kitzbuhel",
+          "start_date": "2025-07-21",
+          "end_date": "2025-07-26",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "umag",
+          "start_date": "2025-07-20",
+          "end_date": "2025-07-26",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "washington",
+          "start_date": "2025-07-21",
+          "end_date": "2025-07-27",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "canadian_open",
+          "start_date": "2025-07-27",
+          "end_date": "2025-08-07",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "cincinnati",
+          "start_date": "2025-08-07",
+          "end_date": "2025-08-18",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "winston_salem",
+          "start_date": "2025-08-17",
+          "end_date": "2025-08-23",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "chengdu",
+          "start_date": "2025-09-17",
+          "end_date": "2025-09-23",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "hangzhou",
+          "start_date": "2025-09-17",
+          "end_date": "2025-09-23",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "tokyo",
+          "start_date": "2025-09-24",
+          "end_date": "2025-09-30",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "beijing",
+          "start_date": "2025-09-25",
+          "end_date": "2025-10-01",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "shanghai",
+          "start_date": "2025-10-01",
+          "end_date": "2025-10-12",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "almaty",
+          "start_date": "2025-10-13",
+          "end_date": "2025-10-19",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "brussels",
+          "start_date": "2025-10-13",
+          "end_date": "2025-10-19",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "stockholm",
+          "start_date": "2025-10-13",
+          "end_date": "2025-10-19",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "basel",
+          "start_date": "2025-10-20",
+          "end_date": "2025-10-26",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "vienna",
+          "start_date": "2025-10-20",
+          "end_date": "2025-10-26",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "paris_masters",
+          "start_date": "2025-10-27",
+          "end_date": "2025-11-02",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "metz",
+          "start_date": "2025-11-02",
+          "end_date": "2025-11-08",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "atp_finals",
+          "start_date": "2025-11-09",
+          "end_date": "2025-11-16",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "next_gen_atp_finals",
+          "start_date": "2025-12-17",
+          "end_date": "2025-12-21",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+          "source_basis": "official_published_event_dates"
+        }
+      ]
+    },
     "2026": {
       "status": "provisional_published_schedule",
       "as_of": "2026-11-03",

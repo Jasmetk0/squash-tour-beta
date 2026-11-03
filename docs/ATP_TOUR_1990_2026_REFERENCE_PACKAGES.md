@@ -1,9 +1,9 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **124** Series identities and 37 generated annual reference rows.
-> The **28 played main ATP Tour tier rosters 1998–2025** have source-backed
-> original year-effective categories. **1990–1997 are incomplete; 2026 is
+> **125** Series identities and 37 generated annual reference rows.
+> The **29 played main ATP Tour tier rosters 1997–2025** have source-backed
+> original year-effective categories. **1990–1996 are incomplete; 2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
@@ -1417,3 +1417,20 @@ Seven new historical-only source IDs are introduced when no safe existing identi
 **Cross-source corrections:** third-party display aliases can be anachronistic. The official 1998 ATP archive lists **Split** (not Geneva), **Lyon** (not Montpellier) and **Singapore** (not Brisbane). The persistent source Series `montpellier` was hosted in Lyon in 1998, `brisbane` in Adelaide, and `singapore_1999` in Singapore. Rotterdam was 1998 World Series and 1999 Championship Series; the Mexico City 1998 original World Series predates its 2000 Gold tier and eventual Acapulco host. 1998 Toronto and 1999 Montreal are separate years of one Canadian top-tier Series.
 
 `PRE_2000_PLAYED_TIER_COUNTS` now gates 1998 against the original 9/12/52 totals; tests assert the original-tier vocabulary, distinct 1998 events and year-host continuity, and reject falsified played-tier classifications or cancellations. The 37 annual source snapshots remain deterministic. **These verification counts are not per-match/results evidence, nor a mandate to auto-Apply a package to any Run.**
+
+
+## 2026-11-03 — 1997 played original ATP categories, 29-year consecutive run
+
+The reconstructed **1997** main ATP Tour source tier roster includes **9 ATP Super 9**, **12 ATP Championship Series**, **53 ATP World Series** and **one year-end ATP Tour World Championships in Hannover**, **75 ATP-only singles tournament identities** total. Grand Slam events (four), the non-ATP Grand Slam Cup, ITF/Challengers and team tournaments are out of scope. This extends *year-level Category/Series* completed coverage to **1997–2025** (29 consecutive played years); **1990–1996 remain incomplete**, and 2026 remains provisional.
+
+Evidence: [1997 ATP official played results archive](https://www.atptour.com/en/scores/results-archive?year=1997), [1997 ATP Tour original-tier schedule](https://en.wikipedia.org/wiki/1997_ATP_Tour), [independent historical categories](https://tennis-db.com/tournaments?season=1997), [ATP 1997 year-end Hannover Finals archive](https://www.atptour.com/-/media/23da5115363646fd89d16716e5b35a2e.pdf). Independent modern display aliases are never allowed to overwrite original tournament venue.
+
+Historical identities explicitly reconciled:
+- **Croatian Indoors: Zagreb 1997 → Split 1998** in one historical `split_1998` source identity, rather than fictitious parallel 1998 Zagreb and Split. 2006 Zagreb licensing is not asserted to follow from 1998.
+- **Marbella 1997 → Mallorca 1998** shares the historic Valencia Open `brussels` source identity, later transferred to Valencia. [Venue lineage](https://newikis.com/en/Valencia_Open).
+- **Milan 1997** Championship Series shares `sofia` history, distinct from **Zagreb 1997** World Series. The modern venue/name Sofia must never backfill 1997.
+- **Coral Springs 1997** is the actual host of the modern Delray Beach event identity; independent historical display sometimes backfills the later Delray host. [Original 1997 event](https://en.wikipedia.org/wiki/1997_International_Tennis_Championships) and [ATP player bio](https://www.atptour.com/en/players/Jason_Stoltenberg/S331/bio).
+- **1997 Beijing** Nokia Open is source ID `beijing_1997` separate from modern China Open, which ATP calls inaugural in 2004, until verified transfer/continuity evidence is found. [ATP historical profile](https://www.atptour.com/en/tournaments/beijing/7307/overview), [2004 new China Open release](https://www.atptour.com/en/news/beijing-2024-20-years-on).
+- **Grand Prix de Lyon 1997** is hosted in Lyon, regardless of later Montpellier brand; **Canadian Open 1997 Montreal / 1998 Toronto** and other year-specific actual locations are recorded.
+
+The deterministic `PRE_2000_PLAYED_TIER_COUNTS` gate now validates 1997's 9/12/53 played roster with original names. New tests assert Category, annual host evidence and fail-closed false tier/cancellation. Source only: **no imported played Editions, scores, points, licence rights, Package Catalog or Run Apply/Save**.

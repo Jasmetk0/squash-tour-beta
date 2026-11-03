@@ -1,9 +1,9 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **162** Series identities and 37 generated annual reference rows.
-> The **35 played main ATP Tour tier rosters 1991–2025** have source-backed
-> original year-effective categories. **1990 is incomplete; 2026 is
+> **167** Series identities and 37 generated annual reference rows.
+> The **36 played main ATP Tour tier rosters 1990–2025** have source-backed
+> original year-effective categories. **2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
@@ -1541,3 +1541,23 @@ Five new year-scoped World Series identities: `chicago_1991`, `orlando_1991`, `b
 Year-specific hosts preserve 1991 Czechoslovakia (Prague, code CSK), Soviet Union (Moscow, code SUN) and Yugoslavia (Umag, code YUG), without retroactively adopting the post-independence state code. The 1991 Vienna tier is original World Series (conflicting historic German annual summary is rejected in favor of original 12 Championship total and independent event data); 1991 Milan World Series wasn't promoted to Championship until 1993. January Sydney World and October Sydney Indoor Championship as well as April Tokyo Japan Open and October Tokyo Indoor Championship are distinct events, not duplicate year records.
 
 Added deterministic `PRE_2000_PLAYED_TIER_COUNTS[1991]` **9/12/54** count gate, 37-year canonical derived source season view, adversarial wrong category and fictitious cancellation tests. No results, ranking matrices, scored Editions, native Package Catalog, FAX Apply/Save or sporting rules were introduced.
+
+
+## 2026-11-03 — 1990 first-year played ATP Tour source census completed
+
+The original **1990 IBM ATP Tour**, its first season, contained **9 ATP Championship Single-Week (future Super 9), 12 ATP Championship Series, 53 ATP World Series and 1 ATP Tour World Championships singles final in Frankfurt**, amounting to **75 ATP-only individual men's singles Series**. The independent [1990 tournament inventory](https://tennis-db.com/tournaments?season=1990) shows 79 played events including four independently organized Grand Slams, which are excluded from this ATP-only source. The [original 1990 full year event calendar](https://en.wikipedia.org/wiki/1990_ATP_Tour), [German historic calendar with original tier/venue](https://de.wikipedia.org/wiki/ATP_Tour_1990), [ATP 1990 results archive](https://www.atptour.com/en/scores/results-archive?year=1990) and [official ATP Finals history](https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf) corroborate original tiers and finalists.
+
+Historical played-tier Category/Series reference coverage is therefore **36 consecutive complete past seasons 1990–2025** with **167 persistent source Series identities** in the 37-year 1990–2026 bounded source. **2026 remains provisional**, not a final played calendar. This is *not* a source of exact played Edition IDs, tournament draws/results, ranking point matrices, historic source rankings, native FAX rules, Run Apply/Save or import adapter.
+
+Five narrow historical source IDs were added: `toronto_indoor_1990`, `rio_carpet_1990`, `san_remo_1990`, `itaparica_1990`, `wembley_1990`. Historical Rio carpet World Series 1990 must not be equated with the modern Rio 500 clay licence launched in 2014; the other four historically played source identities have no invented future Editions or licence assertions.
+
+1990 historical distinctions:
+- **Toronto Indoor Championship February** and **Canadian Open Super 9 at Toronto July** were two separate same-city tournaments. Toronto Indoor is not the Canadian Masters.
+- **January Adelaide World Series** and **September Brisbane World Series** were two independent played ATP tournaments, even though a later Brisbane-era Series ID sources the Adelaide lineage.
+- **1990 Kiawah Island U.S. Men's Clay Court Championships** (1991 Charlotte, 1994 Birmingham Alabama) and **1990 Guaruja February Chevrolet Classic** (Feb 1991 Guaruja, Feb 1992 Maceió) preserve documented source lineages. **1990 Orlando hard** stays distinct from the 1997 Orlando U.S. Clay event.
+- **1990 Stuttgart February Indoor** and **July Stuttgart Clay**, **January Sydney World Series** and **October Sydney Indoor Championship**, **April Japan Open Tokyo** and **October Tokyo Indoor Championship** are distinct concurrent Tour Series.
+- **Rosmalen grass 1990** is the actual historic host of the later 's-Hertogenbosch series. **Prague 1990 (CSK), Umag 1990 (YUG), Moscow 1990 (SUN)** use historical country codes. Pre-October reunification West German hosts use FRG in 1990, whereas November Frankfurt ATP Finals country code is DEU.
+- **1990 Milan** is World Series not Championship, **Memphis** is World Series not later Championship/Gold, and **Stockholm** is original Super 9 (later shifted to Essen, then Stuttgart indoors).
+- Four majors, ITF Grand Slam Cup, Davis/World Team events and separately held doubles Finals remain out of scope.
+
+Added `PRE_2000_PLAYED_TIER_COUNTS[1990]` exact **9/12/53** original-category roster gate, derived 37-year source snapshot and adversarial tests rejecting fabricated 1990 non-played fixtures or category changes. No production sporting consumption has changed.

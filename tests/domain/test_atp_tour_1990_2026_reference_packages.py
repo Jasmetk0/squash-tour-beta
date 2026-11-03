@@ -38,7 +38,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 162
+    assert len(series["entities"]) == 167
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -529,10 +529,7 @@ def test_coverage_gates_reject_false_historical_completeness() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     rows = {s["year"]: s for s in build(categories, source)["seasons"]}
-    for year in range(1990, 1991):
-        assert rows[year]["played_tier_roster_validation"]["status"] == "unverified_incomplete"
-        assert rows[year]["played_tier_roster_validation"]["played_counts"] is None
-    assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
+        assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
     for year in range(2008, 2026):
         assert rows[year]["played_tier_roster_validation"]["status"] == (
             "played_tour_tiers_reconciled_to_atp_results_archive"
@@ -2262,3 +2259,76 @@ def test_1991_tier_gate_rejects_forged_category_and_false_cancellation() -> None
     e["payload"]["not_held_years_known"] = [1991]
     with pytest.raises(ValueError, match="played-tier roster mismatch in 1991"):
         build(cats, cancelled)
+
+
+def test_1990_first_atp_tour_original_tiers_and_standalone_same_city_events() -> None:
+    """The Tour began 1990; separate original Series and standalone same-city events."""
+    source = _source("series")
+    years = {r["year"]: r for r in build(_source("category"), source)["seasons"]}
+    y90 = years[1990]
+    assert y90["played_tier_roster_validation"]["status"] == "played_tour_tiers_reconciled_to_atp_results_archive"
+    assert y90["played_tier_roster_validation"]["played_counts"] == {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 53,
+    }
+    assert y90["played_tier_roster_validation"]["not_an_edition_calendar"]
+    assert Counter(y90["series_category_ids"].values()) == {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 53,
+        "atp_finals": 1,
+    }
+    assert y90["series_category_ids"]["toronto_indoor_1990"] == "atp_championship_series"
+    assert y90["series_category_ids"]["canadian_open"] == "atp_championship_single_week"
+    assert y90["series_category_ids"]["brisbane_autumn_1992"] == "atp_world_series"
+    assert y90["series_category_ids"]["brisbane"] == "atp_world_series"
+    assert y90["series_category_ids"]["rio_carpet_1990"] == "atp_world_series"
+    assert "rio" not in y90["series_category_ids"]
+    assert y90["series_category_ids"]["maceio_1992"] == "atp_world_series"
+    assert y90["series_category_ids"]["orlando_1991"] == "atp_world_series"
+    assert y90["series_category_ids"]["sofia"] == "atp_world_series"
+    assert y90["series_category_ids"]["brussels_championship_1992"] == "atp_championship_series"
+    assert y90["series_category_ids"]["dallas"] == "atp_world_series"
+    assert y90["series_category_ids"]["stuttgart"] == "atp_championship_series"
+    assert y90["series_category_ids"]["stuttgart_indoor_feb_1995"] == "atp_championship_series"
+    assert y90["series_category_ids"]["sydney_indoor_1994"] == "atp_championship_series"
+    assert y90["series_category_ids"]["sydney_2019"] == "atp_world_series"
+    assert y90["series_category_ids"]["tokyo_indoor_1995"] == "atp_championship_series"
+    assert y90["series_category_ids"]["tokyo"] == "atp_championship_series"
+    assert y90["series_category_ids"]["stockholm"] == "atp_championship_single_week"
+    by = {e["source_entity_id"]: e["payload"] for e in source["entities"]}
+    assert _host_by_year(by["toronto_indoor_1990"])[1990] == "Toronto"
+    assert _host_by_year(by["canadian_open"])[1990] == "Toronto"
+    assert _host_by_year(by["s_hertogenbosch"])[1990] == "Rosmalen"
+    assert _host_by_year(by["prague_1999"])[1990] == "Prague"
+    assert _host_by_year(by["umag"])[1990] == "Umag"
+    assert _host_by_year(by["atp_finals"])[1990] == "Frankfurt"
+    assert next(x["country_code"] for x in by["prague_1999"]["historical_host_change"]
+                if x["year"] == 1990) == "CSK"
+    assert next(x["country_code"] for x in by["umag"]["historical_host_change"]
+                if x["year"] == 1990) == "YUG"
+    assert next(x["country_code"] for x in by["moscow"]["historical_host_change"]
+                if x["year"] == 1990) == "SUN"
+    assert next(x["country_code"] for x in by["stuttgart"]["historical_host_change"]
+                if x["year"] == 1990) == "FRG"
+    assert next(x["country_code"] for x in by["atp_finals"]["historical_host_change"]
+                if x["year"] == 1990) == "DEU"
+    assert not {"grand_slam", "grand_slam_cup", "davis_cup", "world_team_cup",
+                "atp_doubles_finals"} & set(y90["series_category_ids"])
+
+
+def test_1990_original_tier_gate_rejects_fabricated_nonplayed_world_series() -> None:
+    import copy
+    categories, source = _source("category"), _source("series")
+    wrong = copy.deepcopy(source)
+    event = next(e for e in wrong["entities"] if e["source_entity_id"] == "dallas")
+    period = next(p for p in event["payload"]["history_periods"] if p["from"] == 1990)
+    period["category_id"] = "atp_championship_series"
+    with pytest.raises(ValueError, match="played-tier roster mismatch in 1990"):
+        build(categories, wrong)
+    fake = copy.deepcopy(source)
+    event = next(e for e in fake["entities"] if e["source_entity_id"] == "toronto_indoor_1990")
+    event["payload"]["not_held_years_known"] = [1990]
+    with pytest.raises(ValueError, match="played-tier roster mismatch in 1990"):
+        build(categories, fake)

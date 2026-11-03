@@ -16,7 +16,7 @@
     "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
     "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
     "notes": [
-      "Played main ATP Tour original tier rosters 1991–2025 source-reconciled; 1990 incomplete and 2026 provisional. Source only, no historical Edition/draw/result/Run Apply.",
+      "Played main ATP Tour original year-effective tier rosters 1990–2025 source-reconciled; 2026 provisional pending final results. This is source-only data, not playable historical Edition/draw/result/Run Apply.",
       "2026 date/host fields are not assumed for earlier seasons.",
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
@@ -53,7 +53,7 @@
       },
       "note": "Tour-only played events, excluding Grand Slam, team, Olympic, Challenger and ITF. The 2025 overview page omitted Hangzhou; ATP 2025 results prove participation."
     },
-    "historical_roster_scope": "1991–2025 complete played category tier source rosters; 1990 incomplete and 2026 provisional, no playable annual Edition objects",
+    "historical_roster_scope": "1990–2025 played ATP main Tour original-tiers source rosters; 2026 provisional; no production playable annual Edition objects",
     "calendar_validation_2023": {
       "source_2023": "https://www.atptour.com/en/scores/results-archive?year=2023",
       "singles_main_tour_250_count": 38,
@@ -967,6 +967,35 @@
         "1991 Frankfurt ATP Finals singles independent from Johannesburg doubles-only Finals. Exclude 4 majors, World Team, Davis, Hopman and Grand Slam Cup."
       ],
       "source_only_not_native_played_editions": true
+    },
+    "calendar_validation_1990": {
+      "first_atp_tour_year": 1990,
+      "official_results_archive": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "original_1990_tiers": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+      "original_1990_host_calendar": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+      "independent_1990_census": "https://tennis-db.com/tournaments?season=1990",
+      "played_tiers": {
+        "original_super_9": 9,
+        "original_championship_series": 12,
+        "original_world_series": 53,
+        "atp_finals_singles": 1
+      },
+      "atp_tour_only_played_source_identities": 75,
+      "excluded_grand_slam_count": 4,
+      "independent_1990_calendar_entries_including_four_majors": 79,
+      "first_season_source_only_not_playable_editions": true,
+      "identity_boundaries": [
+        "1990 February Toronto Indoor Championship and July Toronto Canadian Open Super 9 were distinct same-city tournaments.",
+        "1990 January Adelaide World Series and late September Brisbane World Series were distinct events, not one source licence.",
+        "1990 Rio carpet World Series must not be collapsed into Rio Open clay ATP 500 begun 2014.",
+        "1990 February Guaruja Chevrolet Classic is historical antecedent to February 1991 Guaruja and 1992 Maceió Chevrolet licence; later October 1991 Guaruja is distinct.",
+        "1990 Kiawah Island US Men's Clay Championships continued in Charlotte 1991 and Birmingham Alabama 1994; distinct from later Tampa/Pinehurst/Orlando clay fixture.",
+        "1990 original Stuttgarter indoors Championship in February, original summer Stuttgart clay Championship, separate Stockholm autumn Super 9.",
+        "1990 October Sydney Indoor Championship and January Sydney World Series, and October Tokyo Indoor Championship and April Japan Open, are separate year events.",
+        "1990 Rosmalen grass tournament played in the 's-Hertogenbosch region, historic original host kept Rosmalen.",
+        "Historical 1990 state code FRG for pre-reunification Germany, CSK for Czechoslovakia, YUG for Yugoslavia, SUN for Soviet Moscow; Frankfurt year-end Finals after German reunification DEU.",
+        "1990 Tour original scores and ranking point matrices intentionally not imported; no ITF Grand Slams, Grand Slam Cup, World Team/Davis Cup or doubles-only Finals."
+      ]
     }
   },
   "explicit_scope": [
@@ -1017,6 +1046,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Indian Wells",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Indian Wells",
@@ -1170,6 +1205,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Key Biscayne",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Key Biscayne",
             "country_code": "USA",
@@ -1321,6 +1362,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Monte Carlo",
+            "country_code": "MCO",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Monte Carlo",
@@ -1544,6 +1591,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Rome",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Rome",
             "country_code": "ITA",
@@ -1697,6 +1750,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Toronto",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Montreal",
             "country_code": "CAN",
@@ -1844,6 +1903,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Cincinnati",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Cincinnati",
@@ -2048,6 +2113,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Paris",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Paris",
             "country_code": "FRA",
@@ -2171,6 +2242,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -2413,6 +2491,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Memphis",
             "country_code": "USA",
@@ -2625,6 +2709,12 @@
           "source_entity_id": "atp_championship_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -2645,6 +2735,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -2886,6 +2983,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Rotterdam",
@@ -4171,6 +4274,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_championship_series",
@@ -4405,6 +4515,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Barcelona",
             "country_code": "ESP",
@@ -4552,6 +4668,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -4794,6 +4917,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Munich",
+            "country_code": "FRG",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990"
+          },
+          {
             "year": 1991,
             "city": "Munich",
             "country_code": "DEU",
@@ -4965,6 +5094,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Hamburg",
+            "country_code": "FRG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Hamburg",
@@ -5360,6 +5495,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -5508,6 +5650,12 @@
         "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "London",
             "country_code": "GBR",
@@ -5655,6 +5803,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -5890,6 +6045,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Washington",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Washington",
             "country_code": "USA",
@@ -6037,6 +6198,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -6264,6 +6432,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Tokyo",
@@ -6627,6 +6801,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -6865,6 +7046,12 @@
         "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Basel",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Basel",
             "country_code": "CHE",
@@ -7006,6 +7193,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -7248,6 +7442,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Vienna",
             "country_code": "AUT",
@@ -7444,6 +7644,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -7672,6 +7879,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Adelaide",
             "country_code": "AUS",
@@ -7786,7 +7999,7 @@
             "source_url": "https://www.brisbaneinternational.com.au/2009/01/big-future-for-brisbane-international/"
           }
         ],
-        "identity_review_note": "1992 January Adelaide is the ancestor of the later Brisbane successor; the 1992 September/October Brisbane ATP World Series was a separate original event with its own source identity, no duplicate 1992 Adelaide."
+        "identity_review_note": "1990 Adelaide ATP World Series and September 1990 Brisbane ATP World Series were distinct, do not collapse to contemporary 2026 Brisbane source event."
       },
       "references": [
         {
@@ -7826,6 +8039,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -8074,6 +8294,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Nice",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Nice",
@@ -8387,6 +8613,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -8628,6 +8861,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Auckland",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Auckland",
             "country_code": "NZL",
@@ -8769,6 +9008,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -9017,6 +9263,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Lyon",
@@ -10330,6 +10582,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -10563,6 +10822,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1992,
             "city": "Casablanca",
@@ -10861,6 +11126,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_championship_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_championship_series",
@@ -11109,6 +11381,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Stuttgart",
+            "country_code": "FRG",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990"
+          },
+          {
             "year": 1991,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -11292,6 +11570,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -11534,6 +11819,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Rosmalen",
+            "country_code": "NLD",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990"
+          },
+          {
             "year": 1991,
             "city": "'s-Hertogenbosch",
             "country_code": "NLD",
@@ -11635,7 +11926,8 @@
             "country_code": "NLD",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
           }
-        ]
+        ],
+        "identity_review_note": "1990 Rosmalen grass played ATP World Series (site in 's-Hertogenbosch region); do not write modern event display as historic city."
       },
       "references": [
         {
@@ -11746,6 +12038,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -11995,6 +12294,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Manchester",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Manchester",
             "country_code": "GBR",
@@ -12198,6 +12503,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -12445,6 +12757,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Båstad",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Båstad",
@@ -12588,6 +12906,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -12836,6 +13161,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Gstaad",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Gstaad",
             "country_code": "CHE",
@@ -12977,6 +13308,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -13226,6 +13564,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Umag",
+            "country_code": "YUG",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990"
+          },
+          {
             "year": 1991,
             "city": "Umag",
             "country_code": "YUG",
@@ -13328,7 +13672,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
           }
         ],
-        "identity_review_note": "1991 Umag was within SFR Yugoslavia (YUG), not later independent Croatia; historical year-country data."
+        "identity_review_note": "1990 Umag was in Socialist Federal Republic of Yugoslavia (YUG), not independent Croatia."
       },
       "references": [
         {
@@ -13368,6 +13712,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -13617,6 +13968,12 @@
         "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Kitzbühel",
             "country_code": "AUT",
@@ -13770,6 +14127,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -14011,6 +14375,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Estoril",
@@ -14331,6 +14701,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -14578,6 +14955,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Long Island",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Long Island",
@@ -16320,6 +16703,12 @@
         "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit.",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Stockholm",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Stockholm",
             "country_code": "SWE",
@@ -16491,6 +16880,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Frankfurt",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf"
+          },
           {
             "year": 1991,
             "city": "Frankfurt",
@@ -17490,6 +17885,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -17723,6 +18125,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Newport",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Newport",
             "country_code": "USA",
@@ -17868,6 +18276,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -18101,6 +18516,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Indianapolis",
@@ -18647,6 +19068,13 @@
         "history_scope": "2000_london_axa_gold_2001_milan_is_2005_milan_2006_zagreb_2016_sofia",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -18879,6 +19307,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Milan",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Milan",
@@ -20170,6 +20604,13 @@
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -20380,8 +20821,14 @@
             "notes": "Played ATP Tour event in official 2021 Results Archive"
           }
         ],
-        "identity_review_note": "1991 Kremlin Cup Moscow was played in the Soviet Union (SUN), not modern Russia; historical year-country data.",
+        "identity_review_note": "1990 Moscow was Soviet Union (SUN), not present-day Russian Federation.",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Moscow",
+            "country_code": "SUN",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990"
+          },
           {
             "year": 1991,
             "city": "Moscow",
@@ -20649,6 +21096,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -20854,6 +21308,12 @@
         ],
         "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined.",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Sydney",
@@ -21477,6 +21937,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -21638,8 +22105,14 @@
             "notes": "Detailed contemporary NOS ATP 2013 schedule confirms event city/date/tier; ATP 2013 archive listed for results cross-reference"
           }
         ],
-        "identity_review_note": "San Francisco ATP World Series 1993 moved to San Jose 1994, one source event family until 2013; source 1993 actual city not San Jose.",
+        "identity_review_note": "1990 San Francisco Tour World Series source family later played San Jose, preserve actual 1990 host.",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "San Francisco",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "San Francisco",
@@ -21786,6 +22259,13 @@
         "not_squash_rules": true,
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
           {
             "from": 1991,
             "to": 1991,
@@ -21950,6 +22430,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Los Angeles",
@@ -22329,6 +22815,13 @@
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -22485,6 +22978,12 @@
         ],
         "identity_review_note": "2000 Dutch Open Amsterdam, 2001 Amersfoort; later Serbia names must not overwrite original Dutch city.",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Hilversum",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Hilversum",
@@ -22972,6 +23471,13 @@
         "history_scope": "2005_st_poelten_2006_2008_poertschach",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -23098,8 +23604,14 @@
             "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
           }
         ],
-        "identity_review_note": "1993 Genoa clay ATP World Series moved to St. Pölten in 1994, same historic tournament lineage; not a fictitious parallel Genova 1994.",
+        "identity_review_note": "1990 Genoa clay ATP World Series, not post-relocation St. Pölten venue; original licence continuity remains year-effective.",
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Genoa",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Genoa",
@@ -23575,6 +24087,13 @@
         "history_scope": "2005_2006_played_tour_only_older_seasons_not_backfilled",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -23688,6 +24207,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Palermo",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Palermo",
@@ -24034,6 +24559,13 @@
         "history_scope": "played_2001_2002_hong_kong_salem_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -24119,6 +24651,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Hong Kong",
+            "country_code": "HKG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Hong Kong",
@@ -24534,6 +25072,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -24605,6 +25150,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "San Marino",
+            "country_code": "SMR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "San Marino",
@@ -24705,6 +25256,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -24776,6 +25334,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Toulouse",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Toulouse",
@@ -25128,6 +25692,13 @@
         "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -25193,6 +25764,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Prague",
+            "country_code": "CSK",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990"
+          },
+          {
             "year": 1991,
             "city": "Prague",
             "country_code": "CSK",
@@ -25247,7 +25824,7 @@
             "source_url": "https://www.atptour.com/en/tournaments/-/379/overview"
           }
         ],
-        "identity_review_note": "1991 Prague was in Czechoslovakia (CSK), not modern Czechia; historical host year can differ from 1999 CZE.",
+        "identity_review_note": "1990 Prague was Czechoslovakia (CSK), not present-day Czech Republic.",
         "cancelled_following_year": {
           "year": 2000,
           "reason": "Missing ATP financial guarantee / 2000 Czech Open cancelled before play",
@@ -25601,6 +26178,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_championship_series",
@@ -25658,6 +26242,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Philadelphia",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Philadelphia",
@@ -25740,6 +26330,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -25797,6 +26394,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Bologna",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Bologna",
@@ -25879,6 +26482,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_championship_series",
@@ -25936,6 +26546,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "New Haven",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "New Haven",
@@ -26479,6 +27095,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -26522,6 +27145,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Seoul",
+            "country_code": "KOR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Seoul",
@@ -26653,6 +27282,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -26696,6 +27332,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Tel Aviv",
+            "country_code": "ISR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Tel Aviv",
@@ -26766,6 +27408,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_championship_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_championship_series",
@@ -26802,6 +27451,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Stuttgart",
+            "country_code": "FRG",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990"
+          },
           {
             "year": 1991,
             "city": "Stuttgart",
@@ -26953,6 +27608,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -26989,6 +27651,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Bordeaux",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Bordeaux",
@@ -27053,6 +27721,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_championship_series",
@@ -27089,6 +27764,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Tokyo",
@@ -27458,6 +28139,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -27488,6 +28176,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Kiawah Island",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Charlotte",
             "country_code": "USA",
@@ -27512,7 +28206,7 @@
             "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994"
           }
         ],
-        "identity_review_note": "1991 Charlotte U.S. Men's Clay Court Championships (Jaime Yzaga) separate from Tampa Clay Classic and Birmingham UK indoor 1991."
+        "identity_review_note": "1990 Kiawah Island U.S. Men's Clay Court Championships became Charlotte 1991 and Birmingham Alabama 1994, distinct from Tampa/Pinehurst/Orlando clay licence."
       },
       "references": [
         {
@@ -27545,6 +28239,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -27574,6 +28275,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Madrid",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Madrid",
@@ -27632,6 +28339,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -27661,6 +28375,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Florence",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Florence",
@@ -27719,6 +28439,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -27748,6 +28475,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Schenectady",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Schenectady",
@@ -27806,6 +28539,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -27835,6 +28575,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Athens",
+            "country_code": "GRC",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Athens",
@@ -27893,6 +28639,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_championship_series",
@@ -27922,6 +28675,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Sydney",
@@ -28089,6 +28848,13 @@
         "history_scope": "1993_original_played ATP World Series only no unsupported continuation",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -28111,6 +28877,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "São Paulo",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "São Paulo",
@@ -28163,6 +28935,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -28178,6 +28957,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Wellington",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Wellington",
@@ -28224,6 +29009,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -28240,6 +29032,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Guarujá",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Guarujá",
             "country_code": "BRA",
@@ -28252,7 +29050,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
           }
         ],
-        "identity_review_note": "1991 February Chevrolet Classic in Guarujá (Patrick Baur) was the prior licensed event of February 1992 Chevrolet Classic relocated to Maceió; separate from the October 1991 Guarujá ATP World Series. No duplicated February license."
+        "identity_review_note": "1990 Guaruja Chevrolet Classic (Martin Jaite winner) preceded Feb 1991 Guaruja (Patrick Baur) and Feb 1992 Maceió Chevrolet; distinct from Oct Guaruja 1991-92, all original World Series."
       },
       "references": [
         {
@@ -28285,6 +29083,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_championship_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_championship_series",
@@ -28300,6 +29105,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Brussels",
+            "country_code": "BEL",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990"
+          },
           {
             "year": 1991,
             "city": "Brussels",
@@ -28346,6 +29157,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -28362,6 +29180,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Singapore",
+            "country_code": "SGP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Singapore",
             "country_code": "SGP",
@@ -28374,7 +29198,7 @@
             "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992"
           }
         ],
-        "identity_review_note": "1992 spring Singapore singles ATP World Series; direct legal continuity to 1996 Singapore / 1994–1995 Kuala Lumpur is not assumed."
+        "identity_review_note": "1990 Singapore ATP World Series was played in April-May; preserve separate from 1994/95 Kuala Lumpur and 1996–1999 Singapore event lineage, not assert licence continuity without proof."
       },
       "references": [
         {
@@ -28407,6 +29231,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -28422,6 +29253,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Geneva",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Geneva",
@@ -28468,6 +29305,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -28484,6 +29328,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Brisbane",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Brisbane",
             "country_code": "AUS",
@@ -28496,7 +29346,7 @@
             "source_url": "https://tennis-db.com/tournaments?season=1992"
           }
         ],
-        "identity_review_note": "1992 late September Brisbane, distinct from 1992 January Adelaide, both ATP World Series. Current modern Brisbane/Adelaide successor source cannot be used for both 1992 events."
+        "identity_review_note": "Original 1990 September Brisbane World Series was distinct from played 1990 January Adelaide, continued as separate historical source in 1992."
       },
       "references": [
         {
@@ -28747,6 +29597,13 @@
         "history_scope": "played_1991_original_tour_tier_without_unproved_other_years",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -28756,13 +29613,19 @@
         ],
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Orlando",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
             "year": 1991,
             "city": "Orlando",
             "country_code": "USA",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
           }
         ],
-        "identity_review_note": "Orlando hard Tour World Series played 1991; different from Tampa 1991 and the later 1997 Orlando clay US Men's Clay event."
+        "identity_review_note": "Original 1990 Orlando hard ATP World Series played separately from 1991 Tampa USTA Clay and 1997 Orlando clay; 1990/1991 Orlando hard is one source."
       },
       "references": [
         {
@@ -28843,6 +29706,13 @@
         "history_scope": "played_1991_original_tour_tier_without_unproved_other_years",
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
             "from": 1991,
             "to": 1991,
             "category_id": "atp_world_series",
@@ -28851,6 +29721,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Berlin",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
           {
             "year": 1991,
             "city": "Berlin",
@@ -28907,6 +29783,246 @@
           }
         ],
         "identity_review_note": "Birmingham England 1991 ATP World Series indoor, independent from US Men's Clay Court Birmingham Alabama 1994."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "toronto_indoor_1990",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1990 SkyDome Toronto Indoor Championship Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Toronto",
+        "historical_country_code": "CAN",
+        "historical_surface": "indoor_carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "1990_first_atp_tour_season_original_played_tiers_no_unverified_future_editions",
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_championship_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Toronto",
+            "country_code": "CAN",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990"
+          }
+        ],
+        "identity_review_note": "Indoor Toronto Championship Series in February 1990, separate from the Canadian Open Masters at Toronto in July; no unsupported future licencing continuity."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "rio_carpet_1990",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1990 Rio de Janeiro original ATP World Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Rio de Janeiro",
+        "historical_country_code": "BRA",
+        "historical_surface": "indoor_carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "1990_first_atp_tour_season_original_played_tiers_no_unverified_future_editions",
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://tennis-db.com/tournaments?season=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Rio de Janeiro",
+            "country_code": "BRA",
+            "source_url": "https://tennis-db.com/tournaments?season=1990"
+          }
+        ],
+        "identity_review_note": "1990 Rio World Series carpet ATP Tour fixture, not the 2014-launched Rio Open 500 clay licence. Keep separate immutable source identity."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "san_remo_1990",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1990 San Remo ATP World Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "San Remo",
+        "historical_country_code": "ITA",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "1990_first_atp_tour_season_original_played_tiers_no_unverified_future_editions",
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://tennis-db.com/tournaments?season=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "San Remo",
+            "country_code": "ITA",
+            "source_url": "https://tennis-db.com/tournaments?season=1990"
+          }
+        ],
+        "identity_review_note": "Original 1990 San Remo World Series, no unverified 1991 played ATP edition."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "itaparica_1990",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1990 Itaparica ATP World Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Itaparica",
+        "historical_country_code": "BRA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "1990_first_atp_tour_season_original_played_tiers_no_unverified_future_editions",
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://tennis-db.com/tournaments?season=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Itaparica",
+            "country_code": "BRA",
+            "source_url": "https://tennis-db.com/tournaments?season=1990"
+          }
+        ],
+        "identity_review_note": "Original 1990 Bahia Itaparica ATP World Series singles, distinct from Rio, São Paulo and Guaruja same year; no licence inference."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "wembley_1990",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1990 Wembley Grand Prix ATP World Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Wembley",
+        "historical_country_code": "GBR",
+        "historical_surface": "indoor_carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "1990_first_atp_tour_season_original_played_tiers_no_unverified_future_editions",
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://tennis-db.com/tournaments?season=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1990,
+            "city": "Wembley",
+            "country_code": "GBR",
+            "source_url": "https://tennis-db.com/tournaments?season=1990"
+          }
+        ],
+        "identity_review_note": "1990 Wembley ATP World Series in London (Wembley), no 1991 played event inferred without proof."
       },
       "references": [
         {

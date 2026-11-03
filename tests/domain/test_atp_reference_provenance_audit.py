@@ -136,3 +136,63 @@ def test_duesseldorf_to_geneva_audited_licence_is_one_source_identity() -> None:
     assert by_id["geneva"]["historical_licence_source_urls"]
     assert by_id["cologne_1992_clay"]["historical_host_change"][0]["city"] == "Geneva"
     assert audit(categories, series, seasons)["counts"]["series_identities"] == 164
+
+
+def test_six_verified_venue_transfers_retain_original_licence_identity() -> None:
+    """Documented relocation may change the city, not the stable Series ID.
+
+    These dated references prove specific host transfers, not all the
+    historical movements of long-lived Series.
+    """
+    _, series, seasons = _inputs()
+    by_id = {entity["source_entity_id"]: entity["payload"]
+             for entity in series["entities"]}
+    examples = {
+        "hangzhou": (2023, "Zhuhai", 2024, "Hangzhou",
+                     "https://www.atptour.com/en/news/hangzhou-press-conference-2024-june"),
+        "almaty": (2023, "Astana", 2024, "Almaty",
+                   "https://www.atptour.com/en/news/2024-atp-calendar-update-gijon-almaty"),
+        "brussels": (2024, "Antwerp", 2025, "Brussels",
+                     "https://www.atptour.com/en/news/antwerp-brussels-relocation-2025"),
+        "lyon": (2025, "Marseille", 2026, "Lyon",
+                 "https://www.atptour.com/en/news/marseille-lyon-relocation"),
+        "sofia": (2015, "Zagreb", 2016, "Sofia",
+                  "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars"),
+        "chengdu": (2015, "Kuala Lumpur", 2016, "Chengdu",
+                    "https://www.denik.cz/tenis/teniste-uz-nebudou-hrat-v-kualu-lumpur-turnaj-se-stehuje-do-ccheng-tu-20160629.html"),
+    }
+    snapshot = {x["year"]: x["series_category_ids"] for x in seasons["seasons"]}
+    for series_id, (old_year, old_city, new_year, new_city, url) in examples.items():
+        payload = by_id[series_id]
+        hosts = {row["year"]: row["city"] for row in payload["historical_host_change"]}
+        assert hosts[old_year] == old_city
+        assert hosts[new_year] == new_city
+        assert url in licence_evidence_urls(payload)
+        assert series_id in snapshot[old_year]
+        assert series_id in snapshot[new_year]
+        assert snapshot[old_year][series_id] == snapshot[new_year][series_id]
+    # These six narrow transfers do not purport to certify every older city
+    # or a legal chain in the many other historical source Series.
+    report = audit(*_inputs())
+    assert report["counts"]["multi_host_series_without_explicit_licence_source"] >= 10
+
+
+def test_provenance_metadata_fail_closed_and_no_truncated_official_news_links() -> None:
+    from scripts.build_atp_tour_historical_seasons import build
+
+    categories, series, _ = _inputs()
+    raw = json.dumps(series, ensure_ascii=False)
+    assert '"https://www.atptour.com/en/news/to"' not in raw
+
+    bad = copy.deepcopy(series)
+    hangzhou = next(x for x in bad["entities"] if x["source_entity_id"] == "hangzhou")
+    hangzhou["payload"]["historical_licence_source_urls"] = ["http://example.com"]
+    with pytest.raises(ValueError, match="Invalid historical licence evidence"):
+        build(categories, bad)
+
+    bad = copy.deepcopy(series)
+    hangzhou = next(x for x in bad["entities"] if x["source_entity_id"] == "hangzhou")
+    url = hangzhou["payload"]["historical_licence_source_urls"][0]
+    hangzhou["payload"]["historical_licence_source_urls"] = [url, url]
+    with pytest.raises(ValueError, match="Invalid historical licence evidence"):
+        build(categories, bad)

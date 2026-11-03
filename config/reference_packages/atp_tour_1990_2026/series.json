@@ -16113,20 +16113,20 @@
           "reason": "2025 tournament completed, even though a brief overview page omitted it"
         },
         "historical_licence_source_urls": [
-          "https://www.atptour.com/en/news/to"
+          "https://www.atptour.com/en/news/hangzhou-press-conference-2024-june"
         ],
         "historical_host_change": [
           {
             "year": 2023,
             "city": "Zhuhai",
             "country_code": "CHN",
-            "source_url": "https://www.atptour.com/en/news/to"
+            "source_url": "https://www.atptour.com/en/news/hangzhou-press-conference-2024-june"
           },
           {
             "year": 2024,
             "city": "Hangzhou",
             "country_code": "CHN",
-            "source_url": "https://www.atptour.com/en/news/to"
+            "source_url": "https://www.atptour.com/en/news/hangzhou-press-conference-2024-june"
           }
         ],
         "identity_review_note": "Zhuhai ATP 250 Tour licence relocated to Hangzhou starting 2024. Stable Series ID retained.",

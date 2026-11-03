@@ -33,17 +33,17 @@ def test_source_provenance_audit_full_37_year_inventory_is_reproducible() -> Non
     assert report["schema_version"] == "tennis.atp_source_provenance_audit.v1"
     counts = report["counts"]
     assert counts["category_identities"] == 11
-    assert counts["series_identities"] == 166
+    assert counts["series_identities"] == 165
     assert counts["historical_season_rows"] == 37
     assert counts["source_interval_records"] == 1983
     assert counts["year_effective_series_memberships"] == 2431
-    assert counts["explicit_historical_host_year_records"] == 1448
-    assert counts["memberships_without_explicit_host_year_record"] == 983
-    assert len(report["series_evidence"]) == 166
+    assert counts["explicit_historical_host_year_records"] == 1451
+    assert counts["memberships_without_explicit_host_year_record"] == 980
+    assert len(report["series_evidence"]) == 165
     assert [y["year"] for y in report["yearly_coverage"]] == list(range(1990, 2027))
     assert sum(y["source_membership_count"] for y in report["yearly_coverage"]) == 2431
     assert sum(y["without_explicit_host_year_evidence"]
-               for y in report["yearly_coverage"]) == 983
+               for y in report["yearly_coverage"]) == 980
     assert counts["source_period_evidence_kinds"]["atp_year_results_index"] >= 1700
 
 
@@ -90,3 +90,33 @@ def test_provenance_audit_rejects_stale_annual_snapshot_not_count_only() -> None
     row["series_category_ids"]["belgrade"] = "atp_500"
     with pytest.raises(ValueError, match="Stored seasons differ"):
         audit(category, series, altered)
+
+
+def test_memphis_500_and_san_jose_250_licences_do_not_merge_at_2014_boundary() -> None:
+    """A venue can retain its name while the underlying ATP sanction changes."""
+    categories, series, seasons = _inputs()
+    by_id = {e["source_entity_id"]: e for e in series["entities"]}
+    assert "san_jose_2013" not in by_id
+    memphis_to_rio = by_id["rio"]["payload"]
+    san_jose_to_dallas = by_id["dallas"]["payload"]
+    mhosts = {h["year"]: h["city"]
+              for h in memphis_to_rio["historical_host_change"]}
+    shosts = {h["year"]: h["city"]
+              for h in san_jose_to_dallas["historical_host_change"]}
+    assert mhosts[2013] == "Memphis" and mhosts[2014] == "Rio de Janeiro"
+    assert shosts[2013] == "San Jose" and shosts[2014] == "Memphis"
+    assert mhosts[1990] == "Memphis" and shosts[1990] == "San Francisco"
+
+    annual = {row["year"]: row for row in seasons["seasons"]}
+    for year in (2012, 2013):
+        assert annual[year]["series_category_ids"]["rio"] == "atp_500"
+        assert annual[year]["series_category_ids"]["dallas"] == "atp_250"
+    for year in (2014, 2015):
+        assert annual[year]["series_category_ids"]["rio"] == "atp_500"
+        assert annual[year]["series_category_ids"]["dallas"] == "atp_250"
+    assert annual[2008]["series_category_ids"]["rio"] == "atp_international_series_gold"
+    assert annual[2008]["series_category_ids"]["dallas"] == "atp_international_series"
+    assert annual[2025]["series_category_ids"]["dallas"] == "atp_500"
+    assert by_id["rio"]["payload"]["historical_licence_source_urls"]
+    assert by_id["dallas"]["payload"]["historical_licence_source_urls"]
+    assert audit(categories, series, seasons)["counts"]["year_effective_series_memberships"] == 2431

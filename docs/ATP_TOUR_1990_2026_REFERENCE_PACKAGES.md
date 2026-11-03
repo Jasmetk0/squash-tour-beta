@@ -8,7 +8,7 @@
 > **explicit, opaque Run Package reference Setup** for Preview/Confirm/Save,
 > with two Category/Series children and a small API source manifest. This is
 > **not** a playable Edition calendar, historical ranking system, sporting
-> adapter, or global user-facing Package Catalog UI.
+> adapter. A dedicated ATP reference Apply page is now linked from the Admin Packages hub.
 >
 > Sections below preserve dated incremental research checkpoints. Statements
 > about older incomplete year ranges (e.g. `1990–2007`) describe the state
@@ -31,12 +31,16 @@ tennis-namespaced entity kind/scope, original 1990–2026 reference span,
 `not_squash_rules`, and exact Series-to-Category source references.
 There is no automatic sporting semantic translation.
 
+The dedicated Admin page is `/admin/packages/atp-tour-reference` (Czech/English). Its catalog and preview are read-only; it never creates playable Editions, a Calendar or ranking results. After selecting a writable Run and Branch, confirming is distinct from explicitly saving the Working Draft. Existing non-ATP drafts are not silently deleted.
+
 For an **existing writable Run/Branch** (URL-encode both IDs), the endpoints are:
+
+- `GET /admin/reference-packages/atp-tour-1990-2026` — global, read-only immutable source manifest and fingerprints
 
 - `GET /admin/runs/{run}/branches/{branch}/packages/source-atp-reference/catalog`
   — source manifest and deterministic hashes, with no Run mutation
 - `POST /admin/runs/{run}/branches/{branch}/packages/source-atp-reference/preview`
-  with `{}` — complete Setup preview; no Run mutation
+  with `{}` — compact but fingerprint-bound Setup preview; no Run mutation. Its HTTP response excludes the full source JSON and includes `document_identity` linked to the independently loaded source manifest
 - `POST /admin/runs/{run}/branches/{branch}/packages/source-atp-reference/confirm`
   — CAS-protected, atomic installation of **both** source Packages into the
   Working Draft through the existing generic Run Package service
@@ -58,8 +62,7 @@ Run-owned snapshots; safely preview and explicitly apply/Save those
 historical references. It does **not** create historical tournament Editions,
 match results, points matrices, a Calendar, or change the squash simulation.
 This reference Setup is deliberately not offered as a fully playable package.
-The Admin's global source Package Catalog UI remains World-only and requires
-a separate user-facing discovery/application workflow if desired.
+The dedicated ATP reference UI is available from Packages. The generalized dynamic source Package Catalog remains World-only; this ATP entrypoint is a fixed historic source, not a universal Category/Series catalog.
 
 **Future immutable versioning:** the initial reference documents use
 `source_version: 1`. After a source version is merged/applied, changing its

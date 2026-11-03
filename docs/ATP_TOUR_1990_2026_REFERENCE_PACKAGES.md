@@ -1,9 +1,9 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **136** Series identities and 37 generated annual reference rows.
-> The **31 played main ATP Tour tier rosters 1995–2025** have source-backed
-> original year-effective categories. **1990–1994 are incomplete; 2026 is
+> **145** Series identities and 37 generated annual reference rows.
+> The **32 played main ATP Tour tier rosters 1994–2025** have source-backed
+> original year-effective categories. **1990–1993 are incomplete; 2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
@@ -1477,3 +1477,20 @@ Historically significant:
 Sources: [official 1995 ATP Results Archive](https://www.atptour.com/en/scores/results-archive?year=1995), [1995 source-tier season summary](https://en.wikipedia.org/wiki/1995_ATP_Tour), [1995 independent tournament listing](https://tennis-db.com/tournaments?season=1995), [1995 Vienna World Series](https://en.wikipedia.org/wiki/1995_CA-TennisTrophy), [1995 Tokyo Indoor Championship](https://en.wikipedia.org/wiki/1995_Tokyo_Indoor). The independent list has 84 editions with four non-ATP Grand Slams (not 84 ATP-only).
 
 The deterministic `PRE_2000_PLAYED_TIER_COUNTS[1995]` gate uses 9/11/59, supported by regression and adversarial tests and the 37-year stable JSON derived snapshot. These documents **do not** create native Category/Series adapters, played Editions, original ranking-point matrices, results, Package Catalog or Run Apply/Save support.
+
+
+## 2026-11-03 — complete original 1994 ATP main-Tour played Category roster
+
+**1994** had **9 ATP Super 9, 12 ATP Championship Series, 63 ATP World Series and one singles ATP Tour World Championships** at Frankfurt (**85 ATP-only source Series identities**). This extends original-year played-tier coverage to **32 consecutive seasons (1994–2025)**. **1990–1993 remain unverified/incomplete**. The 2026 source remains a provisional, non-final calendar. The documented [1994 ATP Tour category totals](https://en.wikipedia.org/wiki/1994_ATP_Tour) reconcile against the [ATP 1994 official results archive](https://www.atptour.com/en/scores/results-archive?year=1994), [independent 1994 original tier data](https://tennis-db.com/tournaments?season=1994) and [German 1994 year-host archive](https://de.wikipedia.org/wiki/ATP_Tour_1994). TennisDB reports 89 main-tour singles events including four Grand Slams, which are deliberately excluded from this ATP-only package.
+
+**Nine source IDs introduced**: Oahu, Zaragoza, Osaka, Birmingham Alabama, 1994 Madrid clay Grand Prix, Florence, Schenectady, Athens and Sydney Indoor 1994. All retain original year-only evidence. Historic Madrid **clay World Series** is not automatically assigned to the **2002–2008 Madrid indoor Masters** licence without legal continuity evidence. 1994 Florence is not auto-equal to the temporary 2022 Florence fixture.
+
+Original-year separation and provenance:
+- 1994 **Stuttgart February Indoor Championship**, **Stuttgart July clay Championship** and **Stockholm October Super 9** were three separate played Tour competitions, as were **Tokyo April Japan Open** and **Tokyo October Indoor**, both Championship Series.
+- 1994 **Sydney January World Series** and **Sydney October Indoor Championship** were separate ATP-only fixtures, not a duplicated October/January Edition.
+- **Birmingham Alabama 1994** U.S. Men's Clay Court Championships and **Pinehurst 1994** USTA Clay Court Classic are *different coexisting US events*, confirmed by the [contemporary German annual listing](https://de.wikipedia.org/wiki/ATP_Tour_1994); TennisDB geographically mislabels Birmingham as in the UK. The legal licence chain into later Pinehurst/Orlando/Houston remains evidence-limited, so the two original 1994 fixtures are never collapsed into one. Coral Springs 1994 was also an additional separate World Series, sometimes anachronistically named Delray Beach.
+- 1994 Vienna was **World Series** rather than Championship; the German Wikipedia annual table labels it Championship, but the historical original-tier 12 Championship / 63 World season counts and [independent original-tier tournament record](https://tennis-db.com/tournaments?season=1994) support World. Thus original-year data are not modernized into post-2009 winner-points/tier labels.
+- 1994 **Manchester** (later Nottingham/Eastbourne), **Lyon** (later Montpellier), **Kuala Lumpur** (1995 same host, Singapore from 1996), **Sun City** (1995 Johannesburg) and **1994 Frankfurt Finals singles** use their contemporary city, not present-day brand. Jakarta year-end doubles Finals are separate and excluded.
+- 1994 **Stockholm** was the ninth Super 9 (1995 moved to Essen, 1996 to Stuttgart indoors), not an additional World Series; 1994 Frankfurt singles Finals are not merged with Jakarta doubles Finals.
+
+`PRE_2000_PLAYED_TIER_COUNTS[1994]` enforces 9/12/63 with original vocabulary, rejects category mutation or fabricated cancellations, and regenerates the source-derived season map without altering any other year. This remains source-only Category/Series metadata: no player/results data, ranking points, native Run Apply/Save, playable historic FAX Editions, licence rights, or Tour gameplay added.

@@ -16,7 +16,7 @@
     "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
     "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
     "notes": [
-      "Played main ATP Tour original tier rosters 1995–2025 source-reconciled; 1990–1994 incomplete and 2026 provisional. Source-only data without historical Edition/draw/result/Run Apply.",
+      "Played main ATP Tour original tier rosters 1994–2025 source-reconciled; 1990–1993 incomplete and 2026 provisional. Source-only data without historical Edition/draw/result/Run Apply.",
       "2026 date/host fields are not assumed for earlier seasons.",
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
@@ -53,7 +53,7 @@
       },
       "note": "Tour-only played events, excluding Grand Slam, team, Olympic, Challenger and ITF. The 2025 overview page omitted Hangzhou; ATP 2025 results prove participation."
     },
-    "historical_roster_scope": "1995–2025 played original ATP main Tour tier rosters source-reconciled; 1990–1994 incomplete, 2026 provisional; no played Edition objects",
+    "historical_roster_scope": "1994–2025 ATP main Tour original-tier source-only census; 1990–1993 incomplete and 2026 provisional; no played Edition objects",
     "calendar_validation_2023": {
       "source_2023": "https://www.atptour.com/en/scores/results-archive?year=2023",
       "singles_main_tour_250_count": 38,
@@ -831,6 +831,38 @@
           "source_url": "https://www.atptour.com/-/media/23da5115363646fd89d16716e5b35a2e.pdf"
         }
       ]
+    },
+    "calendar_validation_1994": {
+      "official_atp_results_archive": "https://www.atptour.com/en/scores/results-archive?year=1994",
+      "original_tier_season_roster": "https://en.wikipedia.org/wiki/1994_ATP_Tour",
+      "original_host_calendar": "https://de.wikipedia.org/wiki/ATP_Tour_1994",
+      "independent_tier_crosscheck": "https://tennis-db.com/tournaments?season=1994",
+      "played_original_tiers": {
+        "atp_super_9": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 63,
+        "atp_finals_singles": 1
+      },
+      "atp_only_singles_series_identities": 85,
+      "excluded_grand_slam_count": 4,
+      "original_tier_names_only": true,
+      "reference_not_played_engine_editions": true,
+      "tier_evidence_note": "1994 12 Championships include separately played Sydney Indoor and Tokyo Indoor; 1994 Vienna was World Series despite conflicting German one-line category.",
+      "city_identity_notes": [
+        "1994 Birmingham Alabama U.S. Men's Clay Court Championships and 1994 Pinehurst USTA Clay Court Classic were distinct coexisting ATP World Series events; independent TennisDB incorrectly displays Birmingham as UK.",
+        "1994 October Sydney Indoor Championship and January Sydney World were distinct ATP main Tour fixtures.",
+        "1994 October Tokyo Indoor Championship and April Tokyo Japan Open Championship were distinct ATP main Tour fixtures.",
+        "1994 Frankfurt ATP Tour World Championships singles, Jakarta doubles-only Finals excluded.",
+        "1994 Manchester grass tournament not relocated to Eastbourne venue retroactively.",
+        "1994 Vienna World classification is not modern 250 winner-points equivalence.",
+        "1994 Stockholm was the Masters Super9 host, not 1995 Essen, nor later Stuttgart 1996–2001.",
+        "1994 Kuala Lumpur was a played World Series event with historical source identity used for 1995 and 1996 Singapore move; alias Brisbane is anachronistic."
+      ],
+      "licensing_cautions": [
+        "1994 Birmingham Alabama and Pinehurst licence relationship to subsequent US clay tour events remains under review; currently never merged as one 1994 played entry.",
+        "1994 Madrid clay Series is not automatically the same legal licence as the 2002 Madrid indoor Masters.",
+        "1994 Osaka, Schenectady, Zaragoza, Athens, Oahu and Florence remain historical-only source IDs, not assumed ongoing ATP licences."
+      ]
     }
   },
   "explicit_scope": [
@@ -881,6 +913,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Indian Wells",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Indian Wells",
@@ -1010,6 +1048,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Key Biscayne",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Key Biscayne",
             "country_code": "USA",
@@ -1137,6 +1181,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Monte Carlo",
+            "country_code": "MCO",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Monte Carlo",
@@ -1336,6 +1386,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Rome",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Rome",
             "country_code": "ITA",
@@ -1465,6 +1521,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Toronto",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Montreal",
             "country_code": "CAN",
@@ -1588,6 +1650,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Cincinnati",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Cincinnati",
@@ -1768,6 +1836,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Paris",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Paris",
             "country_code": "FRA",
@@ -1867,6 +1941,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -2081,6 +2162,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Memphis",
             "country_code": "USA",
@@ -2289,6 +2376,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -2503,6 +2597,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Rotterdam",
             "country_code": "NLD",
@@ -2632,6 +2732,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -2853,6 +2960,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Doha",
+            "country_code": "QAT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Doha",
             "country_code": "QAT",
@@ -3016,6 +3129,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -3223,6 +3343,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Mexico City",
+            "country_code": "MEX",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Mexico City",
             "country_code": "MEX",
@@ -3341,6 +3467,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -3555,6 +3688,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Dubai",
+            "country_code": "ARE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Dubai",
             "country_code": "ARE",
@@ -3684,6 +3823,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -3891,6 +4037,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Barcelona",
             "country_code": "ESP",
@@ -4014,6 +4166,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -4228,6 +4387,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Munich",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Munich",
             "country_code": "DEU",
@@ -4376,6 +4541,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Hamburg",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Hamburg",
             "country_code": "DEU",
@@ -4475,6 +4646,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -4595,6 +4773,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Halle ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Halle",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Halle",
@@ -4720,6 +4904,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -4839,6 +5030,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "London",
@@ -4963,6 +5160,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -5170,6 +5374,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Washington",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Washington",
             "country_code": "USA",
@@ -5293,6 +5503,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -5492,6 +5709,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Tokyo",
@@ -5831,6 +6054,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -6041,6 +6271,12 @@
         "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Basel",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Basel",
             "country_code": "CHE",
@@ -6158,6 +6394,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://tennis-db.com/tournaments?season=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -6372,6 +6615,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://tennis-db.com/tournaments?season=1994"
+          },
+          {
             "year": 1995,
             "city": "Vienna",
             "country_code": "AUT",
@@ -6492,7 +6741,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2014"
           }
         ],
-        "identity_review_note": "Vienna 1995 CA Tennis Trophy was ATP World Series (not Championship); historical German yearly summary mismarks tier, contemporary tournament edition and 1995 original census prevail. Vienna 1996 was Championship."
+        "identity_review_note": "1994 Vienna was ATP World Series; German annual table labels Championship Series erroneously, but 1994 original-tier season counts and independent TennisDB classify World Series. 1995 also World; 1996 Championship."
       },
       "references": [
         {
@@ -6544,6 +6793,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -6744,6 +7000,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994"
+          },
+          {
             "year": 1995,
             "city": "Adelaide",
             "country_code": "AUS",
@@ -6874,6 +7136,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -7094,6 +7363,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Nice",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Nice",
@@ -7383,6 +7658,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -7596,6 +7878,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Auckland",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Auckland",
             "country_code": "NZL",
@@ -7713,6 +8001,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -7934,6 +8229,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994"
+          },
+          {
             "year": 1995,
             "city": "Lyon",
             "country_code": "FRA",
@@ -8025,7 +8326,7 @@
           }
         ],
         "historical_licence_source_url": "https://www.lequipe.fr/Tennis/Actualites/Montpellier-remplace-lyon/105494",
-        "identity_review_note": "1997 played Grand Prix de Lyon at Lyon, not Montpellier; current source identity continues to the later Montpellier event licence."
+        "identity_review_note": "1994 Grand Prix de Tennis de Lyon indoor World Series was held in Lyon. Independent tournament archive displays its later Montpellier successor name, anachronistic for 1994."
       },
       "references": [
         {
@@ -8327,6 +8628,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -8554,6 +8862,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Coral Springs",
+            "country_code": "USA",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994"
+          },
+          {
             "year": 1995,
             "city": "Coral Springs",
             "country_code": "USA",
@@ -8632,7 +8946,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
           }
         ],
-        "identity_review_note": "1997 played at Coral Springs, Florida (ATP International Tennis Championships); later event branded Delray Beach. Do not use current host as 1997 venue."
+        "identity_review_note": "1994 Coral Springs clay ATP World Series; independent retroactive 'Delray Beach' title/city is not the actual 1994 host."
       },
       "references": [
         {
@@ -8800,6 +9114,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -9025,6 +9346,12 @@
         "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Pinehurst",
+            "country_code": "USA",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994"
+          },
+          {
             "year": 1995,
             "city": "Pinehurst",
             "country_code": "USA",
@@ -9103,7 +9430,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
           }
         ],
-        "identity_review_note": "Pinehurst 1995–1996 / Orlando 1997–2000 / Houston 2001 onward U.S. Men's Clay Court Championships is one historic title identity."
+        "identity_review_note": "1994 Pinehurst USTA Clay Court Classic was separate from the 1994 Birmingham Alabama US Men's Clay Court Championships. The source family includes 1995–96 Pinehurst, 1997 Orlando, 2001 Houston; exact 1994 cross-licence attribution remains for further confirmation, so no extra Birmingham linkage is claimed."
       },
       "references": [
         {
@@ -9143,6 +9470,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -9356,6 +9690,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Casablanca",
@@ -9636,6 +9976,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_championship_series",
@@ -9856,6 +10203,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -10015,6 +10368,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -10229,6 +10589,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "'s-Hertogenbosch",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "'s-Hertogenbosch",
             "country_code": "NLD",
@@ -10417,6 +10783,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -10638,6 +11011,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Manchester",
+            "country_code": "GBR",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994"
+          },
+          {
             "year": 1995,
             "city": "Nottingham",
             "country_code": "GBR",
@@ -10776,7 +11155,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2017"
           }
         ],
-        "identity_review_note": "Nottingham ATP 250 grass 2016 relocated to Eastbourne 2017; the 2017+ Nottingham men's event was Challenger level, not this Tour 250."
+        "identity_review_note": "1994 Manchester grass World Series was the predecessor of Nottingham and eventual Eastbourne host; 1994 not played in Eastbourne."
       },
       "references": [
         {
@@ -10816,6 +11195,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -11036,6 +11422,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Båstad",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Båstad",
@@ -11155,6 +11547,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -11374,6 +11773,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Gstaad",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Gstaad",
@@ -11493,6 +11898,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -11713,6 +12125,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Umag",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Umag",
             "country_code": "HRV",
@@ -11830,6 +12248,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -12051,6 +12476,12 @@
         "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Kitzbühel",
             "country_code": "AUT",
@@ -12180,6 +12611,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -12393,6 +12831,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Estoril",
@@ -12689,6 +13133,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -12908,6 +13359,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Long Island",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Long Island",
@@ -13929,6 +14386,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -14163,6 +14627,12 @@
           "source_url": "https://www.atptour.com/en/news/marseille-lyon-relocation"
         },
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Marseille",
@@ -14600,6 +15070,12 @@
         "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit.",
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Stockholm",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Stockholm",
             "country_code": "SWE",
@@ -14747,6 +15223,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Frankfurt",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/-/media/83956b6ae89248d3a2a632428df04269.pdf"
+          },
           {
             "year": 1995,
             "city": "Frankfurt",
@@ -15722,6 +16204,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -15927,6 +16416,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Newport",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Newport",
             "country_code": "USA",
@@ -16048,6 +16543,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -16253,6 +16755,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Indianapolis",
@@ -16775,6 +17283,13 @@
         "history_scope": "2000_london_axa_gold_2001_milan_is_2005_milan_2006_zagreb_2016_sofia",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_championship_series",
@@ -16979,6 +17494,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Milan",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Milan",
@@ -17711,6 +18232,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -17895,6 +18423,12 @@
         ],
         "identity_review_note": "Bucharest 2015–16 Tour licence transferred Budapest 2017–19 then Belgrade 2021; Bucharest 2024+ tracked as a distinct Tour licence without unproven merger.",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Bucharest",
+            "country_code": "ROU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Bucharest",
@@ -18214,6 +18748,13 @@
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -18398,6 +18939,12 @@
         ],
         "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played.",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Moscow",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Moscow",
@@ -18641,6 +19188,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -18818,6 +19372,12 @@
         ],
         "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined.",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Sydney",
@@ -19417,6 +19977,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -19552,6 +20119,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "San Jose",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "San Jose",
@@ -19675,6 +20248,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -19810,6 +20390,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Los Angeles",
@@ -20165,6 +20751,13 @@
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -20293,6 +20886,12 @@
         ],
         "identity_review_note": "2000 Dutch Open Amsterdam, 2001 Amersfoort; later Serbia names must not overwrite original Dutch city.",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Hilversum",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Amsterdam",
@@ -20500,6 +21099,13 @@
         "history_scope": "2005_scottsdale_2006_2008_las_vegas",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -20600,6 +21206,12 @@
         ],
         "identity_review_note": "2005 Tennis Channel Open in Scottsdale transferred to Las Vegas in 2006, played there through 2008; earlier Scottsdale years not imported.",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Scottsdale",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Scottsdale",
@@ -20717,6 +21329,13 @@
         "history_scope": "2005_st_poelten_2006_2008_poertschach",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -20817,6 +21436,12 @@
         ],
         "identity_review_note": "2005 St. Pölten ATP event licence moved to Pörtschach from 2006, played there through 2008.",
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "St. Pölten",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "St. Pölten",
@@ -21268,6 +21893,13 @@
         "history_scope": "2005_2006_played_tour_only_older_seasons_not_backfilled",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -21353,6 +21985,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Palermo",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Palermo",
@@ -21465,6 +22103,13 @@
         "history_scope": "played_2001_2003_copenhagen_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -21529,6 +22174,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Copenhagen",
+            "country_code": "DNK",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Copenhagen",
@@ -21623,6 +22274,13 @@
         "history_scope": "played_2001_2002_hong_kong_salem_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -21680,6 +22338,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Hong Kong",
+            "country_code": "HKG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Hong Kong",
@@ -21768,6 +22432,13 @@
         "history_scope": "played_2001_atp_international_series_only_older_1990_2000_not_imported",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -21811,6 +22482,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Bogota",
+            "country_code": "COL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Bogotá",
@@ -21887,6 +22564,13 @@
         "history_scope": "played_2001_atp_international_series_only_older_1990_2000_not_imported",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -21937,6 +22621,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Atlanta",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Atlanta",
@@ -22019,6 +22709,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -22062,6 +22759,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "San Marino",
+            "country_code": "SMR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "San Marino",
@@ -22138,6 +22841,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -22181,6 +22891,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Toulouse",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Toulouse",
@@ -22377,6 +23093,13 @@
         "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -22414,6 +23137,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Kuala Lumpur",
+            "country_code": "MYS",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994"
+          },
+          {
             "year": 1995,
             "city": "Kuala Lumpur",
             "country_code": "MYS",
@@ -22444,7 +23173,7 @@
             "source_url": "https://www.atptour.com/en/tournaments/singapore/326/overview"
           }
         ],
-        "identity_review_note": "Kuala Lumpur 1995 to Singapore 1996/1997/1998/1999 ATP Tour source line, original venue host changes preserved; no fictitious 1995 Singapore played Tour event."
+        "identity_review_note": "1994 Kuala Lumpur ATP World Series (as in 1995); modern TennisDB label Brisbane is not the historical 1994 Australian Brisbane event."
       },
       "references": [
         {
@@ -22483,6 +23212,13 @@
         "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -22519,6 +23255,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Prague",
+            "country_code": "CZE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Prague",
@@ -22785,6 +23527,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_championship_series",
@@ -22807,6 +23556,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Antwerp",
+            "country_code": "BEL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1996,
             "city": "Antwerp",
@@ -22834,6 +23589,12 @@
           "source_entity_id": "atp_championship_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -22858,6 +23619,13 @@
         "not_squash_rules": true,
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
           {
             "from": 1995,
             "to": 1995,
@@ -22888,6 +23656,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Philadelphia",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Philadelphia",
@@ -22946,6 +23720,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -22975,6 +23756,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Bologna",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Bologna",
@@ -23033,6 +23820,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_championship_series",
@@ -23062,6 +23856,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "New Haven",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "New Haven",
@@ -23120,6 +23920,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -23149,6 +23956,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Ostrava",
+            "country_code": "CZE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Ostrava",
@@ -23207,6 +24020,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -23236,6 +24056,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Santiago",
+            "country_code": "CHL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Santiago",
@@ -23294,6 +24120,13 @@
         "history_scope": "historic_beijing_1993_1997_2004_china_open_not_assumed_same_licence",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -23316,6 +24149,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Beijing",
+            "country_code": "CHN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Beijing",
@@ -23368,6 +24207,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -23383,6 +24229,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Jakarta",
+            "country_code": "IDN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Jakarta",
@@ -23490,6 +24342,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -23505,6 +24364,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Seoul",
+            "country_code": "KOR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Seoul",
@@ -23612,6 +24477,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -23627,6 +24499,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Tel Aviv",
+            "country_code": "ISR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Tel Aviv",
@@ -23673,6 +24551,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_championship_series",
@@ -23682,13 +24567,19 @@
         ],
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Stuttgart",
             "country_code": "DEU",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
           }
         ],
-        "identity_review_note": "February 1995 Stuttgart indoors Championship Series was a distinct fixture from the July Stuttgart clay Championship and 1996 Stuttgart autumn Super 9, which was Essen in 1995."
+        "identity_review_note": "1994 February Stuttgart Indoor Championship Series separate from 1994 July Stuttgart clay Championship Series, both distinct from 1996 Super9 Stuttgart autumn."
       },
       "references": [
         {
@@ -23721,6 +24612,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -23730,13 +24628,19 @@
         ],
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Sun City",
+            "country_code": "ZAF",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994"
+          },
+          {
             "year": 1995,
             "city": "Johannesburg",
             "country_code": "ZAF",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
           }
         ],
-        "identity_review_note": "1995 Johannesburg was a Tour World Series event (former Sun City); not automatically the same Tour licence as 2009–2011 Johannesburg."
+        "identity_review_note": "1994 South African Open played Sun City (moved from Durban), 1995 Johannesburg is the subsequent South African Open venue, 2009 Johannesburg return is separately represented."
       },
       "references": [
         {
@@ -23769,6 +24673,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -23777,6 +24688,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Bordeaux",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Bordeaux",
@@ -23817,6 +24734,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_championship_series",
@@ -23826,13 +24750,19 @@
         ],
         "historical_host_change": [
           {
+            "year": 1994,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
             "year": 1995,
             "city": "Tokyo",
             "country_code": "JPN",
             "source_url": "https://en.wikipedia.org/wiki/1995_Tokyo_Indoor"
           }
         ],
-        "identity_review_note": "Tokyo October Indoor 1995 Championship Series is distinct from April Tokyo Japan Open Championship Series; the 1995 autumn indoor edition was its last in ATP tour."
+        "identity_review_note": "1994 October Tokyo Indoor Championship Series separate from April Japan Open Tokyo Championship Series."
       },
       "references": [
         {
@@ -23865,6 +24795,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -23873,6 +24810,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Montevideo",
+            "country_code": "URY",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Montevideo",
@@ -23913,6 +24856,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
             "from": 1995,
             "to": 1995,
             "category_id": "atp_world_series",
@@ -23921,6 +24871,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Buenos Aires",
+            "country_code": "ARG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
           {
             "year": 1995,
             "city": "Buenos Aires",
@@ -23934,6 +24890,438 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "oahu_1994",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1994 Oahu Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Oahu",
+        "historical_country_code": "USA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
+        "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Oahu",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          }
+        ],
+        "identity_review_note": "1994 ATP World Series on Oahu, Hawaiian Islands; year-specific evidence, no inferred continuity."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "zaragoza_1994",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1994 Zaragoza Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Zaragoza",
+        "historical_country_code": "ESP",
+        "historical_surface": "indoor_carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
+        "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Zaragoza",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          }
+        ],
+        "identity_review_note": "One-year documented Zaragoza ATP World Series; no invented 1995 edition."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "osaka_1994",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1994 Osaka Salem Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Osaka",
+        "historical_country_code": "JPN",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
+        "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Osaka",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          }
+        ],
+        "identity_review_note": "Played Osaka ATP World Series 1994, distinct from contemporaneous Tokyo Japan Open and Tokyo Indoor."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "birmingham_1994",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1994 US Men's Clay Court Championships, Birmingham Alabama",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Birmingham",
+        "historical_country_code": "USA",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
+        "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Birmingham",
+            "country_code": "USA",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994"
+          }
+        ],
+        "identity_review_note": "1994 Birmingham (Alabama, USA), NOT Birmingham United Kingdom. Distinct concurrent 1994 Pinehurst USTA Clay Court Classic; historical sanction/license lineage requires further independent proof."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "madrid_clay_1994",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1994 Madrid Grand Prix (clay)",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Madrid",
+        "historical_country_code": "ESP",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
+        "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Madrid",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          }
+        ],
+        "identity_review_note": "1994 Madrid clay World Series, distinct from late-era Madrid indoor Tennis Masters Series starting in 2002; legal source licence equivalence not assumed."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "florence_1994",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1994 Florence ATP Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Florence",
+        "historical_country_code": "ITA",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
+        "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Florence",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          }
+        ],
+        "identity_review_note": "Played Florence 1994 World Series; not equated to the temporary 2022 Florence ATP licence without evidence."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "schenectady_1994",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1994 OTB Open Schenectady",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Schenectady",
+        "historical_country_code": "USA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
+        "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Schenectady",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          }
+        ],
+        "identity_review_note": "Played ATP World Series Schenectady 1994 alongside separate Long Island event; no 1994 conflation."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "athens_1994",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1994 Athens International ATP",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Athens",
+        "historical_country_code": "GRC",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
+        "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Athens",
+            "country_code": "GRC",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          }
+        ],
+        "identity_review_note": "1994 Athens original ATP World Series; historical-only fixture without inferred ATP revival."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "sydney_indoor_1994",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1994 Australian Indoor Tennis Championships Sydney",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Sydney",
+        "historical_country_code": "AUS",
+        "historical_surface": "indoor_hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
+        "history_periods": [
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_championship_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1994,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994"
+          }
+        ],
+        "identity_review_note": "October Sydney indoor Championship Series independent of January Sydney International World Series; not a second copy of same event."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }

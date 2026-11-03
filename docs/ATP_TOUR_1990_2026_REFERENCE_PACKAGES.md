@@ -1,7 +1,7 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
-> **Current verified source state (2026-11-02):** 11 Category identities,
-> **167** Series identities and 37 generated annual reference rows.
+> **Current verified source state (2026-11-03):** 11 Category identities,
+> **166** Series identities and 37 generated annual reference rows.
 > The **36 played main ATP Tour tier rosters 1990–2025** have source-backed
 > original year-effective categories. **2026 is
 > provisional** until final results. This is source-only and is **not**
@@ -18,6 +18,28 @@
 since 1 January 1990**, not the entire history of men's tennis. The Category
 and Series Package are optional **source-only historical references** for
 Squash Engine's data-driven future, not tennis gameplay.
+
+## 2026-11-03 — corrected 2013 Los Angeles → Bogotá → Los Cabos ATP sanction
+
+Independent verification found a real identity defect in the 2013 source roster:
+the `los_angeles_2013` reference falsely suggested a 2013 Los Angeles
+ATP 250, when the last Los Angeles ATP edition was in **2012**.
+The ATP-approved sale transferred its sanction to **Bogotá for 2013**;
+Bogotá's tournament licence subsequently moved to **Los Cabos for 2016**.
+
+The registry now uses one continuous `los_cabos` Series identity for
+**Los Angeles through 2012 → Bogotá 2013–2015 → Los Cabos from 2016**,
+with separately documented year-effective city and Category history.
+The obsolete `los_angeles_2013` ID was removed, leaving **166** unique
+historical Series; annual snapshots for 1990–2013 were regenerated without
+changing **any** played tier census (2013 remains 9 Masters / 11 ATP 500 /
+40 ATP 250, plus singles Finals). The 2026 roster stays provisional.
+This is *source reference* provenance, not a playable Edition or game rule.
+
+Independent sources: [ATP 2012 Los Angeles results](https://www.atptour.com/en/tournaments/los-angeles/423/overview);
+[ATP-approved sale to Bogotá, December 2012](https://www.tennis.com/news/articles/atp-finalizes-sale-of-l-a-tournament-to-bogota);
+[ATP 2013 Bogotá results archive](https://www.atptour.com/en/scores/results-archive?year=2013);
+[Bogotá-to-Los Cabos rights sale, November 2015](https://matchtenis.com/el-atp-de-bogota-se-traslada-a-mexico/).
 
 ## Canonical boundaries
 
@@ -846,10 +868,12 @@ retroactively inferred from the familiar 2026 category names:
   modern tier labels applied to past years.
 - **Viña del Mar 2013–14** is referenced under `cordoba`,
   followed by **Quito 2015–18** and **Córdoba 2019**.
-- Historic ATP 250s **San Jose, Los Angeles and Bangkok
-  (2013)** have separate Series references. Their legal successors
-  are not guessed and no 2014 events are fabricated under
-  those specific source identities.
+- **San Jose and Bangkok** were played ATP 250 events in 2013 but have
+  no 2014 Series membership under those source identities. **Los Angeles**
+  held its last ATP edition in **2012**; its ATP sanction was sold for
+  **Bogotá in 2013** and that same licence moved to **Los Cabos in 2016**.
+  This continuous Series is `los_cabos`, with year-specific historical
+  city records; there was **no 2013 Los Angeles ATP Tour edition**.
 - **Düsseldorf 2013–14** remains a separate 250 Series from
   2015 Geneva unless the transfer of the actual tournament
   licence is independently documented.
@@ -1547,7 +1571,7 @@ Added deterministic `PRE_2000_PLAYED_TIER_COUNTS[1991]` **9/12/54** count gate, 
 
 The original **1990 IBM ATP Tour**, its first season, contained **9 ATP Championship Single-Week (future Super 9), 12 ATP Championship Series, 53 ATP World Series and 1 ATP Tour World Championships singles final in Frankfurt**, amounting to **75 ATP-only individual men's singles Series**. The independent [1990 tournament inventory](https://tennis-db.com/tournaments?season=1990) shows 79 played events including four independently organized Grand Slams, which are excluded from this ATP-only source. The [original 1990 full year event calendar](https://en.wikipedia.org/wiki/1990_ATP_Tour), [German historic calendar with original tier/venue](https://de.wikipedia.org/wiki/ATP_Tour_1990), [ATP 1990 results archive](https://www.atptour.com/en/scores/results-archive?year=1990) and [official ATP Finals history](https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf) corroborate original tiers and finalists.
 
-Historical played-tier Category/Series reference coverage is therefore **36 consecutive complete past seasons 1990–2025** with **167 persistent source Series identities** in the 37-year 1990–2026 bounded source. **2026 remains provisional**, not a final played calendar. This is *not* a source of exact played Edition IDs, tournament draws/results, ranking point matrices, historic source rankings, native FAX rules, Run Apply/Save or import adapter.
+Historical played-tier Category/Series reference coverage is therefore **36 consecutive complete past seasons 1990–2025** with **166 persistent source Series identities** in the 37-year 1990–2026 bounded source. **2026 remains provisional**, not a final played calendar. This is *not* a source of exact played Edition IDs, tournament draws/results, ranking point matrices, historic source rankings, native FAX rules, Run Apply/Save or import adapter.
 
 Five narrow historical source IDs were added: `toronto_indoor_1990`, `rio_carpet_1990`, `san_remo_1990`, `itaparica_1990`, `wembley_1990`. Historical Rio carpet World Series 1990 must not be equated with the modern Rio 500 clay licence launched in 2014; the other four historically played source identities have no invented future Editions or licence assertions.
 

@@ -1,9 +1,9 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **157** Series identities and 37 generated annual reference rows.
-> The **34 played main ATP Tour tier rosters 1992–2025** have source-backed
-> original year-effective categories. **1990–1991 are incomplete; 2026 is
+> **162** Series identities and 37 generated annual reference rows.
+> The **35 played main ATP Tour tier rosters 1991–2025** have source-backed
+> original year-effective categories. **1990 is incomplete; 2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
@@ -1528,3 +1528,16 @@ Important coexistence:
 - Brazil hosted multiple distinct original 1992 World Series (**Maceió, Guarujá, Búzios and São Paulo**) rather than one interchangeable Brazilian event. Other unique sources retain their individual year: Bolzano, Taipei, Brussels and Wellington.
 
 Added `PRE_2000_PLAYED_TIER_COUNTS[1992]` exact 9/12/56 gate, full year-derived source snapshot, adversarial category/cancellation tests, and historical reference documentation. The source contains **no Olympics**, no Grand Slams, no ATP-only false licencing, no playable FAX Editions, ranking matrices, tournament results, Catalog adapter or Run Apply/Save mutation.
+
+
+## 2026-11-03 — 1991 ATP original played tour tiers and Guarujá correction
+
+**1991** original men's singles ATP Tour contains **9 ATP Super 9, 12 Championship Series and 54 World Series**, plus one **Frankfurt ATP Tour World Championship singles**, totaling **76 ATP-only source identities**. Four Grand Slams, the separate Johannesburg doubles-only year-end Finals, Grand Slam Cup and team events do not enter the ATP-only Category/Series Packages. 1991 reference now extends completed year-category coverage **1991–2025 (35 consecutive played Tour seasons)**. **1990 remains incomplete**; 2026 provisional. Sources: [ATP official Results Archive](https://www.atptour.com/en/scores/results-archive?year=1991), [original 1991 year Category roster](https://en.wikipedia.org/wiki/1991_ATP_Tour), [German original 1991 calendar](https://de.wikipedia.org/wiki/ATP_Tour_1991), [independent TennisDB 1991 calendar](https://tennis-db.com/tournaments?season=1991).
+
+**Missing-event finding:** TennisDB's 1991 index of 79 entries (including four majors) omits the **February Guarujá Chevrolet Classic (Patrick Baur singles winner)**. ATP official archive explicitly records **Guaruja-1** Feb 4–10 and **Guaruja-2** Oct 21–27 (Javier Frana winner), both World Series. Both also appear in original German/English historical calendars. Their **licence lineages differ**: 1991 February Chevrolet Classic moved to **February 1992 Maceió** (existing `maceio_1992`); 1991 October Philips Open continued to **October 1992 Guaruja** (existing `guaruja_1992`). The two source IDs remain distinct: don't create fictitious extra licences when the source already has a documented annual successor. [Contemporaneous Guaruja tournament history](https://de.wikipedia.org/wiki/ATP_Guaruj%C3%A1) confirms both 1991 dates and the 1992 split.
+
+Five new year-scoped World Series identities: `chicago_1991`, `orlando_1991`, `brasilia_1991`, `berlin_1991`, `birmingham_indoor_1991`. **1991 Birmingham was in England**, while the **1994 Birmingham Alabama U.S. clay** licence played in **Charlotte** in 1991 and must never be conflated. 1991 Orlando hard vs 1991 Tampa clay vs 1991 Charlotte US clay are three distinct Tour World Series.
+
+Year-specific hosts preserve 1991 Czechoslovakia (Prague, code CSK), Soviet Union (Moscow, code SUN) and Yugoslavia (Umag, code YUG), without retroactively adopting the post-independence state code. The 1991 Vienna tier is original World Series (conflicting historic German annual summary is rejected in favor of original 12 Championship total and independent event data); 1991 Milan World Series wasn't promoted to Championship until 1993. January Sydney World and October Sydney Indoor Championship as well as April Tokyo Japan Open and October Tokyo Indoor Championship are distinct events, not duplicate year records.
+
+Added deterministic `PRE_2000_PLAYED_TIER_COUNTS[1991]` **9/12/54** count gate, 37-year canonical derived source season view, adversarial wrong category and fictitious cancellation tests. No results, ranking matrices, scored Editions, native Package Catalog, FAX Apply/Save or sporting rules were introduced.

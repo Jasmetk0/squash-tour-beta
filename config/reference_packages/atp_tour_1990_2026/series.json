@@ -16,7 +16,7 @@
     "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
     "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
     "notes": [
-      "Played main ATP Tour original tier rosters 1992–2025 source-reconciled; 1990–1991 incomplete and 2026 provisional. Source-only data without historical Edition/draw/result/Run Apply.",
+      "Played main ATP Tour original tier rosters 1991–2025 source-reconciled; 1990 incomplete and 2026 provisional. Source only, no historical Edition/draw/result/Run Apply.",
       "2026 date/host fields are not assumed for earlier seasons.",
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
@@ -53,7 +53,7 @@
       },
       "note": "Tour-only played events, excluding Grand Slam, team, Olympic, Challenger and ITF. The 2025 overview page omitted Hangzhou; ATP 2025 results prove participation."
     },
-    "historical_roster_scope": "1992–2025 played original ATP main Tour source rosters; 1990–1991 incomplete, 2026 provisional; no native historic Edition objects",
+    "historical_roster_scope": "1991–2025 complete played category tier source rosters; 1990 incomplete and 2026 provisional, no playable annual Edition objects",
     "calendar_validation_2023": {
       "source_2023": "https://www.atptour.com/en/scores/results-archive?year=2023",
       "singles_main_tour_250_count": 38,
@@ -931,6 +931,42 @@
         "1992 Prague host country was Czechoslovakia (CSK), not post-dissolution CZE.",
         "1992 US summer Cincinnati, Canadian, Paris and Stockholm top tier have original Super9 category; Frankfurt Finals singles separate from year-end doubles and ITF Grand Slam Cup."
       ]
+    },
+    "calendar_validation_1991": {
+      "official_results_archive_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+      "original_tier_season_url": "https://en.wikipedia.org/wiki/1991_ATP_Tour",
+      "original_year_host_calendar": "https://de.wikipedia.org/wiki/ATP_Tour_1991",
+      "independent_tennisdb_archive_url": "https://tennis-db.com/tournaments?season=1991",
+      "played_counts": {
+        "super9": 9,
+        "championship_series": 12,
+        "world_series": 54,
+        "singles_atp_finals": 1
+      },
+      "atp_only_played_series": 76,
+      "missing_in_independent_season_summary": "TennisDB 1991 index has 79 entries including 4 majors; it omits 1991 February Guarujá Chevrolet Classic (Patrick Baur), though ATP official Results Archive and 1991 German/English original schedules list both February and October played Guaruja Series.",
+      "original_source_licence_links": [
+        {
+          "from": "February 1991 Guaruja Chevrolet Classic",
+          "to": "February 1992 Maceió Chevrolet Classic",
+          "source": "https://de.wikipedia.org/wiki/ATP_Guaruj%C3%A1",
+          "stable_series_id": "maceio_1992"
+        },
+        {
+          "from": "October 1991 Guaruja Philips Open",
+          "to": "October 1992 Guarujá Almanara Cup",
+          "source": "https://de.wikipedia.org/wiki/ATP_Guaruj%C3%A1",
+          "stable_series_id": "guaruja_1992"
+        }
+      ],
+      "historical_host_cautions": [
+        "1991 Birmingham UK indoor World Series and 1991 Charlotte US Men's Clay (1994 Birmingham Alabama venue) were different events.",
+        "1991 Orlando hard, Tampa USTA Clay and Charlotte US Men's Clay are three distinct played original Tour World Series.",
+        "1991 Prague Czechoslovakia CSK, Umag Yugoslavia YUG, Moscow Soviet Union SUN; modern host-country codes are not historical year data.",
+        "1991 Milan World Series, not Championship until 1993. Vienna 1991 was World Series despite conflicting German annual tier label.",
+        "1991 Frankfurt ATP Finals singles independent from Johannesburg doubles-only Finals. Exclude 4 majors, World Team, Davis, Hopman and Grand Slam Cup."
+      ],
+      "source_only_not_native_played_editions": true
     }
   },
   "explicit_scope": [
@@ -981,6 +1017,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Indian Wells",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Indian Wells",
@@ -1128,6 +1170,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Key Biscayne",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Key Biscayne",
             "country_code": "USA",
@@ -1273,6 +1321,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Monte Carlo",
+            "country_code": "MCO",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Monte Carlo",
@@ -1490,6 +1544,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Rome",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Rome",
             "country_code": "ITA",
@@ -1637,6 +1697,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Montreal",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Toronto",
             "country_code": "CAN",
@@ -1778,6 +1844,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Cincinnati",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Cincinnati",
@@ -1976,6 +2048,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Paris",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Paris",
             "country_code": "FRA",
@@ -2093,6 +2171,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -2328,6 +2413,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Memphis",
             "country_code": "USA",
@@ -2554,6 +2645,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -2788,6 +2886,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Rotterdam",
@@ -4067,6 +4171,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_championship_series",
@@ -4294,6 +4405,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Barcelona",
             "country_code": "ESP",
@@ -4435,6 +4552,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -4670,6 +4794,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Munich",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Munich",
             "country_code": "DEU",
@@ -4835,6 +4965,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Hamburg",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Hamburg",
@@ -5224,6 +5360,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -5364,6 +5507,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "London",
@@ -5506,6 +5655,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -5734,6 +5890,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Washington",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Washington",
             "country_code": "USA",
@@ -5875,6 +6037,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -6095,6 +6264,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Tokyo",
@@ -6452,6 +6627,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -6683,6 +6865,12 @@
         "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Basel",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Basel",
             "country_code": "CHE",
@@ -6818,6 +7006,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://tennis-db.com/tournaments?season=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -7053,6 +7248,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://tennis-db.com/tournaments?season=1991"
+          },
+          {
             "year": 1992,
             "city": "Vienna",
             "country_code": "AUT",
@@ -7191,7 +7392,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2014"
           }
         ],
-        "identity_review_note": "1992 Vienna original ATP World Series; not retroactive ATP 250 points and not original Championship Series (that reclassification later)."
+        "identity_review_note": "Original 1991 Vienna World Series despite conflicting German annual table label Championship; independent original category data and 12 original Championship count reject retroactive reclassification."
       },
       "references": [
         {
@@ -7243,6 +7444,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -7464,6 +7672,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Adelaide",
             "country_code": "AUS",
@@ -7612,6 +7826,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -7853,6 +8074,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Nice",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Nice",
@@ -8160,6 +8387,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -8394,6 +8628,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Auckland",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Auckland",
             "country_code": "NZL",
@@ -8529,6 +8769,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -8770,6 +9017,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Lyon",
@@ -9682,6 +9935,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -9927,6 +10187,12 @@
         "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Tampa",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Tampa",
             "country_code": "USA",
@@ -10023,7 +10289,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
           }
         ],
-        "identity_review_note": "1992 Tampa USTA Clay Court Classic →1993 Tampa →1994 Pinehurst; distinct concurrent 1992 Charlotte U.S. Men's Clay Court Championships."
+        "identity_review_note": "1991 Tampa USTA Clay Court Classic (Richey Reneberg) independent from 1991 Orlando hard (Andre Agassi) and 1991 Charlotte clay, and precedes 1994 Pinehurst."
       },
       "references": [
         {
@@ -10595,6 +10861,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_championship_series",
@@ -10836,6 +11109,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -11013,6 +11292,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -11248,6 +11534,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "'s-Hertogenbosch",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "'s-Hertogenbosch",
             "country_code": "NLD",
@@ -11454,6 +11746,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -11696,6 +11995,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Manchester",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Manchester",
             "country_code": "GBR",
@@ -11893,6 +12198,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -12133,6 +12445,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Båstad",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Båstad",
@@ -12270,6 +12588,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -12510,6 +12835,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Gstaad",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Gstaad",
@@ -12647,6 +12978,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -12888,6 +13226,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Umag",
+            "country_code": "YUG",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1991"
+          },
+          {
             "year": 1992,
             "city": "Umag",
             "country_code": "HRV",
@@ -12983,7 +13327,8 @@
             "country_code": "HRV",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
           }
-        ]
+        ],
+        "identity_review_note": "1991 Umag was within SFR Yugoslavia (YUG), not later independent Croatia; historical year-country data."
       },
       "references": [
         {
@@ -13023,6 +13368,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -13265,6 +13617,12 @@
         "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Kitzbühel",
             "country_code": "AUT",
@@ -13412,6 +13770,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -13646,6 +14011,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Estoril",
@@ -13960,6 +14331,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -14200,6 +14578,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Long Island",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Long Island",
@@ -15936,6 +16320,12 @@
         "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit.",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Stockholm",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Stockholm",
             "country_code": "SWE",
@@ -16101,6 +16491,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Frankfurt",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/-/media/08887c4b3be347dd8a2d701c23fcd587.pdf"
+          },
           {
             "year": 1992,
             "city": "Frankfurt",
@@ -17094,6 +17490,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -17320,6 +17723,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Newport",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Newport",
             "country_code": "USA",
@@ -17459,6 +17868,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -17685,6 +18101,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Indianapolis",
@@ -18225,6 +18647,13 @@
         "history_scope": "2000_london_axa_gold_2001_milan_is_2005_milan_2006_zagreb_2016_sofia",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -18451,6 +18880,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Milan",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Milan",
             "country_code": "ITA",
@@ -18601,7 +19036,7 @@
             "source_url": "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars"
           }
         ],
-        "identity_review_note": "1992 Milan ATP World Series, promoted to 1993 Milan Championship Series; separate 1992 Brussels Championship is not Milan. 1999 London Guardian Direct Championship and 2000 Gold have later licence history."
+        "identity_review_note": "1991 Milan ATP World Series, 1992 Milan World, 1993 Milan Championship, later 1999 London Championship and 2001 Milan International; do not backfill later category names."
       },
       "references": [
         {
@@ -19735,6 +20170,13 @@
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -19938,8 +20380,14 @@
             "notes": "Played ATP Tour event in official 2021 Results Archive"
           }
         ],
-        "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played.",
+        "identity_review_note": "1991 Kremlin Cup Moscow was played in the Soviet Union (SUN), not modern Russia; historical year-country data.",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Moscow",
+            "country_code": "SUN",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1991"
+          },
           {
             "year": 1992,
             "city": "Moscow",
@@ -20201,6 +20649,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -20399,6 +20854,12 @@
         ],
         "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined.",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Sydney",
@@ -21016,6 +21477,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -21173,6 +21641,12 @@
         "identity_review_note": "San Francisco ATP World Series 1993 moved to San Jose 1994, one source event family until 2013; source 1993 actual city not San Jose.",
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "San Francisco",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "San Francisco",
             "country_code": "USA",
@@ -21312,6 +21786,13 @@
         "not_squash_rules": true,
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
           {
             "from": 1992,
             "to": 1992,
@@ -21469,6 +21950,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Los Angeles",
@@ -21842,6 +22329,13 @@
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -21991,6 +22485,12 @@
         ],
         "identity_review_note": "2000 Dutch Open Amsterdam, 2001 Amersfoort; later Serbia names must not overwrite original Dutch city.",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Hilversum",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Hilversum",
@@ -22472,6 +22972,13 @@
         "history_scope": "2005_st_poelten_2006_2008_poertschach",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -22593,6 +23100,12 @@
         ],
         "identity_review_note": "1993 Genoa clay ATP World Series moved to St. Pölten in 1994, same historic tournament lineage; not a fictitious parallel Genova 1994.",
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Genoa",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Genoa",
@@ -23062,6 +23575,13 @@
         "history_scope": "2005_2006_played_tour_only_older_seasons_not_backfilled",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -23168,6 +23688,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Palermo",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Palermo",
@@ -23298,6 +23824,13 @@
         "history_scope": "played_2001_2003_copenhagen_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -23383,6 +23916,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Copenhagen",
+            "country_code": "DNK",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Copenhagen",
@@ -23495,6 +24034,13 @@
         "history_scope": "played_2001_2002_hong_kong_salem_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -23573,6 +24119,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Hong Kong",
+            "country_code": "HKG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Hong Kong",
@@ -23982,6 +24534,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -24046,6 +24605,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "San Marino",
+            "country_code": "SMR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "San Marino",
@@ -24140,6 +24705,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -24204,6 +24776,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Toulouse",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Toulouse",
@@ -24550,6 +25128,13 @@
         "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -24608,6 +25193,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Prague",
+            "country_code": "CSK",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1991"
+          },
+          {
             "year": 1992,
             "city": "Prague",
             "country_code": "CSK",
@@ -24656,7 +25247,7 @@
             "source_url": "https://www.atptour.com/en/tournaments/-/379/overview"
           }
         ],
-        "identity_review_note": "1992 Prague was played in Czechoslovakia (CSK), not the post-1993 Czech Republic (CZE). The event/source ID remains stable, but historical host country is year-specific.",
+        "identity_review_note": "1991 Prague was in Czechoslovakia (CSK), not modern Czechia; historical host year can differ from 1999 CZE.",
         "cancelled_following_year": {
           "year": 2000,
           "reason": "Missing ATP financial guarantee / 2000 Czech Open cancelled before play",
@@ -25010,6 +25601,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_championship_series",
@@ -25060,6 +25658,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Philadelphia",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Philadelphia",
@@ -25136,6 +25740,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -25186,6 +25797,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Bologna",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Bologna",
@@ -25262,6 +25879,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_championship_series",
@@ -25312,6 +25936,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "New Haven",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "New Haven",
@@ -25849,6 +26479,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -25885,6 +26522,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Seoul",
+            "country_code": "KOR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Seoul",
@@ -26010,6 +26653,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -26046,6 +26696,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Tel Aviv",
+            "country_code": "ISR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Tel Aviv",
@@ -26110,6 +26766,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_championship_series",
@@ -26139,6 +26802,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Stuttgart",
@@ -26284,6 +26953,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -26313,6 +26989,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Bordeaux",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Bordeaux",
@@ -26371,6 +27053,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_championship_series",
@@ -26400,6 +27089,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Tokyo",
@@ -26763,6 +27458,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -26786,6 +27488,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Charlotte",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Charlotte",
             "country_code": "USA",
@@ -26804,7 +27512,7 @@
             "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994"
           }
         ],
-        "identity_review_note": "1992 Charlotte U.S. Men's Clay Courts alongside 1992 Tampa USTA Clay Classic, separate original licences. Charlotte remained host 1993 then moved Birmingham Alabama 1994."
+        "identity_review_note": "1991 Charlotte U.S. Men's Clay Court Championships (Jaime Yzaga) separate from Tampa Clay Classic and Birmingham UK indoor 1991."
       },
       "references": [
         {
@@ -26837,6 +27545,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -26859,6 +27574,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Madrid",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Madrid",
@@ -26911,6 +27632,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -26933,6 +27661,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Florence",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Florence",
@@ -26985,6 +27719,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -27007,6 +27748,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Schenectady",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Schenectady",
@@ -27059,6 +27806,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -27081,6 +27835,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Athens",
+            "country_code": "GRC",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Athens",
@@ -27133,6 +27893,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_championship_series",
@@ -27155,6 +27922,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Sydney",
@@ -27316,6 +28089,13 @@
         "history_scope": "1993_original_played ATP World Series only no unsupported continuation",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -27331,6 +28111,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "São Paulo",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "São Paulo",
@@ -27377,6 +28163,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -27385,6 +28178,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Wellington",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Wellington",
@@ -27425,6 +28224,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Guaruj%C3%A1",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -27434,13 +28240,19 @@
         ],
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Guarujá",
+            "country_code": "BRA",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Guaruj%C3%A1"
+          },
+          {
             "year": 1992,
             "city": "Maceió",
             "country_code": "BRA",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
           }
         ],
-        "identity_review_note": "Brazil Maceió ATP World Series in 1992, distinct from Guarujá, Búzios and São Paulo in the same original year; 1993 not held."
+        "identity_review_note": "1991 February Chevrolet Classic in Guarujá (Patrick Baur) was the prior licensed event of February 1992 Chevrolet Classic relocated to Maceió; separate from the October 1991 Guarujá ATP World Series. No duplicated February license."
       },
       "references": [
         {
@@ -27473,6 +28285,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_championship_series",
@@ -27482,13 +28301,19 @@
         ],
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Brussels",
+            "country_code": "BEL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Brussels",
             "country_code": "BEL",
             "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992"
           }
         ],
-        "identity_review_note": "1992 Brussels ATP Championship Series separate from 1992 Milan World Series and 1992 Antwerp World Series. Do not merge simultaneously held Belgium events by country."
+        "identity_review_note": "1991 Brussels original Championship Series distinct from contemporaneous Milan and other Belgian event families."
       },
       "references": [
         {
@@ -27521,6 +28346,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -27529,6 +28361,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Singapore",
+            "country_code": "SGP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Singapore",
@@ -27569,6 +28407,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -27577,6 +28422,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Geneva",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Cologne",
@@ -27617,6 +28468,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -27625,6 +28483,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Brisbane",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
           {
             "year": 1992,
             "city": "Brisbane",
@@ -27713,6 +28577,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Guaruj%C3%A1",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -27722,13 +28593,19 @@
         ],
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Guarujá",
+            "country_code": "BRA",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Guaruj%C3%A1"
+          },
+          {
             "year": 1992,
             "city": "Guarujá",
             "country_code": "BRA",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
           }
         ],
-        "identity_review_note": "Original Guarujá 1992 Brazilian World Series, separate 1992 Maceió, Búzios and São Paulo."
+        "identity_review_note": "1991 October Guarujá Philips Open (Javier Frana) was the predecessor to the October 1992 Guarujá Almanara Cup; 1991 February Chevrolet Classic is a separate contemporaneous tournament licence relocated to Maceió 1992."
       },
       "references": [
         {
@@ -27761,6 +28638,13 @@
         "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
         "history_periods": [
           {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
             "from": 1992,
             "to": 1992,
             "category_id": "atp_world_series",
@@ -27770,6 +28654,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1991,
+            "city": "Búzios",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
             "year": 1992,
             "city": "Búzios",
             "country_code": "BRA",
@@ -27777,6 +28667,246 @@
           }
         ],
         "identity_review_note": "1992 Búzios World Series in November alongside the separate 1992 São Paulo World Series."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "chicago_1991",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Volvo Tennis Chicago 1991",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Chicago",
+        "historical_country_code": "USA",
+        "historical_surface": "indoor_carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1991_original_tour_tier_without_unproved_other_years",
+        "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Chicago",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          }
+        ],
+        "identity_review_note": "1991 ATP World Series Chicago indoor; no unproven longer licence."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "orlando_1991",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1991 Prudential-Bache Securities Classic Orlando",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Orlando",
+        "historical_country_code": "USA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1991_original_tour_tier_without_unproved_other_years",
+        "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Orlando",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          }
+        ],
+        "identity_review_note": "Orlando hard Tour World Series played 1991; different from Tampa 1991 and the later 1997 Orlando clay US Men's Clay event."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "brasilia_1991",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Brasília Open 1991",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Brasília",
+        "historical_country_code": "BRA",
+        "historical_surface": "carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1991_original_tour_tier_without_unproved_other_years",
+        "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Brasília",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          }
+        ],
+        "identity_review_note": "1991 Brasília original World Series, independent from Guaruja, Búzios and São Paulo."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "berlin_1991",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "European Indoor Championships Berlin 1991",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Berlin",
+        "historical_country_code": "DEU",
+        "historical_surface": "indoor_carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1991_original_tour_tier_without_unproved_other_years",
+        "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Berlin",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          }
+        ],
+        "identity_review_note": "1991 Berlin indoor ATP World Series, not modern German tennis fixture."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "birmingham_indoor_1991",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Diet Pepsi Challenge Birmingham 1991 (UK)",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Birmingham",
+        "historical_country_code": "GBR",
+        "historical_surface": "indoor_carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1991_original_tour_tier_without_unproved_other_years",
+        "history_periods": [
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://en.wikipedia.org/wiki/1991_ATP_Tour",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1991,
+            "city": "Birmingham",
+            "country_code": "GBR",
+            "source_url": "https://en.wikipedia.org/wiki/1991_ATP_Tour"
+          }
+        ],
+        "identity_review_note": "Birmingham England 1991 ATP World Series indoor, independent from US Men's Clay Court Birmingham Alabama 1994."
       },
       "references": [
         {

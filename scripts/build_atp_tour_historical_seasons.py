@@ -26,6 +26,11 @@ FIRST, LAST = 1990, 2026
 # 1990–1999 original ATP era had a different native Tier vocabulary.
 # Never map these names onto post-2000 Masters/Gold/International results.
 PRE_2000_PLAYED_TIER_COUNTS: dict[int, dict[str, int]] = {
+    1991: {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 54,
+    },
     1992: {
         "atp_championship_single_week": 9,
         "atp_championship_series": 12,
@@ -307,7 +312,7 @@ def main() -> int:
         if not TARGET.is_file() or TARGET.read_text(encoding="utf-8") != payload:
             print("Historical seasons stale; run --write")
             return 1
-        print("ATP Tour reference 1990–2026: 37 seasons derived; complete played-tier rosters 1992–2025, historical 1990–1991 incomplete, 2026 provisional")
+        print("ATP Tour reference 1990–2026: 37 seasons derived; complete played-tier rosters 1991–2025, historical 1990 incomplete, 2026 provisional")
         return 0
     TARGET.write_text(payload, encoding="utf-8")
     print("Created", TARGET)

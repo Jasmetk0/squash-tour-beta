@@ -1872,9 +1872,13 @@ def test_1997_original_category_census_is_fail_closed() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     wrong = copy.deepcopy(source)
-    target = next(e for e in wrong["entities"] if e["source_entity_id"] == "sofia")
+    # Rotterdam is World Series in 1997, but has an existing valid
+    # Championship Series ref for 1999. Changing 1997 to that category
+    # reaches the played-count gate, rather than failing earlier on a
+    # dangling Category reference as a mutation of Milan/sofia would.
+    target = next(e for e in wrong["entities"] if e["source_entity_id"] == "rotterdam")
     period = next(p for p in target["payload"]["history_periods"] if p["from"] == 1997)
-    period["category_id"] = "atp_world_series"
+    period["category_id"] = "atp_championship_series"
     with pytest.raises(ValueError, match="played-tier roster mismatch in 1997"):
         build(categories, wrong)
     cancelled = copy.deepcopy(source)

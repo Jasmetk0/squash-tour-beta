@@ -19,6 +19,12 @@ since 1 January 1990**, not the entire history of men's tennis. The Category
 and Series Package are optional **source-only historical references** for
 Squash Engine's data-driven future, not tennis gameplay.
 
+## 2026-11-03 — independent 2025 Belgrade → Athens host correction
+
+The official [ATP announcement of 4 August 2025](https://www.atptour.com/en/news/belgrade-athens-announcement-august-2025) confirms that the **2024 Belgrade Open ATP 250** sanction was moved to **Athens, Greece in 2025**, where it was held as the **Hellenic Championship** (2–8 November 2025, indoor hard). The 2025 `belgrade` Series membership was already correct, but its physical **venue history was missing** and the fixed displayed title `Belgrade Open` was misleading for the played Athens year.
+
+The source retains **one unchanged Series ID** `belgrade` across those two annual ATP 250 category records, adds dated 2024 Belgrade / 2025 Athens venue evidence and labels both names. This is **not** the unrelated `athens_1994` ATP World Series and cannot be assumed to be the unresolved 2026 late-year ATP 250 TBD calendar slot. No played roster count or canonical season snapshot changes.
+
 ## 2026-11-03 — independent reference review: 2026 Next Gen location
 
 The category roster was checked against the published [ATP 2026 calendar](https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/). That 2025 publication still had the Next Gen Finals host **TBC**, while the historical reference source stored `null` for 2026 city/country. The competition's [9 September 2026 official announcement](https://www.nextgenatpfinals.com/en/news/reggio-calabria-to-host-2026-next-gen-atp-finals) resolves the host to **Reggio Calabria, Italy**, with the event scheduled for **9–13 December 2026**. It is the *same* continuing Next Gen Series, not a new ATP 250/500/1000 tournament.
@@ -288,8 +294,9 @@ for the definitive outcome of late 2026.
 - **Córdoba, Newport and Atlanta** have verified 2024 ATP 250
   entries, but are absent from the 2025 Tour 250 roster. They remain
   separate identities rather than being silently reused for another city.
-- **Belgrade and Metz** occur in 2024 and 2025, but neither belongs to
-  the 2026 ATP 250 roster. **Estoril** appears in 2024 and 2026,
+- **The Belgrade 2024 ATP 250 sanction played in Athens in 2025** as the
+  Hellenic Championship, while Metz played its final 2025 edition. Neither
+  is asserted in the published 2026 ATP 250 Series roster. **Estoril** appears in 2024 and 2026,
   not 2025. These source gaps are intentional category years, never
   automatic tournament closures.
 

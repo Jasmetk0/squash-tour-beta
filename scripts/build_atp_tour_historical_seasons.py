@@ -210,6 +210,15 @@ def build(
             for year in range(p["from"], p["to"] + 1):
                 if len(_active(categories[cid]["payload"]["history_periods"], year)) != 1:
                     raise ValueError("Series references category outside effective years")
+        nonheld_years = entity["payload"].get("not_held_years_known", [])
+        if (
+            not isinstance(nonheld_years, list)
+            or any(type(y) is not int or y < FIRST or y > LAST for y in nonheld_years)
+            or len(set(nonheld_years)) != len(nonheld_years)
+        ):
+            raise ValueError(
+                "Invalid or duplicate known-not-held years: " + entity["source_entity_id"]
+            )
         for year in range(FIRST, LAST + 1):
             applicable = _active(intervals, year)
             if len(applicable) > 1:
@@ -233,6 +242,23 @@ def build(
             x["source_entity_id"] for x in series_doc["entities"]
             if year in x["payload"].get("not_held_years_known", [])
         )
+        # Counts of ordinary played tiers alone would silently permit an extra,
+        # missing or substituted Finals source. The annual ATP-only special
+        # Series identities are independently fixed; a 2020 Next Gen cancellation
+        # remains a known-not-held member, not a played Edition.
+        expected_special = {"atp_finals": "atp_finals"}
+        if year >= 2017:
+            expected_special["next_gen_atp_finals"] = "next_gen_finals"
+        actual_special = {
+            series_id: category for series_id, category in active_series.items()
+            if category in {"atp_finals", "next_gen_finals"}
+        }
+        if actual_special != expected_special:
+            raise ValueError(
+                f"ATP special-Series roster mismatch in {year}: "
+                f"expected {expected_special}, observed {actual_special}"
+            )
+
         if year in PLAYED_TIER_COUNTS or year in HISTORIC_PLAYED_TIER_COUNTS or year in PRE_2000_PLAYED_TIER_COUNTS:
             expected = (
                 PLAYED_TIER_COUNTS.get(year)
@@ -317,7 +343,7 @@ def main() -> int:
         if not TARGET.is_file() or TARGET.read_text(encoding="utf-8") != payload:
             print("Historical seasons stale; run --write")
             return 1
-        print("ATP Tour reference 1990–2026: 37 seasons derived; complete played-tier rosters 1990–2025, 2026 provisional, 2026 provisional")
+        print("ATP Tour reference 1990–2026: 37 seasons derived; complete played-tier rosters 1990–2025, 2026 provisional")
         return 0
     TARGET.write_text(payload, encoding="utf-8")
     print("Created", TARGET)

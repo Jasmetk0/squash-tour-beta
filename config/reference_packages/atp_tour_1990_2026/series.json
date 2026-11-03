@@ -18057,6 +18057,13 @@
           "source_url": "https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/atp-issues-2022-calendar-updates-21-july-2022.pdf",
           "notes": "Permanent ATP membership transferred to Astana in 2022; no simultaneous St Petersburg edition asserted"
         },
+        "historical_host_context_sources": [
+          {
+            "kind": "city_alias",
+            "url": "https://www.atptour.com/en/tournaments/st-petersburg/568/overview",
+            "note": "Saint Petersburg and St. Petersburg refer to the same Russian host city; ATP's tournament listing uses the abbreviated name."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1995,
@@ -18626,6 +18633,13 @@
             "category_id": "atp_250",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
             "notes": "ATP official result archive confirms this Tour 250 event in the given year"
+          }
+        ],
+        "historical_host_context_sources": [
+          {
+            "kind": "site_change",
+            "url": "https://www.lequipe.fr/Tennis/Actualites/Un-nouveau-tournoi-atp-a-lyon-la-semaine-avant-roland-garros/748030",
+            "note": "Contemporary L'Équipe reports the 2017 Lyon clay ATP 250 replacing the Nice ATP 250 in the calendar; not evidence that the earlier indoor Lyon event had the same licence."
           }
         ],
         "historical_host_change": [
@@ -21117,6 +21131,13 @@
           }
         ],
         "identity_review_note": "Bucharest 2015–16 Tour licence transferred Budapest 2017–19 then Belgrade 2021; Bucharest 2024+ tracked as a distinct Tour licence without unproven merger.",
+        "historical_host_context_sources": [
+          {
+            "kind": "site_change",
+            "url": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
+            "note": "ATP explicitly approved the Budapest Hungarian Open's relocation to Belgrade for 2021; this article alone does not certify the earlier Bucharest-to-Budapest identity."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1993,
@@ -22440,6 +22461,13 @@
           }
         ],
         "identity_review_note": "Costa do Sauípe ATP Tour Brasil Open event 2011 moved to São Paulo from 2012, played through 2019. Tournament venue changed, not a new Tour series.",
+        "historical_host_context_sources": [
+          {
+            "kind": "site_change",
+            "url": "https://brasilopen.com.br/historia/",
+            "note": "Historical account from the Brasil Open organiser says its event first moved from Costa do Sauípe to São Paulo in 2012; it does not independently establish every pre-2001 hosting record."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 2001,
@@ -23962,6 +23990,13 @@
           }
         ],
         "identity_review_note": "Sopot 2007 ATP International Series relocated to Warsaw and was played in 2008. Neither historic Sopot and Warsaw host is a parallel 2008 Series. The earlier prospective 2008 calendar still listed Sopot.",
+        "historical_host_context_sources": [
+          {
+            "kind": "site_change",
+            "url": "https://www.atptour.com/en/tournaments/sopot/475/overview",
+            "note": "ATP's Sopot event-code URL displays the Warsaw 2008 Tour event, corroborating a historical event-index link; not a separately published legal licence transfer agreement."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 2001,
@@ -24968,6 +25003,13 @@
             "category_id": "atp_international_series",
             "source_url": "https://www.eltiempo.com/archivo/documento/mam-1352814",
             "notes": "Last played Bogotá Cerveza Club Colombia Open ATP main Tour in 2001. ATP cancelled planned 2002 edition citing security; no 2002 playable ATP Edition. Earlier 1994–2000 years require separate research."
+          }
+        ],
+        "historical_host_context_sources": [
+          {
+            "kind": "city_alias",
+            "url": "https://www.atptour.com/en/scores/results-archive?year=2001",
+            "note": "Bogota and Bogotá are unaccented and accented forms of the same Colombian city; ATP's 2001 Results Archive records the Tour event at Bogota."
           }
         ],
         "historical_host_change": [

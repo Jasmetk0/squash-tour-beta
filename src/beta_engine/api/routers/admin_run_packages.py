@@ -18,6 +18,7 @@ from beta_engine.application.run_package_service import (
 )
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.application.atp_reference_package_adapter import ATPReferencePackageAdapter
+from beta_engine.application.atp_historical_calendar_adapter import ATPHistoricalCalendarAdapter
 from beta_engine.domain.run_packages import CanonicalPackageDocument, canonical_hash, entity_content_fingerprint
 from beta_engine.application.run_edition_entry_timing import RunEditionEntryTimingService
 from beta_engine.domain.tournaments.edition_entry_timing import EditionEntryTiming
@@ -230,6 +231,75 @@ def confirm_source_atp_reference(
         raise HTTPException(409, "ATP reference Setup must be applied atomically")
     try:
         document = ATPReferencePackageAdapter().build_document()
+        result = service.confirm(
+            run_id=run_id,
+            branch_id=branch_id,
+            document=document,
+            command_id=request.command_id,
+            expected_head_revision_id=request.expected_head_revision_id,
+            expected_draft_version=request.expected_draft_version,
+            expected_state_fingerprint=request.expected_state_fingerprint,
+            expected_preview_fingerprint=request.expected_preview_fingerprint,
+            conflict_resolutions=request.conflict_resolutions,
+            selected_entities=None,
+        )
+        return {
+            "state": result.state.model_dump(mode="json") if result.state else None,
+            "state_fingerprint": result.state.fingerprint if result.state else None,
+            "draft_version": result.draft_version,
+            "already_applied": result.already_applied,
+            "command_id": result.command_id,
+        }
+    except (OSError, RunPackageConflictError, RunPackageNotFoundError, ValueError) as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
+@atp_reference_catalog_router.get("/atp-tour-1990-2026-calendar")
+@router.get("/source-atp-reference-calendar/catalog")
+def get_source_atp_reference_calendar_catalog():
+    """Reference-only 1990–2026 date provenance and child Package fingerprints."""
+    try:
+        return ATPHistoricalCalendarAdapter().catalog()
+    except (OSError, ValueError) as exc:
+        raise HTTPException(409, "ATP Calendar reference source is invalid or unavailable") from exc
+
+
+@router.post("/source-atp-reference-calendar/preview")
+def preview_source_atp_reference_calendar(
+    run_id: str,
+    branch_id: str,
+    service: RunPackageService = Depends(get_run_package_service),
+):
+    """Preview immutable 3-child Setup; omit giant frozen payload from response."""
+    try:
+        document = ATPHistoricalCalendarAdapter().build_document()
+        result = service.preview(run_id=run_id, branch_id=branch_id, document=document)
+        return {
+            **result.model_dump(mode="json", exclude={"document"}),
+            "document_identity": {
+                "package_type": document.package_type.value,
+                "package_id": document.package_id,
+                "source_version": document.source_version,
+                "source_fingerprint": document.source_fingerprint,
+            },
+            "preview_fingerprint": result.preview_fingerprint,
+        }
+    except (OSError, RunPackageConflictError, RunPackageNotFoundError, ValueError) as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
+@router.post("/source-atp-reference-calendar/confirm")
+def confirm_source_atp_reference_calendar(
+    run_id: str,
+    branch_id: str,
+    request: SourceWorldConfirmRequest,
+    service: RunPackageService = Depends(get_run_package_service),
+):
+    """Atomically apply Category + Series + Calendar; explicit separate Save."""
+    if request.selected_entities is not None:
+        raise HTTPException(409, "ATP Calendar reference Setup must be applied atomically")
+    try:
+        document = ATPHistoricalCalendarAdapter().build_document()
         result = service.confirm(
             run_id=run_id,
             branch_id=branch_id,

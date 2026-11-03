@@ -1203,6 +1203,13 @@
           2020
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
+        "historical_host_context_sources": [
+          {
+            "kind": "site_change",
+            "url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-1",
+            "note": "ATP history dates Miami Gardens' Hard Rock venue to 2019; the earlier 1997 'Miami' source label is not proof of a 1997 venue move."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1990,
@@ -1748,6 +1755,13 @@
           2020
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
+        "historical_host_context_sources": [
+          {
+            "kind": "alternating_hosts",
+            "url": "https://www.atptour.com/en/tournaments/canada/421/overview",
+            "note": "ATP explicitly documents recurring Toronto–Montréal alternation, not a licence transfer each year."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1990,
@@ -1921,6 +1935,13 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_context_sources": [
+          {
+            "kind": "temporary_site",
+            "url": "https://www.usopen.org/en_US/news/articles/2020-06-17/2020_us_open_western_southern_open_to_be_held_in_new_york.html",
+            "note": "USTA describes the temporary 2020 move to New York in the COVID-19 period."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1990,
@@ -4109,6 +4130,13 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_context_sources": [
+          {
+            "kind": "site_change",
+            "url": "https://www.atptour.com/en/news/atp-50-locations-longform",
+            "note": "ATP retrospectively identifies Acapulco as the Mexican Open host from 2001."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1993,
@@ -8214,6 +8242,13 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_context_sources": [
+          {
+            "kind": "site_change",
+            "url": "https://www.abc.net.au/news/2006-07-07/brisbane-to-host-mens-hard-court-champs-from-2009/1796818",
+            "note": "Contemporary reporting describes Adelaide-to-Brisbane move for 2009; the separate 1990 Brisbane event must not be conflated."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1990,
@@ -10263,6 +10298,13 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_context_sources": [
+          {
+            "kind": "site_change",
+            "url": "https://www.i-love-delray-beach.com/tennis-championships.html",
+            "note": "Local historical account describes a 1999 move from Broward County to Delray Beach; not an ATP legal licence record."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1993,
@@ -10774,6 +10816,13 @@
           2021
         ],
         "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
+        "historical_host_context_sources": [
+          {
+            "kind": "site_change",
+            "url": "https://www.atptour.com/en/tournaments/orlando/717/overview",
+            "note": "Official ATP history describes several US hosts before Houston became the site in 2001."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1991,
@@ -11158,6 +11207,13 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_context_sources": [
+          {
+            "kind": "site_change",
+            "url": "https://www.atptour.com/en/tournaments/casablanca/360/overview",
+            "note": "Official ATP tournament history records Casablanca-to-Marrakech relocation from 2016."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1990,
@@ -11762,6 +11818,13 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_context_sources": [
+          {
+            "kind": "surface_not_licence",
+            "url": "https://www.atptour.com/en/tournaments/stuttgart-1/321/overview",
+            "note": "Stuttgart and Stuttgart (clay) are surface descriptions, not different cities; ATP documents the change to grass in 2015."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1990,
@@ -12200,6 +12263,13 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_context_sources": [
+          {
+            "kind": "city_alias",
+            "url": "https://www.atptour.com/en/tournaments/rosmalen/440/overview",
+            "note": "ATP uses Rosmalen as an event URL name and 's-Hertogenbosch as the location; this does not indicate a transfer of legal licence."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1990,
@@ -12675,6 +12745,13 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_context_sources": [
+          {
+            "kind": "site_change",
+            "url": "https://www.atptour.com/en/tournaments/-/741/overview",
+            "note": "ATP history confirms Nottingham 1995–2008, Eastbourne 2009–14, Nottingham 2015–16, Eastbourne from 2017."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1990,
@@ -14757,6 +14834,13 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_context_sources": [
+          {
+            "kind": "historical_context_only",
+            "url": "https://www.atptour.com/en/tournaments/estoril/7290/overview",
+            "note": "ATP describes a new Portuguese ATP 250 from 2015; same geographic brand is not legal membership proof across 2014/2015."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1990,
@@ -17603,6 +17687,13 @@
           }
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
+        "historical_host_context_sources": [
+          {
+            "kind": "rotating_hosts",
+            "url": "https://www.atptour.com/en/news/atp-50-locations-longform",
+            "note": "Official ATP retrospective documents distinct host cities of the same year-end Finals event, not recurrent legal licence transfers."
+          }
+        ],
         "historical_host_change": [
           {
             "year": 1990,

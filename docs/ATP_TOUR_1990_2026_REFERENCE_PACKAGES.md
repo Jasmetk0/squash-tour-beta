@@ -1,9 +1,9 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **125** Series identities and 37 generated annual reference rows.
-> The **29 played main ATP Tour tier rosters 1997–2025** have source-backed
-> original year-effective categories. **1990–1996 are incomplete; 2026 is
+> **130** Series identities and 37 generated annual reference rows.
+> The **30 played main ATP Tour tier rosters 1996–2025** have source-backed
+> original year-effective categories. **1990–1995 are incomplete; 2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
@@ -1434,3 +1434,27 @@ Historical identities explicitly reconciled:
 - **Grand Prix de Lyon 1997** is hosted in Lyon, regardless of later Montpellier brand; **Canadian Open 1997 Montreal / 1998 Toronto** and other year-specific actual locations are recorded.
 
 The deterministic `PRE_2000_PLAYED_TIER_COUNTS` gate now validates 1997's 9/12/53 played roster with original names. New tests assert Category, annual host evidence and fail-closed false tier/cancellation. Source only: **no imported played Editions, scores, points, licence rights, Package Catalog or Run Apply/Save**.
+
+
+## 2026-11-03 — 1996 original ATP Tour played category roster
+
+**1996** is source-reconciled as **9 ATP Super 9 + 11 ATP Championship Series + 57 ATP World Series + one ATP Tour World Championships (singles, Hannover)**, a total of **78 ATP-only source identities**. This achieves **30 consecutive original played-category seasons, 1996–2025**, without retrofitting 2009 or 2026 category labels to the 1990s. **1990–1995 remain incomplete**, and 2026 is a provisional not final played season.
+
+Sources:
+- [ATP 1996 official results archive](https://www.atptour.com/en/scores/results-archive?year=1996) (cross-check played single-year host/results)
+- [1996 original tier schedule](https://de.wikipedia.org/wiki/ATP_Tour_1996) (explicit original Championship and World Series categories)
+- [1996 independent edition inventory](https://tennis-db.com/tournaments?season=1996) (83 editions including four non-ATP Grand Slams and Atlanta Olympics, rather than 83 ATP-only events)
+- [ATP 1996 Finals tournament history](https://www.atptour.com/-/media/83956b6ae89248d3a2a632428df04269.pdf), singles hosted Hannover; doubles separately held Hartford
+
+Five narrowly scoped World Series source identities were added because no established equivalence was supported: `jakarta_1996`, `bermuda_1996`, `seoul_1996`, `porto_1996` and `tel_aviv_1996`. The earlier 1996 Seoul and Tel Aviv licences are not assumed to equal the temporary 2022 Tour events. Every existing 1996 ATP Series receives its actual year-specific original Category and city, using stable source IDs rather than duplicating relocated tournaments.
+
+Verified era-correct continuity:
+- **New Delhi (1996) → Chennai/Madras (1997)**: same Gold Flake Tour licence inherited by current `hong_kong` source family. [Contemporary 1997 report](https://www.indiatoday.in/magazine/sport/story/19970430-as-gold-flake-open-proved-life-on-tennis-tour-is-often-hard-and-unforgiving-831328-1997-04-29).
+- **Pinehurst (1996) → Orlando (1997)**: U.S. Men's Clay Court Championships, same `houston` source family; [contemporary relocation report](https://www.sportsbusinessjournal.com/Daily/Issues/1996/09/03/Leagues-Governing-Bodies/WALT-DISNEY-TO-HOST-US-CLAY-COURT-TITLE-OPEN-NEWS-NOTES/), [tournament historical record](https://www.mensclaycourt.com/web/DATA/2024%20US%20Clay%20Media%20Guide.pdf).
+- **Marbella (1996–1997) → Mallorca (1998)**: one `brussels` source family; [Valencia Open venue history](https://en.wikipedia.org/wiki/Valencia_Open).
+- **Zagreb (1996–1997) → Split (1998)**: historic Croatian Indoors continuity, not parallel 1998 duplicate; **Singapore 1996 World Series → 1997 Championship Series** is a category transition; **1996 Rotterdam World Series** must not be retro-labelled Championship from 1999.
+- **1996 Lyon** was the Lyon indoor tournament in the eventual Montpellier licence and **1996 Marseille** was a separate event in the `lyon` source family. **1996 Adelaide** and **1996 Singapore** were separate tournaments despite modern name aliases.
+
+A deterministic `PRE_2000_PLAYED_TIER_COUNTS[1996]` gate now requires 9/11/57. Tests verify category hierarchy, original historical hosts, five new identities and exclusions, and reject fabricated cancellations or recategorisation.
+
+**Not a playable tennis or squash calendar:** no scores, draw size contracts, licence rights, ranking matrices, sport rules, tournament Editions or Run Package Apply/Save were created. All 37 yearly views are still a history-derived reference, and no 1990–1995 absence is interpreted as a tournament not existing.

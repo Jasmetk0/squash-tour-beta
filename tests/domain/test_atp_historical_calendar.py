@@ -25,36 +25,41 @@ def sources():
                  ))
 
 
-def test_canonical_snapshot_contains_360_dated_events_and_37_year_ledgers():
+def test_canonical_snapshot_contains_389_dated_events_and_37_year_ledgers():
     doc = build(*sources())
     stored = (SOURCE / "calendar.json").read_text(encoding="utf-8")
     assert stored == canonical(doc), "Generated source is stale; run --write"
     parsed = CanonicalPackageDocument.model_validate(doc)
     assert parsed.package_type is PackageType.CALENDAR
     assert parsed.package_id == "atp_tour_1990_2026_calendar"
-    assert len(parsed.entities) == 397
+    assert len(parsed.entities) == 426
     assert sum(e.entity_kind == "tennis.calendar.coverage.reference.v1"
                for e in parsed.entities) == 37
     dated = [e for e in parsed.entities
              if e.entity_kind == "tennis.calendar.occurrence.reference.v1"]
-    assert len(dated) == 360
+    assert len(dated) == 389
     assert all(e.payload["not_squash_rules"] is True
                and e.payload["run_week_projection"] == "not_applied_source_only"
                and len(e.references) == 2 for e in dated)
-    assert doc["provenance"]["date_coverage_years"] == [2021, 2022, 2023, 2024, 2025, 2026]
+    assert doc["provenance"]["date_coverage_years"] == [2020, 2021, 2022, 2023, 2024, 2025, 2026]
 
 
-def test_2021_2026_full_named_roster_and_prior_31_years_not_fabricated():
+def test_2020_2026_full_named_roster_and_prior_30_years_not_fabricated():
     doc = build(*sources())
     cover = {e["payload"]["atp_season_year"]: e["payload"]
              for e in doc["entities"]
              if e["entity_kind"] == "tennis.calendar.coverage.reference.v1"}
     assert sorted(cover) == list(range(1990, 2027))
-    for y in range(1990, 2021):
+    for y in range(1990, 2020):
         assert cover[y]["date_coverage_state"] == "undated"
         assert cover[y]["dated_series_count"] == 0
         assert cover[y]["undated_series_ids"]
         assert cover[y]["no_fabricated_dates"] is True
+    assert cover[2020]["dated_series_count"] == 29
+    assert cover[2020]["roster_series_count"] == 41
+    assert len(cover[2020]["known_not_held_series_ids"]) == 12
+    assert cover[2020]["undated_series_ids"] == []
+    assert cover[2020]["date_coverage_state"] == "verified_complete_known_series_dates"
     assert cover[2021]["dated_series_count"] == 58
     assert cover[2021]["roster_series_count"] == 65
     assert len(cover[2021]["known_not_held_series_ids"]) == 7
@@ -261,3 +266,20 @@ def test_2021_archived_dates_and_pandemic_cancelled_events():
     assert events["atp_2021_belgrade_2_2021"]["start_date"] == "2021-05-23"
     assert events["atp_2021_melbourne_1_2021"]["start_date"] == "2021-02-01"
     assert events["atp_2021_melbourne_2_2021"]["start_date"] == "2021-02-01"
+
+def test_2020_pandemic_tour_played_dates_vs_twelve_not_held():
+    doc = build(*sources())
+    events = {e["source_entity_id"]: e["payload"]
+              for e in doc["entities"]
+              if e["entity_kind"] == "tennis.calendar.occurrence.reference.v1"}
+    assert sum(k.startswith("atp_2020_") for k in events) == 29
+    for absent in ("beijing", "canadian_open", "chengdu", "halle",
+                   "hangzhou", "indian_wells", "madrid", "miami",
+                   "monte_carlo", "next_gen_atp_finals", "queens_club", "shanghai"):
+        assert f"atp_2020_{absent}" not in events
+    assert events["atp_2020_cincinnati"]["start_date"] == "2020-08-22"
+    assert events["atp_2020_rome"]["start_date"] == "2020-09-14"
+    assert events["atp_2020_cologne_1_2020"]["start_date"] == "2020-10-12"
+    assert events["atp_2020_cologne_2_2020"]["start_date"] == "2020-10-19"
+    assert events["atp_2020_sardinia_2020"]["start_date"] == "2020-10-12"
+    assert events["atp_2020_atp_finals"]["end_date"] == "2020-11-22"

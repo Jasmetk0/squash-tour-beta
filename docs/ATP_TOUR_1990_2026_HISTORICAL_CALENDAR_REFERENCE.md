@@ -16,10 +16,20 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (397 entities at the current
-source revision, comprising 37 provenance-coverage entities and 360 dated
+with Category (11), Series (164) and Calendar (426 entities at the current
+source revision, comprising 37 provenance-coverage entities and 389 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
+
+## 2020 archive coverage
+
+All 29 actually played 2020 main ATP Tour / Finals Series are dated from
+ATP's year-specific results archive. Twelve historical roster memberships
+that were **not played** due to the 2020 COVID disruption remain explicitly
+not held: no fake March Indian Wells/Miami/Madrid, no cancelled European grass
+or China events, no Next Gen Finals. Cincinnati was held in New York from
+22–29 August, Rome 14–21 September, and two Cologne editions and Sardinia
+ran as exceptional autumn events. All results remain unimported.
 
 ## 2021 archive coverage
 
@@ -63,7 +73,8 @@ Grand Slams, Olympic and team events remain out of scope.
 
 | Year(s) | Source status | Dated Series | Undated |
 | --- | --- | ---: | ---: |
-| 1990–2020 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 1990–2019 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 2020 | Official ATP results archive; 29 played, 12 not held | **29 / 29 played** | 0 |
 | 2021 | Official ATP results archive; 58 played, 7 not held | **58 / 58 played** | 0 |
 | 2022 | Official ATP results archive; 65 played, 4 not held | **65 / 65 played** | 0 |
 | 2023 | Official ATP played results archive, all named Series | **62 / 62** | 0 |
@@ -73,12 +84,13 @@ Grand Slams, Olympic and team events remain out of scope.
 
 **No generic history period or week is interpreted as a tournament date.**
 The parent Category/Series dataset contains 2,431 year-effective memberships;
-360 unique year/Series occurrences currently have original *date* sources.
+389 unique year/Series occurrences currently have original *date* sources.
 The other historical years will be sourced individually, not filled by
 inventing dates or extrapolating 2025/2026 patterns.
 
 Source links:
 
+- [2020 official results archive](https://www.atptour.com/en/scores/results-archive?year=2020).
 - [2021 official results archive](https://www.atptour.com/en/scores/results-archive?year=2021).
 - [2022 official results archive](https://www.atptour.com/en/scores/results-archive?year=2022).
 - [2023 official results archive](https://www.atptour.com/en/scores/results-archive?year=2023).
@@ -164,6 +176,6 @@ its own separately reviewed date-to-Run-clock policy.
    Saved Revision. No source-only date reference may be promoted to playable
    FAX events by these steps.
 
-The work is **not complete for 1990–2020**. Source-year coverage must be
+The work is **not complete for 1990–2019**. Source-year coverage must be
 upgraded year by year using original contemporaneous calendars and/or official
 ATP results archives. 2026 final validation remains pending.

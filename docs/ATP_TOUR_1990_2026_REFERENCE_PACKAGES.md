@@ -19,6 +19,17 @@ since 1 January 1990**, not the entire history of men's tennis. The Category
 and Series Package are optional **source-only historical references** for
 Squash Engine's data-driven future, not tennis gameplay.
 
+## 2026-11-03 — recent Canadian Masters alternating hosts (2024–2026)
+
+The **same** Canadian Masters 1000 Series alternates its actual men's tournament
+venue: **Montréal in 2024, Toronto in 2025, Montréal in 2026**.
+The source now records explicit dated hosts and official ATP evidence rather than
+allowing the 2026 current-host field to suggest Toronto 2025 happened in Montréal.
+Evidence: [ATP 2024 results archive](https://www.atptour.com/en/scores/results-archive?year=2024),
+[ATP 2025 Toronto results](https://www.atptour.com/en/scores/results-archive?year=2025),
+and [ATP Montréal 2026 final report](https://www.atptour.com/en/news/montreal-2026-results).
+The Category and annual Series memberships do **not** change.
+
 ## 2026-11-03 — independent 2025 Belgrade → Athens host correction
 
 The official [ATP announcement of 4 August 2025](https://www.atptour.com/en/news/belgrade-athens-announcement-august-2025) confirms that the **2024 Belgrade Open ATP 250** sanction was moved to **Athens, Greece in 2025**, where it was held as the **Hellenic Championship** (2–8 November 2025, indoor hard). The 2025 `belgrade` Series membership was already correct, but its physical **venue history was missing** and the fixed displayed title `Belgrade Open` was misleading for the played Athens year.

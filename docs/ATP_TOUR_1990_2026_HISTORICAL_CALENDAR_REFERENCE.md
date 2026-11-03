@@ -16,10 +16,20 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (212 entities at the current
-source revision, comprising 37 provenance-coverage entities and 175 dated
+with Category (11), Series (164) and Calendar (274 entities at the current
+source revision, comprising 37 provenance-coverage entities and 237 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
+
+## 2023 archive coverage
+
+All 62 named 2023 ATP main-tour/Finals Series are now individually dated from
+the ATP official played-results archive. The two separate Adelaide editions
+retain their separate Series IDs; historical source alias `hong_kong` denotes
+Pune, `hangzhou` denotes Zhuhai, `almaty` denotes Astana, and `lyon` denotes
+Marseille in the 2023 licence lineage. These are original 2023 venues, not
+the later host names. Excluded Grand Slams, Olympic and team events stay
+excluded. Source dates are not claims of match scores.
 
 ## 2024 archive coverage
 
@@ -33,19 +43,21 @@ Grand Slams, Olympic and team events remain out of scope.
 
 | Year(s) | Source status | Dated Series | Undated |
 | --- | --- | ---: | ---: |
-| 1990–2023 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 1990–2022 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 2023 | Official ATP played results archive, all named Series | **62 / 62** | 0 |
 | 2024 | Official ATP played results archive, all named Series | **62 / 62** | 0 |
 | 2025 | Official ATP played results archive, all named Series | **57 / 57** | 0 |
 | 2026 | Official published calendar + dated finals announcement, with seven subsequent corrections from played archive | **56 / 56** | 0 named Series, **year still provisional** |
 
 **No generic history period or week is interpreted as a tournament date.**
 The parent Category/Series dataset contains 2,431 year-effective memberships;
-175 unique year/Series occurrences currently have original *date* sources.
+237 unique year/Series occurrences currently have original *date* sources.
 The other historical years will be sourced individually, not filled by
 inventing dates or extrapolating 2025/2026 patterns.
 
 Source links:
 
+- [2023 official results archive](https://www.atptour.com/en/scores/results-archive?year=2023).
 - [2024 official results archive](https://www.atptour.com/en/scores/results-archive?year=2024).
 - [2025 official results archive](https://www.atptour.com/en/scores/results-archive?year=2025).
 - [2026 official published schedule](https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/).
@@ -128,6 +140,6 @@ its own separately reviewed date-to-Run-clock policy.
    Saved Revision. No source-only date reference may be promoted to playable
    FAX events by these steps.
 
-The work is **not complete for 1990–2023**. Source-year coverage must be
+The work is **not complete for 1990–2022**. Source-year coverage must be
 upgraded year by year using original contemporaneous calendars and/or official
 ATP results archives. 2026 final validation remains pending.

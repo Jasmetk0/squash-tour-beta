@@ -35,7 +35,7 @@ const canonicalYearPartition=(dated:unknown,undated:unknown):boolean => {
   if(!Array.isArray(dated)||!Array.isArray(undated)||dated.length<1)return false
   const ascending=(years:unknown[]):boolean=>years.every((year,i)=>
     typeof year==='number'&&Number.isSafeInteger(year)&&year>=1990&&year<=2026&&
-    (i===0||year>years[i-1]))
+    (i===0||(typeof years[i-1]==='number'&&year>Number(years[i-1]))))
   const combined=[...dated,...undated].sort((a,b)=>a-b)
   return ascending(dated)&&ascending(undated)&&combined.length===37&&
     combined.every((year,i)=>year===1990+i)&&dated.includes(2026)

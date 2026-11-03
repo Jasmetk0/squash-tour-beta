@@ -2806,8 +2806,8 @@
       "entity_schema_version": 1,
       "payload": {
         "atp_season_year": 2022,
-        "date_coverage_state": "undated",
-        "dated_series_count": 0,
+        "date_coverage_state": "verified_complete_known_series_dates",
+        "dated_series_count": 65,
         "known_not_held_series_ids": [
           "beijing",
           "chengdu",
@@ -2817,75 +2817,9 @@
         "no_fabricated_dates": true,
         "not_squash_rules": true,
         "roster_series_count": 69,
-        "undated_series_ids": [
-          "acapulco",
-          "adelaide",
-          "adelaide_2",
-          "almaty",
-          "atlanta",
-          "atp_finals",
-          "banja_luka",
-          "barcelona",
-          "basel",
-          "bastad",
-          "brussels",
-          "buenos_aires",
-          "canadian_open",
-          "cincinnati",
-          "cordoba",
-          "dallas",
-          "delray_beach",
-          "doha",
-          "dubai",
-          "eastbourne",
-          "estoril",
-          "florence_2022",
-          "geneva",
-          "gijon_2022",
-          "gstaad",
-          "halle",
-          "hamburg",
-          "hong_kong",
-          "houston",
-          "indian_wells",
-          "kitzbuhel",
-          "los_cabos",
-          "lyon",
-          "lyon_old",
-          "madrid",
-          "mallorca",
-          "marrakech",
-          "melbourne_2022",
-          "metz",
-          "miami",
-          "monte_carlo",
-          "montpellier",
-          "munich",
-          "naples_2022",
-          "newport",
-          "next_gen_atp_finals",
-          "paris_masters",
-          "queens_club",
-          "rio",
-          "rome",
-          "rotterdam",
-          "s_hertogenbosch",
-          "san_diego_2022",
-          "santiago",
-          "seoul_2022",
-          "sofia",
-          "stockholm",
-          "stuttgart",
-          "sydney_2022",
-          "tel_aviv_2022",
-          "tokyo",
-          "umag",
-          "vienna",
-          "washington",
-          "winston_salem"
-        ],
-        "year_source_status": "not_dated_no_fabricated_dates",
-        "year_source_url": null
+        "undated_series_ids": [],
+        "year_source_status": "verified_results_archive",
+        "year_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022"
       },
       "references": [],
       "scope": "tennis.atp_tour.calendar.reference.1990_2026",
@@ -2970,6 +2904,3365 @@
       "references": [],
       "scope": "tennis.atp_tour.calendar.reference.1990_2026",
       "source_entity_id": "season_2026_date_coverage",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 6,
+        "end_date": "2022-02-26",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "acapulco",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-02-21",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "acapulco",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_acapulco",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-01-09",
+        "end_year_week": {
+          "iso_week": 1,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 1,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "adelaide",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-01-03",
+        "start_year_week": {
+          "iso_week": 1,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "adelaide",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_adelaide",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2022-01-15",
+        "end_year_week": {
+          "iso_week": 2,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 2,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "adelaide_2",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-01-10",
+        "start_year_week": {
+          "iso_week": 2,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "adelaide_2",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_adelaide_2",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-10-09",
+        "end_year_week": {
+          "iso_week": 40,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 40,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "almaty",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-10-03",
+        "start_year_week": {
+          "iso_week": 40,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "almaty",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_almaty",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-07-31",
+        "end_year_week": {
+          "iso_week": 30,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 30,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "atlanta",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-07-25",
+        "start_year_week": {
+          "iso_week": 30,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atlanta",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_atlanta",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_finals",
+        "duration_days_inclusive": 8,
+        "end_date": "2022-11-20",
+        "end_year_week": {
+          "iso_week": 46,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 45,
+            "iso_year": 2022
+          },
+          {
+            "iso_week": 46,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "atp_finals",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-11-13",
+        "start_year_week": {
+          "iso_week": 45,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_finals",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_finals",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_atp_finals",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-04-24",
+        "end_year_week": {
+          "iso_week": 16,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 16,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "banja_luka",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-04-18",
+        "start_year_week": {
+          "iso_week": 16,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "banja_luka",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_banja_luka",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-04-24",
+        "end_year_week": {
+          "iso_week": 16,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 16,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "barcelona",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-04-18",
+        "start_year_week": {
+          "iso_week": 16,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "barcelona",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_barcelona",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-10-30",
+        "end_year_week": {
+          "iso_week": 43,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 43,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "basel",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-10-24",
+        "start_year_week": {
+          "iso_week": 43,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "basel",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_basel",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-07-17",
+        "end_year_week": {
+          "iso_week": 28,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 28,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "bastad",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-07-11",
+        "start_year_week": {
+          "iso_week": 28,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "bastad",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_bastad",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-10-23",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "brussels",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-10-17",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "brussels",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_brussels",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-02-13",
+        "end_year_week": {
+          "iso_week": 6,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 6,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "buenos_aires",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-02-07",
+        "start_year_week": {
+          "iso_week": 6,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "buenos_aires",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_buenos_aires",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-08-14",
+        "end_year_week": {
+          "iso_week": 32,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 32,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "canadian_open",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-08-08",
+        "start_year_week": {
+          "iso_week": 32,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "canadian_open",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_canadian_open",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 8,
+        "end_date": "2022-08-21",
+        "end_year_week": {
+          "iso_week": 33,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 32,
+            "iso_year": 2022
+          },
+          {
+            "iso_week": 33,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "cincinnati",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-08-14",
+        "start_year_week": {
+          "iso_week": 32,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "cincinnati",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_cincinnati",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-02-06",
+        "end_year_week": {
+          "iso_week": 5,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 5,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "cordoba",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-01-31",
+        "start_year_week": {
+          "iso_week": 5,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "cordoba",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_cordoba",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-02-13",
+        "end_year_week": {
+          "iso_week": 6,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 6,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "dallas",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-02-07",
+        "start_year_week": {
+          "iso_week": 6,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "dallas",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_dallas",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-02-20",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "delray_beach",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-02-14",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "delray_beach",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_delray_beach",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2022-02-19",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "doha",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-02-14",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "doha",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_doha",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 6,
+        "end_date": "2022-02-26",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "dubai",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-02-21",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "dubai",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_dubai",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2022-06-25",
+        "end_year_week": {
+          "iso_week": 25,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 25,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "eastbourne",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-06-20",
+        "start_year_week": {
+          "iso_week": 25,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "eastbourne",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_eastbourne",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-05-01",
+        "end_year_week": {
+          "iso_week": 17,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 17,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "estoril",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-04-25",
+        "start_year_week": {
+          "iso_week": 17,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "estoril",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_estoril",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-10-16",
+        "end_year_week": {
+          "iso_week": 41,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 41,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "florence_2022",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-10-10",
+        "start_year_week": {
+          "iso_week": 41,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "florence_2022",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_florence_2022",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-05-21",
+        "end_year_week": {
+          "iso_week": 20,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 19,
+            "iso_year": 2022
+          },
+          {
+            "iso_week": 20,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "geneva",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-05-15",
+        "start_year_week": {
+          "iso_week": 19,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "geneva",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_geneva",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-10-16",
+        "end_year_week": {
+          "iso_week": 41,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 41,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "gijon_2022",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-10-10",
+        "start_year_week": {
+          "iso_week": 41,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "gijon_2022",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_gijon_2022",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-07-24",
+        "end_year_week": {
+          "iso_week": 29,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 29,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "gstaad",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-07-18",
+        "start_year_week": {
+          "iso_week": 29,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "gstaad",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_gstaad",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-06-19",
+        "end_year_week": {
+          "iso_week": 24,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 24,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "halle",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-06-13",
+        "start_year_week": {
+          "iso_week": 24,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "halle",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_halle",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-07-24",
+        "end_year_week": {
+          "iso_week": 29,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 29,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "hamburg",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-07-18",
+        "start_year_week": {
+          "iso_week": 29,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "hamburg",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_hamburg",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-02-06",
+        "end_year_week": {
+          "iso_week": 5,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 5,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "hong_kong",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-01-31",
+        "start_year_week": {
+          "iso_week": 5,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "hong_kong",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_hong_kong",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-04-10",
+        "end_year_week": {
+          "iso_week": 14,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 14,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "houston",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-04-04",
+        "start_year_week": {
+          "iso_week": 14,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "houston",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_houston",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 11,
+        "end_date": "2022-03-20",
+        "end_year_week": {
+          "iso_week": 11,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 10,
+            "iso_year": 2022
+          },
+          {
+            "iso_week": 11,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "indian_wells",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-03-10",
+        "start_year_week": {
+          "iso_week": 10,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "indian_wells",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_indian_wells",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2022-07-30",
+        "end_year_week": {
+          "iso_week": 30,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 30,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "kitzbuhel",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-07-25",
+        "start_year_week": {
+          "iso_week": 30,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "kitzbuhel",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_kitzbuhel",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2022-08-06",
+        "end_year_week": {
+          "iso_week": 31,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 31,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "los_cabos",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-08-01",
+        "start_year_week": {
+          "iso_week": 31,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "los_cabos",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_los_cabos",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-02-20",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "lyon",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-02-14",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "lyon",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_lyon",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-05-21",
+        "end_year_week": {
+          "iso_week": 20,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 19,
+            "iso_year": 2022
+          },
+          {
+            "iso_week": 20,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "lyon_old",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-05-15",
+        "start_year_week": {
+          "iso_week": 19,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "lyon_old",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_lyon_old",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 8,
+        "end_date": "2022-05-08",
+        "end_year_week": {
+          "iso_week": 18,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 17,
+            "iso_year": 2022
+          },
+          {
+            "iso_week": 18,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "madrid",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-05-01",
+        "start_year_week": {
+          "iso_week": 17,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "madrid",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_madrid",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-06-25",
+        "end_year_week": {
+          "iso_week": 25,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 24,
+            "iso_year": 2022
+          },
+          {
+            "iso_week": 25,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "mallorca",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-06-19",
+        "start_year_week": {
+          "iso_week": 24,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "mallorca",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_mallorca",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-04-10",
+        "end_year_week": {
+          "iso_week": 14,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 14,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "marrakech",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-04-04",
+        "start_year_week": {
+          "iso_week": 14,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "marrakech",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_marrakech",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2022-01-09",
+        "end_year_week": {
+          "iso_week": 1,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 1,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "melbourne_2022",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-01-04",
+        "start_year_week": {
+          "iso_week": 1,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "melbourne_2022",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_melbourne_2022",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-09-25",
+        "end_year_week": {
+          "iso_week": 38,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 38,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "metz",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-09-19",
+        "start_year_week": {
+          "iso_week": 38,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "metz",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_metz",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 12,
+        "end_date": "2022-04-03",
+        "end_year_week": {
+          "iso_week": 13,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 12,
+            "iso_year": 2022
+          },
+          {
+            "iso_week": 13,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "miami",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-03-23",
+        "start_year_week": {
+          "iso_week": 12,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "miami",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_miami",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 8,
+        "end_date": "2022-04-17",
+        "end_year_week": {
+          "iso_week": 15,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 14,
+            "iso_year": 2022
+          },
+          {
+            "iso_week": 15,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "monte_carlo",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-04-10",
+        "start_year_week": {
+          "iso_week": 14,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "monte_carlo",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_monte_carlo",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-02-06",
+        "end_year_week": {
+          "iso_week": 5,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 5,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "montpellier",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-01-31",
+        "start_year_week": {
+          "iso_week": 5,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "montpellier",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_montpellier",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-05-01",
+        "end_year_week": {
+          "iso_week": 17,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 17,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "munich",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-04-25",
+        "start_year_week": {
+          "iso_week": 17,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "munich",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_munich",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-10-23",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "naples_2022",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-10-17",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "naples_2022",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_naples_2022",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-07-17",
+        "end_year_week": {
+          "iso_week": 28,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 28,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "newport",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-07-11",
+        "start_year_week": {
+          "iso_week": 28,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "newport",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_newport",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "next_gen_finals",
+        "duration_days_inclusive": 5,
+        "end_date": "2022-11-12",
+        "end_year_week": {
+          "iso_week": 45,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 45,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "next_gen_atp_finals",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-11-08",
+        "start_year_week": {
+          "iso_week": 45,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "next_gen_finals",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "next_gen_atp_finals",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_next_gen_atp_finals",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-11-06",
+        "end_year_week": {
+          "iso_week": 44,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 44,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "paris_masters",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-10-31",
+        "start_year_week": {
+          "iso_week": 44,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "paris_masters",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_paris_masters",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-06-19",
+        "end_year_week": {
+          "iso_week": 24,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 24,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "queens_club",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-06-13",
+        "start_year_week": {
+          "iso_week": 24,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "queens_club",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_queens_club",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-02-20",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rio",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-02-14",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rio",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_rio",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 8,
+        "end_date": "2022-05-15",
+        "end_year_week": {
+          "iso_week": 19,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 18,
+            "iso_year": 2022
+          },
+          {
+            "iso_week": 19,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rome",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-05-08",
+        "start_year_week": {
+          "iso_week": 18,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rome",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_rome",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-02-13",
+        "end_year_week": {
+          "iso_week": 6,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 6,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rotterdam",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-02-07",
+        "start_year_week": {
+          "iso_week": 6,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rotterdam",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_rotterdam",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-06-12",
+        "end_year_week": {
+          "iso_week": 23,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 23,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "s_hertogenbosch",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-06-06",
+        "start_year_week": {
+          "iso_week": 23,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "s_hertogenbosch",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_s_hertogenbosch",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-09-25",
+        "end_year_week": {
+          "iso_week": 38,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 38,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "san_diego_2022",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-09-19",
+        "start_year_week": {
+          "iso_week": 38,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "san_diego_2022",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_san_diego_2022",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-02-27",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "santiago",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-02-21",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "santiago",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_santiago",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-10-02",
+        "end_year_week": {
+          "iso_week": 39,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 39,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "seoul_2022",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-09-26",
+        "start_year_week": {
+          "iso_week": 39,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "seoul_2022",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_seoul_2022",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-10-02",
+        "end_year_week": {
+          "iso_week": 39,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 39,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "sofia",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-09-26",
+        "start_year_week": {
+          "iso_week": 39,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "sofia",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_sofia",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-10-23",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "stockholm",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-10-17",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "stockholm",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_stockholm",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-06-12",
+        "end_year_week": {
+          "iso_week": 23,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 23,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "stuttgart",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-06-06",
+        "start_year_week": {
+          "iso_week": 23,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "stuttgart",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_stuttgart",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2022-01-15",
+        "end_year_week": {
+          "iso_week": 2,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 2,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "sydney_2022",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-01-10",
+        "start_year_week": {
+          "iso_week": 2,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "sydney_2022",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_sydney_2022",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-10-02",
+        "end_year_week": {
+          "iso_week": 39,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 39,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "tel_aviv_2022",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-09-26",
+        "start_year_week": {
+          "iso_week": 39,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tel_aviv_2022",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_tel_aviv_2022",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-10-09",
+        "end_year_week": {
+          "iso_week": 40,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 40,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "tokyo",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-10-03",
+        "start_year_week": {
+          "iso_week": 40,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tokyo",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_tokyo",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-07-31",
+        "end_year_week": {
+          "iso_week": 30,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 30,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "umag",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-07-25",
+        "start_year_week": {
+          "iso_week": 30,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "umag",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_umag",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-10-30",
+        "end_year_week": {
+          "iso_week": 43,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 43,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "vienna",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-10-24",
+        "start_year_week": {
+          "iso_week": 43,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "vienna",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_vienna",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-08-07",
+        "end_year_week": {
+          "iso_week": 31,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 31,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "washington",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-08-01",
+        "start_year_week": {
+          "iso_week": 31,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "washington",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_washington",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2022,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2022-08-27",
+        "end_year_week": {
+          "iso_week": 34,
+          "iso_year": 2022
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 33,
+            "iso_year": 2022
+          },
+          {
+            "iso_week": 34,
+            "iso_year": 2022
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "winston_salem",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+        "start_calendar_year": 2022,
+        "start_date": "2022-08-21",
+        "start_year_week": {
+          "iso_week": 33,
+          "iso_year": 2022
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "winston_salem",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2022_winston_salem",
       "valid": true
     },
     {
@@ -15399,12 +18692,13 @@
     "coverage_model": "explicit_yearly_undated_series_ids",
     "created_for": "Squash Engine independent ATP historical reference",
     "date_coverage_years": [
+      2022,
       2023,
       2024,
       2025,
       2026
     ],
-    "dated_occurrences": 237,
+    "dated_occurrences": 302,
     "iso_week_not_run_week": true,
     "reference_span": {
       "from": 1990,

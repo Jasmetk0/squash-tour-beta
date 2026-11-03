@@ -12,14 +12,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+ROOT = Path(__file__).resolve().parents[1]
+if __package__ in (None, ""):
+    # Support direct execution: python scripts/audit_atp_reference_provenance.py
+    sys.path.insert(0, str(ROOT))
 from scripts.build_atp_tour_historical_seasons import build
 
-ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "config" / "reference_packages" / "atp_tour_1990_2026"
 GENERIC_ATP_RESULTS = "/en/scores/results-archive"
 FIRST_YEAR, LAST_YEAR = 1990, 2026

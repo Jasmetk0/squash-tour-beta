@@ -19009,7 +19009,7 @@
       "entity_schema_version": 1,
       "scope": "tennis.atp_tour.series.reference.1990_2026",
       "payload": {
-        "name": "Belgrade Open",
+        "name": "Belgrade Open / Hellenic Championship",
         "category_id_2026": null,
         "host_city_2026": null,
         "host_country_code_2026": null,
@@ -19034,8 +19034,24 @@
             "from": 2025,
             "to": 2025,
             "category_id": "atp_250",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
-            "notes": "ATP official result archive confirms this Tour 250 event in the given year"
+            "source_url": "https://www.atptour.com/en/news/belgrade-athens-announcement-august-2025",
+            "notes": "ATP official 2025-08-04 relocation of Belgrade ATP 250 to the indoor Athens Hellenic Championship (held Nov 2–8, 2025), not a played Belgrade edition."
+          }
+        ],
+        "identity_review_note": "Belgrade ATP 250 in 2024 and the same ATP-sanction Series relocated to Athens (Hellenic Championship) in 2025; 2026 host and successor are not inferred. Independent 1994 Athens World Series remains a different event.",
+        "historical_licence_source_url": "https://www.atptour.com/en/news/belgrade-athens-announcement-august-2025",
+        "historical_host_change": [
+          {
+            "year": 2024,
+            "city": "Belgrade",
+            "country_code": "SRB",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2024"
+          },
+          {
+            "year": 2025,
+            "city": "Athens",
+            "country_code": "GRC",
+            "source_url": "https://www.atptour.com/en/news/belgrade-athens-announcement-august-2025"
           }
         ]
       },

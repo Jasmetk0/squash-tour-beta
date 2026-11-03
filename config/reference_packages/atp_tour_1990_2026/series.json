@@ -14561,6 +14561,174 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1990,
+            "to": 1990,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
+          },
+          {
+            "from": 1991,
+            "to": 1991,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
+          },
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
+            "from": 1993,
+            "to": 1993,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1993",
+            "notes": "Played 1993 ATP Tour original tier, source and original host; no modern points or FAX sport edition inference."
+          },
+          {
+            "from": 1994,
+            "to": 1994,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
+          },
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
+            "from": 1996,
+            "to": 1996,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+            "notes": "Original played 1996 ATP Tour tier and historical host; not a modern 500/250 categorisation or editable Edition."
+          },
+          {
+            "from": 1997,
+            "to": 1997,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1997",
+            "notes": "1997 ATP played main Tour original category and actual city; no present-day tier or annual Edition inference"
+          },
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
+            "from": 1999,
+            "to": 1999,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
+            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
+          },
+          {
+            "from": 2000,
+            "to": 2000,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
+            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
+          },
+          {
+            "from": 2001,
+            "to": 2001,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2001",
+            "notes": "Actual played ATP main Tour event in original 2001 International Series/Gold category; not modern ATP 250/500 scoring"
+          },
+          {
+            "from": 2002,
+            "to": 2002,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
+            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
+          },
+          {
+            "from": 2003,
+            "to": 2003,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
+          },
+          {
+            "from": 2004,
+            "to": 2004,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2004",
+            "notes": "Played 2004 ATP Tour event, source-backed original historical International Series/Gold Category; annual Edition source does not imply full bracket/points"
+          },
+          {
+            "from": 2005,
+            "to": 2005,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
+            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
+          },
+          {
+            "from": 2006,
+            "to": 2006,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+            "notes": "Actual ATP Tour 2006 played event; historic International Series/Gold classification cross-checked against 2006 contemporary/retrospective calendar. No 2009 points backfill."
+          },
+          {
+            "from": 2007,
+            "to": 2007,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
+            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
+          },
+          {
+            "from": 2008,
+            "to": 2008,
+            "category_id": "atp_international_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
+            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
+          },
+          {
+            "from": 2009,
+            "to": 2009,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
+            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
+          },
+          {
+            "from": 2010,
+            "to": 2010,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+            "notes": "Official ATP 2010 results archive: played main Tour event at effective category; other years not implied"
+          },
+          {
+            "from": 2011,
+            "to": 2011,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+            "notes": "ATP official played results archive 2011 establishes Tour tournament and category; not Grand Slam, Davis or World Team Cup"
+          },
+          {
+            "from": 2012,
+            "to": 2012,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2012",
+            "notes": "ATP official 2012 results archive corroborates played main Tour event and historical category"
+          },
+          {
+            "from": 2013,
+            "to": 2013,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+            "notes": "Played Bogotá ATP 250 in 2013 after ATP-approved sale of the Los Angeles sanction; this is the same licence later relocated to Los Cabos, not a Los Angeles 2013 tournament."
+          },
+          {
             "from": 2014,
             "to": 2014,
             "category_id": "atp_250",
@@ -14648,6 +14816,144 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1990,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
+          },
+          {
+            "year": 1991,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
+          },
+          {
+            "year": 1992,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
+            "year": 1993,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1993"
+          },
+          {
+            "year": 1994,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
+          },
+          {
+            "year": 1995,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
+            "year": 1996,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996"
+          },
+          {
+            "year": 1997,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1997"
+          },
+          {
+            "year": 1998,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
+            "year": 1999,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
+          },
+          {
+            "year": 2000,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
+          },
+          {
+            "year": 2001,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2001"
+          },
+          {
+            "year": 2002,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
+          },
+          {
+            "year": 2003,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
+          },
+          {
+            "year": 2004,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2004"
+          },
+          {
+            "year": 2005,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
+          },
+          {
+            "year": 2006,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006"
+          },
+          {
+            "year": 2007,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
+          },
+          {
+            "year": 2008,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008"
+          },
+          {
+            "year": 2009,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009"
+          },
+          {
+            "year": 2010,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2010"
+          },
+          {
+            "year": 2011,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011"
+          },
+          {
+            "year": 2012,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2012"
+          },
+          {
             "year": 2013,
             "city": "Bogotá",
             "country_code": "COL",
@@ -14672,12 +14978,30 @@
             "source_url": "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars"
           }
         ],
-        "identity_review_note": "Bogotá ATP Tour 250 licence relocated to Los Cabos in 2016. Later years remain same event family."
+        "identity_review_note": "One ATP-sanction lineage: Los Angeles (through 2012), Bogotá (2013–2015), Los Cabos (since 2016). ATP approved the Los Angeles-to-Bogotá sale in December 2012 and the Bogotá rights were sold for Los Cabos from 2016. Historical hosts and tier labels are year-effective; a source Series is not a played Edition.",
+        "historical_licence_source_urls": [
+          "https://www.tennis.com/news/articles/atp-finalizes-sale-of-l-a-tournament-to-bogota",
+          "https://matchtenis.com/el-atp-de-bogota-se-traslada-a-mexico/",
+          "https://www.atptour.com/en/tournaments/los-angeles/423/overview",
+          "https://www.atptour.com/en/scores/results-archive?year=2013"
+        ]
       },
       "references": [
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_250",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -22212,329 +22536,6 @@
           {
             "year": 2007,
             "city": "San Jose",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
-          }
-        ]
-      },
-      "references": [
-        {
-          "source_package_id": "atp_tour_1990_2026_category",
-          "source_entity_id": "atp_250",
-          "expected_entity_kind": "tennis.category.reference.v1",
-          "minimum_schema_version": 1
-        },
-        {
-          "source_package_id": "atp_tour_1990_2026_category",
-          "source_entity_id": "atp_international_series",
-          "expected_entity_kind": "tennis.category.reference.v1",
-          "minimum_schema_version": 1
-        },
-        {
-          "source_package_id": "atp_tour_1990_2026_category",
-          "source_entity_id": "atp_world_series",
-          "expected_entity_kind": "tennis.category.reference.v1",
-          "minimum_schema_version": 1
-        }
-      ],
-      "valid": true
-    },
-    {
-      "source_entity_id": "los_angeles_2013",
-      "entity_kind": "tennis.series.reference.v1",
-      "entity_schema_version": 1,
-      "scope": "tennis.atp_tour.series.reference.1990_2026",
-      "payload": {
-        "name": "Los Angeles Open 2013",
-        "category_id_2026": null,
-        "host_city_2026": null,
-        "host_country_code_2026": null,
-        "surface_2026": null,
-        "historical_host_city": "Los Angeles",
-        "historical_country_code": "USA",
-        "historical_surface": "hard",
-        "reference_year": null,
-        "sponsor_names_can_change": true,
-        "not_calendar_editions": true,
-        "not_squash_rules": true,
-        "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
-        "history_periods": [
-          {
-            "from": 1990,
-            "to": 1990,
-            "category_id": "atp_world_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
-            "notes": "Played in first ATP Tour (1990), original Championship/World Series tier and historical city; no retrospective modern point mapping."
-          },
-          {
-            "from": 1991,
-            "to": 1991,
-            "category_id": "atp_world_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
-            "notes": "Played men's ATP Tour 1991, original Category and city; no modern 250/500 winner points or native played FAX Editions."
-          },
-          {
-            "from": 1992,
-            "to": 1992,
-            "category_id": "atp_world_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
-            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
-          },
-          {
-            "from": 1993,
-            "to": 1993,
-            "category_id": "atp_world_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1993",
-            "notes": "Played 1993 ATP Tour original tier, source and original host; no modern points or FAX sport edition inference."
-          },
-          {
-            "from": 1994,
-            "to": 1994,
-            "category_id": "atp_world_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
-            "notes": "Played 1994 original ATP Tour category / host; not a modern-tier points-equivalence or playable FAX Edition."
-          },
-          {
-            "from": 1995,
-            "to": 1995,
-            "category_id": "atp_world_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
-            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
-          },
-          {
-            "from": 1996,
-            "to": 1996,
-            "category_id": "atp_world_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
-            "notes": "Original played 1996 ATP Tour tier and historical host; not a modern 500/250 categorisation or editable Edition."
-          },
-          {
-            "from": 1997,
-            "to": 1997,
-            "category_id": "atp_world_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1997",
-            "notes": "1997 ATP played main Tour original category and actual city; no present-day tier or annual Edition inference"
-          },
-          {
-            "from": 1998,
-            "to": 1998,
-            "category_id": "atp_world_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
-            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
-          },
-          {
-            "from": 1999,
-            "to": 1999,
-            "category_id": "atp_world_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999",
-            "notes": "1999 original ATP Championship Series/World Series played event, matched ATP archive and original-category German seasonal listing"
-          },
-          {
-            "from": 2000,
-            "to": 2000,
-            "category_id": "atp_international_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000",
-            "notes": "ATP official results archive source of played Tour 2000 original historical International/Gold Category"
-          },
-          {
-            "from": 2001,
-            "to": 2001,
-            "category_id": "atp_international_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2001",
-            "notes": "Actual played ATP main Tour event in original 2001 International Series/Gold category; not modern ATP 250/500 scoring"
-          },
-          {
-            "from": 2002,
-            "to": 2002,
-            "category_id": "atp_international_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
-            "notes": "2002 actual played ATP Tour event, original historic International Series or Gold tier; original year archive cross-checked against contemporary-era calendar"
-          },
-          {
-            "from": 2003,
-            "to": 2003,
-            "category_id": "atp_international_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
-            "notes": "Official ATP 2003 played archive and independent contemporary-era Category schedule; no 2009 tier backfill or inferred Edition results"
-          },
-          {
-            "from": 2004,
-            "to": 2004,
-            "category_id": "atp_international_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2004",
-            "notes": "Played 2004 ATP Tour event, source-backed original historical International Series/Gold Category; annual Edition source does not imply full bracket/points"
-          },
-          {
-            "from": 2005,
-            "to": 2005,
-            "category_id": "atp_international_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
-            "notes": "2005 actual played ATP Tour event in original historic International Series/Gold classification"
-          },
-          {
-            "from": 2006,
-            "to": 2006,
-            "category_id": "atp_international_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
-            "notes": "Actual ATP Tour 2006 played event; historic International Series/Gold classification cross-checked against 2006 contemporary/retrospective calendar. No 2009 points backfill."
-          },
-          {
-            "from": 2007,
-            "to": 2007,
-            "category_id": "atp_international_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
-            "notes": "2007 ATP actual played results; historical International Series/Gold classification cross-checked against 2007 Tour calendar (not later ATP 250/500)"
-          },
-          {
-            "from": 2008,
-            "to": 2008,
-            "category_id": "atp_international_series",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
-            "notes": "Played 2008 ATP International Series Tour event confirmed in official Results Archive"
-          },
-          {
-            "from": 2009,
-            "to": 2009,
-            "category_id": "atp_250",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2009",
-            "notes": "ATP 2009 official played tournament; year-specific Category, no unverified 2008 assumptions"
-          },
-          {
-            "from": 2010,
-            "to": 2010,
-            "category_id": "atp_250",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
-            "notes": "Official ATP 2010 results archive: played main Tour event at effective category; other years not implied"
-          },
-          {
-            "from": 2011,
-            "to": 2011,
-            "category_id": "atp_250",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
-            "notes": "ATP official played results archive 2011 establishes Tour tournament and category; not Grand Slam, Davis or World Team Cup"
-          },
-          {
-            "from": 2012,
-            "to": 2012,
-            "category_id": "atp_250",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2012",
-            "notes": "ATP official 2012 results archive corroborates played main Tour event and historical category"
-          },
-          {
-            "from": 2013,
-            "to": 2013,
-            "category_id": "atp_250",
-            "source_url": "https://nos.nl/artikel/457783-atp-tenniskalender-2013",
-            "notes": "Detailed contemporary NOS ATP 2013 schedule confirms event city/date/tier; ATP 2013 archive listed for results cross-reference"
-          }
-        ],
-        "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
-        "historical_host_change": [
-          {
-            "year": 1990,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990"
-          },
-          {
-            "year": 1991,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991"
-          },
-          {
-            "year": 1992,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
-          },
-          {
-            "year": 1993,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1993"
-          },
-          {
-            "year": 1994,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
-          },
-          {
-            "year": 1995,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
-          },
-          {
-            "year": 1996,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996"
-          },
-          {
-            "year": 1997,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1997"
-          },
-          {
-            "year": 1998,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
-          },
-          {
-            "year": 1999,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1999"
-          },
-          {
-            "year": 2000,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2000"
-          },
-          {
-            "year": 2001,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2001"
-          },
-          {
-            "year": 2002,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002"
-          },
-          {
-            "year": 2003,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003"
-          },
-          {
-            "year": 2004,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2004"
-          },
-          {
-            "year": 2005,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2005"
-          },
-          {
-            "year": 2006,
-            "city": "Los Angeles",
-            "country_code": "USA",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006"
-          },
-          {
-            "year": 2007,
-            "city": "Los Angeles",
             "country_code": "USA",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
           }

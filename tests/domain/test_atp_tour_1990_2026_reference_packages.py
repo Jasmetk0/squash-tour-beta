@@ -38,7 +38,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 130
+    assert len(series["entities"]) == 136
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -529,7 +529,7 @@ def test_coverage_gates_reject_false_historical_completeness() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     rows = {s["year"]: s for s in build(categories, source)["seasons"]}
-    for year in range(1990, 1996):
+    for year in range(1990, 1995):
         assert rows[year]["played_tier_roster_validation"]["status"] == "unverified_incomplete"
         assert rows[year]["played_tier_roster_validation"]["played_counts"] is None
     assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
@@ -1949,3 +1949,64 @@ def test_1996_original_played_tier_gate_rejects_falsified_played_history() -> No
     target["payload"]["not_held_years_known"] = [1996]
     with pytest.raises(ValueError, match="played-tier roster mismatch in 1996"):
         build(categories, cancelled)
+
+
+def test_1995_original_atp_tier_counts_and_independent_venue_identity() -> None:
+    """1995 used 9 Super9, 11 Championship, 59 World, with 1 separate singles Finals."""
+    src = _source("series")
+    years = {y["year"]: y for y in build(_source("category"), src)["seasons"]}
+    y95 = years[1995]
+    assert y95["played_tier_roster_validation"]["played_counts"] == {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 11,
+        "atp_world_series": 59,
+    }
+    assert y95["played_tier_roster_validation"]["not_an_edition_calendar"] is True
+    assert Counter(y95["series_category_ids"].values()) == {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 11,
+        "atp_world_series": 59,
+        "atp_finals": 1,
+    }
+    assert y95["series_category_ids"]["essen_masters"] == "atp_championship_single_week"
+    assert "stuttgart_indoor_masters" not in y95["series_category_ids"]
+    assert y95["series_category_ids"]["stuttgart_indoor_feb_1995"] == "atp_championship_series"
+    assert y95["series_category_ids"]["stuttgart"] == "atp_championship_series"
+    assert y95["series_category_ids"]["tokyo"] == "atp_championship_series"
+    assert y95["series_category_ids"]["tokyo_indoor_1995"] == "atp_championship_series"
+    assert y95["series_category_ids"]["vienna"] == "atp_world_series"
+    assert years[1996]["series_category_ids"]["vienna"] == "atp_championship_series"
+    assert y95["series_category_ids"]["johannesburg_1995"] == "atp_world_series"
+    assert "johannesburg_2011" not in y95["series_category_ids"]
+    by = {e["source_entity_id"]: e["payload"] for e in src["entities"]}
+    assert _host_by_year(by["atp_finals"])[1995] == "Frankfurt"
+    assert _host_by_year(by["essen_masters"])[1995] == "Essen"
+    assert _host_by_year(by["hong_kong"])[1995] == "Nice"
+    assert _host_by_year(by["hong_kong"])[1996] == "New Delhi"
+    assert _host_by_year(by["hong_kong"])[1997] == "Chennai"
+    assert _host_by_year(by["houston"])[1995] == "Pinehurst"
+    assert _host_by_year(by["houston"])[1996] == "Pinehurst"
+    assert _host_by_year(by["brussels"])[1995] == "Valencia"
+    assert _host_by_year(by["brussels"])[1996] == "Marbella"
+    assert _host_by_year(by["singapore_1999"])[1995] == "Kuala Lumpur"
+    assert _host_by_year(by["singapore_1999"])[1996] == "Singapore"
+    assert y95["series_category_ids"]["buenos_aires_1995"] == "atp_world_series"
+    assert "buenos_aires" not in y95["series_category_ids"]
+    assert not {"grand_slam", "grand_slam_cup", "davis_cup", "world_team_cup",
+                "atp_doubles_finals"} & set(y95["series_category_ids"])
+
+
+def test_1995_source_reconciliation_rejects_valid_ref_tier_corruption() -> None:
+    import copy
+    cat, source = _source("category"), _source("series")
+    wrong = copy.deepcopy(source)
+    event = next(e for e in wrong["entities"] if e["source_entity_id"] == "vienna")
+    period = next(p for p in event["payload"]["history_periods"] if p["from"] == 1995)
+    period["category_id"] = "atp_championship_series"
+    with pytest.raises(ValueError, match="played-tier roster mismatch in 1995"):
+        build(cat, wrong)
+    fake = copy.deepcopy(source)
+    event = next(e for e in fake["entities"] if e["source_entity_id"] == "tokyo_indoor_1995")
+    event["payload"]["not_held_years_known"] = [1995]
+    with pytest.raises(ValueError, match="played-tier roster mismatch in 1995"):
+        build(cat, fake)

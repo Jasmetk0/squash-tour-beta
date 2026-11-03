@@ -16,7 +16,7 @@
     "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
     "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
     "notes": [
-      "Played main ATP Tour original tier rosters 1996–2025 source-reconciled; 1990–1995 incomplete and 2026 provisional. Source-only data without historical Edition/draw/result/Run Apply.",
+      "Played main ATP Tour original tier rosters 1995–2025 source-reconciled; 1990–1994 incomplete and 2026 provisional. Source-only data without historical Edition/draw/result/Run Apply.",
       "2026 date/host fields are not assumed for earlier seasons.",
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
@@ -53,7 +53,7 @@
       },
       "note": "Tour-only played events, excluding Grand Slam, team, Olympic, Challenger and ITF. The 2025 overview page omitted Hangzhou; ATP 2025 results prove participation."
     },
-    "historical_roster_scope": "1996–2025 played main Tour source-tier census; 1990–1995 incomplete; 2026 provisional; historical source only",
+    "historical_roster_scope": "1995–2025 played original ATP main Tour tier rosters source-reconciled; 1990–1994 incomplete, 2026 provisional; no played Edition objects",
     "calendar_validation_2023": {
       "source_2023": "https://www.atptour.com/en/scores/results-archive?year=2023",
       "singles_main_tour_250_count": 38,
@@ -789,6 +789,48 @@
         "Olympics Atlanta 1996, four Grand Slams, Hartford separate doubles Finals, Davis/World Team Cup and Munich Grand Slam Cup excluded.",
         "TennisDB uses anachronistic display names for 1996 Zagreb, Singapore, Lyon; historic ATP original city wins."
       ]
+    },
+    "calendar_validation_1995": {
+      "archive_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+      "season_original_tier_url": "https://en.wikipedia.org/wiki/1995_ATP_Tour",
+      "independent_year_roster_url": "https://tennis-db.com/tournaments?season=1995",
+      "original_tier_counts": {
+        "atp_super_9": 9,
+        "atp_championship_series": 11,
+        "atp_world_series": 59,
+        "singles_atp_tour_world_championship": 1
+      },
+      "atp_only_singles_source_series_count": 80,
+      "excluded_grand_slam_tournaments": 4,
+      "excluded_atp_separately_run_doubles_finals": 1,
+      "source_only_not_native_run_or_playable_edition": true,
+      "historical_notes": [
+        "1995 Essen was one-year Super 9; Stuttgart autumn replaced Essen in 1996, distinct from February 1995 Stuttgart Indoor Championship Series and summer Stuttgart Clay Championship Series.",
+        "1995 Tokyo Japan Open and Tokyo Indoor were two different Championship Series tournaments at different dates.",
+        "1995 Vienna was original World Series, not Championship. 1995 CA Tennis Trophy edition source and aggregate 11 Championship/59 World roster outweigh erroneous German historical year table.",
+        "1995 Nice licence transferred to New Delhi 1996 and then Chennai 1997, distinct from Hong Kong Salem Tour at Hong Kong 1995.",
+        "1995 Pinehurst US Men's Clay Court moved to Orlando 1997, preserving a single historic Houston source identity.",
+        "Kuala Lumpur 1995 / Singapore 1996 venue chain is not a second played Singapore 1995 event.",
+        "Year-end ATP Tour World Championships singles in Frankfurt 1995, separate Eindhoven doubles Finals; no Grand Slams, Grand Slam Cup, Davis Cup or World Team Cup inside these 80 identities."
+      ],
+      "crosschecks": [
+        {
+          "fact": "1995 Vienna original World Series classification",
+          "source_url": "https://en.wikipedia.org/wiki/1995_CA-TennisTrophy"
+        },
+        {
+          "fact": "1995 Tokyo Indoor Championship Series",
+          "source_url": "https://en.wikipedia.org/wiki/1995_Tokyo_Indoor"
+        },
+        {
+          "fact": "1995 Essen sole Super 9 Masters host",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?tournamentType=1000&year=1995"
+        },
+        {
+          "fact": "1995 Frankfurt singles final",
+          "source_url": "https://www.atptour.com/-/media/23da5115363646fd89d16716e5b35a2e.pdf"
+        }
+      ]
     }
   },
   "explicit_scope": [
@@ -839,6 +881,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Indian Wells",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Indian Wells",
@@ -962,6 +1010,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Key Biscayne",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Key Biscayne",
             "country_code": "USA",
@@ -1083,6 +1137,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Monte Carlo",
+            "country_code": "MCO",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Monte Carlo",
@@ -1276,6 +1336,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Rome",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Rome",
             "country_code": "ITA",
@@ -1399,6 +1465,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Montreal",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Toronto",
             "country_code": "CAN",
@@ -1516,6 +1588,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Cincinnati",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Cincinnati",
@@ -1690,6 +1768,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Paris",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Paris",
             "country_code": "FRA",
@@ -1783,6 +1867,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -1990,6 +2081,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Memphis",
             "country_code": "USA",
@@ -2192,6 +2289,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -2399,6 +2503,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Rotterdam",
             "country_code": "NLD",
@@ -2522,6 +2632,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -2736,6 +2853,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Doha",
+            "country_code": "QAT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Doha",
             "country_code": "QAT",
@@ -2893,6 +3016,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -3093,6 +3223,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Mexico City",
+            "country_code": "MEX",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Mexico City",
             "country_code": "MEX",
@@ -3205,6 +3341,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -3412,6 +3555,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Dubai",
+            "country_code": "ARE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Dubai",
             "country_code": "ARE",
@@ -3535,6 +3684,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -3735,6 +3891,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Barcelona",
             "country_code": "ESP",
@@ -3852,6 +4014,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -4059,6 +4228,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Munich",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Munich",
             "country_code": "DEU",
@@ -4201,6 +4376,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Hamburg",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Hamburg",
             "country_code": "DEU",
@@ -4294,6 +4475,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -4407,6 +4595,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Halle ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Halle",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Halle",
@@ -4526,6 +4720,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -4638,6 +4839,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "London",
@@ -4756,6 +4963,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -4956,6 +5170,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Washington",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Washington",
             "country_code": "USA",
@@ -5073,6 +5293,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -5265,6 +5492,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Tokyo",
@@ -5598,6 +5831,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -5801,6 +6041,12 @@
         "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Basel",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Basel",
             "country_code": "CHE",
@@ -5912,6 +6158,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://en.wikipedia.org/wiki/1995_CA-TennisTrophy",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -6119,6 +6372,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://en.wikipedia.org/wiki/1995_CA-TennisTrophy"
+          },
+          {
             "year": 1996,
             "city": "Vienna",
             "country_code": "AUT",
@@ -6233,7 +6492,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2014"
           }
         ],
-        "identity_review_note": "Vienna ATP Tour 250 through 2014; upgraded to 500 in 2015, do not retroactively assign 500 to 2013."
+        "identity_review_note": "Vienna 1995 CA Tennis Trophy was ATP World Series (not Championship); historical German yearly summary mismarks tier, contemporary tournament edition and 1995 original census prevail. Vienna 1996 was Championship."
       },
       "references": [
         {
@@ -6259,6 +6518,12 @@
           "source_entity_id": "atp_championship_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -6279,6 +6544,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -6472,6 +6744,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Adelaide",
             "country_code": "AUS",
@@ -6596,6 +6874,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.indiatoday.in/magazine/sport/story/19970430-as-gold-flake-open-proved-life-on-tennis-tour-is-often-hard-and-unforgiving-831328-1997-04-29",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -6810,6 +7095,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Nice",
+            "country_code": "FRA",
+            "source_url": "https://www.indiatoday.in/magazine/sport/story/19970430-as-gold-flake-open-proved-life-on-tennis-tour-is-often-hard-and-unforgiving-831328-1997-04-29"
+          },
+          {
             "year": 1996,
             "city": "New Delhi",
             "country_code": "IND",
@@ -6978,7 +7269,7 @@
             "source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024"
           }
         ],
-        "identity_review_note": "McDowell's Open at New Delhi 1996 / Chennai-Madras 1997 Gold Flake Open / Pune 2018 / Hong Kong 2024; same historic Source Series; documented 1997 relocation.",
+        "identity_review_note": "Nice 1995 ATP World Series licence sold and brought to New Delhi 1996 and Chennai 1997, later Pune→Hong Kong; same year-effective Series identity.",
         "historical_licence_source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024"
       },
       "references": [
@@ -7091,6 +7382,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -7298,6 +7596,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Auckland",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Auckland",
             "country_code": "NZL",
@@ -7409,6 +7713,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -7622,6 +7933,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Lyon",
@@ -8010,6 +8327,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -8229,6 +8553,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Coral Springs",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Coral Springs",
@@ -8471,6 +8801,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.mensclaycourt.com/web/DATA/2024%20US%20Clay%20Media%20Guide.pdf",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -8688,6 +9025,12 @@
         "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Pinehurst",
+            "country_code": "USA",
+            "source_url": "https://www.mensclaycourt.com/web/DATA/2024%20US%20Clay%20Media%20Guide.pdf"
+          },
+          {
             "year": 1996,
             "city": "Pinehurst",
             "country_code": "USA",
@@ -8760,7 +9103,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
           }
         ],
-        "identity_review_note": "U.S. Men's Clay Court Championships hosted Pinehurst in 1995–1996, Orlando in 1997–2000, Houston since 2001; same tournament identity (not a new Houston 1996 event)."
+        "identity_review_note": "Pinehurst 1995–1996 / Orlando 1997–2000 / Houston 2001 onward U.S. Men's Clay Court Championships is one historic title identity."
       },
       "references": [
         {
@@ -8800,6 +9143,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -9006,6 +9356,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Casablanca",
@@ -9280,6 +9636,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_championship_series",
@@ -9493,6 +9856,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -9646,6 +10015,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -9853,6 +10229,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "'s-Hertogenbosch",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "'s-Hertogenbosch",
             "country_code": "NLD",
@@ -10035,6 +10417,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -10249,6 +10638,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Nottingham",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Nottingham",
             "country_code": "GBR",
@@ -10422,6 +10817,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -10634,6 +11036,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Båstad",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Båstad",
@@ -10747,6 +11155,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -10959,6 +11374,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Gstaad",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Gstaad",
@@ -11072,6 +11493,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -11285,6 +11713,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Umag",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Umag",
             "country_code": "HRV",
@@ -11396,6 +11830,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -11610,6 +12051,12 @@
         "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Kitzbühel",
             "country_code": "AUT",
@@ -11733,6 +12180,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -11939,6 +12393,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Estoril",
@@ -12229,6 +12689,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -12441,6 +12908,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Long Island",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Long Island",
@@ -13020,6 +13493,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://en.wikipedia.org/wiki/Valencia_Open",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -13240,6 +13720,12 @@
         "history_scope": "original_2002_mallorca_2003_valencia_then_documented_2009_plus_history",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Valencia",
+            "country_code": "ESP",
+            "source_url": "https://en.wikipedia.org/wiki/Valencia_Open"
+          },
+          {
             "year": 1996,
             "city": "Marbella",
             "country_code": "ESP",
@@ -13396,7 +13882,7 @@
             "source_url": "https://www.atptour.com/en/news/what-is-the-2025-atp-tour-calendar"
           }
         ],
-        "identity_review_note": "Valencia 1995, Marbella 1996–1997, Mallorca 1998–2002, Valencia 2003 onward: one documented licence lineage, with 1996 actual host Marbella."
+        "identity_review_note": "Valencia 1995 / Marbella 1996–1997 / Mallorca 1998–2002 / Valencia 2003–2015 are related historical venues, preserve the original 1995 city."
       },
       "references": [
         {
@@ -13442,6 +13928,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -13671,6 +14164,12 @@
         },
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Marseille",
             "country_code": "FRA",
@@ -13878,6 +14377,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
           },
           {
             "from": 1996,
@@ -14094,6 +14600,12 @@
         "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit.",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Stockholm",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Stockholm",
             "country_code": "SWE",
@@ -14236,6 +14748,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Frankfurt",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/-/media/23da5115363646fd89d16716e5b35a2e.pdf"
+          },
+          {
             "year": 1996,
             "city": "Hannover",
             "country_code": "DEU",
@@ -14368,6 +14886,14 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
             "notes": "Historical venue-based reference; do not infer unverified earlier seasons"
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Essen",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
           }
         ]
       },
@@ -14543,6 +15069,12 @@
           "notes": "Permanent ATP membership transferred to Astana in 2022; no simultaneous St Petersburg edition asserted"
         },
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Saint Petersburg",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Saint Petersburg",
@@ -15190,6 +15722,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -15388,6 +15927,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Newport",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Newport",
             "country_code": "USA",
@@ -15503,6 +16048,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
           {
             "from": 1996,
             "to": 1996,
@@ -15701,6 +16253,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Indianapolis",
@@ -16217,6 +16775,13 @@
         "history_scope": "2000_london_axa_gold_2001_milan_is_2005_milan_2006_zagreb_2016_sofia",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_championship_series",
@@ -16414,6 +16979,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Milan",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Milan",
@@ -17140,6 +17711,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -17317,6 +17895,12 @@
         ],
         "identity_review_note": "Bucharest 2015–16 Tour licence transferred Budapest 2017–19 then Belgrade 2021; Bucharest 2024+ tracked as a distinct Tour licence without unproven merger.",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Bucharest",
+            "country_code": "ROU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Bucharest",
@@ -17630,6 +18214,13 @@
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -17807,6 +18398,12 @@
         ],
         "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played.",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Moscow",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Moscow",
@@ -18044,6 +18641,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -18214,6 +18818,12 @@
         ],
         "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined.",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Sydney",
@@ -18807,6 +19417,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -18935,6 +19552,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "San Jose",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "San Jose",
@@ -19052,6 +19675,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -19180,6 +19810,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Los Angeles",
@@ -19529,6 +20165,13 @@
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -19650,6 +20293,12 @@
         ],
         "identity_review_note": "2000 Dutch Open Amsterdam, 2001 Amersfoort; later Serbia names must not overwrite original Dutch city.",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Amsterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Amsterdam",
@@ -19851,6 +20500,13 @@
         "history_scope": "2005_scottsdale_2006_2008_las_vegas",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -19944,6 +20600,12 @@
         ],
         "identity_review_note": "2005 Tennis Channel Open in Scottsdale transferred to Las Vegas in 2006, played there through 2008; earlier Scottsdale years not imported.",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Scottsdale",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Scottsdale",
@@ -20055,6 +20717,13 @@
         "history_scope": "2005_st_poelten_2006_2008_poertschach",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -20148,6 +20817,12 @@
         ],
         "identity_review_note": "2005 St. Pölten ATP event licence moved to Pörtschach from 2006, played there through 2008.",
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "St. Pölten",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "St. Pölten",
@@ -20593,6 +21268,13 @@
         "history_scope": "2005_2006_played_tour_only_older_seasons_not_backfilled",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -20671,6 +21353,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Palermo",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Palermo",
@@ -20777,6 +21465,13 @@
         "history_scope": "played_2001_2003_copenhagen_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -20834,6 +21529,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Copenhagen",
+            "country_code": "DNK",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Copenhagen",
@@ -20922,6 +21623,13 @@
         "history_scope": "played_2001_2002_hong_kong_salem_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -20972,6 +21680,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Hong Kong",
+            "country_code": "HKG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Hong Kong",
@@ -21054,6 +21768,13 @@
         "history_scope": "played_2001_atp_international_series_only_older_1990_2000_not_imported",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -21090,6 +21811,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Bogotá",
+            "country_code": "COL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Bogotá",
@@ -21160,6 +21887,13 @@
         "history_scope": "played_2001_atp_international_series_only_older_1990_2000_not_imported",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -21203,6 +21937,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Atlanta",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Atlanta",
@@ -21279,6 +22019,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -21315,6 +22062,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "San Marino",
+            "country_code": "SMR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "San Marino",
@@ -21385,6 +22138,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -21421,6 +22181,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Toulouse",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Toulouse",
@@ -21611,6 +22377,13 @@
         "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://stats.tennismylife.org/tournaments/singapore",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -21641,6 +22414,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Kuala Lumpur",
+            "country_code": "MYS",
+            "source_url": "https://stats.tennismylife.org/tournaments/singapore"
+          },
+          {
             "year": 1996,
             "city": "Singapore",
             "country_code": "SGP",
@@ -21665,7 +22444,7 @@
             "source_url": "https://www.atptour.com/en/tournaments/singapore/326/overview"
           }
         ],
-        "identity_review_note": "Singapore indoor Heineken Open played original ATP Championship Series in 1999, Marcello Rios singles champion. 2000 Singapore not played; source is distinct from current 2021 Singapore ATP 250 until licence lineage proven."
+        "identity_review_note": "Kuala Lumpur 1995 to Singapore 1996/1997/1998/1999 ATP Tour source line, original venue host changes preserved; no fictitious 1995 Singapore played Tour event."
       },
       "references": [
         {
@@ -21704,6 +22483,13 @@
         "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -21733,6 +22519,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Prague",
+            "country_code": "CZE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Prague",
@@ -22067,6 +22859,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_championship_series",
@@ -22089,6 +22888,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Philadelphia",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Philadelphia",
@@ -22141,6 +22946,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -22163,6 +22975,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Bologna",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Bologna",
@@ -22215,6 +23033,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_championship_series",
@@ -22237,6 +23062,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "New Haven",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "New Haven",
@@ -22289,6 +23120,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -22311,6 +23149,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Ostrava",
+            "country_code": "CZE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Ostrava",
@@ -22363,6 +23207,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -22385,6 +23236,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Santiago",
+            "country_code": "CHL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Santiago",
@@ -22437,6 +23294,13 @@
         "history_scope": "historic_beijing_1993_1997_2004_china_open_not_assumed_same_licence",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -22452,6 +23316,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Beijing",
+            "country_code": "CHN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Beijing",
@@ -22498,6 +23368,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -22506,6 +23383,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Jakarta",
+            "country_code": "IDN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Jakarta",
@@ -22546,6 +23429,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -22554,6 +23444,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Bermuda",
+            "country_code": "BMU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Bermuda",
@@ -22594,6 +23490,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -22602,6 +23505,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Seoul",
+            "country_code": "KOR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Seoul",
@@ -22642,6 +23551,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -22650,6 +23566,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Porto",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
           {
             "year": 1996,
             "city": "Porto",
@@ -22690,6 +23612,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          },
+          {
             "from": 1996,
             "to": 1996,
             "category_id": "atp_world_series",
@@ -22699,6 +23628,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1995,
+            "city": "Tel Aviv",
+            "country_code": "ISR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          },
+          {
             "year": 1996,
             "city": "Tel Aviv",
             "country_code": "ISR",
@@ -22706,6 +23641,294 @@
           }
         ],
         "identity_review_note": "Played 1996 Tel Aviv World Series; distinct from temporary 2022 ATP 250 licence."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "stuttgart_indoor_feb_1995",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1995 Stuttgart Indoor Championship Series (February)",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Stuttgart",
+        "historical_country_code": "DEU",
+        "historical_surface": "indoor_carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
+        "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          }
+        ],
+        "identity_review_note": "February 1995 Stuttgart indoors Championship Series was a distinct fixture from the July Stuttgart clay Championship and 1996 Stuttgart autumn Super 9, which was Essen in 1995."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "johannesburg_1995",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1995 South African Open Johannesburg",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Johannesburg",
+        "historical_country_code": "ZAF",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
+        "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Johannesburg",
+            "country_code": "ZAF",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          }
+        ],
+        "identity_review_note": "1995 Johannesburg was a Tour World Series event (former Sun City); not automatically the same Tour licence as 2009–2011 Johannesburg."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "bordeaux_1995",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1995 Bordeaux Grand Prix Passing Shot",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Bordeaux",
+        "historical_country_code": "FRA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
+        "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Bordeaux",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          }
+        ],
+        "identity_review_note": "Original 1995 ATP World Series Bordeaux; no unverified year/rights continuation."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "tokyo_indoor_1995",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1995 Tokyo Indoor Seiko World Super Tennis",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Tokyo",
+        "historical_country_code": "JPN",
+        "historical_surface": "indoor_carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
+        "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_championship_series",
+            "source_url": "https://en.wikipedia.org/wiki/1995_Tokyo_Indoor",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://en.wikipedia.org/wiki/1995_Tokyo_Indoor"
+          }
+        ],
+        "identity_review_note": "Tokyo October Indoor 1995 Championship Series is distinct from April Tokyo Japan Open Championship Series; the 1995 autumn indoor edition was its last in ATP tour."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "montevideo_1995",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1995 Montevideo Topper Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Montevideo",
+        "historical_country_code": "URY",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
+        "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Montevideo",
+            "country_code": "URY",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          }
+        ],
+        "identity_review_note": "Original 1995 ATP World Series, not an assumed South American licence revival after 1995."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "buenos_aires_1995",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1995 Buenos Aires Topper South American Open",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Buenos Aires",
+        "historical_country_code": "ARG",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
+        "history_periods": [
+          {
+            "from": 1995,
+            "to": 1995,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+            "notes": "Played 1995 men's ATP Tour original year-tier/venue, not a modern ATP 250/500 equivalent or derived Edition"
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1995,
+            "city": "Buenos Aires",
+            "country_code": "ARG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
+          }
+        ],
+        "identity_review_note": "Actual 1995 World Series Buenos Aires; not assumed identical to the relaunched 2001 ATP Buenos Aires Series without verified licence history."
       },
       "references": [
         {

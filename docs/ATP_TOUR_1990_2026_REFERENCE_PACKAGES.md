@@ -1,9 +1,9 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **130** Series identities and 37 generated annual reference rows.
-> The **30 played main ATP Tour tier rosters 1996–2025** have source-backed
-> original year-effective categories. **1990–1995 are incomplete; 2026 is
+> **136** Series identities and 37 generated annual reference rows.
+> The **31 played main ATP Tour tier rosters 1995–2025** have source-backed
+> original year-effective categories. **1990–1994 are incomplete; 2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
@@ -1458,3 +1458,22 @@ Verified era-correct continuity:
 A deterministic `PRE_2000_PLAYED_TIER_COUNTS[1996]` gate now requires 9/11/57. Tests verify category hierarchy, original historical hosts, five new identities and exclusions, and reject fabricated cancellations or recategorisation.
 
 **Not a playable tennis or squash calendar:** no scores, draw size contracts, licence rights, ranking matrices, sport rules, tournament Editions or Run Package Apply/Save were created. All 37 yearly views are still a history-derived reference, and no 1990–1995 absence is interpreted as a tournament not existing.
+
+
+## 2026-11-03 — completed original 1995 ATP main Tour played roster
+
+The 1995 played source census is **9 ATP Championship Single-Week (Super 9), 11 ATP Championship Series, 59 ATP World Series and one ATP Tour World Championships singles Final in Frankfurt**. This totals **80 ATP-only source Series**. Exclude four independently run Grand Slams, separately staged ATP year-end doubles event in Eindhoven, ITF Grand Slam Cup, team tournaments, Challengers and pre-1990 events. These are source identities, not historical playable Editions or results.
+
+**Consecutive completed original-era roster range now 1995–2025 (31 seasons)**; **1990–1994 still source-incomplete**, 2026 is provisional. Six distinct source IDs were necessary: `stuttgart_indoor_feb_1995`, `tokyo_indoor_1995`, `johannesburg_1995`, `bordeaux_1995`, `montevideo_1995`, `buenos_aires_1995`.
+
+Historically significant:
+- **Vienna 1995 was World Series**, not Championship Series, unlike its 1996 classification. Some summary-year tables mislabeled it; the [original tournament edition](https://en.wikipedia.org/wiki/1995_CA-TennisTrophy) and original-tier overall 11/59 census agree with World. This is **not** historical ATP 250 point equivalence.
+- **Tokyo April 1995 Japan Open and Tokyo Indoor October 1995** were distinct Championship Series tournaments, not duplicates; [1995 Tokyo Indoor](https://en.wikipedia.org/wiki/1995_Tokyo_Indoor).
+- **Stuttgart February 1995 Championship**, **Stuttgart July 1995 Championship** and **Essen October 1995 Super 9** were three separate actual events. The top-tier Essen licence moved to Stuttgart for 1996; do not misidentify the February Stuttgart with that 1996 Super 9.
+- **Nice 1995 → New Delhi 1996 → Chennai 1997** is the same documented ATP licence, now source-scoped as `hong_kong`; [contemporary 1997 report](https://www.indiatoday.in/magazine/sport/story/19970430-as-gold-flake-open-proved-life-on-tennis-tour-is-often-hard-and-unforgiving-831328-1997-04-29).
+- **Pinehurst 1995–1996 → Orlando 1997** remains the U.S. Men's Clay Court Championships `houston` identity; 1995 Valencia→1996 Marbella→1998 Mallorca stays one `brussels` Series. 1995 Kuala Lumpur→1996 Singapore stays a source family, never two 1995 played events.
+- 1995 Buenos Aires and Johannesburg are not automatically assumed the same licensed tournaments as later restarts. Finals 1995 singles were in **Frankfurt**, contrasting with Hannover 1996–1999. [ATP history PDF](https://www.atptour.com/-/media/23da5115363646fd89d16716e5b35a2e.pdf).
+
+Sources: [official 1995 ATP Results Archive](https://www.atptour.com/en/scores/results-archive?year=1995), [1995 source-tier season summary](https://en.wikipedia.org/wiki/1995_ATP_Tour), [1995 independent tournament listing](https://tennis-db.com/tournaments?season=1995), [1995 Vienna World Series](https://en.wikipedia.org/wiki/1995_CA-TennisTrophy), [1995 Tokyo Indoor Championship](https://en.wikipedia.org/wiki/1995_Tokyo_Indoor). The independent list has 84 editions with four non-ATP Grand Slams (not 84 ATP-only).
+
+The deterministic `PRE_2000_PLAYED_TIER_COUNTS[1995]` gate uses 9/11/59, supported by regression and adversarial tests and the 37-year stable JSON derived snapshot. These documents **do not** create native Category/Series adapters, played Editions, original ranking-point matrices, results, Package Catalog or Run Apply/Save support.

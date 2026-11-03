@@ -3855,6 +3855,18 @@
         },
         {
           "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_international_series_gold",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1

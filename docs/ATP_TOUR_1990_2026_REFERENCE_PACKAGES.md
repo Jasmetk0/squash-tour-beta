@@ -1,9 +1,9 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **117** Series identities and 37 generated annual reference rows.
-> The **27 played main ATP Tour tier rosters 1999–2025** have source-backed
-> original year-effective categories. **1990–1998 are incomplete; 2026 is
+> **124** Series identities and 37 generated annual reference rows.
+> The **28 played main ATP Tour tier rosters 1998–2025** have source-backed
+> original year-effective categories. **1990–1997 are incomplete; 2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
@@ -46,7 +46,7 @@ Historical complete ranking point matrices **are not yet certified**, and
 `config/reference_packages/atp_tour_1990_2026/series.json` records stable
 Series IDs and temporal Category relationships. Each Series references the
 exact Category source identity and entity kind. The data currently holds
-**107 identities** across 2026 ATP Tour fixtures and selected older masters.
+**124 identities** across 2026 ATP Tour fixtures and selected older masters.
 A changed venue/title/category does **not** create a new Series by itself.
 
 `config/reference_packages/atp_tour_1990_2026/seasons_1990_2026.json`
@@ -1404,3 +1404,16 @@ now gated with historical category names. 1990–1998 remain incomplete;
 2026 is provisional. This reference data does not create playable
 historical Edtions, draws, results, points, or native Package Apply/Save.
 Keep existing owner-only Draft PR until latest-head CI and review.
+
+
+## 2026-11-03 — 1998 full played ATP Tour original-category roster
+
+The new verified 1998 single-season census completes **28 consecutive played ATP main Tour tier rosters (1998–2025)**; 1990–1997 remain **unverified/incomplete**, and 2026 stays a provisional calendar rather than final played results. The canonical 1998 year source contains **9 ATP Super 9**, **12 ATP Championship Series**, **52 ATP World Series**, and **one ATP Tour World Championships singles Final** in Hannover: **74 ATP-only source Series identities**. The four majors, ITF and team tournaments are excluded. This is reference metadata, **not** native playable Editions, results, rankings or imported sporting rules.
+
+Sources: [official 1998 ATP Results Archive](https://www.atptour.com/en/scores/results-archive?year=1998), [original 1998 ATP Tour tier totals](https://en.wikipedia.org/wiki/1998_ATP_Tour), [independent 1998 tier/location crosscheck](https://tennis-db.com/tournaments?season=1998), [ATP Finals historical official PDF](https://www.atptour.com/-/media/23da5115363646fd89d16716e5b35a2e.pdf), [Mexican Open 1998 Mexico City→2000 Mexico City→2001 Acapulco history](https://www.atptour.com/-/media/0c8acad38fa341ad9237f9197986ebac.pdf).
+
+Seven new historical-only source IDs are introduced when no safe existing identity existed: `split_1998`, `antwerp_1998`, `philadelphia_1998`, `bologna_1998`, `new_haven_1998`, `ostrava_1998`, `santiago_1998`. All other 1998 played Tour entries reuse already established Series IDs and receive explicit year-specific categories and ATP archive hosts. 1998 New Haven Championship and Long Island World Series were distinct simultaneous events; do not collapse them into the later Winston-Salem licence chain.
+
+**Cross-source corrections:** third-party display aliases can be anachronistic. The official 1998 ATP archive lists **Split** (not Geneva), **Lyon** (not Montpellier) and **Singapore** (not Brisbane). The persistent source Series `montpellier` was hosted in Lyon in 1998, `brisbane` in Adelaide, and `singapore_1999` in Singapore. Rotterdam was 1998 World Series and 1999 Championship Series; the Mexico City 1998 original World Series predates its 2000 Gold tier and eventual Acapulco host. 1998 Toronto and 1999 Montreal are separate years of one Canadian top-tier Series.
+
+`PRE_2000_PLAYED_TIER_COUNTS` now gates 1998 against the original 9/12/52 totals; tests assert the original-tier vocabulary, distinct 1998 events and year-host continuity, and reject falsified played-tier classifications or cancellations. The 37 annual source snapshots remain deterministic. **These verification counts are not per-match/results evidence, nor a mandate to auto-Apply a package to any Run.**

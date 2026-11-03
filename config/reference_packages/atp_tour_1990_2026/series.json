@@ -16,7 +16,7 @@
     "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
     "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
     "notes": [
-      "Played main ATP Tour original tier rosters 1999–2025 source-reconciled; 1990–1998 incomplete and 2026 provisional. Source-only data without historical Edition/draw/result/Run Apply.",
+      "Played main ATP Tour original tier rosters 1998–2025 source-reconciled; 1990–1997 incomplete and 2026 provisional. Source-only data without historical Edition/draw/result/Run Apply.",
       "2026 date/host fields are not assumed for earlier seasons.",
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
@@ -53,7 +53,7 @@
       },
       "note": "Tour-only played events, excluding Grand Slam, team, Olympic, Challenger and ITF. The 2025 overview page omitted Hangzhou; ATP 2025 results prove participation."
     },
-    "historical_roster_scope": "2023–2025 main-Tour level rosters source-reconciled; 2026 dated provisional reference; 1990–2022 lower-tier incomplete",
+    "historical_roster_scope": "1998–2025 played main Tour tier rosters source-reconciled; 1990–1997 incomplete, 2026 provisional; no played Edition objects",
     "calendar_validation_2023": {
       "source_2023": "https://www.atptour.com/en/scores/results-archive?year=2023",
       "singles_main_tour_250_count": 38,
@@ -712,6 +712,25 @@
         "1999 Bournemouth belongs to 2000 Brighton source licence, not separate concurrent tournament",
         "Prague 2000 not played, no fabricated edition"
       ]
+    },
+    "calendar_validation_1998": {
+      "archive_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+      "original_tier_census_source_url": "https://en.wikipedia.org/wiki/1998_ATP_Tour",
+      "independent_crosscheck_url": "https://tennis-db.com/tournaments?season=1998",
+      "source_scope": "1998 ATP men's singles main Tour; excludes four Grand Slams, Hopman/Davis/World Team Cup, Challengers, ATP doubles-only finale",
+      "played_super_9_count": 9,
+      "played_championship_series_count": 12,
+      "played_world_series_count": 52,
+      "played_singles_atp_finals": 1,
+      "original_tier_names_only": true,
+      "roster_source_identities": 74,
+      "notes": [
+        "1998 ATP official archive labels Lyon (not Montpellier), Split (not Geneva), and Singapore (not Brisbane); use the actual 1998 ATP host instead of modern TennisDB display alias.",
+        "1998 New Haven Championship Series and Long Island World Series are separate concurrent tournaments; no conflation of historic Volvo International with later New Haven/Winston-Salem licence.",
+        "1998 Mexican Open at Mexico City belongs to the Mexico City 2000 / Acapulco 2001+ source identity; 1999 event was not held.",
+        "1998 Rotterdam World Series, promoted to Championship Series in 1999; 1998 Singapore Championship Series.",
+        "A verified annual source roster is not a calendar of editable/played Squash Engine Editions."
+      ]
     }
   },
   "explicit_scope": [
@@ -762,6 +781,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Indian Wells",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Indian Wells",
@@ -867,6 +892,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Miami",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Miami",
             "country_code": "USA",
@@ -970,6 +1001,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Monte Carlo",
+            "country_code": "MCO",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Monte Carlo",
@@ -1145,6 +1182,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Rome",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Rome",
             "country_code": "ITA",
@@ -1250,6 +1293,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Toronto",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Montreal",
             "country_code": "CAN",
@@ -1349,6 +1398,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Cincinnati",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Cincinnati",
@@ -1505,6 +1560,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Paris",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Paris",
             "country_code": "FRA",
@@ -1580,6 +1641,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -1766,6 +1834,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Memphis",
             "country_code": "USA",
@@ -1950,6 +2024,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -2136,6 +2217,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Rotterdam",
             "country_code": "NLD",
@@ -2215,6 +2302,12 @@
           "source_entity_id": "atp_championship_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -2235,6 +2328,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -2428,6 +2528,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Doha",
+            "country_code": "QAT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Doha",
             "country_code": "QAT",
@@ -2567,6 +2673,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 2000,
             "to": 2000,
@@ -2746,6 +2859,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Mexico City",
+            "country_code": "MEX",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 2000,
             "city": "Mexico City",
             "country_code": "MEX",
@@ -2814,6 +2933,12 @@
           "source_entity_id": "atp_international_series_gold",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -2834,6 +2959,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -3020,6 +3152,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Dubai",
+            "country_code": "ARE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Dubai",
             "country_code": "ARE",
@@ -3125,6 +3263,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -3304,6 +3449,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Barcelona",
             "country_code": "ESP",
@@ -3403,6 +3554,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -3589,6 +3747,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Munich",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Munich",
             "country_code": "DEU",
@@ -3713,6 +3877,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Hamburg",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Hamburg",
             "country_code": "DEU",
@@ -3788,6 +3958,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -3880,6 +4057,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Halle ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Halle",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Halle",
@@ -3981,6 +4164,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -4072,6 +4262,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "London",
@@ -4172,6 +4368,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -4351,6 +4554,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Washington",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Washington",
             "country_code": "USA",
@@ -4450,6 +4659,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -4621,6 +4837,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Tokyo",
@@ -4936,6 +5158,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -5118,6 +5347,12 @@
         "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Basel",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Basel",
             "country_code": "CHE",
@@ -5211,6 +5446,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -5397,6 +5639,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Vienna",
             "country_code": "AUT",
@@ -5539,6 +5787,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -5711,6 +5966,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Adelaide",
             "country_code": "AUS",
@@ -5817,6 +6078,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -6009,6 +6277,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Chennai",
+            "country_code": "IND",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Chennai",
@@ -6274,6 +6548,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -6459,6 +6740,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Auckland",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Auckland",
             "country_code": "NZL",
@@ -6552,6 +6839,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -6744,6 +7038,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Lyon",
@@ -7114,6 +7414,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -7312,6 +7619,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Delray Beach",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Delray Beach",
@@ -7535,6 +7848,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -7731,6 +8051,12 @@
         "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Orlando",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Orlando",
             "country_code": "USA",
@@ -7825,6 +8151,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -8010,6 +8343,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Casablanca",
@@ -8266,6 +8605,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_championship_series",
@@ -8458,6 +8804,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -8593,6 +8945,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -8779,6 +9138,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "'s-Hertogenbosch",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "'s-Hertogenbosch",
             "country_code": "NLD",
@@ -8943,6 +9308,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -9136,6 +9508,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Nottingham",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Nottingham",
             "country_code": "GBR",
@@ -9291,6 +9669,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -9482,6 +9867,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Båstad",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Båstad",
@@ -9577,6 +9968,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -9768,6 +10166,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Gstaad",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Gstaad",
@@ -9863,6 +10267,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -10055,6 +10466,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Umag",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Umag",
             "country_code": "HRV",
@@ -10148,6 +10565,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -10341,6 +10765,12 @@
         "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Kitzbühel",
             "country_code": "AUT",
@@ -10420,6 +10850,12 @@
           "source_entity_id": "atp_championship_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
         }
       ],
       "valid": true
@@ -10440,6 +10876,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -10625,6 +11068,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Estoril",
@@ -10897,6 +11346,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -11088,6 +11544,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Long Island",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Long Island",
@@ -11649,6 +12111,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -11848,6 +12317,12 @@
         "history_scope": "original_2002_mallorca_2003_valencia_then_documented_2009_plus_history",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Mallorca",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Mallorca",
             "country_code": "ESP",
@@ -12032,6 +12507,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -12240,6 +12722,12 @@
         },
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Marseille",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Marseille",
             "country_code": "FRA",
@@ -12429,6 +12917,13 @@
             "category_id": "atp_championship_single_week",
             "source_url": "https://www.atptour.com/en/news/edberg-number-one-club-rise",
             "notes": ""
+          },
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
           },
           {
             "from": 1999,
@@ -12624,6 +13119,12 @@
         "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit.",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Stockholm",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Stockholm",
             "country_code": "SWE",
@@ -12747,6 +13248,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Hannover",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/-/media/23da5115363646fd89d16716e5b35a2e.pdf"
+          },
           {
             "year": 1999,
             "city": "Hannover",
@@ -12912,6 +13419,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -13019,6 +13532,12 @@
           "notes": "Permanent ATP membership transferred to Astana in 2022; no simultaneous St Petersburg edition asserted"
         },
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "St. Petersburg",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Saint Petersburg",
@@ -13648,6 +14167,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -13825,6 +14351,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Newport",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Newport",
             "country_code": "USA",
@@ -13922,6 +14454,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -14099,6 +14638,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Indianapolis",
@@ -14597,6 +15142,13 @@
         "history_scope": "2000_london_axa_gold_2001_milan_is_2005_milan_2006_zagreb_2016_sofia",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_championship_series",
@@ -14773,6 +15325,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "London",
@@ -15481,6 +16039,13 @@
         "history_scope": "played_2021_ATP_Tour_event_no_inferred_neighbouring_years",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -15637,6 +16202,12 @@
         ],
         "identity_review_note": "Bucharest 2015–16 Tour licence transferred Budapest 2017–19 then Belgrade 2021; Bucharest 2024+ tracked as a distinct Tour licence without unproven merger.",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Bucharest",
+            "country_code": "ROU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Bucharest",
@@ -15932,6 +16503,13 @@
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -16088,6 +16666,12 @@
         ],
         "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played.",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Moscow",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Moscow",
@@ -16307,6 +16891,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -16456,6 +17047,12 @@
         ],
         "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined.",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Sydney",
@@ -17031,6 +17628,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -17138,6 +17742,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "San Jose",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "San Jose",
@@ -17237,6 +17847,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -17345,6 +17962,12 @@
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Los Angeles",
             "country_code": "USA",
@@ -17442,6 +18065,13 @@
         "not_squash_rules": true,
         "history_scope": "played_2002_tashkent_2003_bangkok_historically_verified_older_years_unverified",
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -17551,6 +18181,12 @@
         "identity_review_note": "2002 Tashkent President's Cup ATP International Series sanction moved with ATP approval to Bangkok for 2003. Keep one Series identity; do not invent 2003 Tashkent ATP main Tour event.",
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Tashkent",
+            "country_code": "UZB",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Tashkent",
             "country_code": "UZB",
@@ -17648,6 +18284,13 @@
         "not_squash_rules": true,
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
           {
             "from": 1999,
             "to": 1999,
@@ -17749,6 +18392,12 @@
         ],
         "identity_review_note": "2000 Dutch Open Amsterdam, 2001 Amersfoort; later Serbia names must not overwrite original Dutch city.",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Amsterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Amsterdam",
@@ -17932,6 +18581,13 @@
         "history_scope": "2005_scottsdale_2006_2008_las_vegas",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -18004,6 +18660,12 @@
         ],
         "identity_review_note": "2005 Tennis Channel Open in Scottsdale transferred to Las Vegas in 2006, played there through 2008; earlier Scottsdale years not imported.",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Scottsdale",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Scottsdale",
@@ -18097,6 +18759,13 @@
         "history_scope": "2005_st_poelten_2006_2008_poertschach",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -18169,6 +18838,12 @@
         ],
         "identity_review_note": "2005 St. Pölten ATP event licence moved to Pörtschach from 2006, played there through 2008.",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "St. Pölten",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "St. Pölten",
@@ -18401,6 +19076,13 @@
         "history_scope": "2001_then_2003_2004_shanghai_reg_2002_absent_2005_vietnam_2006_2007_mumbai_2008_canceled",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -18470,6 +19152,12 @@
         ],
         "known_nonheld_source": "https://www.skysports.com/tennis/news/4050908/bangalore-open-cancelled",
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Shanghai",
+            "country_code": "CHN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Shanghai",
@@ -18557,6 +19245,13 @@
         "history_scope": "2005_2006_played_tour_only_older_seasons_not_backfilled",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -18614,6 +19309,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Palermo",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Palermo",
@@ -18702,6 +19403,13 @@
         "history_scope": "played_2001_2003_copenhagen_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -18738,6 +19446,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Copenhagen",
+            "country_code": "DNK",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Copenhagen",
@@ -18808,6 +19522,13 @@
         "history_scope": "played_2001_2002_hong_kong_salem_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -18837,6 +19558,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Hong Kong",
+            "country_code": "HKG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Hong Kong",
@@ -18901,6 +19628,13 @@
         "history_scope": "played_2001_atp_international_series_only_older_1990_2000_not_imported",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 2000,
             "to": 2000,
             "category_id": "atp_international_series",
@@ -18916,6 +19650,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Bogota",
+            "country_code": "COL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 2000,
             "city": "Bogotá",
@@ -18935,6 +19675,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_international_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -18962,6 +19708,13 @@
         "history_scope": "played_2001_atp_international_series_only_older_1990_2000_not_imported",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -18984,6 +19737,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Atlanta",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Atlanta",
@@ -19042,6 +19801,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -19057,6 +19823,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "San Marino",
+            "country_code": "SMR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "San Marino",
@@ -19109,6 +19881,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -19124,6 +19903,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Toulouse",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Toulouse",
@@ -19176,6 +19961,13 @@
         "history_scope": "1999_bournemouth_2000_brighton_same_historical_atp_license_1996_1998_unverified",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -19191,6 +19983,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Bournemouth",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Bournemouth",
@@ -19257,6 +20055,13 @@
         "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_championship_series",
@@ -19265,6 +20070,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Singapore",
+            "country_code": "SGP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Singapore",
@@ -19305,6 +20116,13 @@
         "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -19313,6 +20131,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Prague",
+            "country_code": "CZE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
           {
             "year": 1999,
             "city": "Prague",
@@ -19407,6 +20231,13 @@
         "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
         "history_periods": [
           {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          },
+          {
             "from": 1999,
             "to": 1999,
             "category_id": "atp_world_series",
@@ -19416,6 +20247,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1998,
+            "city": "Boston",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          },
+          {
             "year": 1999,
             "city": "Boston",
             "country_code": "USA",
@@ -19423,6 +20260,342 @@
           }
         ],
         "identity_review_note": "Played 1999 ATP World Series Boston, winner Marat Safin; do not infer 2000 Boston Tour event or confuse with Challenger events."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "split_1998",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Croatian Indoors Split 1998",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Split",
+        "historical_country_code": "HRV",
+        "historical_surface": "carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
+        "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Split",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          }
+        ],
+        "identity_review_note": "Independent 1998 ATP indoor Split event; TennisDB currently labels it Geneva Open despite Split host."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "antwerp_1998",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Antwerp Open 1998",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Antwerp",
+        "historical_country_code": "BEL",
+        "historical_surface": "indoor_hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
+        "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Antwerp",
+            "country_code": "BEL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          }
+        ],
+        "identity_review_note": "1998 Antwerp Championship Series; distinct from the later ATP European Open event."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "philadelphia_1998",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "U.S. Indoor Championships Philadelphia 1998",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Philadelphia",
+        "historical_country_code": "USA",
+        "historical_surface": "indoor_hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
+        "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Philadelphia",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          }
+        ],
+        "identity_review_note": "1998 Philadelphia Championship Series event; no unproven 1999 continuation."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "bologna_1998",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Bologna Open 1998",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Bologna",
+        "historical_country_code": "ITA",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
+        "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Bologna",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          }
+        ],
+        "identity_review_note": "1998 Bologna ATP World Series event."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "new_haven_1998",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Volvo International New Haven 1998",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "New Haven",
+        "historical_country_code": "USA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
+        "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "New Haven",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          }
+        ],
+        "identity_review_note": "1998 New Haven Championship Series; distinct from contemporaneous Long Island World Series."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "ostrava_1998",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Ostrava Open 1998",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Ostrava",
+        "historical_country_code": "CZE",
+        "historical_surface": "carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
+        "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Ostrava",
+            "country_code": "CZE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          }
+        ],
+        "identity_review_note": "1998 Ostrava ATP World Series; source ATP 1998 Results Archive identifies Ostrava, winner Andre Agassi."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "santiago_1998",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "Chile Open Santiago 1998",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Santiago",
+        "historical_country_code": "CHL",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
+        "history_periods": [
+          {
+            "from": 1998,
+            "to": 1998,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+            "notes": "Played ATP main Tour 1998; original ATP Championship/World Series classification reconciled with 1998 season archive; not a modern 500/250 equivalence."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1998,
+            "city": "Santiago",
+            "country_code": "CHL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998"
+          }
+        ],
+        "identity_review_note": "1998 Santiago ATP World Series; no inferred direct license link to the 2020+ Chile Open source Series."
       },
       "references": [
         {

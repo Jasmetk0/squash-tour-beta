@@ -26,6 +26,11 @@ FIRST, LAST = 1990, 2026
 # 1990–1999 original ATP era had a different native Tier vocabulary.
 # Never map these names onto post-2000 Masters/Gold/International results.
 PRE_2000_PLAYED_TIER_COUNTS: dict[int, dict[str, int]] = {
+    1998: {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 52,
+    },
     1999: {
         "atp_championship_single_week": 9,  # Original ATP Super 9 label in 1999
         "atp_championship_series": 11,
@@ -211,7 +216,7 @@ def build(
                 "source_url": f"https://www.atptour.com/en/scores/results-archive?year={year}",
                 "played_counts": expected,
                 "scope": (
-                    "1999 ATP Super 9 / ATP Championship Series / ATP World Series; "
+                    f"{year} ATP Super 9 / ATP Championship Series / ATP World Series; "
                     "excludes Finals, Grand Slam Cup, majors and team events"
                     if year in PRE_2000_PLAYED_TIER_COUNTS else
                     "ATP Tennis Masters Series / International Series Gold / "
@@ -272,7 +277,7 @@ def main() -> int:
         if not TARGET.is_file() or TARGET.read_text(encoding="utf-8") != payload:
             print("Historical seasons stale; run --write")
             return 1
-        print("ATP Tour reference 1990–2026: 37 seasons derived; complete played-tier rosters 1999–2025, historical 1990–1998 incomplete, 2026 provisional")
+        print("ATP Tour reference 1990–2026: 37 seasons derived; complete played-tier rosters 1998–2025, historical 1990–1997 incomplete, 2026 provisional")
         return 0
     TARGET.write_text(payload, encoding="utf-8")
     print("Created", TARGET)

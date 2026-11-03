@@ -107,8 +107,10 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
     })
   })
   async function selectTarget(){
-    await userEvent.selectOptions(await screen.findByRole('combobox',{name:'Target Run'}),'run/1')
-    await userEvent.selectOptions(await screen.findByRole('combobox',{name:'Target Branch'}),'branch/1')
+    await screen.findByRole('option',{name:'Custom Run'})
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Target Run'}),'run/1')
+    await screen.findByRole('option',{name:'Main'})
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Target Branch'}),'branch/1')
     await screen.findByText(/Přidávané:/)
   }
 

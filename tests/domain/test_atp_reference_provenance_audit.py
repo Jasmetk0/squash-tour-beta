@@ -259,3 +259,17 @@ def test_invalid_venue_context_metadata_rejected_without_source_mutation() -> No
         with pytest.raises(ValueError, match="Invalid historical host-context evidence"):
             build(category, altered)
     assert audit(category, series, snapshot) == baseline
+
+
+def test_2001_brasil_open_site_not_sloppy_regional_label() -> None:
+    """Contemporary Salvador marketing is not the precise tennis venue."""
+    categories, series, seasons = _inputs()
+    payload = next(e["payload"] for e in series["entities"]
+                   if e["source_entity_id"] == "sao_paulo")
+    hosts = {item["year"]: item for item in payload["historical_host_change"]}
+    assert hosts[2001]["city"] == "Costa do Sauípe"
+    assert hosts[2001]["source_url"] == "https://brasilopen.com.br/historia/"
+    assert hosts[2002]["city"] == "Costa do Sauipe"
+    assert hosts[2011]["city"] == "Costa do Sauípe"
+    assert hosts[2012]["city"] == "São Paulo"
+    assert audit(categories, series, seasons)["counts"]["series_identities"] == 164

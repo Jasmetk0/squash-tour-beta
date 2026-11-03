@@ -203,8 +203,8 @@
         },
         {
           "series_id": "lyon",
-          "start_date": "2025-05-18",
-          "end_date": "2025-05-24",
+          "start_date": "2025-02-10",
+          "end_date": "2025-02-16",
           "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
           "source_basis": "official_published_event_dates"
         },

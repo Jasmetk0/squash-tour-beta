@@ -38,7 +38,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 166
+    assert len(series["entities"]) == 165
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -515,7 +515,9 @@ def test_2020_cologne_sardinia_nur_sultan_one_year_events_and_nyc_venue() -> Non
     series = _source("series")
     by_id = {x["source_entity_id"]: x["payload"] for x in series["entities"]}
     hosts = _host_by_year(by_id["dallas"])
-    assert hosts[2008] == hosts[2017] == "Memphis"
+    assert hosts[1994] == "San Jose"
+    assert hosts[2017] == "Memphis"
+    assert _host_by_year(by_id["rio"])[2008] == "Memphis"
     assert hosts[2018] == hosts[2020] == "New York"
     assert hosts[2022] == "Dallas"
     assert [host["city"] for host in by_id["cincinnati"]["historical_host_change"]
@@ -660,7 +662,9 @@ def test_2018_quito_to_2019_cordoba_and_distinct_southern_venues() -> None:
     assert cordoba_hosts[2015] == cordoba_hosts[2018] == "Quito"
     assert cordoba_hosts[2019] == "Córdoba"
     dallas_hosts = _host_by_year(by["dallas"])
-    assert dallas_hosts[2008] == dallas_hosts[2017] == "Memphis"
+    assert dallas_hosts[1994] == "San Jose"
+    assert dallas_hosts[2017] == "Memphis"
+    assert _host_by_year(by["rio"])[2008] == "Memphis"
     assert dallas_hosts[2018] == dallas_hosts[2020] == "New York"
     assert dallas_hosts[2022] == "Dallas"
 
@@ -835,7 +839,7 @@ def test_2014_to_2015_500_tier_promotions_and_valencia_demotion() -> None:
     assert old["brussels"] == "atp_500"  # Valencia 2014
     assert new["brussels"] == "atp_250"  # Valencia 2015
     assert years[2016]["brussels"] == "atp_250"  # Antwerp
-    assert old["rio"] == "atp_500"  # ATP 500 debuted 2014
+    assert old["rio"] == "atp_500"  # Rio venue debuted 2014; licence was Memphis 500
     assert "st_petersburg" not in old
     assert "duesseldorf_2014" in old
     assert "duesseldorf_2014" not in new
@@ -893,8 +897,9 @@ def test_2013_top_level_atp_tour_61_played_events_and_correct_tiers() -> None:
 def test_2013_memphis_was_atp_500_and_2014_memphis_was_atp_250() -> None:
     years = {row["year"]: row["series_category_ids"] for row in
              build(_source("category"), _source("series"))["seasons"]}
-    assert years[2013]["dallas"] == "atp_500"  # Memphis
-    assert years[2014]["dallas"] == "atp_250"  # Memphis
+    assert years[2013]["rio"] == "atp_500"  # Original Memphis 500 licence
+    assert years[2013]["dallas"] == "atp_250"  # San Jose licence
+    assert years[2014]["dallas"] == "atp_250"  # Same San Jose licence in Memphis
     assert years[2019]["dallas"] == "atp_250"  # New York
     assert years[2025]["dallas"] == "atp_500"  # Dallas
     assert years[2013]["brussels"] == "atp_500"  # Valencia
@@ -911,7 +916,7 @@ def test_2013_bogota_and_los_cabos_preserve_original_los_angeles_licence() -> No
     series = _source("series")
     years = {row["year"]: row["series_category_ids"] for row in
              build(_source("category"), series)["seasons"]}
-    for id in ("san_jose_2013", "bangkok_2013"):
+    for id in ("bangkok_2013",):
         assert years[2013][id] == "atp_250"
         assert id not in years[2014]
     assert years[2012]["los_cabos"] == "atp_250"  # Los Angeles
@@ -933,7 +938,7 @@ def test_2013_bogota_and_los_cabos_preserve_original_los_angeles_licence() -> No
     assert years[2013]["cordoba"] == "atp_250"  # Viña del Mar
     assert years[2014]["cordoba"] == "atp_250"  # Viña del Mar
     assert years[2015]["cordoba"] == "atp_250"  # Quito
-    assert "rio" not in years[2013]  # Rio ATP 500 began 2014
+    assert years[2013]["rio"] == "atp_500"  # Memphis 500 source moved to Rio 2014
 
 
 def test_2012_real_atp_tour_roster_9_masters_11_500_40_250() -> None:
@@ -970,12 +975,12 @@ def test_2012_belgrade_serbia_open_is_not_automatically_later_belgrade() -> None
     assert "belgrade_2012" not in years[2021]
     assert years[2012]["belgrade_clay_2021"] == "atp_250"  # Bucharest
     # Bucharest and Serbia Open Belgrade are two distinct Tour events in 2012.
-    assert years[2013]["san_jose_2013"] == "atp_250"
-    assert years[2012]["san_jose_2013"] == "atp_250"
+    assert years[2013]["dallas"] == "atp_250"  # San Jose source
+    assert years[2012]["dallas"] == "atp_250"  # San Jose source
     for forbidden in ("olympics_2012", "world_team_cup", "davis_cup",
                       "australian_open", "french_open", "wimbledon", "us_open"):
         assert forbidden not in years[2012]
-    assert years[2012]["dallas"] == "atp_500"  # Memphis
+    assert years[2012]["rio"] == "atp_500"  # Memphis licence
     assert years[2012]["brussels"] == "atp_500"  # Valencia
     for name in ("halle", "queens_club", "vienna"):
         assert years[2012][name] == "atp_250"
@@ -1172,7 +1177,7 @@ def test_2008_international_series_gold_has_nine_historic_tier_members() -> None
         if category == "atp_international_series_gold"
     }
     assert gold == {
-        "rotterdam", "dallas", "dubai", "acapulco", "barcelona",
+        "rotterdam", "rio", "dubai", "acapulco", "barcelona",
         "stuttgart", "kitzbuhel", "tokyo", "vienna",
     }
     assert len(gold) == 9
@@ -1191,7 +1196,7 @@ def test_2008_historic_gold_cannot_be_retroactively_called_2009_500() -> None:
     for id in ("stuttgart", "kitzbuhel", "vienna"):
         assert years[2008]["series_category_ids"][id] == "atp_international_series_gold"
         assert years[2009]["series_category_ids"][id] == "atp_250"
-    for id in ("rotterdam", "dallas", "dubai", "acapulco",
+    for id in ("rotterdam", "rio", "dubai", "acapulco",
                "barcelona", "tokyo"):
         assert years[2008]["series_category_ids"][id] == "atp_international_series_gold"
         assert years[2009]["series_category_ids"][id] == "atp_500"
@@ -1296,7 +1301,7 @@ def test_2007_complete_actual_played_historical_tier_roster_and_distinct_finals(
     gold_ids = {id for id, tier in row["series_category_ids"].items()
                 if tier == "atp_international_series_gold"}
     assert gold_ids == {
-        "rotterdam", "dallas", "dubai", "acapulco", "barcelona",
+        "rotterdam", "rio", "dubai", "acapulco", "barcelona",
         "stuttgart", "kitzbuhel", "tokyo", "vienna",
     }
     provenance = series["provenance"]["calendar_validation_2007"]
@@ -1334,7 +1339,7 @@ def test_2007_historical_hosts_and_2008_cancelled_bangalore_not_played() -> None
 def test_2007_missing_gold_or_misreported_event_is_rejected() -> None:
     import copy
     bad = copy.deepcopy(_source("series"))
-    item = next(e for e in bad["entities"] if e["source_entity_id"] == "dallas")
+    item = next(e for e in bad["entities"] if e["source_entity_id"] == "rio")
     item["payload"]["not_held_years_known"] = [2007]
     with pytest.raises(ValueError, match="played-tier roster mismatch in 2007"):
         build(_source("category"), bad)
@@ -2117,7 +2122,7 @@ def test_1993_played_original_categories_84_atp_only_and_distinct_licences() -> 
     assert y93["series_category_ids"]["birmingham_1994"] == "atp_world_series"
     assert y93["series_category_ids"]["houston"] == "atp_world_series"
     assert y93["series_category_ids"]["poertschach_2008"] == "atp_world_series"
-    assert y93["series_category_ids"]["san_jose_2013"] == "atp_world_series"
+    assert y93["series_category_ids"]["dallas"] == "atp_world_series"  # San Francisco
     assert y93["series_category_ids"]["sydney_indoor_1994"] == "atp_championship_series"
     assert y93["series_category_ids"]["sydney_2019"] == "atp_world_series"
     assert y93["series_category_ids"]["tokyo_indoor_1995"] == "atp_championship_series"
@@ -2127,8 +2132,8 @@ def test_1993_played_original_categories_84_atp_only_and_distinct_licences() -> 
     assert y93["series_category_ids"]["bolzano_1993"] == "atp_world_series"
     assert y93["series_category_ids"]["sao_paulo_1993"] == "atp_world_series"
     by = {e["source_entity_id"]: e["payload"] for e in series["entities"]}
-    assert _host_by_year(by["san_jose_2013"])[1993] == "San Francisco"
-    assert _host_by_year(by["san_jose_2013"])[1994] == "San Jose"
+    assert _host_by_year(by["dallas"])[1993] == "San Francisco"
+    assert _host_by_year(by["dallas"])[1994] == "San Jose"
     assert _host_by_year(by["poertschach_2008"])[1993] == "Genoa"
     assert _host_by_year(by["poertschach_2008"])[1994] == "St. Pölten"
     assert _host_by_year(by["houston"])[1993] == "Tampa"
@@ -2307,7 +2312,7 @@ def test_1990_first_atp_tour_original_tiers_and_standalone_same_city_events() ->
     assert y90["series_category_ids"]["brisbane_autumn_1992"] == "atp_world_series"
     assert y90["series_category_ids"]["brisbane"] == "atp_world_series"
     assert y90["series_category_ids"]["rio_carpet_1990"] == "atp_world_series"
-    assert "rio" not in y90["series_category_ids"]
+    assert y90["series_category_ids"]["rio"] == "atp_world_series"  # Memphis licence
     assert y90["series_category_ids"]["maceio_1992"] == "atp_world_series"
     assert y90["series_category_ids"]["orlando_1991"] == "atp_world_series"
     assert y90["series_category_ids"]["sofia"] == "atp_world_series"

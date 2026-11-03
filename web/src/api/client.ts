@@ -3878,6 +3878,20 @@ export async function getATPCalendarReferenceCatalog(): Promise<import('./atpCal
 function atpCalendarReferenceRoot(runId:string,branchId:string):string {
   return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/packages/source-atp-reference-calendar`
 }
+/** Read-only verified per-year dates; the Calendar-child fingerprint is mandatory. */
+export async function getATPCalendarReferenceYear(
+  year:number,calendarFingerprint:string
+):Promise<import('./atpCalendarReferencePackages').ATPCalendarReferenceYearView> {
+  if(!Number.isSafeInteger(year)||year<1990||year>2026)
+    throw new Error('ATP Calendar year must be in the 1990–2026 source span.')
+  const result=await request<unknown>(
+    `/admin/reference-packages/atp-tour-1990-2026-calendar/years/${year}`
+  )
+  const {validATPCalendarYearView}=await import('./atpCalendarReferencePackages')
+  if(!validATPCalendarYearView(result,year,calendarFingerprint))
+    throw new Error('ATP Calendar year view failed source fingerprint validation.')
+  return result
+}
 export function previewATPCalendarReference(
   runId:string,branchId:string
 ):Promise<import('./atpReferencePackages').ATPReferencePreview> {

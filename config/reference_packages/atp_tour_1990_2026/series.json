@@ -16,7 +16,7 @@
     "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
     "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
     "notes": [
-      "Played main ATP Tour original tier rosters 1993–2025 source-reconciled; 1990–1992 incomplete and 2026 provisional. Source-only data without historical Edition/draw/result/Run Apply.",
+      "Played main ATP Tour original tier rosters 1992–2025 source-reconciled; 1990–1991 incomplete and 2026 provisional. Source-only data without historical Edition/draw/result/Run Apply.",
       "2026 date/host fields are not assumed for earlier seasons.",
       "Historical category identity remains stable while calendar editions and cancellations are unverified.",
       "Current 2026 calendar lists a TBD slot; no fictitious persistent Series ID is created.",
@@ -53,7 +53,7 @@
       },
       "note": "Tour-only played events, excluding Grand Slam, team, Olympic, Challenger and ITF. The 2025 overview page omitted Hangzhou; ATP 2025 results prove participation."
     },
-    "historical_roster_scope": "1993–2025 ATP Tour original played-tier source rosters; 1990–1992 incomplete, 2026 provisional; no native playable Edition objects",
+    "historical_roster_scope": "1992–2025 played original ATP main Tour source rosters; 1990–1991 incomplete, 2026 provisional; no native historic Edition objects",
     "calendar_validation_2023": {
       "source_2023": "https://www.atptour.com/en/scores/results-archive?year=2023",
       "singles_main_tour_250_count": 38,
@@ -905,6 +905,32 @@
         "1993 Vienna World, Tokyo indoor/April Tokyo two distinct Championships, Stuttgart Feb indoor and July clay two distinct Championships, October Sydney indoor not January Sydney World.",
         "1993 São Paulo World event separate from 2001-relaunched Brasil Open licence unless continuity established; 1993 Bolzano World disappears in 1994."
       ]
+    },
+    "calendar_validation_1992": {
+      "official_results_archive": "https://www.atptour.com/en/scores/results-archive?year=1992",
+      "original_tiers_1992": "https://en.wikipedia.org/wiki/1992_ATP_Tour",
+      "original_venues_1992": "https://de.wikipedia.org/wiki/ATP_Tour_1992",
+      "independent_1992_tiers": "https://tennis-db.com/tournaments?season=1992",
+      "source_tier_counts": {
+        "atp_super_9": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 56,
+        "atp_tour_world_championship_singles": 1
+      },
+      "atp_only_played_series": 78,
+      "excluded_non_atp_major_count": 4,
+      "excluded_olympic_singles_event": 1,
+      "scope": "Source Category/Series only; 1992 Barcelona Olympic tennis had no ATP ranking points and is intentionally not ATP Tour Category despite external season schedule inclusion",
+      "important_notes": [
+        "1992 83 listed in TennisDB: 78 ATP-only original singles Tour events plus 4 independently organized Grand Slams plus 1 Barcelona Olympics, which granted no ATP ranking points.",
+        "1992 January Adelaide and September Brisbane were separate ATP World Series played events: do not conflate their modernized names/source licences.",
+        "1992 original Milan World Series and Brussels Championship Series were separate; 1993 Milan Championship was a later tier change.",
+        "1992 Charlotte vs Tampa are two different original American clay World Series events; do not falsely merge as one when tracing Birmingham Alabama / Pinehurst later moves.",
+        "1992 Singapore World Series is separate historical source from 1994–95 Kuala Lumpur / 1996+ Singapore event where direct rights lineage is unproven.",
+        "1992 Bolzano, Maceió, Guarujá, Búzios, Taipei, Cologne, Wellington and two simultaneous original ATP venues are recorded without inventing post-1992 annual editions.",
+        "1992 Prague host country was Czechoslovakia (CSK), not post-dissolution CZE.",
+        "1992 US summer Cincinnati, Canadian, Paris and Stockholm top tier have original Super9 category; Frankfurt Finals singles separate from year-end doubles and ITF Grand Slam Cup."
+      ]
     }
   },
   "explicit_scope": [
@@ -955,6 +981,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Indian Wells",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Indian Wells",
@@ -1096,6 +1128,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Key Biscayne",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Key Biscayne",
             "country_code": "USA",
@@ -1235,6 +1273,12 @@
         ],
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Monte Carlo",
+            "country_code": "MCO",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Monte Carlo",
@@ -1446,6 +1490,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Rome",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Rome",
             "country_code": "ITA",
@@ -1587,6 +1637,12 @@
         "known_nonheld_source": "https://en.wikipedia.org/wiki/2020_ATP_Masters_1000_tournaments",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Toronto",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Montreal",
             "country_code": "CAN",
@@ -1722,6 +1778,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Cincinnati",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Cincinnati",
@@ -1914,6 +1976,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Paris",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Paris",
             "country_code": "FRA",
@@ -2025,6 +2093,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -2253,6 +2328,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Memphis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Memphis",
             "country_code": "USA",
@@ -2473,6 +2554,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -2700,6 +2788,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Rotterdam",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Rotterdam",
@@ -3973,6 +4067,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_championship_series",
@@ -4193,6 +4294,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Barcelona",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Barcelona",
             "country_code": "ESP",
@@ -4328,6 +4435,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -4556,6 +4670,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Munich",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Munich",
             "country_code": "DEU",
@@ -4715,6 +4835,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Hamburg",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Hamburg",
@@ -5098,6 +5224,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -5231,6 +5364,12 @@
         "known_nonheld_source": "https://www.usopen.org/en_US/news/articles/2020-05-15/atp_wta_itf_announce_further_covid19_suspensions_into_july.html",
         "identity_review_note": "Queen's Club ATP Tour 250 through 2014, upgraded to ATP 500 in 2015, historical category not backfilled.",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "London",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "London",
@@ -5367,6 +5506,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -5588,6 +5734,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Washington",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Washington",
             "country_code": "USA",
@@ -5723,6 +5875,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -5936,6 +6095,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Tokyo",
@@ -6287,6 +6452,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -6511,6 +6683,12 @@
         "known_nonheld_source": "https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2021-06-04_Swiss-Indoors-Basel-2021-cancelled.php",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Basel",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Basel",
             "country_code": "CHE",
@@ -6640,6 +6818,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -6868,6 +7053,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Vienna",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Vienna",
             "country_code": "AUT",
@@ -7000,7 +7191,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2014"
           }
         ],
-        "identity_review_note": "1993 Vienna ATP World Series, not original Championship; independent tier record complements 1994 and 1995 World/1996 Championship."
+        "identity_review_note": "1992 Vienna original ATP World Series; not retroactive ATP 250 points and not original Championship Series (that reclassification later)."
       },
       "references": [
         {
@@ -7052,6 +7243,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -7266,6 +7464,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Adelaide",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Adelaide",
             "country_code": "AUS",
@@ -7368,7 +7572,7 @@
             "source_url": "https://www.brisbaneinternational.com.au/2009/01/big-future-for-brisbane-international/"
           }
         ],
-        "identity_review_note": "Adelaide men's Australian Hardcourt ATP event 2008 transferred to Brisbane for 2009. Current Adelaide International from 2020 is a later separate tournament."
+        "identity_review_note": "1992 January Adelaide is the ancestor of the later Brisbane successor; the 1992 September/October Brisbane ATP World Series was a separate original event with its own source identity, no duplicate 1992 Adelaide."
       },
       "references": [
         {
@@ -7408,6 +7612,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -7642,6 +7853,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Nice",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Nice",
@@ -7943,6 +8160,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -8170,6 +8394,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Auckland",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Auckland",
             "country_code": "NZL",
@@ -8299,6 +8529,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -8534,6 +8771,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Lyon",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Lyon",
             "country_code": "FRA",
@@ -8637,7 +8880,7 @@
           }
         ],
         "historical_licence_source_url": "https://www.lequipe.fr/Tennis/Actualites/Montpellier-remplace-lyon/105494",
-        "identity_review_note": "1993 Grand Prix de Lyon indoor World Series played Lyon, not the modern Montpellier successor name."
+        "identity_review_note": "1992 October Grand Prix de Lyon indoor World Series played Lyon, modern Montpellier is anachronistic display alias."
       },
       "references": [
         {
@@ -9439,6 +9682,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -9677,6 +9927,12 @@
         "known_nonheld_source": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Tampa",
+            "country_code": "USA",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992"
+          },
+          {
             "year": 1993,
             "city": "Tampa",
             "country_code": "USA",
@@ -9767,7 +10023,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2007"
           }
         ],
-        "identity_review_note": "1993 Tampa USTA Clay Court Classic → Pinehurst 1994 and 1995–96, then Orlando 1997 and Houston 2001 source history; original 1993 Tampa is separate from US Men's Clay Charlotte 1993."
+        "identity_review_note": "1992 Tampa USTA Clay Court Classic →1993 Tampa →1994 Pinehurst; distinct concurrent 1992 Charlotte U.S. Men's Clay Court Championships."
       },
       "references": [
         {
@@ -9807,6 +10063,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -10034,6 +10297,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Casablanca",
+            "country_code": "MAR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Casablanca",
@@ -10326,6 +10595,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_championship_series",
@@ -10560,6 +10836,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Stuttgart",
             "country_code": "DEU",
@@ -10731,6 +11013,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -10959,6 +11248,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "'s-Hertogenbosch",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "'s-Hertogenbosch",
             "country_code": "NLD",
@@ -11159,6 +11454,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -11394,6 +11696,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Manchester",
+            "country_code": "GBR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Manchester",
             "country_code": "GBR",
@@ -11585,6 +11893,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -11818,6 +12133,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Båstad",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Båstad",
@@ -11949,6 +12270,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -12182,6 +12510,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Gstaad",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Gstaad",
@@ -12313,6 +12647,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -12547,6 +12888,12 @@
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Umag",
+            "country_code": "HRV",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Umag",
             "country_code": "HRV",
@@ -12676,6 +13023,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -12911,6 +13265,12 @@
         "history_scope": "Tour played 2009; Kitzbuhel 2010 was Challenger, Tour level resumed 2011, no Tour 250 edition invented in 2010",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Kitzbühel",
+            "country_code": "AUT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Kitzbühel",
             "country_code": "AUT",
@@ -13052,6 +13412,13 @@
         "not_calendar_editions": true,
         "not_squash_rules": true,
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -13279,6 +13646,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Estoril",
+            "country_code": "PRT",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Estoril",
@@ -13587,6 +13960,13 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -13820,6 +14200,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Long Island",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Long Island",
@@ -15550,6 +15936,12 @@
         "identity_review_note": "Stockholm Masters 1990–1994 and Stockholm ATP 250 2026 share event identity; intervening classification intentionally missing pending audit.",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Stockholm",
+            "country_code": "SWE",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Stockholm",
             "country_code": "SWE",
@@ -15709,6 +16101,12 @@
         ],
         "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Frankfurt",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf"
+          },
           {
             "year": 1993,
             "city": "Frankfurt",
@@ -16696,6 +17094,13 @@
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -16915,6 +17320,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Newport",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Newport",
             "country_code": "USA",
@@ -17048,6 +17459,13 @@
         "not_squash_rules": true,
         "history_scope": "documented_2024_2025_event_only_no_unverified_years",
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -17267,6 +17685,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Indianapolis",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Indianapolis",
@@ -17801,6 +18225,13 @@
         "history_scope": "2000_london_axa_gold_2001_milan_is_2005_milan_2006_zagreb_2016_sofia",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://tennis-db.com/tournaments?season=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_championship_series",
@@ -18020,6 +18451,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Milan",
+            "country_code": "ITA",
+            "source_url": "https://tennis-db.com/tournaments?season=1992"
+          },
+          {
             "year": 1993,
             "city": "Milan",
             "country_code": "ITA",
@@ -18164,7 +18601,7 @@
             "source_url": "https://www.atptour.com/en/news/atp-announces-2017-2018-calendars"
           }
         ],
-        "identity_review_note": "1999 London Guardian Direct Cup original Championship Series (not 1999 Queen's grass World Series), same licensed London indoor tournament in 2000 as Gold AXA Cup, then returned to Milan 2001 as International Series. Milan later moved to Zagreb and Sofia."
+        "identity_review_note": "1992 Milan ATP World Series, promoted to 1993 Milan Championship Series; separate 1992 Brussels Championship is not Milan. 1999 London Guardian Direct Championship and 2000 Gold have later licence history."
       },
       "references": [
         {
@@ -18188,6 +18625,12 @@
         {
           "source_package_id": "atp_tour_1990_2026_category",
           "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        },
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
           "expected_entity_kind": "tennis.category.reference.v1",
           "minimum_schema_version": 1
         }
@@ -19292,6 +19735,13 @@
         "history_scope": "evidence_backed_2019_and_2021_tour_250_without_inferred_2020_edition",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -19490,6 +19940,12 @@
         ],
         "identity_review_note": "Moscow Kremlin Cup is the same ongoing Series before and after the 2020 COVID gap; 2020 edition not inferred as played.",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Moscow",
+            "country_code": "RUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Moscow",
@@ -19745,6 +20201,13 @@
         "history_scope": "verified_sydney_2018_2019_tour_250_only_2022_new_licence_review",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -19936,6 +20399,12 @@
         ],
         "identity_review_note": "2019 Sydney International event; 2022 Sydney Tennis Classic licence identity requires separate evidence and is not automatically combined.",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Sydney",
@@ -20547,6 +21016,13 @@
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -20697,6 +21173,12 @@
         "identity_review_note": "San Francisco ATP World Series 1993 moved to San Jose 1994, one source event family until 2013; source 1993 actual city not San Jose.",
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "San Francisco",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "San Francisco",
             "country_code": "USA",
@@ -20830,6 +21312,13 @@
         "not_squash_rules": true,
         "history_scope": "2013_verified_played_tour_event_legal_successor_not_certified",
         "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
           {
             "from": 1993,
             "to": 1993,
@@ -20980,6 +21469,12 @@
         ],
         "identity_review_note": "2013 historical Tour 250 event; do not assume transfer to a currently known tournament without dated ATP licence source",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Los Angeles",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Los Angeles",
@@ -21347,6 +21842,13 @@
         "history_scope": "played_2011_2012_atp_250_legal_successor_after_2012_unverified",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -21489,6 +21991,12 @@
         ],
         "identity_review_note": "2000 Dutch Open Amsterdam, 2001 Amersfoort; later Serbia names must not overwrite original Dutch city.",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Hilversum",
+            "country_code": "NLD",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Hilversum",
@@ -21708,6 +22216,13 @@
         "history_scope": "2005_scottsdale_2006_2008_las_vegas",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -21822,6 +22337,12 @@
         ],
         "identity_review_note": "2005 Tennis Channel Open in Scottsdale transferred to Las Vegas in 2006, played there through 2008; earlier Scottsdale years not imported.",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Scottsdale",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Scottsdale",
@@ -21951,6 +22472,13 @@
         "history_scope": "2005_st_poelten_2006_2008_poertschach",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -22065,6 +22593,12 @@
         ],
         "identity_review_note": "1993 Genoa clay ATP World Series moved to St. Pölten in 1994, same historic tournament lineage; not a fictitious parallel Genova 1994.",
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Genoa",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Genoa",
@@ -22528,6 +23062,13 @@
         "history_scope": "2005_2006_played_tour_only_older_seasons_not_backfilled",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -22627,6 +23168,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Palermo",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Palermo",
@@ -22751,6 +23298,13 @@
         "history_scope": "played_2001_2003_copenhagen_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -22829,6 +23383,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Copenhagen",
+            "country_code": "DNK",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Copenhagen",
@@ -22935,6 +23495,13 @@
         "history_scope": "played_2001_2002_hong_kong_salem_earlier_years_unverified",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -23006,6 +23573,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Hong Kong",
+            "country_code": "HKG",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Hong Kong",
@@ -23238,6 +23811,13 @@
         "history_scope": "played_2001_atp_international_series_only_older_1990_2000_not_imported",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -23302,6 +23882,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Atlanta",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Atlanta",
@@ -23396,6 +23982,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -23453,6 +24046,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "San Marino",
+            "country_code": "SMR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "San Marino",
@@ -23541,6 +24140,13 @@
         "history_scope": "2000_played_atp_international_series_only_earlier_era_not_backfilled",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -23598,6 +24204,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Toulouse",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Toulouse",
@@ -23938,6 +24550,13 @@
         "history_scope": "played_1999_year_source_reconciled_older_1990_1998_to_be_verified",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -23989,6 +24608,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Prague",
+            "country_code": "CSK",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992"
+          },
+          {
             "year": 1993,
             "city": "Prague",
             "country_code": "CZE",
@@ -24031,7 +24656,7 @@
             "source_url": "https://www.atptour.com/en/tournaments/-/379/overview"
           }
         ],
-        "identity_review_note": "1999 actual ATP World Series tournament in Prague, winner Dominik Hrbaty. Planned 2000 Czech Open cancelled after organizers failed ATP financial guarantee; no fictional 2000 played edition.",
+        "identity_review_note": "1992 Prague was played in Czechoslovakia (CSK), not the post-1993 Czech Republic (CZE). The event/source ID remains stable, but historical host country is year-specific.",
         "cancelled_following_year": {
           "year": 2000,
           "reason": "Missing ATP financial guarantee / 2000 Czech Open cancelled before play",
@@ -24266,6 +24891,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -24302,6 +24934,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Antwerp",
+            "country_code": "BEL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Antwerp",
@@ -24372,6 +25010,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_championship_series",
@@ -24415,6 +25060,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Philadelphia",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Philadelphia",
@@ -24485,6 +25136,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -24528,6 +25186,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Bologna",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Bologna",
@@ -24598,6 +25262,13 @@
         "history_scope": "verified_played_1998_only_no_unverified_edition_inference",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_championship_series",
@@ -24641,6 +25312,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "New Haven",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "New Haven",
@@ -25172,6 +25849,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -25201,6 +25885,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Seoul",
+            "country_code": "KOR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Seoul",
@@ -25320,6 +26010,13 @@
         "history_scope": "played_1996_original_world_series_only_older_years_not_inferred",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -25349,6 +26046,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Tel Aviv",
+            "country_code": "ISR",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Tel Aviv",
@@ -25407,6 +26110,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_championship_series",
@@ -25429,6 +26139,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Stuttgart",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Stuttgart",
@@ -25481,6 +26197,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -25504,6 +26227,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Johannesburg",
+            "country_code": "ZAF",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Durban",
             "country_code": "ZAF",
@@ -25522,7 +26251,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
           }
         ],
-        "identity_review_note": "1993 Durban SA Open moved to Sun City 1994, Johannesburg 1995; preserve each historical original ATP source host."
+        "identity_review_note": "1992 Johannesburg SA Open moved Durban 1993 then Sun City 1994 and Johannesburg 1995; historical year-original host preserved."
       },
       "references": [
         {
@@ -25555,6 +26284,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -25577,6 +26313,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Bordeaux",
+            "country_code": "FRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Bordeaux",
@@ -25629,6 +26371,13 @@
         "history_scope": "played_1995_source_original_category_only_no_inferred_older_or_newer_years",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_championship_series",
@@ -25651,6 +26400,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Tokyo",
+            "country_code": "JPN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Tokyo",
@@ -26008,6 +26763,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -26024,6 +26786,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Charlotte",
+            "country_code": "USA",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992"
+          },
+          {
             "year": 1993,
             "city": "Charlotte",
             "country_code": "USA",
@@ -26036,7 +26804,7 @@
             "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1994"
           }
         ],
-        "identity_review_note": "1993 Charlotte US Men's Clay Court Championship moved to Birmingham Alabama 1994, independent from 1993 Tampa USTA Clay Court Classic moved to Pinehurst 1994. No 1994 parallel licence conflation."
+        "identity_review_note": "1992 Charlotte U.S. Men's Clay Courts alongside 1992 Tampa USTA Clay Classic, separate original licences. Charlotte remained host 1993 then moved Birmingham Alabama 1994."
       },
       "references": [
         {
@@ -26069,6 +26837,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -26085,6 +26860,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "Madrid",
+            "country_code": "ESP",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "Madrid",
             "country_code": "ESP",
@@ -26097,7 +26878,7 @@
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994"
           }
         ],
-        "identity_review_note": "1994 Madrid clay World Series, distinct from late-era Madrid indoor Tennis Masters Series starting in 2002; legal source licence equivalence not assumed."
+        "identity_review_note": "1992 Madrid clay original ATP World Series, distinct legal licence from 2002+ Madrid indoor Masters unless independently established."
       },
       "references": [
         {
@@ -26130,6 +26911,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -26145,6 +26933,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Florence",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Florence",
@@ -26191,6 +26985,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -26206,6 +27007,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Schenectady",
+            "country_code": "USA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Schenectady",
@@ -26252,6 +27059,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -26267,6 +27081,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Athens",
+            "country_code": "GRC",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Athens",
@@ -26313,6 +27133,13 @@
         "history_scope": "played_1994_original_tiers_only_no_unsupported_earlier_later_years",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_championship_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_championship_series",
@@ -26328,6 +27155,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Sydney",
+            "country_code": "AUS",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Sydney",
@@ -26422,6 +27255,13 @@
         "history_scope": "1993_original_played ATP World Series only no unsupported continuation",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -26430,6 +27270,12 @@
           }
         ],
         "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Bolzano",
+            "country_code": "ITA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
           {
             "year": 1993,
             "city": "Bolzano",
@@ -26470,6 +27316,13 @@
         "history_scope": "1993_original_played ATP World Series only no unsupported continuation",
         "history_periods": [
           {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          },
+          {
             "from": 1993,
             "to": 1993,
             "category_id": "atp_world_series",
@@ -26479,6 +27332,12 @@
         ],
         "historical_host_change": [
           {
+            "year": 1992,
+            "city": "São Paulo",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          },
+          {
             "year": 1993,
             "city": "São Paulo",
             "country_code": "BRA",
@@ -26486,6 +27345,438 @@
           }
         ],
         "identity_review_note": "Original 1993 São Paulo ATP World Series; not automatically identified with 2001–2019 Costa do Sauípe / São Paulo Brasil Open successor licence."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "wellington_1992",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1992 Wellington National Championships",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Wellington",
+        "historical_country_code": "NZL",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
+        "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Wellington",
+            "country_code": "NZL",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          }
+        ],
+        "identity_review_note": "1992 ATP World Series Wellington, which was no longer played on ATP Tour in 1993; not Challenger results."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "maceio_1992",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1992 Maceió Open ATP World Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Maceió",
+        "historical_country_code": "BRA",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
+        "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Maceió",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          }
+        ],
+        "identity_review_note": "Brazil Maceió ATP World Series in 1992, distinct from Guarujá, Búzios and São Paulo in the same original year; 1993 not held."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "brussels_championship_1992",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1992 Brussels Championship Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Brussels",
+        "historical_country_code": "BEL",
+        "historical_surface": "indoor_carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
+        "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_championship_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Brussels",
+            "country_code": "BEL",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992"
+          }
+        ],
+        "identity_review_note": "1992 Brussels ATP Championship Series separate from 1992 Milan World Series and 1992 Antwerp World Series. Do not merge simultaneously held Belgium events by country."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_championship_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "singapore_march_1992",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1992 Singapore ATP World Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Singapore",
+        "historical_country_code": "SGP",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
+        "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Singapore",
+            "country_code": "SGP",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992"
+          }
+        ],
+        "identity_review_note": "1992 spring Singapore singles ATP World Series; direct legal continuity to 1996 Singapore / 1994–1995 Kuala Lumpur is not assumed."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "cologne_1992_clay",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1992 Cologne clay ATP World Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Cologne",
+        "historical_country_code": "DEU",
+        "historical_surface": "clay",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
+        "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Cologne",
+            "country_code": "DEU",
+            "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1992"
+          }
+        ],
+        "identity_review_note": "1992 Geneva clay tournament moved to Cologne in 1992; not the Geneva ATP 250 2015+ source Series unless legal lineage proven."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "brisbane_autumn_1992",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1992 Brisbane autumn ATP World Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Brisbane",
+        "historical_country_code": "AUS",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
+        "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://tennis-db.com/tournaments?season=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Brisbane",
+            "country_code": "AUS",
+            "source_url": "https://tennis-db.com/tournaments?season=1992"
+          }
+        ],
+        "identity_review_note": "1992 late September Brisbane, distinct from 1992 January Adelaide, both ATP World Series. Current modern Brisbane/Adelaide successor source cannot be used for both 1992 events."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "taipei_1992",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1992 Taipei ATP World Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Taipei",
+        "historical_country_code": "TWN",
+        "historical_surface": "indoor_carpet",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
+        "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Taipei",
+            "country_code": "TWN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          }
+        ],
+        "identity_review_note": "Original 1992 Taipei men's ATP Tour World Series, separate from the later challenger circuit and original 1990 events pending provenance."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "guaruja_1992",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1992 Guarujá ATP World Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Guarujá",
+        "historical_country_code": "BRA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
+        "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Guarujá",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          }
+        ],
+        "identity_review_note": "Original Guarujá 1992 Brazilian World Series, separate 1992 Maceió, Búzios and São Paulo."
+      },
+      "references": [
+        {
+          "source_package_id": "atp_tour_1990_2026_category",
+          "source_entity_id": "atp_world_series",
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1
+        }
+      ],
+      "valid": true
+    },
+    {
+      "source_entity_id": "buzios_1992",
+      "entity_kind": "tennis.series.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.series.reference.1990_2026",
+      "payload": {
+        "name": "1992 Búzios ATP World Series",
+        "reference_year": null,
+        "category_id_2026": null,
+        "host_city_2026": null,
+        "host_country_code_2026": null,
+        "surface_2026": null,
+        "historical_host_city": "Búzios",
+        "historical_country_code": "BRA",
+        "historical_surface": "hard",
+        "sponsor_names_can_change": true,
+        "not_calendar_editions": true,
+        "not_squash_rules": true,
+        "history_scope": "played_1992_original_ATP_year_only_without_inferred_future_licences",
+        "history_periods": [
+          {
+            "from": 1992,
+            "to": 1992,
+            "category_id": "atp_world_series",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+            "notes": "1992 original played ATP Tour source tier and historical host, not 2026 tennis/squash ranking equivalent."
+          }
+        ],
+        "historical_host_change": [
+          {
+            "year": 1992,
+            "city": "Búzios",
+            "country_code": "BRA",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992"
+          }
+        ],
+        "identity_review_note": "1992 Búzios World Series in November alongside the separate 1992 São Paulo World Series."
       },
       "references": [
         {

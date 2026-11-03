@@ -1,9 +1,9 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-02):** 11 Category identities,
-> **148** Series identities and 37 generated annual reference rows.
-> The **33 played main ATP Tour tier rosters 1993–2025** have source-backed
-> original year-effective categories. **1990–1992 are incomplete; 2026 is
+> **157** Series identities and 37 generated annual reference rows.
+> The **34 played main ATP Tour tier rosters 1992–2025** have source-backed
+> original year-effective categories. **1990–1991 are incomplete; 2026 is
 > provisional** until final results. This is source-only and is **not**
 > a production Package Catalog, import adapter, playable Edition calendar,
 > historical ranking system or Saved Run Apply/Save integration.
@@ -1510,3 +1510,21 @@ Year-effective source identities and locations:
 - Other 1993 historical hosts retained without anachronistic current names: Coral Springs, Marseille, Manchester, Lyon, Kuala Lumpur, Nice, Durban, Frankfurt and San Francisco.
 
 Added 1993's deterministic **9/12/62** original-tier played-roster gate, the canonical 1993 derived yearly snapshot, tests rejecting fabricated cancellations/wrong categories and audit documents. This is historical Category/Series source metadata only, not operational ATP/FAX gameplay, results, ranking points, playable Editions or Run Apply/Save.
+
+
+## 2026-11-03 — 1992 original ATP Tour tiers, Olympic year boundary
+
+Year **1992** originally consisted of **9 ATP Super 9, 12 ATP Championship Series, 56 ATP World Series and one Frankfurt singles ATP Tour World Championships**, hence **78 ATP-only source singles identities**. [Full independent season listing](https://tennis-db.com/tournaments?season=1992) has 83 events but that number includes **four non-ATP Grand Slams** and **1992 Barcelona Olympics**; Olympic tennis was not ATP Tour and awarded **no ATP ranking points**, as also stated by the [German original-year source](https://de.wikipedia.org/wiki/ATP_Tour_1992). This is **34 consecutive complete original-tier played source rosters 1992–2025**; **1990–1991 are unverified/incomplete** and 2026 is provisional. Sources: [ATP 1992 official results archive](https://www.atptour.com/en/scores/results-archive?year=1992), [original categories for 1992](https://en.wikipedia.org/wiki/1992_ATP_Tour), [German annual event locations](https://de.wikipedia.org/wiki/ATP_Tour_1992), [independent 1992 tournament list](https://tennis-db.com/tournaments?season=1992), [official ATP year-end Finals historical PDF](https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf).
+
+Nine new historical source IDs: 1992 **Wellington, Maceió, Brussels Championship, Singapore spring, Cologne clay, Brisbane autumn, Taipei, Guarujá and Búzios**.
+
+Important coexistence:
+- **January 1992 Adelaide** and **September 1992 Brisbane** are different *actual* ATP World Series in the same calendar year; modern Brisbane International title/alias must not collapse two sources.
+- **1992 Milan World Series** vs **1992 Brussels Championship** are distinct; Milan was *promoted to Championship for 1993*. Historic 1992 Antwerp World Series also separate from Brussels.
+- **1992 Singapore spring** World Series was played in its own historical season, with future licence continuity to the 1996+ Singapore/1994–95 Kuala Lumpur series not assumed without proof.
+- **1992 Tampa** USTA Clay Court Classic and **1992 Charlotte** US Men's Clay Court Championship were separate ATP World Series, later Pinehurst/Birmingham respectively; historical 1992 tennis season must not have only one US clay identity.
+- **1992 Cologne** clay World Series follows the historic Geneva-to-Cologne venue move, *not* proven same as revived Geneva 2015+ event. **1992 Johannesburg** preceded Durban 1993, Sun City 1994, Johannesburg 1995 in South African Open venue history.
+- **1992 Prague** was still in **Czechoslovakia (CSK)**, not the Czech Republic created in 1993. Preserve the correct year-host country even when the Source Series persists.
+- Brazil hosted multiple distinct original 1992 World Series (**Maceió, Guarujá, Búzios and São Paulo**) rather than one interchangeable Brazilian event. Other unique sources retain their individual year: Bolzano, Taipei, Brussels and Wellington.
+
+Added `PRE_2000_PLAYED_TIER_COUNTS[1992]` exact 9/12/56 gate, full year-derived source snapshot, adversarial category/cancellation tests, and historical reference documentation. The source contains **no Olympics**, no Grand Slams, no ATP-only false licencing, no playable FAX Editions, ranking matrices, tournament results, Catalog adapter or Run Apply/Save mutation.

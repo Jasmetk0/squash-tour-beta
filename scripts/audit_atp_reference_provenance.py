@@ -77,6 +77,8 @@ def audit(
     yearly_memberships: Counter[int] = Counter()
     yearly_host_evidence: Counter[int] = Counter()
     licences_missing_on_multi_host: list[str] = []
+    context_missing_on_multi_host: list[str] = []
+    context_kinds: Counter[str] = Counter()
     for item in sorted(series["entities"], key=lambda e: e["source_entity_id"]):
         identity = item["source_entity_id"]
         payload = item["payload"]
@@ -86,6 +88,10 @@ def audit(
         hosted = {x["year"] for x in hosts}
         cities = sorted({x["city"] for x in hosts})
         licence_urls = licence_evidence_urls(payload)
+        # A historical site reference is not legal ownership evidence.
+        host_context = payload.get("historical_host_context_sources", [])
+        context_urls = [row["url"] for row in host_context]
+        context_kinds.update(row["kind"] for row in host_context)
         period_kinds = Counter(evidence_kind(period["source_url"])
                                for period in periods)
         source_kinds.update(period_kinds)
@@ -95,6 +101,8 @@ def audit(
             yearly_host_evidence[year] += 1
         if len(cities) > 1 and not licence_urls:
             licences_missing_on_multi_host.append(identity)
+        if len(cities) > 1 and not licence_urls and not host_context:
+            context_missing_on_multi_host.append(identity)
         entries.append({
             "source_entity_id": identity,
             "effective_from": min(active),
@@ -105,6 +113,11 @@ def audit(
             "documented_distinct_host_cities": cities,
             "source_period_evidence_kind_counts": dict(sorted(period_kinds.items())),
             "explicit_licence_evidence_urls": licence_urls,
+            "historical_host_context_evidence_urls": context_urls,
+            "historical_host_context_evidence_kinds":
+                sorted({row["kind"] for row in host_context}),
+            "multiple_host_cities_without_any_specific_context":
+                len(cities) > 1 and not licence_urls and not host_context,
             "multiple_host_cities_without_explicit_licence_source":
                 len(cities) > 1 and not licence_urls,
         })
@@ -147,6 +160,11 @@ def audit(
             "source_period_evidence_kinds": dict(sorted(source_kinds.items())),
             "multi_host_series_without_explicit_licence_source":
                 len(licences_missing_on_multi_host),
+            "multi_host_series_without_any_specific_context":
+                len(context_missing_on_multi_host),
+            "series_with_nonlicence_host_context":
+                sum(bool(row["historical_host_context_evidence_urls"]) for row in entries),
+            "historical_host_context_kinds": dict(sorted(context_kinds.items())),
         },
         "provisional_2026": {
             "source_status": current["played_tier_roster_validation"]["status"],
@@ -162,6 +180,8 @@ def audit(
         },
         "multi_host_series_without_explicit_licence_source":
             licences_missing_on_multi_host,
+        "multi_host_series_without_any_specific_context":
+            context_missing_on_multi_host,
         "yearly_coverage": year_rows,
         "series_evidence": entries,
     }

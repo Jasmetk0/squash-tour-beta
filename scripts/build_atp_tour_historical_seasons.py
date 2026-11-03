@@ -242,6 +242,25 @@ def build(
         intervals = entity["payload"].get("history_periods") or []
         if not intervals:
             raise ValueError("Series missing history: " + entity["source_entity_id"])
+        # A publication URL is supporting evidence, never a blanket
+        # licence certification. Reject malformed metadata rather than
+        # silently omitting records from independent provenance review.
+        payload = entity["payload"]
+        licence_single = payload.get("historical_licence_source_url")
+        licence_multi = payload.get("historical_licence_source_urls", [])
+        if (
+            (licence_single is not None and
+             (not isinstance(licence_single, str) or
+              not licence_single.startswith("https://")))
+            or not isinstance(licence_multi, list)
+            or any(not isinstance(url, str) or
+                   not url.startswith("https://") for url in licence_multi)
+            or len(licence_multi) != len(set(licence_multi))
+            or (licence_single is not None and licence_single in licence_multi)
+        ):
+            raise ValueError(
+                "Invalid historical licence evidence: " + entity["source_entity_id"]
+            )
         refs = {
             r["source_entity_id"]
             for r in entity["references"]

@@ -2493,3 +2493,24 @@ def test_source_metadata_rejects_unproven_or_duplicate_historical_venue_years(
     event["payload"]["historical_host_change"].append(bad_entry)
     with pytest.raises(ValueError, match=expected_message):
         build(categories, changed)
+
+
+def test_2025_belgrade_to_athens_licence_move_preserves_distinct_1994_athens() -> None:
+    """The 2025 Hellenic Championship is the relocated 2024 Belgrade Series."""
+    source = _source("series")
+    by_id = {e["source_entity_id"]: e["payload"] for e in source["entities"]}
+    belgrade = by_id["belgrade"]
+    assert belgrade["historical_licence_source_url"] == (
+        "https://www.atptour.com/en/news/belgrade-athens-announcement-august-2025"
+    )
+    hosts = {x["year"]: x for x in belgrade["historical_host_change"]}
+    assert hosts[2024]["city"] == "Belgrade"
+    assert hosts[2024]["country_code"] == "SRB"
+    assert hosts[2025]["city"] == "Athens"
+    assert hosts[2025]["country_code"] == "GRC"
+    years = {row["year"]: row["series_category_ids"] for row in
+             build(_source("category"), source)["seasons"]}
+    assert years[2024]["belgrade"] == "atp_250"
+    assert years[2025]["belgrade"] == "atp_250"
+    assert "belgrade" not in years[2026]  # unknown 2026 slot is not invented
+    assert "athens_1994" not in years[2025]  # distinct 1994 World Series

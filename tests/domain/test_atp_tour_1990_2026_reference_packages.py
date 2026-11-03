@@ -529,7 +529,14 @@ def test_coverage_gates_reject_false_historical_completeness() -> None:
     import copy
     categories, source = _source("category"), _source("series")
     rows = {s["year"]: s for s in build(categories, source)["seasons"]}
-        assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
+    # Historical source-category census is complete only through the last
+    # played season, not the ongoing 2026 calendar.
+    for year in range(1990, 2026):
+        assert rows[year]["played_tier_roster_validation"]["status"] == (
+            "played_tour_tiers_reconciled_to_atp_results_archive"
+        )
+        assert rows[year]["played_tier_roster_validation"]["not_an_edition_calendar"] is True
+    assert rows[2026]["played_tier_roster_validation"]["status"] == "provisional_calendar_not_final_results"
     for year in range(2008, 2026):
         assert rows[year]["played_tier_roster_validation"]["status"] == (
             "played_tour_tiers_reconciled_to_atp_results_archive"

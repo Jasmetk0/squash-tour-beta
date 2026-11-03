@@ -70,6 +70,7 @@ export function ATPReferenceApplyPage():JSX.Element {
   })
   const preview=review.data
   const contextCorrect=Boolean(
+    source.isSuccess && review.isSuccess && runs.isSuccess && branches.isSuccess &&
     source.data && preview && run && branch && draft.isSuccess && state.isSuccess &&
     reviewedATPReference(source.data,preview,runId,branchId) &&
     preview.saved_head_revision_id===branch.saved_head_revision_id &&
@@ -96,13 +97,15 @@ export function ATPReferenceApplyPage():JSX.Element {
         (item as Record<string,unknown>).source_fingerprint===source.data?.source_fingerprint))
   )
   const canRecover=Boolean(
-    stagedATP&&branch&&draft.data?.status==='dirty' &&
+    stagedATP&&source.isSuccess&&branches.isSuccess&&draft.isSuccess&&state.isSuccess&&
+    branch&&draft.data?.status==='dirty' &&
     draft.data.run_id===runId && draft.data.branch_id===branchId &&
     draft.data.base_saved_revision_id===branch.saved_head_revision_id &&
     state.data?.fingerprint&&!draft.isFetching&&!state.isFetching
   )
   const saveAllowed=Boolean(
-    pendingSave&&branch&&draft.data?.status==='dirty' &&
+    pendingSave&&run&&branch&&branches.isSuccess&&draft.isSuccess&&state.isSuccess&&
+    draft.data?.status==='dirty' &&
     pendingSave.runId===runId && pendingSave.branchId===branchId &&
     pendingSave.version===draft.data.draft_version &&
     pendingSave.head===branch.saved_head_revision_id &&
@@ -111,7 +114,7 @@ export function ATPReferenceApplyPage():JSX.Element {
     !draft.isFetching&&!state.isFetching
   )
   const pendingChanges=Boolean(
-    approved||hasApplied||pendingSave ||
+    approved||pendingSave ||
     (branch && draft.data?.status==='dirty')
   )
 

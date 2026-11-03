@@ -420,9 +420,9 @@
       "events": [
         {
           "series_id": "brisbane",
-          "start_date": "2026-01-05",
+          "start_date": "2026-01-04",
           "end_date": "2026-01-11",
-          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
           "source_basis": "official_published_event_dates"
         },
         {
@@ -477,8 +477,8 @@
         {
           "series_id": "doha",
           "start_date": "2026-02-16",
-          "end_date": "2026-02-22",
-          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "end_date": "2026-02-21",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
           "source_basis": "official_published_event_dates"
         },
         {
@@ -505,8 +505,8 @@
         {
           "series_id": "dubai",
           "start_date": "2026-02-23",
-          "end_date": "2026-03-01",
-          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "end_date": "2026-02-28",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
           "source_basis": "official_published_event_dates"
         },
         {
@@ -659,15 +659,15 @@
         {
           "series_id": "umag",
           "start_date": "2026-07-13",
-          "end_date": "2026-07-19",
-          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "end_date": "2026-07-18",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
           "source_basis": "official_published_event_dates"
         },
         {
           "series_id": "kitzbuhel",
           "start_date": "2026-07-20",
-          "end_date": "2026-07-26",
-          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "end_date": "2026-07-25",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
           "source_basis": "official_published_event_dates"
         },
         {
@@ -687,15 +687,15 @@
         {
           "series_id": "los_cabos",
           "start_date": "2026-07-27",
-          "end_date": "2026-08-02",
-          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "end_date": "2026-08-01",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
           "source_basis": "official_published_event_dates"
         },
         {
           "series_id": "canadian_open",
           "start_date": "2026-08-02",
-          "end_date": "2026-08-12",
-          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "end_date": "2026-08-13",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
           "source_basis": "official_published_event_dates"
         },
         {

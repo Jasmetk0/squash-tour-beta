@@ -209,7 +209,7 @@
           "atp_championship_single_week": 9,
           "atp_world_series": 57
         },
-        "scope": "1996 ATP Super 9 / ATP Championship Series / ATP World Series; excludes singles Finals, Olympics, Slams, Grand Slam Cup and team events",
+        "scope": "1996 ATP Super 9 / ATP Championship Series / ATP World Series; excludes Finals, Grand Slam Cup, majors and team events",
         "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
         "status": "played_tour_tiers_reconciled_to_atp_results_archive"
       },

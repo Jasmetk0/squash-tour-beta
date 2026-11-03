@@ -45,10 +45,10 @@ def test_source_provenance_audit_full_37_year_inventory_is_reproducible() -> Non
     assert sum(y["without_explicit_host_year_evidence"]
                for y in report["yearly_coverage"]) == 976
     assert counts["source_period_evidence_kinds"]["atp_year_results_index"] >= 1700
-    assert counts["series_with_nonlicence_host_context"] == 13
-    assert counts["multi_host_series_without_any_specific_context"] == 18
+    assert counts["series_with_nonlicence_host_context"] == 19
+    assert counts["multi_host_series_without_any_specific_context"] == 12
     assert counts["multi_host_series_without_explicit_licence_source"] == 31
-    assert sum(counts["historical_host_context_kinds"].values()) == 13
+    assert sum(counts["historical_host_context_kinds"].values()) == 19
 
 
 def test_provenance_audit_does_not_mislabel_generic_atp_archive_as_licence_proof() -> None:
@@ -220,6 +220,12 @@ def test_venue_context_must_not_be_misrepresented_as_licence_ownership() -> None
         "eastbourne": "site_change",
         "estoril": "historical_context_only",
         "atp_finals": "rotating_hosts",
+        "belgrade_clay_2021": "site_change",
+        "lyon_old": "site_change",
+        "sao_paulo": "site_change",
+        "st_petersburg": "city_alias",
+        "warsaw_2008": "site_change",
+        "bogota_colombia_2001": "city_alias",
     }
     assert {
         key: by_id[key]["historical_host_context_evidence_kinds"][0]

@@ -68,6 +68,10 @@ def test_atp_reference_http_atomic_preview_apply_save_restore(tmp_path: Path) ->
         assert catalog_status == 200
         assert catalog["package_id"] == SETUP_ID
         assert [c["entity_count"] for c in catalog["children"]] == [11, 164]
+        global_status, global_catalog = _request(
+            "GET", server.base_url + "/admin/reference-packages/atp-tour-1990-2026"
+        )
+        assert global_status == 200 and global_catalog == catalog
         assert _request("GET", base)[1]["state"] is None
 
         status, preview = _request("POST", base + "/source-atp-reference/preview", {})
@@ -75,6 +79,14 @@ def test_atp_reference_http_atomic_preview_apply_save_restore(tmp_path: Path) ->
         assert len(preview["additions"]) == 175
         assert not preview["conflicts"] and not preview["invalid"]
         assert not preview["unresolved"]
+        assert "document" not in preview  # Never transmit ~1.3 MB source for every preview.
+        assert preview["document_identity"] == {
+            "package_type": "Setup",
+            "package_id": SETUP_ID,
+            "source_version": 1,
+            "source_fingerprint": catalog["source_fingerprint"],
+        }
+        assert len(json.dumps(preview, ensure_ascii=False)) < 30000
         assert _request("GET", base)[1]["state"] is None
 
         command = {

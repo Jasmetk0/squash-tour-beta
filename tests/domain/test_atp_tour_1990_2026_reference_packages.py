@@ -2514,3 +2514,20 @@ def test_2025_belgrade_to_athens_licence_move_preserves_distinct_1994_athens() -
     assert years[2025]["belgrade"] == "atp_250"
     assert "belgrade" not in years[2026]  # unknown 2026 slot is not invented
     assert "athens_1994" not in years[2025]  # distinct 1994 World Series
+
+
+def test_2024_2025_2026_canadian_masters_alternates_hosts_with_year_evidence() -> None:
+    """2026 Montreal must not be silently projected into 2025 Toronto."""
+    source = _source("series")
+    event = next(e for e in source["entities"]
+                 if e["source_entity_id"] == "canadian_open")
+    by_year = {r["year"]: r for r in event["payload"]["historical_host_change"]}
+    assert [(by_year[year]["city"], by_year[year]["country_code"])
+            for year in (2024, 2025, 2026)] == [
+                ("Montreal", "CAN"), ("Toronto", "CAN"), ("Montreal", "CAN")
+            ]
+    assert all(by_year[y]["source_url"].startswith("https://www.atptour.com/")
+               for y in (2024, 2025, 2026))
+    seasons = {r["year"]: r for r in build(_source("category"), source)["seasons"]}
+    assert all(seasons[year]["series_category_ids"]["canadian_open"]
+               == "atp_masters_1000" for year in (2024, 2025, 2026))

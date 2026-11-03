@@ -1838,8 +1838,27 @@
             "city": "Toronto",
             "country_code": "CAN",
             "source_url": "https://www.atptour.com/en/scores/results-archive?year=2004"
+          },
+          {
+            "year": 2024,
+            "city": "Montreal",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2024"
+          },
+          {
+            "year": 2025,
+            "city": "Toronto",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2025"
+          },
+          {
+            "year": 2026,
+            "city": "Montreal",
+            "country_code": "CAN",
+            "source_url": "https://www.atptour.com/en/news/montreal-2026-results"
           }
-        ]
+        ],
+        "identity_review_note": "Men's Canadian Masters uses one continuing Masters Series across alternating actual hosts: Montreal 2024, Toronto 2025, Montreal 2026. Never infer the 2026 city for historical years from host_city_2026; retain dated official results evidence."
       },
       "references": [
         {

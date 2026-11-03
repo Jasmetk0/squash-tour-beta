@@ -2349,7 +2349,9 @@ def test_1990_original_tier_gate_rejects_fabricated_nonplayed_world_series() -> 
     import copy
     categories, source = _source("category"), _source("series")
     wrong = copy.deepcopy(source)
-    event = next(e for e in wrong["entities"] if e["source_entity_id"] == "dallas")
+    # The historic Memphis source now belongs to rio; unlike San Jose,
+    # this Series owns a valid Championship reference in later years.
+    event = next(e for e in wrong["entities"] if e["source_entity_id"] == "rio")
     period = next(p for p in event["payload"]["history_periods"] if p["from"] == 1990)
     period["category_id"] = "atp_championship_series"
     with pytest.raises(ValueError, match="played-tier roster mismatch in 1990"):

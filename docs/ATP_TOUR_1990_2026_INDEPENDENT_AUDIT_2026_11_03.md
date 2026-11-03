@@ -15,8 +15,8 @@ check must not be described as full independent historical certification.
 | Annual derived source snapshots (1990–2026) | 37 |
 | Historical Category intervals attached to Series | 1,983 |
 | Year-effective Series memberships across 37 snapshots | 2,431 |
-| Explicit historical host-year records | 1,445 |
-| Active membership-years without a *separate* explicit host-year record | 986 |
+| Explicit historical host-year records | 1,448 |
+| Active membership-years without a *separate* explicit host-year record | 983 |
 | Series periods citing an ATP-domain URL | 1,832 / 1,983 |
 | Series periods citing the general ATP results archive, year-filtered | 1,716 / 1,983 |
 | Series periods citing non-ATP pages | 151 / 1,983 |
@@ -35,7 +35,7 @@ all 37 source snapshot dictionaries and cancellation lists. Findings:
 - General ATP year-index pages support **year-level checking**; they are **not**
   proof of a particular legal tournament licence transfer. A source-period URL
   cannot by itself justify historical identity equivalence across venue moves.
-- `historical_host_change` is sparse and optional by design; the 986 missing
+- `historical_host_change` is sparse and optional by design; the 983 missing
   *individual host-year entries* are an evidence/coverage limitation, **not**
   986 missing tournament categories or proof of wrong locations.
 
@@ -79,7 +79,13 @@ one tier could evade a count-only gate.
    establishes that the **2024 Belgrade Open** ATP 250 moved to the **Athens
    Hellenic Championship in 2025**. A continuous `belgrade` Series now
    records 2024 Belgrade / 2025 Athens, separate from original 1994 Athens.
-4. **Source integrity gates:** builder rejects missing/duplicate Finals
+4. **2024–2026 Canada Masters:** official results show the alternating
+   men's Canadian Masters 1000 city **Montréal 2024 → Toronto 2025 →
+   Montréal 2026**, not an implied permanent 2026 host. Dated host
+   records were added to one unchanged `canadian_open` Series. See
+   [ATP 2025 archive](https://www.atptour.com/en/scores/results-archive?year=2025)
+   and [ATP Montreal 2026 results](https://www.atptour.com/en/news/montreal-2026-results).
+5. **Source integrity gates:** builder rejects missing/duplicate Finals
    identities; malformed cancellation years; mismatched 2026 effective
    category/current host; false, duplicate or out-of-scope historical
    venue evidence. Added adversarial/negative regression cases.
@@ -96,7 +102,7 @@ the recorded annual values. Final-head CI must be green **after all edits**.
 
 **Not yet proven:** independent *per-event* verification of every pre-2000
 and 2000–2025 identity/lineage against original ATP event records;
-all 986 sparse venue-year gaps; licence/legal reuse rights; complete
+all 983 sparse venue-year gaps; licence/legal reuse rights; complete
 2026 played season (late 2026 schedule still includes TBD); native Package
 Catalog inventory and Run Apply; full sporting lifecycle, result histories,
 point distribution, and a playable Calendar.

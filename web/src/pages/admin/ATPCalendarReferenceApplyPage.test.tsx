@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '../../i18n/LanguageContext'
 import { ATPCalendarReferenceApplyPage } from './ATPCalendarReferenceApplyPage'
+import { validATPCalendarCatalog } from '../../api/atpCalendarReferencePackages'
 
 const hash=(s:string)=>s.repeat(64)
 const ctx=vi.hoisted(()=>({
@@ -141,6 +142,18 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Target Branch'}),'branch/1')
     await screen.findByText(/Přidávané:/)
   }
+
+  it('validates all 37 calendar years as one non-overlapping source partition',()=>{
+    const original=source()
+    expect(validATPCalendarCatalog(original)).toBe(true)
+    expect(validATPCalendarCatalog({...original,
+      dated_years:[...original.dated_years,2026]})).toBe(false)
+    expect(validATPCalendarCatalog({...original,
+      undated_years:original.undated_years.slice(1)})).toBe(false)
+    expect(validATPCalendarCatalog({...original,
+      children:[...original.children.slice(0,2),
+        {...original.children[2],entity_count:0}]})).toBe(false)
+  })
 
   it('renders sourced ISO year/week dates and explicit undated-year warnings',async()=>{
     mount()

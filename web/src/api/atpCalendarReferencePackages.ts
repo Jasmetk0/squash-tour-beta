@@ -31,26 +31,35 @@ const record=(v:unknown):v is Record<string,unknown> =>
   Boolean(v&&typeof v==='object'&&!Array.isArray(v))
 const fingerprint=(v:unknown):v is string =>
   typeof v==='string' && /^[0-9a-f]{64}$/.test(v)
-const uniqueSortedYears=(v:unknown,first:number,last:number):v is number[] =>
-  Array.isArray(v) && v.length===last-first+1 &&
-  v.every((year,i)=>year===first+i)
+const canonicalYearPartition=(dated:unknown,undated:unknown):boolean => {
+  if(!Array.isArray(dated)||!Array.isArray(undated)||dated.length<1)return false
+  const ascending=(years:unknown[]):boolean=>years.every((year,i)=>
+    typeof year==='number'&&Number.isSafeInteger(year)&&year>=1990&&year<=2026&&
+    (i===0||year>years[i-1]))
+  const combined=[...dated,...undated].sort((a,b)=>a-b)
+  return ascending(dated)&&ascending(undated)&&combined.length===37&&
+    combined.every((year,i)=>year===1990+i)&&dated.includes(2026)
+}
 
 export function validATPCalendarCatalog(v:unknown):v is ATPCalendarReferenceCatalog {
   if(!record(v)||v.package_id!==ATP_CALENDAR_REFERENCE_SETUP_ID||
     v.package_type!=='Setup'||v.source_version!==1||
     !fingerprint(v.source_fingerprint)||v.usage!=='source_reference_only_no_playable_calendar'||
     !record(v.reference_span)||v.reference_span.from!==1990||v.reference_span.to!==2026||
-    !uniqueSortedYears(v.dated_years,2025,2026)||
-    !uniqueSortedYears(v.undated_years,1990,2024)||
-    !uniqueSortedYears(v.provisional_years,2026,2026)||
+    !canonicalYearPartition(v.dated_years,v.undated_years)||
+    !Array.isArray(v.provisional_years)||v.provisional_years.length!==1||
+    v.provisional_years[0]!==2026||
     !Array.isArray(v.children)||v.children.length!==3)return false
   return v.children.every((item:unknown,i:number)=>{
     if(!record(item))return false
-    const count=[11,164,150]
+    const validCount=i<2 ? item.entity_count===[11,164][i] :
+      typeof item.entity_count==='number' &&
+      Number.isSafeInteger(item.entity_count) &&
+      item.entity_count>=37 && item.entity_count<=10000
     return item.package_id===ATP_CALENDAR_REFERENCE_CHILD_IDS[i] &&
       item.package_type===['Category','Series','Calendar'][i] &&
       item.source_version===1 && fingerprint(item.source_fingerprint) &&
-      item.entity_count===count[i]
+      validCount
   })
 }
 

@@ -2443,3 +2443,53 @@ def test_2026_next_gen_finals_host_is_current_authoritative_atp_announcement() -
     assert seasons[2017]["series_category_ids"]["next_gen_atp_finals"] == "next_gen_finals"
     assert seasons[2020]["known_not_held_series_ids"].count("next_gen_atp_finals") == 1
     assert seasons[2026]["series_category_ids"]["next_gen_atp_finals"] == "next_gen_finals"
+
+
+@pytest.mark.parametrize(
+    ("series_id", "field", "wrong", "expected_message"),
+    [
+        ("stockholm", "category_id_2026", "atp_500", "2026 Series category mismatch"),
+        ("stockholm", "host_city_2026", None, "Active 2026 Series missing venue/surface"),
+        ("metz", "host_city_2026", "Metz", "Inactive 2026 Series has current venue"),
+        ("next_gen_atp_finals", "host_city_2026", "Jeddah", "2026 historical host mismatch"),
+    ],
+)
+def test_source_metadata_rejects_2026_category_or_venue_contradictions(
+    series_id: str, field: str, wrong: str | None, expected_message: str
+) -> None:
+    """Annual historical source membership and 2026 metadata must agree."""
+    import copy
+    categories, original = _source("category"), _source("series")
+    changed = copy.deepcopy(original)
+    event = next(e for e in changed["entities"]
+                 if e["source_entity_id"] == series_id)
+    event["payload"][field] = wrong
+    with pytest.raises(ValueError, match=expected_message):
+        build(categories, changed)
+
+
+@pytest.mark.parametrize(
+    ("bad_entry", "expected_message"),
+    [
+        ({"year": 1989, "city": "Bogotá", "country_code": "COL",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013"},
+         "Invalid historical host year/evidence"),
+        ({"year": 2013, "city": "Bogotá", "country_code": "COL",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013"},
+         "Invalid historical host year/evidence"),
+        ({"year": 2000, "city": "Bogotá", "country_code": "COL",
+          "source_url": "http://invalid.example/legacy"},
+         "Invalid historical host year/evidence"),
+    ],
+)
+def test_source_metadata_rejects_unproven_or_duplicate_historical_venue_years(
+    bad_entry: dict, expected_message: str
+) -> None:
+    import copy
+    categories, original = _source("category"), _source("series")
+    changed = copy.deepcopy(original)
+    event = next(e for e in changed["entities"]
+                 if e["source_entity_id"] == "los_cabos")
+    event["payload"]["historical_host_change"].append(bad_entry)
+    with pytest.raises(ValueError, match=expected_message):
+        build(categories, changed)

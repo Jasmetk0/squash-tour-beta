@@ -1,10 +1,14 @@
 # Independent ATP Category / Series source audit — 2026-11-03
 
-**Scope:** isolated, source-only reference Package PR #1731 against `buuk` in
-`Jasmetk0/squash-tour-beta`. This is **not** a review of a playable ATP Tour
-Calendar, Run import/Apply/Save, ranking points or any sporting implementation.
-**Release/merge status:** Draft; owner alone merges. Passing a source integrity
-check must not be described as full independent historical certification.
+**Scope:** independent historical source audit within reference Package
+PR #1731 against `buuk` in `Jasmetk0/squash-tour-beta`. This document
+evaluates **historical Category/Series source provenance**, not a playable
+ATP Tour Calendar, ranking points or sporting implementation. A separate
+opaque Run-owned reference Setup adapter with Preview/Confirm/explicit Save
+was added later in this same PR; that integration has its own tests and
+documentation in `ATP_TOUR_1990_2026_REFERENCE_PACKAGES.md`.
+**Release/merge status:** Draft; owner alone merges. Passing source integrity
+checks must not be described as full independent historical certification.
 
 ## 1. Inventory and deterministic integrity
 
@@ -140,6 +144,36 @@ moved to Cologne in 1992 remains `cologne_1992_clay`.
 The Category counts and 2,431 year-effective membership records do not
 change; no played Edition or ranking score is added.
 
+
+
+## 2026-11-03 follow-up — six independently sourced relocation links
+
+The source Registry now explicitly attaches **specific supporting publications**
+to six already represented one-ID transitions; neither annual tier membership
+nor any played total was changed. Independent source articles:
+
+| Source Series | Specific documented transition | Evidence |
+| --- | --- | --- |
+| `hangzhou` | Zhuhai 2023 → Hangzhou 2024 | [ATP 2024 press conference](https://www.atptour.com/en/news/hangzhou-press-conference-2024-june), explicitly states Zhuhai relocation |
+| `almaty` | Astana 2023 → Almaty 2024 | [ATP calendar update](https://www.atptour.com/en/news/2024-atp-calendar-update-gijon-almaty); [Kazakh federation approval](https://ktf.kz/en/tournaments/ktt/news/?id=8708) |
+| `brussels` | Valencia 2015 → Antwerp 2016 → Brussels 2025 | [ATP 2016 calendar announcement](https://www.atptour.com/en/news/atp-announces-2017-2018-calendars); [ATP 2025 move](https://www.atptour.com/en/news/antwerp-brussels-relocation-2025) |
+| `lyon` | Marseille 2025 → Lyon 2026 | [ATP-approved 2025 announcement](https://www.atptour.com/en/news/marseille-lyon-relocation) |
+| `sofia` | Zagreb 2015 → Sofia 2016 | [ATP 2016 calendar announcement](https://www.atptour.com/en/news/atp-announces-2017-2018-calendars) |
+| `chengdu` | Kuala Lumpur 2015 → Chengdu 2016 | [Contemporary June 2016 report quoting ATP approval](https://www.denik.cz/tenis/teniste-uz-nebudou-hrat-v-kualu-lumpur-turnaj-se-stehuje-do-ccheng-tu-20160629.html) |
+
+The Zhuhai/Hangzhou Series also contained three truncated ATP article URLs
+(`/en/news/to`); all were replaced with a verifiable ATP article. Regression
+tests pin host-year identities, the documented links and fail-closed source
+evidence shape. **One publication supporting one venue transition does not
+certify every historical move within that Series.**
+
+As of **3 November 2026**, the official [ATP published 2026 calendar](https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/)
+still includes a November ATP 250 `TBD` entry. The official
+[ATP tournament index](https://www.atptour.com/en/tournaments/) does not
+establish a substitute identity for that slot. Therefore the 2026 reference
+remains explicitly provisional. No future edition, winner or historic
+ranking point is inferred.
+
 ## 4. Review and merge boundaries
 
 **Technically verifiable now:** source documents parse under the existing
@@ -150,12 +184,16 @@ the recorded annual values. Final-head CI must be green **after all edits**.
 **Not yet proven:** independent *per-event* verification of every pre-2000
 and 2000–2025 identity/lineage against original ATP event records;
 all 976 sparse venue-year gaps; licence/legal reuse rights; complete
-2026 played season (late 2026 schedule still includes TBD); native Package
-Catalog inventory and Run Apply; full sporting lifecycle, result histories,
-point distribution, and a playable Calendar.
+2026 played season (late 2026 schedule still includes TBD); the general
+dynamic source Catalog for arbitrary non-World Packages; full sporting
+lifecycle, result histories, point distribution, and a playable Calendar.
+The dedicated ATP source catalog, Run reference Setup, Preview, explicit
+Confirm/Save and Czech/English Apply UI are now implemented and tested;
+they do not close the independent historical provenance gaps.
 
-**Recommendation:** keep PR #1731 a **Draft** pending an independent
-year-by-year source/identity provenance review. Technical integrity checks
-and passing Fast CI do **not** justify marking every historical source as
-fully independently certified. Owner makes any merge decision. Any future
-Catalog/Run integration belongs in its own explicit approved vertical slice.
+**Recommendation:** keep PR #1731 a **Draft** until the owner approves
+the explicitly **provisional historical-provenance boundary**. Technical
+integrity checks and passing Fast CI do **not** justify marking every
+historical source as independently certified. The current reference-only
+Package integration is not a promise of a playable ATP Tour or FAX Calendar.
+Owner makes any merge decision.

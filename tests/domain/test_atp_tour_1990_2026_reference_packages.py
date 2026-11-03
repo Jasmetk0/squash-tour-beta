@@ -2421,3 +2421,25 @@ def test_atp_known_not_held_years_reject_duplicate_out_of_range_or_text(
     hangzhou["payload"]["not_held_years_known"] = invalid_years
     with pytest.raises(ValueError, match="Invalid or duplicate known-not-held years"):
         build(categories, invalid)
+
+
+def test_2026_next_gen_finals_host_is_current_authoritative_atp_announcement() -> None:
+    """2026 host was confirmed September 2026, not 2023–25 Jeddah."""
+    source = _source("series")
+    event = next(e for e in source["entities"]
+                 if e["source_entity_id"] == "next_gen_atp_finals")
+    payload = event["payload"]
+    assert payload["host_city_2026"] == "Reggio Calabria"
+    assert payload["host_country_code_2026"] == "ITA"
+    assert payload["host_2026_announced_on"] == "2026-09-09"
+    assert payload["host_2026_source_url"].startswith("https://www.nextgenatpfinals.com/")
+    assert payload["historical_host_change"] == [{
+        "year": 2026,
+        "city": "Reggio Calabria",
+        "country_code": "ITA",
+        "source_url": payload["host_2026_source_url"],
+    }]
+    seasons = {r["year"]: r for r in build(_source("category"), source)["seasons"]}
+    assert seasons[2017]["series_category_ids"]["next_gen_atp_finals"] == "next_gen_finals"
+    assert seasons[2020]["known_not_held_series_ids"].count("next_gen_atp_finals") == 1
+    assert seasons[2026]["series_category_ids"]["next_gen_atp_finals"] == "next_gen_finals"

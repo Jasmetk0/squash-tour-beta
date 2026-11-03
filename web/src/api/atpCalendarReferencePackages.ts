@@ -107,7 +107,7 @@ export type ATPCalendarReferenceYearView = {
 const positiveInt=(v:unknown):v is number =>
   typeof v==='number' && Number.isSafeInteger(v) && v>=0
 const dateString=(v:unknown):v is string =>
-  typeof v==='string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(v)
+  typeof v==='string' && /^\d{4}-\d{2}-\d{2}$/.test(v)
 const isoYearWeek=(v:unknown):boolean =>
   record(v)&&positiveInt(v.iso_year)&&positiveInt(v.iso_week)&&
   v.iso_week>=1&&v.iso_week<=53

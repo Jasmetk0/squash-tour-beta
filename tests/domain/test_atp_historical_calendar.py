@@ -82,6 +82,17 @@ def test_2025_2026_precise_dates_two_week_masters_and_host_licence_continuity():
     # 'lyon' persistent Series is 2025 Marseille; old Lyon clay is separate.
     assert events["atp_2025_lyon"]["start_date"] == "2025-02-10"
     assert events["atp_2025_lyon"]["end_date"] == "2025-02-16"
+    assert events["atp_2026_brisbane"]["start_date"] == "2026-01-04"
+    assert events["atp_2026_brisbane"]["iso_weeks_occupied"] == [
+        {"iso_year": 2026, "iso_week": 1},
+        {"iso_year": 2026, "iso_week": 2},
+    ]
+    assert events["atp_2026_doha"]["end_date"] == "2026-02-21"
+    assert events["atp_2026_dubai"]["end_date"] == "2026-02-28"
+    assert events["atp_2026_umag"]["end_date"] == "2026-07-18"
+    assert events["atp_2026_kitzbuhel"]["end_date"] == "2026-07-25"
+    assert events["atp_2026_los_cabos"]["end_date"] == "2026-08-01"
+    assert events["atp_2026_canadian_open"]["end_date"] == "2026-08-13"
     assert events["atp_2026_lyon"]["start_date"] == "2026-10-19"
     assert events["atp_2026_next_gen_atp_finals"]["start_date"] == "2026-12-09"
     assert events["atp_2026_next_gen_atp_finals"]["end_date"] == "2026-12-13"

@@ -17315,8 +17315,8 @@
       "payload": {
         "name": "Next Gen ATP Finals",
         "category_id_2026": "next_gen_finals",
-        "host_city_2026": null,
-        "host_country_code_2026": null,
+        "host_city_2026": "Reggio Calabria",
+        "host_country_code_2026": "ITA",
         "surface_2026": "indoor_hard",
         "reference_year": 2026,
         "sponsor_names_can_change": true,
@@ -17335,7 +17335,18 @@
         "not_held_years_known": [
           2020
         ],
-        "known_nonheld_source": "https://www.nextgenatpfinals.com/en/heritage/history"
+        "known_nonheld_source": "https://www.nextgenatpfinals.com/en/heritage/history",
+        "host_2026_source_url": "https://www.nextgenatpfinals.com/en/news/reggio-calabria-to-host-2026-next-gen-atp-finals",
+        "host_2026_announced_on": "2026-09-09",
+        "historical_host_change": [
+          {
+            "year": 2026,
+            "city": "Reggio Calabria",
+            "country_code": "ITA",
+            "source_url": "https://www.nextgenatpfinals.com/en/news/reggio-calabria-to-host-2026-next-gen-atp-finals"
+          }
+        ],
+        "identity_review_note": "2026 Reggio Calabria venue announced by ATP/Next Gen ATP Finals on 2026-09-09, replacing 2023–2025 Jeddah; it is the same continuing 2017+ Next Gen event, not a new ATP Tour 250/500/1000 Series."
       },
       "references": [
         {

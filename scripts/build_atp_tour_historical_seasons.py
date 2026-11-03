@@ -160,6 +160,53 @@ def _era(year: int) -> str:
     return "atp_masters_1000_500_250"
 
 
+
+def _validate_year_effective_source_metadata(entity: dict[str, Any]) -> None:
+    """Reject source metadata that disagrees with recorded effective membership.
+
+    Historical venues are intentionally sparse: this validates records that
+    exist without pretending every active Series year has a verified host.
+    """
+    payload = entity["payload"]
+    series_id = entity["source_entity_id"]
+    periods = payload["history_periods"]
+    effective_2026 = _active(periods, LAST)
+    expected_2026 = effective_2026[0]["category_id"] if effective_2026 else None
+    if payload.get("category_id_2026") != expected_2026:
+        raise ValueError("2026 Series category mismatch: " + series_id)
+    present_fields = ("host_city_2026", "host_country_code_2026", "surface_2026")
+    if expected_2026 is None:
+        if any(payload.get(field) is not None for field in present_fields):
+            raise ValueError("Inactive 2026 Series has current venue: " + series_id)
+    elif any(not isinstance(payload.get(field), str) or not payload[field].strip()
+             for field in present_fields):
+        raise ValueError("Active 2026 Series missing venue/surface: " + series_id)
+
+    host_history = payload.get("historical_host_change", [])
+    if not isinstance(host_history, list):
+        raise ValueError("Invalid historical hosts: " + series_id)
+    seen_years: set[int] = set()
+    for host in host_history:
+        if not isinstance(host, dict):
+            raise ValueError("Invalid historical hosts: " + series_id)
+        year = host.get("year")
+        if (type(year) is not int or not FIRST <= year <= LAST
+                or year in seen_years or not _active(periods, year)
+                or not isinstance(host.get("city"), str) or not host["city"].strip()
+                or not isinstance(host.get("country_code"), str)
+                or len(host["country_code"]) != 3
+                or not host["country_code"].isupper()
+                or not isinstance(host.get("source_url"), str)
+                or not host["source_url"].startswith("https://")):
+            raise ValueError("Invalid historical host year/evidence: " + series_id)
+        seen_years.add(year)
+        if year == LAST and (
+            host["city"] != payload["host_city_2026"]
+            or host["country_code"] != payload["host_country_code_2026"]
+        ):
+            raise ValueError("2026 historical host mismatch: " + series_id)
+
+
 def build(
     category_doc: dict[str, Any], series_doc: dict[str, Any]
 ) -> dict[str, Any]:
@@ -312,6 +359,9 @@ def build(
             "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
             "edition_assertion": "none; reference membership does not prove played annual edition",
         })
+
+    for entity in series_doc["entities"]:
+        _validate_year_effective_source_metadata(entity)
 
     return {
         "schema_version": "tennis.atp_tour_reference_seasons.v1",

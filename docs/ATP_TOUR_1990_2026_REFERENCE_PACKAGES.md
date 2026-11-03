@@ -1,7 +1,7 @@
 # ATP Tour 1990–2026: Category and Series reference Packages
 
 > **Current verified source state (2026-11-03):** 11 Category identities,
-> **165** Series identities and 37 generated annual reference rows.
+> **164** Series identities and 37 generated annual reference rows.
 > The **36 played main ATP Tour tier rosters 1990–2025** have source-backed
 > original year-effective categories. **2026 is
 > provisional** until final results. This is source-only and is **not**
@@ -18,6 +18,30 @@
 since 1 January 1990**, not the entire history of men's tennis. The Category
 and Series Package are optional **source-only historical references** for
 Squash Engine's data-driven future, not tennis gameplay.
+
+## 2026-11-03 — Düsseldorf 2014 → Geneva 2015 ATP 250 licence continuity
+
+The original historical data treated **2013–2014 Düsseldorf** and
+**Geneva Open from 2015** as distinct source identities because the exact
+legal transfer had not been independently verified. That conservative
+boundary was justified then, but contemporaneous evidence now resolves it:
+
+- [19 November 2014 report quoting ATP's approval of the Düsseldorf-to-Geneva licence move](https://www.welt.de/print/welt_kompakt/duesseldorf/article134566672/Aus-fuer-ATP-Turnier-besiegelt.html)
+- [Separate contemporaneous ATP announcement coverage](https://www.zeit.de/news/2014-11/19/tennis-kuenftig-in-genf-aus-fuer-atp-turnier-im-rochusclub-perfekt-19193604)
+- [Geneva organiser's own tournament history naming the licence's Düsseldorf origin](https://gonetgenevaopen.ch/le-tournoi/)
+
+The two Düsseldorf source periods (2013–14) have been moved into the
+continuing `geneva` identity from 2015 onward. Dated venues make that
+transition inspectable without treating tournament-name changes as new
+played events. The redundant `duesseldorf_2014` Series ID has been
+removed, leaving **164** historical Series. No tier count or year-effective
+membership changes.
+
+**Distinct historical boundary:** the Geneva clay World Series held in
+1990–1991 is already attributed to `cologne_1992_clay`, which moved to
+Cologne in 1992. That is **not** the 2015 Geneva ATP 250 licence.
+The historical ATP operated tournament must never be confused with the
+separate World Team Cup at Düsseldorf.
 
 ## 2026-11-03 — corrected two independent 2013 → 2014 US licences (Memphis / San José)
 
@@ -878,10 +902,10 @@ Historical classification matters more than present-day event names:
   change are noted explicitly. [Portuguese coverage](https://www.rtp.pt/noticias/outras-modalidades/estoril-open-volta-ao-circuito-atp-em-2026_d1631989)
   explains that event continuity does **not** automatically prove
   legal licence/organizer identity across the 2015 change.
-- **Düsseldorf 2014** is preserved as a separate `duesseldorf_2014`
-  Series identity. Geneva replaced its calendar placement in 2015,
-  but legal licence continuity remains under review. This avoids
-  merging identities on insufficient evidence.
+- **Düsseldorf 2013–14 → Geneva 2015** is one *confirmed* ATP 250
+  tournament sanction, independently documented by contemporaneous
+  ATP-announcement reporting and the Geneva organiser's history. The
+  shared `geneva` source identity preserves each year's real host.
 - **St Petersburg was absent in 2014** and is not fabricated
   despite its source continuity in 2013 and 2015.
 
@@ -937,9 +961,10 @@ retroactively inferred from the familiar 2026 category names:
   **Bogotá in 2013** and that same licence moved to **Los Cabos in 2016**.
   This continuous Series is `los_cabos`, with year-specific historical
   city records; there was **no 2013 Los Angeles ATP Tour edition**.
-- **Düsseldorf 2013–14** remains a separate 250 Series from
-  2015 Geneva unless the transfer of the actual tournament
-  licence is independently documented.
+- **Düsseldorf 2013–14 → Geneva from 2015** is one confirmed licensed
+  ATP 250 transfer; the `geneva` source identity carries both hosts.
+  This does **not** merge the unrelated Geneva clay Tour event from
+  1990–1991 (source `cologne_1992_clay`).
 
 The annual source resolver validates the 2013 9/11/40 census,
 as well as the other year-specific complete top Tour tier rosters
@@ -1634,7 +1659,7 @@ Added deterministic `PRE_2000_PLAYED_TIER_COUNTS[1991]` **9/12/54** count gate, 
 
 The original **1990 IBM ATP Tour**, its first season, contained **9 ATP Championship Single-Week (future Super 9), 12 ATP Championship Series, 53 ATP World Series and 1 ATP Tour World Championships singles final in Frankfurt**, amounting to **75 ATP-only individual men's singles Series**. The independent [1990 tournament inventory](https://tennis-db.com/tournaments?season=1990) shows 79 played events including four independently organized Grand Slams, which are excluded from this ATP-only source. The [original 1990 full year event calendar](https://en.wikipedia.org/wiki/1990_ATP_Tour), [German historic calendar with original tier/venue](https://de.wikipedia.org/wiki/ATP_Tour_1990), [ATP 1990 results archive](https://www.atptour.com/en/scores/results-archive?year=1990) and [official ATP Finals history](https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf) corroborate original tiers and finalists.
 
-Historical played-tier Category/Series reference coverage is therefore **36 consecutive complete past seasons 1990–2025** with **165 persistent source Series identities** (as of the latest independent licence audit) in the 37-year 1990–2026 bounded source. **2026 remains provisional**, not a final played calendar. This is *not* a source of exact played Edition IDs, tournament draws/results, ranking point matrices, historic source rankings, native FAX rules, Run Apply/Save or import adapter.
+Historical played-tier Category/Series reference coverage is therefore **36 consecutive complete past seasons 1990–2025** with **164 persistent source Series identities** (after the independent 2014–2015 sanction audit) in the 37-year 1990–2026 bounded source. **2026 remains provisional**, not a final played calendar. This is *not* a source of exact played Edition IDs, tournament draws/results, ranking point matrices, historic source rankings, native FAX rules, Run Apply/Save or import adapter.
 
 Five narrow historical source IDs were added: `toronto_indoor_1990`, `rio_carpet_1990`, `san_remo_1990`, `itaparica_1990`, `wembley_1990`. Historical Rio carpet World Series 1990 must not be equated with the modern Rio 500 clay licence launched in 2014; the other four historically played source identities have no invented future Editions or licence assertions.
 

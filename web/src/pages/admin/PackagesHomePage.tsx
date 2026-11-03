@@ -113,6 +113,13 @@ export function PackagesHomePage():JSX.Element {
       : 'ATP Tour 1990–2026: historical Category + Series'}</Link>
       {' · '}<span className="status">{cs?'Reference, nikoliv hratelný kalendář':'Reference only, not a playable calendar'}</span>
     </p>
+    <p><Link to="/admin/packages/atp-tour-calendar-reference">{cs
+      ? 'ATP Tour 1990–2026: historický Calendar (termíny + ISO týdny)'
+      : 'ATP Tour 1990–2026: historical Calendar (exact dates + ISO weeks)'}</Link>
+      {' · '}<span className="status">{cs
+        ? '2025 a 2026 datováno; starší sezóny čekají na zdroje'
+        : '2025 and 2026 dated; older seasons await verified sources'}</span>
+    </p>
     {query.isPending && <p role="status">{cs?'Načítám registry…':'Loading registry…'}</p>}
     {query.isError && <><p className="error" role="alert">{cs ? 'Registr balíčků se nepodařilo načíst: ' : 'Package registry failed to load: '}{formatApiError(query.error)}</p><RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} /></>}
     {query.isSuccess && <RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} />}

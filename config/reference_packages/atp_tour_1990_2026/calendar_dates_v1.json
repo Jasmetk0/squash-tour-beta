@@ -1,0 +1,410 @@
+{
+  "schema_version": "tennis.atp_tour_calendar_dates.v1",
+  "reference_span": {
+    "from": 1990,
+    "to": 2026
+  },
+  "scope": "ATP Tour main singles categories plus ATP-operated Finals; other tennis events intentionally excluded",
+  "legal_boundary": "Reference-only non-playable dates; published schedule does not establish match results or complete legal licence continuity",
+  "year_sources": {
+    "2026": {
+      "status": "provisional_published_schedule",
+      "as_of": "2026-11-03",
+      "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+      "events": [
+        {
+          "series_id": "brisbane",
+          "start_date": "2026-01-05",
+          "end_date": "2026-01-11",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "hong_kong",
+          "start_date": "2026-01-05",
+          "end_date": "2026-01-11",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "adelaide",
+          "start_date": "2026-01-12",
+          "end_date": "2026-01-17",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "auckland",
+          "start_date": "2026-01-12",
+          "end_date": "2026-01-17",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "montpellier",
+          "start_date": "2026-02-02",
+          "end_date": "2026-02-08",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "dallas",
+          "start_date": "2026-02-09",
+          "end_date": "2026-02-15",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "rotterdam",
+          "start_date": "2026-02-09",
+          "end_date": "2026-02-15",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "buenos_aires",
+          "start_date": "2026-02-09",
+          "end_date": "2026-02-15",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "doha",
+          "start_date": "2026-02-16",
+          "end_date": "2026-02-22",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "rio",
+          "start_date": "2026-02-16",
+          "end_date": "2026-02-22",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "delray_beach",
+          "start_date": "2026-02-16",
+          "end_date": "2026-02-22",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "acapulco",
+          "start_date": "2026-02-23",
+          "end_date": "2026-02-28",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "dubai",
+          "start_date": "2026-02-23",
+          "end_date": "2026-03-01",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "santiago",
+          "start_date": "2026-02-23",
+          "end_date": "2026-03-01",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "indian_wells",
+          "start_date": "2026-03-04",
+          "end_date": "2026-03-15",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "miami",
+          "start_date": "2026-03-18",
+          "end_date": "2026-03-29",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "bucharest",
+          "start_date": "2026-03-30",
+          "end_date": "2026-04-05",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "houston",
+          "start_date": "2026-03-30",
+          "end_date": "2026-04-05",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "marrakech",
+          "start_date": "2026-03-30",
+          "end_date": "2026-04-05",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "monte_carlo",
+          "start_date": "2026-04-05",
+          "end_date": "2026-04-12",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "barcelona",
+          "start_date": "2026-04-13",
+          "end_date": "2026-04-19",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "munich",
+          "start_date": "2026-04-13",
+          "end_date": "2026-04-19",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "madrid",
+          "start_date": "2026-04-22",
+          "end_date": "2026-05-03",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "rome",
+          "start_date": "2026-05-06",
+          "end_date": "2026-05-17",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "hamburg",
+          "start_date": "2026-05-17",
+          "end_date": "2026-05-23",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "geneva",
+          "start_date": "2026-05-17",
+          "end_date": "2026-05-23",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "stuttgart",
+          "start_date": "2026-06-08",
+          "end_date": "2026-06-14",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "s_hertogenbosch",
+          "start_date": "2026-06-08",
+          "end_date": "2026-06-14",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "halle",
+          "start_date": "2026-06-15",
+          "end_date": "2026-06-21",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "queens_club",
+          "start_date": "2026-06-15",
+          "end_date": "2026-06-21",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "mallorca",
+          "start_date": "2026-06-21",
+          "end_date": "2026-06-27",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "eastbourne",
+          "start_date": "2026-06-22",
+          "end_date": "2026-06-27",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "bastad",
+          "start_date": "2026-07-13",
+          "end_date": "2026-07-19",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "gstaad",
+          "start_date": "2026-07-13",
+          "end_date": "2026-07-19",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "umag",
+          "start_date": "2026-07-13",
+          "end_date": "2026-07-19",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "kitzbuhel",
+          "start_date": "2026-07-20",
+          "end_date": "2026-07-26",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "estoril",
+          "start_date": "2026-07-20",
+          "end_date": "2026-07-26",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "washington",
+          "start_date": "2026-07-27",
+          "end_date": "2026-08-02",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "los_cabos",
+          "start_date": "2026-07-27",
+          "end_date": "2026-08-02",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "canadian_open",
+          "start_date": "2026-08-02",
+          "end_date": "2026-08-12",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "cincinnati",
+          "start_date": "2026-08-13",
+          "end_date": "2026-08-23",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "winston_salem",
+          "start_date": "2026-08-23",
+          "end_date": "2026-08-29",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "chengdu",
+          "start_date": "2026-09-23",
+          "end_date": "2026-09-29",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "hangzhou",
+          "start_date": "2026-09-23",
+          "end_date": "2026-09-29",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "tokyo",
+          "start_date": "2026-09-30",
+          "end_date": "2026-10-06",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "beijing",
+          "start_date": "2026-09-30",
+          "end_date": "2026-10-06",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "shanghai",
+          "start_date": "2026-10-07",
+          "end_date": "2026-10-18",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "almaty",
+          "start_date": "2026-10-19",
+          "end_date": "2026-10-25",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "brussels",
+          "start_date": "2026-10-19",
+          "end_date": "2026-10-25",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "lyon",
+          "start_date": "2026-10-19",
+          "end_date": "2026-10-25",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "basel",
+          "start_date": "2026-10-26",
+          "end_date": "2026-11-01",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "vienna",
+          "start_date": "2026-10-26",
+          "end_date": "2026-11-01",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "paris_masters",
+          "start_date": "2026-11-02",
+          "end_date": "2026-11-08",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "stockholm",
+          "start_date": "2026-11-08",
+          "end_date": "2026-11-14",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "atp_finals",
+          "start_date": "2026-11-15",
+          "end_date": "2026-11-22",
+          "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+          "source_basis": "official_published_event_dates"
+        },
+        {
+          "series_id": "next_gen_atp_finals",
+          "start_date": "2026-12-09",
+          "end_date": "2026-12-13",
+          "source_url": "https://www.nextgenatpfinals.com/en/news/reggio-calabria-to-host-2026-next-gen-atp-finals",
+          "source_basis": "official_published_event_dates"
+        }
+      ]
+    }
+  }
+}

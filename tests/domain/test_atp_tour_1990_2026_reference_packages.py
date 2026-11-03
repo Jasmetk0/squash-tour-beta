@@ -38,7 +38,7 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert category_doc.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
-    assert len(series["entities"]) == 165
+    assert len(series["entities"]) == 164
     assert categories["provenance"]["reference_span"] == {"from": 1990, "to": 2026}
     assert series["provenance"]["runtime_status"].startswith("data_only_")
     assert all(e["payload"].get("not_squash_rules") for e in series["entities"])
@@ -841,8 +841,7 @@ def test_2014_to_2015_500_tier_promotions_and_valencia_demotion() -> None:
     assert years[2016]["brussels"] == "atp_250"  # Antwerp
     assert old["rio"] == "atp_500"  # Rio venue debuted 2014; licence was Memphis 500
     assert "st_petersburg" not in old
-    assert "duesseldorf_2014" in old
-    assert "duesseldorf_2014" not in new
+    assert old["geneva"] == new["geneva"] == "atp_250"  # Düsseldorf 2014 → Geneva 2015
 
 
 def test_2014_vina_del_mar_to_quito_to_cordoba_licence_history() -> None:
@@ -862,7 +861,7 @@ def test_2014_vina_del_mar_to_quito_to_cordoba_licence_history() -> None:
         2017: "Quito", 2018: "Quito", 2019: "Córdoba"
     }
     assert all(locations[year] == city for year, city in expected_hosts.items())
-    assert by["duesseldorf_2014"]["history_scope"].startswith("2014_verified_")
+    assert "Düsseldorf" in by["geneva"]["identity_review_note"]
     estoril_2014 = next(
         record for record in by["estoril"]["historical_host_change"]
         if record["year"] == 2014
@@ -933,8 +932,8 @@ def test_2013_bogota_and_los_cabos_preserve_original_los_angeles_licence() -> No
     assert hosts[1990] == hosts[2012] == "Los Angeles"
     assert hosts[2013] == hosts[2015] == "Bogotá"
     assert hosts[2016] == "Los Cabos"
-    assert years[2013]["duesseldorf_2014"] == "atp_250"
-    assert years[2014]["duesseldorf_2014"] == "atp_250"
+    assert years[2013]["geneva"] == "atp_250"  # Düsseldorf
+    assert years[2014]["geneva"] == "atp_250"  # Düsseldorf
     assert years[2013]["cordoba"] == "atp_250"  # Viña del Mar
     assert years[2014]["cordoba"] == "atp_250"  # Viña del Mar
     assert years[2015]["cordoba"] == "atp_250"  # Quito
@@ -2536,3 +2535,24 @@ def test_2024_2025_2026_canadian_masters_alternates_hosts_with_year_evidence() -
     seasons = {r["year"]: r for r in build(_source("category"), source)["seasons"]}
     assert all(seasons[year]["series_category_ids"]["canadian_open"]
                == "atp_masters_1000" for year in (2024, 2025, 2026))
+
+
+def test_2014_duesseldorf_licence_is_2015_geneva_not_1990_geneva() -> None:
+    """Two independent Geneva-hosted histories must not be merged."""
+    source = _source("series")
+    entities = {e["source_entity_id"]: e for e in source["entities"]}
+    assert "duesseldorf_2014" not in entities
+    venue = entities["geneva"]["payload"]
+    timeline = {entry["year"]: entry["city"]
+                for entry in venue["historical_host_change"]}
+    assert timeline[2013] == timeline[2014] == "Düsseldorf"
+    assert timeline[2015] == "Geneva"
+    assert timeline[2026] == "Geneva"
+    assert "zeit.de" in " ".join(venue["historical_licence_source_urls"])
+    by_year = {row["year"]: row["series_category_ids"]
+               for row in build(_source("category"), source)["seasons"]}
+    assert by_year[2013]["geneva"] == by_year[2014]["geneva"] == "atp_250"
+    assert by_year[2015]["geneva"] == "atp_250"
+    assert by_year[1990]["cologne_1992_clay"] == "atp_world_series"
+    assert by_year[1991]["cologne_1992_clay"] == "atp_world_series"
+    assert "geneva" not in by_year[1990]

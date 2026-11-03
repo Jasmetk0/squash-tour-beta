@@ -179,7 +179,7 @@ ranking point is inferred.
 The initial licence-continuity queue used *any distinct historical city string*
 as an unresolved licence transfer. That was overbroad: legal ownership, host
 location, temporarily moved event, surface label and metropolitan-city alias
-are **different facts**. The source now contains 13 explicitly scoped
+are **different facts**. The source now contains 19 explicitly scoped
 `historical_host_context_sources` records. They are validated HTTPS citations
 with one of seven nonlegal `kind` classifications. This distinct field is
 deliberately **not** merged into `historical_licence_source_urls`.
@@ -199,11 +199,17 @@ deliberately **not** merged into `historical_licence_source_urls`.
 | Eastbourne | Nottingham / Eastbourne venue shifts | [ATP history of both venues](https://www.atptour.com/en/tournaments/-/741/overview) |
 | Estoril | Historical context, **not legal continuity** | [ATP Estoril 2015 new tournament overview](https://www.atptour.com/en/tournaments/estoril/7290/overview) |
 | ATP Finals | Rotating host venues | [ATP Finals city history](https://www.atptour.com/en/news/atp-50-locations-longform) |
+| Budapest → Belgrade | ATP-approved event relocation from 2021 | [ATP 2021 calendar release](https://www.atptour.com/en/news/atp-2021-calendar-updates-new-events) |
+| Nice → Lyon (`lyon_old`) | Calendar replacement from 2017; older indoor Lyon event is a separate Series | [L'Équipe contemporary announcement](https://www.lequipe.fr/Tennis/Actualites/Un-nouveau-tournoi-atp-a-lyon-la-semaine-avant-roland-garros/748030) |
+| Costa do Sauípe → São Paulo | 2012 site change | [Brasil Open tournament-organiser history](https://brasilopen.com.br/historia/) |
+| Saint Petersburg / St. Petersburg | Same-city English spelling variants | [ATP St. Petersburg overview](https://www.atptour.com/en/tournaments/st-petersburg/568/overview) |
+| Sopot → Warsaw | Official ATP event-index linkage in 2008, not ownership proof | [ATP Sopot tournament ID, Warsaw host](https://www.atptour.com/en/tournaments/sopot/475/overview) |
+| Bogotá / Bogota | Same-city accent variation | [ATP 2001 results index](https://www.atptour.com/en/scores/results-archive?year=2001) |
 
 **Current coverage accounting:** among 46 source Series with more than one
 recorded city string, 31 still lack a separately labelled *licence evidence*
-URL (unchanged), but **13 of those** now have concrete, nonlegal, typed host
-context, leaving **18 without either kind of explicit contextual source**.
+URL (unchanged), but **19 of those** now have concrete, nonlegal, typed host
+context, leaving **12 without either kind of explicit contextual source**.
 Some of the 18 include mere spelling differences, but they are not
 automatically upgraded to certified transfers. Not all cited context pages
 verify every individual historical year or legal ownership: the 1997 Miami

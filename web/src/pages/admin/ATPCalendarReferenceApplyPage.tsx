@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useContext, useEffect, useState } from 'react'
 import { Link, UNSAFE_DataRouterContext } from 'react-router-dom'
 import {
-  confirmATPCalendarReference, getATPCalendarReferenceCatalog, getBranchWorkingDraft,
+  confirmATPCalendarReference, getATPCalendarReferenceCatalog, getATPCalendarReferenceYear, getBranchWorkingDraft,
   getRunPackageState, listRunBranches, listRunContainers, previewATPCalendarReference,
   saveRunPackageWorkingDraft
 } from '../../api/client'
@@ -31,6 +31,7 @@ export function ATPCalendarReferenceApplyPage():JSX.Element {
   const {language}=useLanguage(),cs=language==='cs'
   const dataRouter=useContext(UNSAFE_DataRouterContext)
   const qc=useQueryClient()
+  const [sourceYear,setSourceYear]=useState(2026)
   const [runId,setRunId]=useState('')
   const [branchId,setBranchId]=useState('')
   const [approved,setApproved]=useState(false)
@@ -40,6 +41,14 @@ export function ATPCalendarReferenceApplyPage():JSX.Element {
   const [notice,setNotice]=useState('')
   const source=useQuery({
     queryKey:['atp-calendar-reference-catalog'],queryFn:getATPCalendarReferenceCatalog,retry:false
+  })
+  const calendarFingerprint=source.data?.children.find(
+    child=>child.package_type==='Calendar'
+  )?.source_fingerprint??''
+  const yearView=useQuery({
+    queryKey:['atp-calendar-year',sourceYear,calendarFingerprint],
+    queryFn:()=>getATPCalendarReferenceYear(sourceYear,calendarFingerprint),
+    enabled:source.isSuccess&&Boolean(calendarFingerprint),retry:false
   })
   const runs=useQuery({
     queryKey:['run-containers'],queryFn:listRunContainers,retry:false
@@ -245,6 +254,57 @@ export function ATPCalendarReferenceApplyPage():JSX.Element {
             {child.package_id}: <code>{child.source_fingerprint}</code></p>)}
         </details>
       </div>}
+      <section className="package-apply-step">
+        <h3>{cs?'Historický přehled datumů a ISO týdnů':'Historical exact dates and ISO weeks'}</h3>
+        <label>{cs?'Ročník':'ATP season'}
+          <select aria-label="ATP Calendar Year" value={sourceYear}
+            onChange={e=>setSourceYear(Number(e.target.value))}>
+            {Array.from({length:37},(_,i)=>1990+i).reverse().map(y=>
+              <option key={y} value={y}>{y}</option>)}
+          </select>
+        </label>
+        {yearView.isPending&&<p role="status">{cs?'Načítám termíny…':'Loading dated events…'}</p>}
+        {yearView.isError&&<p role="alert" className="error">{formatApiError(yearView.error)}
+          <button type="button" onClick={()=>{void yearView.refetch()}}>
+            {cs?'Znovu načíst':'Retry'}
+          </button></p>}
+        {yearView.data&&<>
+          <p className="status">
+            {cs?'Doložené termíny':'Sourced dates'}: {yearView.data.coverage.dated_series_count}
+            {' / '}{yearView.data.coverage.roster_series_count}
+            {' · '}{yearView.data.coverage.date_coverage_state}
+            {' · '}{cs?'Pouze reference':'Reference only'}
+          </p>
+          {yearView.data.events.length>0?
+            <div className="table-responsive">
+              <table><thead><tr>
+                <th>{cs?'Turnajová série':'Series'}</th>
+                <th>{cs?'Od':'From'}</th><th>{cs?'Do':'To'}</th>
+                <th>{cs?'ISO týden začátku':'Start ISO week'}</th>
+                <th>{cs?'ISO týden konce':'End ISO week'}</th>
+                <th>{cs?'Kategorie':'Category'}</th>
+                <th>{cs?'Zdroj':'Source'}</th>
+              </tr></thead><tbody>{yearView.data.events.map(item=>
+                <tr key={item.series_id}>
+                  <td>{item.series_id}</td>
+                  <td>{item.start_date}</td><td>{item.end_date}</td>
+                  <td>{item.start_year_week.iso_year}/W{String(item.start_year_week.iso_week).padStart(2,'0')}</td>
+                  <td>{item.end_year_week.iso_year}/W{String(item.end_year_week.iso_week).padStart(2,'0')}</td>
+                  <td>{item.category_id}</td>
+                  <td><a href={item.source_url} target="_blank" rel="noopener noreferrer">
+                    {cs?'ATP zdroj':'ATP source'}</a></td>
+                </tr>)}</tbody></table>
+            </div>:
+            <p role="status">{cs
+              ? 'Pro tento rok nejsou jednotlivá data turnajů ještě ověřená. Neznamená to, že se turnaje nekonaly.'
+              : 'No individual event dates have been verified for this year. It does not imply that events were not held.'}</p>}
+          {yearView.data.coverage.undated_series_ids.length>0&&
+            <details><summary>{cs?'Série bez doloženého data':'Series lacking exact-date evidence'}
+              {' ('}{yearView.data.coverage.undated_series_ids.length}{')'}</summary>
+              <p>{yearView.data.coverage.undated_series_ids.join(', ')}</p>
+            </details>}
+        </>}
+      </section>
       <section className="package-apply-step">
         <h3>1. {cs?'Vybrat Run a Branch':'Choose Run and Branch'}</h3>
         {runs.isError&&<p role="alert" className="error">{formatApiError(runs.error)}</p>}

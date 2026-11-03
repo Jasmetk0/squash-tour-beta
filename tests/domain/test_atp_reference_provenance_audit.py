@@ -33,17 +33,17 @@ def test_source_provenance_audit_full_37_year_inventory_is_reproducible() -> Non
     assert report["schema_version"] == "tennis.atp_source_provenance_audit.v1"
     counts = report["counts"]
     assert counts["category_identities"] == 11
-    assert counts["series_identities"] == 165
+    assert counts["series_identities"] == 164
     assert counts["historical_season_rows"] == 37
     assert counts["source_interval_records"] == 1983
     assert counts["year_effective_series_memberships"] == 2431
-    assert counts["explicit_historical_host_year_records"] == 1451
-    assert counts["memberships_without_explicit_host_year_record"] == 980
-    assert len(report["series_evidence"]) == 165
+    assert counts["explicit_historical_host_year_records"] == 1455
+    assert counts["memberships_without_explicit_host_year_record"] == 976
+    assert len(report["series_evidence"]) == 164
     assert [y["year"] for y in report["yearly_coverage"]] == list(range(1990, 2027))
     assert sum(y["source_membership_count"] for y in report["yearly_coverage"]) == 2431
     assert sum(y["without_explicit_host_year_evidence"]
-               for y in report["yearly_coverage"]) == 980
+               for y in report["yearly_coverage"]) == 976
     assert counts["source_period_evidence_kinds"]["atp_year_results_index"] >= 1700
 
 
@@ -120,3 +120,19 @@ def test_memphis_500_and_san_jose_250_licences_do_not_merge_at_2014_boundary() -
     assert by_id["rio"]["payload"]["historical_licence_source_urls"]
     assert by_id["dallas"]["payload"]["historical_licence_source_urls"]
     assert audit(categories, series, seasons)["counts"]["year_effective_series_memberships"] == 2431
+
+
+def test_duesseldorf_to_geneva_audited_licence_is_one_source_identity() -> None:
+    categories, series, seasons = _inputs()
+    by_id = {e["source_entity_id"]: e["payload"] for e in series["entities"]}
+    assert "duesseldorf_2014" not in by_id
+    hosts = {host["year"]: host["city"]
+             for host in by_id["geneva"]["historical_host_change"]}
+    assert hosts[2013] == hosts[2014] == "Düsseldorf"
+    assert hosts[2015] == hosts[2026] == "Geneva"
+    for year in (2013, 2014, 2015, 2026):
+        annual = next(row for row in seasons["seasons"] if row["year"] == year)
+        assert annual["series_category_ids"]["geneva"] == "atp_250"
+    assert by_id["geneva"]["historical_licence_source_urls"]
+    assert by_id["cologne_1992_clay"]["historical_host_change"][0]["city"] == "Geneva"
+    assert audit(categories, series, seasons)["counts"]["series_identities"] == 164

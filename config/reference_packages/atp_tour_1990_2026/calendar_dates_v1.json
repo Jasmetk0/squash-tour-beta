@@ -7,6 +7,454 @@
   "schema_version": "tennis.atp_tour_calendar_dates.v1",
   "scope": "ATP Tour main singles categories plus ATP-operated Finals; other tennis events intentionally excluded",
   "year_sources": {
+    "2019": {
+      "as_of": "2026-11-03",
+      "events": [
+        {
+          "end_date": "2019-03-02",
+          "series_id": "acapulco",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-02-25"
+        },
+        {
+          "end_date": "2019-06-29",
+          "series_id": "antalya_2019",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-06-23"
+        },
+        {
+          "end_date": "2019-07-28",
+          "series_id": "atlanta",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-07-22"
+        },
+        {
+          "end_date": "2019-11-17",
+          "series_id": "atp_finals",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-11-10"
+        },
+        {
+          "end_date": "2019-01-12",
+          "series_id": "auckland",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-01-07"
+        },
+        {
+          "end_date": "2019-04-28",
+          "series_id": "barcelona",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-04-22"
+        },
+        {
+          "end_date": "2019-10-27",
+          "series_id": "basel",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-10-21"
+        },
+        {
+          "end_date": "2019-07-21",
+          "series_id": "bastad",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-07-15"
+        },
+        {
+          "end_date": "2019-10-06",
+          "series_id": "beijing",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-09-30"
+        },
+        {
+          "end_date": "2019-04-28",
+          "series_id": "belgrade_clay_2021",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-04-22"
+        },
+        {
+          "end_date": "2019-01-06",
+          "series_id": "brisbane",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2018-12-31"
+        },
+        {
+          "end_date": "2019-10-20",
+          "series_id": "brussels",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-10-14"
+        },
+        {
+          "end_date": "2019-02-17",
+          "series_id": "buenos_aires",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-02-11"
+        },
+        {
+          "end_date": "2019-08-11",
+          "series_id": "canadian_open",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-08-05"
+        },
+        {
+          "end_date": "2019-09-29",
+          "series_id": "chengdu",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-09-23"
+        },
+        {
+          "end_date": "2019-08-18",
+          "series_id": "cincinnati",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-08-11"
+        },
+        {
+          "end_date": "2019-02-10",
+          "series_id": "cordoba",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-02-04"
+        },
+        {
+          "end_date": "2019-02-17",
+          "series_id": "dallas",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-02-11"
+        },
+        {
+          "end_date": "2019-02-24",
+          "series_id": "delray_beach",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-02-18"
+        },
+        {
+          "end_date": "2019-01-05",
+          "series_id": "doha",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2018-12-31"
+        },
+        {
+          "end_date": "2019-03-02",
+          "series_id": "dubai",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-02-25"
+        },
+        {
+          "end_date": "2019-06-29",
+          "series_id": "eastbourne",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-06-24"
+        },
+        {
+          "end_date": "2019-05-05",
+          "series_id": "estoril",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-04-29"
+        },
+        {
+          "end_date": "2019-05-25",
+          "series_id": "geneva",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-05-19"
+        },
+        {
+          "end_date": "2019-07-28",
+          "series_id": "gstaad",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-07-22"
+        },
+        {
+          "end_date": "2019-06-23",
+          "series_id": "halle",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-06-17"
+        },
+        {
+          "end_date": "2019-07-28",
+          "series_id": "hamburg",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-07-22"
+        },
+        {
+          "end_date": "2019-09-29",
+          "series_id": "hangzhou",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-09-23"
+        },
+        {
+          "end_date": "2019-01-05",
+          "series_id": "hong_kong",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2018-12-31"
+        },
+        {
+          "end_date": "2019-04-14",
+          "series_id": "houston",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-04-08"
+        },
+        {
+          "end_date": "2019-03-17",
+          "series_id": "indian_wells",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-03-07"
+        },
+        {
+          "end_date": "2019-08-03",
+          "series_id": "kitzbuhel",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-07-29"
+        },
+        {
+          "end_date": "2019-08-03",
+          "series_id": "los_cabos",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-07-29"
+        },
+        {
+          "end_date": "2019-02-24",
+          "series_id": "lyon",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-02-18"
+        },
+        {
+          "end_date": "2019-05-25",
+          "series_id": "lyon_old",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-05-19"
+        },
+        {
+          "end_date": "2019-05-12",
+          "series_id": "madrid",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-05-05"
+        },
+        {
+          "end_date": "2019-04-14",
+          "series_id": "marrakech",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-04-08"
+        },
+        {
+          "end_date": "2019-09-22",
+          "series_id": "metz",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-09-15"
+        },
+        {
+          "end_date": "2019-03-31",
+          "series_id": "miami",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-03-20"
+        },
+        {
+          "end_date": "2019-04-21",
+          "series_id": "monte_carlo",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-04-14"
+        },
+        {
+          "end_date": "2019-02-10",
+          "series_id": "montpellier",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-02-04"
+        },
+        {
+          "end_date": "2019-10-20",
+          "series_id": "moscow",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-10-14"
+        },
+        {
+          "end_date": "2019-05-05",
+          "series_id": "munich",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-04-29"
+        },
+        {
+          "end_date": "2019-07-21",
+          "series_id": "newport",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-07-14"
+        },
+        {
+          "end_date": "2019-11-09",
+          "series_id": "next_gen_atp_finals",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-11-05"
+        },
+        {
+          "end_date": "2019-11-03",
+          "series_id": "paris_masters",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-10-28"
+        },
+        {
+          "end_date": "2019-06-23",
+          "series_id": "queens_club",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-06-17"
+        },
+        {
+          "end_date": "2019-02-24",
+          "series_id": "rio",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-02-18"
+        },
+        {
+          "end_date": "2019-05-19",
+          "series_id": "rome",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-05-12"
+        },
+        {
+          "end_date": "2019-02-17",
+          "series_id": "rotterdam",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-02-11"
+        },
+        {
+          "end_date": "2019-06-16",
+          "series_id": "s_hertogenbosch",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-06-10"
+        },
+        {
+          "end_date": "2019-03-03",
+          "series_id": "sao_paulo",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-02-25"
+        },
+        {
+          "end_date": "2019-10-13",
+          "series_id": "shanghai",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-10-06"
+        },
+        {
+          "end_date": "2019-02-10",
+          "series_id": "sofia",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-02-04"
+        },
+        {
+          "end_date": "2019-09-22",
+          "series_id": "st_petersburg",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-09-15"
+        },
+        {
+          "end_date": "2019-10-20",
+          "series_id": "stockholm",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-10-14"
+        },
+        {
+          "end_date": "2019-06-16",
+          "series_id": "stuttgart",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-06-10"
+        },
+        {
+          "end_date": "2019-01-12",
+          "series_id": "sydney_2019",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-01-06"
+        },
+        {
+          "end_date": "2019-10-06",
+          "series_id": "tokyo",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-09-30"
+        },
+        {
+          "end_date": "2019-07-21",
+          "series_id": "umag",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-07-15"
+        },
+        {
+          "end_date": "2019-10-27",
+          "series_id": "vienna",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-10-21"
+        },
+        {
+          "end_date": "2019-08-04",
+          "series_id": "washington",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-07-27"
+        },
+        {
+          "end_date": "2019-08-24",
+          "series_id": "winston_salem",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "start_date": "2019-08-18"
+        }
+      ],
+      "source_url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+      "status": "verified_results_archive"
+    },
     "2020": {
       "as_of": "2026-11-03",
       "events": [

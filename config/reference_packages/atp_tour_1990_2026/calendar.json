@@ -6570,13 +6570,17 @@
       "payload": {
         "atp_season_year": 2026,
         "category_id": "atp_250",
-        "duration_days_inclusive": 7,
+        "duration_days_inclusive": 8,
         "end_date": "2026-01-11",
         "end_year_week": {
           "iso_week": 2,
           "iso_year": 2026
         },
         "iso_weeks_occupied": [
+          {
+            "iso_week": 1,
+            "iso_year": 2026
+          },
           {
             "iso_week": 2,
             "iso_year": 2026
@@ -6588,11 +6592,11 @@
         "series_id": "brisbane",
         "source_as_of": "2026-11-03",
         "source_basis": "official_published_event_dates",
-        "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
         "start_calendar_year": 2026,
-        "start_date": "2026-01-05",
+        "start_date": "2026-01-04",
         "start_year_week": {
-          "iso_week": 2,
+          "iso_week": 1,
           "iso_year": 2026
         },
         "year_source_state": "provisional_published_schedule"
@@ -6774,8 +6778,8 @@
       "payload": {
         "atp_season_year": 2026,
         "category_id": "atp_masters_1000",
-        "duration_days_inclusive": 11,
-        "end_date": "2026-08-12",
+        "duration_days_inclusive": 12,
+        "end_date": "2026-08-13",
         "end_year_week": {
           "iso_week": 33,
           "iso_year": 2026
@@ -6800,7 +6804,7 @@
         "series_id": "canadian_open",
         "source_as_of": "2026-11-03",
         "source_basis": "official_published_event_dates",
-        "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
         "start_calendar_year": 2026,
         "start_date": "2026-08-02",
         "start_year_week": {
@@ -7045,8 +7049,8 @@
       "payload": {
         "atp_season_year": 2026,
         "category_id": "atp_500",
-        "duration_days_inclusive": 7,
-        "end_date": "2026-02-22",
+        "duration_days_inclusive": 6,
+        "end_date": "2026-02-21",
         "end_year_week": {
           "iso_week": 8,
           "iso_year": 2026
@@ -7063,7 +7067,7 @@
         "series_id": "doha",
         "source_as_of": "2026-11-03",
         "source_basis": "official_published_event_dates",
-        "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
         "start_calendar_year": 2026,
         "start_date": "2026-02-16",
         "start_year_week": {
@@ -7096,8 +7100,8 @@
       "payload": {
         "atp_season_year": 2026,
         "category_id": "atp_500",
-        "duration_days_inclusive": 7,
-        "end_date": "2026-03-01",
+        "duration_days_inclusive": 6,
+        "end_date": "2026-02-28",
         "end_year_week": {
           "iso_week": 9,
           "iso_year": 2026
@@ -7114,7 +7118,7 @@
         "series_id": "dubai",
         "source_as_of": "2026-11-03",
         "source_basis": "official_published_event_dates",
-        "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
         "start_calendar_year": 2026,
         "start_date": "2026-02-23",
         "start_year_week": {
@@ -7673,8 +7677,8 @@
       "payload": {
         "atp_season_year": 2026,
         "category_id": "atp_250",
-        "duration_days_inclusive": 7,
-        "end_date": "2026-07-26",
+        "duration_days_inclusive": 6,
+        "end_date": "2026-07-25",
         "end_year_week": {
           "iso_week": 30,
           "iso_year": 2026
@@ -7691,7 +7695,7 @@
         "series_id": "kitzbuhel",
         "source_as_of": "2026-11-03",
         "source_basis": "official_published_event_dates",
-        "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
         "start_calendar_year": 2026,
         "start_date": "2026-07-20",
         "start_year_week": {
@@ -7724,8 +7728,8 @@
       "payload": {
         "atp_season_year": 2026,
         "category_id": "atp_250",
-        "duration_days_inclusive": 7,
-        "end_date": "2026-08-02",
+        "duration_days_inclusive": 6,
+        "end_date": "2026-08-01",
         "end_year_week": {
           "iso_week": 31,
           "iso_year": 2026
@@ -7742,7 +7746,7 @@
         "series_id": "los_cabos",
         "source_as_of": "2026-11-03",
         "source_basis": "official_published_event_dates",
-        "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
         "start_calendar_year": 2026,
         "start_date": "2026-07-27",
         "start_year_week": {
@@ -8827,8 +8831,8 @@
       "payload": {
         "atp_season_year": 2026,
         "category_id": "atp_250",
-        "duration_days_inclusive": 7,
-        "end_date": "2026-07-19",
+        "duration_days_inclusive": 6,
+        "end_date": "2026-07-18",
         "end_year_week": {
           "iso_week": 29,
           "iso_year": 2026
@@ -8845,7 +8849,7 @@
         "series_id": "umag",
         "source_as_of": "2026-11-03",
         "source_basis": "official_published_event_dates",
-        "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2026",
         "start_calendar_year": 2026,
         "start_date": "2026-07-13",
         "start_year_week": {

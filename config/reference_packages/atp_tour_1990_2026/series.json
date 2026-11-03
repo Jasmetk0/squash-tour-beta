@@ -11357,6 +11357,20 @@
         "not_squash_rules": true,
         "history_periods": [
           {
+            "from": 2013,
+            "to": 2013,
+            "category_id": "atp_250",
+            "source_url": "https://nos.nl/artikel/457783-atp-tenniskalender-2013",
+            "notes": "Detailed contemporary NOS ATP 2013 schedule confirms event city/date/tier; ATP 2013 archive listed for results cross-reference"
+          },
+          {
+            "from": 2014,
+            "to": 2014,
+            "category_id": "atp_250",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+            "notes": "ATP official 2014 Results Archive confirms played Tour tournament; historical host/category are year-effective, not extrapolated to adjacent years"
+          },
+          {
             "from": 2015,
             "to": 2015,
             "category_id": "atp_250",
@@ -11434,7 +11448,39 @@
             "notes": "current-season reference only; earlier identity and classifications intentionally not inferred"
           }
         ],
-        "history_scope": "evidence_bound_yearly_category_not_complete_tournament_edition_census"
+        "history_scope": "2013–2014 Düsseldorf ATP 250 → Geneva 2015 onward; original annual played-tier membership sources, not play-ready Editions.",
+        "historical_host_change": [
+          {
+            "year": 2013,
+            "city": "Düsseldorf",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013"
+          },
+          {
+            "year": 2014,
+            "city": "Düsseldorf",
+            "country_code": "DEU",
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2014"
+          },
+          {
+            "year": 2015,
+            "city": "Geneva",
+            "country_code": "CHE",
+            "source_url": "https://www.gonetgenevaopen.com/en/tournament/about"
+          },
+          {
+            "year": 2026,
+            "city": "Geneva",
+            "country_code": "CHE",
+            "source_url": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/"
+          }
+        ],
+        "historical_licence_source_urls": [
+          "https://www.welt.de/print/welt_kompakt/duesseldorf/article134566672/Aus-fuer-ATP-Turnier-besiegelt.html",
+          "https://www.zeit.de/news/2014-11/19/tennis-kuenftig-in-genf-aus-fuer-atp-turnier-im-rochusclub-perfekt-19193604",
+          "https://gonetgenevaopen.ch/le-tournoi/"
+        ],
+        "identity_review_note": "The licensed 2013–2014 Düsseldorf ATP 250 was transferred by its existing owners and confirmed by ATP to Geneva from 2015; this is the same tournament sanction. The separate Geneva clay World Series of 1990–1991 that moved to Cologne in 1992 remains another licence (cologne_1992_clay)."
       },
       "references": [
         {
@@ -22546,53 +22592,6 @@
           }
         ],
         "identity_review_note": "Verified 2018 ATP 250 event. No legally proven continuing post-2018 Series licence is inferred."
-      },
-      "references": [
-        {
-          "source_package_id": "atp_tour_1990_2026_category",
-          "source_entity_id": "atp_250",
-          "expected_entity_kind": "tennis.category.reference.v1",
-          "minimum_schema_version": 1
-        }
-      ],
-      "valid": true
-    },
-    {
-      "source_entity_id": "duesseldorf_2014",
-      "entity_kind": "tennis.series.reference.v1",
-      "entity_schema_version": 1,
-      "scope": "tennis.atp_tour.series.reference.1990_2026",
-      "payload": {
-        "name": "Düsseldorf Open 2014",
-        "reference_year": null,
-        "category_id_2026": null,
-        "host_city_2026": null,
-        "host_country_code_2026": null,
-        "surface_2026": null,
-        "historical_host_city": "Düsseldorf",
-        "historical_country_code": "DEU",
-        "historical_surface": "clay",
-        "sponsor_names_can_change": true,
-        "not_calendar_editions": true,
-        "not_squash_rules": true,
-        "history_scope": "2014_verified_atp250_only_no_legal_licence_successor_proven",
-        "history_periods": [
-          {
-            "from": 2013,
-            "to": 2013,
-            "category_id": "atp_250",
-            "source_url": "https://nos.nl/artikel/457783-atp-tenniskalender-2013",
-            "notes": "Detailed contemporary NOS ATP 2013 schedule confirms event city/date/tier; ATP 2013 archive listed for results cross-reference"
-          },
-          {
-            "from": 2014,
-            "to": 2014,
-            "category_id": "atp_250",
-            "source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
-            "notes": "ATP official 2014 Results Archive confirms played Tour tournament; historical host/category are year-effective, not extrapolated to adjacent years"
-          }
-        ],
-        "identity_review_note": "Dusseldorf ATP250 was last played 2014; Geneva 2015 adopted the available ATP calendar slot. Same legal licence identity not yet conclusively audited; do not merge automatically."
       },
       "references": [
         {

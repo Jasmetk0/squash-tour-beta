@@ -4,9 +4,11 @@
 > **164** Series identities and 37 generated annual reference rows.
 > The **36 played main ATP Tour tier rosters 1990–2025** have source-backed
 > original year-effective categories. **2026 is
-> provisional** until final results. This is source-only and is **not**
-> a production Package Catalog, import adapter, playable Edition calendar,
-> historical ranking system or Saved Run Apply/Save integration.
+> provisional** until final results. The server now provides an
+> **explicit, opaque Run Package reference Setup** for Preview/Confirm/Save,
+> with two Category/Series children and a small API source manifest. This is
+> **not** a playable Edition calendar, historical ranking system, sporting
+> adapter, or global user-facing Package Catalog UI.
 >
 > Sections below preserve dated incremental research checkpoints. Statements
 > about older incomplete year ranges (e.g. `1990–2007`) describe the state
@@ -18,6 +20,53 @@
 since 1 January 1990**, not the entire history of men's tennis. The Category
 and Series Package are optional **source-only historical references** for
 Squash Engine's data-driven future, not tennis gameplay.
+
+## 2026-11-03 — server-controlled Run reference Setup integration
+
+The source adapter at `src/beta_engine/application/atp_reference_package_adapter.py`
+loads only the two fixed repository-maintained JSON Package documents. The
+`atp_tour_1990_2026_reference_setup` canonical Setup freezes Category and
+Series together. It enforces document identity/type, technical schema, strictly
+tennis-namespaced entity kind/scope, original 1990–2026 reference span,
+`not_squash_rules`, and exact Series-to-Category source references.
+There is no automatic sporting semantic translation.
+
+For an **existing writable Run/Branch** (URL-encode both IDs), the endpoints are:
+
+- `GET /admin/runs/{run}/branches/{branch}/packages/source-atp-reference/catalog`
+  — source manifest and deterministic hashes, with no Run mutation
+- `POST /admin/runs/{run}/branches/{branch}/packages/source-atp-reference/preview`
+  with `{}` — complete Setup preview; no Run mutation
+- `POST /admin/runs/{run}/branches/{branch}/packages/source-atp-reference/confirm`
+  — CAS-protected, atomic installation of **both** source Packages into the
+  Working Draft through the existing generic Run Package service
+
+Confirm request fields mirror ordinary source Package confirm:
+`command_id`, `expected_head_revision_id`,
+`expected_draft_version`, `expected_state_fingerprint`,
+`expected_preview_fingerprint` and optionally `conflict_resolutions`.
+All expected values must be copied from the immediately reviewed Preview.
+Unlike generic partial Setup commands, the ATP server endpoint **rejects**
+`selected_entities`: no partial/orphaned historical Series installation.
+Conflicting local overrides require explicit source/Run resolution as in the
+native Package contract. No implicit Save: use the existing Working Draft
+Save endpoint, then normal immutable Saved Revision/Branch machinery.
+
+**What this integration does:** store 11 Category and 164 Series entities with
+stable source identity, audited references, source fingerprints and isolated
+Run-owned snapshots; safely preview and explicitly apply/Save those
+historical references. It does **not** create historical tournament Editions,
+match results, points matrices, a Calendar, or change the squash simulation.
+This reference Setup is deliberately not offered as a fully playable package.
+The Admin's global source Package Catalog UI remains World-only and requires
+a separate user-facing discovery/application workflow if desired.
+
+**Future immutable versioning:** the initial reference documents use
+`source_version: 1`. After a source version is merged/applied, changing its
+content under the same version triggers the core conflict detection;
+future historical corrections must be published with a higher source version
+and valid parent source fingerprint. Historical evidence remains subject to
+the independent licence-provenance audit.
 
 ## 2026-11-03 — Düsseldorf 2014 → Geneva 2015 ATP 250 licence continuity
 

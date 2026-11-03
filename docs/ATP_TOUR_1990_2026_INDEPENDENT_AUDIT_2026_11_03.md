@@ -218,6 +218,18 @@ because the ATP documents a later 2019 Miami Gardens move. The Estoril
 2014/2015 organiser boundary must not be automatically treated as an
 identical ATP membership.
 
+**2001 Brasil Open host correction:** the recorded `sao_paulo` Series
+labelled its first year `Salvador`, a regional/announcement shorthand.
+The actual ATP Tour matches took place at the **Costa do Sauípe** resort;
+the [original organiser's tournament history](https://brasilopen.com.br/historia/),
+[contemporary September 2001 match coverage](https://www1.folha.uol.com.br/folha/esporte/ult92u25406.shtml)
+and [July 2001 announcement](https://www.terra.com.br/esportes/2001/07/09/103.htm)
+distinguish the precise venue from Salvador city branding. The 2001
+historical host entry now reads `Costa do Sauípe` and cites the organiser.
+This is a host-evidence correction, **not** a new event ID, category or
+year-effective membership. A PR-critical regression pins 2001–2012 context.
+
+
 `audit_atp_reference_provenance.py` now publishes both separately counted
 coverage types and the **per-Series machine-readable unresolved queue**;
 its complete year-effective values and deterministic 1990–2026 snapshots

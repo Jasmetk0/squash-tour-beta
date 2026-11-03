@@ -18,6 +18,7 @@ const ctx=vi.hoisted(()=>({
 }))
 const api=vi.hoisted(()=>({
   getATPCalendarReferenceCatalog:vi.fn(),
+  getATPCalendarReferenceYear:vi.fn(),
   listRunContainers:vi.fn(),
   listRunBranches:vi.fn(),
   getBranchWorkingDraft:vi.fn(),
@@ -73,6 +74,30 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
     Object.assign(ctx,{draftVersion:0,stateFingerprint:null,savedHead:'r0',
       staged:false,sourceFingerprint:hash('a'),previewHead:'r0',previewConflicts:[]})
     api.getATPCalendarReferenceCatalog.mockImplementation(async()=>source())
+    api.getATPCalendarReferenceYear.mockImplementation(async(year:number)=>
+      year===2026?{
+        year,package_id:'atp_tour_1990_2026_calendar',
+        source_fingerprint:hash('d'),read_only:true,run_mutated:false,
+        coverage:{atp_season_year:year,roster_series_count:56,dated_series_count:1,
+          undated_series_ids:[],known_not_held_series_ids:[],
+          date_coverage_state:'provisional_complete_named_schedule',
+          year_source_status:'provisional_published_schedule',year_source_url:null},
+        events:[{series_id:'brisbane',category_id:'atp_250',
+          start_date:'2026-01-04',end_date:'2026-01-11',
+          start_year_week:{iso_year:2026,iso_week:1},
+          end_year_week:{iso_year:2026,iso_week:2},
+          iso_weeks_occupied:[{iso_year:2026,iso_week:1},{iso_year:2026,iso_week:2}],
+          source_url:'https://www.atptour.com/en/scores/results-archive?year=2026',
+          year_source_state:'provisional_published_schedule'}]
+      }:{
+        year,package_id:'atp_tour_1990_2026_calendar',
+        source_fingerprint:hash('d'),read_only:true,run_mutated:false,
+        coverage:{atp_season_year:year,roster_series_count:75,dated_series_count:0,
+          undated_series_ids:['indian_wells'],known_not_held_series_ids:[],
+          date_coverage_state:'undated',year_source_status:'not_dated',year_source_url:null},
+        events:[]
+      })
+
     api.listRunContainers.mockResolvedValue({run_containers:[{
       run_id:'run/1',display_name:'Custom Run',storage_kind:'custom_local',
       read_only:false,status:'working'
@@ -116,6 +141,17 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
     await userEvent.selectOptions(screen.getByRole('combobox',{name:'Target Branch'}),'branch/1')
     await screen.findByText(/Přidávané:/)
   }
+
+  it('renders sourced ISO year/week dates and explicit undated-year warnings',async()=>{
+    mount()
+    await screen.findByText('2026/W01')
+    expect(screen.getByText('2026/W02')).toBeInTheDocument()
+    expect(screen.getByText('2026-01-04')).toBeInTheDocument()
+    await userEvent.selectOptions(
+      screen.getByRole('combobox',{name:'ATP Calendar Year'}),'1990')
+    expect(await screen.findByText(/Pro tento rok nejsou jednotlivá data/)).toBeInTheDocument()
+    expect(api.confirmATPCalendarReference).not.toHaveBeenCalled()
+  })
 
   it('shows a non-playable source and keeps all writes behind confirm and Save',async()=>{
     mount()

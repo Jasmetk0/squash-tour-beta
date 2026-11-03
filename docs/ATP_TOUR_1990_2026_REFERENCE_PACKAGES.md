@@ -19,6 +19,12 @@ since 1 January 1990**, not the entire history of men's tennis. The Category
 and Series Package are optional **source-only historical references** for
 Squash Engine's data-driven future, not tennis gameplay.
 
+## 2026-11-03 — independent reference review: 2026 Next Gen location
+
+The category roster was checked against the published [ATP 2026 calendar](https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/). That 2025 publication still had the Next Gen Finals host **TBC**, while the historical reference source stored `null` for 2026 city/country. The competition's [9 September 2026 official announcement](https://www.nextgenatpfinals.com/en/news/reggio-calabria-to-host-2026-next-gen-atp-finals) resolves the host to **Reggio Calabria, Italy**, with the event scheduled for **9–13 December 2026**. It is the *same* continuing Next Gen Series, not a new ATP 250/500/1000 tournament.
+
+The `next_gen_atp_finals` 2026 host is now **Reggio Calabria / ITA** with announcement date and official source. The previous years, 2020 cancellation and the 2026 provisional roster/derived snapshots do not change. The main 2026 Tour roster remains provisional because the published ordinary ATP 250 schedule included a **TBD** slot and year-end completeness is not yet established.
+
 ## 2026-11-03 — corrected 2013 Los Angeles → Bogotá → Los Cabos ATP sanction
 
 Independent verification found a real identity defect in the 2013 source roster:

@@ -274,6 +274,7 @@ def build(
             or any(
                 not isinstance(item, dict)
                 or set(item) != {"kind", "url", "note"}
+                or not isinstance(item["kind"], str)
                 or item["kind"] not in allowed_kinds
                 or not isinstance(item["url"], str)
                 or not item["url"].startswith("https://")

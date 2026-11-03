@@ -45,6 +45,10 @@ def test_source_provenance_audit_full_37_year_inventory_is_reproducible() -> Non
     assert sum(y["without_explicit_host_year_evidence"]
                for y in report["yearly_coverage"]) == 976
     assert counts["source_period_evidence_kinds"]["atp_year_results_index"] >= 1700
+    assert counts["series_with_nonlicence_host_context"] == 13
+    assert counts["multi_host_series_without_any_specific_context"] == 18
+    assert counts["multi_host_series_without_explicit_licence_source"] == 31
+    assert sum(counts["historical_host_context_kinds"].values()) == 13
 
 
 def test_provenance_audit_does_not_mislabel_generic_atp_archive_as_licence_proof() -> None:
@@ -196,3 +200,56 @@ def test_provenance_metadata_fail_closed_and_no_truncated_official_news_links() 
     hangzhou["payload"]["historical_licence_source_urls"] = [url, url]
     with pytest.raises(ValueError, match="Invalid historical licence evidence"):
         build(categories, bad)
+
+
+def test_venue_context_must_not_be_misrepresented_as_licence_ownership() -> None:
+    categories, series, seasons = _inputs()
+    report = audit(categories, series, seasons)
+    by_id = {row["source_entity_id"]: row for row in report["series_evidence"]}
+    expected = {
+        "miami": "site_change",
+        "canadian_open": "alternating_hosts",
+        "cincinnati": "temporary_site",
+        "acapulco": "site_change",
+        "brisbane": "site_change",
+        "delray_beach": "site_change",
+        "houston": "site_change",
+        "marrakech": "site_change",
+        "stuttgart": "surface_not_licence",
+        "s_hertogenbosch": "city_alias",
+        "eastbourne": "site_change",
+        "estoril": "historical_context_only",
+        "atp_finals": "rotating_hosts",
+    }
+    assert {
+        key: by_id[key]["historical_host_context_evidence_kinds"][0]
+        for key in expected
+    } == expected
+    # Separate public context references must never be silently promoted
+    # to legal licence proof; tracked missing-licence count remains unchanged.
+    for key in ("canadian_open", "stuttgart", "s_hertogenbosch", "estoril"):
+        assert by_id[key]["historical_host_context_evidence_urls"]
+        assert not by_id[key]["explicit_licence_evidence_urls"]
+        assert by_id[key]["multiple_host_cities_without_explicit_licence_source"]
+    assert "estoril" not in report["multi_host_series_without_any_specific_context"]
+    assert "miami" not in report["multi_host_series_without_any_specific_context"]
+
+
+def test_invalid_venue_context_metadata_rejected_without_source_mutation() -> None:
+    from scripts.build_atp_tour_historical_seasons import build
+
+    category, series, snapshot = _inputs()
+    baseline = audit(category, series, snapshot)
+    assert baseline["counts"]["series_identities"] == 164
+    for broken in (
+        {"kind": "site_change", "url": "http://insecure.test", "note": "x"},
+        {"kind": [], "url": "https://example.org/a", "note": "x"},
+        {"kind": "legal_licence_certified", "url": "https://example.org/a", "note": "x"},
+        {"kind": "site_change", "url": "https://example.org/a", "note": ""},
+    ):
+        altered = copy.deepcopy(series)
+        item = next(e for e in altered["entities"] if e["source_entity_id"] == "miami")
+        item["payload"]["historical_host_context_sources"] = [broken]
+        with pytest.raises(ValueError, match="Invalid historical host-context evidence"):
+            build(category, altered)
+    assert audit(category, series, snapshot) == baseline

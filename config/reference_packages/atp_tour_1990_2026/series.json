@@ -259,7 +259,7 @@
       "atp_finals_played": true,
       "next_gen_finals_did_not_exist": true,
       "exceptions": [
-        "Memphis 2013 ATP 500 to 250 in 2014",
+        "Memphis ATP 500 licence transferred to Rio for 2014; separate San Jose ATP 250 licence transferred to Memphis for 2014",
         "Halle/Queen's/Vienna 2013 ATP 250 to 500 in 2015",
         "Valencia ATP 500 to 250 in 2015"
       ],
@@ -367,7 +367,7 @@
       "atp_historical_gold_tier_source_url": "https://en.wikipedia.org/wiki/ATP_International_Series_Gold",
       "documented_played_gold_series_ids": [
         "rotterdam",
-        "dallas",
+        "rio",
         "dubai",
         "acapulco",
         "barcelona",

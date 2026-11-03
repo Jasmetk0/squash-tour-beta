@@ -126,7 +126,7 @@ def test_source_calendar_preview_confirm_save_reopen_and_idempotence(tmp_path: P
 
         saved_status, saved = _request(
             "POST",
-            f"{server.base_url}/admin/runs/{quote(run_id, safe='')}"
+            f"{server.base_url}/run-containers/{quote(run_id, safe='')}"
             f"/branches/{quote(branch_id, safe='')}/working-draft/save",
             {"expected_draft_version": applied["draft_version"]},
         )

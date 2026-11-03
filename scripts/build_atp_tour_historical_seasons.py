@@ -261,6 +261,32 @@ def build(
             raise ValueError(
                 "Invalid historical licence evidence: " + entity["source_entity_id"]
             )
+        # Venue-name variants, alternating-city events and pandemic site
+        # changes are provenance context, NOT assertions of ATP licence rights.
+        contexts = payload.get("historical_host_context_sources", [])
+        allowed_kinds = {
+            "site_change", "alternating_hosts", "temporary_site",
+            "surface_not_licence", "city_alias", "historical_context_only",
+            "rotating_hosts",
+        }
+        if (
+            not isinstance(contexts, list)
+            or any(
+                not isinstance(item, dict)
+                or set(item) != {"kind", "url", "note"}
+                or item["kind"] not in allowed_kinds
+                or not isinstance(item["url"], str)
+                or not item["url"].startswith("https://")
+                or not isinstance(item["note"], str)
+                or not item["note"].strip()
+                for item in contexts
+            )
+            or len({item["url"] for item in contexts}) != len(contexts)
+        ):
+            raise ValueError(
+                "Invalid historical host-context evidence: "
+                + entity["source_entity_id"]
+            )
         refs = {
             r["source_entity_id"]
             for r in entity["references"]

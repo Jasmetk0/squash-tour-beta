@@ -11,12 +11,12 @@ check must not be described as full independent historical certification.
 | Item | Independently enumerated |
 | --- | ---: |
 | Category entities | 11 |
-| Persistent Series identities | 166 |
+| Persistent Series identities | 165 |
 | Annual derived source snapshots (1990–2026) | 37 |
 | Historical Category intervals attached to Series | 1,983 |
 | Year-effective Series memberships across 37 snapshots | 2,431 |
-| Explicit historical host-year records | 1,448 |
-| Active membership-years without a *separate* explicit host-year record | 983 |
+| Explicit historical host-year records | 1,451 |
+| Active membership-years without a *separate* explicit host-year record | 980 |
 | Series periods citing an ATP-domain URL | 1,832 / 1,983 |
 | Series periods citing the general ATP results archive, year-filtered | 1,716 / 1,983 |
 | Series periods citing non-ATP pages | 151 / 1,983 |
@@ -35,9 +35,9 @@ all 37 source snapshot dictionaries and cancellation lists. Findings:
 - General ATP year-index pages support **year-level checking**; they are **not**
   proof of a particular legal tournament licence transfer. A source-period URL
   cannot by itself justify historical identity equivalence across venue moves.
-- `historical_host_change` is sparse and optional by design; the 983 missing
+- `historical_host_change` is sparse and optional by design; the 980 missing
   *individual host-year entries* are an evidence/coverage limitation, **not**
-  986 missing tournament categories or proof of wrong locations.
+  980 missing tournament categories or proof of wrong locations.
 
 ## 2. External source sanity checks (bounded, not exhaustive)
 
@@ -93,6 +93,36 @@ one tier could evade a count-only gate.
 All corrections preserve historic year-effective original categories. None
 copies ATP match, ranking, player or prize-money data into FAX.
 
+### ATP licence transfer audit — two genuinely independent 2013→2014 Series
+
+Contemporary primary-industry reporting confirms that **the Memphis 500 sanction
+was sold and moved to Rio de Janeiro for 2014**, while **the San José 250
+sanction was moved to Memphis in 2014**. These were not a promotion/demotion
+of a single Memphis source licence. Sources: [2012 ATP board decision
+report](https://www.sportsbusinessjournal.com/Daily/Issues/2012/04/24/Leagues-and-Governing-Bodies/ATP/),
+[contemporaneous detailed tennis report](https://www.tennis.com/news/articles/san-jose-atp-tourney-to-close-rio-gets-event),
+[2014 licence ownership follow-up](https://www.tennis.com/news/articles/usta-buying-memphis-tournament),
+[ATP 2014 results](https://www.atptour.com/en/scores/results-archive?year=2014).
+
+The historical 1990–2013 **Memphis** Tier/host timeline was moved to
+`rio`, leaving 2014+ Rio Category membership as previously recorded.
+Historical **San Francisco → San José 1990–2013** membership moved into
+`dallas`, which owns **Memphis 2014–17 → New York 2018–20 → Dallas 2022+**.
+Obsolete `san_jose_2013` identity removed; 166 → **165 Series**.
+All original-era 1990–2025 Category played-tier totals and 2,431
+year-effective memberships stay unchanged. Independent adversarial
+regressions verify the 2008 **Memphis Gold** versus **San José International**
+distinction, the 2013/2014 cross-transfer and later Dallas 2025 upgrade.
+
+The newly added deterministic `scripts/audit_atp_reference_provenance.py`
+is a **read-only diagnostic**, not a new data source. It inventories every
+Series/year, highlights generic archive URLs, sparse host-years and
+multi-host source IDs without explicit licence proof, and separately
+records the **2026 ATP 250 announced-summary/TBD ambiguity**. It neither
+auto-fetches webpages nor claims legal or sporting certification.
+Use `python scripts/audit_atp_reference_provenance.py` for summary or
+`--output FILE.json` to export the full per-Series/per-year evidence queue.
+
 ## 4. Review and merge boundaries
 
 **Technically verifiable now:** source documents parse under the existing
@@ -102,7 +132,7 @@ the recorded annual values. Final-head CI must be green **after all edits**.
 
 **Not yet proven:** independent *per-event* verification of every pre-2000
 and 2000–2025 identity/lineage against original ATP event records;
-all 983 sparse venue-year gaps; licence/legal reuse rights; complete
+all 980 sparse venue-year gaps; licence/legal reuse rights; complete
 2026 played season (late 2026 schedule still includes TBD); native Package
 Catalog inventory and Run Apply; full sporting lifecycle, result histories,
 point distribution, and a playable Calendar.

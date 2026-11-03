@@ -2656,8 +2656,8 @@
       "entity_schema_version": 1,
       "payload": {
         "atp_season_year": 2020,
-        "date_coverage_state": "undated",
-        "dated_series_count": 0,
+        "date_coverage_state": "verified_complete_known_series_dates",
+        "dated_series_count": 29,
         "known_not_held_series_ids": [
           "beijing",
           "canadian_open",
@@ -2675,39 +2675,9 @@
         "no_fabricated_dates": true,
         "not_squash_rules": true,
         "roster_series_count": 41,
-        "undated_series_ids": [
-          "acapulco",
-          "adelaide",
-          "almaty",
-          "atp_finals",
-          "auckland",
-          "brussels",
-          "buenos_aires",
-          "cincinnati",
-          "cologne_1_2020",
-          "cologne_2_2020",
-          "cordoba",
-          "dallas",
-          "delray_beach",
-          "doha",
-          "dubai",
-          "hamburg",
-          "hong_kong",
-          "kitzbuhel",
-          "lyon",
-          "montpellier",
-          "paris_masters",
-          "rio",
-          "rome",
-          "rotterdam",
-          "santiago",
-          "sardinia_2020",
-          "sofia",
-          "st_petersburg",
-          "vienna"
-        ],
-        "year_source_status": "not_dated_no_fabricated_dates",
-        "year_source_url": null
+        "undated_series_ids": [],
+        "year_source_status": "verified_results_archive",
+        "year_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020"
       },
       "references": [],
       "scope": "tennis.atp_tour.calendar.reference.1990_2026",
@@ -2845,6 +2815,1505 @@
       "references": [],
       "scope": "tennis.atp_tour.calendar.reference.1990_2026",
       "source_entity_id": "season_2026_date_coverage",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 6,
+        "end_date": "2020-02-29",
+        "end_year_week": {
+          "iso_week": 9,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 9,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "acapulco",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-02-24",
+        "start_year_week": {
+          "iso_week": 9,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "acapulco",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_acapulco",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-01-18",
+        "end_year_week": {
+          "iso_week": 3,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 2,
+            "iso_year": 2020
+          },
+          {
+            "iso_week": 3,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "adelaide",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-01-12",
+        "start_year_week": {
+          "iso_week": 2,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "adelaide",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_adelaide",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-11-01",
+        "end_year_week": {
+          "iso_week": 44,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 44,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "almaty",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-10-26",
+        "start_year_week": {
+          "iso_week": 44,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "almaty",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_almaty",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_finals",
+        "duration_days_inclusive": 8,
+        "end_date": "2020-11-22",
+        "end_year_week": {
+          "iso_week": 47,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 46,
+            "iso_year": 2020
+          },
+          {
+            "iso_week": 47,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "atp_finals",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-11-15",
+        "start_year_week": {
+          "iso_week": 46,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_finals",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_finals",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_atp_finals",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2020-01-18",
+        "end_year_week": {
+          "iso_week": 3,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 3,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "auckland",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-01-13",
+        "start_year_week": {
+          "iso_week": 3,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "auckland",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_auckland",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-10-25",
+        "end_year_week": {
+          "iso_week": 43,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 43,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "brussels",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-10-19",
+        "start_year_week": {
+          "iso_week": 43,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "brussels",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_brussels",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-02-16",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "buenos_aires",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-02-10",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "buenos_aires",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_buenos_aires",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 8,
+        "end_date": "2020-08-29",
+        "end_year_week": {
+          "iso_week": 35,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 34,
+            "iso_year": 2020
+          },
+          {
+            "iso_week": 35,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "cincinnati",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-08-22",
+        "start_year_week": {
+          "iso_week": 34,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "cincinnati",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_cincinnati",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-10-18",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "cologne_1_2020",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-10-12",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "cologne_1_2020",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_cologne_1_2020",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-10-25",
+        "end_year_week": {
+          "iso_week": 43,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 43,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "cologne_2_2020",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-10-19",
+        "start_year_week": {
+          "iso_week": 43,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "cologne_2_2020",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_cologne_2_2020",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-02-09",
+        "end_year_week": {
+          "iso_week": 6,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 6,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "cordoba",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-02-03",
+        "start_year_week": {
+          "iso_week": 6,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "cordoba",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_cordoba",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-02-16",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "dallas",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-02-10",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "dallas",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_dallas",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-02-23",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "delray_beach",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-02-17",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "delray_beach",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_delray_beach",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2020-01-11",
+        "end_year_week": {
+          "iso_week": 2,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 2,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "doha",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-01-06",
+        "start_year_week": {
+          "iso_week": 2,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "doha",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_doha",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 6,
+        "end_date": "2020-02-29",
+        "end_year_week": {
+          "iso_week": 9,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 9,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "dubai",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-02-24",
+        "start_year_week": {
+          "iso_week": 9,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "dubai",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_dubai",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-09-27",
+        "end_year_week": {
+          "iso_week": 39,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 39,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "hamburg",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-09-21",
+        "start_year_week": {
+          "iso_week": 39,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "hamburg",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_hamburg",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-02-09",
+        "end_year_week": {
+          "iso_week": 6,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 6,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "hong_kong",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-02-03",
+        "start_year_week": {
+          "iso_week": 6,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "hong_kong",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_hong_kong",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2020-09-13",
+        "end_year_week": {
+          "iso_week": 37,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 37,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "kitzbuhel",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-09-08",
+        "start_year_week": {
+          "iso_week": 37,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "kitzbuhel",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_kitzbuhel",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-02-23",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "lyon",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-02-17",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "lyon",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_lyon",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-02-09",
+        "end_year_week": {
+          "iso_week": 6,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 6,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "montpellier",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-02-03",
+        "start_year_week": {
+          "iso_week": 6,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "montpellier",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_montpellier",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-11-08",
+        "end_year_week": {
+          "iso_week": 45,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 45,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "paris_masters",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-11-02",
+        "start_year_week": {
+          "iso_week": 45,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "paris_masters",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_paris_masters",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-02-23",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rio",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-02-17",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rio",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_rio",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 8,
+        "end_date": "2020-09-21",
+        "end_year_week": {
+          "iso_week": 39,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 38,
+            "iso_year": 2020
+          },
+          {
+            "iso_week": 39,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rome",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-09-14",
+        "start_year_week": {
+          "iso_week": 38,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rome",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_rome",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-02-16",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rotterdam",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-02-10",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rotterdam",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_rotterdam",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-03-01",
+        "end_year_week": {
+          "iso_week": 9,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 9,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "santiago",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-02-24",
+        "start_year_week": {
+          "iso_week": 9,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "santiago",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_santiago",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-10-18",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "sardinia_2020",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-10-12",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "sardinia_2020",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_sardinia_2020",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-11-14",
+        "end_year_week": {
+          "iso_week": 46,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 45,
+            "iso_year": 2020
+          },
+          {
+            "iso_week": 46,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "sofia",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-11-08",
+        "start_year_week": {
+          "iso_week": 45,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "sofia",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_sofia",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-10-18",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "st_petersburg",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-10-12",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "st_petersburg",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_st_petersburg",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2020,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2020-11-01",
+        "end_year_week": {
+          "iso_week": 44,
+          "iso_year": 2020
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 44,
+            "iso_year": 2020
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "vienna",
+        "source_as_of": "2026-11-03",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+        "start_calendar_year": 2020,
+        "start_date": "2020-10-26",
+        "start_year_week": {
+          "iso_week": 44,
+          "iso_year": 2020
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "vienna",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2020_vienna",
       "valid": true
     },
     {
@@ -21655,6 +23124,7 @@
     "coverage_model": "explicit_yearly_undated_series_ids",
     "created_for": "Squash Engine independent ATP historical reference",
     "date_coverage_years": [
+      2020,
       2021,
       2022,
       2023,
@@ -21662,7 +23132,7 @@
       2025,
       2026
     ],
-    "dated_occurrences": 360,
+    "dated_occurrences": 389,
     "iso_week_not_run_week": true,
     "reference_span": {
       "from": 1990,

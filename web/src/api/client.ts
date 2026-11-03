@@ -3868,6 +3868,30 @@ export function confirmATPReference(
   })
 }
 
+/** Separate, non-playable ATP historic Calendar source with strict 3-child identity. */
+export async function getATPCalendarReferenceCatalog(): Promise<import('./atpCalendarReferencePackages').ATPCalendarReferenceCatalog> {
+  const result=await request<unknown>('/admin/reference-packages/atp-tour-1990-2026-calendar')
+  const {validATPCalendarCatalog}=await import('./atpCalendarReferencePackages')
+  if(!validATPCalendarCatalog(result))throw new Error('ATP Calendar source catalog failed identity validation.')
+  return result
+}
+function atpCalendarReferenceRoot(runId:string,branchId:string):string {
+  return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/packages/source-atp-reference-calendar`
+}
+export function previewATPCalendarReference(
+  runId:string,branchId:string
+):Promise<import('./atpReferencePackages').ATPReferencePreview> {
+  return request(atpCalendarReferenceRoot(runId,branchId)+'/preview',{method:'POST',body:'{}'})
+}
+export function confirmATPCalendarReference(
+  runId:string,branchId:string,
+  requestBody:import('./atpReferencePackages').ATPReferenceConfirm
+):Promise<import('./runPackageSetup').RunSourcePackageApplied> {
+  return request(atpCalendarReferenceRoot(runId,branchId)+'/confirm',{
+    method:'POST',body:JSON.stringify(requestBody)
+  })
+}
+
 export function previewRunSourcePackage(
   runId: string, branchId: string,
   kind: import('./runPackageSetup').RunSourcePackageKind, sourceId: string

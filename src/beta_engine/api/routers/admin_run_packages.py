@@ -264,6 +264,47 @@ def get_source_atp_reference_calendar_catalog():
         raise HTTPException(409, "ATP Calendar reference source is invalid or unavailable") from exc
 
 
+@atp_reference_catalog_router.get("/atp-tour-1990-2026-calendar/years/{year}")
+def get_source_atp_reference_calendar_year(year: int):
+    """Read-only dated events for one season; never invent missing Series dates."""
+    if not 1990 <= year <= 2026:
+        raise HTTPException(404, "ATP Calendar source year is outside 1990–2026")
+    try:
+        document = ATPHistoricalCalendarAdapter().build_calendar()
+        coverage = [
+            e for e in document.entities
+            if e.entity_kind == "tennis.calendar.coverage.reference.v1"
+            and e.payload["atp_season_year"] == year
+        ]
+        if len(coverage) != 1:
+            raise ValueError("Invalid ATP historical Calendar year coverage")
+        occurrences = [
+            e.payload for e in document.entities
+            if e.entity_kind == "tennis.calendar.occurrence.reference.v1"
+            and e.payload["atp_season_year"] == year
+        ]
+        events = [{
+            key: e[key] for key in (
+                "series_id", "category_id", "start_date", "end_date",
+                "start_year_week", "end_year_week", "iso_weeks_occupied",
+                "source_url", "year_source_state",
+            )
+        } for e in sorted(occurrences, key=lambda x: (
+            x["start_date"], x["series_id"]
+        ))]
+        return {
+            "year": year,
+            "package_id": document.package_id,
+            "source_fingerprint": document.source_fingerprint,
+            "read_only": True,
+            "run_mutated": False,
+            "coverage": coverage[0].payload,
+            "events": events,
+        }
+    except (OSError, ValueError) as exc:
+        raise HTTPException(409, "ATP Calendar source year is invalid") from exc
+
+
 @router.post("/source-atp-reference-calendar/preview")
 def preview_source_atp_reference_calendar(
     run_id: str,

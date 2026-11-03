@@ -174,6 +174,52 @@ establish a substitute identity for that slot. Therefore the 2026 reference
 remains explicitly provisional. No future edition, winner or historic
 ranking point is inferred.
 
+## Additional ATP host-context classification (read-only evidence audit)
+
+The initial licence-continuity queue used *any distinct historical city string*
+as an unresolved licence transfer. That was overbroad: legal ownership, host
+location, temporarily moved event, surface label and metropolitan-city alias
+are **different facts**. The source now contains 13 explicitly scoped
+`historical_host_context_sources` records. They are validated HTTPS citations
+with one of seven nonlegal `kind` classifications. This distinct field is
+deliberately **not** merged into `historical_licence_source_urls`.
+
+| Series | Context evidence type | Independently identified supporting source |
+| --- | --- | --- |
+| Miami | Site transition | [ATP Miami 2019 Miami Gardens history](https://www.atptour.com/en/news/atp-50-moments-longform-part-1) |
+| Canadian Open | Alternating host | [ATP Canada official overview](https://www.atptour.com/en/tournaments/canada/421/overview) |
+| Cincinnati | Temporary site, 2020 | [USTA official New York announcement](https://www.usopen.org/en_US/news/articles/2020-06-17/2020_us_open_western_southern_open_to_be_held_in_new_york.html) |
+| Acapulco | Site transition, 2001 | [ATP 50 host-city history](https://www.atptour.com/en/news/atp-50-locations-longform) |
+| Brisbane | Adelaide-to-Brisbane context | [ABC's contemporary 2006 report](https://www.abc.net.au/news/2006-07-07/brisbane-to-host-mens-hard-court-champs-from-2009/1796818) |
+| Delray Beach | Site transition, 1999 | [Local Delray Beach historical account](https://www.i-love-delray-beach.com/tennis-championships.html) — not official legal documentation |
+| Houston | Site transitions, through 2001 | [ATP Houston history](https://www.atptour.com/en/tournaments/orlando/717/overview) |
+| Marrakech | Casablanca-to-Marrakech, 2016 | [ATP official tournament overview](https://www.atptour.com/en/tournaments/casablanca/360/overview) |
+| Stuttgart | Surface description (not new city) | [ATP Stuttgart official history](https://www.atptour.com/en/tournaments/stuttgart-1/321/overview) |
+| ’s-Hertogenbosch | Rosmalen / city-name alias | [ATP Rosmalen / ’s-Hertogenbosch overview](https://www.atptour.com/en/tournaments/rosmalen/440/overview) |
+| Eastbourne | Nottingham / Eastbourne venue shifts | [ATP history of both venues](https://www.atptour.com/en/tournaments/-/741/overview) |
+| Estoril | Historical context, **not legal continuity** | [ATP Estoril 2015 new tournament overview](https://www.atptour.com/en/tournaments/estoril/7290/overview) |
+| ATP Finals | Rotating host venues | [ATP Finals city history](https://www.atptour.com/en/news/atp-50-locations-longform) |
+
+**Current coverage accounting:** among 46 source Series with more than one
+recorded city string, 31 still lack a separately labelled *licence evidence*
+URL (unchanged), but **13 of those** now have concrete, nonlegal, typed host
+context, leaving **18 without either kind of explicit contextual source**.
+Some of the 18 include mere spelling differences, but they are not
+automatically upgraded to certified transfers. Not all cited context pages
+verify every individual historical year or legal ownership: the 1997 Miami
+city label, for example, cannot be interpreted as a legal or venue move just
+because the ATP documents a later 2019 Miami Gardens move. The Estoril
+2014/2015 organiser boundary must not be automatically treated as an
+identical ATP membership.
+
+`audit_atp_reference_provenance.py` now publishes both separately counted
+coverage types and the **per-Series machine-readable unresolved queue**;
+its complete year-effective values and deterministic 1990–2026 snapshots
+stay unchanged. The builder rejects invalid context kinds, malformed URLs
+and duplicate sources; PR-critical tests cover the distinction. This improves
+traceability but **does not claim the entire original 1990–2025 legal
+licence chain has been certified**.
+
 ## 4. Review and merge boundaries
 
 **Technically verifiable now:** source documents parse under the existing

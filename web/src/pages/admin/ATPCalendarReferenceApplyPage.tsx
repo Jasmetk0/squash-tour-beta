@@ -231,8 +231,8 @@ export function ATPCalendarReferenceApplyPage():JSX.Element {
       <div className="page-intro">
         <h2>{cs?'ATP Tour 1990–2026 – referenční kalendář':'ATP Tour 1990–2026 – reference Calendar'}</h2>
         <p className="subtitle">{cs
-          ? 'Historické Category + Series + Calendar v jednom Setup. Přesná data jsou zatím doložena pro roky 2025 a 2026; starší roky jsou výslovně nedatované. Nejde o hratelné turnaje ani kalendář pro squash.'
-          : 'Historic Category + Series + Calendar in one Setup. Exact dates are currently sourced only for 2025 and 2026; older seasons are explicitly undated. This is not a playable squash Calendar.'}</p>
+          ? 'Historické Category + Series + Calendar v jednom Setup. Termíny jednotlivých ročníků vycházejí z archivů ATP; chybějící data se nedopočítávají odhadem. Rok 2026 zůstává předběžný. Nejde o hratelný kalendář pro squash.'
+          : 'Historical Category + Series + Calendar in one Setup. Season dates come from ATP archives; missing dates are never guessed. Year 2026 remains provisional. This is not a playable squash Calendar.'}</p>
       </div>
       {source.isPending&&<p role="status">{cs?'Načítám zdrojový manifest…':'Loading source manifest…'}</p>}
       {source.isError&&<p role="alert" className="error">{formatApiError(source.error)}
@@ -243,8 +243,8 @@ export function ATPCalendarReferenceApplyPage():JSX.Element {
           {' · '}{cs?'2026 předběžný':'2026 provisional'}
           {' · '}{cs?'Pouze historická reference':'Historical reference only'}</p>
         <p className="status">{cs
-          ? 'Termíny: 2025 — 57 odehraných sérií, 2026 — 56 předběžně naplánovaných; 1990–2024 čeká na ověřená data. ISO week ≠ Run Week.'
-          : 'Dates: 2025 — 57 played series; 2026 — 56 provisional scheduled; 1990–2024 awaiting sourced dates. ISO week ≠ Run Week.'}</p>
+          ? `Datované ročníky: ${source.data.dated_years[0]}–${source.data.dated_years[source.data.dated_years.length-1]} · dosud nedatovaných: ${source.data.undated_years.length}. Rok 2026 je předběžný. ISO week ≠ Run Week.`
+          : `Dated seasons: ${source.data.dated_years[0]}–${source.data.dated_years[source.data.dated_years.length-1]} · undated seasons: ${source.data.undated_years.length}. 2026 is provisional. ISO week ≠ Run Week.`}</p>
         <ul>{source.data.children.map(child=><li key={child.package_id}>
           <strong>{child.package_type}</strong> — {child.entity_count} {cs?'položek':'entities'}
           {' · '}v{child.source_version}</li>)}</ul>

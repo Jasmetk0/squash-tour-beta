@@ -50,7 +50,7 @@ class ATPHistoricalCalendarAdapter:
             or document.source_version != 1
             or document.explicit_scope != (CALENDAR_SCOPE,)
             or document.children
-            or len(document.entities) != 150
+            or len(document.entities) < 37
         ):
             raise ValueError("Invalid ATP Calendar reference Package shape")
         ids = {entity.source_entity_id for entity in document.entities}
@@ -64,7 +64,18 @@ class ATPHistoricalCalendarAdapter:
             for entity in document.entities
         ):
             raise ValueError("Invalid ATP Calendar source reference boundary")
-        if len(ids) != 150 or document.provenance.get("dated_occurrences") != 113:
+        dated_count = sum(
+            e.entity_kind == CALENDAR_OCCURRENCE_KIND for e in document.entities
+        )
+        coverage_count = sum(
+            e.entity_kind == CALENDAR_COVERAGE_KIND for e in document.entities
+        )
+        if (
+            len(ids) != len(document.entities)
+            or coverage_count != 37
+            or dated_count + coverage_count != len(document.entities)
+            or document.provenance.get("dated_occurrences") != dated_count
+        ):
             raise ValueError("Invalid ATP Calendar verified date inventory")
         return document
 
@@ -79,7 +90,7 @@ class ATPHistoricalCalendarAdapter:
             provenance={
                 "adapter": "server_atp_tour_calendar_reference_setup.v1",
                 "historical_span": {"from": 1990, "to": 2026},
-                "dated_years": [2025, 2026],
+                "dated_years": list(calendar.provenance["date_coverage_years"]),
                 "dated_2026": "provisional",
                 "run_consumption": "opaque_reference_only_no_sporting_calendar",
                 "no_autosave": True,
@@ -96,8 +107,11 @@ class ATPHistoricalCalendarAdapter:
             "source_version": doc.source_version,
             "source_fingerprint": doc.source_fingerprint,
             "reference_span": {"from": 1990, "to": 2026},
-            "dated_years": [2025, 2026],
-            "undated_years": list(range(1990, 2025)),
+            "dated_years": list(doc.children[-1].provenance["date_coverage_years"]),
+            "undated_years": [
+                y for y in range(1990, 2027)
+                if y not in doc.children[-1].provenance["date_coverage_years"]
+            ],
             "provisional_years": [2026],
             "usage": "source_reference_only_no_playable_calendar",
             "children": [

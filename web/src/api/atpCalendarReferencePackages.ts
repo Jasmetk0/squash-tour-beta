@@ -74,3 +74,78 @@ export function reviewedATPCalendarReference(
         Array.isArray(preview[k as keyof ATPReferencePreview])&&
         (preview[k as keyof ATPReferencePreview] as unknown[]).every(x=>typeof x==='string'))
 }
+
+export type ATPCalendarReferenceYearView = {
+  year:number
+  package_id:'atp_tour_1990_2026_calendar'
+  source_fingerprint:string
+  read_only:true
+  run_mutated:false
+  coverage:{
+    atp_season_year:number
+    roster_series_count:number
+    dated_series_count:number
+    undated_series_ids:string[]
+    known_not_held_series_ids:string[]
+    date_coverage_state:string
+    year_source_status:string
+    year_source_url:string|null
+  }
+  events:{
+    series_id:string
+    category_id:string
+    start_date:string
+    end_date:string
+    start_year_week:{iso_year:number;iso_week:number}
+    end_year_week:{iso_year:number;iso_week:number}
+    iso_weeks_occupied:{iso_year:number;iso_week:number}[]
+    source_url:string
+    year_source_state:string
+  }[]
+}
+
+const positiveInt=(v:unknown):v is number =>
+  typeof v==='number' && Number.isSafeInteger(v) && v>=0
+const dateString=(v:unknown):v is string =>
+  typeof v==='string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(v)
+const isoYearWeek=(v:unknown):boolean =>
+  record(v)&&positiveInt(v.iso_year)&&positiveInt(v.iso_week)&&
+  v.iso_week>=1&&v.iso_week<=53
+
+/** Match the server's exact Calendar child fingerprint before rendering. */
+export function validATPCalendarYearView(
+  value:unknown,expectedYear:number,calendarFingerprint:string
+):value is ATPCalendarReferenceYearView {
+  if(!record(value)||value.year!==expectedYear||
+     value.package_id!=='atp_tour_1990_2026_calendar'||
+     !fingerprint(value.source_fingerprint)||
+     value.source_fingerprint!==calendarFingerprint||
+     value.read_only!==true||value.run_mutated!==false||
+     !record(value.coverage)||!Array.isArray(value.events))return false
+  const cov=value.coverage
+  if(cov.atp_season_year!==expectedYear||!positiveInt(cov.roster_series_count)||
+     !positiveInt(cov.dated_series_count)||
+     !Array.isArray(cov.undated_series_ids)||
+     !Array.isArray(cov.known_not_held_series_ids)||
+     typeof cov.date_coverage_state!=='string'||
+     typeof cov.year_source_status!=='string'||
+     !(cov.year_source_url===null||typeof cov.year_source_url==='string')||
+     value.events.length!==cov.dated_series_count)return false
+  const seen=new Set<string>()
+  return value.events.every((entry:unknown)=>{
+    if(!record(entry)||typeof entry.series_id!=='string'||!entry.series_id||
+       seen.has(entry.series_id)||typeof entry.category_id!=='string'||
+       !dateString(entry.start_date)||!dateString(entry.end_date)||
+       entry.start_date>entry.end_date||
+       !isoYearWeek(entry.start_year_week)||!isoYearWeek(entry.end_year_week)||
+       !Array.isArray(entry.iso_weeks_occupied)||
+       entry.iso_weeks_occupied.length<1||
+       !entry.iso_weeks_occupied.every(isoYearWeek)||
+       typeof entry.source_url!=='string'||
+       !entry.source_url.startsWith('https://www.atptour.com/')&&
+       !entry.source_url.startsWith('https://www.nextgenatpfinals.com/')||
+       typeof entry.year_source_state!=='string')return false
+    seen.add(entry.series_id)
+    return true
+  })
+}

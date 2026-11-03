@@ -2339,3 +2339,69 @@ def test_1990_original_tier_gate_rejects_fabricated_nonplayed_world_series() -> 
     event["payload"]["not_held_years_known"] = [1990]
     with pytest.raises(ValueError, match="played-tier roster mismatch in 1990"):
         build(categories, fake)
+
+
+@pytest.mark.parametrize(
+    ("original_id", "first_affected_year"),
+    [
+        ("atp_finals", 1990),
+        ("next_gen_atp_finals", 2017),
+    ],
+)
+def test_atp_special_series_reject_duplicate_source_identity(
+    original_id: str, first_affected_year: int
+) -> None:
+    """A second Finals source must not hide behind correct ordinary tier totals."""
+    import copy
+
+    categories, series = _source("category"), _source("series")
+    extra = copy.deepcopy(series)
+    original = next(
+        entity for entity in extra["entities"]
+        if entity["source_entity_id"] == original_id
+    )
+    phantom = copy.deepcopy(original)
+    phantom["source_entity_id"] = f"{original_id}_phantom"
+    extra["entities"].append(phantom)
+    with pytest.raises(
+        ValueError, match=f"ATP special-Series roster mismatch in {first_affected_year}"
+    ):
+        build(categories, extra)
+    assert build(categories, series)["seasons_count"] == 37
+
+
+def test_atp_finals_missing_in_inaugural_year_is_not_a_closed_source_roster() -> None:
+    """An otherwise intact 9/12/53 roster cannot omit the 1990 singles Finals."""
+    import copy
+
+    categories, series = _source("category"), _source("series")
+    missing = copy.deepcopy(series)
+    finals = next(
+        entity for entity in missing["entities"]
+        if entity["source_entity_id"] == "atp_finals"
+    )
+    inaugural = next(
+        period for period in finals["payload"]["history_periods"]
+        if period["from"] <= 1990 <= period["to"]
+    )
+    inaugural["from"] = 1991
+    with pytest.raises(ValueError, match="ATP special-Series roster mismatch in 1990"):
+        build(categories, missing)
+
+
+@pytest.mark.parametrize("invalid_years", [[2020, 2020], [1989], ["2020"]])
+def test_atp_known_not_held_years_reject_duplicate_out_of_range_or_text(
+    invalid_years: list[int | str],
+) -> None:
+    """Cancellation provenance must be typed, unique and inside ATP Tour scope."""
+    import copy
+
+    categories, series = _source("category"), _source("series")
+    invalid = copy.deepcopy(series)
+    hangzhou = next(
+        entity for entity in invalid["entities"]
+        if entity["source_entity_id"] == "hangzhou"
+    )
+    hangzhou["payload"]["not_held_years_known"] = invalid_years
+    with pytest.raises(ValueError, match="Invalid or duplicate known-not-held years"):
+        build(categories, invalid)

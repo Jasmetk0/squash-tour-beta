@@ -1,0 +1,52 @@
+{
+  "schema_version": "tennis.atp_tour_calendar_backfill_candidates.v1",
+  "year": 2001,
+  "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
+  "source_url": "https://www.atptour.com/en/scores/results-archive?year=2001",
+  "as_of": "2026-11-04",
+  "notes": "Seven early-season ATP 2001 main-tour tournament date candidates transcribed from official ATP results archive. This is an explicitly partial year and must not be promoted as complete.",
+  "events": [
+    {
+      "historical_host": "Doha",
+      "series_id": "doha",
+      "start_date": "2001-01-01",
+      "end_date": "2001-01-07"
+    },
+    {
+      "historical_host": "Chennai",
+      "series_id": "hong_kong",
+      "start_date": "2001-01-01",
+      "end_date": "2001-01-07"
+    },
+    {
+      "historical_host": "Adelaide",
+      "series_id": "brisbane",
+      "start_date": "2001-01-01",
+      "end_date": "2001-01-07"
+    },
+    {
+      "historical_host": "Sydney",
+      "series_id": "sydney_2019",
+      "start_date": "2001-01-08",
+      "end_date": "2001-01-14"
+    },
+    {
+      "historical_host": "Auckland",
+      "series_id": "auckland",
+      "start_date": "2001-01-08",
+      "end_date": "2001-01-14"
+    },
+    {
+      "historical_host": "Bogotá",
+      "series_id": "bogota_colombia_2001",
+      "start_date": "2001-01-28",
+      "end_date": "2001-02-03"
+    },
+    {
+      "historical_host": "Milan",
+      "series_id": "sofia",
+      "start_date": "2001-01-29",
+      "end_date": "2001-02-04"
+    }
+  ]
+}

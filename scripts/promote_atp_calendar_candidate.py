@@ -2,7 +2,7 @@
 
 Requires an explicit --write only for a new dated year. --check is read-only.
 Imported 2000, 2001 and 2002 cohorts are checked idempotently against their
-candidate evidence and generated snapshot. Year 2003 remains blocked on an
+candidate evidence and generated snapshot. Years 1999 and 2003 remain blocked on an
 unresolved official ATP Finals date conflict.
 
 Usage:
@@ -24,6 +24,15 @@ from scripts.audit_atp_calendar_backfill import audit_candidates
 from scripts.build_atp_historical_calendar import SOURCE, build, canonical
 
 PENDING_CONFLICTS = {
+    # ATP 1999 annual results index: 22–28 November.
+    # ATP Finals heritage: 23–28 November. Do not silently collapse
+    # different official ATP event-date conventions.
+    1999: {
+        "atp_finals": (
+            "ATP 1999 results archive: 1999-11-22 to 1999-11-28; "
+            "ATP Finals heritage: 1999-11-23 to 1999-11-28"
+        ),
+    },
     # The published ATP annual archive labels 10–16 Nov, whereas an ATP
     # historical tournament overview cites 8–16 Nov. Resolve which date
     # convention the calendar represents before a whole-year import.
@@ -37,8 +46,8 @@ PENDING_CONFLICTS = {
 
 
 def prepare(year: int):
-    if year not in (2000, 2001, 2002, 2003):
-        raise ValueError("Only staged 2000–2003 candidate ledgers are supported")
+    if year not in (1999, 2000, 2001, 2002, 2003):
+        raise ValueError("Only staged 1999–2003 candidate ledgers are supported")
     candidate = json.loads(
         (SOURCE / f"calendar_backfill_{year}_candidates_v1.json").read_text(
             encoding="utf-8"

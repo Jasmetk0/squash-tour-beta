@@ -66,10 +66,10 @@ def test_1996_canonical_snapshot_is_unchanged_on_idempotent_check() -> None:
     dated, document, report = prepare(1996)
     assert report["candidate_count"] == 78
     assert len(dated["year_sources"]["1996"]["events"]) == 78
-    assert document["provenance"]["dated_occurrences"] == 1816
+    assert document["provenance"]["dated_occurrences"] == 1892
     assert document["provenance"]["season_coverage_entries"] == 37
     assert document["provenance"]["date_coverage_years"] == (
-        [1994, 1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
+        [1991, 1994, 1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
     )
     by_id = {row["source_entity_id"]: row for row in document["entities"]}
     assert by_id["atp_1996_atp_finals"]["payload"]["start_year_week"] == {

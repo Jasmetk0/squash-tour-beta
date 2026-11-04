@@ -65,10 +65,10 @@ def test_1995_is_canonical_and_rebuild_is_idempotent() -> None:
     dated, doc, report = prepare(1995)
     assert report["candidate_count"] == 80
     assert len(dated["year_sources"]["1995"]["events"]) == 80
-    assert doc["provenance"]["dated_occurrences"] == 1816
+    assert doc["provenance"]["dated_occurrences"] == 1892
     assert doc["provenance"]["season_coverage_entries"] == 37
     assert doc["provenance"]["date_coverage_years"] == (
-        [1994, 1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
+        [1991, 1994, 1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
     )
     lookup = {entity["source_entity_id"]: entity for entity in doc["entities"]}
     assert lookup["atp_1995_atp_finals"]["payload"]["start_year_week"] == {

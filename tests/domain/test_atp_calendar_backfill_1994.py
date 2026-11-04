@@ -61,12 +61,12 @@ def test_1994_is_canonical_idempotent_and_does_not_mutate_old_events() -> None:
     dated, document, report = prepare(1994)
     assert report["candidate_count"] == 85
     assert len(dated["year_sources"]["1994"]["events"]) == 85
-    assert document["provenance"]["dated_occurrences"] == 1816
+    assert document["provenance"]["dated_occurrences"] == 1892
     assert document["provenance"]["season_coverage_entries"] == 37
     assert document["provenance"]["date_coverage_years"] == (
-        [1994, 1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
+        [1991, 1994, 1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
     )
-    assert len(document["entities"]) == 1853
+    assert len(document["entities"]) == 1929
     assert document["provenance"]["run_consumption"] == "opaque_reference_only_no_sporting_calendar"
     lookup = {row["source_entity_id"]: row for row in document["entities"]}
     assert lookup["season_1994_date_coverage"]["payload"]["date_coverage_state"] == "verified_complete_known_series_dates"

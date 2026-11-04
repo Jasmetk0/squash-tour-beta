@@ -16,10 +16,14 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (1853 entities at the current
-source revision, comprising 37 provenance-coverage entities and 1816 dated
+with Category (11), Series (164) and Calendar (1929 entities at the current
+source revision, comprising 37 provenance-coverage entities and 1892 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
+
+## 1991 original ATP Tour — complete canonical date coverage (76/76)
+
+The official [ATP Tour 1991 results archive](https://www.atptour.com/en/scores/results-archive?year=1991) dates all **76** original ATP singles main Tour/Frankfurt World Championships year-effective Series. The original [ATP Finals historical results](https://www.nittoatpfinals.com/en/heritage/results-1970-1999) independently agree on Frankfurt **12–17 November 1991**. The original dual Guarujá, Sydney, Tokyo and Stuttgart events, 31 December 1990 Adelaide/Wellington ISO 1991/W01 and September Brisbane are preserved. Now canonically stored: **1,892** dated occurrences plus **37** coverage entities = **1,929** Calendar source entities, **30 of 37** year source cohorts dated. See [complete 1991 dates and caveats](ATP_TOUR_1991_COMPLETE_DATE_REFERENCE.md). All playable FAX sporting commands and Run clock remain separate.
 
 ## 1992 source-date backfill (78/78 staged; not canonical)
 

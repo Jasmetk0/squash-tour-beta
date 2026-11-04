@@ -28,8 +28,8 @@ from scripts.build_atp_historical_calendar import SOURCE, build, canonical
 
 
 def prepare(year: int):
-    if year not in (1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003):
-        raise ValueError("Only staged 1992–2003 candidate ledgers are supported")
+    if year not in (1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003):
+        raise ValueError("Only staged 1991–2003 candidate ledgers are supported")
     candidate = json.loads(
         (SOURCE / f"calendar_backfill_{year}_candidates_v1.json").read_text(
             encoding="utf-8"

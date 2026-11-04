@@ -30,7 +30,9 @@ def test_1997_all_75_original_atp_tour_roster_dates_remain_evidence_only() -> No
     assert report["expected_played_source_count"] == 75
     assert report["remaining_series_ids"] == []
     assert report["canonical_conflicts"] == []
-    assert report["ready_for_whole_year_promotion"] is True
+    assert report["roster_reconciled"] is True
+    assert "atp_finals" in report["unresolved_date_conflicts"]
+    assert report["ready_for_whole_year_promotion"] is False
     assert "1997" not in dated["year_sources"]
     events = {x["series_id"]: x for x in report["candidate_events"]}
     assert events["doha"]["start_date"] == "1996-12-30"

@@ -1,4 +1,4 @@
-"""ATP 2001 source-only, explicitly incomplete date-backfill contract."""
+"""ATP 2001 archived source data matches its canonical Calendar year."""
 from __future__ import annotations
 
 import json
@@ -28,9 +28,10 @@ def test_2001_complete_parent_roster_candidates_reconcile_without_canonical_muta
     assert report["candidate_count"] == 65
     assert report["expected_played_source_count"] == 65
     assert report["remaining_series_ids"] == []
-    assert report["canonical_conflicts"] == []
-    assert report["ready_for_whole_year_promotion"] is True
-    assert "2001" not in canonical["year_sources"]
+    assert len(report["canonical_conflicts"]) == 65
+    assert report["ready_for_whole_year_promotion"] is False
+    assert "2001" in canonical["year_sources"]
+    assert len(canonical["year_sources"]["2001"]["events"]) == 65
     events = {x["series_id"]: x for x in report["candidate_events"]}
     assert events["doha"]["start_date"] == "2001-01-01"
     assert events["hong_kong"]["start_date"] == "2001-01-01"

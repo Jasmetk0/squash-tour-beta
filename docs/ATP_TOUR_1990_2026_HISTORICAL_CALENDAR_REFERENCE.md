@@ -16,8 +16,8 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (1545 entities at the current
-source revision, comprising 37 provenance-coverage entities and 1508 dated
+with Category (11), Series (164) and Calendar (1610 entities at the current
+source revision, comprising 37 provenance-coverage entities and 1573 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
 
@@ -138,21 +138,22 @@ is retained for Marseille (`lyon`), old outdoor Lyon (`lyon_old`) and
 Antwerp (`brussels`). Brisbane starts in 2023/W52 and ends in 2024/W01.
 Grand Slams, Olympic and team events remain out of scope.
 
-## 2001 and 2002 canonical archive coverage
+## 2000–2002 canonical archive coverage
 
-The 2001 and 2002 ATP original-tier source cohorts were promoted into the
+The 2000, 2001 and 2002 ATP original-tier source cohorts were promoted into the
 canonical `calendar_dates_v1.json` and regenerated immutable `calendar.json`
-in November 2026. **2001: 65 / 65 historical parent Series; 2002: 62 / 62**.
+in November 2026. **2000: 65 / 65; 2001: 65 / 65; 2002: 62 / 62**.
 Event-specific archived dates and original venue aliases are retained, including
 2001 Amsterdam / Sopot / Montreal and the separate Stuttgart indoor Masters,
 and the 2002 December 2001 opening three tournaments whose ISO labels belong
-to 2002/W01. The 127 new references are not playable FAX sporting events.
+to 2002/W01. The 192 new references are not playable FAX sporting events.
 
 The automatic regeneration was compared to the old complete calendar: **all
 pre-existing event entities and all coverage records for other years stayed
 byte-equivalent after canonical serialization**. That verifies unchanged
 source content, *not* historical legal licence identities. For dated inventory
 and remaining evidence limitations see
+[`ATP_TOUR_2000_COMPLETE_DATE_REFERENCE.md`](ATP_TOUR_2000_COMPLETE_DATE_REFERENCE.md),
 [`ATP_TOUR_2001_COMPLETE_DATE_CANDIDATES.md`](ATP_TOUR_2001_COMPLETE_DATE_CANDIDATES.md)
 and
 [`ATP_TOUR_2002_COMPLETE_DATE_CANDIDATES.md`](ATP_TOUR_2002_COMPLETE_DATE_CANDIDATES.md).
@@ -161,13 +162,14 @@ Year **2003 is still not canonically dated**: 63 dated historical candidates are
 staged, but the official annual ATP archive's 10–16 November Tennis Masters Cup
 interval conflicts with a separate ATP tournament history's 8–16 November
 interval. The import is deliberately blocked until the date convention is
-reconciled. Historical years **1990–2000** remain undated.
+reconciled. Historical years **1990–1999** remain undated.
 
 ## Current actual date coverage
 
 | Year(s) | Source status | Dated Series | Undated |
 | --- | --- | ---: | ---: |
-| 1990–2000 | No canonically dated source Series yet | 0 | Explicit missing IDs for every year |
+| 1990–1999 | No canonically dated source Series yet | 0 | Explicit missing IDs for every year |
+| 2000 | Official played ATP archive, original 2000 host and tier dates | **65 / 65** | 0 |
 | 2001 | Original ATP annual archive; 65 historical source identities | **65 / 65** | 0 |
 | 2002 | Original ATP annual archive; 62 historical source identities | **62 / 62** | 0 |
 | 2003 | 63 staged candidates; unresolved ATP Finals source conflict | **0 / 63 canonical** | 63 |
@@ -197,12 +199,13 @@ reconciled. Historical years **1990–2000** remain undated.
 
 **No generic history period or week is interpreted as a tournament date.**
 The parent Category/Series dataset contains 2,431 year-effective memberships;
-1508 unique year/Series occurrences currently have original *date* sources.
+1573 unique year/Series occurrences currently have original *date* sources.
 The other historical years will be sourced individually, not filled by
 inventing dates or extrapolating 2025/2026 patterns.
 
 Source links:
 
+- [2000 original ATP results archive](https://www.atptour.com/en/scores/results-archive?year=2000).
 - [2001 original ATP results archive](https://www.atptour.com/en/scores/results-archive?year=2001).
 - [2002 original ATP results archive](https://www.atptour.com/en/scores/results-archive?year=2002).
 - [2004 official results archive](https://www.atptour.com/en/scores/results-archive?year=2004).
@@ -309,6 +312,6 @@ its own separately reviewed date-to-Run-clock policy.
    Saved Revision. No source-only date reference may be promoted to playable
    FAX events by these steps.
 
-The work is **not complete for 1990–2000 or 2003**. Source-year coverage must be
+The work is **not complete for 1990–1999 or 2003**. Source-year coverage must be
 upgraded year by year using original contemporaneous calendars and/or official
 ATP results archives. 2026 final validation remains pending.

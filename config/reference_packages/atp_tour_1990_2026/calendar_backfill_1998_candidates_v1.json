@@ -1,0 +1,454 @@
+{
+  "schema_version": "tennis.atp_tour_calendar_backfill_candidates.v1",
+  "year": 1998,
+  "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
+  "source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+  "as_of": "2026-11-04",
+  "notes": "All 74 original ATP 1998 Tour+World Championship played tournament date candidates mapped to historical source Series IDs. The ATP year archive lists Finals November 23–29, while ATP Finals heritage lists November 24–29. This official date-convention conflict blocks canonical 1998 promotion until adjudication. Independent licence transfer/legal continuity not certified. Grand Slams, World Team Cup and Grand Slam Cup excluded.",
+  "events": [
+    {
+      "historical_host": "Doha",
+      "series_id": "doha",
+      "start_date": "1998-01-05",
+      "end_date": "1998-01-11"
+    },
+    {
+      "historical_host": "Adelaide",
+      "series_id": "brisbane",
+      "start_date": "1998-01-05",
+      "end_date": "1998-01-11"
+    },
+    {
+      "historical_host": "Auckland",
+      "series_id": "auckland",
+      "start_date": "1998-01-12",
+      "end_date": "1998-01-18"
+    },
+    {
+      "historical_host": "Sydney",
+      "series_id": "sydney_2019",
+      "start_date": "1998-01-12",
+      "end_date": "1998-01-18"
+    },
+    {
+      "historical_host": "Marseille",
+      "series_id": "lyon",
+      "start_date": "1998-02-02",
+      "end_date": "1998-02-08"
+    },
+    {
+      "historical_host": "Split",
+      "series_id": "split_1998",
+      "start_date": "1998-02-02",
+      "end_date": "1998-02-08"
+    },
+    {
+      "historical_host": "Dubai",
+      "series_id": "dubai",
+      "start_date": "1998-02-09",
+      "end_date": "1998-02-15"
+    },
+    {
+      "historical_host": "San Jose",
+      "series_id": "dallas",
+      "start_date": "1998-02-09",
+      "end_date": "1998-02-15"
+    },
+    {
+      "historical_host": "St. Petersburg",
+      "series_id": "st_petersburg",
+      "start_date": "1998-02-09",
+      "end_date": "1998-02-15"
+    },
+    {
+      "historical_host": "Antwerp",
+      "series_id": "antwerp_1998",
+      "start_date": "1998-02-16",
+      "end_date": "1998-02-22"
+    },
+    {
+      "historical_host": "Memphis",
+      "series_id": "rio",
+      "start_date": "1998-02-16",
+      "end_date": "1998-02-22"
+    },
+    {
+      "historical_host": "London-1",
+      "series_id": "sofia",
+      "start_date": "1998-02-23",
+      "end_date": "1998-03-01"
+    },
+    {
+      "historical_host": "Philadelphia",
+      "series_id": "philadelphia_1998",
+      "start_date": "1998-02-23",
+      "end_date": "1998-03-01"
+    },
+    {
+      "historical_host": "Rotterdam",
+      "series_id": "rotterdam",
+      "start_date": "1998-03-02",
+      "end_date": "1998-03-08"
+    },
+    {
+      "historical_host": "Scottsdale",
+      "series_id": "las_vegas_2008",
+      "start_date": "1998-03-02",
+      "end_date": "1998-03-08"
+    },
+    {
+      "historical_host": "Indian Wells",
+      "series_id": "indian_wells",
+      "start_date": "1998-03-09",
+      "end_date": "1998-03-15"
+    },
+    {
+      "historical_host": "Copenhagen",
+      "series_id": "copenhagen_2003",
+      "start_date": "1998-03-09",
+      "end_date": "1998-03-15"
+    },
+    {
+      "historical_host": "Miami",
+      "series_id": "miami",
+      "start_date": "1998-03-16",
+      "end_date": "1998-03-29"
+    },
+    {
+      "historical_host": "Casablanca",
+      "series_id": "marrakech",
+      "start_date": "1998-03-23",
+      "end_date": "1998-03-29"
+    },
+    {
+      "historical_host": "Estoril",
+      "series_id": "estoril",
+      "start_date": "1998-04-06",
+      "end_date": "1998-04-12"
+    },
+    {
+      "historical_host": "Chennai",
+      "series_id": "hong_kong",
+      "start_date": "1998-04-06",
+      "end_date": "1998-04-12"
+    },
+    {
+      "historical_host": "Hong Kong",
+      "series_id": "hong_kong_salem_2002",
+      "start_date": "1998-04-06",
+      "end_date": "1998-04-12"
+    },
+    {
+      "historical_host": "Barcelona",
+      "series_id": "barcelona",
+      "start_date": "1998-04-13",
+      "end_date": "1998-04-19"
+    },
+    {
+      "historical_host": "Tokyo",
+      "series_id": "tokyo",
+      "start_date": "1998-04-13",
+      "end_date": "1998-04-19"
+    },
+    {
+      "historical_host": "Monte-Carlo",
+      "series_id": "monte_carlo",
+      "start_date": "1998-04-20",
+      "end_date": "1998-04-26"
+    },
+    {
+      "historical_host": "Orlando",
+      "series_id": "houston",
+      "start_date": "1998-04-20",
+      "end_date": "1998-04-26"
+    },
+    {
+      "historical_host": "Munich",
+      "series_id": "munich",
+      "start_date": "1998-04-27",
+      "end_date": "1998-05-03"
+    },
+    {
+      "historical_host": "Prague",
+      "series_id": "prague_1999",
+      "start_date": "1998-04-27",
+      "end_date": "1998-05-03"
+    },
+    {
+      "historical_host": "Atlanta",
+      "series_id": "atlanta_verizon_2001",
+      "start_date": "1998-04-27",
+      "end_date": "1998-05-03"
+    },
+    {
+      "historical_host": "Hamburg",
+      "series_id": "hamburg",
+      "start_date": "1998-05-04",
+      "end_date": "1998-05-10"
+    },
+    {
+      "historical_host": "Coral Springs",
+      "series_id": "delray_beach",
+      "start_date": "1998-05-04",
+      "end_date": "1998-05-10"
+    },
+    {
+      "historical_host": "Rome",
+      "series_id": "rome",
+      "start_date": "1998-05-11",
+      "end_date": "1998-05-17"
+    },
+    {
+      "historical_host": "St. Polten",
+      "series_id": "poertschach_2008",
+      "start_date": "1998-05-18",
+      "end_date": "1998-05-24"
+    },
+    {
+      "historical_host": "Halle",
+      "series_id": "halle",
+      "start_date": "1998-06-08",
+      "end_date": "1998-06-14"
+    },
+    {
+      "historical_host": "London / Queen's Club",
+      "series_id": "queens_club",
+      "start_date": "1998-06-08",
+      "end_date": "1998-06-14"
+    },
+    {
+      "historical_host": "Bologna",
+      "series_id": "bologna_1998",
+      "start_date": "1998-06-08",
+      "end_date": "1998-06-14"
+    },
+    {
+      "historical_host": "'s-Hertogenbosch",
+      "series_id": "s_hertogenbosch",
+      "start_date": "1998-06-15",
+      "end_date": "1998-06-21"
+    },
+    {
+      "historical_host": "Nottingham",
+      "series_id": "eastbourne",
+      "start_date": "1998-06-15",
+      "end_date": "1998-06-21"
+    },
+    {
+      "historical_host": "Gstaad",
+      "series_id": "gstaad",
+      "start_date": "1998-07-06",
+      "end_date": "1998-07-12"
+    },
+    {
+      "historical_host": "Bastad",
+      "series_id": "bastad",
+      "start_date": "1998-07-06",
+      "end_date": "1998-07-12"
+    },
+    {
+      "historical_host": "Newport",
+      "series_id": "newport",
+      "start_date": "1998-07-06",
+      "end_date": "1998-07-12"
+    },
+    {
+      "historical_host": "Stuttgart-1 (clay)",
+      "series_id": "stuttgart",
+      "start_date": "1998-07-20",
+      "end_date": "1998-07-26"
+    },
+    {
+      "historical_host": "Washington",
+      "series_id": "washington",
+      "start_date": "1998-07-20",
+      "end_date": "1998-07-26"
+    },
+    {
+      "historical_host": "Kitzbuhel",
+      "series_id": "kitzbuhel",
+      "start_date": "1998-07-27",
+      "end_date": "1998-08-02"
+    },
+    {
+      "historical_host": "Umag",
+      "series_id": "umag",
+      "start_date": "1998-07-27",
+      "end_date": "1998-08-02"
+    },
+    {
+      "historical_host": "Los Angeles",
+      "series_id": "los_cabos",
+      "start_date": "1998-07-27",
+      "end_date": "1998-08-02"
+    },
+    {
+      "historical_host": "Toronto",
+      "series_id": "canadian_open",
+      "start_date": "1998-08-03",
+      "end_date": "1998-08-09"
+    },
+    {
+      "historical_host": "Amsterdam",
+      "series_id": "belgrade_2012",
+      "start_date": "1998-08-03",
+      "end_date": "1998-08-08"
+    },
+    {
+      "historical_host": "Cincinnati",
+      "series_id": "cincinnati",
+      "start_date": "1998-08-10",
+      "end_date": "1998-08-16"
+    },
+    {
+      "historical_host": "San Marino",
+      "series_id": "san_marino_2000",
+      "start_date": "1998-08-10",
+      "end_date": "1998-08-16"
+    },
+    {
+      "historical_host": "Indianapolis",
+      "series_id": "atlanta",
+      "start_date": "1998-08-17",
+      "end_date": "1998-08-23"
+    },
+    {
+      "historical_host": "New Haven",
+      "series_id": "new_haven_1998",
+      "start_date": "1998-08-17",
+      "end_date": "1998-08-23"
+    },
+    {
+      "historical_host": "Boston",
+      "series_id": "boston_1999",
+      "start_date": "1998-08-24",
+      "end_date": "1998-08-30"
+    },
+    {
+      "historical_host": "Long Island",
+      "series_id": "winston_salem",
+      "start_date": "1998-08-24",
+      "end_date": "1998-08-30"
+    },
+    {
+      "historical_host": "Bucharest",
+      "series_id": "belgrade_clay_2021",
+      "start_date": "1998-09-14",
+      "end_date": "1998-09-20"
+    },
+    {
+      "historical_host": "Tashkent",
+      "series_id": "bangkok_2013",
+      "start_date": "1998-09-14",
+      "end_date": "1998-09-20"
+    },
+    {
+      "historical_host": "Bournemouth",
+      "series_id": "brighton_2000",
+      "start_date": "1998-09-14",
+      "end_date": "1998-09-20"
+    },
+    {
+      "historical_host": "Mallorca",
+      "series_id": "brussels",
+      "start_date": "1998-09-28",
+      "end_date": "1998-10-04"
+    },
+    {
+      "historical_host": "Toulouse",
+      "series_id": "toulouse_2000",
+      "start_date": "1998-09-28",
+      "end_date": "1998-10-04"
+    },
+    {
+      "historical_host": "Basel",
+      "series_id": "basel",
+      "start_date": "1998-10-05",
+      "end_date": "1998-10-11"
+    },
+    {
+      "historical_host": "Palermo",
+      "series_id": "palermo",
+      "start_date": "1998-10-05",
+      "end_date": "1998-10-11"
+    },
+    {
+      "historical_host": "Shanghai",
+      "series_id": "bangalore_2008",
+      "start_date": "1998-10-05",
+      "end_date": "1998-10-11"
+    },
+    {
+      "historical_host": "Vienna",
+      "series_id": "vienna",
+      "start_date": "1998-10-12",
+      "end_date": "1998-10-18"
+    },
+    {
+      "historical_host": "Singapore",
+      "series_id": "singapore_1999",
+      "start_date": "1998-10-12",
+      "end_date": "1998-10-18"
+    },
+    {
+      "historical_host": "Ostrava",
+      "series_id": "ostrava_1998",
+      "start_date": "1998-10-19",
+      "end_date": "1998-10-25"
+    },
+    {
+      "historical_host": "Lyon",
+      "series_id": "montpellier",
+      "start_date": "1998-10-19",
+      "end_date": "1998-10-25"
+    },
+    {
+      "historical_host": "Stuttgart Indoor Masters",
+      "series_id": "stuttgart_indoor_masters",
+      "start_date": "1998-10-26",
+      "end_date": "1998-11-01"
+    },
+    {
+      "historical_host": "Mexico City",
+      "series_id": "acapulco",
+      "start_date": "1998-10-26",
+      "end_date": "1998-11-01"
+    },
+    {
+      "historical_host": "Paris",
+      "series_id": "paris_masters",
+      "start_date": "1998-11-02",
+      "end_date": "1998-11-08"
+    },
+    {
+      "historical_host": "Bogota",
+      "series_id": "bogota_colombia_2001",
+      "start_date": "1998-11-02",
+      "end_date": "1998-11-08"
+    },
+    {
+      "historical_host": "Moscow",
+      "series_id": "moscow",
+      "start_date": "1998-11-09",
+      "end_date": "1998-11-15"
+    },
+    {
+      "historical_host": "Stockholm",
+      "series_id": "stockholm",
+      "start_date": "1998-11-09",
+      "end_date": "1998-11-15"
+    },
+    {
+      "historical_host": "Santiago",
+      "series_id": "santiago_1998",
+      "start_date": "1998-11-09",
+      "end_date": "1998-11-15"
+    },
+    {
+      "historical_host": "ATP Tour World Championship (Hanover)",
+      "series_id": "atp_finals",
+      "start_date": "1998-11-23",
+      "end_date": "1998-11-29"
+    }
+  ]
+}

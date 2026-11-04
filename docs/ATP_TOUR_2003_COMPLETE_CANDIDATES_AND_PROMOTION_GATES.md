@@ -26,3 +26,15 @@ Expected for the 2003 candidate inventory: 63 candidates, zero unmatched parent 
 2. Move the fully vetted 2003 rows to the canonical dates source, keeping official evidence links, and regenerate its committed `calendar.json` snapshot with `python scripts/build_atp_historical_calendar.py --write`.
 3. Run `--check`, all PR-critical and API/FE tests and review final-head hosted CI.
 4. Continue 2002 through 1990 as separate year-specific audited cohorts. Maintain exact dates, annual tier identity and transparent missing/uncertain history.
+
+## Newly verified official ATP Finals date-source conflict (2026-11-04)
+
+There are two different **official ATP** 2003 source representations:
+
+- [Official ATP 2003 annual results archive](https://www.atptour.com/en/scores/results-archive?year=2003) lists the **Tennis Masters Cup as 10–16 November 2003**; the provisional 2003 candidate ledger follows this event-date definition.
+- [ATP tournament-history document](https://www.atptour.com/-/media/08887c4b3be347dd8a2d701c23fcd587.pdf) describes the **2003 Tennis Masters Cup as 8–16 November 2003**.
+
+The difference could concern competition/tournament-calendar definition, but that explanation has **not been independently established**. Do not silently prefer one definition while presenting it as resolved historical truth. The candidate data remains source attributed but cannot be promoted to the official final Calendar while this is unresolved.
+
+`scripts/promote_atp_calendar_candidate.py --check --year 2003` therefore currently **fails closed** with the explicit historical date conflict. The script additionally checks complete roster reconciliation and that no existing source-era Calendar occurrence changes during any future promotion.
+

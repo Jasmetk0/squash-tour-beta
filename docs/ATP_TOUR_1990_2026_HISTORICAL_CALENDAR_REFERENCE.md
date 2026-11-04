@@ -16,10 +16,14 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (1167 entities at the current
-source revision, comprising 37 provenance-coverage entities and 1130 dated
+with Category (11), Series (164) and Calendar (1229 entities at the current
+source revision, comprising 37 provenance-coverage entities and 1192 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
+
+## 2007 archive coverage
+
+All **62 named source Series in the 2007 ATP Tour + Tennis Masters Cup** are individually dated from the original [ATP 2007 results archive](https://www.atptour.com/en/scores/results-archive?year=2007). Era-specific site records are preserved: Adelaide (`brisbane` lineage), Mumbai (`bangalore_2008`), Sopot (`warsaw_2008`), Amersfoort (`belgrade_2012`), Pörtschach, Nottingham (`eastbourne` lineage), Memphis (`rio`), Valencia (`brussels`) and Lyon (`montpellier`). The tour also included Hamburg and indoor Madrid **Tennis Masters Series**, not their modern ATP 500 / Madrid clay chronology. Grand Slams, team events and Davis Cup are not imported.
 
 ## 2008 archive coverage
 
@@ -126,7 +130,8 @@ Grand Slams, Olympic and team events remain out of scope.
 
 | Year(s) | Source status | Dated Series | Undated |
 | --- | --- | ---: | ---: |
-| 1990–2007 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 1990–2006 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 2007 | Official results archive, historical host continuity | **62 / 62** | 0 |
 | 2008 | Official archive, original ATP tiers; Bangalore not held | **61 / 61 played** | 0 |
 | 2009 | Official ATP results archive, year-specific historical hosts | **61 / 61** | 0 |
 | 2010 | Official ATP results archive, all named source Series | **61 / 61** | 0 |
@@ -149,12 +154,13 @@ Grand Slams, Olympic and team events remain out of scope.
 
 **No generic history period or week is interpreted as a tournament date.**
 The parent Category/Series dataset contains 2,431 year-effective memberships;
-1130 unique year/Series occurrences currently have original *date* sources.
+1192 unique year/Series occurrences currently have original *date* sources.
 The other historical years will be sourced individually, not filled by
 inventing dates or extrapolating 2025/2026 patterns.
 
 Source links:
 
+- [2007 official results archive](https://www.atptour.com/en/scores/results-archive?year=2007).
 - [2008 official results archive](https://www.atptour.com/en/scores/results-archive?year=2008).
 - [2009 official results archive](https://www.atptour.com/en/scores/results-archive?year=2009).
 - [2010 official results archive](https://www.atptour.com/en/scores/results-archive?year=2010).
@@ -253,6 +259,6 @@ its own separately reviewed date-to-Run-clock policy.
    Saved Revision. No source-only date reference may be promoted to playable
    FAX events by these steps.
 
-The work is **not complete for 1990–2007**. Source-year coverage must be
+The work is **not complete for 1990–2006**. Source-year coverage must be
 upgraded year by year using original contemporaneous calendars and/or official
 ATP results archives. 2026 final validation remains pending.

@@ -4,7 +4,7 @@
   "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
   "source_url": "https://www.atptour.com/en/scores/results-archive?year=2001",
   "as_of": "2026-11-04",
-  "notes": "Seven early-season ATP 2001 main-tour tournament date candidates transcribed from official ATP results archive. This is an explicitly partial year and must not be promoted as complete.",
+  "notes": "34 official ATP 2001 archive date intervals transcribed; still partial until complete 65-Series audit. Historical host IDs derived from parent source; legal licence provenance is not fully certified.",
   "events": [
     {
       "historical_host": "Doha",
@@ -47,6 +47,168 @@
       "series_id": "sofia",
       "start_date": "2001-01-29",
       "end_date": "2001-02-04"
+    },
+    {
+      "historical_host": "Marseille",
+      "series_id": "lyon",
+      "start_date": "2001-02-12",
+      "end_date": "2001-02-18"
+    },
+    {
+      "historical_host": "Viña del Mar",
+      "series_id": "cordoba",
+      "start_date": "2001-02-12",
+      "end_date": "2001-02-18"
+    },
+    {
+      "historical_host": "Copenhagen",
+      "series_id": "copenhagen_2003",
+      "start_date": "2001-02-12",
+      "end_date": "2001-02-18"
+    },
+    {
+      "historical_host": "Rotterdam",
+      "series_id": "rotterdam",
+      "start_date": "2001-02-19",
+      "end_date": "2001-02-25"
+    },
+    {
+      "historical_host": "Memphis",
+      "series_id": "rio",
+      "start_date": "2001-02-19",
+      "end_date": "2001-02-25"
+    },
+    {
+      "historical_host": "Buenos Aires",
+      "series_id": "buenos_aires",
+      "start_date": "2001-02-19",
+      "end_date": "2001-02-25"
+    },
+    {
+      "historical_host": "Dubai",
+      "series_id": "dubai",
+      "start_date": "2001-02-26",
+      "end_date": "2001-03-04"
+    },
+    {
+      "historical_host": "Acapulco",
+      "series_id": "acapulco",
+      "start_date": "2001-02-26",
+      "end_date": "2001-03-04"
+    },
+    {
+      "historical_host": "San Jose",
+      "series_id": "dallas",
+      "start_date": "2001-02-26",
+      "end_date": "2001-03-04"
+    },
+    {
+      "historical_host": "Scottsdale",
+      "series_id": "las_vegas_2008",
+      "start_date": "2001-03-05",
+      "end_date": "2001-03-11"
+    },
+    {
+      "historical_host": "Delray Beach",
+      "series_id": "delray_beach",
+      "start_date": "2001-03-05",
+      "end_date": "2001-03-11"
+    },
+    {
+      "historical_host": "Indian Wells",
+      "series_id": "indian_wells",
+      "start_date": "2001-03-12",
+      "end_date": "2001-03-18"
+    },
+    {
+      "historical_host": "Miami",
+      "series_id": "miami",
+      "start_date": "2001-03-19",
+      "end_date": "2001-04-01"
+    },
+    {
+      "historical_host": "Estoril",
+      "series_id": "estoril",
+      "start_date": "2001-04-09",
+      "end_date": "2001-04-15"
+    },
+    {
+      "historical_host": "Casablanca",
+      "series_id": "marrakech",
+      "start_date": "2001-04-09",
+      "end_date": "2001-04-15"
+    },
+    {
+      "historical_host": "Monte-Carlo",
+      "series_id": "monte_carlo",
+      "start_date": "2001-04-16",
+      "end_date": "2001-04-22"
+    },
+    {
+      "historical_host": "Barcelona",
+      "series_id": "barcelona",
+      "start_date": "2001-04-23",
+      "end_date": "2001-04-29"
+    },
+    {
+      "historical_host": "Mallorca",
+      "series_id": "brussels",
+      "start_date": "2001-04-30",
+      "end_date": "2001-05-06"
+    },
+    {
+      "historical_host": "Munich",
+      "series_id": "munich",
+      "start_date": "2001-04-30",
+      "end_date": "2001-05-06"
+    },
+    {
+      "historical_host": "Houston",
+      "series_id": "houston",
+      "start_date": "2001-04-30",
+      "end_date": "2001-05-06"
+    },
+    {
+      "historical_host": "Rome",
+      "series_id": "rome",
+      "start_date": "2001-05-07",
+      "end_date": "2001-05-13"
+    },
+    {
+      "historical_host": "Hamburg",
+      "series_id": "hamburg",
+      "start_date": "2001-05-14",
+      "end_date": "2001-05-20"
+    },
+    {
+      "historical_host": "St. Pölten",
+      "series_id": "poertschach_2008",
+      "start_date": "2001-05-21",
+      "end_date": "2001-05-27"
+    },
+    {
+      "historical_host": "Halle",
+      "series_id": "halle",
+      "start_date": "2001-06-11",
+      "end_date": "2001-06-17"
+    },
+    {
+      "historical_host": "London / Queen's Club",
+      "series_id": "queens_club",
+      "start_date": "2001-06-11",
+      "end_date": "2001-06-17"
+    },
+    {
+      "historical_host": "Nottingham",
+      "series_id": "eastbourne",
+      "start_date": "2001-06-18",
+      "end_date": "2001-06-24"
+    },
+    {
+      "historical_host": "'s-Hertogenbosch",
+      "series_id": "s_hertogenbosch",
+      "start_date": "2001-06-18",
+      "end_date": "2001-06-24"
     }
   ]
 }

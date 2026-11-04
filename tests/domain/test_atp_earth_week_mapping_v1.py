@@ -214,3 +214,57 @@ def test_majority_week_nonmutation_of_source_dates(report: dict) -> None:
     assert example["original_end_date"] == "2012-11-12"
     assert len(example["source_iso_weeks"]) == 2
     assert sum(r["source_days_in_week"] for r in example["source_iso_week_day_counts"]) == 8
+
+
+def test_every_week_projection_preserves_exact_day_provenance(report: dict) -> None:
+    """Check all 2,407 records, not only representative dated examples."""
+    for item in report["mappings"]:
+        source_weeks = item["source_iso_weeks"]
+        allocation = item["source_iso_week_day_counts"]
+        mapped = item["mapped_year_weeks"]
+        assert len(source_weeks) == len(allocation)
+        assert item["source_finish_iso_week"] == source_weeks[-1]
+        assert sum(row["source_days_in_week"] for row in allocation) == (
+            item["source_duration_days_inclusive"]
+        )
+        assert all(row["source_days_in_week"] >= 1 for row in allocation)
+        assert [
+            {"calendar_year": row["calendar_year"], "year_week": row["year_week"]}
+            for row in allocation
+        ] == source_weeks
+        if item["source_duration_days_inclusive"] <= 8:
+            assert len(mapped) == 1
+            chosen = next(
+                r for r in allocation
+                if (r["calendar_year"], r["year_week"])
+                == (mapped[0]["calendar_year"], mapped[0]["year_week"])
+            )
+            assert chosen["source_days_in_week"] > max(
+                (r["source_days_in_week"] for r in allocation if r is not chosen),
+                default=0,
+            )
+            assert item["mapping_rule"] == "single_majority_week"
+        else:
+            assert mapped == source_weeks
+            assert item["mapping_rule"] in {
+                "two_source_iso_weeks", "three_source_iso_weeks_reviewed"
+            }
+
+
+def test_evenly_split_short_week_projection_fails_closed() -> None:
+    """Eight days Thu-to-Thu can split four and four; do not invent priority."""
+    with pytest.raises(ValueError, match="Ambiguous short-event majority week"):
+        map_one(
+            season_year=2025, series_id="hypothetical",
+            start_date="2025-06-05", end_date="2025-06-12",
+            year_source_status="verified_results_archive",
+        )
+
+
+def test_wrong_source_season_year_rejected() -> None:
+    with pytest.raises(ValueError, match="source season"):
+        map_one(
+            season_year=2025, series_id="hypothetical",
+            start_date="2024-10-06", end_date="2024-10-13",
+            year_source_status="verified_results_archive",
+        )

@@ -34,7 +34,7 @@ PENDING_CONFLICTS = {
 }
 
 
-def prepare(year: int, *, allow_unresolved: bool = False):
+def prepare(year: int):
     if year != 2003:
         raise ValueError("Only the explicit 2003 candidate ledger is supported")
     candidate = json.loads(
@@ -58,15 +58,13 @@ def prepare(year: int, *, allow_unresolved: bool = False):
     if audit["year"] != year or not audit["ready_for_whole_year_promotion"]:
         raise ValueError("Historical year not fully reconciled to parent roster")
     conflicts = PENDING_CONFLICTS.get(year, {})
-    if conflicts and not allow_unresolved:
+    if conflicts:
         raise ValueError(
             "Unresolved official ATP dates block whole-year promotion: "
             + "; ".join(f"{sid}: {why}" for sid, why in conflicts.items())
         )
-    # Deliberately do not expose a --force flag. Historical disagreement
-    # requires source curation rather than bypassing evidence gates.
-    if conflicts:
-        raise ValueError("Historical ATP source conflict must be resolved")
+    # Deliberately do not expose a --force flag: source conflicts must be
+    # resolved through source curation, never bypassed by a command option.
     promoted = dict(dated)
     promoted["year_sources"] = dict(dated["year_sources"])
     if str(year) in promoted["year_sources"]:

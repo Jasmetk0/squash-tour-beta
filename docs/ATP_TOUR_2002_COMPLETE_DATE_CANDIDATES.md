@@ -23,3 +23,20 @@ python scripts/promote_atp_calendar_candidate.py --check --year 2002
 After source review and green tests, an explicit `--write --year 2002` performs source and generated snapshot updates together in the working tree; commit **both** files in one PR. The script performs old-occurrence immutability checks; it has not been run and no generated snapshot has been committed in this contribution.
 
 The distinct 2003 official ATP Finals date discrepancy remains blocked for canonical promotion. Neither parent #1731 nor stacked #1741 is merged.
+
+
+## Canonical import — 4 November 2026
+
+All **62** 2002 original-tier source candidates have now been promoted into
+the canonical ATP Calendar source and regenerated Calendar snapshot, together
+with the 65 events of 2001. These are historical reference dates and ISO
+week labels, **not** runnable FAX tournament editions or certified legal
+Series transfers. The idempotent verification is:
+
+```bash
+python scripts/promote_atp_calendar_candidate.py --check --year 2002
+python scripts/build_atp_historical_calendar.py --check
+```
+
+The earlier instructions above describing the 2002 cohort as staged and
+uncommitted predate this import.

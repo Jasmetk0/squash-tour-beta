@@ -21,6 +21,10 @@ source revision, comprising 37 provenance-coverage entities and 1731 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
 
+## 1994 source-date backfill (partial, not canonical)
+
+The 1994 parent historical source has **85 original ATP Tour / Finals Series**. A separately staged [1994 evidence ledger](ATP_TOUR_1994_PARTIAL_DATE_REFERENCE.md) now records **23 exact dated candidate events** (22 dated January–April original tour fixtures plus Frankfurt ATP Finals 15–20 November). **62 Series remain undated**, so 1994 still has no canonical source-year dates. The auditor reports the exact missing Series; the promoter refuses an incomplete 1994 import. No existing 1,731 canonical occurrences, 37 coverage entities, Run Save, or FAX sporting behavior are changed. The 1997–1999 and 2003 Finals date conflicts remain separately unresolved.
+
 ## 2004 archive coverage
 
 All **63 played 2004 ATP Tour / Tennis Masters Cup historical source Series** are dated from the [ATP 2004 results archive](https://www.atptour.com/en/scores/results-archive?year=2004), with independent corroboration for specific venues (e.g. [ITF Palermo 2004](https://www.itftennis.com/en/tournament/palermo/ita/2004/m-is-ita-02a-2004/draws-and-results/)). Olympic tennis in Athens is **excluded**, as are Grand Slams, World Team Cup and Davis Cup. The original historical host and 2004 week arrangement, including *September Delray Beach*, Shanghai (`bangalore_2008` lineage), 2004 March Scottsdale (`las_vegas_2008`), Sopot (`warsaw_2008`), Amersfoort, St. Pölten, Memphis and autumn Madrid are preserved. **2004 Masters Cup start-date discrepancy:** official ATP year results archive shows **15–21 Nov 2004**, while [ATP Finals heritage](https://www.nittoatpfinals.com/en/heritage/results-2000-2023) records **13–21 Nov**. Stored year-source date follows the original ATP yearly archive, pending date-definition reconciliation. This is not independently a complete annual event census beyond the 2004 parent roster.

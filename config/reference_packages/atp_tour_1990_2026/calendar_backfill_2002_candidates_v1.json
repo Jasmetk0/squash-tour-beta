@@ -4,7 +4,7 @@
   "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
   "source_url": "https://www.atptour.com/en/scores/results-archive?year=2002",
   "as_of": "2026-11-04",
-  "notes": "31 individually sourced played ATP 2002 main-tour events. Partial evidence only; not a complete annual roster. Parent licence lineage remains provisional; stage separately without canonical import.",
+  "notes": "All 62 year-effective source Series matched to ATP 2002 archived played dates (62/62 parent roster). Parent legal licence evidence remains separately qualified. Candidate source remains distinct from canonical Calendar pending audited promotion and snapshot rebuild.",
   "events": [
     {
       "historical_host": "Doha",
@@ -191,6 +191,192 @@
       "series_id": "queens_club",
       "start_date": "2002-06-10",
       "end_date": "2002-06-16"
+    },
+    {
+      "historical_host": "Nottingham",
+      "series_id": "eastbourne",
+      "start_date": "2002-06-17",
+      "end_date": "2002-06-23"
+    },
+    {
+      "historical_host": "'s-Hertogenbosch",
+      "series_id": "s_hertogenbosch",
+      "start_date": "2002-06-17",
+      "end_date": "2002-06-23"
+    },
+    {
+      "historical_host": "Gstaad",
+      "series_id": "gstaad",
+      "start_date": "2002-07-08",
+      "end_date": "2002-07-14"
+    },
+    {
+      "historical_host": "Newport",
+      "series_id": "newport",
+      "start_date": "2002-07-08",
+      "end_date": "2002-07-14"
+    },
+    {
+      "historical_host": "Bastad",
+      "series_id": "bastad",
+      "start_date": "2002-07-08",
+      "end_date": "2002-07-14"
+    },
+    {
+      "historical_host": "Stuttgart",
+      "series_id": "stuttgart",
+      "start_date": "2002-07-15",
+      "end_date": "2002-07-21"
+    },
+    {
+      "historical_host": "Amersfoort",
+      "series_id": "belgrade_2012",
+      "start_date": "2002-07-15",
+      "end_date": "2002-07-21"
+    },
+    {
+      "historical_host": "Umag",
+      "series_id": "umag",
+      "start_date": "2002-07-15",
+      "end_date": "2002-07-21"
+    },
+    {
+      "historical_host": "Kitzbühel",
+      "series_id": "kitzbuhel",
+      "start_date": "2002-07-22",
+      "end_date": "2002-07-28"
+    },
+    {
+      "historical_host": "Los Angeles",
+      "series_id": "los_cabos",
+      "start_date": "2002-07-22",
+      "end_date": "2002-07-28"
+    },
+    {
+      "historical_host": "Sopot",
+      "series_id": "warsaw_2008",
+      "start_date": "2002-07-22",
+      "end_date": "2002-07-28"
+    },
+    {
+      "historical_host": "Toronto",
+      "series_id": "canadian_open",
+      "start_date": "2002-07-29",
+      "end_date": "2002-08-04"
+    },
+    {
+      "historical_host": "Cincinnati",
+      "series_id": "cincinnati",
+      "start_date": "2002-08-05",
+      "end_date": "2002-08-11"
+    },
+    {
+      "historical_host": "Indianapolis",
+      "series_id": "atlanta",
+      "start_date": "2002-08-12",
+      "end_date": "2002-08-18"
+    },
+    {
+      "historical_host": "Washington",
+      "series_id": "washington",
+      "start_date": "2002-08-12",
+      "end_date": "2002-08-18"
+    },
+    {
+      "historical_host": "Long Island",
+      "series_id": "winston_salem",
+      "start_date": "2002-08-19",
+      "end_date": "2002-08-25"
+    },
+    {
+      "historical_host": "Costa do Sauípe",
+      "series_id": "sao_paulo",
+      "start_date": "2002-09-09",
+      "end_date": "2002-09-15"
+    },
+    {
+      "historical_host": "Tashkent",
+      "series_id": "bangkok_2013",
+      "start_date": "2002-09-09",
+      "end_date": "2002-09-15"
+    },
+    {
+      "historical_host": "Bucharest",
+      "series_id": "belgrade_clay_2021",
+      "start_date": "2002-09-09",
+      "end_date": "2002-09-15"
+    },
+    {
+      "historical_host": "Hong Kong",
+      "series_id": "hong_kong_salem_2002",
+      "start_date": "2002-09-23",
+      "end_date": "2002-09-29"
+    },
+    {
+      "historical_host": "Palermo",
+      "series_id": "palermo",
+      "start_date": "2002-09-23",
+      "end_date": "2002-09-29"
+    },
+    {
+      "historical_host": "Moscow",
+      "series_id": "moscow",
+      "start_date": "2002-09-30",
+      "end_date": "2002-10-06"
+    },
+    {
+      "historical_host": "Tokyo",
+      "series_id": "tokyo",
+      "start_date": "2002-09-30",
+      "end_date": "2002-10-06"
+    },
+    {
+      "historical_host": "Vienna",
+      "series_id": "vienna",
+      "start_date": "2002-10-07",
+      "end_date": "2002-10-13"
+    },
+    {
+      "historical_host": "Lyon",
+      "series_id": "montpellier",
+      "start_date": "2002-10-07",
+      "end_date": "2002-10-13"
+    },
+    {
+      "historical_host": "Madrid",
+      "series_id": "madrid",
+      "start_date": "2002-10-14",
+      "end_date": "2002-10-20"
+    },
+    {
+      "historical_host": "Basel",
+      "series_id": "basel",
+      "start_date": "2002-10-21",
+      "end_date": "2002-10-27"
+    },
+    {
+      "historical_host": "St. Petersburg",
+      "series_id": "st_petersburg",
+      "start_date": "2002-10-21",
+      "end_date": "2002-10-27"
+    },
+    {
+      "historical_host": "Stockholm",
+      "series_id": "stockholm",
+      "start_date": "2002-10-21",
+      "end_date": "2002-10-27"
+    },
+    {
+      "historical_host": "Paris",
+      "series_id": "paris_masters",
+      "start_date": "2002-10-28",
+      "end_date": "2002-11-03"
+    },
+    {
+      "historical_host": "Tennis Masters Cup",
+      "series_id": "atp_finals",
+      "start_date": "2002-11-11",
+      "end_date": "2002-11-17"
     }
   ]
 }

@@ -509,96 +509,15 @@
       "entity_schema_version": 1,
       "payload": {
         "atp_season_year": 1995,
-        "date_coverage_state": "undated",
-        "dated_series_count": 0,
+        "date_coverage_state": "verified_complete_known_series_dates",
+        "dated_series_count": 80,
         "known_not_held_series_ids": [],
         "no_fabricated_dates": true,
         "not_squash_rules": true,
         "roster_series_count": 80,
-        "undated_series_ids": [
-          "acapulco",
-          "atlanta",
-          "atlanta_verizon_2001",
-          "atp_finals",
-          "auckland",
-          "barcelona",
-          "basel",
-          "bastad",
-          "beijing_1997",
-          "belgrade_2012",
-          "belgrade_clay_2021",
-          "bermuda_1996",
-          "bogota_colombia_2001",
-          "bologna_1998",
-          "bordeaux_1995",
-          "brisbane",
-          "brussels",
-          "buenos_aires_1995",
-          "canadian_open",
-          "cincinnati",
-          "copenhagen_2003",
-          "dallas",
-          "delray_beach",
-          "doha",
-          "dubai",
-          "eastbourne",
-          "essen_masters",
-          "estoril",
-          "gstaad",
-          "halle",
-          "hamburg",
-          "hong_kong",
-          "hong_kong_salem_2002",
-          "houston",
-          "indian_wells",
-          "jakarta_1996",
-          "johannesburg_1995",
-          "kitzbuhel",
-          "las_vegas_2008",
-          "los_cabos",
-          "lyon",
-          "marrakech",
-          "miami",
-          "monte_carlo",
-          "montevideo_1995",
-          "montpellier",
-          "moscow",
-          "munich",
-          "new_haven_1998",
-          "newport",
-          "ostrava_1998",
-          "palermo",
-          "paris_masters",
-          "philadelphia_1998",
-          "poertschach_2008",
-          "porto_1996",
-          "prague_1999",
-          "queens_club",
-          "rio",
-          "rome",
-          "rotterdam",
-          "s_hertogenbosch",
-          "san_marino_2000",
-          "santiago_1998",
-          "seoul_1996",
-          "singapore_1999",
-          "sofia",
-          "st_petersburg",
-          "stockholm",
-          "stuttgart",
-          "stuttgart_indoor_feb_1995",
-          "sydney_2019",
-          "tel_aviv_1996",
-          "tokyo",
-          "tokyo_indoor_1995",
-          "toulouse_2000",
-          "umag",
-          "vienna",
-          "washington",
-          "winston_salem"
-        ],
-        "year_source_status": "not_dated_no_fabricated_dates",
-        "year_source_url": null
+        "undated_series_ids": [],
+        "year_source_status": "verified_results_archive",
+        "year_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995"
       },
       "references": [],
       "scope": "tennis.atp_tour.calendar.reference.1990_2026",
@@ -1533,6 +1452,4094 @@
       "references": [],
       "scope": "tennis.atp_tour.calendar.reference.1990_2026",
       "source_entity_id": "season_2026_date_coverage",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-03-05",
+        "end_year_week": {
+          "iso_week": 9,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 9,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "acapulco",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-02-27",
+        "start_year_week": {
+          "iso_week": 9,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "acapulco",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_acapulco",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-08-20",
+        "end_year_week": {
+          "iso_week": 33,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 33,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "atlanta",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-08-14",
+        "start_year_week": {
+          "iso_week": 33,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atlanta",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_atlanta",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-05-07",
+        "end_year_week": {
+          "iso_week": 18,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 18,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "atlanta_verizon_2001",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-05-01",
+        "start_year_week": {
+          "iso_week": 18,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atlanta_verizon_2001",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_atlanta_verizon_2001",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_finals",
+        "duration_days_inclusive": 6,
+        "end_date": "1995-11-19",
+        "end_year_week": {
+          "iso_week": 46,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 46,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "atp_finals",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-11-14",
+        "start_year_week": {
+          "iso_week": 46,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_finals",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_finals",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_atp_finals",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-01-15",
+        "end_year_week": {
+          "iso_week": 2,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 2,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "auckland",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-01-09",
+        "start_year_week": {
+          "iso_week": 2,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "auckland",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_auckland",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-04-16",
+        "end_year_week": {
+          "iso_week": 15,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 15,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "barcelona",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-04-10",
+        "start_year_week": {
+          "iso_week": 15,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "barcelona",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_barcelona",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-01",
+        "end_year_week": {
+          "iso_week": 39,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 39,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "basel",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-09-25",
+        "start_year_week": {
+          "iso_week": 39,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "basel",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_basel",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-07-16",
+        "end_year_week": {
+          "iso_week": 28,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 28,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "bastad",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-07-10",
+        "start_year_week": {
+          "iso_week": 28,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "bastad",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_bastad",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-22",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "beijing_1997",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-16",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "beijing_1997",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_beijing_1997",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-07-30",
+        "end_year_week": {
+          "iso_week": 30,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 30,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "belgrade_2012",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-07-24",
+        "start_year_week": {
+          "iso_week": 30,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "belgrade_2012",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_belgrade_2012",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-09-17",
+        "end_year_week": {
+          "iso_week": 37,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 37,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "belgrade_clay_2021",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-09-11",
+        "start_year_week": {
+          "iso_week": 37,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "belgrade_clay_2021",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_belgrade_clay_2021",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-04-23",
+        "end_year_week": {
+          "iso_week": 16,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 16,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "bermuda_1996",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-04-17",
+        "start_year_week": {
+          "iso_week": 16,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "bermuda_1996",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_bermuda_1996",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-09-17",
+        "end_year_week": {
+          "iso_week": 37,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 37,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "bogota_colombia_2001",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-09-11",
+        "start_year_week": {
+          "iso_week": 37,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "bogota_colombia_2001",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_bogota_colombia_2001",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-05-28",
+        "end_year_week": {
+          "iso_week": 21,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 21,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "bologna_1998",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-05-22",
+        "start_year_week": {
+          "iso_week": 21,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "bologna_1998",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_bologna_1998",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-09-17",
+        "end_year_week": {
+          "iso_week": 37,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 37,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "bordeaux_1995",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-09-11",
+        "start_year_week": {
+          "iso_week": 37,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "bordeaux_1995",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_bordeaux_1995",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-01-08",
+        "end_year_week": {
+          "iso_week": 1,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 1,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "brisbane",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-01-02",
+        "start_year_week": {
+          "iso_week": 1,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "brisbane",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_brisbane",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-08",
+        "end_year_week": {
+          "iso_week": 40,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 40,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "brussels",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-02",
+        "start_year_week": {
+          "iso_week": 40,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "brussels",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_brussels",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-11-12",
+        "end_year_week": {
+          "iso_week": 45,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 45,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "buenos_aires_1995",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-11-06",
+        "start_year_week": {
+          "iso_week": 45,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "buenos_aires_1995",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_buenos_aires_1995",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_single_week",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-07-30",
+        "end_year_week": {
+          "iso_week": 30,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 30,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "canadian_open",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-07-24",
+        "start_year_week": {
+          "iso_week": 30,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_single_week",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "canadian_open",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_canadian_open",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_single_week",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-08-13",
+        "end_year_week": {
+          "iso_week": 32,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 32,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "cincinnati",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-08-07",
+        "start_year_week": {
+          "iso_week": 32,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_single_week",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "cincinnati",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_cincinnati",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-03-12",
+        "end_year_week": {
+          "iso_week": 10,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 10,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "copenhagen_2003",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-03-06",
+        "start_year_week": {
+          "iso_week": 10,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "copenhagen_2003",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_copenhagen_2003",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-02-12",
+        "end_year_week": {
+          "iso_week": 6,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 6,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "dallas",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-02-06",
+        "start_year_week": {
+          "iso_week": 6,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "dallas",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_dallas",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-05-21",
+        "end_year_week": {
+          "iso_week": 20,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 20,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "delray_beach",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-05-15",
+        "start_year_week": {
+          "iso_week": 20,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "delray_beach",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_delray_beach",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-01-08",
+        "end_year_week": {
+          "iso_week": 1,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 1,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "doha",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-01-02",
+        "start_year_week": {
+          "iso_week": 1,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "doha",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_doha",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-02-12",
+        "end_year_week": {
+          "iso_week": 6,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 6,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "dubai",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-02-06",
+        "start_year_week": {
+          "iso_week": 6,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "dubai",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_dubai",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-06-25",
+        "end_year_week": {
+          "iso_week": 25,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 25,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "eastbourne",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-06-19",
+        "start_year_week": {
+          "iso_week": 25,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "eastbourne",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_eastbourne",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_single_week",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-29",
+        "end_year_week": {
+          "iso_week": 43,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 43,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "essen_masters",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-23",
+        "start_year_week": {
+          "iso_week": 43,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_single_week",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "essen_masters",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_essen_masters",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-04-09",
+        "end_year_week": {
+          "iso_week": 14,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 14,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "estoril",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-04-03",
+        "start_year_week": {
+          "iso_week": 14,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "estoril",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_estoril",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-07-16",
+        "end_year_week": {
+          "iso_week": 28,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 28,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "gstaad",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-07-10",
+        "start_year_week": {
+          "iso_week": 28,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "gstaad",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_gstaad",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-06-25",
+        "end_year_week": {
+          "iso_week": 25,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 25,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "halle",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-06-19",
+        "start_year_week": {
+          "iso_week": 25,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "halle",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_halle",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_single_week",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-05-14",
+        "end_year_week": {
+          "iso_week": 19,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 19,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "hamburg",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-05-08",
+        "start_year_week": {
+          "iso_week": 19,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_single_week",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "hamburg",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_hamburg",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-04-23",
+        "end_year_week": {
+          "iso_week": 16,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 16,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "hong_kong",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-04-17",
+        "start_year_week": {
+          "iso_week": 16,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "hong_kong",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_hong_kong",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-04-23",
+        "end_year_week": {
+          "iso_week": 16,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 16,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "hong_kong_salem_2002",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-04-17",
+        "start_year_week": {
+          "iso_week": 16,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "hong_kong_salem_2002",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_hong_kong_salem_2002",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-05-14",
+        "end_year_week": {
+          "iso_week": 19,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 19,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "houston",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-05-08",
+        "start_year_week": {
+          "iso_week": 19,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "houston",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_houston",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_single_week",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-03-12",
+        "end_year_week": {
+          "iso_week": 10,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 10,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "indian_wells",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-03-06",
+        "start_year_week": {
+          "iso_week": 10,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_single_week",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "indian_wells",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_indian_wells",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-01-15",
+        "end_year_week": {
+          "iso_week": 2,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 2,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "jakarta_1996",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-01-09",
+        "start_year_week": {
+          "iso_week": 2,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "jakarta_1996",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_jakarta_1996",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-04-09",
+        "end_year_week": {
+          "iso_week": 14,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 14,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "johannesburg_1995",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-04-03",
+        "start_year_week": {
+          "iso_week": 14,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "johannesburg_1995",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_johannesburg_1995",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-08-06",
+        "end_year_week": {
+          "iso_week": 31,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 31,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "kitzbuhel",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-07-31",
+        "start_year_week": {
+          "iso_week": 31,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "kitzbuhel",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_kitzbuhel",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-03-05",
+        "end_year_week": {
+          "iso_week": 9,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 9,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "las_vegas_2008",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-02-27",
+        "start_year_week": {
+          "iso_week": 9,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "las_vegas_2008",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_las_vegas_2008",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-08-06",
+        "end_year_week": {
+          "iso_week": 31,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 31,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "los_cabos",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-07-31",
+        "start_year_week": {
+          "iso_week": 31,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "los_cabos",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_los_cabos",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-02-12",
+        "end_year_week": {
+          "iso_week": 6,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 6,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "lyon",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-02-06",
+        "start_year_week": {
+          "iso_week": 6,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "lyon",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_lyon",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-03-26",
+        "end_year_week": {
+          "iso_week": 12,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 12,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "marrakech",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-03-20",
+        "start_year_week": {
+          "iso_week": 12,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "marrakech",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_marrakech",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_single_week",
+        "duration_days_inclusive": 14,
+        "end_date": "1995-03-26",
+        "end_year_week": {
+          "iso_week": 12,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 11,
+            "iso_year": 1995
+          },
+          {
+            "iso_week": 12,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "miami",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-03-13",
+        "start_year_week": {
+          "iso_week": 11,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_single_week",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "miami",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_miami",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_single_week",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-04-30",
+        "end_year_week": {
+          "iso_week": 17,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 17,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "monte_carlo",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-04-24",
+        "start_year_week": {
+          "iso_week": 17,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_single_week",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "monte_carlo",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_monte_carlo",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-11-05",
+        "end_year_week": {
+          "iso_week": 44,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 44,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "montevideo_1995",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-30",
+        "start_year_week": {
+          "iso_week": 44,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "montevideo_1995",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_montevideo_1995",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-22",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "montpellier",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-16",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "montpellier",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_montpellier",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-11-12",
+        "end_year_week": {
+          "iso_week": 45,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 45,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "moscow",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-11-06",
+        "start_year_week": {
+          "iso_week": 45,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "moscow",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_moscow",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-05-07",
+        "end_year_week": {
+          "iso_week": 18,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 18,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "munich",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-05-01",
+        "start_year_week": {
+          "iso_week": 18,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "munich",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_munich",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-08-20",
+        "end_year_week": {
+          "iso_week": 33,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 33,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "new_haven_1998",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-08-14",
+        "start_year_week": {
+          "iso_week": 33,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "new_haven_1998",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_new_haven_1998",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-07-16",
+        "end_year_week": {
+          "iso_week": 28,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 28,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "newport",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-07-10",
+        "start_year_week": {
+          "iso_week": 28,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "newport",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_newport",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-15",
+        "end_year_week": {
+          "iso_week": 41,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 41,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "ostrava_1998",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-09",
+        "start_year_week": {
+          "iso_week": 41,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "ostrava_1998",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_ostrava_1998",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-01",
+        "end_year_week": {
+          "iso_week": 39,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 39,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "palermo",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-09-25",
+        "start_year_week": {
+          "iso_week": 39,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "palermo",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_palermo",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_single_week",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-11-05",
+        "end_year_week": {
+          "iso_week": 44,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 44,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "paris_masters",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-30",
+        "start_year_week": {
+          "iso_week": 44,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_single_week",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "paris_masters",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_paris_masters",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-02-26",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "philadelphia_1998",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-02-20",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "philadelphia_1998",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_philadelphia_1998",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-06-25",
+        "end_year_week": {
+          "iso_week": 25,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 25,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "poertschach_2008",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-06-19",
+        "start_year_week": {
+          "iso_week": 25,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "poertschach_2008",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_poertschach_2008",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-06-18",
+        "end_year_week": {
+          "iso_week": 24,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 24,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "porto_1996",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-06-12",
+        "start_year_week": {
+          "iso_week": 24,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "porto_1996",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_porto_1996",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-08-06",
+        "end_year_week": {
+          "iso_week": 31,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 31,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "prague_1999",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-07-31",
+        "start_year_week": {
+          "iso_week": 31,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "prague_1999",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_prague_1999",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-06-18",
+        "end_year_week": {
+          "iso_week": 24,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 24,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "queens_club",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-06-12",
+        "start_year_week": {
+          "iso_week": 24,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "queens_club",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_queens_club",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-02-19",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rio",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-02-13",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rio",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_rio",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_single_week",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-05-21",
+        "end_year_week": {
+          "iso_week": 20,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 20,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rome",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-05-15",
+        "start_year_week": {
+          "iso_week": 20,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_single_week",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rome",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_rome",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-03-05",
+        "end_year_week": {
+          "iso_week": 9,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 9,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rotterdam",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-02-27",
+        "start_year_week": {
+          "iso_week": 9,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rotterdam",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_rotterdam",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-06-18",
+        "end_year_week": {
+          "iso_week": 24,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 24,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "s_hertogenbosch",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-06-12",
+        "start_year_week": {
+          "iso_week": 24,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "s_hertogenbosch",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_s_hertogenbosch",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-08-13",
+        "end_year_week": {
+          "iso_week": 32,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 32,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "san_marino_2000",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-08-07",
+        "start_year_week": {
+          "iso_week": 32,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "san_marino_2000",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_san_marino_2000",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-29",
+        "end_year_week": {
+          "iso_week": 43,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 43,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "santiago_1998",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-23",
+        "start_year_week": {
+          "iso_week": 43,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "santiago_1998",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_santiago_1998",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-04-30",
+        "end_year_week": {
+          "iso_week": 17,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 17,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "seoul_1996",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-04-24",
+        "start_year_week": {
+          "iso_week": 17,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "seoul_1996",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_seoul_1996",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-08",
+        "end_year_week": {
+          "iso_week": 40,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 40,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "singapore_1999",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-02",
+        "start_year_week": {
+          "iso_week": 40,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "singapore_1999",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_singapore_1999",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-02-19",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "sofia",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-02-13",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "sofia",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_sofia",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 14,
+        "end_date": "1995-03-26",
+        "end_year_week": {
+          "iso_week": 12,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 11,
+            "iso_year": 1995
+          },
+          {
+            "iso_week": 12,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "st_petersburg",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-03-13",
+        "start_year_week": {
+          "iso_week": 11,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "st_petersburg",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_st_petersburg",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-11-12",
+        "end_year_week": {
+          "iso_week": 45,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 45,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "stockholm",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-11-06",
+        "start_year_week": {
+          "iso_week": 45,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "stockholm",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_stockholm",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-07-23",
+        "end_year_week": {
+          "iso_week": 29,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 29,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "stuttgart",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-07-17",
+        "start_year_week": {
+          "iso_week": 29,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "stuttgart",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_stuttgart",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-02-26",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "stuttgart_indoor_feb_1995",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-02-20",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "stuttgart_indoor_feb_1995",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_stuttgart_indoor_feb_1995",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-01-15",
+        "end_year_week": {
+          "iso_week": 2,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 2,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "sydney_2019",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-01-09",
+        "start_year_week": {
+          "iso_week": 2,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "sydney_2019",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_sydney_2019",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-15",
+        "end_year_week": {
+          "iso_week": 41,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 41,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "tel_aviv_1996",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-09",
+        "start_year_week": {
+          "iso_week": 41,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tel_aviv_1996",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_tel_aviv_1996",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-04-16",
+        "end_year_week": {
+          "iso_week": 15,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 15,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "tokyo",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-04-10",
+        "start_year_week": {
+          "iso_week": 15,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tokyo",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_tokyo",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-15",
+        "end_year_week": {
+          "iso_week": 41,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 41,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "tokyo_indoor_1995",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-09",
+        "start_year_week": {
+          "iso_week": 41,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tokyo_indoor_1995",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_tokyo_indoor_1995",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-08",
+        "end_year_week": {
+          "iso_week": 40,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 40,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "toulouse_2000",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-02",
+        "start_year_week": {
+          "iso_week": 40,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "toulouse_2000",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_toulouse_2000",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-08-27",
+        "end_year_week": {
+          "iso_week": 34,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 34,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "umag",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-08-21",
+        "start_year_week": {
+          "iso_week": 34,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "umag",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_umag",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-10-22",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "vienna",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-10-16",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "vienna",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_vienna",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_championship_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-07-23",
+        "end_year_week": {
+          "iso_week": 29,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 29,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "washington",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-07-17",
+        "start_year_week": {
+          "iso_week": 29,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_championship_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "washington",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_washington",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 1995,
+        "category_id": "atp_world_series",
+        "duration_days_inclusive": 7,
+        "end_date": "1995-08-27",
+        "end_year_week": {
+          "iso_week": 34,
+          "iso_year": 1995
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 34,
+            "iso_year": 1995
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "winston_salem",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+        "start_calendar_year": 1995,
+        "start_date": "1995-08-21",
+        "start_year_week": {
+          "iso_week": 34,
+          "iso_year": 1995
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_world_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "winston_salem",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_1995_winston_salem",
       "valid": true
     },
     {
@@ -87024,6 +91031,7 @@
     "coverage_model": "explicit_yearly_undated_series_ids",
     "created_for": "Squash Engine independent ATP historical reference",
     "date_coverage_years": [
+      1995,
       1996,
       2000,
       2001,
@@ -87052,7 +91060,7 @@
       2025,
       2026
     ],
-    "dated_occurrences": 1651,
+    "dated_occurrences": 1731,
     "iso_week_not_run_week": true,
     "reference_span": {
       "from": 1990,

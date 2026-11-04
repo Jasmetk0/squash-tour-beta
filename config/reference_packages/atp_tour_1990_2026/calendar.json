@@ -1494,79 +1494,15 @@
       "entity_schema_version": 1,
       "payload": {
         "atp_season_year": 2006,
-        "date_coverage_state": "undated",
-        "dated_series_count": 0,
+        "date_coverage_state": "verified_complete_known_series_dates",
+        "dated_series_count": 63,
         "known_not_held_series_ids": [],
         "no_fabricated_dates": true,
         "not_squash_rules": true,
         "roster_series_count": 63,
-        "undated_series_ids": [
-          "acapulco",
-          "atlanta",
-          "atp_finals",
-          "auckland",
-          "bangalore_2008",
-          "bangkok_2013",
-          "barcelona",
-          "basel",
-          "bastad",
-          "beijing",
-          "belgrade_2012",
-          "belgrade_clay_2021",
-          "brisbane",
-          "brussels",
-          "buenos_aires",
-          "canadian_open",
-          "cincinnati",
-          "cordoba",
-          "dallas",
-          "delray_beach",
-          "doha",
-          "dubai",
-          "eastbourne",
-          "estoril",
-          "gstaad",
-          "halle",
-          "hamburg",
-          "hong_kong",
-          "houston",
-          "indian_wells",
-          "kitzbuhel",
-          "las_vegas_2008",
-          "los_cabos",
-          "lyon",
-          "madrid",
-          "marrakech",
-          "metz",
-          "miami",
-          "monte_carlo",
-          "montpellier",
-          "moscow",
-          "munich",
-          "newport",
-          "palermo",
-          "paris_masters",
-          "poertschach_2008",
-          "queens_club",
-          "rio",
-          "rome",
-          "rotterdam",
-          "s_hertogenbosch",
-          "sao_paulo",
-          "sofia",
-          "st_petersburg",
-          "stockholm",
-          "stuttgart",
-          "sydney_2019",
-          "tokyo",
-          "umag",
-          "vienna",
-          "warsaw_2008",
-          "washington",
-          "winston_salem"
-        ],
-        "year_source_status": "not_dated_no_fabricated_dates",
-        "year_source_url": null
+        "undated_series_ids": [],
+        "year_source_status": "verified_results_archive",
+        "year_source_url": "https://www.atptour.com/en/scores/results-archive?year=2006"
       },
       "references": [],
       "scope": "tennis.atp_tour.calendar.reference.1990_2026",
@@ -1999,6 +1935,3227 @@
       "references": [],
       "scope": "tennis.atp_tour.calendar.reference.1990_2026",
       "source_entity_id": "season_2026_date_coverage",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series_gold",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-03-05",
+        "end_year_week": {
+          "iso_week": 9,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 9,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "acapulco",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-02-27",
+        "start_year_week": {
+          "iso_week": 9,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series_gold",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "acapulco",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_acapulco",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-07-23",
+        "end_year_week": {
+          "iso_week": 29,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 29,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "atlanta",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-07-17",
+        "start_year_week": {
+          "iso_week": 29,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atlanta",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_atlanta",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_finals",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-11-19",
+        "end_year_week": {
+          "iso_week": 46,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 46,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "atp_finals",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-11-13",
+        "start_year_week": {
+          "iso_week": 46,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_finals",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_finals",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_atp_finals",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-01-15",
+        "end_year_week": {
+          "iso_week": 2,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 2,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "auckland",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-01-09",
+        "start_year_week": {
+          "iso_week": 2,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "auckland",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_auckland",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-10-01",
+        "end_year_week": {
+          "iso_week": 39,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 39,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "bangalore_2008",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-09-25",
+        "start_year_week": {
+          "iso_week": 39,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "bangalore_2008",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_bangalore_2008",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-10-01",
+        "end_year_week": {
+          "iso_week": 39,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 39,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "bangkok_2013",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-09-25",
+        "start_year_week": {
+          "iso_week": 39,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "bangkok_2013",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_bangkok_2013",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series_gold",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-04-30",
+        "end_year_week": {
+          "iso_week": 17,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 17,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "barcelona",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-04-24",
+        "start_year_week": {
+          "iso_week": 17,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series_gold",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "barcelona",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_barcelona",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-10-29",
+        "end_year_week": {
+          "iso_week": 43,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 43,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "basel",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-10-23",
+        "start_year_week": {
+          "iso_week": 43,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "basel",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_basel",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-07-16",
+        "end_year_week": {
+          "iso_week": 28,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 28,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "bastad",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-07-10",
+        "start_year_week": {
+          "iso_week": 28,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "bastad",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_bastad",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-09-17",
+        "end_year_week": {
+          "iso_week": 37,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 37,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "beijing",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-09-11",
+        "start_year_week": {
+          "iso_week": 37,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "beijing",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_beijing",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-07-23",
+        "end_year_week": {
+          "iso_week": 29,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 29,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "belgrade_2012",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-07-17",
+        "start_year_week": {
+          "iso_week": 29,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "belgrade_2012",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_belgrade_2012",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-09-17",
+        "end_year_week": {
+          "iso_week": 37,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 37,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "belgrade_clay_2021",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-09-11",
+        "start_year_week": {
+          "iso_week": 37,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "belgrade_clay_2021",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_belgrade_clay_2021",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-01-08",
+        "end_year_week": {
+          "iso_week": 1,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 1,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "brisbane",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-01-02",
+        "start_year_week": {
+          "iso_week": 1,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "brisbane",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_brisbane",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-04-16",
+        "end_year_week": {
+          "iso_week": 15,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 15,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "brussels",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-04-10",
+        "start_year_week": {
+          "iso_week": 15,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "brussels",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_brussels",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-02-19",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "buenos_aires",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-02-13",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "buenos_aires",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_buenos_aires",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "tennis_masters_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-08-13",
+        "end_year_week": {
+          "iso_week": 32,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 32,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "canadian_open",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-08-07",
+        "start_year_week": {
+          "iso_week": 32,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tennis_masters_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "canadian_open",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_canadian_open",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "tennis_masters_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-08-20",
+        "end_year_week": {
+          "iso_week": 33,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 33,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "cincinnati",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-08-14",
+        "start_year_week": {
+          "iso_week": 33,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tennis_masters_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "cincinnati",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_cincinnati",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-02-05",
+        "end_year_week": {
+          "iso_week": 5,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 5,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "cordoba",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-01-30",
+        "start_year_week": {
+          "iso_week": 5,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "cordoba",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_cordoba",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-02-19",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "dallas",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-02-13",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "dallas",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_dallas",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-02-05",
+        "end_year_week": {
+          "iso_week": 5,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 5,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "delray_beach",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-01-30",
+        "start_year_week": {
+          "iso_week": 5,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "delray_beach",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_delray_beach",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-01-08",
+        "end_year_week": {
+          "iso_week": 1,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 1,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "doha",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-01-02",
+        "start_year_week": {
+          "iso_week": 1,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "doha",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_doha",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series_gold",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-03-05",
+        "end_year_week": {
+          "iso_week": 9,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 9,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "dubai",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-02-27",
+        "start_year_week": {
+          "iso_week": 9,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series_gold",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "dubai",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_dubai",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-06-25",
+        "end_year_week": {
+          "iso_week": 25,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 25,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "eastbourne",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-06-19",
+        "start_year_week": {
+          "iso_week": 25,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "eastbourne",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_eastbourne",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-05-07",
+        "end_year_week": {
+          "iso_week": 18,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 18,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "estoril",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-05-01",
+        "start_year_week": {
+          "iso_week": 18,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "estoril",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_estoril",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-07-16",
+        "end_year_week": {
+          "iso_week": 28,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 28,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "gstaad",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-07-10",
+        "start_year_week": {
+          "iso_week": 28,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "gstaad",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_gstaad",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-06-18",
+        "end_year_week": {
+          "iso_week": 24,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 24,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "halle",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-06-12",
+        "start_year_week": {
+          "iso_week": 24,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "halle",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_halle",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "tennis_masters_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-05-21",
+        "end_year_week": {
+          "iso_week": 20,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 20,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "hamburg",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-05-15",
+        "start_year_week": {
+          "iso_week": 20,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tennis_masters_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "hamburg",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_hamburg",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-01-08",
+        "end_year_week": {
+          "iso_week": 1,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 1,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "hong_kong",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-01-02",
+        "start_year_week": {
+          "iso_week": 1,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "hong_kong",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_hong_kong",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-04-16",
+        "end_year_week": {
+          "iso_week": 15,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 15,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "houston",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-04-10",
+        "start_year_week": {
+          "iso_week": 15,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "houston",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_houston",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "tennis_masters_series",
+        "duration_days_inclusive": 14,
+        "end_date": "2006-03-19",
+        "end_year_week": {
+          "iso_week": 11,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 10,
+            "iso_year": 2006
+          },
+          {
+            "iso_week": 11,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "indian_wells",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-03-06",
+        "start_year_week": {
+          "iso_week": 10,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tennis_masters_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "indian_wells",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_indian_wells",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series_gold",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-07-30",
+        "end_year_week": {
+          "iso_week": 30,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 30,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "kitzbuhel",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-07-24",
+        "start_year_week": {
+          "iso_week": 30,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series_gold",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "kitzbuhel",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_kitzbuhel",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-03-05",
+        "end_year_week": {
+          "iso_week": 9,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 9,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "las_vegas_2008",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-02-27",
+        "start_year_week": {
+          "iso_week": 9,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "las_vegas_2008",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_las_vegas_2008",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-07-30",
+        "end_year_week": {
+          "iso_week": 30,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 30,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "los_cabos",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-07-24",
+        "start_year_week": {
+          "iso_week": 30,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "los_cabos",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_los_cabos",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-02-19",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "lyon",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-02-13",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "lyon",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_lyon",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "tennis_masters_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-10-22",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "madrid",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-10-16",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tennis_masters_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "madrid",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_madrid",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-04-30",
+        "end_year_week": {
+          "iso_week": 17,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 17,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "marrakech",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-04-24",
+        "start_year_week": {
+          "iso_week": 17,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "marrakech",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_marrakech",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-10-08",
+        "end_year_week": {
+          "iso_week": 40,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 40,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "metz",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-10-02",
+        "start_year_week": {
+          "iso_week": 40,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "metz",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_metz",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "tennis_masters_series",
+        "duration_days_inclusive": 14,
+        "end_date": "2006-04-02",
+        "end_year_week": {
+          "iso_week": 13,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 12,
+            "iso_year": 2006
+          },
+          {
+            "iso_week": 13,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "miami",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-03-20",
+        "start_year_week": {
+          "iso_week": 12,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tennis_masters_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "miami",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_miami",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "tennis_masters_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-04-23",
+        "end_year_week": {
+          "iso_week": 16,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 16,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "monte_carlo",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-04-17",
+        "start_year_week": {
+          "iso_week": 16,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tennis_masters_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "monte_carlo",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_monte_carlo",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-10-29",
+        "end_year_week": {
+          "iso_week": 43,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 43,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "montpellier",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-10-23",
+        "start_year_week": {
+          "iso_week": 43,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "montpellier",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_montpellier",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-10-15",
+        "end_year_week": {
+          "iso_week": 41,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 41,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "moscow",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-10-09",
+        "start_year_week": {
+          "iso_week": 41,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "moscow",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_moscow",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-05-07",
+        "end_year_week": {
+          "iso_week": 18,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 18,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "munich",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-05-01",
+        "start_year_week": {
+          "iso_week": 18,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "munich",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_munich",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-07-16",
+        "end_year_week": {
+          "iso_week": 28,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 28,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "newport",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-07-10",
+        "start_year_week": {
+          "iso_week": 28,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "newport",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_newport",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-10-01",
+        "end_year_week": {
+          "iso_week": 39,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 39,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "palermo",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-09-25",
+        "start_year_week": {
+          "iso_week": 39,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "palermo",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_palermo",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "tennis_masters_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-11-05",
+        "end_year_week": {
+          "iso_week": 44,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 44,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "paris_masters",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-10-30",
+        "start_year_week": {
+          "iso_week": 44,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tennis_masters_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "paris_masters",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_paris_masters",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-05-28",
+        "end_year_week": {
+          "iso_week": 21,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 21,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "poertschach_2008",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-05-22",
+        "start_year_week": {
+          "iso_week": 21,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "poertschach_2008",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_poertschach_2008",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-06-18",
+        "end_year_week": {
+          "iso_week": 24,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 24,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "queens_club",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-06-12",
+        "start_year_week": {
+          "iso_week": 24,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "queens_club",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_queens_club",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series_gold",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-02-26",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rio",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-02-20",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series_gold",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rio",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_rio",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "tennis_masters_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-05-14",
+        "end_year_week": {
+          "iso_week": 19,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 19,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rome",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-05-08",
+        "start_year_week": {
+          "iso_week": 19,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tennis_masters_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rome",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_rome",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series_gold",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-02-26",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rotterdam",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-02-20",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series_gold",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rotterdam",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_rotterdam",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-06-25",
+        "end_year_week": {
+          "iso_week": 25,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 25,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "s_hertogenbosch",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-06-19",
+        "start_year_week": {
+          "iso_week": 25,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "s_hertogenbosch",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_s_hertogenbosch",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-02-26",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "sao_paulo",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-02-20",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "sao_paulo",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_sao_paulo",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-02-05",
+        "end_year_week": {
+          "iso_week": 5,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 5,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "sofia",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-01-30",
+        "start_year_week": {
+          "iso_week": 5,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "sofia",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_sofia",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-10-29",
+        "end_year_week": {
+          "iso_week": 43,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 43,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "st_petersburg",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-10-23",
+        "start_year_week": {
+          "iso_week": 43,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "st_petersburg",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_st_petersburg",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-10-15",
+        "end_year_week": {
+          "iso_week": 41,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 41,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "stockholm",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-10-09",
+        "start_year_week": {
+          "iso_week": 41,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "stockholm",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_stockholm",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series_gold",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-07-23",
+        "end_year_week": {
+          "iso_week": 29,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 29,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "stuttgart",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-07-17",
+        "start_year_week": {
+          "iso_week": 29,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series_gold",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "stuttgart",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_stuttgart",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-01-15",
+        "end_year_week": {
+          "iso_week": 2,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 2,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "sydney_2019",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-01-09",
+        "start_year_week": {
+          "iso_week": 2,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "sydney_2019",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_sydney_2019",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series_gold",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-10-08",
+        "end_year_week": {
+          "iso_week": 40,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 40,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "tokyo",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-10-02",
+        "start_year_week": {
+          "iso_week": 40,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series_gold",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tokyo",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_tokyo",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-07-30",
+        "end_year_week": {
+          "iso_week": 30,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 30,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "umag",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-07-24",
+        "start_year_week": {
+          "iso_week": 30,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "umag",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_umag",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series_gold",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-10-15",
+        "end_year_week": {
+          "iso_week": 41,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 41,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "vienna",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-10-09",
+        "start_year_week": {
+          "iso_week": 41,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series_gold",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "vienna",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_vienna",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-08-06",
+        "end_year_week": {
+          "iso_week": 31,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 31,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "warsaw_2008",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-07-31",
+        "start_year_week": {
+          "iso_week": 31,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "warsaw_2008",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_warsaw_2008",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-08-06",
+        "end_year_week": {
+          "iso_week": 31,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 31,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "washington",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-07-31",
+        "start_year_week": {
+          "iso_week": 31,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "washington",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_washington",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2006,
+        "category_id": "atp_international_series",
+        "duration_days_inclusive": 7,
+        "end_date": "2006-08-27",
+        "end_year_week": {
+          "iso_week": 34,
+          "iso_year": 2006
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 34,
+            "iso_year": 2006
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "winston_salem",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2006",
+        "start_calendar_year": 2006,
+        "start_date": "2006-08-21",
+        "start_year_week": {
+          "iso_week": 34,
+          "iso_year": 2006
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_international_series",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "winston_salem",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2006_winston_salem",
       "valid": true
     },
     {
@@ -64033,6 +67190,7 @@
     "coverage_model": "explicit_yearly_undated_series_ids",
     "created_for": "Squash Engine independent ATP historical reference",
     "date_coverage_years": [
+      2006,
       2007,
       2008,
       2009,
@@ -64054,7 +67212,7 @@
       2025,
       2026
     ],
-    "dated_occurrences": 1192,
+    "dated_occurrences": 1255,
     "iso_week_not_run_week": true,
     "reference_span": {
       "from": 1990,

@@ -16,10 +16,14 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (1229 entities at the current
-source revision, comprising 37 provenance-coverage entities and 1192 dated
+with Category (11), Series (164) and Calendar (1292 entities at the current
+source revision, comprising 37 provenance-coverage entities and 1255 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
+
+## 2006 archive coverage
+
+All **63 originally played source Series** in the 2006 ATP Tour and Tennis Masters Cup historical roster have been dated from the [official ATP 2006 results archive](https://www.atptour.com/en/scores/results-archive?year=2006). In particular, the last Palermo (`palermo`) tournament was **25 Sep–1 Oct 2006**, while the Mumbai (`bangalore_2008`) and Amersfoort (`belgrade_2012`) host identities are retained. Other historical lineages: Adelaide (`brisbane`), Chennai (`hong_kong`), Viña del Mar (`cordoba`), San José (`dallas`), Memphis (`rio`), Costa do Sauípe (`sao_paulo`), Nottingham (`eastbourne`), Los Angeles (`los_cabos`), Sopot (`warsaw_2008`), Lyon (`montpellier`). The 2006 nine Masters Series events retain their original historical category, with Hamburg and autumn Madrid. Grand Slams, World Team Cup and Davis Cup remain excluded. The coverage is complete against the established source roster, but does not prove an independent complete tournament census.
 
 ## 2007 archive coverage
 
@@ -130,7 +134,8 @@ Grand Slams, Olympic and team events remain out of scope.
 
 | Year(s) | Source status | Dated Series | Undated |
 | --- | --- | ---: | ---: |
-| 1990–2006 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 1990–2005 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 2006 | Official played ATP archive, original host and tier dates | **63 / 63** | 0 |
 | 2007 | Official results archive, historical host continuity | **62 / 62** | 0 |
 | 2008 | Official archive, original ATP tiers; Bangalore not held | **61 / 61 played** | 0 |
 | 2009 | Official ATP results archive, year-specific historical hosts | **61 / 61** | 0 |
@@ -154,12 +159,13 @@ Grand Slams, Olympic and team events remain out of scope.
 
 **No generic history period or week is interpreted as a tournament date.**
 The parent Category/Series dataset contains 2,431 year-effective memberships;
-1192 unique year/Series occurrences currently have original *date* sources.
+1255 unique year/Series occurrences currently have original *date* sources.
 The other historical years will be sourced individually, not filled by
 inventing dates or extrapolating 2025/2026 patterns.
 
 Source links:
 
+- [2006 official results archive](https://www.atptour.com/en/scores/results-archive?year=2006).
 - [2007 official results archive](https://www.atptour.com/en/scores/results-archive?year=2007).
 - [2008 official results archive](https://www.atptour.com/en/scores/results-archive?year=2008).
 - [2009 official results archive](https://www.atptour.com/en/scores/results-archive?year=2009).
@@ -259,6 +265,6 @@ its own separately reviewed date-to-Run-clock policy.
    Saved Revision. No source-only date reference may be promoted to playable
    FAX events by these steps.
 
-The work is **not complete for 1990–2006**. Source-year coverage must be
+The work is **not complete for 1990–2005**. Source-year coverage must be
 upgraded year by year using original contemporaneous calendars and/or official
 ATP results archives. 2026 final validation remains pending.

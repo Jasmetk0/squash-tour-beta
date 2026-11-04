@@ -1,7 +1,9 @@
 """Promote a fully reconciled ATP historical Calendar candidate and regenerate snapshot.
 
-Requires an explicit --write; --check is read-only. Year 2002 is eligible for\nmechanical promotion; year 2003 remains blocked on an official date conflict. This avoids half-updating
-calendar_dates_v1.json while leaving calendar.json stale.
+Requires an explicit --write only for a new dated year. --check is read-only.
+Imported 2001 and 2002 cohorts are checked idempotently against their
+candidate evidence and generated snapshot. Year 2003 remains blocked on an
+unresolved official ATP Finals date conflict.
 
 Usage:
     python scripts/promote_atp_calendar_candidate.py --check --year 2003

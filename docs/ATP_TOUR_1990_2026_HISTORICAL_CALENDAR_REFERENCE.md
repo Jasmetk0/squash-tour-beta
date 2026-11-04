@@ -16,10 +16,14 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (679 entities at the current
-source revision, comprising 37 provenance-coverage entities and 642 dated
+with Category (11), Series (164) and Calendar (741 entities at the current
+source revision, comprising 37 provenance-coverage entities and 704 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
+
+## 2015 archive coverage
+
+All 62 ATP Tour and ATP Finals source Series dated against [ATP's official played 2015 archive](https://www.atptour.com/en/scores/results-archive?year=2015), including historical original hosts: Zagreb (`sofia`), Casablanca (`marrakech`), Bucharest (`belgrade_clay_2021`), Nottingham (`eastbourne`), Nice (`lyon_old`), Bogotá (`los_cabos`), Kuala Lumpur (`chengdu`), and Valencia (`brussels`). No Grand Slams, team events or later Next Gen events were added. Dates are contemporaneous, not 2026 defaults.
 
 ## 2016 archive coverage
 
@@ -94,7 +98,8 @@ Grand Slams, Olympic and team events remain out of scope.
 
 | Year(s) | Source status | Dated Series | Undated |
 | --- | --- | ---: | ---: |
-| 1990–2015 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 1990–2014 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 2015 | ATP official results archive, 62 held source Series | **62 / 62** | 0 |
 | 2016 | ATP official results archive, 62 held source Series | **62 / 62** | 0 |
 | 2017 | ATP official results archive, complete original host dates | **64 / 64** | 0 |
 | 2018 | ATP official results archive, complete original host dates | **64 / 64** | 0 |
@@ -109,12 +114,13 @@ Grand Slams, Olympic and team events remain out of scope.
 
 **No generic history period or week is interpreted as a tournament date.**
 The parent Category/Series dataset contains 2,431 year-effective memberships;
-642 unique year/Series occurrences currently have original *date* sources.
+704 unique year/Series occurrences currently have original *date* sources.
 The other historical years will be sourced individually, not filled by
 inventing dates or extrapolating 2025/2026 patterns.
 
 Source links:
 
+- [2015 official results archive](https://www.atptour.com/en/scores/results-archive?year=2015).
 - [2016 official results archive](https://www.atptour.com/en/scores/results-archive?year=2016).
 - [2017 official results archive](https://www.atptour.com/en/scores/results-archive?year=2017).
 - [2018 official results archive](https://www.atptour.com/en/scores/results-archive?year=2018).
@@ -205,6 +211,6 @@ its own separately reviewed date-to-Run-clock policy.
    Saved Revision. No source-only date reference may be promoted to playable
    FAX events by these steps.
 
-The work is **not complete for 1990–2015**. Source-year coverage must be
+The work is **not complete for 1990–2014**. Source-year coverage must be
 upgraded year by year using original contemporaneous calendars and/or official
 ATP results archives. 2026 final validation remains pending.

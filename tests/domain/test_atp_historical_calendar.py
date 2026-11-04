@@ -25,36 +25,39 @@ def sources():
                  ))
 
 
-def test_canonical_snapshot_contains_642_dated_events_and_37_year_ledgers():
+def test_canonical_snapshot_contains_704_dated_events_and_37_year_ledgers():
     doc = build(*sources())
     stored = (SOURCE / "calendar.json").read_text(encoding="utf-8")
     assert stored == canonical(doc), "Generated source is stale; run --write"
     parsed = CanonicalPackageDocument.model_validate(doc)
     assert parsed.package_type is PackageType.CALENDAR
     assert parsed.package_id == "atp_tour_1990_2026_calendar"
-    assert len(parsed.entities) == 679
+    assert len(parsed.entities) == 741
     assert sum(e.entity_kind == "tennis.calendar.coverage.reference.v1"
                for e in parsed.entities) == 37
     dated = [e for e in parsed.entities
              if e.entity_kind == "tennis.calendar.occurrence.reference.v1"]
-    assert len(dated) == 642
+    assert len(dated) == 704
     assert all(e.payload["not_squash_rules"] is True
                and e.payload["run_week_projection"] == "not_applied_source_only"
                and len(e.references) == 2 for e in dated)
-    assert doc["provenance"]["date_coverage_years"] == list(range(2016, 2027))
+    assert doc["provenance"]["date_coverage_years"] == list(range(2015, 2027))
 
 
-def test_2016_2026_full_named_roster_and_prior_26_years_not_fabricated():
+def test_2015_2026_full_named_roster_and_prior_25_years_not_fabricated():
     doc = build(*sources())
     cover = {e["payload"]["atp_season_year"]: e["payload"]
              for e in doc["entities"]
              if e["entity_kind"] == "tennis.calendar.coverage.reference.v1"}
     assert sorted(cover) == list(range(1990, 2027))
-    for y in range(1990, 2016):
+    for y in range(1990, 2015):
         assert cover[y]["date_coverage_state"] == "undated"
         assert cover[y]["dated_series_count"] == 0
         assert cover[y]["undated_series_ids"]
         assert cover[y]["no_fabricated_dates"] is True
+    assert cover[2015]["dated_series_count"] == 62
+    assert cover[2015]["undated_series_ids"] == []
+    assert cover[2015]["date_coverage_state"] == "verified_complete_known_series_dates"
     assert cover[2016]["dated_series_count"] == 62
     assert cover[2016]["undated_series_ids"] == []
     assert cover[2016]["date_coverage_state"] == "verified_complete_known_series_dates"
@@ -370,3 +373,19 @@ def test_2016_official_calendar_original_hosts_and_non_atp_exclusions():
     assert events["atp_2016_eastbourne"]["start_date"] == "2016-06-19"
     assert "atp_2016_next_gen_atp_finals" not in events
     assert events["atp_2016_atp_finals"]["end_date"] == "2016-11-20"
+
+def test_2015_official_tour_dates_and_pre_transfer_venue_aliases():
+    doc = build(*sources())
+    events = {e["source_entity_id"]: e["payload"] for e in doc["entities"]
+              if e["entity_kind"] == "tennis.calendar.occurrence.reference.v1"}
+    assert sum(k.startswith("atp_2015_") for k in events) == 62
+    assert events["atp_2015_brisbane"]["start_date"] == "2015-01-04"
+    assert events["atp_2015_sao_paulo"]["start_date"] == "2015-02-09"
+    assert events["atp_2015_buenos_aires"]["start_date"] == "2015-02-23"
+    assert events["atp_2015_sofia"]["start_date"] == "2015-02-02"
+    assert events["atp_2015_marrakech"]["start_date"] == "2015-04-06"
+    assert events["atp_2015_los_cabos"]["start_date"] == "2015-07-20"
+    assert events["atp_2015_chengdu"]["start_date"] == "2015-09-28"
+    assert events["atp_2015_brussels"]["end_date"] == "2015-11-01"
+    assert events["atp_2015_eastbourne"]["end_date"] == "2015-06-28"
+    assert "atp_2015_next_gen_atp_finals" not in events

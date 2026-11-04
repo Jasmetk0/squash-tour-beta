@@ -7,6 +7,440 @@
   "schema_version": "tennis.atp_tour_calendar_dates.v1",
   "scope": "ATP Tour main singles categories plus ATP-operated Finals; other tennis events intentionally excluded",
   "year_sources": {
+    "2011": {
+      "as_of": "2026-11-04",
+      "events": [
+        {
+          "end_date": "2011-01-09",
+          "series_id": "brisbane",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-01-02"
+        },
+        {
+          "end_date": "2011-01-08",
+          "series_id": "doha",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-01-03"
+        },
+        {
+          "end_date": "2011-01-09",
+          "series_id": "hong_kong",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-01-03"
+        },
+        {
+          "end_date": "2011-01-15",
+          "series_id": "sydney_2019",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-01-10"
+        },
+        {
+          "end_date": "2011-01-15",
+          "series_id": "auckland",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-01-10"
+        },
+        {
+          "end_date": "2011-02-06",
+          "series_id": "johannesburg_2011",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-01-31"
+        },
+        {
+          "end_date": "2011-02-06",
+          "series_id": "cordoba",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-01-31"
+        },
+        {
+          "end_date": "2011-02-06",
+          "series_id": "sofia",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-01-31"
+        },
+        {
+          "end_date": "2011-02-13",
+          "series_id": "rotterdam",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-02-07"
+        },
+        {
+          "end_date": "2011-02-13",
+          "series_id": "dallas",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-02-07"
+        },
+        {
+          "end_date": "2011-02-12",
+          "series_id": "sao_paulo",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-02-07"
+        },
+        {
+          "end_date": "2011-02-20",
+          "series_id": "rio",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-02-14"
+        },
+        {
+          "end_date": "2011-02-20",
+          "series_id": "lyon",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-02-14"
+        },
+        {
+          "end_date": "2011-02-20",
+          "series_id": "buenos_aires",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-02-14"
+        },
+        {
+          "end_date": "2011-02-26",
+          "series_id": "dubai",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-02-21"
+        },
+        {
+          "end_date": "2011-02-26",
+          "series_id": "acapulco",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-02-21"
+        },
+        {
+          "end_date": "2011-02-27",
+          "series_id": "delray_beach",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-02-21"
+        },
+        {
+          "end_date": "2011-03-20",
+          "series_id": "indian_wells",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-03-10"
+        },
+        {
+          "end_date": "2011-04-03",
+          "series_id": "miami",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-03-23"
+        },
+        {
+          "end_date": "2011-04-10",
+          "series_id": "houston",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-04-04"
+        },
+        {
+          "end_date": "2011-04-10",
+          "series_id": "marrakech",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-04-04"
+        },
+        {
+          "end_date": "2011-04-17",
+          "series_id": "monte_carlo",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-04-10"
+        },
+        {
+          "end_date": "2011-04-24",
+          "series_id": "barcelona",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-04-18"
+        },
+        {
+          "end_date": "2011-05-01",
+          "series_id": "munich",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-04-24"
+        },
+        {
+          "end_date": "2011-05-01",
+          "series_id": "estoril",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-04-25"
+        },
+        {
+          "end_date": "2011-05-01",
+          "series_id": "belgrade_2012",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-04-25"
+        },
+        {
+          "end_date": "2011-05-08",
+          "series_id": "madrid",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-05-01"
+        },
+        {
+          "end_date": "2011-05-15",
+          "series_id": "rome",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-05-08"
+        },
+        {
+          "end_date": "2011-05-21",
+          "series_id": "lyon_old",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-05-15"
+        },
+        {
+          "end_date": "2011-06-12",
+          "series_id": "halle",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-06-06"
+        },
+        {
+          "end_date": "2011-06-12",
+          "series_id": "queens_club",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-06-06"
+        },
+        {
+          "end_date": "2011-06-18",
+          "series_id": "eastbourne",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-06-12"
+        },
+        {
+          "end_date": "2011-06-18",
+          "series_id": "s_hertogenbosch",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-06-12"
+        },
+        {
+          "end_date": "2011-07-10",
+          "series_id": "newport",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-07-04"
+        },
+        {
+          "end_date": "2011-07-17",
+          "series_id": "bastad",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-07-11"
+        },
+        {
+          "end_date": "2011-07-17",
+          "series_id": "stuttgart",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-07-11"
+        },
+        {
+          "end_date": "2011-07-24",
+          "series_id": "hamburg",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-07-18"
+        },
+        {
+          "end_date": "2011-07-24",
+          "series_id": "atlanta",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-07-18"
+        },
+        {
+          "end_date": "2011-07-31",
+          "series_id": "los_cabos",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-07-25"
+        },
+        {
+          "end_date": "2011-07-31",
+          "series_id": "gstaad",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-07-25"
+        },
+        {
+          "end_date": "2011-07-31",
+          "series_id": "umag",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-07-25"
+        },
+        {
+          "end_date": "2011-08-07",
+          "series_id": "washington",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-07-31"
+        },
+        {
+          "end_date": "2011-08-06",
+          "series_id": "kitzbuhel",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-07-31"
+        },
+        {
+          "end_date": "2011-08-14",
+          "series_id": "canadian_open",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-08-08"
+        },
+        {
+          "end_date": "2011-08-21",
+          "series_id": "cincinnati",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-08-14"
+        },
+        {
+          "end_date": "2011-08-27",
+          "series_id": "winston_salem",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-08-21"
+        },
+        {
+          "end_date": "2011-09-25",
+          "series_id": "metz",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-09-19"
+        },
+        {
+          "end_date": "2011-09-25",
+          "series_id": "belgrade_clay_2021",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-09-19"
+        },
+        {
+          "end_date": "2011-10-02",
+          "series_id": "chengdu",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-09-26"
+        },
+        {
+          "end_date": "2011-10-02",
+          "series_id": "bangkok_2013",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-09-26"
+        },
+        {
+          "end_date": "2011-10-09",
+          "series_id": "beijing",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-10-03"
+        },
+        {
+          "end_date": "2011-10-09",
+          "series_id": "tokyo",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-10-03"
+        },
+        {
+          "end_date": "2011-10-16",
+          "series_id": "shanghai",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-10-09"
+        },
+        {
+          "end_date": "2011-10-23",
+          "series_id": "moscow",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-10-17"
+        },
+        {
+          "end_date": "2011-10-23",
+          "series_id": "stockholm",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-10-17"
+        },
+        {
+          "end_date": "2011-10-30",
+          "series_id": "st_petersburg",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-10-24"
+        },
+        {
+          "end_date": "2011-10-30",
+          "series_id": "vienna",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-10-24"
+        },
+        {
+          "end_date": "2011-11-06",
+          "series_id": "brussels",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-10-31"
+        },
+        {
+          "end_date": "2011-11-06",
+          "series_id": "basel",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-10-31"
+        },
+        {
+          "end_date": "2011-11-13",
+          "series_id": "paris_masters",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-11-07"
+        },
+        {
+          "end_date": "2011-11-27",
+          "series_id": "atp_finals",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+          "start_date": "2011-11-20"
+        }
+      ],
+      "source_url": "https://www.atptour.com/en/scores/results-archive?year=2011",
+      "status": "verified_results_archive"
+    },
     "2012": {
       "as_of": "2026-11-04",
       "events": [

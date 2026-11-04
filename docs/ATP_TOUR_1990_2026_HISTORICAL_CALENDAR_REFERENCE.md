@@ -16,10 +16,14 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (923 entities at the current
-source revision, comprising 37 provenance-coverage entities and 886 dated
+with Category (11), Series (164) and Calendar (984 entities at the current
+source revision, comprising 37 provenance-coverage entities and 947 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
+
+## 2011 archive coverage
+
+All **61 named 2011 historical main-tour and ATP Finals source Series** are dated to their original [ATP 2011 results archive](https://www.atptour.com/en/scores/results-archive?year=2011). Separate contemporaneous editions include San José ATP 250 (`dallas`) and Memphis ATP 500 (`rio`); spring Belgrade (`belgrade_2012`) versus autumn Bucharest (`belgrade_clay_2021`); Johannesburg (`johannesburg_2011`), Santiago (`cordoba`), Costa do Sauípe (`sao_paulo`), Los Angeles (`los_cabos`), Kuala Lumpur (`chengdu`), Valencia (`brussels`) and London ATP Finals. Brisbane opened **2 Jan 2011 in ISO 2010/W52** and ended ISO 2011/W01. The ATP-listed World Team Cup and Grand Slam competitions were not imported. Historical parent roster explicitly does not claim to census every ATP event beyond its source series. Event start and end are the archive's displayed original dates, not copied from a newer season.
 
 ## 2012 archive coverage
 
@@ -110,7 +114,8 @@ Grand Slams, Olympic and team events remain out of scope.
 
 | Year(s) | Source status | Dated Series | Undated |
 | --- | --- | ---: | ---: |
-| 1990–2011 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 1990–2010 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 2011 | Official ATP results archive, original venues and ATP Finals | **61 / 61** | 0 |
 | 2012 | Official ATP results archive, played Tour + Finals | **61 / 61** | 0 |
 | 2013 | Official ATP results archive, played Tour + Finals | **61 / 61** | 0 |
 | 2014 | Official ATP results archive, dated played main Tour and Finals | **60 / 60** | 0 |
@@ -129,12 +134,13 @@ Grand Slams, Olympic and team events remain out of scope.
 
 **No generic history period or week is interpreted as a tournament date.**
 The parent Category/Series dataset contains 2,431 year-effective memberships;
-886 unique year/Series occurrences currently have original *date* sources.
+947 unique year/Series occurrences currently have original *date* sources.
 The other historical years will be sourced individually, not filled by
 inventing dates or extrapolating 2025/2026 patterns.
 
 Source links:
 
+- [2011 official results archive](https://www.atptour.com/en/scores/results-archive?year=2011).
 - [2012 official results archive](https://www.atptour.com/en/scores/results-archive?year=2012).
 - [2013 official results archive](https://www.atptour.com/en/scores/results-archive?year=2013).
 - [2014 official results archive](https://www.atptour.com/en/scores/results-archive?year=2014).
@@ -229,6 +235,6 @@ its own separately reviewed date-to-Run-clock policy.
    Saved Revision. No source-only date reference may be promoted to playable
    FAX events by these steps.
 
-The work is **not complete for 1990–2011**. Source-year coverage must be
+The work is **not complete for 1990–2010**. Source-year coverage must be
 upgraded year by year using original contemporaneous calendars and/or official
 ATP results archives. 2026 final validation remains pending.

@@ -1,7 +1,7 @@
 """Promote a fully reconciled ATP historical Calendar candidate and regenerate snapshot.
 
 Requires an explicit --write only for a new dated year. --check is read-only.
-Imported 2001 and 2002 cohorts are checked idempotently against their
+Imported 2000, 2001 and 2002 cohorts are checked idempotently against their
 candidate evidence and generated snapshot. Year 2003 remains blocked on an
 unresolved official ATP Finals date conflict.
 
@@ -37,8 +37,8 @@ PENDING_CONFLICTS = {
 
 
 def prepare(year: int):
-    if year not in (2001, 2002, 2003):
-        raise ValueError("Only staged 2001–2003 candidate ledgers are supported")
+    if year not in (2000, 2001, 2002, 2003):
+        raise ValueError("Only staged 2000–2003 candidate ledgers are supported")
     candidate = json.loads(
         (SOURCE / f"calendar_backfill_{year}_candidates_v1.json").read_text(
             encoding="utf-8"

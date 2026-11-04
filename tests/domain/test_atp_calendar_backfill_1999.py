@@ -30,7 +30,9 @@ def test_1999_parent_series_coverage_complete_without_canonical_date_claim() -> 
     assert audited["expected_played_source_count"] == 66
     assert audited["remaining_series_ids"] == []
     assert audited["canonical_conflicts"] == []
-    assert audited["ready_for_whole_year_promotion"] is True
+    assert audited["roster_reconciled"] is True
+    assert "atp_finals" in audited["unresolved_date_conflicts"]
+    assert audited["ready_for_whole_year_promotion"] is False
     # Completeness of source IDs does not override conflicting official
     # date definitions for the year-ending ATP World Championship.
     assert "1999" not in canonical["year_sources"]

@@ -6,7 +6,7 @@ complete/verified season calendars.
 
 Run:
     python scripts/audit_atp_calendar_backfill.py
-    python scripts/audit_atp_calendar_backfill.py --json
+    python scripts/audit_atp_calendar_backfill.py --json --year 2002
 """
 from __future__ import annotations
 
@@ -104,9 +104,10 @@ def audit_candidates(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--year", type=int, choices=(2002, 2003), default=2003)
     args = parser.parse_args()
     candidate = json.loads(
-        (SOURCE / "calendar_backfill_2003_candidates_v1.json").read_text(
+        (SOURCE / f"calendar_backfill_{args.year}_candidates_v1.json").read_text(
             encoding="utf-8"
         )
     )

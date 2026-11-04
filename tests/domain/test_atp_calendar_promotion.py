@@ -14,21 +14,35 @@ from scripts.build_atp_historical_calendar import SOURCE
 pytestmark = pytest.mark.pr_critical
 
 
-def test_2003_promotion_blocked_by_conflicting_official_finals_dates() -> None:
-    assert "atp_finals" in PENDING_CONFLICTS[2003]
+def test_2003_preserves_annual_archive_and_wider_finals_heritage_dates() -> None:
+    assert "atp_finals" in PENDING_CONFLICTS[2003]  # recorded difference
     assert "2003-11-08" in PENDING_CONFLICTS[2003]["atp_finals"]
     assert "2003-11-10" in PENDING_CONFLICTS[2003]["atp_finals"]
-    with pytest.raises(ValueError, match="Unresolved official ATP dates"):
-        prepare(2003)
+    source, built, audit = prepare(2003)
+    assert audit["unresolved_date_conflicts"] == {}
+    assert audit["preserved_official_date_window_differences"]
+    assert len(audit["canonical_conflicts"]) == 63
+    assert len(source["year_sources"]["2003"]["events"]) == 63
+    by_id = {e["source_entity_id"]: e for e in built["entities"]}
+    finals = by_id["atp_2003_atp_finals"]["payload"]
+    assert finals["start_date"] == "2003-11-10"
+    alt = finals["alternate_official_finals_window"]
+    assert alt["alternate_start_date"] == "2003-11-08"
+    assert alt["alternate_date_concept"] == (
+        "atp_finals_heritage_broader_tournament_interval"
+    )
 
 
-def test_source_files_remain_unchanged_when_promotion_vetoes() -> None:
-    source = (SOURCE / "calendar_dates_v1.json").read_bytes()
-    generated = (SOURCE / "calendar.json").read_bytes()
-    with pytest.raises(ValueError, match="Unresolved official ATP dates"):
-        prepare(2003)
-    assert (SOURCE / "calendar_dates_v1.json").read_bytes() == source
-    assert (SOURCE / "calendar.json").read_bytes() == generated
+def test_already_canonical_promotion_is_read_only_for_2003() -> None:
+    before = (
+        (SOURCE / "calendar_dates_v1.json").read_bytes(),
+        (SOURCE / "calendar.json").read_bytes(),
+    )
+    prepare(2003)
+    assert (
+        (SOURCE / "calendar_dates_v1.json").read_bytes(),
+        (SOURCE / "calendar.json").read_bytes(),
+    ) == before
 
 
 def test_promoter_rejects_unstaged_year() -> None:
@@ -48,10 +62,10 @@ def test_2002_is_mechanically_promotable_without_changing_2004_onward() -> None:
     assert audited["candidate_count"] == 62
     assert "2002" in promoted["year_sources"]
     assert len(promoted["year_sources"]["2002"]["events"]) == 62
-    assert built["provenance"]["dated_occurrences"] == 1892
+    assert built["provenance"]["dated_occurrences"] == 2407
     assert built["provenance"]["season_coverage_entries"] == 37
     assert sorted(built["provenance"]["date_coverage_years"]) == (
-        [1991, 1994, 1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
+        list(range(1990, 2027))
     )
     by_id = {
         entity["source_entity_id"]: entity
@@ -73,10 +87,10 @@ def test_2001_is_mechanically_promotable_without_changing_other_years() -> None:
     assert audited["remaining_series_ids"] == []
     assert "2001" in promoted["year_sources"]
     assert len(promoted["year_sources"]["2001"]["events"]) == 65
-    assert built["provenance"]["dated_occurrences"] == 1892
+    assert built["provenance"]["dated_occurrences"] == 2407
     assert built["provenance"]["season_coverage_entries"] == 37
     assert built["provenance"]["date_coverage_years"] == (
-        [1991, 1994, 1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
+        list(range(1990, 2027))
     )
     by_id = {x["source_entity_id"]: x for x in built["entities"]}
     assert by_id["atp_2001_atlanta_verizon_2001"]["payload"][

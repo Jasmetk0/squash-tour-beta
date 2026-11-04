@@ -1,9 +1,10 @@
 """Promote a fully reconciled ATP historical Calendar candidate and regenerate snapshot.
 
 Requires an explicit --write only for a new dated year. --check is read-only.
-Imported 1994–1996, 2000–2002 cohorts are checked idempotently against their
-candidate evidence and generated snapshot. Years 1990, 1992–1993, 1997–1999 and 2003 remain blocked on an
-unresolved official ATP Finals date conflict.
+Previously staged 1990–2003 cohorts are idempotently verified after review.
+The original ATP annual results-archive event window is authoritative for
+Calendar start_date/end_date, and separate Finals history/competition windows
+are preserved as explicit sourced evidence. No historical interval is guessed.
 
 Usage:
     python scripts/promote_atp_calendar_candidate.py --check --year 2003
@@ -24,6 +25,10 @@ from scripts.audit_atp_calendar_backfill import (
     audit_candidates, SOURCE_DATE_CONFLICTS as PENDING_CONFLICTS,
 )
 from scripts.build_atp_historical_calendar import SOURCE, build, canonical
+from scripts.atp_finals_date_window_evidence import (
+    REVIEWED_DATE_WINDOW_YEARS, VERIFIED_SOURCE_WINDOW_STATE,
+    make_official_finals_window_evidence,
+)
 
 
 
@@ -50,13 +55,17 @@ def prepare(year: int):
     audit = audit_candidates(candidate, seasons, dated)
     if audit["year"] != year:
         raise ValueError("Mismatched historical year candidate")
-    conflicts = PENDING_CONFLICTS.get(year, {})
+    conflicts = (
+        {} if year in REVIEWED_DATE_WINDOW_YEARS
+        else PENDING_CONFLICTS.get(year, {})
+    )
     if conflicts:
         raise ValueError(
             "Unresolved official ATP dates block whole-year promotion: "
             + "; ".join(f"{sid}: {why}" for sid, why in conflicts.items())
         )
-    # Deliberately no force flag; the source conflict must be resolved.
+    # No force flag or guessed date. Reviewed exceptions preserve both
+    # original ATP archive and independent official Finals window in source.
     rows = [
         {
             "series_id": row["series_id"],
@@ -69,10 +78,18 @@ def prepare(year: int):
     ]
     target_year = {
         "as_of": candidate["as_of"],
-        "status": "verified_results_archive",
+        "status": (
+            VERIFIED_SOURCE_WINDOW_STATE
+            if year in REVIEWED_DATE_WINDOW_YEARS
+            else "verified_results_archive"
+        ),
         "source_url": candidate["source_url"],
         "events": rows,
     }
+    if year in REVIEWED_DATE_WINDOW_YEARS:
+        target_year["finals_date_window_evidence"] = (
+            make_official_finals_window_evidence(year)
+        )
     existing = dated["year_sources"].get(str(year))
     if existing is not None:
         if existing != target_year:

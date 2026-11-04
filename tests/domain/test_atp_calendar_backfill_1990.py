@@ -28,9 +28,10 @@ def test_1990_original_75_event_candidates_reconcile_with_original_parent():
     assert report["expected_played_source_count"] == 75
     assert report["remaining_series_ids"] == []
     assert report["roster_reconciled"] is True
-    assert report["canonical_conflicts"] == []
-    assert report["unresolved_date_conflicts"] == SOURCE_DATE_CONFLICTS[1990]
-    assert "1990" not in dated["year_sources"]
+    assert len(report["canonical_conflicts"]) == 75
+    assert report["unresolved_date_conflicts"] == {}
+    assert report["preserved_official_date_window_differences"] == SOURCE_DATE_CONFLICTS[1990]
+    assert "1990" in dated["year_sources"]
     assert report["ready_for_whole_year_promotion"] is False
 
     by_id = {entry["series_id"]: entry for entry in report["candidate_events"]}
@@ -56,12 +57,14 @@ def test_1990_original_75_event_candidates_reconcile_with_original_parent():
     assert "grand_slam_cup" not in by_id
 
 
-def test_1990_ambiguous_finals_cannot_mutate_existing_source_or_calendar():
+def test_1990_distinct_official_finals_dates_are_idempotent_and_not_mutated():
     dates_path = SOURCE / "calendar_dates_v1.json"
     calendar_path = SOURCE / "calendar.json"
     before = (dates_path.read_bytes(), calendar_path.read_bytes())
-    with pytest.raises(ValueError, match="Unresolved official ATP dates"):
-        prepare(1990)
+    source_years, built, checked = prepare(1990)
+    assert checked["unresolved_date_conflicts"] == {}
+    assert len(source_years["year_sources"]["1990"]["events"]) == 75
+    assert built["provenance"]["dated_occurrences"] == 2407
     assert (dates_path.read_bytes(), calendar_path.read_bytes()) == before
 
 

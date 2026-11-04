@@ -19,6 +19,11 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
+from scripts.atp_finals_date_window_evidence import (
+    VERIFIED_SOURCE_WINDOW_STATE, CALENDAR_DATE_CONCEPT,
+    REVIEWED_DATE_WINDOW_YEARS, validate_official_finals_window_evidence,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "config/reference_packages/atp_tour_1990_2026"
 DATES = SOURCE / "calendar_dates_v1.json"
@@ -30,6 +35,7 @@ SERIES_ID = "atp_tour_1990_2026_series"
 CATEGORY_ID = "atp_tour_1990_2026_category"
 ALLOWED_STATUSES = {
     "verified_results_archive", "provisional_published_schedule",
+    VERIFIED_SOURCE_WINDOW_STATE,
 }
 
 
@@ -156,14 +162,26 @@ def build(
         found: set[str] = set()
         valid_events = []
         state = "not_dated_no_fabricated_dates"
+        finals_evidence = None
         if dated_year is not None:
-            if not isinstance(dated_year, dict) or set(dated_year) != {
-                "status", "source_url", "events", "as_of",
-            }:
+            if not isinstance(dated_year, dict):
                 raise ValueError("Invalid dated-year source shape: " + str(year))
-            state = dated_year["status"]
+            state = dated_year.get("status")
             if state not in ALLOWED_STATUSES:
                 raise ValueError("Unsupported dated-year status: " + str(year))
+            expected_keys = {"status", "source_url", "events", "as_of"}
+            if state == VERIFIED_SOURCE_WINDOW_STATE:
+                expected_keys.add("finals_date_window_evidence")
+                finals_evidence = validate_official_finals_window_evidence(
+                    year, dated_year.get("finals_date_window_evidence")
+                )
+            elif year in REVIEWED_DATE_WINDOW_YEARS:
+                raise ValueError(
+                    "Reviewed Finals-year source must preserve independent date "
+                    "concepts: " + str(year)
+                )
+            if set(dated_year) != expected_keys:
+                raise ValueError("Invalid dated-year source shape: " + str(year))
             official_url(dated_year["source_url"], identity=str(year))
             ensure_archive_year_matches(dated_year["source_url"], year=year)
             parse_exact_date(dated_year["as_of"], identity="source as_of")
@@ -196,6 +214,12 @@ def build(
                     if p["from"] <= year <= p["to"]
                 }:
                     raise ValueError("Mismatched source Category in edition " + sid)
+                if finals_evidence is not None and sid == "atp_finals":
+                    if (start.isoformat(), end.isoformat()) != (
+                        finals_evidence["archive_start_date"],
+                        finals_evidence["archive_end_date"],
+                    ):
+                        raise ValueError("Finals archive dates differ from reviewed evidence")
                 payload = {
                     "atp_season_year": year,
                     "series_id": sid,
@@ -215,6 +239,9 @@ def build(
                     "no_match_or_result_claim": True,
                     "run_week_projection": "not_applied_source_only",
                 }
+                if finals_evidence is not None and sid == "atp_finals":
+                    payload["calendar_date_concept"] = CALENDAR_DATE_CONCEPT
+                    payload["alternate_official_finals_window"] = finals_evidence
                 valid_events.append({
                     "source_entity_id": f"atp_{year}_{sid}",
                     "entity_kind": "tennis.calendar.occurrence.reference.v1",
@@ -242,10 +269,15 @@ def build(
             "undated" if dated_year is None
             else "provisional_complete_named_schedule"
             if state == "provisional_published_schedule" and len(found) == len(active)
+            else "verified_complete_archive_dates_with_alternate_finals_window"
+            if state == VERIFIED_SOURCE_WINDOW_STATE
+            and len(found) == len(active) - len(known_cancelled)
             else "verified_complete_known_series_dates"
             if len(found) == len(active) - len(known_cancelled)
             else "partial_verified_dates"
         )
+        if finals_evidence is not None and "atp_finals" not in found:
+            raise ValueError("Expected reviewed ATP Finals source occurrence absent")
         coverage.append({
             "source_entity_id": f"season_{year}_date_coverage",
             "entity_kind": "tennis.calendar.coverage.reference.v1",
@@ -283,6 +315,11 @@ def build(
             "actual_dates_not_inferred_from_category_series": True,
             "iso_week_not_run_week": True,
             "date_coverage_years": sorted(int(k) for k in source_years),
+            "calendar_date_concept": CALENDAR_DATE_CONCEPT,
+            "finals_alternate_official_window_years": sorted(
+                int(y) for y, value in source_years.items()
+                if value["status"] == VERIFIED_SOURCE_WINDOW_STATE
+            ),
             "dated_occurrences": len(events),
             "season_coverage_entries": len(coverage),
         },
@@ -294,7 +331,11 @@ def build(
 
 
 def canonical(data: dict[str, Any]) -> str:
-    return json.dumps(data, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+    # Large immutable Calendar snapshots: deterministic compact JSON avoids
+    # transport-size failures without dropping or transforming source evidence.
+    return json.dumps(
+        data, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ) + "\n"
 
 
 def main() -> int:

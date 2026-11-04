@@ -1,6 +1,6 @@
 # 🎾 ATP Tour Historical Calendar Reference — 1990–2026
 
-> **STATUS: incremental Draft, NOT historical date complete.** Historical
+> **STATUS: original ATP Tour archive-date coverage complete for all 37 years; 2026 provisional, legal lineage review incomplete; PR still Draft.** Historical
 > Category+Series parent [PR #1731](https://github.com/Jasmetk0/squash-tour-beta/pull/1731)
 > must merge before this [stacked Calendar PR #1741](https://github.com/Jasmetk0/squash-tour-beta/pull/1741)
 > is retargeted to `buuk`. Neither PR is automatically merged.
@@ -16,42 +16,52 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (1929 entities at the current
-source revision, comprising 37 provenance-coverage entities and 1892 dated
+with Category (11), Series (164) and Calendar (2444 entities at the current
+source revision, comprising 37 provenance-coverage entities and 2407 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
 
-## Independent all-year source census (37/37 years)
+## All-year source census — 37/37 canonical ATP archive seasons
 
-The read-only `scripts/audit_atp_calendar_full_roster.py` now rebuilds and byte-verifies the canonical Calendar and checks every **1990–2026** source year against its exact parent Series roster. It distinguishes **canonical historical**, **canonical provisional (2026)** and **staged-but-not-imported due to official date-window conflicts** instead of treating staged evidence as a released Package.
+All **37** year-effective original ATP Tour 1990–2026 source rosters are **canonically source-dated** using the exact published ATP annual results-archive event windows. This is **2,407** original Tour singles-event occurrences plus **37** yearly coverage audit records = **2,444 Calendar entities**. The historical parent inventory has **2,431 Series-year memberships**, including **24 expressly known not held**; 2,431 − 24 = 2,407. **37/37 source-year date evidence matched, 37/37 Calendar years imported, 0 parent Series missing.**
 
-Current census: **2,431 year-effective parent Series memberships**, of which **24 are explicitly known not held**; the remaining **2,407** have individually recorded historic or provisional exact event-window evidence: **1,892 canonical dated occurrences** and **515 fully roster-matched staged date candidates** across **1990, 1992–1993, 1997–1999 and 2003**. Hence **37/37 years have source-date evidence**, but **only 30/37 are canonically imported**, **2026 remains provisional**, and none of these numbers proves historical legal licence continuity or a runnable FAX sports calendar. No 1990 or 1992–1993 date-window contradiction was silently resolved.
+**Crucial qualification:** The **2026** source status is `provisional_published_schedule`, **not final played results**. The Series historical-licence lineage is *not* independently certified across the entire period. Exact historical ATP source dates are **not real squash/FAX Edition or match schedules**.
+
+Seven original ATP Finals windows have another officially documented historical range. Rather than discard either, the retained `start_date`/`end_date` correspond consistently to the **ATP annual results-archive event window**, and `finals_date_window_evidence` plus generated Finals-occurrence `alternate_official_finals_window` preserve separately the [ATP Finals heritage](https://www.nittoatpfinals.com/en/heritage/results-1970-1999) interval (2003: [2000–2025 heritage](https://www.nittoatpfinals.com/en/heritage/results-2000-2023)). The distinction is source-specific and does **not** claim an independently verified first/last singles match date. Full original dates, year-specific alternative windows, sources and constraints: [Finals evidence-preserving date-window policy](ATP_TOUR_FINALS_DATE_WINDOW_SEMANTICS.md).
 
 ```bash
 python scripts/audit_atp_calendar_full_roster.py --check
-python scripts/audit_atp_calendar_full_roster.py --json
-python -m pytest -q tests/domain/test_atp_calendar_full_roster.py
+python scripts/build_atp_historical_calendar.py --check
+python -m pytest -q tests/domain/test_atp_calendar_finals_date_window_policy.py
 ```
 
-## 1990 original ATP Tour source dates — 75/75 staged (not canonical)
+The generated `calendar.json` is deterministic **compact, sorted-key UTF-8 JSON**, not a loss of provenance; historical original candidate ledgers and `calendar_dates_v1.json` remain readable indented JSON. Neither imported historic event boundaries nor Run Save/Preview/Confirm semantics have been inferred or silently changed.
 
-All **75** original 1990 ATP Tour main-tour and Frankfurt singles World Championships parent Series now have individual event-window candidates taken from the [ATP official 1990 results archive](https://www.atptour.com/en/scores/results-archive?year=1990). Exact historic hosts include Toronto-1 (indoor, February) *separate from* the summer Canadian Open, Rio de Janeiro carpet separate from Memphis, plus San Remo, Wembley, Itaparica, and the two Sydney, Tokyo and Stuttgart events. The [ATP annual archive](https://www.atptour.com/en/scores/results-archive?year=1990) dates Frankfurt 12–18 November; [Nitto ATP Finals historical results](https://www.nittoatpfinals.com/en/heritage/results-1970-1999) date actual competition 13–18 November. Both are retained as independent source-date concepts. Canonical promotion remains blocked pending an explicit provenance/date-window policy, **not** because the roster is missing tournaments. See [1990 event-level evidence and promotion guard](ATP_TOUR_1990_DATE_EVIDENCE_AND_CONFLICT.md). No canonically dated 1990 year, FAX match, sporting calendar or Run mutation is claimed.
 
-## 1991 original ATP Tour — complete canonical date coverage (76/76)
+## 1990 original ATP Tour — canonical source archive dates (75/75)
 
-The official [ATP Tour 1991 results archive](https://www.atptour.com/en/scores/results-archive?year=1991) dates all **76** original ATP singles main Tour/Frankfurt World Championships year-effective Series. The original [ATP Finals historical results](https://www.nittoatpfinals.com/en/heritage/results-1970-1999) independently agree on Frankfurt **12–17 November 1991**. The original dual Guarujá, Sydney, Tokyo and Stuttgart events, 31 December 1990 Adelaide/Wellington ISO 1991/W01 and September Brisbane are preserved. Now canonically stored: **1,892** dated occurrences plus **37** coverage entities = **1,929** Calendar source entities, **30 of 37** year source cohorts dated. See [complete 1991 dates and caveats](ATP_TOUR_1991_COMPLETE_DATE_REFERENCE.md). All playable FAX sporting commands and Run clock remain separate.
+All **75** original 1990 ATP main-Tour singles/Frankfurt World Championships Series have exact original ATP archive event windows in the canonical reference. Special independent 1990 identities, including Toronto indoor versus Canadian Open and Wembley, Itaparica, San Remo, Rio de Janeiro, two Sydney, two Tokyo and two Stuttgart events, remain distinct. For Frankfurt Finals, the canonical annual archive **12–18 November** and separate official historical **13–18 November** are both preserved in the source and generated occurrence, with their distinct window semantics. [Original 1990 evidence ledger](ATP_TOUR_1990_DATE_EVIDENCE_AND_CONFLICT.md); [resolved source semantics](ATP_TOUR_FINALS_DATE_WINDOW_SEMANTICS.md). The year is source-dated, not playable FAX.
 
-## 1992 source-date backfill (78/78 staged; not canonical)
 
-All **78** original ATP Tour year-effective parent Series for 1992 have officially published event-date candidates, including **Adelaide and Wellington 30 December 1991–5 January 1992**, separately held **Brisbane in September–October 1992**, separate Tokyo/Sydney/Stuttgart editions and the original ATP Tour championships. The [official ATP 1992 archive](https://www.atptour.com/en/scores/results-archive?year=1992) includes **Frankfurt Finals 16–22 November**, while [official ATP Finals history](https://www.nittoatpfinals.com/en/heritage/results-1970-1999) and the ITF record date actual competition **17–22 November**. The year is staged only, with a centrally blocked source-date conflict. See [1992 evidence and constraints](ATP_TOUR_1992_DATE_EVIDENCE_AND_CONFLICT.md). **1992 remains undated in canonical Calendar.**
+## 1991 original ATP Tour — canonical source archive dates (76/76)
 
-## 1993 source-date backfill (84/84 staged; not canonical)
+All **76** original 1991 year-effective parent Series remain canonically dated, including separate Guarujá, Sydney, Tokyo and Stuttgart fixtures and Adelaide/Wellington beginning 31 Dec 1990 (ISO 1991/W01). The ATP 1991 annual archive and Finals history both give Frankfurt **12–17 November**. [1991 complete source audit](ATP_TOUR_1991_COMPLETE_DATE_REFERENCE.md).
 
-The original 1993 ATP year-effective parent roster contains **84 original Tour and Frankfurt Finals source Series**. All **84 date candidates** have now been staged from the official [ATP 1993 yearly results archive](https://www.atptour.com/en/scores/results-archive?year=1993), preserving historical distinct Kuala Lumpur-1/2, Sydney-1/2, Tokyo-1/2, Stuttgart-1/2, Manchester, Durban, Genoa and Frankfurt. However, **the annual archive dates the Frankfurt Finals 15–21 November, while the separately authoritative [ATP Finals history](https://www.nittoatpfinals.com/en/heritage/results-1970-1999) and [ITF record](https://www.itftennis.com/en/tournament/atp-finals/ger/1993/m-csr-ger-01a-1993/draws-and-results/) date actual competition 16–21 November**. This conflict remains explicit and blocks entire-year promotion. See [1993 evidence and source conflict](ATP_TOUR_1993_DATE_EVIDENCE_AND_CONFLICT.md). No 1993 canonical Calendar, Run Calendar, or FAX sporting mutation is made.
 
-## 1994 original ATP Tour (complete source date roster)
+## 1992 original ATP Tour — canonical dates with preserved Finals source distinction (78/78)
 
-All **85** 1994 original Tour + Frankfurt World Championships year-effective Series have been dated from the official ATP results archive, retaining exact historic hosts, original categories, published date windows and ISO week spans. The distinct Sydney-1/Sydney-2, Tokyo-1/Tokyo-2, Stuttgart-1/Stuttgart-2, Atlanta/Indianapolis, Manchester and Hilversum cases are preserved. See [1994 complete evidence report](ATP_TOUR_1994_COMPLETE_DATE_REFERENCE.md). Canonical Calendar includes **1,816 dated occurrences + 37 year coverage records**; this confirms the known parent roster, **not** independent legal licence lineage or playable tennis/squash scheduling. Official Finals date-window differences for 1997–1999 and 2003 remain unresolved.
+All **78** original ATP 1992 Series are now canonically dated, including late-1991 Adelaide/Wellington rollover, September Brisbane, and original paired Sydney/Tokyo/Stuttgart. The ATP yearly archive's **16–22 November 1992** Frankfurt Finals window and official historical **17–22 November** date record are preserved as two different source-date concepts; neither was silently substituted for the other. [1992 original candidate and alternate evidence](ATP_TOUR_1992_DATE_EVIDENCE_AND_CONFLICT.md); [window policy](ATP_TOUR_FINALS_DATE_WINDOW_SEMANTICS.md).
+
+
+## 1993 original ATP Tour — canonical dates with preserved Finals source distinction (84/84)
+
+All **84** original ATP 1993 Series are canonically dated, including Kuala Lumpur-1/2, Sydney-1/2, Tokyo-1/2, Stuttgart-1/2, Durban, Genoa, Frankfurt. ATP annual archive **15–21 Nov 1993** and Finals historical record **16–21 Nov** remain separately source-tagged. [1993 original evidence](ATP_TOUR_1993_DATE_EVIDENCE_AND_CONFLICT.md); [window policy](ATP_TOUR_FINALS_DATE_WINDOW_SEMANTICS.md).
+
+
+## 1994 original ATP Tour — canonical source dates (85/85)
+
+All **85** original 1994 Tour + Frankfurt Finals date windows are canonically imported. The distinct Sydney, Tokyo, Stuttgart, Atlanta/Indianapolis, Manchester and Hilversum events remain historically grounded. [1994 event-level evidence](ATP_TOUR_1994_COMPLETE_DATE_REFERENCE.md). 1994 Frankfurt Finals is **15–20 Nov** in both cited official sources.
+
 
 ## 2004 archive coverage
 
@@ -225,117 +235,32 @@ interval conflicts with a separate ATP tournament history's 8–16 November
 interval. The import is deliberately blocked until the date convention is
 reconciled. Historical years **1990–1994 and 1997–1999** remain undated.
 
-## Source-only historical candidates blocked by official date conflicts
+## 1997–1999 and 2003 — original ATP archives fully dated, alternate Finals provenance retained
 
-In addition to 1,731 already canonical date-bearing ATP occurrences, **278
-additional source-date candidates** have been transcribed for years not yet
-promoted into Calendar:
+Original ATP played main-Tour parent rosters dated in the reference: **1997: 75/75**, **1998: 74/74**, **1999: 66/66**, **2003: 63/63**. All were formerly staged because the yearly ATP results archive and the separate Finals historical source use differing date-window concepts. They are now **canonical as ATP results-archive event windows**, with independent Finals evidence nested into the precise Finals entity payload; this is an **explicit resolution of representation**, not an assertion that both sources report the same first singles match date.
 
-| Year | Original parent Series identities matched | Source state |
-| --- | ---: | --- |
-| 1997 | 75 / 75 | Staged; original ATP Finals week differs from historical Finals |
-| 1998 | 74 / 74 | Staged; original ATP Finals week differs from historical Finals |
-| 1999 | 66 / 66 | Staged; original ATP Finals week differs from historical Finals |
-| 2003 | 63 / 63 | Staged; historical Finals start differs by two days |
+For **2003**, the ATP year archive shows **10–16 Nov** while Finals historical sources describe the **broader 8–16 Nov** tournament. The Calendar preserves the ATP annual range plus broader historical event range, never retroactively infers singles match days or squash Edition dates. See [source semantics and exact evidence](ATP_TOUR_FINALS_DATE_WINDOW_SEMANTICS.md). All remaining current-season (2026) event windows are provisional.
 
-**The source files are not playable, not canonically dated, and not
-independently licence-lineage-certified.** Merely counting all original
-source Series IDs is *roster reconciliation*, not proof that all ATP played
-events or rightsholder chains are independently verified.
 
-The read-only `audit_atp_calendar_backfill.py --year <year> --json` reports
-`roster_reconciled=true` and a nonempty `unresolved_date_conflicts` for
-the four affected years. Its `ready_for_whole_year_promotion` is
-correctly **false** until the conflict has been adjudicated. Both the
-read-only audit and canonical promoter use one shared conflict registry
-to prevent mismatched acceptance signals.
+## Current canonical date coverage and boundaries
 
-See
-[`ATP_TOUR_1997_DATE_EVIDENCE_AND_CONFLICTS.md`](ATP_TOUR_1997_DATE_EVIDENCE_AND_CONFLICTS.md)
-and
-[`ATP_TOUR_1998_1999_DATE_EVIDENCE_AND_CONFLICTS.md`](ATP_TOUR_1998_1999_DATE_EVIDENCE_AND_CONFLICTS.md).
-The annual archives are the source of the published historical date
-windows; ATP Finals heritage separately reports the competition windows.
+| Category | Audit result |
+| --- | ---: |
+| Historical source years | **37 / 37 canonically dated** |
+| Canonical original ATP singles-event occurrences | **2,407** |
+| Per-year coverage audit records | **37** |
+| Total Calendar source entities | **2,444** |
+| Category source entities | 11 |
+| Series source entities | 164 |
+| Three-child linked Setup source entities | **2,619** |
+| Parent Series-year memberships | 2,431 |
+| Explicitly not-held parent-year memberships | 24 |
+| Missing original played parent-year dates | **0** |
+| Finals years retaining two separate official date concepts | 1990, 1992, 1993, 1997–1999, 2003 |
+| Provisional year (not final played results) | **2026** |
 
-## Current actual date coverage
+These numbers describe coverage **relative to the existing historical parent source roster**; they do not independently prove the completeness of the entire ATP professional event universe or verified licence lineage. Source-only ATP Calendar event-window dates and ISO week labels **must not be projected into a playable FAX Calendar**, and Save is always explicit.
 
-| Year(s) | Source status | Dated Series | Undated |
-| --- | --- | ---: | ---: |
-| 1990–1994 | No canonically dated source Series yet | 0 | Explicit missing IDs for every year |
-| 1995 | ATP played archive and official Frankfurt Finals date | **80 / 80** | 0 |
-| 1996 | ATP played archive, all original main-tier dates and Finals | **78 / 78** | 0 |
-| 1997–1999 | Source candidates available; conflicting official Finals date windows | **0 / 215 canonical** | 215 |
-| 2000 | Official played ATP archive, original 2000 host and tier dates | **65 / 65** | 0 |
-| 2001 | Original ATP annual archive; 65 historical source identities | **65 / 65** | 0 |
-| 2002 | Original ATP annual archive; 62 historical source identities | **62 / 62** | 0 |
-| 2003 | 63 staged candidates; unresolved ATP Finals source conflict | **0 / 63 canonical** | 63 |
-| 2004 | ATP played results archive, 2004 original year/host dates; Finals evidence conflict | **63 / 63** | 0 |
-| 2005 | Official ATP archive, 63 named editions; Finals start date conflict | **63 / 63** | 0 |
-| 2006 | Official played ATP archive, original host and tier dates | **63 / 63** | 0 |
-| 2007 | Official results archive, historical host continuity | **62 / 62** | 0 |
-| 2008 | Official archive, original ATP tiers; Bangalore not held | **61 / 61 played** | 0 |
-| 2009 | Official ATP results archive, year-specific historical hosts | **61 / 61** | 0 |
-| 2010 | Official ATP results archive, all named source Series | **61 / 61** | 0 |
-| 2011 | Official ATP results archive, original venues and ATP Finals | **61 / 61** | 0 |
-| 2012 | Official ATP results archive, played Tour + Finals | **61 / 61** | 0 |
-| 2013 | Official ATP results archive, played Tour + Finals | **61 / 61** | 0 |
-| 2014 | Official ATP results archive, dated played main Tour and Finals | **60 / 60** | 0 |
-| 2015 | ATP official results archive, 62 held source Series | **62 / 62** | 0 |
-| 2016 | ATP official results archive, 62 held source Series | **62 / 62** | 0 |
-| 2017 | ATP official results archive, complete original host dates | **64 / 64** | 0 |
-| 2018 | ATP official results archive, complete original host dates | **64 / 64** | 0 |
-| 2019 | Official ATP played results archive, all named Series | **63 / 63** | 0 |
-| 2020 | Official ATP results archive; 29 played, 12 not held | **29 / 29 played** | 0 |
-| 2021 | Official ATP results archive; 58 played, 7 not held | **58 / 58 played** | 0 |
-| 2022 | Official ATP results archive; 65 played, 4 not held | **65 / 65 played** | 0 |
-| 2023 | Official ATP played results archive, all named Series | **62 / 62** | 0 |
-| 2024 | Official ATP played results archive, all named Series | **62 / 62** | 0 |
-| 2025 | Official ATP played results archive, all named Series | **57 / 57** | 0 |
-| 2026 | Official published calendar + dated finals announcement, with seven subsequent corrections from played archive | **56 / 56** | 0 named Series, **year still provisional** |
-
-**No generic history period or week is interpreted as a tournament date.**
-The parent Category/Series dataset contains 2,431 year-effective memberships;
-1731 unique year/Series occurrences currently have original *date* sources.
-The other historical years will be sourced individually, not filled by
-inventing dates or extrapolating 2025/2026 patterns.
-
-Source links:
-
-- [1995 original ATP results archive](https://www.atptour.com/en/scores/results-archive?year=1995).
-- [1995 official ATP Finals historical record](https://www.nittoatpfinals.com/en/heritage/results-1970-1999).
-- [1996 original ATP results archive](https://www.atptour.com/en/scores/results-archive?year=1996).
-- [1996 Nitto ATP Finals historical record](https://www.nittoatpfinals.com/en/heritage/results-1970-1999).
-- [2000 original ATP results archive](https://www.atptour.com/en/scores/results-archive?year=2000).
-- [2001 original ATP results archive](https://www.atptour.com/en/scores/results-archive?year=2001).
-- [2002 original ATP results archive](https://www.atptour.com/en/scores/results-archive?year=2002).
-- [2004 official results archive](https://www.atptour.com/en/scores/results-archive?year=2004).
-- [2004 Tennis Masters Cup alternative start date](https://www.nittoatpfinals.com/en/heritage/results-2000-2023).
-- [2005 official results archive](https://www.atptour.com/en/scores/results-archive?year=2005).
-- [2005 Tennis Masters Cup alternative start date](https://www.nittoatpfinals.com/es/heritage/results-2000-2023).
-- [2006 official results archive](https://www.atptour.com/en/scores/results-archive?year=2006).
-- [2007 official results archive](https://www.atptour.com/en/scores/results-archive?year=2007).
-- [2008 official results archive](https://www.atptour.com/en/scores/results-archive?year=2008).
-- [2009 official results archive](https://www.atptour.com/en/scores/results-archive?year=2009).
-- [2010 official results archive](https://www.atptour.com/en/scores/results-archive?year=2010).
-- [2011 official results archive](https://www.atptour.com/en/scores/results-archive?year=2011).
-- [2012 official results archive](https://www.atptour.com/en/scores/results-archive?year=2012).
-- [2013 official results archive](https://www.atptour.com/en/scores/results-archive?year=2013).
-- [2014 official results archive](https://www.atptour.com/en/scores/results-archive?year=2014).
-- [2015 official results archive](https://www.atptour.com/en/scores/results-archive?year=2015).
-- [2016 official results archive](https://www.atptour.com/en/scores/results-archive?year=2016).
-- [2017 official results archive](https://www.atptour.com/en/scores/results-archive?year=2017).
-- [2018 official results archive](https://www.atptour.com/en/scores/results-archive?year=2018).
-- [2019 official results archive](https://www.atptour.com/en/scores/results-archive?year=2019).
-- [2020 official results archive](https://www.atptour.com/en/scores/results-archive?year=2020).
-- [2021 official results archive](https://www.atptour.com/en/scores/results-archive?year=2021).
-- [2022 official results archive](https://www.atptour.com/en/scores/results-archive?year=2022).
-- [2023 official results archive](https://www.atptour.com/en/scores/results-archive?year=2023).
-- [2024 official results archive](https://www.atptour.com/en/scores/results-archive?year=2024).
-- [2025 official results archive](https://www.atptour.com/en/scores/results-archive?year=2025).
-- [2026 official published schedule](https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar/).
-- [2026 official results archive](https://www.atptour.com/en/scores/results-archive?year=2026) for later corrections.
-- [2026 Next Gen Finals venue/dates in Reggio Calabria](https://www.nextgenatpfinals.com/en/news/reggio-calabria-to-host-2026-next-gen-atp-finals).
-- [2025 Marseille -> 2026 Lyon ATP-approved transfer](https://www.atptour.com/en/news/marseille-lyon-relocation).
 
 ### Crucial licensed-identity example
 

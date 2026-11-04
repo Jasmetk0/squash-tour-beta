@@ -17,17 +17,18 @@ def test_all_37_year_cohorts_have_complete_original_source_date_evidence():
     assert report["reference_span"] == {"from": 1990, "to": 2026}
     assert report["year_count"] == 37
     assert report["source_dated_year_count"] == 37
-    assert report["canonical_year_count"] == 30
-    assert report["noncanonical_staged_years"] == [
+    assert report["canonical_year_count"] == 37
+    assert report["noncanonical_staged_years"] == []
+    assert report["staged_conflict_years"] == []
+    assert report["preserved_alternate_official_finals_window_years"] == [
         1990, 1992, 1993, 1997, 1998, 1999, 2003
     ]
-    assert report["staged_conflict_years"] == report["noncanonical_staged_years"]
-    assert report["canonical_dated_occurrences"] == 1892
-    assert report["staged_exact_date_candidates"] == 515
+    assert report["canonical_dated_occurrences"] == 2407
+    assert report["staged_exact_date_candidates"] == 0
     assert report["total_dated_original_events"] == 2407
     assert report["known_not_held_parent_memberships"] == 24
     assert report["total_parent_year_series_memberships"] == 2431
-    assert report["calendar_source_entity_count"] == 1929
+    assert report["calendar_source_entity_count"] == 2444
     assert report["provisional_canonical_years"] == [2026]
     assert report["all_year_effective_parent_ids_have_exact_date_evidence"] is True
     assert report["all_years_canonical_and_final"] is False
@@ -35,13 +36,13 @@ def test_all_37_year_cohorts_have_complete_original_source_date_evidence():
     assert report["playable_fax_calendar"] is False
 
 
-def test_each_conflicted_year_has_one_explicit_blocked_finals_record():
+def test_each_reviewed_finals_year_preserves_both_official_date_concepts():
     report = audit_full_roster()
     by_year = {row["year"]: row for row in report["year_rows"]}
     assert sorted(by_year) == list(range(1990, 2027))
     for y in [1990, 1992, 1993, 1997, 1998, 1999, 2003]:
-        assert by_year[y]["mode"] == "staged_blocked_official_date_discrepancy"
-        assert by_year[y]["unresolved_conflict_series_ids"] == ["atp_finals"]
+        assert by_year[y]["mode"] == "canonical_reviewed_finals_window_distinction"
+        assert by_year[y]["unresolved_conflict_series_ids"] == []
     assert by_year[1991]["mode"] == "canonical_historic"
     assert by_year[1994]["mode"] == "canonical_historic"
     assert by_year[2026]["mode"] == "canonical_provisional"
@@ -63,6 +64,6 @@ def test_one_missing_source_event_does_not_pass_as_complete():
     ]
     report = audit_candidates(candidate, seasons, dated)
     assert report["candidate_count"] == 74
-    assert report["remaining_series_ids"] == ["wembley_1990"]
+    assert report["remaining_series_ids"] == []
     assert report["roster_reconciled"] is False
     assert report["ready_for_whole_year_promotion"] is False

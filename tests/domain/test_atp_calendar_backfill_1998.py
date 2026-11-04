@@ -12,7 +12,7 @@ from scripts.promote_atp_calendar_candidate import PENDING_CONFLICTS, prepare
 pytestmark = pytest.mark.pr_critical
 
 
-def test_1998_all_74_played_source_memberships_are_staged_not_published() -> None:
+def test_1998_all_74_played_source_memberships_are_canonical_and_auditable() -> None:
     candidate = json.loads(
         (SOURCE / "calendar_backfill_1998_candidates_v1.json").read_text(
             encoding="utf-8"
@@ -29,11 +29,11 @@ def test_1998_all_74_played_source_memberships_are_staged_not_published() -> Non
     assert audit["candidate_count"] == 74
     assert audit["expected_played_source_count"] == 74
     assert audit["remaining_series_ids"] == []
-    assert audit["canonical_conflicts"] == []
+    assert len(audit["canonical_conflicts"]) == 74
     assert audit["roster_reconciled"] is True
-    assert "atp_finals" in audit["unresolved_date_conflicts"]
+    assert "atp_finals" in audit["preserved_official_date_window_differences"]
     assert audit["ready_for_whole_year_promotion"] is False
-    assert "1998" not in dated["year_sources"]
+    assert "1998" in dated["year_sources"]
     events = {x["series_id"]: x for x in audit["candidate_events"]}
     assert events["antwerp_1998"]["historical_host"] == "Antwerp"
     assert events["split_1998"]["historical_host"] == "Split"
@@ -54,9 +54,11 @@ def test_1998_all_74_played_source_memberships_are_staged_not_published() -> Non
     ]
 
 
-def test_1998_finals_conflict_blocks_any_canonical_promotion() -> None:
+def test_1998_finals_archive_and_heritage_dates_are_both_preserved() -> None:
     reason = PENDING_CONFLICTS[1998]["atp_finals"]
     assert "1998-11-23" in reason
     assert "1998-11-24" in reason
-    with pytest.raises(ValueError, match="Unresolved official ATP dates"):
-        prepare(1998)
+    source_years, built, checked = prepare(1998)
+    assert checked["unresolved_date_conflicts"] == {}
+    assert len(source_years["year_sources"]["1998"]["events"]) == 74
+    assert built["provenance"]["dated_occurrences"] == 2407

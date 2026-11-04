@@ -46,11 +46,11 @@ def test_1991_promotion_idempotent_does_not_mutate_source():
     dates,calendar,audit=prepare(1991)
     assert audit["candidate_count"]==76
     assert len(dates["year_sources"]["1991"]["events"])==76
-    assert calendar["provenance"]["dated_occurrences"]==1892
+    assert calendar["provenance"]["dated_occurrences"]==2407
     assert calendar["provenance"]["date_coverage_years"]==(
-        [1991,1994,1995,1996,2000,2001,2002]+list(range(2004,2027))
+        list(range(1990, 2027))
     )
-    assert len(calendar["entities"])==1929
+    assert len(calendar["entities"])==2444
     assert canonical(calendar)==q.read_text(encoding="utf-8")
     entries={e["source_entity_id"]:e for e in calendar["entities"]}
     assert entries["season_1991_date_coverage"]["payload"]["date_coverage_state"]=="verified_complete_known_series_dates"

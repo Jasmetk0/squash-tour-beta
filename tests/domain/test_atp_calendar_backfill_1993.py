@@ -25,13 +25,14 @@ def test_1993_archive_source_roster_84_and_disputed_finals_date() -> None:
     assert report["expected_played_source_count"] == 84
     assert report["remaining_series_ids"] == []
     assert report["roster_reconciled"] is True
-    assert report["canonical_conflicts"] == []
+    assert len(report["canonical_conflicts"]) == 84
     assert report["ready_for_whole_year_promotion"] is False
-    assert report["unresolved_date_conflicts"] == SOURCE_DATE_CONFLICTS[1993]
-    assert "atp_finals" in report["unresolved_date_conflicts"]
-    assert "1993-11-15" in report["unresolved_date_conflicts"]["atp_finals"]
-    assert "1993-11-16" in report["unresolved_date_conflicts"]["atp_finals"]
-    assert "1993" not in dated["year_sources"]
+    assert report["unresolved_date_conflicts"] == {}
+    assert report["preserved_official_date_window_differences"] == SOURCE_DATE_CONFLICTS[1993]
+    assert "atp_finals" in report["preserved_official_date_window_differences"]
+    assert "1993-11-15" in report["preserved_official_date_window_differences"]["atp_finals"]
+    assert "1993-11-16" in report["preserved_official_date_window_differences"]["atp_finals"]
+    assert "1993" in dated["year_sources"]
     rows = {r["series_id"]: r for r in report["candidate_events"]}
     assert rows["kuala_lumpur_jan_1993"]["historical_host"] == "Kuala Lumpur-1"
     assert rows["singapore_1999"]["historical_host"] == "Kuala Lumpur-2"
@@ -52,13 +53,15 @@ def test_1993_archive_source_roster_84_and_disputed_finals_date() -> None:
     assert rows["atp_finals"]["iso_weeks_occupied"] == [{"iso_year": 1993, "iso_week": 46}]
 
 
-def test_1993_cannot_be_promoted_and_no_other_calendar_changes() -> None:
+def test_1993_archive_and_alternate_windows_are_idempotent() -> None:
     before = (
         (SOURCE / "calendar_dates_v1.json").read_bytes(),
         (SOURCE / "calendar.json").read_bytes(),
     )
-    with pytest.raises(ValueError, match="Unresolved official ATP dates"):
-        prepare(1993)
+    source_years, built, checked = prepare(1993)
+    assert checked["unresolved_date_conflicts"] == {}
+    assert len(source_years["year_sources"]["1993"]["events"]) == 84
+    assert built["provenance"]["dated_occurrences"] == 2407
     assert (
         (SOURCE / "calendar_dates_v1.json").read_bytes(),
         (SOURCE / "calendar.json").read_bytes(),

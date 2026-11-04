@@ -22,10 +22,11 @@ def test_1992_year_effective_78_early_cross_year_events_and_finals_conflict() ->
     assert report["expected_played_source_count"] == 78
     assert report["remaining_series_ids"] == []
     assert report["roster_reconciled"] is True
-    assert report["canonical_conflicts"] == []
-    assert report["unresolved_date_conflicts"] == SOURCE_DATE_CONFLICTS[1992]
+    assert len(report["canonical_conflicts"]) == 78
+    assert report["unresolved_date_conflicts"] == {}
+    assert report["preserved_official_date_window_differences"] == SOURCE_DATE_CONFLICTS[1992]
     assert report["ready_for_whole_year_promotion"] is False
-    assert "1992" not in dated["year_sources"]
+    assert "1992" in dated["year_sources"]
     rows = {e["series_id"]: e for e in report["candidate_events"]}
     assert rows["brisbane"]["historical_host"] == "Adelaide"
     assert rows["wellington_1992"]["historical_host"] == "Wellington"
@@ -46,13 +47,15 @@ def test_1992_year_effective_78_early_cross_year_events_and_finals_conflict() ->
     assert "barcelona_olympics" not in rows
 
 
-def test_1992_unresolved_dates_fail_closed_and_canonical_files_unchanged() -> None:
+def test_1992_archive_and_alternate_windows_are_idempotent() -> None:
     before = (
         (SOURCE / "calendar_dates_v1.json").read_bytes(),
         (SOURCE / "calendar.json").read_bytes(),
     )
-    with pytest.raises(ValueError, match="Unresolved official ATP dates"):
-        prepare(1992)
+    source_years, built, checked = prepare(1992)
+    assert checked["unresolved_date_conflicts"] == {}
+    assert len(source_years["year_sources"]["1992"]["events"]) == 78
+    assert built["provenance"]["dated_occurrences"] == 2407
     assert (
         (SOURCE / "calendar_dates_v1.json").read_bytes(),
         (SOURCE / "calendar.json").read_bytes(),

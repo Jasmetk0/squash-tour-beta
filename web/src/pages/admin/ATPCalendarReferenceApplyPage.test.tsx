@@ -44,8 +44,8 @@ function source(){
     package_id:'atp_tour_1990_2026_calendar_reference_setup',
     package_type:'Setup',source_version:1,source_fingerprint:ctx.sourceFingerprint,
     reference_span:{from:1990,to:2026},provisional_years:[2026],
-    dated_years:[1991,1994,1995,1996,2000,2001,2002,...Array.from({length:23},(_,i)=>2004+i)],
-    undated_years:[1990,1992,1993,1997,1998,1999,2003],
+    dated_years:Array.from({length:37},(_,i)=>1990+i),
+    undated_years:[],
     usage:'source_reference_only_no_playable_calendar',
     children:[
       {package_id:'atp_tour_1990_2026_category',package_type:'Category',
@@ -53,7 +53,7 @@ function source(){
       {package_id:'atp_tour_1990_2026_series',package_type:'Series',
         source_version:1,source_fingerprint:hash('c'),entity_count:164},
       {package_id:'atp_tour_1990_2026_calendar',package_type:'Calendar',
-        source_version:1,source_fingerprint:hash('d'),entity_count:1929}
+        source_version:1,source_fingerprint:hash('d'),entity_count:2444}
     ]
   }
 }
@@ -94,10 +94,18 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
       }:{
         year,package_id:'atp_tour_1990_2026_calendar',
         source_fingerprint:hash('d'),read_only:true,run_mutated:false,
-        coverage:{atp_season_year:year,roster_series_count:75,dated_series_count:0,
-          undated_series_ids:['indian_wells'],known_not_held_series_ids:[],
-          date_coverage_state:'undated',year_source_status:'not_dated',year_source_url:null},
-        events:[]
+        coverage:{atp_season_year:year,roster_series_count:75,dated_series_count:1,
+          undated_series_ids:[],known_not_held_series_ids:[],
+          date_coverage_state:'verified_complete_archive_dates_with_alternate_finals_window',
+          year_source_status:'verified_atp_results_archive_with_separate_finals_historical_window',
+          year_source_url:'https://www.atptour.com/en/scores/results-archive?year=1990'},
+        events:[{series_id:'brisbane',category_id:'atp_world_series',
+          start_date:'1990-01-01',end_date:'1990-01-07',
+          start_year_week:{iso_year:1990,iso_week:1},
+          end_year_week:{iso_year:1990,iso_week:1},
+          iso_weeks_occupied:[{iso_year:1990,iso_week:1}],
+          source_url:'https://www.atptour.com/en/scores/results-archive?year=1990',
+          year_source_state:'verified_atp_results_archive_with_separate_finals_historical_window'}]
       })
 
     api.listRunContainers.mockResolvedValue({run_containers:[{
@@ -150,20 +158,20 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
     expect(validATPCalendarCatalog({...original,
       dated_years:[...original.dated_years,2026]})).toBe(false)
     expect(validATPCalendarCatalog({...original,
-      undated_years:original.undated_years.slice(1)})).toBe(false)
+      undated_years:[1990]})).toBe(false)
     expect(validATPCalendarCatalog({...original,
       children:[...original.children.slice(0,2),
         {...original.children[2],entity_count:0}]})).toBe(false)
   })
 
-  it('renders sourced ISO year/week dates and explicit undated-year warnings',async()=>{
+  it('renders sourced ISO year/week dates for earliest ATP 1990 source',async()=>{
     mount()
     await screen.findByText('2026/W01')
     expect(screen.getByText('2026/W02')).toBeInTheDocument()
     expect(screen.getByText('2026-01-04')).toBeInTheDocument()
     await userEvent.selectOptions(
       screen.getByRole('combobox',{name:'ATP Calendar Year'}),'1990')
-    expect(await screen.findByText(/Pro tento rok nejsou jednotlivá data/)).toBeInTheDocument()
+    expect(await screen.findByText('1990-01-01')).toBeInTheDocument()
     expect(api.confirmATPCalendarReference).not.toHaveBeenCalled()
   })
 
@@ -171,8 +179,8 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
     mount()
     expect(await screen.findByText(/11 položek/)).toBeInTheDocument()
     expect(screen.getByText(/164 položek/)).toBeInTheDocument()
-    expect(screen.getByText(/1929 položek/)).toBeInTheDocument()
-    expect(screen.getByText(/1991, 1994–1996, 2000–2002, 2004–2026/)).toBeInTheDocument()
+    expect(screen.getByText(/2444 položek/)).toBeInTheDocument()
+    expect(screen.getByText(/1990–2026/)).toBeInTheDocument()
     expect(screen.getByText(/2026 předběžný/)).toBeInTheDocument()
     expect(api.previewATPCalendarReference).not.toHaveBeenCalled()
     await selectTarget()

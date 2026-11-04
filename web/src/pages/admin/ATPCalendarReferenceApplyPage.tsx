@@ -22,8 +22,8 @@ const writableBranch = (branch:RunBranch,runId:string):boolean =>
   branch.run_id===runId && branch.status==='active' &&
   !branch.read_only && Boolean(branch.saved_head_revision_id)
 
-/** Preserve disjoint historical coverage: 2000–2002, 2004–2026
- * must not be presented as an uninterrupted 2000–2026 date census. */
+/** Compact only genuinely consecutive source-dated historical years.
+ * The caller must use the actual canonical year partition, never assume it. */
 const datedYearRanges=(years:readonly number[]):string=>{
   if(!years.length)return '—'
   const sorted=[...years].sort((a,b)=>a-b)

@@ -19,6 +19,9 @@ from scripts.build_atp_historical_calendar import (
     SOURCE, ensure_archive_year_matches, iso_weeks_touched, official_url,
     parse_exact_date,
 )
+from scripts.atp_finals_date_window_evidence import (
+    REVIEWED_DATE_WINDOW_YEARS, make_official_finals_window_evidence,
+)
 
 
 SOURCE_DATE_CONFLICTS = {
@@ -154,18 +157,12 @@ def audit_candidates(
     # All disputed Finals archives must preserve the ORIGINAL annual ATP
     # event-window value. Otherwise an accidental edit could turn a documented
     # source conflict into a subtly different candidate without an audit error.
-    archived_finals_windows = {
-        1990: ("1990-11-12", "1990-11-18"),
-        1992: ("1992-11-16", "1992-11-22"),
-        1993: ("1993-11-15", "1993-11-21"),
-        1997: ("1997-11-10", "1997-11-16"),
-        1998: ("1998-11-23", "1998-11-29"),
-        1999: ("1999-11-22", "1999-11-28"),
-        2003: ("2003-11-10", "2003-11-16"),
-    }
-    if year in archived_finals_windows and "atp_finals" in seen:
+    if year in REVIEWED_DATE_WINDOW_YEARS and "atp_finals" in seen:
+        expected = make_official_finals_window_evidence(year)
         finals = next(row for row in validated if row["series_id"] == "atp_finals")
-        if (finals["start_date"], finals["end_date"]) != archived_finals_windows[year]:
+        if (finals["start_date"], finals["end_date"]) != (
+            expected["archive_start_date"], expected["archive_end_date"]
+        ):
             raise ValueError(
                 "Conflicting ATP Finals candidate no longer matches the "
                 "original annual results-archive date window"
@@ -174,7 +171,14 @@ def audit_candidates(
     already_dated = {x["series_id"] for x in current["events"]} if current else set()
     conflicts = sorted(already_dated & seen)
     remaining = sorted(set(active) - not_held - seen - already_dated)
-    evidence_conflicts = SOURCE_DATE_CONFLICTS.get(year, {})
+    reviewed_differences = SOURCE_DATE_CONFLICTS.get(year, {})
+    # The exact annual archive window is the canonical date concept. The
+    # independent Finals historical interval is preserved separately with an
+    # immutable reviewed source record, not overwritten or treated as a
+    # tournament match-day claim. Unreviewed disagreements remain blocking.
+    evidence_conflicts = (
+        {} if year in REVIEWED_DATE_WINDOW_YEARS else reviewed_differences
+    )
     roster_reconciled = (not remaining and len(seen) == len(active) - len(not_held))
     return {
         "year": year,
@@ -187,6 +191,10 @@ def audit_candidates(
         "canonical_conflicts": conflicts,
         "roster_reconciled": roster_reconciled,
         "unresolved_date_conflicts": evidence_conflicts,
+        "preserved_official_date_window_differences": (
+            reviewed_differences if year in REVIEWED_DATE_WINDOW_YEARS else {}
+        ),
+        "calendar_date_semantics": "official_atp_annual_results_archive_event_window",
         "ready_for_whole_year_promotion": bool(
             roster_reconciled and not conflicts and not evidence_conflicts
         ),

@@ -26,7 +26,7 @@ def test_reference_calendar_setup_has_three_children_and_never_runnable_editions
     assert [child.package_type for child in doc.children] == [
         PackageType.CATEGORY, PackageType.SERIES, PackageType.CALENDAR
     ]
-    assert [len(child.entities) for child in doc.children] == [11, 164, 1929]
+    assert [len(child.entities) for child in doc.children] == [11, 164, 2444]
     assert len(doc.children[-1].entities) == 37 + doc.children[-1].provenance["dated_occurrences"]
     cal = doc.children[-1]
     assert all(e.scope == "tennis.atp_tour.calendar.reference.1990_2026"
@@ -81,10 +81,10 @@ def test_source_calendar_preview_confirm_save_reopen_and_idempotence(tmp_path: P
         )
         assert local_status == 200 and catalog == global_catalog
         expected_calendar_size = catalog["children"][-1]["entity_count"]
-        assert expected_calendar_size == 1929
+        assert expected_calendar_size == 2444
         assert [c["entity_count"] for c in catalog["children"]] == [11, 164, expected_calendar_size]
-        assert catalog["dated_years"] == [1991, 1994, 1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
-        assert catalog["undated_years"] == list([1990, 1992, 1993]) + [1997, 1998, 1999, 2003]
+        assert catalog["dated_years"] == list(range(1990, 2027))
+        assert catalog["undated_years"] == []
         assert _request("GET", base)[1]["state"] is None
 
         status, preview = _request(

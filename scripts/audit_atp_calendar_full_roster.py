@@ -5,7 +5,10 @@ maps historical tennis events into a playable FAX sporting Run.
 The two distinct metrics are:
   - year-effective roster coverage (sourced exact event windows);
   - canonically imported Package occurrence coverage (published snapshot).
-A staged, source-conflicted year NEVER counts as canonically dated.
+The official ATP annual results archive event window is authoritative for
+the Calendar start/end dates; separately official Finals history intervals are
+preserved explicitly as distinct evidence. A missing/inconsistent alternate
+official Finals window MUST reject the source.
 
 Usage:
     python scripts/audit_atp_calendar_full_roster.py --check
@@ -18,6 +21,10 @@ import json
 
 from scripts.audit_atp_calendar_backfill import (
     SOURCE_DATE_CONFLICTS, audit_candidates,
+)
+from scripts.atp_finals_date_window_evidence import (
+    REVIEWED_DATE_WINDOW_YEARS, VERIFIED_SOURCE_WINDOW_STATE,
+    CALENDAR_DATE_CONCEPT, validate_official_finals_window_evidence,
 )
 from scripts.build_atp_historical_calendar import SOURCE, build, canonical
 
@@ -71,10 +78,25 @@ def audit_full_roster() -> dict:
                 entity = old_entities.get(f"atp_{year}_{sid}")
                 if entity is None or entity["payload"]["atp_season_year"] != year:
                     raise ValueError(f"Missing canonical occurrence ATP {year}/{sid}")
+            if year in REVIEWED_DATE_WINDOW_YEARS:
+                if canonical_year["status"] != VERIFIED_SOURCE_WINDOW_STATE:
+                    raise ValueError(f"ATP {year} Finals source distinction erased")
+                evidence = validate_official_finals_window_evidence(
+                    year, canonical_year.get("finals_date_window_evidence")
+                )
+                finals = old_entities.get(f"atp_{year}_atp_finals")
+                if finals is None or finals["payload"].get(
+                    "alternate_official_finals_window"
+                ) != evidence:
+                    raise ValueError(f"ATP {year} Finals independent evidence lost")
+                if finals["payload"].get("calendar_date_concept") != CALENDAR_DATE_CONCEPT:
+                    raise ValueError(f"ATP {year} Finals source date semantics changed")
             total_canonical += len(rows)
             mode = (
                 "canonical_provisional"
                 if canonical_year["status"] == "provisional_published_schedule"
+                else "canonical_reviewed_finals_window_distinction"
+                if year in REVIEWED_DATE_WINDOW_YEARS
                 else "canonical_historic"
             )
             conflicts = []
@@ -128,6 +150,10 @@ def audit_full_roster() -> dict:
         "canonical_year_count": len(sources),
         "noncanonical_staged_years": noncanonical_years,
         "staged_conflict_years": staged_conflicts,
+        "preserved_alternate_official_finals_window_years": sorted(
+            y for y in historical if y in REVIEWED_DATE_WINDOW_YEARS
+        ),
+        "historical_calendar_date_concept": CALENDAR_DATE_CONCEPT,
         "canonical_dated_occurrences": total_canonical,
         "staged_exact_date_candidates": total_staged,
         "total_dated_original_events": total_canonical + total_staged,

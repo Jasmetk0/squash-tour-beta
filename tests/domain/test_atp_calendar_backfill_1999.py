@@ -12,7 +12,7 @@ from scripts.promote_atp_calendar_candidate import PENDING_CONFLICTS, prepare
 pytestmark = pytest.mark.pr_critical
 
 
-def test_1999_parent_series_coverage_complete_without_canonical_date_claim() -> None:
+def test_1999_parent_series_coverage_complete_with_distinct_window_evidence() -> None:
     candidate = json.loads(
         (SOURCE / "calendar_backfill_1999_candidates_v1.json").read_text(
             encoding="utf-8"
@@ -29,13 +29,13 @@ def test_1999_parent_series_coverage_complete_without_canonical_date_claim() -> 
     assert audited["candidate_count"] == 66
     assert audited["expected_played_source_count"] == 66
     assert audited["remaining_series_ids"] == []
-    assert audited["canonical_conflicts"] == []
+    assert len(audited["canonical_conflicts"]) == 66
     assert audited["roster_reconciled"] is True
-    assert "atp_finals" in audited["unresolved_date_conflicts"]
+    assert "atp_finals" in audited["preserved_official_date_window_differences"]
     assert audited["ready_for_whole_year_promotion"] is False
     # Completeness of source IDs does not override conflicting official
     # date definitions for the year-ending ATP World Championship.
-    assert "1999" not in canonical["year_sources"]
+    assert "1999" in canonical["year_sources"]
     events = {row["series_id"]: row for row in audited["candidate_events"]}
     assert events["prague_1999"]["historical_host"] == "Prague"
     assert events["merano_1999"]["historical_host"] == "Meran"
@@ -55,9 +55,11 @@ def test_1999_parent_series_coverage_complete_without_canonical_date_claim() -> 
     ]
 
 
-def test_1999_official_finals_date_disagreement_blocks_import() -> None:
+def test_1999_official_finals_date_disagreement_is_recorded() -> None:
     reason = PENDING_CONFLICTS[1999]["atp_finals"]
     assert "1999-11-22" in reason
     assert "1999-11-23" in reason
-    with pytest.raises(ValueError, match="Unresolved official ATP dates"):
-        prepare(1999)
+    source_years, built, checked = prepare(1999)
+    assert checked["unresolved_date_conflicts"] == {}
+    assert len(source_years["year_sources"]["1999"]["events"]) == 66
+    assert built["provenance"]["dated_occurrences"] == 2407

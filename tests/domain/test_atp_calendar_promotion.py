@@ -32,8 +32,8 @@ def test_source_files_remain_unchanged_when_promotion_vetoes() -> None:
 
 
 def test_promoter_rejects_unstaged_year() -> None:
-    with pytest.raises(ValueError, match="Only staged 2002 and 2003"):
-        prepare(2001)
+    with pytest.raises(ValueError, match="Only staged 2001–2003"):
+        prepare(2000)
 
 
 def test_conflicted_year_is_not_mislabelled_as_canonically_dated() -> None:
@@ -62,5 +62,32 @@ def test_2002_is_mechanically_promotable_without_changing_2004_onward() -> None:
         "iso_week": 1,
     }
     assert by_id["season_2002_date_coverage"]["payload"][
+        "date_coverage_state"
+    ] == "verified_complete_known_series_dates"
+
+
+def test_2001_is_mechanically_promotable_without_changing_other_years() -> None:
+    promoted, built, audited = prepare(2001)
+    assert audited["candidate_count"] == 65
+    assert audited["expected_played_source_count"] == 65
+    assert audited["remaining_series_ids"] == []
+    assert "2001" in promoted["year_sources"]
+    assert len(promoted["year_sources"]["2001"]["events"]) == 65
+    assert built["provenance"]["dated_occurrences"] == 1381 + 65
+    assert built["provenance"]["season_coverage_entries"] == 37
+    assert built["provenance"]["date_coverage_years"] == (
+        [2001] + list(range(2004, 2027))
+    )
+    by_id = {x["source_entity_id"]: x for x in built["entities"]}
+    assert by_id["atp_2001_atlanta_verizon_2001"]["payload"][
+        "start_date"
+    ] == "2001-04-23"
+    assert by_id["atp_2001_stuttgart"]["payload"][
+        "start_date"
+    ] == "2001-07-16"
+    assert by_id["atp_2001_stuttgart_indoor_masters"]["payload"][
+        "start_date"
+    ] == "2001-10-15"
+    assert by_id["season_2001_date_coverage"]["payload"][
         "date_coverage_state"
     ] == "verified_complete_known_series_dates"

@@ -1,5 +1,18 @@
 # ATP Tour 1990 — all original source-year dates, unresolved Frankfurt Finals window
 
+> **Historical audit snapshot (superseded import status).** This report
+> documents the original pre-reconciliation evidence and the reason this
+> year's promotion was formerly blocked. The year is now canonically dated
+> **only as an ATP annual results-archive event window**; the distinct official
+> Finals historical window remains separately preserved in
+> `calendar_dates_v1.json`, in each relevant Finals occurrence, and in
+> [the reviewed source-window policy](ATP_TOUR_FINALS_DATE_WINDOW_SEMANTICS.md).
+> Phrases below about a blocked, staged or undated calendar describe the
+> historical audit stage, **not the current state**. There is no claim of
+> actual first-match dates, playable squash calendars or complete licence
+> lineage.
+>
+
 **Status: 75/75 historical ATP Tour / singles World Championship original-tier Series date candidates, NOT canonical.** The new `calendar_backfill_1990_candidates_v1.json` exactly matches all 75 year-effective parent source Series. The complete source list is the [1990 original ATP Tour results archive](https://www.atptour.com/en/scores/results-archive?year=1990), including historical event-city labels and inclusive date intervals.
 
 ## Two official Finals date concepts — unresolved

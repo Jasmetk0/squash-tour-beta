@@ -180,7 +180,7 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
     expect(await screen.findByText(/11 položek/)).toBeInTheDocument()
     expect(screen.getByText(/164 položek/)).toBeInTheDocument()
     expect(screen.getByText(/2444 položek/)).toBeInTheDocument()
-    expect(screen.getByText(/1990–2026/)).toBeInTheDocument()
+    expect(screen.getAllByText(/1990–2026/).length).toBeGreaterThan(0)
     expect(screen.getByText(/2026 předběžný/)).toBeInTheDocument()
     expect(api.previewATPCalendarReference).not.toHaveBeenCalled()
     await selectTarget()

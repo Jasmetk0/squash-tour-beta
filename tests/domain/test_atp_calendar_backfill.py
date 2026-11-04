@@ -31,9 +31,10 @@ def test_2003_full_parent_roster_candidates_preserve_real_cross_year_iso_week() 
     result = audit_candidates(*inputs())
     assert result["year"] == 2003
     assert result["candidate_count"] == 63
-    assert result["existing_canonical_count"] == 0
+    assert result["existing_canonical_count"] == 63
     assert result["roster_reconciled"] is True
-    assert "atp_finals" in result["unresolved_date_conflicts"]
+    assert result["unresolved_date_conflicts"] == {}
+    assert "atp_finals" in result["preserved_official_date_window_differences"]
     assert result["ready_for_whole_year_promotion"] is False
     assert result["remaining_series_ids"] == []
     by_id = {x["series_id"]: x for x in result["candidate_events"]}
@@ -82,4 +83,4 @@ def test_candidate_does_not_implicitly_modify_canonical_data() -> None:
     before = json.dumps(dated, sort_keys=True)
     audit_candidates(candidate, seasons, dated)
     assert json.dumps(dated, sort_keys=True) == before
-    assert "2003" not in dated["year_sources"]
+    assert "2003" in dated["year_sources"]

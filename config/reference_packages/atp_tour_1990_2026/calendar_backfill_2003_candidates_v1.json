@@ -4,7 +4,7 @@
   "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
   "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
   "as_of": "2026-11-04",
-  "notes": "Five start-of-season official archive dates. Parent Series mapping uses the 2003 year-effective source roster. No claim of complete annual dates or independently established legal licence lineage. Not included in canonical Calendar until all expected played source Series have dated intervals.",
+  "notes": "All 63 events from the official ATP 2003 results archive transcribed, excluding Grand Slams and team events. Series mappings joined to parent historical roster; licence continuity is not independently certified. Candidate data remains separate from canonical generated Calendar until promotion and CI.",
   "events": [
     {
       "historical_host": "Doha",
@@ -35,6 +35,354 @@
       "series_id": "sydney_2019",
       "start_date": "2003-01-06",
       "end_date": "2003-01-12"
+    },
+    {
+      "historical_host": "Milan",
+      "series_id": "sofia",
+      "start_date": "2003-01-27",
+      "end_date": "2003-02-02"
+    },
+    {
+      "historical_host": "Marseille",
+      "series_id": "lyon",
+      "start_date": "2003-02-10",
+      "end_date": "2003-02-16"
+    },
+    {
+      "historical_host": "San Jose",
+      "series_id": "dallas",
+      "start_date": "2003-02-10",
+      "end_date": "2003-02-16"
+    },
+    {
+      "historical_host": "Viña del Mar",
+      "series_id": "cordoba",
+      "start_date": "2003-02-10",
+      "end_date": "2003-02-16"
+    },
+    {
+      "historical_host": "Rotterdam",
+      "series_id": "rotterdam",
+      "start_date": "2003-02-17",
+      "end_date": "2003-02-23"
+    },
+    {
+      "historical_host": "Memphis",
+      "series_id": "rio",
+      "start_date": "2003-02-17",
+      "end_date": "2003-02-23"
+    },
+    {
+      "historical_host": "Buenos Aires",
+      "series_id": "buenos_aires",
+      "start_date": "2003-02-17",
+      "end_date": "2003-02-23"
+    },
+    {
+      "historical_host": "Dubai",
+      "series_id": "dubai",
+      "start_date": "2003-02-24",
+      "end_date": "2003-03-02"
+    },
+    {
+      "historical_host": "Acapulco",
+      "series_id": "acapulco",
+      "start_date": "2003-02-24",
+      "end_date": "2003-03-02"
+    },
+    {
+      "historical_host": "Copenhagen",
+      "series_id": "copenhagen_2003",
+      "start_date": "2003-02-24",
+      "end_date": "2003-03-02"
+    },
+    {
+      "historical_host": "Delray Beach",
+      "series_id": "delray_beach",
+      "start_date": "2003-03-03",
+      "end_date": "2003-03-09"
+    },
+    {
+      "historical_host": "Scottsdale",
+      "series_id": "las_vegas_2008",
+      "start_date": "2003-03-03",
+      "end_date": "2003-03-09"
+    },
+    {
+      "historical_host": "Indian Wells",
+      "series_id": "indian_wells",
+      "start_date": "2003-03-10",
+      "end_date": "2003-03-16"
+    },
+    {
+      "historical_host": "Miami",
+      "series_id": "miami",
+      "start_date": "2003-03-17",
+      "end_date": "2003-03-30"
+    },
+    {
+      "historical_host": "Estoril",
+      "series_id": "estoril",
+      "start_date": "2003-04-07",
+      "end_date": "2003-04-13"
+    },
+    {
+      "historical_host": "Casablanca",
+      "series_id": "marrakech",
+      "start_date": "2003-04-07",
+      "end_date": "2003-04-13"
+    },
+    {
+      "historical_host": "Monte-Carlo",
+      "series_id": "monte_carlo",
+      "start_date": "2003-04-14",
+      "end_date": "2003-04-20"
+    },
+    {
+      "historical_host": "Barcelona",
+      "series_id": "barcelona",
+      "start_date": "2003-04-21",
+      "end_date": "2003-04-27"
+    },
+    {
+      "historical_host": "Houston",
+      "series_id": "houston",
+      "start_date": "2003-04-21",
+      "end_date": "2003-04-27"
+    },
+    {
+      "historical_host": "Valencia",
+      "series_id": "brussels",
+      "start_date": "2003-04-28",
+      "end_date": "2003-05-04"
+    },
+    {
+      "historical_host": "Munich",
+      "series_id": "munich",
+      "start_date": "2003-04-28",
+      "end_date": "2003-05-04"
+    },
+    {
+      "historical_host": "Rome",
+      "series_id": "rome",
+      "start_date": "2003-05-05",
+      "end_date": "2003-05-11"
+    },
+    {
+      "historical_host": "Hamburg",
+      "series_id": "hamburg",
+      "start_date": "2003-05-12",
+      "end_date": "2003-05-18"
+    },
+    {
+      "historical_host": "St. Pölten",
+      "series_id": "poertschach_2008",
+      "start_date": "2003-05-19",
+      "end_date": "2003-05-25"
+    },
+    {
+      "historical_host": "London / Queen's Club",
+      "series_id": "queens_club",
+      "start_date": "2003-06-09",
+      "end_date": "2003-06-15"
+    },
+    {
+      "historical_host": "Halle",
+      "series_id": "halle",
+      "start_date": "2003-06-09",
+      "end_date": "2003-06-15"
+    },
+    {
+      "historical_host": "Nottingham",
+      "series_id": "eastbourne",
+      "start_date": "2003-06-16",
+      "end_date": "2003-06-22"
+    },
+    {
+      "historical_host": "'s-Hertogenbosch",
+      "series_id": "s_hertogenbosch",
+      "start_date": "2003-06-16",
+      "end_date": "2003-06-22"
+    },
+    {
+      "historical_host": "Gstaad",
+      "series_id": "gstaad",
+      "start_date": "2003-07-07",
+      "end_date": "2003-07-13"
+    },
+    {
+      "historical_host": "Bastad",
+      "series_id": "bastad",
+      "start_date": "2003-07-07",
+      "end_date": "2003-07-13"
+    },
+    {
+      "historical_host": "Newport",
+      "series_id": "newport",
+      "start_date": "2003-07-07",
+      "end_date": "2003-07-13"
+    },
+    {
+      "historical_host": "Stuttgart",
+      "series_id": "stuttgart",
+      "start_date": "2003-07-14",
+      "end_date": "2003-07-20"
+    },
+    {
+      "historical_host": "Amersfoort",
+      "series_id": "belgrade_2012",
+      "start_date": "2003-07-14",
+      "end_date": "2003-07-20"
+    },
+    {
+      "historical_host": "Kitzbühel",
+      "series_id": "kitzbuhel",
+      "start_date": "2003-07-21",
+      "end_date": "2003-07-27"
+    },
+    {
+      "historical_host": "Indianapolis",
+      "series_id": "atlanta",
+      "start_date": "2003-07-21",
+      "end_date": "2003-07-27"
+    },
+    {
+      "historical_host": "Umag",
+      "series_id": "umag",
+      "start_date": "2003-07-21",
+      "end_date": "2003-07-27"
+    },
+    {
+      "historical_host": "Washington",
+      "series_id": "washington",
+      "start_date": "2003-07-28",
+      "end_date": "2003-08-03"
+    },
+    {
+      "historical_host": "Sopot",
+      "series_id": "warsaw_2008",
+      "start_date": "2003-07-28",
+      "end_date": "2003-08-03"
+    },
+    {
+      "historical_host": "Los Angeles",
+      "series_id": "los_cabos",
+      "start_date": "2003-07-28",
+      "end_date": "2003-08-03"
+    },
+    {
+      "historical_host": "Montreal",
+      "series_id": "canadian_open",
+      "start_date": "2003-08-04",
+      "end_date": "2003-08-10"
+    },
+    {
+      "historical_host": "Cincinnati",
+      "series_id": "cincinnati",
+      "start_date": "2003-08-11",
+      "end_date": "2003-08-17"
+    },
+    {
+      "historical_host": "Long Island",
+      "series_id": "winston_salem",
+      "start_date": "2003-08-18",
+      "end_date": "2003-08-24"
+    },
+    {
+      "historical_host": "Bucharest",
+      "series_id": "belgrade_clay_2021",
+      "start_date": "2003-09-08",
+      "end_date": "2003-09-14"
+    },
+    {
+      "historical_host": "Costa do Sauípe",
+      "series_id": "sao_paulo",
+      "start_date": "2003-09-08",
+      "end_date": "2003-09-14"
+    },
+    {
+      "historical_host": "Bangkok",
+      "series_id": "bangkok_2013",
+      "start_date": "2003-09-22",
+      "end_date": "2003-09-28"
+    },
+    {
+      "historical_host": "Palermo",
+      "series_id": "palermo",
+      "start_date": "2003-09-22",
+      "end_date": "2003-09-28"
+    },
+    {
+      "historical_host": "Shanghai",
+      "series_id": "bangalore_2008",
+      "start_date": "2003-09-22",
+      "end_date": "2003-09-28"
+    },
+    {
+      "historical_host": "Moscow",
+      "series_id": "moscow",
+      "start_date": "2003-09-29",
+      "end_date": "2003-10-05"
+    },
+    {
+      "historical_host": "Tokyo",
+      "series_id": "tokyo",
+      "start_date": "2003-09-29",
+      "end_date": "2003-10-05"
+    },
+    {
+      "historical_host": "Metz",
+      "series_id": "metz",
+      "start_date": "2003-09-29",
+      "end_date": "2003-10-05"
+    },
+    {
+      "historical_host": "Lyon",
+      "series_id": "montpellier",
+      "start_date": "2003-10-06",
+      "end_date": "2003-10-12"
+    },
+    {
+      "historical_host": "Vienna",
+      "series_id": "vienna",
+      "start_date": "2003-10-06",
+      "end_date": "2003-10-12"
+    },
+    {
+      "historical_host": "Madrid",
+      "series_id": "madrid",
+      "start_date": "2003-10-13",
+      "end_date": "2003-10-19"
+    },
+    {
+      "historical_host": "Basel",
+      "series_id": "basel",
+      "start_date": "2003-10-20",
+      "end_date": "2003-10-26"
+    },
+    {
+      "historical_host": "St. Petersburg",
+      "series_id": "st_petersburg",
+      "start_date": "2003-10-20",
+      "end_date": "2003-10-26"
+    },
+    {
+      "historical_host": "Stockholm",
+      "series_id": "stockholm",
+      "start_date": "2003-10-20",
+      "end_date": "2003-10-26"
+    },
+    {
+      "historical_host": "Paris",
+      "series_id": "paris_masters",
+      "start_date": "2003-10-27",
+      "end_date": "2003-11-02"
+    },
+    {
+      "historical_host": "Tennis Masters Cup",
+      "series_id": "atp_finals",
+      "start_date": "2003-11-10",
+      "end_date": "2003-11-16"
     }
   ]
 }

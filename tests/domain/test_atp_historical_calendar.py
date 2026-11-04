@@ -25,36 +25,39 @@ def sources():
                  ))
 
 
-def test_canonical_snapshot_contains_516_dated_events_and_37_year_ledgers():
+def test_canonical_snapshot_contains_580_dated_events_and_37_year_ledgers():
     doc = build(*sources())
     stored = (SOURCE / "calendar.json").read_text(encoding="utf-8")
     assert stored == canonical(doc), "Generated source is stale; run --write"
     parsed = CanonicalPackageDocument.model_validate(doc)
     assert parsed.package_type is PackageType.CALENDAR
     assert parsed.package_id == "atp_tour_1990_2026_calendar"
-    assert len(parsed.entities) == 553
+    assert len(parsed.entities) == 617
     assert sum(e.entity_kind == "tennis.calendar.coverage.reference.v1"
                for e in parsed.entities) == 37
     dated = [e for e in parsed.entities
              if e.entity_kind == "tennis.calendar.occurrence.reference.v1"]
-    assert len(dated) == 516
+    assert len(dated) == 580
     assert all(e.payload["not_squash_rules"] is True
                and e.payload["run_week_projection"] == "not_applied_source_only"
                and len(e.references) == 2 for e in dated)
-    assert doc["provenance"]["date_coverage_years"] == [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
+    assert doc["provenance"]["date_coverage_years"] == list(range(2017, 2027))
 
 
-def test_2018_2026_full_named_roster_and_prior_28_years_not_fabricated():
+def test_2017_2026_full_named_roster_and_prior_27_years_not_fabricated():
     doc = build(*sources())
     cover = {e["payload"]["atp_season_year"]: e["payload"]
              for e in doc["entities"]
              if e["entity_kind"] == "tennis.calendar.coverage.reference.v1"}
     assert sorted(cover) == list(range(1990, 2027))
-    for y in range(1990, 2018):
+    for y in range(1990, 2017):
         assert cover[y]["date_coverage_state"] == "undated"
         assert cover[y]["dated_series_count"] == 0
         assert cover[y]["undated_series_ids"]
         assert cover[y]["no_fabricated_dates"] is True
+    assert cover[2017]["dated_series_count"] == 64
+    assert cover[2017]["undated_series_ids"] == []
+    assert cover[2017]["date_coverage_state"] == "verified_complete_known_series_dates"
     assert cover[2018]["dated_series_count"] == 64
     assert cover[2018]["undated_series_ids"] == []
     assert cover[2018]["date_coverage_state"] == "verified_complete_known_series_dates"
@@ -326,3 +329,23 @@ def test_2018_official_archive_complete_named_edition_roster_and_cross_year():
     assert events["atp_2018_lyon_old"]["start_date"] == "2018-05-20"
     assert events["atp_2018_shenzhen_2018"]["end_date"] == "2018-09-30"
     assert events["atp_2018_atp_finals"]["end_date"] == "2018-11-18"
+
+def test_2017_official_calendar_original_hosts_and_iso_rollover():
+    doc = build(*sources())
+    events = {e["source_entity_id"]: e["payload"] for e in doc["entities"]
+              if e["entity_kind"] == "tennis.calendar.occurrence.reference.v1"}
+    assert sum(k.startswith("atp_2017_") for k in events) == 64
+    assert events["atp_2017_brisbane"]["start_date"] == "2017-01-01"
+    assert events["atp_2017_brisbane"]["iso_weeks_occupied"] == [
+        {"iso_year": 2016, "iso_week": 52},
+        {"iso_year": 2017, "iso_week": 1},
+    ]
+    # 2017 original cities: Chennai, Quito, Memphis and Budapest.
+    assert events["atp_2017_hong_kong"]["start_date"] == "2017-01-02"
+    assert events["atp_2017_cordoba"]["start_date"] == "2017-02-06"
+    assert events["atp_2017_dallas"]["start_date"] == "2017-02-13"
+    assert events["atp_2017_belgrade_clay_2021"]["start_date"] == "2017-04-24"
+    assert events["atp_2017_lyon"]["start_date"] == "2017-02-20"
+    assert events["atp_2017_lyon_old"]["start_date"] == "2017-05-21"
+    assert events["atp_2017_next_gen_atp_finals"]["end_date"] == "2017-11-11"
+    assert events["atp_2017_atp_finals"]["end_date"] == "2017-11-19"

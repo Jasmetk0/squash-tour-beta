@@ -16,10 +16,14 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (553 entities at the current
-source revision, comprising 37 provenance-coverage entities and 516 dated
+with Category (11), Series (164) and Calendar (617 entities at the current
+source revision, comprising 37 provenance-coverage entities and 580 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
+
+## 2017 archive coverage
+
+All 64 played 2017 ATP Tour / ATP-operated Finals source Series have sourced exact dates from the [2017 ATP results archive](https://www.atptour.com/en/scores/results-archive?year=2017), preserving contemporaneous Chennai (`hong_kong` lineage), Quito (`cordoba`), Memphis (`dallas`), Budapest (`belgrade_clay_2021`), and separate Marseille / outdoor Lyon events. Brisbane on 1 Jan 2017 starts in ISO **2016/W52** even though the tournament year is 2017; the correct two ISO weeks are retained. The first Next Gen Finals are dated 7–11 Nov 2017. No Grand Slam or team events were imported.
 
 ## 2018 archive coverage
 
@@ -86,7 +90,8 @@ Grand Slams, Olympic and team events remain out of scope.
 
 | Year(s) | Source status | Dated Series | Undated |
 | --- | --- | ---: | ---: |
-| 1990–2017 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 1990–2016 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 2017 | ATP official results archive, complete original host dates | **64 / 64** | 0 |
 | 2018 | ATP official results archive, complete original host dates | **64 / 64** | 0 |
 | 2019 | Official ATP played results archive, all named Series | **63 / 63** | 0 |
 | 2020 | Official ATP results archive; 29 played, 12 not held | **29 / 29 played** | 0 |
@@ -99,12 +104,13 @@ Grand Slams, Olympic and team events remain out of scope.
 
 **No generic history period or week is interpreted as a tournament date.**
 The parent Category/Series dataset contains 2,431 year-effective memberships;
-516 unique year/Series occurrences currently have original *date* sources.
+580 unique year/Series occurrences currently have original *date* sources.
 The other historical years will be sourced individually, not filled by
 inventing dates or extrapolating 2025/2026 patterns.
 
 Source links:
 
+- [2017 official results archive](https://www.atptour.com/en/scores/results-archive?year=2017).
 - [2018 official results archive](https://www.atptour.com/en/scores/results-archive?year=2018).
 - [2019 official results archive](https://www.atptour.com/en/scores/results-archive?year=2019).
 - [2020 official results archive](https://www.atptour.com/en/scores/results-archive?year=2020).
@@ -193,6 +199,6 @@ its own separately reviewed date-to-Run-clock policy.
    Saved Revision. No source-only date reference may be promoted to playable
    FAX events by these steps.
 
-The work is **not complete for 1990–2017**. Source-year coverage must be
+The work is **not complete for 1990–2016**. Source-year coverage must be
 upgraded year by year using original contemporaneous calendars and/or official
 ATP results archives. 2026 final validation remains pending.

@@ -104,7 +104,7 @@ def audit_candidates(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true")
-    parser.add_argument("--year", type=int, choices=(2002, 2003), default=2003)
+    parser.add_argument("--year", type=int, choices=(2001, 2002, 2003), default=2003)
     args = parser.parse_args()
     candidate = json.loads(
         (SOURCE / f"calendar_backfill_{args.year}_candidates_v1.json").read_text(

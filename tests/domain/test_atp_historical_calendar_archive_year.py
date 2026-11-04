@@ -6,14 +6,25 @@ It guards against a correctly hosted but wrong-year ATP archive citation.
 from __future__ import annotations
 
 import copy
+import json
 
 import pytest
 
 from scripts.build_atp_historical_calendar import (
+    SOURCE,
     build,
     ensure_archive_year_matches,
 )
-from tests.domain.test_atp_historical_calendar import sources
+def sources():
+    return tuple(
+        json.loads((SOURCE / name).read_text(encoding="utf-8"))
+        for name in (
+            "category.json",
+            "series.json",
+            "seasons_1990_2026.json",
+            "calendar_dates_v1.json",
+        )
+    )
 
 pytestmark = pytest.mark.pr_critical
 

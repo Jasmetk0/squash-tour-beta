@@ -4,7 +4,7 @@
   "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
   "source_url": "https://www.atptour.com/en/scores/results-archive?year=2001",
   "as_of": "2026-11-04",
-  "notes": "57 independently sourced original-date candidate rows for 2001. Historical parent licence continuity remains provisional. This is not a full annual census until the remaining source IDs are resolved, and is not yet a native Calendar.",
+  "notes": "65 of 65 original 2001 parent Series memberships now have dated candidate rows, sourced from the ATP original played-results archive. Structural reconciliation with the parent roster is possible, but legal sanction lineage, independent complete ATP census and final canonical promotion are not certified.",
   "events": [
     {
       "historical_host": "Doha",
@@ -347,6 +347,54 @@
       "series_id": "atp_finals",
       "start_date": "2001-11-12",
       "end_date": "2001-11-18"
+    },
+    {
+      "historical_host": "Atlanta",
+      "series_id": "atlanta_verizon_2001",
+      "start_date": "2001-04-23",
+      "end_date": "2001-04-29"
+    },
+    {
+      "historical_host": "Stuttgart (clay)",
+      "series_id": "stuttgart",
+      "start_date": "2001-07-16",
+      "end_date": "2001-07-22"
+    },
+    {
+      "historical_host": "Amsterdam",
+      "series_id": "belgrade_2012",
+      "start_date": "2001-07-16",
+      "end_date": "2001-07-22"
+    },
+    {
+      "historical_host": "Umag",
+      "series_id": "umag",
+      "start_date": "2001-07-16",
+      "end_date": "2001-07-22"
+    },
+    {
+      "historical_host": "Kitzbühel",
+      "series_id": "kitzbuhel",
+      "start_date": "2001-07-23",
+      "end_date": "2001-07-29"
+    },
+    {
+      "historical_host": "Los Angeles",
+      "series_id": "los_cabos",
+      "start_date": "2001-07-23",
+      "end_date": "2001-07-29"
+    },
+    {
+      "historical_host": "Sopot",
+      "series_id": "warsaw_2008",
+      "start_date": "2001-07-23",
+      "end_date": "2001-07-29"
+    },
+    {
+      "historical_host": "Montréal",
+      "series_id": "canadian_open",
+      "start_date": "2001-07-30",
+      "end_date": "2001-08-05"
     }
   ]
 }

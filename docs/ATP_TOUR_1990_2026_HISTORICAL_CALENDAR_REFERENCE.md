@@ -16,8 +16,8 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (1688 entities at the current
-source revision, comprising 37 provenance-coverage entities and 1651 dated
+with Category (11), Series (164) and Calendar (1768 entities at the current
+source revision, comprising 37 provenance-coverage entities and 1731 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
 
@@ -138,6 +138,21 @@ is retained for Marseille (`lyon`), old outdoor Lyon (`lyon_old`) and
 Antwerp (`brussels`). Brisbane starts in 2023/W52 and ends in 2024/W01.
 Grand Slams, Olympic and team events remain out of scope.
 
+## 1995 canonical archive coverage
+
+**1995: 80/80 historical ATP played main-tier and Finals source Series now
+have exact date intervals in the canonical Calendar.** This includes
+two separate **Tokyo** events (April outdoor / October indoor), two
+**Stuttgart** events (February indoor / July clay), and the historical
+October **Essen Masters**. The original Frankfurt ATP Tour World
+Championship ran **14–19 November 1995** in both
+[ATP annual archive](https://www.atptour.com/en/scores/results-archive?year=1995)
+and [official ATP Finals history](https://www.nittoatpfinals.com/en/heritage/results-1970-1999).
+The original Nice and Hong Kong tournaments are separate source Series.
+For exact host labels and licence-evidence caveats, see
+[`ATP_TOUR_1995_COMPLETE_DATE_REFERENCE.md`](ATP_TOUR_1995_COMPLETE_DATE_REFERENCE.md).
+No playable FAX events or ATP results were created.
+
 ## 1996 canonical archive coverage
 
 **1996: 78 / 78 original played ATP Tour source Series have dated records
@@ -176,11 +191,11 @@ Year **2003 is still not canonically dated**: 63 dated historical candidates are
 staged, but the official annual ATP archive's 10–16 November Tennis Masters Cup
 interval conflicts with a separate ATP tournament history's 8–16 November
 interval. The import is deliberately blocked until the date convention is
-reconciled. Historical years **1990–1995 and 1997–1999** remain undated.
+reconciled. Historical years **1990–1994 and 1997–1999** remain undated.
 
 ## Source-only historical candidates blocked by official date conflicts
 
-In addition to 1,651 already canonical date-bearing ATP occurrences, **278
+In addition to 1,731 already canonical date-bearing ATP occurrences, **278
 additional source-date candidates** have been transcribed for years not yet
 promoted into Calendar:
 
@@ -214,7 +229,8 @@ windows; ATP Finals heritage separately reports the competition windows.
 
 | Year(s) | Source status | Dated Series | Undated |
 | --- | --- | ---: | ---: |
-| 1990–1995 | No canonically dated source Series yet | 0 | Explicit missing IDs for every year |
+| 1990–1994 | No canonically dated source Series yet | 0 | Explicit missing IDs for every year |
+| 1995 | ATP played archive and official Frankfurt Finals date | **80 / 80** | 0 |
 | 1996 | ATP played archive, all original main-tier dates and Finals | **78 / 78** | 0 |
 | 1997–1999 | Source candidates available; conflicting official Finals date windows | **0 / 215 canonical** | 215 |
 | 2000 | Official played ATP archive, original 2000 host and tier dates | **65 / 65** | 0 |
@@ -247,12 +263,14 @@ windows; ATP Finals heritage separately reports the competition windows.
 
 **No generic history period or week is interpreted as a tournament date.**
 The parent Category/Series dataset contains 2,431 year-effective memberships;
-1651 unique year/Series occurrences currently have original *date* sources.
+1731 unique year/Series occurrences currently have original *date* sources.
 The other historical years will be sourced individually, not filled by
 inventing dates or extrapolating 2025/2026 patterns.
 
 Source links:
 
+- [1995 original ATP results archive](https://www.atptour.com/en/scores/results-archive?year=1995).
+- [1995 official ATP Finals historical record](https://www.nittoatpfinals.com/en/heritage/results-1970-1999).
 - [1996 original ATP results archive](https://www.atptour.com/en/scores/results-archive?year=1996).
 - [1996 Nitto ATP Finals historical record](https://www.nittoatpfinals.com/en/heritage/results-1970-1999).
 - [2000 original ATP results archive](https://www.atptour.com/en/scores/results-archive?year=2000).
@@ -362,6 +380,6 @@ its own separately reviewed date-to-Run-clock policy.
    Saved Revision. No source-only date reference may be promoted to playable
    FAX events by these steps.
 
-The work is **not complete for 1990–1995, 1997–1999 or 2003**. Source-year coverage must be
+The work is **not complete for 1990–1994, 1997–1999 or 2003**. Source-year coverage must be
 upgraded year by year using original contemporaneous calendars and/or official
 ATP results archives. 2026 final validation remains pending.

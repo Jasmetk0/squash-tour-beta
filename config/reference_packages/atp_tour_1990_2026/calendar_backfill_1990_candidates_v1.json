@@ -1,0 +1,460 @@
+{
+  "schema_version": "tennis.atp_tour_calendar_backfill_candidates.v1",
+  "year": 1990,
+  "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
+  "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+  "as_of": "2026-11-04",
+  "notes": "Full 75/75 original ATP Tour 1990 year-effective main-tour and Frankfurt singles World Championships source-roster date candidates. Official annual ATP results archive displays Frankfurt 12–18 Nov 1990 while separate Nitto ATP Finals historical results give 13–18 Nov: distinct date-window conventions, unresolved and MUST block canonical promotion pending explicit evidence policy. Preserve Toronto-1 February indoor distinct from Canada summer, Sydney/Tokyo/Stuttgart double editions, Rio de Janeiro vs Memphis and Wimbledon/Slams and separate team events excluded. Parent Series IDs do not independently prove legal licence transfer. This is non-playable tennis date reference only; no Run schedule, matches, rankings or Save.",
+  "events": [
+    {
+      "historical_host": "Adelaide",
+      "series_id": "brisbane",
+      "start_date": "1990-01-01",
+      "end_date": "1990-01-07"
+    },
+    {
+      "historical_host": "Wellington",
+      "series_id": "wellington_1992",
+      "start_date": "1990-01-01",
+      "end_date": "1990-01-07"
+    },
+    {
+      "historical_host": "Auckland",
+      "series_id": "auckland",
+      "start_date": "1990-01-08",
+      "end_date": "1990-01-14"
+    },
+    {
+      "historical_host": "Sydney-1",
+      "series_id": "sydney_2019",
+      "start_date": "1990-01-08",
+      "end_date": "1990-01-14"
+    },
+    {
+      "historical_host": "Guaruja",
+      "series_id": "maceio_1992",
+      "start_date": "1990-02-05",
+      "end_date": "1990-02-11"
+    },
+    {
+      "historical_host": "Milan",
+      "series_id": "sofia",
+      "start_date": "1990-02-05",
+      "end_date": "1990-02-11"
+    },
+    {
+      "historical_host": "San Francisco",
+      "series_id": "dallas",
+      "start_date": "1990-02-05",
+      "end_date": "1990-02-11"
+    },
+    {
+      "historical_host": "Brussels",
+      "series_id": "brussels_championship_1992",
+      "start_date": "1990-02-12",
+      "end_date": "1990-02-18"
+    },
+    {
+      "historical_host": "Toronto-1 (indoor)",
+      "series_id": "toronto_indoor_1990",
+      "start_date": "1990-02-12",
+      "end_date": "1990-02-18"
+    },
+    {
+      "historical_host": "Philadelphia",
+      "series_id": "philadelphia_1998",
+      "start_date": "1990-02-19",
+      "end_date": "1990-02-25"
+    },
+    {
+      "historical_host": "Stuttgart-1 (indoor)",
+      "series_id": "stuttgart_indoor_feb_1995",
+      "start_date": "1990-02-19",
+      "end_date": "1990-02-25"
+    },
+    {
+      "historical_host": "Memphis",
+      "series_id": "rio",
+      "start_date": "1990-02-26",
+      "end_date": "1990-03-04"
+    },
+    {
+      "historical_host": "Rotterdam",
+      "series_id": "rotterdam",
+      "start_date": "1990-02-26",
+      "end_date": "1990-03-04"
+    },
+    {
+      "historical_host": "Casablanca",
+      "series_id": "marrakech",
+      "start_date": "1990-03-05",
+      "end_date": "1990-03-11"
+    },
+    {
+      "historical_host": "Indian Wells",
+      "series_id": "indian_wells",
+      "start_date": "1990-03-05",
+      "end_date": "1990-03-11"
+    },
+    {
+      "historical_host": "Miami",
+      "series_id": "miami",
+      "start_date": "1990-03-16",
+      "end_date": "1990-03-25"
+    },
+    {
+      "historical_host": "Estoril",
+      "series_id": "estoril",
+      "start_date": "1990-04-02",
+      "end_date": "1990-04-08"
+    },
+    {
+      "historical_host": "Orlando",
+      "series_id": "orlando_1991",
+      "start_date": "1990-04-02",
+      "end_date": "1990-04-08"
+    },
+    {
+      "historical_host": "Rio de Janeiro",
+      "series_id": "rio_carpet_1990",
+      "start_date": "1990-04-02",
+      "end_date": "1990-04-08"
+    },
+    {
+      "historical_host": "Barcelona",
+      "series_id": "barcelona",
+      "start_date": "1990-04-09",
+      "end_date": "1990-04-15"
+    },
+    {
+      "historical_host": "Tokyo-1 (Japan Open)",
+      "series_id": "tokyo",
+      "start_date": "1990-04-09",
+      "end_date": "1990-04-15"
+    },
+    {
+      "historical_host": "Nice",
+      "series_id": "hong_kong",
+      "start_date": "1990-04-16",
+      "end_date": "1990-04-22"
+    },
+    {
+      "historical_host": "Seoul",
+      "series_id": "seoul_1996",
+      "start_date": "1990-04-16",
+      "end_date": "1990-04-22"
+    },
+    {
+      "historical_host": "Hong Kong",
+      "series_id": "hong_kong_salem_2002",
+      "start_date": "1990-04-23",
+      "end_date": "1990-04-29"
+    },
+    {
+      "historical_host": "Monte-Carlo",
+      "series_id": "monte_carlo",
+      "start_date": "1990-04-23",
+      "end_date": "1990-04-29"
+    },
+    {
+      "historical_host": "Madrid",
+      "series_id": "madrid_clay_1994",
+      "start_date": "1990-04-30",
+      "end_date": "1990-05-06"
+    },
+    {
+      "historical_host": "Munich",
+      "series_id": "munich",
+      "start_date": "1990-04-30",
+      "end_date": "1990-05-06"
+    },
+    {
+      "historical_host": "Singapore",
+      "series_id": "singapore_march_1992",
+      "start_date": "1990-04-30",
+      "end_date": "1990-05-06"
+    },
+    {
+      "historical_host": "Hamburg",
+      "series_id": "hamburg",
+      "start_date": "1990-05-07",
+      "end_date": "1990-05-13"
+    },
+    {
+      "historical_host": "Kiawah Island",
+      "series_id": "birmingham_1994",
+      "start_date": "1990-05-07",
+      "end_date": "1990-05-13"
+    },
+    {
+      "historical_host": "Rome",
+      "series_id": "rome",
+      "start_date": "1990-05-14",
+      "end_date": "1990-05-20"
+    },
+    {
+      "historical_host": "Umag",
+      "series_id": "umag",
+      "start_date": "1990-05-14",
+      "end_date": "1990-05-20"
+    },
+    {
+      "historical_host": "Bologna",
+      "series_id": "bologna_1998",
+      "start_date": "1990-05-21",
+      "end_date": "1990-05-27"
+    },
+    {
+      "historical_host": "Florence",
+      "series_id": "florence_1994",
+      "start_date": "1990-06-11",
+      "end_date": "1990-06-17"
+    },
+    {
+      "historical_host": "London / Queen's Club",
+      "series_id": "queens_club",
+      "start_date": "1990-06-11",
+      "end_date": "1990-06-17"
+    },
+    {
+      "historical_host": "Rosmalen",
+      "series_id": "s_hertogenbosch",
+      "start_date": "1990-06-11",
+      "end_date": "1990-06-17"
+    },
+    {
+      "historical_host": "Genoa",
+      "series_id": "poertschach_2008",
+      "start_date": "1990-06-18",
+      "end_date": "1990-06-24"
+    },
+    {
+      "historical_host": "Manchester",
+      "series_id": "eastbourne",
+      "start_date": "1990-06-18",
+      "end_date": "1990-06-24"
+    },
+    {
+      "historical_host": "Bastad",
+      "series_id": "bastad",
+      "start_date": "1990-07-09",
+      "end_date": "1990-07-15"
+    },
+    {
+      "historical_host": "Gstaad",
+      "series_id": "gstaad",
+      "start_date": "1990-07-09",
+      "end_date": "1990-07-15"
+    },
+    {
+      "historical_host": "Newport",
+      "series_id": "newport",
+      "start_date": "1990-07-09",
+      "end_date": "1990-07-15"
+    },
+    {
+      "historical_host": "Stuttgart-2 (clay)",
+      "series_id": "stuttgart",
+      "start_date": "1990-07-16",
+      "end_date": "1990-07-22"
+    },
+    {
+      "historical_host": "Washington",
+      "series_id": "washington",
+      "start_date": "1990-07-16",
+      "end_date": "1990-07-22"
+    },
+    {
+      "historical_host": "Hilversum",
+      "series_id": "belgrade_2012",
+      "start_date": "1990-07-23",
+      "end_date": "1990-07-29"
+    },
+    {
+      "historical_host": "Toronto (Canadian Open)",
+      "series_id": "canadian_open",
+      "start_date": "1990-07-23",
+      "end_date": "1990-07-29"
+    },
+    {
+      "historical_host": "Kitzbuhel",
+      "series_id": "kitzbuhel",
+      "start_date": "1990-07-30",
+      "end_date": "1990-08-05"
+    },
+    {
+      "historical_host": "Los Angeles",
+      "series_id": "los_cabos",
+      "start_date": "1990-07-30",
+      "end_date": "1990-08-05"
+    },
+    {
+      "historical_host": "San Remo",
+      "series_id": "san_remo_1990",
+      "start_date": "1990-07-30",
+      "end_date": "1990-08-05"
+    },
+    {
+      "historical_host": "Cincinnati",
+      "series_id": "cincinnati",
+      "start_date": "1990-08-06",
+      "end_date": "1990-08-12"
+    },
+    {
+      "historical_host": "Prague",
+      "series_id": "prague_1999",
+      "start_date": "1990-08-06",
+      "end_date": "1990-08-12"
+    },
+    {
+      "historical_host": "Indianapolis",
+      "series_id": "atlanta",
+      "start_date": "1990-08-13",
+      "end_date": "1990-08-19"
+    },
+    {
+      "historical_host": "New Haven",
+      "series_id": "new_haven_1998",
+      "start_date": "1990-08-13",
+      "end_date": "1990-08-19"
+    },
+    {
+      "historical_host": "Long Island",
+      "series_id": "winston_salem",
+      "start_date": "1990-08-20",
+      "end_date": "1990-08-26"
+    },
+    {
+      "historical_host": "San Marino",
+      "series_id": "san_marino_2000",
+      "start_date": "1990-08-20",
+      "end_date": "1990-08-26"
+    },
+    {
+      "historical_host": "Schenectady",
+      "series_id": "schenectady_1994",
+      "start_date": "1990-08-20",
+      "end_date": "1990-08-26"
+    },
+    {
+      "historical_host": "Bordeaux",
+      "series_id": "bordeaux_1995",
+      "start_date": "1990-09-10",
+      "end_date": "1990-09-16"
+    },
+    {
+      "historical_host": "Geneva",
+      "series_id": "cologne_1992_clay",
+      "start_date": "1990-09-10",
+      "end_date": "1990-09-16"
+    },
+    {
+      "historical_host": "Basel",
+      "series_id": "basel",
+      "start_date": "1990-09-24",
+      "end_date": "1990-09-30"
+    },
+    {
+      "historical_host": "Brisbane (autumn)",
+      "series_id": "brisbane_autumn_1992",
+      "start_date": "1990-09-24",
+      "end_date": "1990-09-30"
+    },
+    {
+      "historical_host": "Palermo",
+      "series_id": "palermo",
+      "start_date": "1990-09-24",
+      "end_date": "1990-09-30"
+    },
+    {
+      "historical_host": "Athens",
+      "series_id": "athens_1994",
+      "start_date": "1990-10-01",
+      "end_date": "1990-10-07"
+    },
+    {
+      "historical_host": "Sydney-2 (indoor)",
+      "series_id": "sydney_indoor_1994",
+      "start_date": "1990-10-01",
+      "end_date": "1990-10-07"
+    },
+    {
+      "historical_host": "Toulouse",
+      "series_id": "toulouse_2000",
+      "start_date": "1990-10-01",
+      "end_date": "1990-10-07"
+    },
+    {
+      "historical_host": "Berlin",
+      "series_id": "berlin_1991",
+      "start_date": "1990-10-08",
+      "end_date": "1990-10-14"
+    },
+    {
+      "historical_host": "Tel Aviv",
+      "series_id": "tel_aviv_1996",
+      "start_date": "1990-10-08",
+      "end_date": "1990-10-14"
+    },
+    {
+      "historical_host": "Tokyo-2 (indoor)",
+      "series_id": "tokyo_indoor_1995",
+      "start_date": "1990-10-08",
+      "end_date": "1990-10-14"
+    },
+    {
+      "historical_host": "Lyon",
+      "series_id": "montpellier",
+      "start_date": "1990-10-15",
+      "end_date": "1990-10-21"
+    },
+    {
+      "historical_host": "Vienna",
+      "series_id": "vienna",
+      "start_date": "1990-10-15",
+      "end_date": "1990-10-21"
+    },
+    {
+      "historical_host": "Sao Paulo",
+      "series_id": "sao_paulo_1993",
+      "start_date": "1990-10-22",
+      "end_date": "1990-10-28"
+    },
+    {
+      "historical_host": "Stockholm",
+      "series_id": "stockholm",
+      "start_date": "1990-10-22",
+      "end_date": "1990-10-28"
+    },
+    {
+      "historical_host": "Paris",
+      "series_id": "paris_masters",
+      "start_date": "1990-10-29",
+      "end_date": "1990-11-04"
+    },
+    {
+      "historical_host": "Itaparica",
+      "series_id": "itaparica_1990",
+      "start_date": "1990-11-05",
+      "end_date": "1990-11-11"
+    },
+    {
+      "historical_host": "Moscow",
+      "series_id": "moscow",
+      "start_date": "1990-11-05",
+      "end_date": "1990-11-11"
+    },
+    {
+      "historical_host": "Wembley",
+      "series_id": "wembley_1990",
+      "start_date": "1990-11-05",
+      "end_date": "1990-11-11"
+    },
+    {
+      "historical_host": "Frankfurt ATP Tour World Championships (annual archive window)",
+      "series_id": "atp_finals",
+      "start_date": "1990-11-12",
+      "end_date": "1990-11-18"
+    }
+  ]
+}

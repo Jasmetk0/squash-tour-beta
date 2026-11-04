@@ -17,9 +17,9 @@ def test_1994_sourced_cohort_is_partial_not_canonical() -> None:
     dated = json.loads((SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8"))
     report = audit_candidates(candidate, seasons, dated)
     assert report["year"] == 1994
-    assert report["candidate_count"] == 16
+    assert report["candidate_count"] == 23
     assert report["expected_played_source_count"] == 85
-    assert len(report["remaining_series_ids"]) == 69
+    assert len(report["remaining_series_ids"]) == 62
     assert report["canonical_conflicts"] == []
     assert report["roster_reconciled"] is False
     assert report["ready_for_whole_year_promotion"] is False
@@ -30,6 +30,10 @@ def test_1994_sourced_cohort_is_partial_not_canonical() -> None:
     assert rows["stuttgart_indoor_feb_1995"]["start_date"] == "1994-02-14"
     assert rows["dallas"]["historical_host"] == "San Jose"
     assert rows["rio"]["historical_host"] == "Memphis"
+    assert rows["miami"]["start_date"] == "1994-03-07"
+    assert rows["miami"]["end_date"] == "1994-03-20"
+    assert rows["indian_wells"]["start_date"] == "1994-02-28"
+    assert rows["monte_carlo"]["start_date"] == "1994-04-18"
     assert rows["atp_finals"]["start_date"] == "1994-11-15"
     assert rows["atp_finals"]["end_date"] == "1994-11-20"
     assert rows["atp_finals"]["category_id"] == "atp_finals"

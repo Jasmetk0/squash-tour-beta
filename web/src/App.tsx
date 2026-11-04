@@ -14,6 +14,7 @@ import { FinalsResultDetailPage } from './pages/FinalsResultDetailPage'
 import { PackagesHomePage, PackagesListPage, PackageWorldDetailPage } from './pages/admin/PackagesHomePage'
 import { WorldPackageApplyPage } from './pages/admin/WorldPackageApplyPage'
 import { ATPReferenceApplyPage } from './pages/admin/ATPReferenceApplyPage'
+import { ATPCalendarReferenceApplyPage } from './pages/admin/ATPCalendarReferenceApplyPage'
 import { TestLabHomePage } from './pages/admin/TestLabHomePage'
 import { RunManagementPage } from './pages/RunManagementPage'
 import {
@@ -145,6 +146,7 @@ export default function App(): JSX.Element {
         <Route path="admin/packages/world/:worldId" element={<PackageWorldDetailPage />} />
         <Route path="admin/packages/world/:worldId/apply" element={<WorldPackageApplyPage />} />
         <Route path="admin/packages/atp-tour-reference" element={<ATPReferenceApplyPage />} />
+        <Route path="admin/packages/atp-tour-calendar-reference" element={<ATPCalendarReferenceApplyPage />} />
         <Route path="admin/labs" element={<TestLabHomePage />} />
         <Route path="admin/world" element={<AdminWorldPage />} />
         <Route path="admin/world/library" element={<WorldLibraryPage />} />

@@ -1,0 +1,478 @@
+{
+  "schema_version": "tennis.atp_tour_calendar_backfill_candidates.v1",
+  "year": 1992,
+  "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
+  "source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+  "as_of": "2026-11-04",
+  "notes": "Full 78/78 year-effective original ATP Tour tier source Series candidates transcribed from the annual ATP 1992 played-results archive, preserving December 1991 to January 1992 year crossover; distinct beginning Adelaide and autumn Brisbane, distinct Tokyo/Sydney/Stuttgart pairs. 1992 ATP yearly archive lists Frankfurt Singles World Championships 16–22 November, versus primary official ATP Finals heritage/ATP tournament history and ITF 17–22 November. The conflict must block all canonical 1992 dates; keep both evidences without choosing an authoritative start-date convention. Excludes four Grand Slams, World Team Cup, 1992 Barcelona Olympics, Davis Cup, Grand Slam Cup, Challenger events and doubles Finals. Stable source Series IDs do not certify legal ATP sanction continuity. Nonplayable source-only evidence.",
+  "events": [
+    {
+      "historical_host": "Adelaide",
+      "series_id": "brisbane",
+      "start_date": "1991-12-30",
+      "end_date": "1992-01-05"
+    },
+    {
+      "historical_host": "Wellington",
+      "series_id": "wellington_1992",
+      "start_date": "1991-12-30",
+      "end_date": "1992-01-05"
+    },
+    {
+      "historical_host": "Auckland",
+      "series_id": "auckland",
+      "start_date": "1992-01-06",
+      "end_date": "1992-01-12"
+    },
+    {
+      "historical_host": "Sydney-1",
+      "series_id": "sydney_2019",
+      "start_date": "1992-01-06",
+      "end_date": "1992-01-12"
+    },
+    {
+      "historical_host": "Maceio",
+      "series_id": "maceio_1992",
+      "start_date": "1992-02-03",
+      "end_date": "1992-02-09"
+    },
+    {
+      "historical_host": "Milan",
+      "series_id": "sofia",
+      "start_date": "1992-02-03",
+      "end_date": "1992-02-09"
+    },
+    {
+      "historical_host": "San Francisco",
+      "series_id": "dallas",
+      "start_date": "1992-02-03",
+      "end_date": "1992-02-09"
+    },
+    {
+      "historical_host": "Brussels",
+      "series_id": "brussels_championship_1992",
+      "start_date": "1992-02-10",
+      "end_date": "1992-02-16"
+    },
+    {
+      "historical_host": "Memphis",
+      "series_id": "rio",
+      "start_date": "1992-02-10",
+      "end_date": "1992-02-16"
+    },
+    {
+      "historical_host": "Philadelphia",
+      "series_id": "philadelphia_1998",
+      "start_date": "1992-02-17",
+      "end_date": "1992-02-23"
+    },
+    {
+      "historical_host": "Stuttgart-1 (indoor)",
+      "series_id": "stuttgart_indoor_feb_1995",
+      "start_date": "1992-02-17",
+      "end_date": "1992-02-23"
+    },
+    {
+      "historical_host": "Rotterdam",
+      "series_id": "rotterdam",
+      "start_date": "1992-02-24",
+      "end_date": "1992-03-01"
+    },
+    {
+      "historical_host": "Scottsdale",
+      "series_id": "las_vegas_2008",
+      "start_date": "1992-02-24",
+      "end_date": "1992-03-01"
+    },
+    {
+      "historical_host": "Copenhagen",
+      "series_id": "copenhagen_2003",
+      "start_date": "1992-03-02",
+      "end_date": "1992-03-08"
+    },
+    {
+      "historical_host": "Indian Wells",
+      "series_id": "indian_wells",
+      "start_date": "1992-03-02",
+      "end_date": "1992-03-08"
+    },
+    {
+      "historical_host": "Miami",
+      "series_id": "miami",
+      "start_date": "1992-03-13",
+      "end_date": "1992-03-22"
+    },
+    {
+      "historical_host": "Casablanca",
+      "series_id": "marrakech",
+      "start_date": "1992-03-16",
+      "end_date": "1992-03-22"
+    },
+    {
+      "historical_host": "Estoril",
+      "series_id": "estoril",
+      "start_date": "1992-03-30",
+      "end_date": "1992-04-05"
+    },
+    {
+      "historical_host": "Johannesburg",
+      "series_id": "johannesburg_1995",
+      "start_date": "1992-03-30",
+      "end_date": "1992-04-05"
+    },
+    {
+      "historical_host": "Singapore",
+      "series_id": "singapore_march_1992",
+      "start_date": "1992-03-30",
+      "end_date": "1992-04-05"
+    },
+    {
+      "historical_host": "Barcelona",
+      "series_id": "barcelona",
+      "start_date": "1992-04-06",
+      "end_date": "1992-04-12"
+    },
+    {
+      "historical_host": "Tokyo-1 (Japan Open)",
+      "series_id": "tokyo",
+      "start_date": "1992-04-06",
+      "end_date": "1992-04-12"
+    },
+    {
+      "historical_host": "Hong Kong",
+      "series_id": "hong_kong_salem_2002",
+      "start_date": "1992-04-13",
+      "end_date": "1992-04-19"
+    },
+    {
+      "historical_host": "Nice",
+      "series_id": "hong_kong",
+      "start_date": "1992-04-13",
+      "end_date": "1992-04-19"
+    },
+    {
+      "historical_host": "Tampa",
+      "series_id": "houston",
+      "start_date": "1992-04-13",
+      "end_date": "1992-04-19"
+    },
+    {
+      "historical_host": "Monte-Carlo",
+      "series_id": "monte_carlo",
+      "start_date": "1992-04-20",
+      "end_date": "1992-04-26"
+    },
+    {
+      "historical_host": "Seoul",
+      "series_id": "seoul_1996",
+      "start_date": "1992-04-20",
+      "end_date": "1992-04-26"
+    },
+    {
+      "historical_host": "Atlanta",
+      "series_id": "atlanta_verizon_2001",
+      "start_date": "1992-04-27",
+      "end_date": "1992-05-03"
+    },
+    {
+      "historical_host": "Madrid",
+      "series_id": "madrid_clay_1994",
+      "start_date": "1992-04-27",
+      "end_date": "1992-05-03"
+    },
+    {
+      "historical_host": "Munich",
+      "series_id": "munich",
+      "start_date": "1992-04-27",
+      "end_date": "1992-05-03"
+    },
+    {
+      "historical_host": "Charlotte",
+      "series_id": "birmingham_1994",
+      "start_date": "1992-05-04",
+      "end_date": "1992-05-10"
+    },
+    {
+      "historical_host": "Hamburg",
+      "series_id": "hamburg",
+      "start_date": "1992-05-04",
+      "end_date": "1992-05-10"
+    },
+    {
+      "historical_host": "Rome",
+      "series_id": "rome",
+      "start_date": "1992-05-11",
+      "end_date": "1992-05-17"
+    },
+    {
+      "historical_host": "Bologna",
+      "series_id": "bologna_1998",
+      "start_date": "1992-05-18",
+      "end_date": "1992-05-24"
+    },
+    {
+      "historical_host": "Florence",
+      "series_id": "florence_1994",
+      "start_date": "1992-06-08",
+      "end_date": "1992-06-14"
+    },
+    {
+      "historical_host": "London / Queen's Club",
+      "series_id": "queens_club",
+      "start_date": "1992-06-08",
+      "end_date": "1992-06-14"
+    },
+    {
+      "historical_host": "Rosmalen",
+      "series_id": "s_hertogenbosch",
+      "start_date": "1992-06-08",
+      "end_date": "1992-06-14"
+    },
+    {
+      "historical_host": "Genoa",
+      "series_id": "poertschach_2008",
+      "start_date": "1992-06-15",
+      "end_date": "1992-06-21"
+    },
+    {
+      "historical_host": "Manchester",
+      "series_id": "eastbourne",
+      "start_date": "1992-06-15",
+      "end_date": "1992-06-21"
+    },
+    {
+      "historical_host": "Bastad",
+      "series_id": "bastad",
+      "start_date": "1992-07-06",
+      "end_date": "1992-07-12"
+    },
+    {
+      "historical_host": "Gstaad",
+      "series_id": "gstaad",
+      "start_date": "1992-07-06",
+      "end_date": "1992-07-12"
+    },
+    {
+      "historical_host": "Newport",
+      "series_id": "newport",
+      "start_date": "1992-07-06",
+      "end_date": "1992-07-12"
+    },
+    {
+      "historical_host": "Stuttgart-2 (clay)",
+      "series_id": "stuttgart",
+      "start_date": "1992-07-13",
+      "end_date": "1992-07-19"
+    },
+    {
+      "historical_host": "Washington",
+      "series_id": "washington",
+      "start_date": "1992-07-13",
+      "end_date": "1992-07-19"
+    },
+    {
+      "historical_host": "Hilversum",
+      "series_id": "belgrade_2012",
+      "start_date": "1992-07-20",
+      "end_date": "1992-07-26"
+    },
+    {
+      "historical_host": "Kitzbuhel",
+      "series_id": "kitzbuhel",
+      "start_date": "1992-07-20",
+      "end_date": "1992-07-26"
+    },
+    {
+      "historical_host": "Toronto (Canadian Open)",
+      "series_id": "canadian_open",
+      "start_date": "1992-07-20",
+      "end_date": "1992-07-26"
+    },
+    {
+      "historical_host": "San Marino",
+      "series_id": "san_marino_2000",
+      "start_date": "1992-07-27",
+      "end_date": "1992-08-02"
+    },
+    {
+      "historical_host": "Los Angeles",
+      "series_id": "los_cabos",
+      "start_date": "1992-08-03",
+      "end_date": "1992-08-09"
+    },
+    {
+      "historical_host": "Cincinnati",
+      "series_id": "cincinnati",
+      "start_date": "1992-08-10",
+      "end_date": "1992-08-16"
+    },
+    {
+      "historical_host": "Prague",
+      "series_id": "prague_1999",
+      "start_date": "1992-08-10",
+      "end_date": "1992-08-16"
+    },
+    {
+      "historical_host": "Indianapolis",
+      "series_id": "atlanta",
+      "start_date": "1992-08-17",
+      "end_date": "1992-08-23"
+    },
+    {
+      "historical_host": "New Haven",
+      "series_id": "new_haven_1998",
+      "start_date": "1992-08-17",
+      "end_date": "1992-08-23"
+    },
+    {
+      "historical_host": "Long Island",
+      "series_id": "winston_salem",
+      "start_date": "1992-08-24",
+      "end_date": "1992-08-30"
+    },
+    {
+      "historical_host": "Schenectady",
+      "series_id": "schenectady_1994",
+      "start_date": "1992-08-24",
+      "end_date": "1992-08-30"
+    },
+    {
+      "historical_host": "Umag",
+      "series_id": "umag",
+      "start_date": "1992-08-24",
+      "end_date": "1992-08-30"
+    },
+    {
+      "historical_host": "Bordeaux",
+      "series_id": "bordeaux_1995",
+      "start_date": "1992-09-14",
+      "end_date": "1992-09-20"
+    },
+    {
+      "historical_host": "Cologne",
+      "series_id": "cologne_1992_clay",
+      "start_date": "1992-09-14",
+      "end_date": "1992-09-20"
+    },
+    {
+      "historical_host": "Basel",
+      "series_id": "basel",
+      "start_date": "1992-09-28",
+      "end_date": "1992-10-04"
+    },
+    {
+      "historical_host": "Brisbane (autumn)",
+      "series_id": "brisbane_autumn_1992",
+      "start_date": "1992-09-28",
+      "end_date": "1992-10-04"
+    },
+    {
+      "historical_host": "Palermo",
+      "series_id": "palermo",
+      "start_date": "1992-09-28",
+      "end_date": "1992-10-04"
+    },
+    {
+      "historical_host": "Athens",
+      "series_id": "athens_1994",
+      "start_date": "1992-10-05",
+      "end_date": "1992-10-11"
+    },
+    {
+      "historical_host": "Sydney-2 (indoor)",
+      "series_id": "sydney_indoor_1994",
+      "start_date": "1992-10-05",
+      "end_date": "1992-10-11"
+    },
+    {
+      "historical_host": "Toulouse",
+      "series_id": "toulouse_2000",
+      "start_date": "1992-10-05",
+      "end_date": "1992-10-11"
+    },
+    {
+      "historical_host": "Bolzano",
+      "series_id": "bolzano_1993",
+      "start_date": "1992-10-12",
+      "end_date": "1992-10-18"
+    },
+    {
+      "historical_host": "Tel Aviv",
+      "series_id": "tel_aviv_1996",
+      "start_date": "1992-10-12",
+      "end_date": "1992-10-18"
+    },
+    {
+      "historical_host": "Tokyo-2 (indoor)",
+      "series_id": "tokyo_indoor_1995",
+      "start_date": "1992-10-12",
+      "end_date": "1992-10-18"
+    },
+    {
+      "historical_host": "Lyon",
+      "series_id": "montpellier",
+      "start_date": "1992-10-19",
+      "end_date": "1992-10-25"
+    },
+    {
+      "historical_host": "Taipei",
+      "series_id": "taipei_1992",
+      "start_date": "1992-10-19",
+      "end_date": "1992-10-25"
+    },
+    {
+      "historical_host": "Vienna",
+      "series_id": "vienna",
+      "start_date": "1992-10-19",
+      "end_date": "1992-10-25"
+    },
+    {
+      "historical_host": "Guaruja",
+      "series_id": "guaruja_1992",
+      "start_date": "1992-10-26",
+      "end_date": "1992-11-01"
+    },
+    {
+      "historical_host": "Stockholm",
+      "series_id": "stockholm",
+      "start_date": "1992-10-26",
+      "end_date": "1992-11-01"
+    },
+    {
+      "historical_host": "Buzios",
+      "series_id": "buzios_1992",
+      "start_date": "1992-11-02",
+      "end_date": "1992-11-08"
+    },
+    {
+      "historical_host": "Paris",
+      "series_id": "paris_masters",
+      "start_date": "1992-11-02",
+      "end_date": "1992-11-08"
+    },
+    {
+      "historical_host": "Antwerp",
+      "series_id": "antwerp_1998",
+      "start_date": "1992-11-09",
+      "end_date": "1992-11-15"
+    },
+    {
+      "historical_host": "Moscow",
+      "series_id": "moscow",
+      "start_date": "1992-11-09",
+      "end_date": "1992-11-15"
+    },
+    {
+      "historical_host": "Sao Paulo",
+      "series_id": "sao_paulo_1993",
+      "start_date": "1992-11-09",
+      "end_date": "1992-11-15"
+    },
+    {
+      "historical_host": "Frankfurt ATP Tour World Championship (annual archive window)",
+      "series_id": "atp_finals",
+      "start_date": "1992-11-16",
+      "end_date": "1992-11-22"
+    }
+  ]
+}

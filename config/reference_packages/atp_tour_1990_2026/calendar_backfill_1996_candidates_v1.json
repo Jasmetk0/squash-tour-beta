@@ -1,0 +1,478 @@
+{
+  "schema_version": "tennis.atp_tour_calendar_backfill_candidates.v1",
+  "year": 1996,
+  "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
+  "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+  "as_of": "2026-11-04",
+  "notes": "All 78 original played ATP Tour 1996 year-effective source Series with source-original cities and date windows from the official ATP year archive. Year-ending Hanover 1996 Nov 19–24 agrees with the separately published official Nitto ATP Finals history. Archive modern 'Masters 1000' labels must not replace contemporaneous tier names. Parent legal licence transfers not independently certified; excluded: Grand Slams, Atlanta Olympics, World Team Cup, Grand Slam Cup, Davis Cup.",
+  "events": [
+    {
+      "historical_host": "Doha",
+      "series_id": "doha",
+      "start_date": "1996-01-01",
+      "end_date": "1996-01-07"
+    },
+    {
+      "historical_host": "Adelaide",
+      "series_id": "brisbane",
+      "start_date": "1996-01-01",
+      "end_date": "1996-01-07"
+    },
+    {
+      "historical_host": "Auckland",
+      "series_id": "auckland",
+      "start_date": "1996-01-08",
+      "end_date": "1996-01-14"
+    },
+    {
+      "historical_host": "Jakarta",
+      "series_id": "jakarta_1996",
+      "start_date": "1996-01-08",
+      "end_date": "1996-01-14"
+    },
+    {
+      "historical_host": "Sydney",
+      "series_id": "sydney_2019",
+      "start_date": "1996-01-08",
+      "end_date": "1996-01-14"
+    },
+    {
+      "historical_host": "Zagreb",
+      "series_id": "split_1998",
+      "start_date": "1996-01-29",
+      "end_date": "1996-02-04"
+    },
+    {
+      "historical_host": "Shanghai",
+      "series_id": "bangalore_2008",
+      "start_date": "1996-01-29",
+      "end_date": "1996-02-04"
+    },
+    {
+      "historical_host": "Dubai",
+      "series_id": "dubai",
+      "start_date": "1996-02-12",
+      "end_date": "1996-02-18"
+    },
+    {
+      "historical_host": "Marseille",
+      "series_id": "lyon",
+      "start_date": "1996-02-12",
+      "end_date": "1996-02-18"
+    },
+    {
+      "historical_host": "San Jose",
+      "series_id": "dallas",
+      "start_date": "1996-02-12",
+      "end_date": "1996-02-18"
+    },
+    {
+      "historical_host": "Antwerp",
+      "series_id": "antwerp_1998",
+      "start_date": "1996-02-19",
+      "end_date": "1996-02-25"
+    },
+    {
+      "historical_host": "Memphis",
+      "series_id": "rio",
+      "start_date": "1996-02-19",
+      "end_date": "1996-02-25"
+    },
+    {
+      "historical_host": "Milan",
+      "series_id": "sofia",
+      "start_date": "1996-02-26",
+      "end_date": "1996-03-03"
+    },
+    {
+      "historical_host": "Philadelphia",
+      "series_id": "philadelphia_1998",
+      "start_date": "1996-02-26",
+      "end_date": "1996-03-03"
+    },
+    {
+      "historical_host": "Rotterdam",
+      "series_id": "rotterdam",
+      "start_date": "1996-03-04",
+      "end_date": "1996-03-10"
+    },
+    {
+      "historical_host": "Mexico City",
+      "series_id": "acapulco",
+      "start_date": "1996-03-04",
+      "end_date": "1996-03-10"
+    },
+    {
+      "historical_host": "Scottsdale",
+      "series_id": "las_vegas_2008",
+      "start_date": "1996-03-04",
+      "end_date": "1996-03-10"
+    },
+    {
+      "historical_host": "Indian Wells",
+      "series_id": "indian_wells",
+      "start_date": "1996-03-11",
+      "end_date": "1996-03-17"
+    },
+    {
+      "historical_host": "Copenhagen",
+      "series_id": "copenhagen_2003",
+      "start_date": "1996-03-11",
+      "end_date": "1996-03-17"
+    },
+    {
+      "historical_host": "Miami",
+      "series_id": "miami",
+      "start_date": "1996-03-18",
+      "end_date": "1996-03-31"
+    },
+    {
+      "historical_host": "St. Petersburg",
+      "series_id": "st_petersburg",
+      "start_date": "1996-03-18",
+      "end_date": "1996-03-31"
+    },
+    {
+      "historical_host": "Casablanca",
+      "series_id": "marrakech",
+      "start_date": "1996-03-25",
+      "end_date": "1996-03-31"
+    },
+    {
+      "historical_host": "Estoril",
+      "series_id": "estoril",
+      "start_date": "1996-04-08",
+      "end_date": "1996-04-14"
+    },
+    {
+      "historical_host": "New Delhi",
+      "series_id": "hong_kong",
+      "start_date": "1996-04-08",
+      "end_date": "1996-04-14"
+    },
+    {
+      "historical_host": "Hong Kong",
+      "series_id": "hong_kong_salem_2002",
+      "start_date": "1996-04-08",
+      "end_date": "1996-04-14"
+    },
+    {
+      "historical_host": "Tokyo",
+      "series_id": "tokyo",
+      "start_date": "1996-04-15",
+      "end_date": "1996-04-21"
+    },
+    {
+      "historical_host": "Barcelona",
+      "series_id": "barcelona",
+      "start_date": "1996-04-15",
+      "end_date": "1996-04-21"
+    },
+    {
+      "historical_host": "Bermuda",
+      "series_id": "bermuda_1996",
+      "start_date": "1996-04-15",
+      "end_date": "1996-04-21"
+    },
+    {
+      "historical_host": "Monte-Carlo",
+      "series_id": "monte_carlo",
+      "start_date": "1996-04-22",
+      "end_date": "1996-04-28"
+    },
+    {
+      "historical_host": "Seoul",
+      "series_id": "seoul_1996",
+      "start_date": "1996-04-22",
+      "end_date": "1996-04-28"
+    },
+    {
+      "historical_host": "Munich",
+      "series_id": "munich",
+      "start_date": "1996-04-29",
+      "end_date": "1996-05-05"
+    },
+    {
+      "historical_host": "Prague",
+      "series_id": "prague_1999",
+      "start_date": "1996-04-29",
+      "end_date": "1996-05-05"
+    },
+    {
+      "historical_host": "Atlanta",
+      "series_id": "atlanta_verizon_2001",
+      "start_date": "1996-04-29",
+      "end_date": "1996-05-05"
+    },
+    {
+      "historical_host": "Hamburg",
+      "series_id": "hamburg",
+      "start_date": "1996-05-06",
+      "end_date": "1996-05-12"
+    },
+    {
+      "historical_host": "Pinehurst",
+      "series_id": "houston",
+      "start_date": "1996-05-06",
+      "end_date": "1996-05-12"
+    },
+    {
+      "historical_host": "Rome",
+      "series_id": "rome",
+      "start_date": "1996-05-13",
+      "end_date": "1996-05-19"
+    },
+    {
+      "historical_host": "Coral Springs",
+      "series_id": "delray_beach",
+      "start_date": "1996-05-13",
+      "end_date": "1996-05-19"
+    },
+    {
+      "historical_host": "St. Polten",
+      "series_id": "poertschach_2008",
+      "start_date": "1996-05-20",
+      "end_date": "1996-05-26"
+    },
+    {
+      "historical_host": "London / Queen's Club",
+      "series_id": "queens_club",
+      "start_date": "1996-06-10",
+      "end_date": "1996-06-16"
+    },
+    {
+      "historical_host": "Rosmalen",
+      "series_id": "s_hertogenbosch",
+      "start_date": "1996-06-10",
+      "end_date": "1996-06-16"
+    },
+    {
+      "historical_host": "Porto",
+      "series_id": "porto_1996",
+      "start_date": "1996-06-10",
+      "end_date": "1996-06-16"
+    },
+    {
+      "historical_host": "Halle",
+      "series_id": "halle",
+      "start_date": "1996-06-17",
+      "end_date": "1996-06-23"
+    },
+    {
+      "historical_host": "Bologna",
+      "series_id": "bologna_1998",
+      "start_date": "1996-06-17",
+      "end_date": "1996-06-23"
+    },
+    {
+      "historical_host": "Nottingham",
+      "series_id": "eastbourne",
+      "start_date": "1996-06-17",
+      "end_date": "1996-06-23"
+    },
+    {
+      "historical_host": "Gstaad",
+      "series_id": "gstaad",
+      "start_date": "1996-07-08",
+      "end_date": "1996-07-14"
+    },
+    {
+      "historical_host": "Bastad",
+      "series_id": "bastad",
+      "start_date": "1996-07-08",
+      "end_date": "1996-07-14"
+    },
+    {
+      "historical_host": "Newport",
+      "series_id": "newport",
+      "start_date": "1996-07-08",
+      "end_date": "1996-07-14"
+    },
+    {
+      "historical_host": "Stuttgart-1 (clay)",
+      "series_id": "stuttgart",
+      "start_date": "1996-07-15",
+      "end_date": "1996-07-21"
+    },
+    {
+      "historical_host": "Washington",
+      "series_id": "washington",
+      "start_date": "1996-07-15",
+      "end_date": "1996-07-21"
+    },
+    {
+      "historical_host": "Kitzbuhel",
+      "series_id": "kitzbuhel",
+      "start_date": "1996-07-22",
+      "end_date": "1996-07-28"
+    },
+    {
+      "historical_host": "Amsterdam",
+      "series_id": "belgrade_2012",
+      "start_date": "1996-07-29",
+      "end_date": "1996-08-04"
+    },
+    {
+      "historical_host": "Los Angeles",
+      "series_id": "los_cabos",
+      "start_date": "1996-07-29",
+      "end_date": "1996-08-04"
+    },
+    {
+      "historical_host": "Cincinnati",
+      "series_id": "cincinnati",
+      "start_date": "1996-08-05",
+      "end_date": "1996-08-11"
+    },
+    {
+      "historical_host": "San Marino",
+      "series_id": "san_marino_2000",
+      "start_date": "1996-08-05",
+      "end_date": "1996-08-11"
+    },
+    {
+      "historical_host": "Indianapolis",
+      "series_id": "atlanta",
+      "start_date": "1996-08-12",
+      "end_date": "1996-08-18"
+    },
+    {
+      "historical_host": "New Haven",
+      "series_id": "new_haven_1998",
+      "start_date": "1996-08-12",
+      "end_date": "1996-08-18"
+    },
+    {
+      "historical_host": "Umag",
+      "series_id": "umag",
+      "start_date": "1996-08-12",
+      "end_date": "1996-08-18"
+    },
+    {
+      "historical_host": "Toronto",
+      "series_id": "canadian_open",
+      "start_date": "1996-08-19",
+      "end_date": "1996-08-25"
+    },
+    {
+      "historical_host": "Long Island",
+      "series_id": "winston_salem",
+      "start_date": "1996-08-19",
+      "end_date": "1996-08-25"
+    },
+    {
+      "historical_host": "Bucharest",
+      "series_id": "belgrade_clay_2021",
+      "start_date": "1996-09-09",
+      "end_date": "1996-09-15"
+    },
+    {
+      "historical_host": "Bournemouth",
+      "series_id": "brighton_2000",
+      "start_date": "1996-09-09",
+      "end_date": "1996-09-15"
+    },
+    {
+      "historical_host": "Bogota",
+      "series_id": "bogota_colombia_2001",
+      "start_date": "1996-09-09",
+      "end_date": "1996-09-15"
+    },
+    {
+      "historical_host": "Basel",
+      "series_id": "basel",
+      "start_date": "1996-09-23",
+      "end_date": "1996-09-29"
+    },
+    {
+      "historical_host": "Palermo",
+      "series_id": "palermo",
+      "start_date": "1996-09-23",
+      "end_date": "1996-09-29"
+    },
+    {
+      "historical_host": "Lyon",
+      "series_id": "montpellier",
+      "start_date": "1996-09-30",
+      "end_date": "1996-10-06"
+    },
+    {
+      "historical_host": "Singapore",
+      "series_id": "singapore_1999",
+      "start_date": "1996-09-30",
+      "end_date": "1996-10-06"
+    },
+    {
+      "historical_host": "Marbella",
+      "series_id": "brussels",
+      "start_date": "1996-09-30",
+      "end_date": "1996-10-06"
+    },
+    {
+      "historical_host": "Vienna",
+      "series_id": "vienna",
+      "start_date": "1996-10-07",
+      "end_date": "1996-10-13"
+    },
+    {
+      "historical_host": "Beijing",
+      "series_id": "beijing_1997",
+      "start_date": "1996-10-07",
+      "end_date": "1996-10-13"
+    },
+    {
+      "historical_host": "Ostrava",
+      "series_id": "ostrava_1998",
+      "start_date": "1996-10-14",
+      "end_date": "1996-10-20"
+    },
+    {
+      "historical_host": "Toulouse",
+      "series_id": "toulouse_2000",
+      "start_date": "1996-10-14",
+      "end_date": "1996-10-20"
+    },
+    {
+      "historical_host": "Tel Aviv",
+      "series_id": "tel_aviv_1996",
+      "start_date": "1996-10-14",
+      "end_date": "1996-10-20"
+    },
+    {
+      "historical_host": "Stuttgart Indoor Masters",
+      "series_id": "stuttgart_indoor_masters",
+      "start_date": "1996-10-21",
+      "end_date": "1996-10-27"
+    },
+    {
+      "historical_host": "Paris",
+      "series_id": "paris_masters",
+      "start_date": "1996-10-28",
+      "end_date": "1996-11-03"
+    },
+    {
+      "historical_host": "Moscow",
+      "series_id": "moscow",
+      "start_date": "1996-11-04",
+      "end_date": "1996-11-10"
+    },
+    {
+      "historical_host": "Stockholm",
+      "series_id": "stockholm",
+      "start_date": "1996-11-04",
+      "end_date": "1996-11-10"
+    },
+    {
+      "historical_host": "Santiago",
+      "series_id": "santiago_1998",
+      "start_date": "1996-11-04",
+      "end_date": "1996-11-10"
+    },
+    {
+      "historical_host": "ATP Tour World Championship (Hanover)",
+      "series_id": "atp_finals",
+      "start_date": "1996-11-19",
+      "end_date": "1996-11-24"
+    }
+  ]
+}

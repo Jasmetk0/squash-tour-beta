@@ -56,10 +56,10 @@ def test_2000_canonical_promotion_is_idempotently_verified() -> None:
     dated, built, audit = prepare(2000)
     assert audit["candidate_count"] == 65
     assert len(dated["year_sources"]["2000"]["events"]) == 65
-    assert built["provenance"]["dated_occurrences"] == 1573
+    assert built["provenance"]["dated_occurrences"] == 1731
     assert built["provenance"]["season_coverage_entries"] == 37
     assert built["provenance"]["date_coverage_years"] == (
-        [2000, 2001, 2002] + list(range(2004, 2027))
+        [1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
     )
     by_id = {row["source_entity_id"]: row for row in built["entities"]}
     assert by_id["atp_2000_atp_finals"]["payload"][

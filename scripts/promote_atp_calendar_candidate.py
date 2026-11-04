@@ -1,6 +1,6 @@
 """Promote a fully reconciled ATP historical Calendar candidate and regenerate snapshot.
 
-Requires an explicit --write; --check is read-only. This avoids half-updating
+Requires an explicit --write; --check is read-only. Year 2002 is eligible for\nmechanical promotion; year 2003 remains blocked on an official date conflict. This avoids half-updating
 calendar_dates_v1.json while leaving calendar.json stale.
 
 Usage:
@@ -35,10 +35,10 @@ PENDING_CONFLICTS = {
 
 
 def prepare(year: int):
-    if year != 2003:
-        raise ValueError("Only the explicit 2003 candidate ledger is supported")
+    if year not in (2002, 2003):
+        raise ValueError("Only staged 2002 and 2003 candidate ledgers are supported")
     candidate = json.loads(
-        (SOURCE / "calendar_backfill_2003_candidates_v1.json").read_text(
+        (SOURCE / f"calendar_backfill_{year}_candidates_v1.json").read_text(
             encoding="utf-8"
         )
     )

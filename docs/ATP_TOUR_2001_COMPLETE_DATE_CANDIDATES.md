@@ -24,3 +24,20 @@ python scripts/promote_atp_calendar_candidate.py --check --year 2001
 Full canonical promotion still requires running `--write --year 2001`, regenerating and committing **both** `calendar_dates_v1.json` and `calendar.json`, checking the resulting source fingerprint and host CI and reviewing unresolved historical legal continuity. Those files were **not** updated as part of these staged data edits; do not describe 2001 as playable or already installed.
 
 Parent #1731 and stacked child #1741 remain Draft, owner-only merge.
+
+
+## Canonical import — 4 November 2026
+
+All **65** 2001 original-tier source candidates have now been promoted into
+`calendar_dates_v1.json` and generated `calendar.json` on the existing
+Calendar Draft branch. The resulting 2001 reference events are **not playable
+editions** and the 2001 Series lineage is **not independently legally
+certified**. The reproducible read-only check is:
+
+```bash
+python scripts/promote_atp_calendar_candidate.py --check --year 2001
+python scripts/build_atp_historical_calendar.py --check
+```
+
+The preceding staged-only promotion checklist is a historical record
+written before this import; the above canonical status supersedes it.

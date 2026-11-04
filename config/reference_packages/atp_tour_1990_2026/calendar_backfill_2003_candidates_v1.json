@@ -1,0 +1,40 @@
+{
+  "schema_version": "tennis.atp_tour_calendar_backfill_candidates.v1",
+  "year": 2003,
+  "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
+  "source_url": "https://www.atptour.com/en/scores/results-archive?year=2003",
+  "as_of": "2026-11-04",
+  "notes": "Five start-of-season official archive dates. Parent Series mapping uses the 2003 year-effective source roster. No claim of complete annual dates or independently established legal licence lineage. Not included in canonical Calendar until all expected played source Series have dated intervals.",
+  "events": [
+    {
+      "historical_host": "Doha",
+      "series_id": "doha",
+      "start_date": "2002-12-30",
+      "end_date": "2003-01-05"
+    },
+    {
+      "historical_host": "Chennai",
+      "series_id": "hong_kong",
+      "start_date": "2002-12-30",
+      "end_date": "2003-01-05"
+    },
+    {
+      "historical_host": "Adelaide",
+      "series_id": "brisbane",
+      "start_date": "2002-12-30",
+      "end_date": "2003-01-05"
+    },
+    {
+      "historical_host": "Auckland",
+      "series_id": "auckland",
+      "start_date": "2003-01-06",
+      "end_date": "2003-01-12"
+    },
+    {
+      "historical_host": "Sydney",
+      "series_id": "sydney_2019",
+      "start_date": "2003-01-06",
+      "end_date": "2003-01-12"
+    }
+  ]
+}

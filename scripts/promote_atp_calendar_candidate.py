@@ -24,6 +24,13 @@ from scripts.audit_atp_calendar_backfill import audit_candidates
 from scripts.build_atp_historical_calendar import SOURCE, build, canonical
 
 PENDING_CONFLICTS = {
+    # ATP annual archive: Nov 10–16; ATP Finals heritage: Nov 11–16.
+    1997: {
+        "atp_finals": (
+            "ATP 1997 results archive: 1997-11-10 to 1997-11-16; "
+            "ATP Finals heritage: 1997-11-11 to 1997-11-16"
+        ),
+    },
     # ATP 1998 annual results archive: 23–29 November. ATP Finals
     # historical results: 24–29 November. Keep the event-date convention
     # discrepancy explicit, and block canonical promotion.
@@ -55,8 +62,8 @@ PENDING_CONFLICTS = {
 
 
 def prepare(year: int):
-    if year not in (1998, 1999, 2000, 2001, 2002, 2003):
-        raise ValueError("Only staged 1998–2003 candidate ledgers are supported")
+    if year not in (1997, 1998, 1999, 2000, 2001, 2002, 2003):
+        raise ValueError("Only staged 1997–2003 candidate ledgers are supported")
     candidate = json.loads(
         (SOURCE / f"calendar_backfill_{year}_candidates_v1.json").read_text(
             encoding="utf-8"

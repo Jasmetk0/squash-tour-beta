@@ -43,8 +43,13 @@ def test_2003_full_parent_roster_candidates_preserve_real_cross_year_iso_week() 
             {"iso_year": 2003, "iso_week": 1}
         ]
     assert {x["category_id"] for x in result["candidate_events"]} == {
-        "atp_international_series"
+        "atp_international_series",
+        "atp_international_series_gold",
+        "tennis_masters_series",
+        "atp_finals",
     }
+    for sid in ("doha", "hong_kong", "brisbane"):
+        assert by_id[sid]["category_id"] == "atp_international_series"
 
 
 def test_unknown_series_rejected() -> None:

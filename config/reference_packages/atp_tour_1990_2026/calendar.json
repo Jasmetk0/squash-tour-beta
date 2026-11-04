@@ -2073,77 +2073,15 @@
       "entity_schema_version": 1,
       "payload": {
         "atp_season_year": 2013,
-        "date_coverage_state": "undated",
-        "dated_series_count": 0,
+        "date_coverage_state": "verified_complete_known_series_dates",
+        "dated_series_count": 61,
         "known_not_held_series_ids": [],
         "no_fabricated_dates": true,
         "not_squash_rules": true,
         "roster_series_count": 61,
-        "undated_series_ids": [
-          "acapulco",
-          "atlanta",
-          "atp_finals",
-          "auckland",
-          "bangkok_2013",
-          "barcelona",
-          "basel",
-          "bastad",
-          "beijing",
-          "belgrade_clay_2021",
-          "brisbane",
-          "brussels",
-          "buenos_aires",
-          "canadian_open",
-          "chengdu",
-          "cincinnati",
-          "cordoba",
-          "dallas",
-          "delray_beach",
-          "doha",
-          "dubai",
-          "eastbourne",
-          "estoril",
-          "geneva",
-          "gstaad",
-          "halle",
-          "hamburg",
-          "hong_kong",
-          "houston",
-          "indian_wells",
-          "kitzbuhel",
-          "los_cabos",
-          "lyon",
-          "lyon_old",
-          "madrid",
-          "marrakech",
-          "metz",
-          "miami",
-          "monte_carlo",
-          "montpellier",
-          "moscow",
-          "munich",
-          "newport",
-          "paris_masters",
-          "queens_club",
-          "rio",
-          "rome",
-          "rotterdam",
-          "s_hertogenbosch",
-          "sao_paulo",
-          "shanghai",
-          "sofia",
-          "st_petersburg",
-          "stockholm",
-          "stuttgart",
-          "sydney_2019",
-          "tokyo",
-          "umag",
-          "vienna",
-          "washington",
-          "winston_salem"
-        ],
-        "year_source_status": "not_dated_no_fabricated_dates",
-        "year_source_url": null
+        "undated_series_ids": [],
+        "year_source_status": "verified_results_archive",
+        "year_source_url": "https://www.atptour.com/en/scores/results-archive?year=2013"
       },
       "references": [],
       "scope": "tennis.atp_tour.calendar.reference.1990_2026",
@@ -2434,6 +2372,3169 @@
       "references": [],
       "scope": "tennis.atp_tour.calendar.reference.1990_2026",
       "source_entity_id": "season_2026_date_coverage",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 6,
+        "end_date": "2013-03-02",
+        "end_year_week": {
+          "iso_week": 9,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 9,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "acapulco",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-02-25",
+        "start_year_week": {
+          "iso_week": 9,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "acapulco",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_acapulco",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-07-28",
+        "end_year_week": {
+          "iso_week": 30,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 30,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "atlanta",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-07-22",
+        "start_year_week": {
+          "iso_week": 30,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atlanta",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_atlanta",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_finals",
+        "duration_days_inclusive": 8,
+        "end_date": "2013-11-11",
+        "end_year_week": {
+          "iso_week": 46,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 45,
+            "iso_year": 2013
+          },
+          {
+            "iso_week": 46,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "atp_finals",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-11-04",
+        "start_year_week": {
+          "iso_week": 45,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_finals",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_finals",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_atp_finals",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2013-01-12",
+        "end_year_week": {
+          "iso_week": 2,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 2,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "auckland",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-01-07",
+        "start_year_week": {
+          "iso_week": 2,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "auckland",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_auckland",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-09-29",
+        "end_year_week": {
+          "iso_week": 39,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 39,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "bangkok_2013",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-09-23",
+        "start_year_week": {
+          "iso_week": 39,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "bangkok_2013",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_bangkok_2013",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-04-28",
+        "end_year_week": {
+          "iso_week": 17,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 17,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "barcelona",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-04-22",
+        "start_year_week": {
+          "iso_week": 17,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "barcelona",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_barcelona",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-10-27",
+        "end_year_week": {
+          "iso_week": 43,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 43,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "basel",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-10-21",
+        "start_year_week": {
+          "iso_week": 43,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "basel",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_basel",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-07-14",
+        "end_year_week": {
+          "iso_week": 28,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 28,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "bastad",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-07-08",
+        "start_year_week": {
+          "iso_week": 28,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "bastad",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_bastad",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-10-06",
+        "end_year_week": {
+          "iso_week": 40,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 40,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "beijing",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-09-30",
+        "start_year_week": {
+          "iso_week": 40,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "beijing",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_beijing",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-04-28",
+        "end_year_week": {
+          "iso_week": 17,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 17,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "belgrade_clay_2021",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-04-22",
+        "start_year_week": {
+          "iso_week": 17,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "belgrade_clay_2021",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_belgrade_clay_2021",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 8,
+        "end_date": "2013-01-06",
+        "end_year_week": {
+          "iso_week": 1,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 52,
+            "iso_year": 2012
+          },
+          {
+            "iso_week": 1,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "brisbane",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2012,
+        "start_date": "2012-12-30",
+        "start_year_week": {
+          "iso_week": 52,
+          "iso_year": 2012
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "brisbane",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_brisbane",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-10-27",
+        "end_year_week": {
+          "iso_week": 43,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 43,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "brussels",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-10-21",
+        "start_year_week": {
+          "iso_week": 43,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "brussels",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_brussels",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-02-24",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "buenos_aires",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-02-18",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "buenos_aires",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_buenos_aires",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-08-11",
+        "end_year_week": {
+          "iso_week": 32,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 32,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "canadian_open",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-08-05",
+        "start_year_week": {
+          "iso_week": 32,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "canadian_open",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_canadian_open",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-09-29",
+        "end_year_week": {
+          "iso_week": 39,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 39,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "chengdu",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-09-23",
+        "start_year_week": {
+          "iso_week": 39,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "chengdu",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_chengdu",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 8,
+        "end_date": "2013-08-18",
+        "end_year_week": {
+          "iso_week": 33,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 32,
+            "iso_year": 2013
+          },
+          {
+            "iso_week": 33,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "cincinnati",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-08-11",
+        "start_year_week": {
+          "iso_week": 32,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "cincinnati",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_cincinnati",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-02-10",
+        "end_year_week": {
+          "iso_week": 6,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 6,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "cordoba",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-02-04",
+        "start_year_week": {
+          "iso_week": 6,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "cordoba",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_cordoba",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-02-17",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "dallas",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-02-11",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "dallas",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_dallas",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-03-03",
+        "end_year_week": {
+          "iso_week": 9,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 9,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "delray_beach",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-02-25",
+        "start_year_week": {
+          "iso_week": 9,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "delray_beach",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_delray_beach",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2013-01-05",
+        "end_year_week": {
+          "iso_week": 1,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 1,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "doha",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2012,
+        "start_date": "2012-12-31",
+        "start_year_week": {
+          "iso_week": 1,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "doha",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_doha",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 6,
+        "end_date": "2013-03-02",
+        "end_year_week": {
+          "iso_week": 9,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 9,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "dubai",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-02-25",
+        "start_year_week": {
+          "iso_week": 9,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "dubai",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_dubai",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2013-06-22",
+        "end_year_week": {
+          "iso_week": 25,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 25,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "eastbourne",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-06-17",
+        "start_year_week": {
+          "iso_week": 25,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "eastbourne",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_eastbourne",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-05-05",
+        "end_year_week": {
+          "iso_week": 18,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 18,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "estoril",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-04-29",
+        "start_year_week": {
+          "iso_week": 18,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "estoril",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_estoril",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-05-25",
+        "end_year_week": {
+          "iso_week": 21,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 20,
+            "iso_year": 2013
+          },
+          {
+            "iso_week": 21,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "geneva",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-05-19",
+        "start_year_week": {
+          "iso_week": 20,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "geneva",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_geneva",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-07-28",
+        "end_year_week": {
+          "iso_week": 30,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 30,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "gstaad",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-07-22",
+        "start_year_week": {
+          "iso_week": 30,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "gstaad",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_gstaad",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-06-16",
+        "end_year_week": {
+          "iso_week": 24,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 24,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "halle",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-06-10",
+        "start_year_week": {
+          "iso_week": 24,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "halle",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_halle",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-07-21",
+        "end_year_week": {
+          "iso_week": 29,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 29,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "hamburg",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-07-15",
+        "start_year_week": {
+          "iso_week": 29,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "hamburg",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_hamburg",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-01-06",
+        "end_year_week": {
+          "iso_week": 1,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 1,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "hong_kong",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2012,
+        "start_date": "2012-12-31",
+        "start_year_week": {
+          "iso_week": 1,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "hong_kong",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_hong_kong",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-04-14",
+        "end_year_week": {
+          "iso_week": 15,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 15,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "houston",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-04-08",
+        "start_year_week": {
+          "iso_week": 15,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "houston",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_houston",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 11,
+        "end_date": "2013-03-17",
+        "end_year_week": {
+          "iso_week": 11,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 10,
+            "iso_year": 2013
+          },
+          {
+            "iso_week": 11,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "indian_wells",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-03-07",
+        "start_year_week": {
+          "iso_week": 10,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "indian_wells",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_indian_wells",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-08-03",
+        "end_year_week": {
+          "iso_week": 31,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 30,
+            "iso_year": 2013
+          },
+          {
+            "iso_week": 31,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "kitzbuhel",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-07-28",
+        "start_year_week": {
+          "iso_week": 30,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "kitzbuhel",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_kitzbuhel",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-07-21",
+        "end_year_week": {
+          "iso_week": 29,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 29,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "los_cabos",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-07-15",
+        "start_year_week": {
+          "iso_week": 29,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "los_cabos",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_los_cabos",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-02-24",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "lyon",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-02-18",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "lyon",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_lyon",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-05-25",
+        "end_year_week": {
+          "iso_week": 21,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 20,
+            "iso_year": 2013
+          },
+          {
+            "iso_week": 21,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "lyon_old",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-05-19",
+        "start_year_week": {
+          "iso_week": 20,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "lyon_old",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_lyon_old",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 8,
+        "end_date": "2013-05-12",
+        "end_year_week": {
+          "iso_week": 19,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 18,
+            "iso_year": 2013
+          },
+          {
+            "iso_week": 19,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "madrid",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-05-05",
+        "start_year_week": {
+          "iso_week": 18,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "madrid",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_madrid",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-04-14",
+        "end_year_week": {
+          "iso_week": 15,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 15,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "marrakech",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-04-08",
+        "start_year_week": {
+          "iso_week": 15,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "marrakech",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_marrakech",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-09-22",
+        "end_year_week": {
+          "iso_week": 38,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 38,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "metz",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-09-16",
+        "start_year_week": {
+          "iso_week": 38,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "metz",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_metz",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 12,
+        "end_date": "2013-03-31",
+        "end_year_week": {
+          "iso_week": 13,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 12,
+            "iso_year": 2013
+          },
+          {
+            "iso_week": 13,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "miami",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-03-20",
+        "start_year_week": {
+          "iso_week": 12,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "miami",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_miami",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 8,
+        "end_date": "2013-04-21",
+        "end_year_week": {
+          "iso_week": 16,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 15,
+            "iso_year": 2013
+          },
+          {
+            "iso_week": 16,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "monte_carlo",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-04-14",
+        "start_year_week": {
+          "iso_week": 15,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "monte_carlo",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_monte_carlo",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-02-10",
+        "end_year_week": {
+          "iso_week": 6,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 6,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "montpellier",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-02-04",
+        "start_year_week": {
+          "iso_week": 6,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "montpellier",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_montpellier",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-10-20",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "moscow",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-10-14",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "moscow",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_moscow",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-05-05",
+        "end_year_week": {
+          "iso_week": 18,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 18,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "munich",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-04-29",
+        "start_year_week": {
+          "iso_week": 18,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "munich",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_munich",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-07-14",
+        "end_year_week": {
+          "iso_week": 28,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 28,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "newport",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-07-08",
+        "start_year_week": {
+          "iso_week": 28,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "newport",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_newport",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-11-03",
+        "end_year_week": {
+          "iso_week": 44,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 44,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "paris_masters",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-10-28",
+        "start_year_week": {
+          "iso_week": 44,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "paris_masters",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_paris_masters",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-06-16",
+        "end_year_week": {
+          "iso_week": 24,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 24,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "queens_club",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-06-10",
+        "start_year_week": {
+          "iso_week": 24,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "queens_club",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_queens_club",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-02-24",
+        "end_year_week": {
+          "iso_week": 8,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 8,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rio",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-02-18",
+        "start_year_week": {
+          "iso_week": 8,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rio",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_rio",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 8,
+        "end_date": "2013-05-19",
+        "end_year_week": {
+          "iso_week": 20,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 19,
+            "iso_year": 2013
+          },
+          {
+            "iso_week": 20,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rome",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-05-12",
+        "start_year_week": {
+          "iso_week": 19,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rome",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_rome",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-02-17",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "rotterdam",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-02-11",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "rotterdam",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_rotterdam",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-06-22",
+        "end_year_week": {
+          "iso_week": 25,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 24,
+            "iso_year": 2013
+          },
+          {
+            "iso_week": 25,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "s_hertogenbosch",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-06-16",
+        "start_year_week": {
+          "iso_week": 24,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "s_hertogenbosch",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_s_hertogenbosch",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-02-17",
+        "end_year_week": {
+          "iso_week": 7,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 7,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "sao_paulo",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-02-11",
+        "start_year_week": {
+          "iso_week": 7,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "sao_paulo",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_sao_paulo",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_masters_1000",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-10-13",
+        "end_year_week": {
+          "iso_week": 41,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 41,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "shanghai",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-10-07",
+        "start_year_week": {
+          "iso_week": 41,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_masters_1000",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "shanghai",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_shanghai",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-02-10",
+        "end_year_week": {
+          "iso_week": 6,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 6,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "sofia",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-02-04",
+        "start_year_week": {
+          "iso_week": 6,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "sofia",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_sofia",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-09-22",
+        "end_year_week": {
+          "iso_week": 38,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 38,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "st_petersburg",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-09-16",
+        "start_year_week": {
+          "iso_week": 38,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "st_petersburg",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_st_petersburg",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-10-20",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "stockholm",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-10-14",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "stockholm",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_stockholm",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-07-14",
+        "end_year_week": {
+          "iso_week": 28,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 28,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "stuttgart",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-07-08",
+        "start_year_week": {
+          "iso_week": 28,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "stuttgart",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_stuttgart",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 6,
+        "end_date": "2013-01-12",
+        "end_year_week": {
+          "iso_week": 2,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 2,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "sydney_2019",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-01-07",
+        "start_year_week": {
+          "iso_week": 2,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "sydney_2019",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_sydney_2019",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-10-06",
+        "end_year_week": {
+          "iso_week": 40,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 40,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "tokyo",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-09-30",
+        "start_year_week": {
+          "iso_week": 40,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "tokyo",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_tokyo",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-07-28",
+        "end_year_week": {
+          "iso_week": 30,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 30,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "umag",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-07-22",
+        "start_year_week": {
+          "iso_week": 30,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "umag",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_umag",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-10-20",
+        "end_year_week": {
+          "iso_week": 42,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 42,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "vienna",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-10-14",
+        "start_year_week": {
+          "iso_week": 42,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "vienna",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_vienna",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_500",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-08-04",
+        "end_year_week": {
+          "iso_week": 31,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 31,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "washington",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-07-29",
+        "start_year_week": {
+          "iso_week": 31,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_500",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "washington",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_washington",
+      "valid": true
+    },
+    {
+      "entity_kind": "tennis.calendar.occurrence.reference.v1",
+      "entity_schema_version": 1,
+      "payload": {
+        "atp_season_year": 2013,
+        "category_id": "atp_250",
+        "duration_days_inclusive": 7,
+        "end_date": "2013-08-24",
+        "end_year_week": {
+          "iso_week": 34,
+          "iso_year": 2013
+        },
+        "iso_weeks_occupied": [
+          {
+            "iso_week": 33,
+            "iso_year": 2013
+          },
+          {
+            "iso_week": 34,
+            "iso_year": 2013
+          }
+        ],
+        "no_match_or_result_claim": true,
+        "not_squash_rules": true,
+        "run_week_projection": "not_applied_source_only",
+        "series_id": "winston_salem",
+        "source_as_of": "2026-11-04",
+        "source_basis": "official_published_event_dates",
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
+        "start_calendar_year": 2013,
+        "start_date": "2013-08-18",
+        "start_year_week": {
+          "iso_week": 33,
+          "iso_year": 2013
+        },
+        "year_source_state": "verified_results_archive"
+      },
+      "references": [
+        {
+          "expected_entity_kind": "tennis.category.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "atp_250",
+          "source_package_id": "atp_tour_1990_2026_category"
+        },
+        {
+          "expected_entity_kind": "tennis.series.reference.v1",
+          "minimum_schema_version": 1,
+          "source_entity_id": "winston_salem",
+          "source_package_id": "atp_tour_1990_2026_series"
+        }
+      ],
+      "scope": "tennis.atp_tour.calendar.reference.1990_2026",
+      "source_entity_id": "atp_2013_winston_salem",
       "valid": true
     },
     {
@@ -42216,6 +45317,7 @@
     "coverage_model": "explicit_yearly_undated_series_ids",
     "created_for": "Squash Engine independent ATP historical reference",
     "date_coverage_years": [
+      2013,
       2014,
       2015,
       2016,
@@ -42230,7 +45332,7 @@
       2025,
       2026
     ],
-    "dated_occurrences": 764,
+    "dated_occurrences": 825,
     "iso_week_not_run_week": true,
     "reference_span": {
       "from": 1990,

@@ -17,7 +17,7 @@ import json
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "config/reference_packages/atp_tour_1990_2026"
@@ -56,6 +56,22 @@ def official_url(raw: Any, *, identity: str) -> str:
     }:
         raise ValueError("Non-official ATP source: " + identity)
     return raw
+
+
+def ensure_archive_year_matches(url: str, *, year: int) -> None:
+    """Fail closed if a year-scoped official results archive cites another season.
+
+    Tournament-specific ATP pages may have unrelated query parameters and are
+    deliberately not interpreted as annual archive citations.
+    """
+    parsed = urlsplit(url)
+    if parsed.path.rstrip("/").lower() != "/en/scores/results-archive":
+        return
+    values = parse_qs(parsed.query, keep_blank_values=True)
+    if values.get("year") != [str(year)]:
+        raise ValueError(
+            f"ATP results archive year must match season {year}: {url}"
+        )
 
 
 def iso_weeks_touched(start: date, end: date) -> list[dict[str, int]]:
@@ -149,6 +165,7 @@ def build(
             if state not in ALLOWED_STATUSES:
                 raise ValueError("Unsupported dated-year status: " + str(year))
             official_url(dated_year["source_url"], identity=str(year))
+            ensure_archive_year_matches(dated_year["source_url"], year=year)
             parse_exact_date(dated_year["as_of"], identity="source as_of")
             if not isinstance(dated_year["events"], list):
                 raise ValueError("Missing dated events list: " + str(year))
@@ -166,6 +183,7 @@ def build(
                 if entry["source_basis"] != "official_published_event_dates":
                     raise ValueError("Date origin was not independently designated official")
                 url = official_url(entry["source_url"], identity=sid)
+                ensure_archive_year_matches(url, year=year)
                 start = parse_exact_date(entry["start_date"], identity=sid)
                 end = parse_exact_date(entry["end_date"], identity=sid)
                 if start.year not in (year, year - 1) or end.year != year:

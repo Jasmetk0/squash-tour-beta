@@ -21,6 +21,18 @@ source revision, comprising 37 provenance-coverage entities and 1892 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
 
+## Independent all-year source census (37/37 years)
+
+The read-only `scripts/audit_atp_calendar_full_roster.py` now rebuilds and byte-verifies the canonical Calendar and checks every **1990–2026** source year against its exact parent Series roster. It distinguishes **canonical historical**, **canonical provisional (2026)** and **staged-but-not-imported due to official date-window conflicts** instead of treating staged evidence as a released Package.
+
+Current census: **2,431 year-effective parent Series memberships**, of which **24 are explicitly known not held**; the remaining **2,407** have individually recorded historic or provisional exact event-window evidence: **1,892 canonical dated occurrences** and **515 fully roster-matched staged date candidates** across **1990, 1992–1993, 1997–1999 and 2003**. Hence **37/37 years have source-date evidence**, but **only 30/37 are canonically imported**, **2026 remains provisional**, and none of these numbers proves historical legal licence continuity or a runnable FAX sports calendar. No 1990 or 1992–1993 date-window contradiction was silently resolved.
+
+```bash
+python scripts/audit_atp_calendar_full_roster.py --check
+python scripts/audit_atp_calendar_full_roster.py --json
+python -m pytest -q tests/domain/test_atp_calendar_full_roster.py
+```
+
 ## 1990 original ATP Tour source dates — 75/75 staged (not canonical)
 
 All **75** original 1990 ATP Tour main-tour and Frankfurt singles World Championships parent Series now have individual event-window candidates taken from the [ATP official 1990 results archive](https://www.atptour.com/en/scores/results-archive?year=1990). Exact historic hosts include Toronto-1 (indoor, February) *separate from* the summer Canadian Open, Rio de Janeiro carpet separate from Memphis, plus San Remo, Wembley, Itaparica, and the two Sydney, Tokyo and Stuttgart events. The [ATP annual archive](https://www.atptour.com/en/scores/results-archive?year=1990) dates Frankfurt 12–18 November; [Nitto ATP Finals historical results](https://www.nittoatpfinals.com/en/heritage/results-1970-1999) date actual competition 13–18 November. Both are retained as independent source-date concepts. Canonical promotion remains blocked pending an explicit provenance/date-window policy, **not** because the roster is missing tournaments. See [1990 event-level evidence and promotion guard](ATP_TOUR_1990_DATE_EVIDENCE_AND_CONFLICT.md). No canonically dated 1990 year, FAX match, sporting calendar or Run mutation is claimed.

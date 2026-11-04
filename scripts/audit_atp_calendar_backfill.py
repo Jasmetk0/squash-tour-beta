@@ -22,6 +22,15 @@ from scripts.build_atp_historical_calendar import (
 
 
 SOURCE_DATE_CONFLICTS = {
+    # Annual ATP archive publishes a 12–18 Nov event window, but
+    # Nitto ATP Finals historical results date actual play 13–18 Nov.
+    # This is a source/date-concept discrepancy, not permission to guess.
+    1990: {
+        "atp_finals": (
+            "ATP 1990 results archive: 1990-11-12 to 1990-11-18; "
+            "ATP Finals heritage competition dates: 1990-11-13 to 1990-11-18"
+        ),
+    },
     # Official ATP yearly archive publishes 16–22 Nov 1992 event window;
     # independent ATP Finals heritage and ITF give actual competition
     # dates 17–22 Nov. Record different date concepts, never silently infer.
@@ -142,6 +151,25 @@ def audit_candidates(
             "iso_weeks_occupied": weeks,
             "source_url": candidate["source_url"],
         })
+    # All disputed Finals archives must preserve the ORIGINAL annual ATP
+    # event-window value. Otherwise an accidental edit could turn a documented
+    # source conflict into a subtly different candidate without an audit error.
+    archived_finals_windows = {
+        1990: ("1990-11-12", "1990-11-18"),
+        1992: ("1992-11-16", "1992-11-22"),
+        1993: ("1993-11-15", "1993-11-21"),
+        1997: ("1997-11-10", "1997-11-16"),
+        1998: ("1998-11-23", "1998-11-29"),
+        1999: ("1999-11-22", "1999-11-28"),
+        2003: ("2003-11-10", "2003-11-16"),
+    }
+    if year in archived_finals_windows and "atp_finals" in seen:
+        finals = next(row for row in validated if row["series_id"] == "atp_finals")
+        if (finals["start_date"], finals["end_date"]) != archived_finals_windows[year]:
+            raise ValueError(
+                "Conflicting ATP Finals candidate no longer matches the "
+                "original annual results-archive date window"
+            )
     current = existing_dates.get("year_sources", {}).get(str(year))
     already_dated = {x["series_id"] for x in current["events"]} if current else set()
     conflicts = sorted(already_dated & seen)
@@ -173,7 +201,7 @@ def audit_candidates(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true")
-    parser.add_argument("--year", type=int, choices=(1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003), default=2003)
+    parser.add_argument("--year", type=int, choices=(1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003), default=2003)
     args = parser.parse_args()
     candidate = json.loads(
         (SOURCE / f"calendar_backfill_{args.year}_candidates_v1.json").read_text(

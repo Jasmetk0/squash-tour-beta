@@ -32,8 +32,8 @@ def test_source_files_remain_unchanged_when_promotion_vetoes() -> None:
 
 
 def test_promoter_rejects_unstaged_year() -> None:
-    with pytest.raises(ValueError, match="Only staged 1996–2003"):
-        prepare(1995)
+    with pytest.raises(ValueError, match="Only staged 1995–2003"):
+        prepare(1994)
 
 
 def test_conflicted_year_is_not_mislabelled_as_canonically_dated() -> None:
@@ -48,10 +48,10 @@ def test_2002_is_mechanically_promotable_without_changing_2004_onward() -> None:
     assert audited["candidate_count"] == 62
     assert "2002" in promoted["year_sources"]
     assert len(promoted["year_sources"]["2002"]["events"]) == 62
-    assert built["provenance"]["dated_occurrences"] == 1651
+    assert built["provenance"]["dated_occurrences"] == 1731
     assert built["provenance"]["season_coverage_entries"] == 37
     assert sorted(built["provenance"]["date_coverage_years"]) == (
-        [1996, 2000, 2001, 2002] + list(range(2004, 2027))
+        [1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
     )
     by_id = {
         entity["source_entity_id"]: entity
@@ -73,10 +73,10 @@ def test_2001_is_mechanically_promotable_without_changing_other_years() -> None:
     assert audited["remaining_series_ids"] == []
     assert "2001" in promoted["year_sources"]
     assert len(promoted["year_sources"]["2001"]["events"]) == 65
-    assert built["provenance"]["dated_occurrences"] == 1651
+    assert built["provenance"]["dated_occurrences"] == 1731
     assert built["provenance"]["season_coverage_entries"] == 37
     assert built["provenance"]["date_coverage_years"] == (
-        [1996, 2000, 2001, 2002] + list(range(2004, 2027))
+        [1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
     )
     by_id = {x["source_entity_id"]: x for x in built["entities"]}
     assert by_id["atp_2001_atlanta_verizon_2001"]["payload"][

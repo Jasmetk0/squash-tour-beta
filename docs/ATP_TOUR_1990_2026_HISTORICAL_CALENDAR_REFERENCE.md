@@ -164,6 +164,38 @@ interval conflicts with a separate ATP tournament history's 8–16 November
 interval. The import is deliberately blocked until the date convention is
 reconciled. Historical years **1990–1999** remain undated.
 
+## Source-only historical candidates blocked by official date conflicts
+
+In addition to 1,573 already canonical date-bearing ATP occurrences, **278
+additional source-date candidates** have been transcribed for years not yet
+promoted into Calendar:
+
+| Year | Original parent Series identities matched | Source state |
+| --- | ---: | --- |
+| 1997 | 75 / 75 | Staged; original ATP Finals week differs from historical Finals |
+| 1998 | 74 / 74 | Staged; original ATP Finals week differs from historical Finals |
+| 1999 | 66 / 66 | Staged; original ATP Finals week differs from historical Finals |
+| 2003 | 63 / 63 | Staged; historical Finals start differs by two days |
+
+**The source files are not playable, not canonically dated, and not
+independently licence-lineage-certified.** Merely counting all original
+source Series IDs is *roster reconciliation*, not proof that all ATP played
+events or rightsholder chains are independently verified.
+
+The read-only `audit_atp_calendar_backfill.py --year <year> --json` reports
+`roster_reconciled=true` and a nonempty `unresolved_date_conflicts` for
+the four affected years. Its `ready_for_whole_year_promotion` is
+correctly **false** until the conflict has been adjudicated. Both the
+read-only audit and canonical promoter use one shared conflict registry
+to prevent mismatched acceptance signals.
+
+See
+[`ATP_TOUR_1997_DATE_EVIDENCE_AND_CONFLICTS.md`](ATP_TOUR_1997_DATE_EVIDENCE_AND_CONFLICTS.md)
+and
+[`ATP_TOUR_1998_1999_DATE_EVIDENCE_AND_CONFLICTS.md`](ATP_TOUR_1998_1999_DATE_EVIDENCE_AND_CONFLICTS.md).
+The annual archives are the source of the published historical date
+windows; ATP Finals heritage separately reports the competition windows.
+
 ## Current actual date coverage
 
 | Year(s) | Source status | Dated Series | Undated |

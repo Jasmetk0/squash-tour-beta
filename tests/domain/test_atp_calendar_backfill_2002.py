@@ -28,8 +28,8 @@ def test_2002_full_year_candidates_reconcile_to_parent_roster() -> None:
     assert result["candidate_count"] == 62
     assert result["expected_played_source_count"] == 62
     assert result["remaining_series_ids"] == []
-    assert result["canonical_conflicts"] == []
-    assert result["ready_for_whole_year_promotion"] is True
+    assert len(result["canonical_conflicts"]) == 62
+    assert result["ready_for_whole_year_promotion"] is False
     rows = {x["series_id"]: x for x in result["candidate_events"]}
     for sid in ("doha", "hong_kong", "brisbane"):
         assert rows[sid]["start_date"] == "2001-12-31"
@@ -41,4 +41,5 @@ def test_2002_full_year_candidates_reconcile_to_parent_roster() -> None:
     assert rows["atp_finals"]["end_date"] == "2002-11-17"
     assert rows["hong_kong_salem_2002"]["historical_host"] == "Hong Kong"
     assert rows["bangkok_2013"]["historical_host"] == "Tashkent"
-    assert "2002" not in canonical["year_sources"]
+    assert "2002" in canonical["year_sources"]
+    assert len(canonical["year_sources"]["2002"]["events"]) == 62

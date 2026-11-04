@@ -22,6 +22,22 @@ const writableBranch = (branch:RunBranch,runId:string):boolean =>
   branch.run_id===runId && branch.status==='active' &&
   !branch.read_only && Boolean(branch.saved_head_revision_id)
 
+/** Preserve disjoint historical coverage: 2000–2002, 2004–2026
+ * must not be presented as an uninterrupted 2000–2026 date census. */
+const datedYearRanges=(years:readonly number[]):string=>{
+  if(!years.length)return '—'
+  const sorted=[...years].sort((a,b)=>a-b)
+  const ranges:string[]=[]
+  let first=sorted[0],last=first
+  for(const year of sorted.slice(1)){
+    if(year===last+1){last=year;continue}
+    ranges.push(first===last?String(first):`${first}–${last}`)
+    first=last=year
+  }
+  ranges.push(first===last?String(first):`${first}–${last}`)
+  return ranges.join(', ')
+}
+
 /**
  * ATP references are deliberately opaque: this is NOT an event/score/points
  * import or a playable Calendar. Only the existing generic Run Package
@@ -243,8 +259,8 @@ export function ATPCalendarReferenceApplyPage():JSX.Element {
           {' · '}{cs?'2026 předběžný':'2026 provisional'}
           {' · '}{cs?'Pouze historická reference':'Historical reference only'}</p>
         <p className="status">{cs
-          ? `Datované ročníky: ${source.data.dated_years[0]}–${source.data.dated_years[source.data.dated_years.length-1]} · dosud nedatovaných: ${source.data.undated_years.length}. Rok 2026 je předběžný. ISO week ≠ Run Week.`
-          : `Dated seasons: ${source.data.dated_years[0]}–${source.data.dated_years[source.data.dated_years.length-1]} · undated seasons: ${source.data.undated_years.length}. 2026 is provisional. ISO week ≠ Run Week.`}</p>
+          ? `Datované ročníky: ${datedYearRanges(source.data.dated_years)} · dosud nedatovaných: ${source.data.undated_years.length}. Rok 2026 je předběžný. ISO week ≠ Run Week.`
+          : `Dated seasons: ${datedYearRanges(source.data.dated_years)} · undated seasons: ${source.data.undated_years.length}. 2026 is provisional. ISO week ≠ Run Week.`}</p>
         <ul>{source.data.children.map(child=><li key={child.package_id}>
           <strong>{child.package_type}</strong> — {child.entity_count} {cs?'položek':'entities'}
           {' · '}v{child.source_version}</li>)}</ul>

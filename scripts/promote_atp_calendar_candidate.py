@@ -55,20 +55,15 @@ def prepare(year: int):
         (SOURCE / "series.json").read_text(encoding="utf-8")
     )
     audit = audit_candidates(candidate, seasons, dated)
-    if audit["year"] != year or not audit["ready_for_whole_year_promotion"]:
-        raise ValueError("Historical year not fully reconciled to parent roster")
+    if audit["year"] != year:
+        raise ValueError("Mismatched historical year candidate")
     conflicts = PENDING_CONFLICTS.get(year, {})
     if conflicts:
         raise ValueError(
             "Unresolved official ATP dates block whole-year promotion: "
             + "; ".join(f"{sid}: {why}" for sid, why in conflicts.items())
         )
-    # Deliberately do not expose a --force flag: source conflicts must be
-    # resolved through source curation, never bypassed by a command option.
-    promoted = dict(dated)
-    promoted["year_sources"] = dict(dated["year_sources"])
-    if str(year) in promoted["year_sources"]:
-        raise ValueError("Year already exists; never overwrite dated history")
+    # Deliberately no force flag; the source conflict must be resolved.
     rows = [
         {
             "series_id": row["series_id"],
@@ -79,12 +74,30 @@ def prepare(year: int):
         }
         for row in audit["candidate_events"]
     ]
-    promoted["year_sources"][str(year)] = {
+    target_year = {
         "as_of": candidate["as_of"],
         "status": "verified_results_archive",
         "source_url": candidate["source_url"],
         "events": rows,
     }
+    existing = dated["year_sources"].get(str(year))
+    if existing is not None:
+        if existing != target_year:
+            raise ValueError(
+                "Existing canonical historical year differs from staged source: "
+                + str(year)
+            )
+        generated = build(categories, series, seasons, dated)
+        if (SOURCE / "calendar.json").read_text(encoding="utf-8") != canonical(
+            generated
+        ):
+            raise ValueError("Canonical Calendar snapshot stale on existing year")
+        return dated, generated, audit
+    if not audit["ready_for_whole_year_promotion"]:
+        raise ValueError("Historical year not fully reconciled to parent roster")
+    promoted = dict(dated)
+    promoted["year_sources"] = dict(dated["year_sources"])
+    promoted["year_sources"][str(year)] = target_year
     promoted["year_sources"] = dict(
         sorted(promoted["year_sources"].items(), key=lambda item: int(item[0]))
     )
@@ -115,6 +128,15 @@ def main() -> int:
     parser.add_argument("--year", type=int, required=True)
     args = parser.parse_args()
     promoted, generated, audit = prepare(args.year)
+    existing = str(args.year) in json.loads(
+        (SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8")
+    )["year_sources"]
+    if existing:
+        print(
+            f"ATP {args.year}: {audit['candidate_count']} dates already "
+            "canonical, source and generated snapshot verified; no changes"
+        )
+        return 0
     if args.check:
         print(
             f"ATP {args.year} eligible: {audit['candidate_count']} dates; "

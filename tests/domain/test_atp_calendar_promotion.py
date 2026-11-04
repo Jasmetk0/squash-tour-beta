@@ -50,11 +50,21 @@ def test_promoter_rejects_unstaged_year() -> None:
         prepare(1989)
 
 
-def test_conflicted_year_is_not_mislabelled_as_canonically_dated() -> None:
+def test_2003_canonical_archive_dates_preserve_distinct_heritage_window() -> None:
     dated = json.loads(
         (SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8")
     )
-    assert "2003" not in dated["year_sources"]
+    assert "2003" in dated["year_sources"]
+    year = dated["year_sources"]["2003"]
+    assert year["status"] == (
+        "verified_atp_results_archive_with_separate_finals_historical_window"
+    )
+    assert year["finals_date_window_evidence"]["archive_start_date"] == (
+        "2003-11-10"
+    )
+    assert year["finals_date_window_evidence"]["alternate_start_date"] == (
+        "2003-11-08"
+    )
 
 
 def test_2002_is_mechanically_promotable_without_changing_2004_onward() -> None:

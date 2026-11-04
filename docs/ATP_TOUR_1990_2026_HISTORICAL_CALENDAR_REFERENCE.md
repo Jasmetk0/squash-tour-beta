@@ -16,10 +16,14 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (1355 entities at the current
-source revision, comprising 37 provenance-coverage entities and 1318 dated
+with Category (11), Series (164) and Calendar (1418 entities at the current
+source revision, comprising 37 provenance-coverage entities and 1381 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
+
+## 2004 archive coverage
+
+All **63 played 2004 ATP Tour / Tennis Masters Cup historical source Series** are dated from the [ATP 2004 results archive](https://www.atptour.com/en/scores/results-archive?year=2004), with independent corroboration for specific venues (e.g. [ITF Palermo 2004](https://www.itftennis.com/en/tournament/palermo/ita/2004/m-is-ita-02a-2004/draws-and-results/)). Olympic tennis in Athens is **excluded**, as are Grand Slams, World Team Cup and Davis Cup. The original historical host and 2004 week arrangement, including *September Delray Beach*, Shanghai (`bangalore_2008` lineage), 2004 March Scottsdale (`las_vegas_2008`), Sopot (`warsaw_2008`), Amersfoort, St. Pölten, Memphis and autumn Madrid are preserved. **2004 Masters Cup start-date discrepancy:** official ATP year results archive shows **15–21 Nov 2004**, while [ATP Finals heritage](https://www.nittoatpfinals.com/en/heritage/results-2000-2023) records **13–21 Nov**. Stored year-source date follows the original ATP yearly archive, pending date-definition reconciliation. This is not independently a complete annual event census beyond the 2004 parent roster.
 
 ## 2005 archive coverage
 
@@ -138,7 +142,8 @@ Grand Slams, Olympic and team events remain out of scope.
 
 | Year(s) | Source status | Dated Series | Undated |
 | --- | --- | ---: | ---: |
-| 1990–2004 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 1990–2003 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 2004 | ATP played results archive, 2004 original year/host dates; Finals evidence conflict | **63 / 63** | 0 |
 | 2005 | Official ATP archive, 63 named editions; Finals start date conflict | **63 / 63** | 0 |
 | 2006 | Official played ATP archive, original host and tier dates | **63 / 63** | 0 |
 | 2007 | Official results archive, historical host continuity | **62 / 62** | 0 |
@@ -164,12 +169,14 @@ Grand Slams, Olympic and team events remain out of scope.
 
 **No generic history period or week is interpreted as a tournament date.**
 The parent Category/Series dataset contains 2,431 year-effective memberships;
-1318 unique year/Series occurrences currently have original *date* sources.
+1381 unique year/Series occurrences currently have original *date* sources.
 The other historical years will be sourced individually, not filled by
 inventing dates or extrapolating 2025/2026 patterns.
 
 Source links:
 
+- [2004 official results archive](https://www.atptour.com/en/scores/results-archive?year=2004).
+- [2004 Tennis Masters Cup alternative start date](https://www.nittoatpfinals.com/en/heritage/results-2000-2023).
 - [2005 official results archive](https://www.atptour.com/en/scores/results-archive?year=2005).
 - [2005 Tennis Masters Cup alternative start date](https://www.nittoatpfinals.com/es/heritage/results-2000-2023).
 - [2006 official results archive](https://www.atptour.com/en/scores/results-archive?year=2006).
@@ -272,6 +279,6 @@ its own separately reviewed date-to-Run-clock policy.
    Saved Revision. No source-only date reference may be promoted to playable
    FAX events by these steps.
 
-The work is **not complete for 1990–2004**. Source-year coverage must be
+The work is **not complete for 1990–2003**. Source-year coverage must be
 upgraded year by year using original contemporaneous calendars and/or official
 ATP results archives. 2026 final validation remains pending.

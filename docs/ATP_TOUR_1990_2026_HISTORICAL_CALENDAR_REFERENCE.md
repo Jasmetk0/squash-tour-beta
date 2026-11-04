@@ -16,14 +16,14 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (1768 entities at the current
-source revision, comprising 37 provenance-coverage entities and 1731 dated
+with Category (11), Series (164) and Calendar (1853 entities at the current
+source revision, comprising 37 provenance-coverage entities and 1816 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
 
-## 1994 source-date backfill (partial, not canonical)
+## 1994 original ATP Tour (complete source date roster)
 
-The 1994 parent historical source has **85 original ATP Tour / Finals Series**. A separately staged [1994 evidence ledger](ATP_TOUR_1994_PARTIAL_DATE_REFERENCE.md) now records **23 exact dated candidate events** (22 dated January–April original tour fixtures plus Frankfurt ATP Finals 15–20 November). **62 Series remain undated**, so 1994 still has no canonical source-year dates. The auditor reports the exact missing Series; the promoter refuses an incomplete 1994 import. No existing 1,731 canonical occurrences, 37 coverage entities, Run Save, or FAX sporting behavior are changed. The 1997–1999 and 2003 Finals date conflicts remain separately unresolved.
+All **85** 1994 original Tour + Frankfurt World Championships year-effective Series have been dated from the official ATP results archive, retaining exact historic hosts, original categories, published date windows and ISO week spans. The distinct Sydney-1/Sydney-2, Tokyo-1/Tokyo-2, Stuttgart-1/Stuttgart-2, Atlanta/Indianapolis, Manchester and Hilversum cases are preserved. See [1994 complete evidence report](ATP_TOUR_1994_COMPLETE_DATE_REFERENCE.md). Canonical Calendar includes **1,816 dated occurrences + 37 year coverage records**; this confirms the known parent roster, **not** independent legal licence lineage or playable tennis/squash scheduling. Official Finals date-window differences for 1997–1999 and 2003 remain unresolved.
 
 ## 2004 archive coverage
 

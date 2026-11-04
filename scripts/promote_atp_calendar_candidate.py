@@ -1,8 +1,8 @@
 """Promote a fully reconciled ATP historical Calendar candidate and regenerate snapshot.
 
 Requires an explicit --write only for a new dated year. --check is read-only.
-Imported 2000, 2001 and 2002 cohorts are checked idempotently against their
-candidate evidence and generated snapshot. Years 1999 and 2003 remain blocked on an
+Imported 1994–1996, 2000–2002 cohorts are checked idempotently against their
+candidate evidence and generated snapshot. Years 1997–1999 and 2003 remain blocked on an
 unresolved official ATP Finals date conflict.
 
 Usage:

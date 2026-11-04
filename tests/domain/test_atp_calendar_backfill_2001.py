@@ -25,9 +25,9 @@ def test_2001_early_edition_candidates_are_auditable_but_not_promotable() -> Non
     )
     report = audit_candidates(candidate, seasons, canonical)
     assert report["year"] == 2001
-    assert report["candidate_count"] == 7
+    assert report["candidate_count"] == 34
     assert report["expected_played_source_count"] == 65
-    assert len(report["remaining_series_ids"]) == 58
+    assert len(report["remaining_series_ids"]) == 31
     assert report["canonical_conflicts"] == []
     assert report["ready_for_whole_year_promotion"] is False
     assert "2001" not in canonical["year_sources"]
@@ -37,6 +37,9 @@ def test_2001_early_edition_candidates_are_auditable_but_not_promotable() -> Non
     assert events["brisbane"]["start_date"] == "2001-01-01"
     assert events["bogota_colombia_2001"]["historical_host"] == "Bogotá"
     assert events["sofia"]["historical_host"] == "Milan"
+    assert events["miami"]["start_date"] == "2001-03-19"
+    assert events["miami"]["end_date"] == "2001-04-01"
+    assert events["rome"]["category_id"] == "tennis_masters_series"
     assert events["doha"]["iso_weeks_occupied"] == [
         {"iso_year": 2001, "iso_week": 1}
     ]

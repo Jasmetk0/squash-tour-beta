@@ -32,7 +32,7 @@ def test_source_files_remain_unchanged_when_promotion_vetoes() -> None:
 
 
 def test_promoter_rejects_unstaged_year() -> None:
-    with pytest.raises(ValueError, match="Only the explicit 2003"):
+    with pytest.raises(ValueError, match="Only staged 2002 and 2003"):
         prepare(2001)
 
 

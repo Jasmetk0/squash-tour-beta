@@ -30,7 +30,9 @@ def test_1998_all_74_played_source_memberships_are_staged_not_published() -> Non
     assert audit["expected_played_source_count"] == 74
     assert audit["remaining_series_ids"] == []
     assert audit["canonical_conflicts"] == []
-    assert audit["ready_for_whole_year_promotion"] is True
+    assert audit["roster_reconciled"] is True
+    assert "atp_finals" in audit["unresolved_date_conflicts"]
+    assert audit["ready_for_whole_year_promotion"] is False
     assert "1998" not in dated["year_sources"]
     events = {x["series_id"]: x for x in audit["candidate_events"]}
     assert events["antwerp_1998"]["historical_host"] == "Antwerp"

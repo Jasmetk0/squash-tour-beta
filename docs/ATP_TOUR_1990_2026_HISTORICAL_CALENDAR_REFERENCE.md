@@ -21,6 +21,10 @@ source revision, comprising 37 provenance-coverage entities and 1816 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
 
+## 1992 source-date backfill (78/78 staged; not canonical)
+
+All **78** original ATP Tour year-effective parent Series for 1992 have officially published event-date candidates, including **Adelaide and Wellington 30 December 1991–5 January 1992**, separately held **Brisbane in September–October 1992**, separate Tokyo/Sydney/Stuttgart editions and the original ATP Tour championships. The [official ATP 1992 archive](https://www.atptour.com/en/scores/results-archive?year=1992) includes **Frankfurt Finals 16–22 November**, while [official ATP Finals history](https://www.nittoatpfinals.com/en/heritage/results-1970-1999) and the ITF record date actual competition **17–22 November**. The year is staged only, with a centrally blocked source-date conflict. See [1992 evidence and constraints](ATP_TOUR_1992_DATE_EVIDENCE_AND_CONFLICT.md). **1992 remains undated in canonical Calendar.**
+
 ## 1993 source-date backfill (84/84 staged; not canonical)
 
 The original 1993 ATP year-effective parent roster contains **84 original Tour and Frankfurt Finals source Series**. All **84 date candidates** have now been staged from the official [ATP 1993 yearly results archive](https://www.atptour.com/en/scores/results-archive?year=1993), preserving historical distinct Kuala Lumpur-1/2, Sydney-1/2, Tokyo-1/2, Stuttgart-1/2, Manchester, Durban, Genoa and Frankfurt. However, **the annual archive dates the Frankfurt Finals 15–21 November, while the separately authoritative [ATP Finals history](https://www.nittoatpfinals.com/en/heritage/results-1970-1999) and [ITF record](https://www.itftennis.com/en/tournament/atp-finals/ger/1993/m-csr-ger-01a-1993/draws-and-results/) date actual competition 16–21 November**. This conflict remains explicit and blocks entire-year promotion. See [1993 evidence and source conflict](ATP_TOUR_1993_DATE_EVIDENCE_AND_CONFLICT.md). No 1993 canonical Calendar, Run Calendar, or FAX sporting mutation is made.

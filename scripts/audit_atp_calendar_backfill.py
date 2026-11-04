@@ -22,6 +22,16 @@ from scripts.build_atp_historical_calendar import (
 
 
 SOURCE_DATE_CONFLICTS = {
+    # Official ATP yearly archive publishes 16–22 Nov 1992 event window;
+    # independent ATP Finals heritage and ITF give actual competition
+    # dates 17–22 Nov. Record different date concepts, never silently infer.
+    1992: {
+        "atp_finals": (
+            "ATP 1992 results archive: 1992-11-16 to 1992-11-22; "
+            "ATP Finals heritage and ITF actual competition dates: "
+            "1992-11-17 to 1992-11-22"
+        ),
+    },
     # Original ATP annual 1993 year archive shows an inclusive 15–21 Nov
     # event window, but actual singles Finals in ATP heritage, tournament
     # history and ITF records are 16–21 Nov. Preserve BOTH source conventions.
@@ -163,7 +173,7 @@ def audit_candidates(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true")
-    parser.add_argument("--year", type=int, choices=(1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003), default=2003)
+    parser.add_argument("--year", type=int, choices=(1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003), default=2003)
     args = parser.parse_args()
     candidate = json.loads(
         (SOURCE / f"calendar_backfill_{args.year}_candidates_v1.json").read_text(

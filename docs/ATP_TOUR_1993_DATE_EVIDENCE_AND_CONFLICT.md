@@ -38,4 +38,4 @@ python scripts/build_atp_historical_calendar.py --check
 
 The auditor must yield `candidate_count=84`, `expected_played_source_count=84`, `remaining_series_ids=[]`, `roster_reconciled=true`, `unresolved_date_conflicts.atp_finals` present and `ready_for_whole_year_promotion=false`. `prepare(1993)` fails closed even if attempted with `--write` or `--check`. **No approval to change game mechanics, Edition dates or Run clock.** Canonical historical Calendar remains **1,816 occurrences + 37 coverage entries; 29/37 dated seasons**.
 
-Other remaining missing canonical years: 1990–1992; other unresolved historical Finals date-window discrepancies: 1997–1999 and 2003; 2026 still provisional. Do not treat this evidence as full independent ATP event licence certification.
+Other remaining missing canonical years: 1990–1992 (1992 now separately staged with its own Finals date-source conflict); other unresolved historical Finals date-window discrepancies: 1997–1999 and 2003; 2026 still provisional. Do not treat this evidence as full independent ATP event licence certification.

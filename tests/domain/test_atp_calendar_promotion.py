@@ -32,8 +32,8 @@ def test_source_files_remain_unchanged_when_promotion_vetoes() -> None:
 
 
 def test_promoter_rejects_unstaged_year() -> None:
-    with pytest.raises(ValueError, match="Only staged 1994–2003"):
-        prepare(1993)
+    with pytest.raises(ValueError, match="Only staged 1992–2003"):
+        prepare(1991)
 
 
 def test_conflicted_year_is_not_mislabelled_as_canonically_dated() -> None:

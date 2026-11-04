@@ -44,7 +44,7 @@ function source(){
     package_id:'atp_tour_1990_2026_calendar_reference_setup',
     package_type:'Setup',source_version:1,source_fingerprint:ctx.sourceFingerprint,
     reference_span:{from:1990,to:2026},provisional_years:[2026],
-    dated_years:Array.from({length:8},(_,i)=>2019+i),undated_years:Array.from({length:29},(_,i)=>1990+i),
+    dated_years:Array.from({length:9},(_,i)=>2018+i),undated_years:Array.from({length:28},(_,i)=>1990+i),
     usage:'source_reference_only_no_playable_calendar',
     children:[
       {package_id:'atp_tour_1990_2026_category',package_type:'Category',
@@ -52,7 +52,7 @@ function source(){
       {package_id:'atp_tour_1990_2026_series',package_type:'Series',
         source_version:1,source_fingerprint:hash('c'),entity_count:164},
       {package_id:'atp_tour_1990_2026_calendar',package_type:'Calendar',
-        source_version:1,source_fingerprint:hash('d'),entity_count:489}
+        source_version:1,source_fingerprint:hash('d'),entity_count:553}
     ]
   }
 }
@@ -170,8 +170,8 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
     mount()
     expect(await screen.findByText(/11 položek/)).toBeInTheDocument()
     expect(screen.getByText(/164 položek/)).toBeInTheDocument()
-    expect(screen.getByText(/489 položek/)).toBeInTheDocument()
-    expect(screen.getByText(/2019–2026/)).toBeInTheDocument()
+    expect(screen.getByText(/553 položek/)).toBeInTheDocument()
+    expect(screen.getByText(/2018–2026/)).toBeInTheDocument()
     expect(screen.getByText(/2026 předběžný/)).toBeInTheDocument()
     expect(api.previewATPCalendarReference).not.toHaveBeenCalled()
     await selectTarget()

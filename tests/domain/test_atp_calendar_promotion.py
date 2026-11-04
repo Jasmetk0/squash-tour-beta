@@ -50,9 +50,9 @@ def test_2002_is_mechanically_promotable_without_changing_2004_onward() -> None:
     assert len(promoted["year_sources"]["2002"]["events"]) == 62
     assert built["provenance"]["dated_occurrences"] == 1573
     assert built["provenance"]["season_coverage_entries"] == 37
-    assert sorted(built["provenance"]["date_coverage_years"]) == list(
-        range(2002, 2003)
-    ) + list(range(2004, 2027))
+    assert sorted(built["provenance"]["date_coverage_years"]) == (
+        [2000, 2001, 2002] + list(range(2004, 2027))
+    )
     by_id = {
         entity["source_entity_id"]: entity
         for entity in built["entities"]

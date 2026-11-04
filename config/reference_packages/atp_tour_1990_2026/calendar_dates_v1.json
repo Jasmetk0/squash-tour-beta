@@ -7,6 +7,559 @@
   "schema_version": "tennis.atp_tour_calendar_dates.v1",
   "scope": "ATP Tour main singles categories plus ATP-operated Finals; other tennis events intentionally excluded",
   "year_sources": {
+    "1996": {
+      "as_of": "2026-11-04",
+      "events": [
+        {
+          "end_date": "1996-01-07",
+          "series_id": "doha",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-01-01"
+        },
+        {
+          "end_date": "1996-01-07",
+          "series_id": "brisbane",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-01-01"
+        },
+        {
+          "end_date": "1996-01-14",
+          "series_id": "auckland",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-01-08"
+        },
+        {
+          "end_date": "1996-01-14",
+          "series_id": "jakarta_1996",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-01-08"
+        },
+        {
+          "end_date": "1996-01-14",
+          "series_id": "sydney_2019",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-01-08"
+        },
+        {
+          "end_date": "1996-02-04",
+          "series_id": "split_1998",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-01-29"
+        },
+        {
+          "end_date": "1996-02-04",
+          "series_id": "bangalore_2008",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-01-29"
+        },
+        {
+          "end_date": "1996-02-18",
+          "series_id": "dubai",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-02-12"
+        },
+        {
+          "end_date": "1996-02-18",
+          "series_id": "lyon",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-02-12"
+        },
+        {
+          "end_date": "1996-02-18",
+          "series_id": "dallas",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-02-12"
+        },
+        {
+          "end_date": "1996-02-25",
+          "series_id": "antwerp_1998",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-02-19"
+        },
+        {
+          "end_date": "1996-02-25",
+          "series_id": "rio",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-02-19"
+        },
+        {
+          "end_date": "1996-03-03",
+          "series_id": "sofia",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-02-26"
+        },
+        {
+          "end_date": "1996-03-03",
+          "series_id": "philadelphia_1998",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-02-26"
+        },
+        {
+          "end_date": "1996-03-10",
+          "series_id": "rotterdam",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-03-04"
+        },
+        {
+          "end_date": "1996-03-10",
+          "series_id": "acapulco",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-03-04"
+        },
+        {
+          "end_date": "1996-03-10",
+          "series_id": "las_vegas_2008",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-03-04"
+        },
+        {
+          "end_date": "1996-03-17",
+          "series_id": "indian_wells",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-03-11"
+        },
+        {
+          "end_date": "1996-03-17",
+          "series_id": "copenhagen_2003",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-03-11"
+        },
+        {
+          "end_date": "1996-03-31",
+          "series_id": "miami",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-03-18"
+        },
+        {
+          "end_date": "1996-03-31",
+          "series_id": "st_petersburg",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-03-18"
+        },
+        {
+          "end_date": "1996-03-31",
+          "series_id": "marrakech",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-03-25"
+        },
+        {
+          "end_date": "1996-04-14",
+          "series_id": "estoril",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-04-08"
+        },
+        {
+          "end_date": "1996-04-14",
+          "series_id": "hong_kong",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-04-08"
+        },
+        {
+          "end_date": "1996-04-14",
+          "series_id": "hong_kong_salem_2002",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-04-08"
+        },
+        {
+          "end_date": "1996-04-21",
+          "series_id": "tokyo",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-04-15"
+        },
+        {
+          "end_date": "1996-04-21",
+          "series_id": "barcelona",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-04-15"
+        },
+        {
+          "end_date": "1996-04-21",
+          "series_id": "bermuda_1996",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-04-15"
+        },
+        {
+          "end_date": "1996-04-28",
+          "series_id": "monte_carlo",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-04-22"
+        },
+        {
+          "end_date": "1996-04-28",
+          "series_id": "seoul_1996",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-04-22"
+        },
+        {
+          "end_date": "1996-05-05",
+          "series_id": "munich",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-04-29"
+        },
+        {
+          "end_date": "1996-05-05",
+          "series_id": "prague_1999",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-04-29"
+        },
+        {
+          "end_date": "1996-05-05",
+          "series_id": "atlanta_verizon_2001",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-04-29"
+        },
+        {
+          "end_date": "1996-05-12",
+          "series_id": "hamburg",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-05-06"
+        },
+        {
+          "end_date": "1996-05-12",
+          "series_id": "houston",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-05-06"
+        },
+        {
+          "end_date": "1996-05-19",
+          "series_id": "rome",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-05-13"
+        },
+        {
+          "end_date": "1996-05-19",
+          "series_id": "delray_beach",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-05-13"
+        },
+        {
+          "end_date": "1996-05-26",
+          "series_id": "poertschach_2008",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-05-20"
+        },
+        {
+          "end_date": "1996-06-16",
+          "series_id": "queens_club",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-06-10"
+        },
+        {
+          "end_date": "1996-06-16",
+          "series_id": "s_hertogenbosch",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-06-10"
+        },
+        {
+          "end_date": "1996-06-16",
+          "series_id": "porto_1996",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-06-10"
+        },
+        {
+          "end_date": "1996-06-23",
+          "series_id": "halle",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-06-17"
+        },
+        {
+          "end_date": "1996-06-23",
+          "series_id": "bologna_1998",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-06-17"
+        },
+        {
+          "end_date": "1996-06-23",
+          "series_id": "eastbourne",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-06-17"
+        },
+        {
+          "end_date": "1996-07-14",
+          "series_id": "gstaad",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-07-08"
+        },
+        {
+          "end_date": "1996-07-14",
+          "series_id": "bastad",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-07-08"
+        },
+        {
+          "end_date": "1996-07-14",
+          "series_id": "newport",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-07-08"
+        },
+        {
+          "end_date": "1996-07-21",
+          "series_id": "stuttgart",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-07-15"
+        },
+        {
+          "end_date": "1996-07-21",
+          "series_id": "washington",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-07-15"
+        },
+        {
+          "end_date": "1996-07-28",
+          "series_id": "kitzbuhel",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-07-22"
+        },
+        {
+          "end_date": "1996-08-04",
+          "series_id": "belgrade_2012",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-07-29"
+        },
+        {
+          "end_date": "1996-08-04",
+          "series_id": "los_cabos",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-07-29"
+        },
+        {
+          "end_date": "1996-08-11",
+          "series_id": "cincinnati",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-08-05"
+        },
+        {
+          "end_date": "1996-08-11",
+          "series_id": "san_marino_2000",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-08-05"
+        },
+        {
+          "end_date": "1996-08-18",
+          "series_id": "atlanta",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-08-12"
+        },
+        {
+          "end_date": "1996-08-18",
+          "series_id": "new_haven_1998",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-08-12"
+        },
+        {
+          "end_date": "1996-08-18",
+          "series_id": "umag",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-08-12"
+        },
+        {
+          "end_date": "1996-08-25",
+          "series_id": "canadian_open",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-08-19"
+        },
+        {
+          "end_date": "1996-08-25",
+          "series_id": "winston_salem",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-08-19"
+        },
+        {
+          "end_date": "1996-09-15",
+          "series_id": "belgrade_clay_2021",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-09-09"
+        },
+        {
+          "end_date": "1996-09-15",
+          "series_id": "brighton_2000",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-09-09"
+        },
+        {
+          "end_date": "1996-09-15",
+          "series_id": "bogota_colombia_2001",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-09-09"
+        },
+        {
+          "end_date": "1996-09-29",
+          "series_id": "basel",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-09-23"
+        },
+        {
+          "end_date": "1996-09-29",
+          "series_id": "palermo",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-09-23"
+        },
+        {
+          "end_date": "1996-10-06",
+          "series_id": "montpellier",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-09-30"
+        },
+        {
+          "end_date": "1996-10-06",
+          "series_id": "singapore_1999",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-09-30"
+        },
+        {
+          "end_date": "1996-10-06",
+          "series_id": "brussels",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-09-30"
+        },
+        {
+          "end_date": "1996-10-13",
+          "series_id": "vienna",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-10-07"
+        },
+        {
+          "end_date": "1996-10-13",
+          "series_id": "beijing_1997",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-10-07"
+        },
+        {
+          "end_date": "1996-10-20",
+          "series_id": "ostrava_1998",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-10-14"
+        },
+        {
+          "end_date": "1996-10-20",
+          "series_id": "toulouse_2000",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-10-14"
+        },
+        {
+          "end_date": "1996-10-20",
+          "series_id": "tel_aviv_1996",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-10-14"
+        },
+        {
+          "end_date": "1996-10-27",
+          "series_id": "stuttgart_indoor_masters",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-10-21"
+        },
+        {
+          "end_date": "1996-11-03",
+          "series_id": "paris_masters",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-10-28"
+        },
+        {
+          "end_date": "1996-11-10",
+          "series_id": "moscow",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-11-04"
+        },
+        {
+          "end_date": "1996-11-10",
+          "series_id": "stockholm",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-11-04"
+        },
+        {
+          "end_date": "1996-11-10",
+          "series_id": "santiago_1998",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-11-04"
+        },
+        {
+          "end_date": "1996-11-24",
+          "series_id": "atp_finals",
+          "source_basis": "official_published_event_dates",
+          "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+          "start_date": "1996-11-19"
+        }
+      ],
+      "source_url": "https://www.atptour.com/en/scores/results-archive?year=1996",
+      "status": "verified_results_archive"
+    },
     "2000": {
       "as_of": "2026-11-04",
       "events": [

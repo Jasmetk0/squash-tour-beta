@@ -1,0 +1,106 @@
+{
+  "schema_version": "tennis.atp_tour_calendar_backfill_candidates.v1",
+  "year": 1994,
+  "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
+  "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+  "as_of": "2026-11-04",
+  "notes": "PARTIAL source transcription: 16 of the 85 year-effective original ATP Tour 1994 source Series. Fifteen January–February archive-listed main-tour events, plus Frankfurt ATP World Championships separately corroborated by official ATP Finals heritage (15–20 Nov). Explicitly missing 69 other year-effective parent Series, so no 1994 canonical promotion. Historical stable Series IDs follow the existing parent source and do not certify legal licence continuity. Excludes Australian Open/other Grand Slams, Grand Slam Cup, Davis Cup, Hopman Cup, World Team Cup and Challenger; not a playable tennis or FAX Calendar. The candidate source_url is annual ATP archive; Finals corroboration is documented separately.",
+  "events": [
+    {
+      "historical_host": "Doha",
+      "series_id": "doha",
+      "start_date": "1994-01-03",
+      "end_date": "1994-01-09"
+    },
+    {
+      "historical_host": "Adelaide",
+      "series_id": "brisbane",
+      "start_date": "1994-01-03",
+      "end_date": "1994-01-09"
+    },
+    {
+      "historical_host": "Oahu",
+      "series_id": "oahu_1994",
+      "start_date": "1994-01-03",
+      "end_date": "1994-01-09"
+    },
+    {
+      "historical_host": "Auckland",
+      "series_id": "auckland",
+      "start_date": "1994-01-10",
+      "end_date": "1994-01-16"
+    },
+    {
+      "historical_host": "Jakarta",
+      "series_id": "jakarta_1996",
+      "start_date": "1994-01-10",
+      "end_date": "1994-01-16"
+    },
+    {
+      "historical_host": "Sydney-1",
+      "series_id": "sydney_2019",
+      "start_date": "1994-01-10",
+      "end_date": "1994-01-16"
+    },
+    {
+      "historical_host": "Dubai",
+      "series_id": "dubai",
+      "start_date": "1994-01-31",
+      "end_date": "1994-02-06"
+    },
+    {
+      "historical_host": "Marseille",
+      "series_id": "lyon",
+      "start_date": "1994-01-31",
+      "end_date": "1994-02-06"
+    },
+    {
+      "historical_host": "San Jose",
+      "series_id": "dallas",
+      "start_date": "1994-01-31",
+      "end_date": "1994-02-06"
+    },
+    {
+      "historical_host": "Milan",
+      "series_id": "sofia",
+      "start_date": "1994-02-07",
+      "end_date": "1994-02-13"
+    },
+    {
+      "historical_host": "Memphis",
+      "series_id": "rio",
+      "start_date": "1994-02-07",
+      "end_date": "1994-02-13"
+    },
+    {
+      "historical_host": "Stuttgart-1 (indoor)",
+      "series_id": "stuttgart_indoor_feb_1995",
+      "start_date": "1994-02-14",
+      "end_date": "1994-02-20"
+    },
+    {
+      "historical_host": "Philadelphia",
+      "series_id": "philadelphia_1998",
+      "start_date": "1994-02-14",
+      "end_date": "1994-02-20"
+    },
+    {
+      "historical_host": "Rotterdam",
+      "series_id": "rotterdam",
+      "start_date": "1994-02-21",
+      "end_date": "1994-02-27"
+    },
+    {
+      "historical_host": "Mexico City",
+      "series_id": "acapulco",
+      "start_date": "1994-02-21",
+      "end_date": "1994-02-27"
+    },
+    {
+      "historical_host": "Frankfurt ATP World Championships",
+      "series_id": "atp_finals",
+      "start_date": "1994-11-15",
+      "end_date": "1994-11-20"
+    }
+  ]
+}

@@ -21,6 +21,10 @@ source revision, comprising 37 provenance-coverage entities and 1816 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
 
+## 1993 source-date backfill (84/84 staged; not canonical)
+
+The original 1993 ATP year-effective parent roster contains **84 original Tour and Frankfurt Finals source Series**. All **84 date candidates** have now been staged from the official [ATP 1993 yearly results archive](https://www.atptour.com/en/scores/results-archive?year=1993), preserving historical distinct Kuala Lumpur-1/2, Sydney-1/2, Tokyo-1/2, Stuttgart-1/2, Manchester, Durban, Genoa and Frankfurt. However, **the annual archive dates the Frankfurt Finals 15–21 November, while the separately authoritative [ATP Finals history](https://www.nittoatpfinals.com/en/heritage/results-1970-1999) and [ITF record](https://www.itftennis.com/en/tournament/atp-finals/ger/1993/m-csr-ger-01a-1993/draws-and-results/) date actual competition 16–21 November**. This conflict remains explicit and blocks entire-year promotion. See [1993 evidence and source conflict](ATP_TOUR_1993_DATE_EVIDENCE_AND_CONFLICT.md). No 1993 canonical Calendar, Run Calendar, or FAX sporting mutation is made.
+
 ## 1994 original ATP Tour (complete source date roster)
 
 All **85** 1994 original Tour + Frankfurt World Championships year-effective Series have been dated from the official ATP results archive, retaining exact historic hosts, original categories, published date windows and ISO week spans. The distinct Sydney-1/Sydney-2, Tokyo-1/Tokyo-2, Stuttgart-1/Stuttgart-2, Atlanta/Indianapolis, Manchester and Hilversum cases are preserved. See [1994 complete evidence report](ATP_TOUR_1994_COMPLETE_DATE_REFERENCE.md). Canonical Calendar includes **1,816 dated occurrences + 37 year coverage records**; this confirms the known parent roster, **not** independent legal licence lineage or playable tennis/squash scheduling. Official Finals date-window differences for 1997–1999 and 2003 remain unresolved.

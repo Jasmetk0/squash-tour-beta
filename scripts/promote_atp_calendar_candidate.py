@@ -2,7 +2,7 @@
 
 Requires an explicit --write only for a new dated year. --check is read-only.
 Imported 1994–1996, 2000–2002 cohorts are checked idempotently against their
-candidate evidence and generated snapshot. Years 1997–1999 and 2003 remain blocked on an
+candidate evidence and generated snapshot. Years 1993, 1997–1999 and 2003 remain blocked on an
 unresolved official ATP Finals date conflict.
 
 Usage:
@@ -28,8 +28,8 @@ from scripts.build_atp_historical_calendar import SOURCE, build, canonical
 
 
 def prepare(year: int):
-    if year not in (1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003):
-        raise ValueError("Only staged 1994–2003 candidate ledgers are supported")
+    if year not in (1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003):
+        raise ValueError("Only staged 1993–2003 candidate ledgers are supported")
     candidate = json.loads(
         (SOURCE / f"calendar_backfill_{year}_candidates_v1.json").read_text(
             encoding="utf-8"

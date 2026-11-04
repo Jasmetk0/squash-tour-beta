@@ -127,7 +127,7 @@ def audit_candidates(
     conflicts = sorted(already_dated & seen)
     remaining = sorted(set(active) - not_held - seen - already_dated)
     evidence_conflicts = SOURCE_DATE_CONFLICTS.get(year, {})
-    roster_reconciled = not remaining and not conflicts
+    roster_reconciled = (not remaining and len(seen) == len(active) - len(not_held))
     return {
         "year": year,
         "source_url": candidate["source_url"],
@@ -139,7 +139,9 @@ def audit_candidates(
         "canonical_conflicts": conflicts,
         "roster_reconciled": roster_reconciled,
         "unresolved_date_conflicts": evidence_conflicts,
-        "ready_for_whole_year_promotion": bool(roster_reconciled and not evidence_conflicts),
+        "ready_for_whole_year_promotion": bool(
+            roster_reconciled and not conflicts and not evidence_conflicts
+        ),
         "candidate_events": validated,
         "warning": (
             "Even zero missing parent Series IDs do not prove a complete ATP "

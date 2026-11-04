@@ -20,45 +20,9 @@ import os
 from pathlib import Path
 import tempfile
 
-from scripts.audit_atp_calendar_backfill import audit_candidates
+from scripts.audit_atp_calendar_backfill import (\n    audit_candidates, SOURCE_DATE_CONFLICTS as PENDING_CONFLICTS,\n)
 from scripts.build_atp_historical_calendar import SOURCE, build, canonical
 
-PENDING_CONFLICTS = {
-    # ATP annual archive: Nov 10–16; ATP Finals heritage: Nov 11–16.
-    1997: {
-        "atp_finals": (
-            "ATP 1997 results archive: 1997-11-10 to 1997-11-16; "
-            "ATP Finals heritage: 1997-11-11 to 1997-11-16"
-        ),
-    },
-    # ATP 1998 annual results archive: 23–29 November. ATP Finals
-    # historical results: 24–29 November. Keep the event-date convention
-    # discrepancy explicit, and block canonical promotion.
-    1998: {
-        "atp_finals": (
-            "ATP 1998 results archive: 1998-11-23 to 1998-11-29; "
-            "ATP Finals heritage: 1998-11-24 to 1998-11-29"
-        ),
-    },
-    # ATP 1999 annual results index: 22–28 November.
-    # ATP Finals heritage: 23–28 November. Do not silently collapse
-    # different official ATP event-date conventions.
-    1999: {
-        "atp_finals": (
-            "ATP 1999 results archive: 1999-11-22 to 1999-11-28; "
-            "ATP Finals heritage: 1999-11-23 to 1999-11-28"
-        ),
-    },
-    # The published ATP annual archive labels 10–16 Nov, whereas an ATP
-    # historical tournament overview cites 8–16 Nov. Resolve which date
-    # convention the calendar represents before a whole-year import.
-    2003: {
-        "atp_finals": (
-            "ATP 2003 year results archive: 2003-11-10 to 2003-11-16; "
-            "ATP Tournament History overview: 2003-11-08 to 2003-11-16"
-        ),
-    },
-}
 
 
 def prepare(year: int):

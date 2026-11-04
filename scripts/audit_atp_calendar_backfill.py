@@ -21,6 +21,43 @@ from scripts.build_atp_historical_calendar import (
 )
 
 
+SOURCE_DATE_CONFLICTS = {
+    # ATP annual archive: Nov 10–16; ATP Finals heritage: Nov 11–16.
+    1997: {
+        "atp_finals": (
+            "ATP 1997 results archive: 1997-11-10 to 1997-11-16; "
+            "ATP Finals heritage: 1997-11-11 to 1997-11-16"
+        ),
+    },
+    # ATP 1998 annual results archive: 23–29 November. ATP Finals
+    # historical results: 24–29 November. Keep the event-date convention
+    # discrepancy explicit, and block canonical promotion.
+    1998: {
+        "atp_finals": (
+            "ATP 1998 results archive: 1998-11-23 to 1998-11-29; "
+            "ATP Finals heritage: 1998-11-24 to 1998-11-29"
+        ),
+    },
+    # ATP 1999 annual results index: 22–28 November.
+    # ATP Finals heritage: 23–28 November. Do not silently collapse
+    # different official ATP event-date conventions.
+    1999: {
+        "atp_finals": (
+            "ATP 1999 results archive: 1999-11-22 to 1999-11-28; "
+            "ATP Finals heritage: 1999-11-23 to 1999-11-28"
+        ),
+    },
+    # The published ATP annual archive labels 10–16 Nov, whereas an ATP
+    # historical tournament overview cites 8–16 Nov. Resolve which date
+    # convention the calendar represents before a whole-year import.
+    2003: {
+        "atp_finals": (
+            "ATP 2003 year results archive: 2003-11-10 to 2003-11-16; "
+            "ATP Tournament History overview: 2003-11-08 to 2003-11-16"
+        ),
+    },
+}
+
 def audit_candidates(
     candidate: dict, seasons: dict, existing_dates: dict,
 ) -> dict:
@@ -83,6 +120,8 @@ def audit_candidates(
     already_dated = {x["series_id"] for x in current["events"]} if current else set()
     conflicts = sorted(already_dated & seen)
     remaining = sorted(set(active) - not_held - seen - already_dated)
+    evidence_conflicts = SOURCE_DATE_CONFLICTS.get(year, {})
+    roster_reconciled = not remaining and not conflicts
     return {
         "year": year,
         "source_url": candidate["source_url"],
@@ -92,7 +131,9 @@ def audit_candidates(
         "expected_played_source_count": len(active) - len(not_held),
         "remaining_series_ids": remaining,
         "canonical_conflicts": conflicts,
-        "ready_for_whole_year_promotion": not remaining and not conflicts,
+        "roster_reconciled": roster_reconciled,
+        "unresolved_date_conflicts": evidence_conflicts,
+        "ready_for_whole_year_promotion": bool(roster_reconciled and not evidence_conflicts),
         "candidate_events": validated,
         "warning": (
             "Even zero missing parent Series IDs do not prove a complete ATP "
@@ -124,7 +165,8 @@ def main() -> int:
         print(
             f"ATP {result['year']}: {result['candidate_count']} candidates, "
             f"{len(result['remaining_series_ids'])} missing Series, "
-            f"{len(result['canonical_conflicts'])} conflicts. "
+            f"{len(result['canonical_conflicts'])} canonical conflicts, "
+            f"{len(result['unresolved_date_conflicts'])} date-source conflicts. "
             "Canonical source unchanged."
         )
     return 0

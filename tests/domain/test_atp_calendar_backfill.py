@@ -27,13 +27,13 @@ def inputs():
     return candidate, seasons, dated
 
 
-def test_2003_candidates_preserve_real_cross_year_iso_week() -> None:
+def test_2003_full_parent_roster_candidates_preserve_real_cross_year_iso_week() -> None:
     result = audit_candidates(*inputs())
     assert result["year"] == 2003
-    assert result["candidate_count"] == 5
+    assert result["candidate_count"] == 63
     assert result["existing_canonical_count"] == 0
-    assert result["ready_for_whole_year_promotion"] is False
-    assert len(result["remaining_series_ids"]) > 0
+    assert result["ready_for_whole_year_promotion"] is True
+    assert result["remaining_series_ids"] == []
     by_id = {x["series_id"]: x for x in result["candidate_events"]}
     for sid in ("doha", "hong_kong", "brisbane"):
         row = by_id[sid]

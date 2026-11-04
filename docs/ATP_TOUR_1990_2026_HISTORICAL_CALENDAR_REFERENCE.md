@@ -16,10 +16,14 @@ a native tournament schedule. Its `tennis.calendar.occurrence.reference.v1`
 kind and dedicated scope are intentionally opaque to FAX sporting consumers.
 
 The three-child Setup is `atp_tour_1990_2026_calendar_reference_setup`
-with Category (11), Series (164) and Calendar (1292 entities at the current
-source revision, comprising 37 provenance-coverage entities and 1255 dated
+with Category (11), Series (164) and Calendar (1355 entities at the current
+source revision, comprising 37 provenance-coverage entities and 1318 dated
 occurrences). The whole source is fingerprinted; Read-only Preview and
 all-or-nothing Confirm use existing Run Package CAS; **Save remains explicit**.
+
+## 2005 archive coverage
+
+All **63 named 2005 ATP main Tour + Tennis Masters Cup Series** are dated against the original [ATP 2005 results archive](https://www.atptour.com/en/scores/results-archive?year=2005). The edition was still in the original ATP International Series / Gold / Masters Series era. Chronological original host aliases include Adelaide (`brisbane`), Chennai (`hong_kong`), Milan (`sofia`), Viña del Mar (`cordoba`), San José (`dallas`), Memphis (`rio`), Scottsdale (`las_vegas_2008`), St. Pölten (`poertschach_2008`), Ho Chi Minh City (`bangalore_2008`), Palermo, Sopot, Amersfoort, New Haven, Valencia and Lyon. The official ATP year-results archive lists the 2005 Tennis Masters Cup at **14–20 Nov**, but the [ATP Finals tournament-history archive](https://www.nittoatpfinals.com/es/heritage/results-2000-2023) dates it **13–20 Nov**. We retain the official year archive's exact label as the Calendar source while documenting the conflicting contemporaneous season start; this is an unresolved provenance conflict rather than a certified date. No independent complete ATP tournament census is claimed beyond the source roster.
 
 ## 2006 archive coverage
 
@@ -134,7 +138,8 @@ Grand Slams, Olympic and team events remain out of scope.
 
 | Year(s) | Source status | Dated Series | Undated |
 | --- | --- | ---: | ---: |
-| 1990–2005 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 1990–2004 | No independently verified per-Series dates yet | 0 | Explicit missing IDs for every year |
+| 2005 | Official ATP archive, 63 named editions; Finals start date conflict | **63 / 63** | 0 |
 | 2006 | Official played ATP archive, original host and tier dates | **63 / 63** | 0 |
 | 2007 | Official results archive, historical host continuity | **62 / 62** | 0 |
 | 2008 | Official archive, original ATP tiers; Bangalore not held | **61 / 61 played** | 0 |
@@ -159,12 +164,14 @@ Grand Slams, Olympic and team events remain out of scope.
 
 **No generic history period or week is interpreted as a tournament date.**
 The parent Category/Series dataset contains 2,431 year-effective memberships;
-1255 unique year/Series occurrences currently have original *date* sources.
+1318 unique year/Series occurrences currently have original *date* sources.
 The other historical years will be sourced individually, not filled by
 inventing dates or extrapolating 2025/2026 patterns.
 
 Source links:
 
+- [2005 official results archive](https://www.atptour.com/en/scores/results-archive?year=2005).
+- [2005 Tennis Masters Cup alternative start date](https://www.nittoatpfinals.com/es/heritage/results-2000-2023).
 - [2006 official results archive](https://www.atptour.com/en/scores/results-archive?year=2006).
 - [2007 official results archive](https://www.atptour.com/en/scores/results-archive?year=2007).
 - [2008 official results archive](https://www.atptour.com/en/scores/results-archive?year=2008).
@@ -265,6 +272,6 @@ its own separately reviewed date-to-Run-clock policy.
    Saved Revision. No source-only date reference may be promoted to playable
    FAX events by these steps.
 
-The work is **not complete for 1990–2005**. Source-year coverage must be
+The work is **not complete for 1990–2004**. Source-year coverage must be
 upgraded year by year using original contemporaneous calendars and/or official
 ATP results archives. 2026 final validation remains pending.

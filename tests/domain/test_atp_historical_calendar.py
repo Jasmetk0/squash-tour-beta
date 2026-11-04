@@ -25,23 +25,23 @@ def sources():
                  ))
 
 
-def test_canonical_snapshot_contains_1731_dated_events_and_37_year_ledgers():
+def test_canonical_snapshot_contains_1816_dated_events_and_37_year_ledgers():
     doc = build(*sources())
     stored = (SOURCE / "calendar.json").read_text(encoding="utf-8")
     assert stored == canonical(doc), "Generated source is stale; run --write"
     parsed = CanonicalPackageDocument.model_validate(doc)
     assert parsed.package_type is PackageType.CALENDAR
     assert parsed.package_id == "atp_tour_1990_2026_calendar"
-    assert len(parsed.entities) == 1768
+    assert len(parsed.entities) == 1853
     assert sum(e.entity_kind == "tennis.calendar.coverage.reference.v1"
                for e in parsed.entities) == 37
     dated = [e for e in parsed.entities
              if e.entity_kind == "tennis.calendar.occurrence.reference.v1"]
-    assert len(dated) == 1731
+    assert len(dated) == 1816
     assert all(e.payload["not_squash_rules"] is True
                and e.payload["run_week_projection"] == "not_applied_source_only"
                and len(e.references) == 2 for e in dated)
-    assert doc["provenance"]["date_coverage_years"] == [1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
+    assert doc["provenance"]["date_coverage_years"] == [1994, 1995, 1996, 2000, 2001, 2002] + list(range(2004, 2027))
 
 
 def test_2000_2002_and_2004_2026_rosters_with_explicit_remaining_gaps():
@@ -50,11 +50,15 @@ def test_2000_2002_and_2004_2026_rosters_with_explicit_remaining_gaps():
              for e in doc["entities"]
              if e["entity_kind"] == "tennis.calendar.coverage.reference.v1"}
     assert sorted(cover) == list(range(1990, 2027))
-    for y in list(range(1990, 1995)) + [1997, 1998, 1999, 2003]:
+    for y in list(range(1990, 1994)) + [1997, 1998, 1999, 2003]:
         assert cover[y]["date_coverage_state"] == "undated"
         assert cover[y]["dated_series_count"] == 0
         assert cover[y]["undated_series_ids"]
         assert cover[y]["no_fabricated_dates"] is True
+    assert cover[1994]["dated_series_count"] == 85
+    assert cover[1994]["undated_series_ids"] == []
+    assert cover[1994]["date_coverage_state"] == "verified_complete_known_series_dates"
+    assert cover[1994]["year_source_status"] == "verified_results_archive"
     assert cover[1995]["dated_series_count"] == 80
     assert cover[1995]["undated_series_ids"] == []
     assert cover[1995]["date_coverage_state"] == "verified_complete_known_series_dates"

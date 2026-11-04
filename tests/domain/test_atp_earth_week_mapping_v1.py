@@ -262,7 +262,7 @@ def test_evenly_split_short_week_projection_fails_closed() -> None:
 
 
 def test_wrong_source_season_year_rejected() -> None:
-    with pytest.raises(ValueError, match="source season"):
+    with pytest.raises(ValueError, match="ATP year"):
         map_one(
             season_year=2025, series_id="hypothetical",
             start_date="2024-10-06", end_date="2024-10-13",

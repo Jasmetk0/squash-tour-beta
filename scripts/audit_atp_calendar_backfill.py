@@ -102,6 +102,12 @@ def audit_candidates(
         seen.add(sid)
         start = parse_exact_date(row["start_date"], identity=sid)
         end = parse_exact_date(row["end_date"], identity=sid)
+        duration_days = (end - start).days + 1
+        if duration_days < 1 or duration_days > 35:
+            raise ValueError(
+                f"Historical ATP event duration must be 1–35 days: "
+                f"{year}/{sid}, {row['start_date']}..{row['end_date']}"
+            )
         if start.year not in {year - 1, year} or end.year != year:
             raise ValueError("Invalid ATP event year")
         if start.year == year - 1 and start.month != 12:

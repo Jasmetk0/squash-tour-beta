@@ -20,7 +20,9 @@ import os
 from pathlib import Path
 import tempfile
 
-from scripts.audit_atp_calendar_backfill import (\n    audit_candidates, SOURCE_DATE_CONFLICTS as PENDING_CONFLICTS,\n)
+from scripts.audit_atp_calendar_backfill import (
+    audit_candidates, SOURCE_DATE_CONFLICTS as PENDING_CONFLICTS,
+)
 from scripts.build_atp_historical_calendar import SOURCE, build, canonical
 
 

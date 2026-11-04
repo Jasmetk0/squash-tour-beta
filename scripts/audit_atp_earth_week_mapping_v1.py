@@ -13,11 +13,16 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from collections import Counter
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
+# Support direct invocation from the repository root without an installed package.
+ROOT = Path(__file__).resolve().parents[1]
+if __package__ in (None, ""):
+    sys.path.insert(0, str(ROOT))
 from scripts.build_atp_historical_calendar import SOURCE
 
 SOURCE_FILE = SOURCE / "calendar_dates_v1.json"
@@ -61,8 +66,8 @@ def map_one(*, season_year: int, series_id: str,
             year_source_status: str) -> dict[str, Any]:
     """Map one independently dated parent Series, never assigning partial weeks.
 
-    At most 8 days -> one closing ISO week; 9+ days covering exactly two ISO
-    weeks -> both; 9+ days covering three -> all three and an explicit review
+    At most 8 days -> the single ISO week containing the most source days;
+    9+ days covering exactly two ISO weeks -> both; 9+ days covering three -> all three and an explicit review
     flag. Do not silently renumber W53 or infer tournament rounds.
     """
     if type(season_year) is not int or not FIRST_YEAR <= season_year <= LAST_YEAR:
@@ -84,9 +89,23 @@ def map_one(*, season_year: int, series_id: str,
     if end.isocalendar().year != season_year:
         raise ValueError(f"Source end ISO year disagrees with ATP year: {season_year}/{series_id}")
 
+    # The source interval may start on Sunday or end on Tuesday/Monday. A
+    # closing-week-only rule can move most of an event into the wrong week.
+    # For short events select the ISO week containing the most source days;
+    # retain source finish separately. Tied majority weeks are never guessed.
+    day_counts = { (week["calendar_year"], week["year_week"]): 0 for week in touched }
+    cursor = start
+    while cursor <= end:
+        y, w, _ = cursor.isocalendar()
+        day_counts[(y, w)] += 1
+        cursor += timedelta(days=1)
     if days <= 8:
-        selected = touched[-1:]
-        rule = "single_closing_week"
+        majority = max(day_counts.values())
+        winners = [week for week in touched if day_counts[(week["calendar_year"], week["year_week"])] == majority]
+        if len(winners) != 1:
+            raise ValueError(f"Ambiguous short-event majority week: {season_year}/{series_id}")
+        selected = winners
+        rule = "single_majority_week"
     elif len(touched) == 2:
         selected = touched
         rule = "two_source_iso_weeks"
@@ -118,8 +137,10 @@ def map_one(*, season_year: int, series_id: str,
         flags.append("reviewed_source_iso_week_53_not_projected")
     if len(selected) == 3:
         flags.append("three_week_interval_manual_sporting_review")
-    if days <= 8 and len(touched) > 1 and end.weekday() == 0:
-        flags.append("monday_finish_majority_in_prior_iso_week")
+    if days <= 8 and selected[0] != touched[-1]:
+        flags.append("single_week_majority_precedes_finish_week")
+        if end.weekday() == 0:
+            flags.append("monday_finish_majority_in_prior_iso_week")
     if end.weekday() not in (5, 6):
         flags.append("non_weekend_finish")
     if year_source_status == "provisional_published_schedule":
@@ -134,6 +155,11 @@ def map_one(*, season_year: int, series_id: str,
         "original_start_date": start.isoformat(),
         "original_end_date": end.isoformat(),
         "source_iso_weeks": touched,
+        "source_iso_week_day_counts": [
+            {**week, "source_days_in_week": day_counts[(week["calendar_year"], week["year_week"])]}
+            for week in touched
+        ],
+        "source_finish_iso_week": touched[-1],
         "source_duration_days_inclusive": days,
         "source_finish_day": _last_week_end_day(end),
         "mapped_year_weeks": selected,
@@ -188,6 +214,13 @@ def build_projection(dated: dict[str, Any]) -> dict[str, Any]:
     occupancy = Counter(len(item["mapped_year_weeks"]) for item in mappings)
     touched = Counter(len(item["source_iso_weeks"]) for item in mappings)
     flags = Counter(flag for item in mappings for flag in item["review_flags"])
+    week_events: dict[tuple[int, int], list[str]] = {}
+    for item in mappings:
+        for week in item["mapped_year_weeks"]:
+            key = (week["calendar_year"], week["year_week"])
+            week_events.setdefault(key, []).append(item["source_identity"])
+    overlap_counts = Counter(len(events) for events in week_events.values())
+    maximum_overlap = max(overlap_counts, default=0)
     summary = {
         "source_event_count": len(mappings),
         "simulated_week_count_distribution": {
@@ -203,6 +236,13 @@ def build_projection(dated: dict[str, Any]) -> dict[str, Any]:
         ),
         "source_years": LAST_YEAR - FIRST_YEAR + 1,
         "provisional_years": [2026],
+        "distinct_mapped_year_weeks": len(week_events),
+        "mapped_week_concurrency_distribution": {
+            str(n): overlap_counts.get(n, 0)
+            for n in range(1, maximum_overlap + 1)
+        },
+        "max_parallel_source_tournaments_in_week": maximum_overlap,
+        "weekly_occupancy_is_not_player_conflict_evidence": True,
         "sporting_schedule_installed": False,
     }
     if (summary["source_event_count"] != 2407

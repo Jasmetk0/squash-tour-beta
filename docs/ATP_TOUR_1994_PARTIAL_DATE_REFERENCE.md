@@ -4,7 +4,7 @@
 
 ## Sources and methodological limits
 
-- [Official ATP 1994 results archive](https://www.atptour.com/en/scores/results-archive?year=1994) — original January–February historical host names and dates for the **22** January–April dated tournament identities. The archived chronology starts **Doha, Adelaide, Oahu (3–9 January)**; **Auckland, Jakarta, Sydney-1 (10–16 January)** and includes Dubai, Marseille, San José, Milan, Memphis, Stuttgart-1, Philadelphia, Rotterdam and Mexico City.
+- [Official ATP 1994 results archive](https://www.atptour.com/en/scores/results-archive?year=1994) — original January–April historical host names and dates for the **22** January–April dated tournament identities. The archived chronology starts **Doha, Adelaide, Oahu (3–9 January)**; **Auckland, Jakarta, Sydney-1 (10–16 January)** and includes Dubai, Marseille, San José, Milan, Memphis, Stuttgart-1, Philadelphia, Rotterdam and Mexico City.
 - [Official Nitto ATP Finals historical results, 1970–1999](https://www.nittoatpfinals.com/en/heritage/results-1970-1999) — original **Frankfurt World Championships 15–20 November 1994**, not a later Masters or a different city's finals.
 - [International Tennis Federation: Monte Carlo 1994](https://www.itftennis.com/en/tournament/monte-carlo/mon/1994/m-css-mon-01a-1994/draws-and-results/) independently confirms **18–24 April 1994**. The ATP results archive's original date convention shows **Indian Wells 28 Feb–6 Mar**, **Miami 7–20 Mar**, and **Copenhagen 28 Feb–6 Mar**; historical city links are not legal licence proof.
 - Original pre-2009 **ATP World Series / Championship Series / Single-Week** categorisation is inherited from the existing parent Series year, not overwritten with modern 250/500/1000 labels.

@@ -33,7 +33,7 @@ def test_source_files_remain_unchanged_when_promotion_vetoes() -> None:
 
 def test_promoter_rejects_unstaged_year() -> None:
     with pytest.raises(ValueError, match="Only the explicit 2003"):
-        prepare(2002)
+        prepare(2001)
 
 
 def test_conflicted_year_is_not_mislabelled_as_canonically_dated() -> None:
@@ -41,3 +41,26 @@ def test_conflicted_year_is_not_mislabelled_as_canonically_dated() -> None:
         (SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8")
     )
     assert "2003" not in dated["year_sources"]
+
+
+def test_2002_is_mechanically_promotable_without_changing_2004_onward() -> None:
+    promoted, built, audited = prepare(2002)
+    assert audited["candidate_count"] == 62
+    assert "2002" in promoted["year_sources"]
+    assert len(promoted["year_sources"]["2002"]["events"]) == 62
+    assert built["provenance"]["dated_occurrences"] == 1381 + 62
+    assert built["provenance"]["season_coverage_entries"] == 37
+    assert sorted(built["provenance"]["date_coverage_years"]) == list(
+        range(2002, 2003)
+    ) + list(range(2004, 2027))
+    by_id = {
+        entity["source_entity_id"]: entity
+        for entity in built["entities"]
+    }
+    assert by_id["atp_2002_doha"]["payload"]["start_year_week"] == {
+        "iso_year": 2002,
+        "iso_week": 1,
+    }
+    assert by_id["season_2002_date_coverage"]["payload"][
+        "date_coverage_state"
+    ] == "verified_complete_known_series_dates"

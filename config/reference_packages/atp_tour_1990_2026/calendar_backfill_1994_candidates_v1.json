@@ -4,17 +4,17 @@
   "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
   "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
   "as_of": "2026-11-04",
-  "notes": "PARTIAL source transcription: 16 of the 85 year-effective original ATP Tour 1994 source Series. Fifteen January–February archive-listed main-tour events, plus Frankfurt ATP World Championships separately corroborated by official ATP Finals heritage (15–20 Nov). Explicitly missing 69 other year-effective parent Series, so no 1994 canonical promotion. Historical stable Series IDs follow the existing parent source and do not certify legal licence continuity. Excludes Australian Open/other Grand Slams, Grand Slam Cup, Davis Cup, Hopman Cup, World Team Cup and Challenger; not a playable tennis or FAX Calendar. The candidate source_url is annual ATP archive; Finals corroboration is documented separately.",
+  "notes": "PARTIAL source transcription: 23 of 85 year-effective original ATP Tour 1994 source Series, 22 originally dated Jan–Apr main-tour events from ATP archive (Monte Carlo corroborated by ITF) plus original Frankfurt ATP World Championships verified by ATP Finals heritage (15–20 Nov). Explicitly missing 62 parent Series. No canonical promotion or fabricated event-date inference. Legal licence lineage not certified. Out of scope: Grand Slams, Challengers, Grand Slam Cup, Davis Cup, Hopman Cup and World Team Cup; non-playable reference. Per-event source qualifications: see docs/ATP_TOUR_1994_PARTIAL_DATE_REFERENCE.md.",
   "events": [
     {
-      "historical_host": "Doha",
-      "series_id": "doha",
+      "historical_host": "Adelaide",
+      "series_id": "brisbane",
       "start_date": "1994-01-03",
       "end_date": "1994-01-09"
     },
     {
-      "historical_host": "Adelaide",
-      "series_id": "brisbane",
+      "historical_host": "Doha",
+      "series_id": "doha",
       "start_date": "1994-01-03",
       "end_date": "1994-01-09"
     },
@@ -61,22 +61,16 @@
       "end_date": "1994-02-06"
     },
     {
-      "historical_host": "Milan",
-      "series_id": "sofia",
-      "start_date": "1994-02-07",
-      "end_date": "1994-02-13"
-    },
-    {
       "historical_host": "Memphis",
       "series_id": "rio",
       "start_date": "1994-02-07",
       "end_date": "1994-02-13"
     },
     {
-      "historical_host": "Stuttgart-1 (indoor)",
-      "series_id": "stuttgart_indoor_feb_1995",
-      "start_date": "1994-02-14",
-      "end_date": "1994-02-20"
+      "historical_host": "Milan",
+      "series_id": "sofia",
+      "start_date": "1994-02-07",
+      "end_date": "1994-02-13"
     },
     {
       "historical_host": "Philadelphia",
@@ -85,16 +79,64 @@
       "end_date": "1994-02-20"
     },
     {
-      "historical_host": "Rotterdam",
-      "series_id": "rotterdam",
-      "start_date": "1994-02-21",
-      "end_date": "1994-02-27"
+      "historical_host": "Stuttgart-1 (indoor)",
+      "series_id": "stuttgart_indoor_feb_1995",
+      "start_date": "1994-02-14",
+      "end_date": "1994-02-20"
     },
     {
       "historical_host": "Mexico City",
       "series_id": "acapulco",
       "start_date": "1994-02-21",
       "end_date": "1994-02-27"
+    },
+    {
+      "historical_host": "Rotterdam",
+      "series_id": "rotterdam",
+      "start_date": "1994-02-21",
+      "end_date": "1994-02-27"
+    },
+    {
+      "historical_host": "Copenhagen",
+      "series_id": "copenhagen_2003",
+      "start_date": "1994-02-28",
+      "end_date": "1994-03-06"
+    },
+    {
+      "historical_host": "Indian Wells",
+      "series_id": "indian_wells",
+      "start_date": "1994-02-28",
+      "end_date": "1994-03-06"
+    },
+    {
+      "historical_host": "Miami",
+      "series_id": "miami",
+      "start_date": "1994-03-07",
+      "end_date": "1994-03-20"
+    },
+    {
+      "historical_host": "Casablanca",
+      "series_id": "marrakech",
+      "start_date": "1994-03-14",
+      "end_date": "1994-03-20"
+    },
+    {
+      "historical_host": "Estoril",
+      "series_id": "estoril",
+      "start_date": "1994-03-28",
+      "end_date": "1994-04-03"
+    },
+    {
+      "historical_host": "Osaka",
+      "series_id": "osaka_1994",
+      "start_date": "1994-03-28",
+      "end_date": "1994-04-03"
+    },
+    {
+      "historical_host": "Monte Carlo",
+      "series_id": "monte_carlo",
+      "start_date": "1994-04-18",
+      "end_date": "1994-04-24"
     },
     {
       "historical_host": "Frankfurt ATP World Championships",

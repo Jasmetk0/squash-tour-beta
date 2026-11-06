@@ -96,3 +96,51 @@ withdrawal/replacement and multiple Editions. Unsupported padded-Q repair paths
 remain fail-closed. Do not remove the native executor Main4/8 guard as a shortcut.
 The original incomplete awards and early announcement prerequisites still apply.
 Neither this Draw nor its restored component proves a played season/50-season Run.
+
+
+## Saved-bound node feeders (6 November 2026 candidate)
+
+`project_canonical_draw_nodes` uses canonical node IDs as stable match IDs and
+shares the existing legacy BYE/Q resolver. It needs no fabricated legacy
+MatchPackage or outcome. Legacy projections retain their exact original payloads.
+
+`SavedFaxKnockoutFeederService.prepare` authenticates the explicitly expected
+current Branch-owned Saved head, then reads **saved** Calendar, Draw/Input and
+clock. Unsaved live inputs, stale heads, edited adopted sources, revised Draws,
+foreign scopes and unmaterialized inherited roots fail closed. Preparing a plan
+never saves or starts play. Later live edits cannot retcon the returned snapshot.
+`reload(plan)` reauthenticates the original source through the exact owner Branch's
+reachable history after later Saves; it never substitutes the newest Calendar.
+Unreachable revisions and altered serialized plans fail closed. This is preparation/
+reload validation, not a new per-match full-history scan or validation bypass.
+The plan binds the original Saved revision ID/content hash and source fingerprint;
+these are verified by the service, not a standalone authorization signature.
+
+`project_knockout_progress` is stateless and accepts event-only existing
+`CalendarContinuationMatch` evidence. The authenticated native ledger still owns
+replay, results and player-state validation. The graph checks exact owners,
+source head/clock/season, seed, ordered opponents and predecessor chronology.
+**All Qualification must finish before any Main match**, including direct-only
+Main pairs. Q1–Q4 resolve from their actual section finals; BYEs never become
+played records. Independent acceptance order gives the same readiness/champion.
+Dependent rounds may not reuse their predecessor's frozen input snapshot.
+
+New `canonical_knockout_match_seed.v1` derives from the frozen draw seed, Edition,
+season and canonical node. Revision/command labels, acceptance order, horizon and
+unrelated Calendar metadata do not reseed matches. Old native seed paths remain.
+
+Tests use actual MatchEngine BO5 results/logs for Gold35 and Platinum51, one frozen
+population per test wave, the existing effect reducer, and unmodified unrelated
+players. Valid engine records with wrong opponents or a predecessor snapshot are
+rejected, alongside duplicate/foreign/BYE/stale/seed/chronology corruption. Separate
+real SQLite tests require normal explicit Save, reopen physical connections and
+prove immunity to changed live Calendar/Draw rows and rejection of damaged Saved
+bytes. Test players/eligibility are explicit fixtures, not automatic policy.
+
+This is a **component/kernel and Saved-source checkpoint**, not the native public
+Run executor. `readiness_scope=feeder_dependencies_only` and
+`native_slot_execution_ready=false` prevent treating it as sporting permission.
+Next consume it through versioned native Edition/global-slot/result models,
+existing v13 ownership, operation/Health/award/schedule guards and public partial
+Next Match/Save/resume/restart. No points, time progression, branch fork remapping,
+withdrawal/LL mechanics, full season or 50-season acceptance is inferred here.

@@ -8,6 +8,11 @@ on:
       - 'tests/domain/test_fax_reference_bracket_topology.py'
       - 'src/beta_engine/domain/tournaments/fax_reference_player_draw.py'
       - 'src/beta_engine/application/fax_reference_player_draw.py'
+      - 'src/beta_engine/application/canonical_tournament_topology.py'
+      - 'src/beta_engine/application/canonical_knockout_feeders.py'
+      - 'src/beta_engine/application/saved_fax_knockout_feeders.py'
+      - 'tests/application/test_canonical_knockout_feeders.py'
+      - 'tests/application/test_saved_fax_knockout_feeders.py'
       - 'src/beta_engine/domain/tournaments/draw_input_authority.py'
       - 'src/beta_engine/infrastructure/db/tournament_draw_input_authority.py'
       - 'tests/infrastructure/test_fax_reference_player_draw.py'
@@ -48,6 +53,10 @@ jobs:
         run: >-
           GITHUB_EVENT_NAME=fax_qualification_geometry_acceptance python -m pytest
           tests/infrastructure/test_fax_reference_player_draw.py
+          tests/application/test_canonical_tournament_topology.py
+          tests/application/test_canonical_knockout_feeders.py
+          tests/application/test_saved_fax_knockout_feeders.py
+          tests/domain/test_calendar_global_slot_contracts.py
           tests/infrastructure/test_tournament_draw_authority.py
           tests/infrastructure/test_tournament_draw_input_authority.py
           tests/domain/test_tournament_entry_field.py

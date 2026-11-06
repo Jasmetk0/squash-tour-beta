@@ -7,6 +7,8 @@ match record must bind one-to-one to a canonical Draw node or the bridge fails c
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from pydantic import Field, model_validator
 
 from beta_engine.application.season_match_service import (
@@ -20,6 +22,7 @@ from beta_engine.domain.tournaments.draw_authority import (
     TournamentDrawAuthority,
     TournamentDrawBracket,
     TournamentDrawNode,
+    _build_nodes,
 )
 
 
@@ -92,6 +95,42 @@ def project_canonical_draw_to_match_topology(
             raise ValueError("MatchPackage contains a foreign event match")
         record_by_node[node.node_id] = record
 
+    return _project_topology(draw=draw, record_by_node=record_by_node, package=package)
+
+
+@dataclass(frozen=True)
+class _NodeMatchBinding:
+    """Match identity only; never a simulated result or legacy MatchPackage."""
+    match_id: str
+    top_player_id: str | None = None
+    bottom_player_id: str | None = None
+
+
+def project_canonical_draw_nodes(*, draw: TournamentDrawAuthority) -> CanonicalTournamentTopologyProjection:
+    """Plan directly from canonical nodes using the same BYE/Q resolver as legacy.
+
+    Node IDs are the stable match IDs. No legacy package, player sampling or
+    result is fabricated to bridge a larger or padded Qualification bracket.
+    """
+    brackets = (*draw.qualification_brackets, draw.main)
+    for index, bracket in enumerate(draw.qualification_brackets):
+        if bracket.nodes != _build_nodes(
+            draw.event_id, "qualification", bracket.bracket_size,
+            section_id=bracket.section_id, section_ordinal=index,
+            section_count=len(draw.qualification_brackets),
+        ):
+            raise ValueError("Canonical Qualification node topology is corrupt")
+    if draw.main.nodes != _build_nodes(draw.event_id, "main", draw.main.bracket_size):
+        raise ValueError("Canonical Main node topology is corrupt")
+    ids = [node.node_id for bracket in brackets for node in bracket.nodes]
+    if len(set(ids)) != len(ids):
+        raise ValueError("Canonical Draw node IDs overlap")
+    return _project_topology(
+        draw=draw, record_by_node={mid: _NodeMatchBinding(mid) for mid in ids},
+    )
+
+
+def _project_topology(*, draw, record_by_node, package=None):
     qualification_terminal_match_ids: dict[str, str] = {}
     for index, bracket in enumerate(draw.qualification_brackets, start=1):
         section_id = bracket.section_id or f"Q{index}"
@@ -153,7 +192,7 @@ def project_canonical_draw_to_match_topology(
                                 source_match_id=source_match_id,
                                 target_match_id=record.match_id,
                                 target_side="top" if side_index == 0 else "bottom",
-                                target_slot_id=f"{package.event_id}:main:S{slot.slot_index}",
+                                target_slot_id=f"{draw.event_id}:main:S{slot.slot_index}",
                             )
                         )
 
@@ -189,14 +228,14 @@ def project_canonical_draw_to_match_topology(
             plans.append(
                 SimulationMatchEventPlan(
                     group_id=record.match_id,
-                    event_id=package.event_id,
+                    event_id=draw.event_id,
                     match_id=record.match_id,
                     participant_sources=participant_sources,
                 )
             )
 
     executable_ids = {plan.match_id for plan in plans}
-    expected_ids = {record.match_id for record in all_records} - set(bye_match_ids)
+    expected_ids = {record.match_id for record in record_by_node.values()} - set(bye_match_ids)
     if executable_ids != expected_ids:
         raise ValueError("canonical Draw/MatchPackage executable universes differ")
 
@@ -205,15 +244,16 @@ def project_canonical_draw_to_match_topology(
     if terminal_match_id in bye_match_ids:
         raise ValueError("canonical Main Draw terminal cannot be a BYE auto-advance")
 
-    _validate_legacy_feeder_hints(
-        package=package,
-        draw=draw,
-        record_by_node=record_by_node,
-        bye_match_ids=set(bye_match_ids),
-    )
+    if package is not None:
+        _validate_legacy_feeder_hints(
+            package=package,
+            draw=draw,
+            record_by_node=record_by_node,
+            bye_match_ids=set(bye_match_ids),
+        )
 
     return CanonicalTournamentTopologyProjection(
-        event_id=package.event_id,
+        event_id=draw.event_id,
         draw_authority_fingerprint=draw.fingerprint,
         plans=tuple(sorted(plans, key=lambda plan: plan.group_id)),
         terminal_group_id=terminal_match_id,

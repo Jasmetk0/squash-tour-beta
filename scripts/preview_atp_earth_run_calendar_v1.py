@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 if __package__ in (None, ""):
     sys.path.insert(0, str(ROOT))
+    sys.path.insert(0, str(ROOT / "src"))
 
 from beta_engine.application.atp_earth_run_calendar_preview import (
     preview_atp_earth_weeks_on_run,

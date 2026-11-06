@@ -28,6 +28,7 @@ import { RunCalendarExtensionInspection } from './RunCalendarExtensionInspection
 import { HomePlayerIdentityLink } from './HomePlayerIdentityLink'
 import { RunHomeRankingPanel } from './RunHomeRankingPanel'
 import { RunHomeReadinessPanel } from './RunHomeReadinessPanel'
+import { RunBranchReadinessComparison } from './RunBranchReadinessComparison'
 import { seasonOrdinal, weekOrdinal } from './runHomeModel'
 
 const NEXT = {
@@ -127,7 +128,7 @@ export function RunPage(): JSX.Element {
   const { runId = '' } = useParams()
   const { language } = useLanguage()
   const l = NEXT[language]
-  const { selectedBranch, selectedBranchId, viewerBranchId, isLoading: branchLoading, error: branchError } = useAdminBranch()
+  const { selectedBranch, selectedBranchId, viewerBranchId, branches, isLoading: branchLoading, error: branchError } = useAdminBranch()
   const time = useAdminTime()
   const branchId = selectedBranch?.run_id === runId ? selectedBranch.branch_id : null
   const present = time.mode === 'present'
@@ -415,6 +416,10 @@ export function RunPage(): JSX.Element {
         selectedBranch?.status === 'active' && !selectedBranch.read_only &&
         Boolean(selectedBranch.saved_head_revision_id)}
       refreshing={readinessRefreshing} refresh={refreshReadinessEvidence} />}
+    {ready && branchId && selectedBranch?.saved_head_revision_id && branches.length > 1 &&
+      <RunBranchReadinessComparison key={runId + ':' + branchId + ':' + selectedBranch.saved_head_revision_id}
+        runId={runId} branchId={branchId} head={selectedBranch.saved_head_revision_id}
+        branches={branches} />}
     <div className="run-home-columns">
       <SectionCard title={l.next}>
         {!verified && <p className="status">{branchLoading || containerQuery.isPending || time.isLoading ? l.loading : l.missing}</p>}

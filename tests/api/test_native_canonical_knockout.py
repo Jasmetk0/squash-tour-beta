@@ -299,8 +299,8 @@ def test_actual_q_main_partial_save_restart_and_terminal(
         assert view["next_slot"] == partial["next_slot"]
         if size == 24:
             from tests.api.test_calendar_sporting_horizon_extension import (
-                extension,
                 extend,
+                extension,
             )
 
             status, review = extension(server, 4)

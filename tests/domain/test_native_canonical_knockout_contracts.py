@@ -195,3 +195,91 @@ def test_missing_source_announcement_is_not_invented(authority):
     # DTO strictness rejects unchecked Python list/bool inputs too.
     with pytest.raises(ValidationError):
         NativeCanonicalRoundSchedule(qualification=(True, 2, 3), main=(4, 5, 6, 7, 8))
+
+
+@pytest.mark.parametrize(
+    "damage",
+    [
+        None,
+        "foreign_head",
+        "late_announcement",
+        "missing_player",
+        "ranked",
+        "multiweek",
+        "fork",
+    ],
+)
+def test_adoption_is_explicit_prospective_and_operation_scoped(authority, damage):
+    from types import SimpleNamespace
+
+    from beta_engine.application.native_canonical_draw_adoption import adopt_saved_draw
+
+    binding = authority.canonical_binding
+    source = binding.plan(authority.draw).source
+    if damage in {"ranked", "multiweek"}:
+        event = source.source_event.model_copy(
+            update={
+                **(
+                    {
+                        "ranking_status": type(source.source_event.ranking_status)(
+                            "ranked"
+                        )
+                    }
+                    if damage == "ranked"
+                    else {"duration_in_season_weeks": 2, "end_season_week": 5}
+                ),
+            }
+        )
+        source = source.model_copy(update={"source_event": event})
+    plan = freeze_knockout_feeder_plan(
+        source=source,
+        source_saved_revision_id="saved",
+        source_saved_content_hash="a" * 64,
+        calendar=binding.calendar,
+    )
+    week = RunWeekPosition(
+        calendar=binding.calendar,
+        season_index=0,
+        week=3 if damage == "late_announcement" else 2,
+    )
+    ids = {
+        *binding.draw_input.direct_main_player_ids,
+        *binding.draw_input.wild_card_player_ids,
+        *binding.draw_input.qualification_player_ids,
+    }
+    cp = SimpleNamespace(
+        week=week,
+        players=tuple(
+            SimpleNamespace(player_id=p)
+            for p in sorted(ids)[1 if damage == "missing_player" else 0 :]
+        ),
+        tournaments=(),
+    )
+    state = SimpleNamespace(
+        run_id="run",
+        branch_id="branch",
+        schema_version="native_fork_tour.v1"
+        if damage == "fork"
+        else "calendar_tour_authority.v5",
+        editions=(),
+        slot_cursor=0,
+    )
+    cmd = SimpleNamespace(
+        command_id="adopt",
+        edition_id=None,
+        expected_saved_head="foreign" if damage == "foreign_head" else "saved",
+        data={
+            "season": "2000/2001",
+            "event_id": source.draw.event_id,
+            "source_plan_fingerprint": plan.fingerprint,
+            "schedule": binding.schedule.model_dump(mode="json"),
+        },
+    )
+    context = (binding.calendar, None, None, None, cp, None, None)
+    if damage:
+        with pytest.raises(ValueError):
+            adopt_saved_draw(None, context, state, cmd, replay_plan=plan)
+    else:
+        assert (
+            adopt_saved_draw(None, context, state, cmd, replay_plan=plan) == authority
+        )

@@ -207,6 +207,9 @@ class CalendarEditionAuthority(FrozenInput):
                 raise ValueError("Canonical Edition changes its frozen source identity/clock/Draw")
             if self.edition.week.season_index != int(str(event.season).split('/')[0]) - binding.calendar.start_year:
                 raise ValueError("Canonical Edition changes its source season")
+            position = self.edition.week.calendar_position
+            if (event.calendar_year, event.year_week) != (position.calendar_year, position.year_week):
+                raise ValueError("Canonical source dates require an explicit compatible Run calendar; no silent conversion")
             return self
         if self.canonical_binding is not None:
             raise ValueError("Historical Edition cannot acquire canonical v4 source binding")

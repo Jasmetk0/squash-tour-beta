@@ -11,7 +11,7 @@ on:
       - 'src/beta_engine/application/native_canonical_draw_adoption.py'
       - 'src/beta_engine/infrastructure/db/native_canonical_draw_origin.py'
       - 'tests/api/test_native_canonical_knockout.py'
-      - 'tests/domain/test_native_canonical_knockout.py'
+      - 'tests/domain/test_native_canonical_knockout_contracts.py'
       - 'src/beta_engine/domain/tournaments/fax_reference_bracket_topology.py'
       - 'tests/domain/test_fax_reference_bracket_topology.py'
       - 'src/beta_engine/domain/tournaments/fax_reference_player_draw.py'

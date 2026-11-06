@@ -1,0 +1,504 @@
+# R012 — searchable archive of owner-supplied ChatGPT research
+
+Original document: "Historický vývoj ekonomiky PSA (2018–2026).docx (13 pages)", uploaded 2026-11-02.
+**STATUS: RESEARCH-ONLY, UNVERIFIED AS SCIENTIFIC CALIBRATION OR FAX PRODUCT DECISION.**
+Source is **text extraction**, not the original Word file. Inline snippet citations like [25:L59-68] are not a full audited bibliography; line-wrapped layouts and images might be missing. Cross-check against original DOCX and primary sources; see independent critical review in this branch.
+No scientific experiments in the source were executed during this archival task. The original report sometimes *proposes* model features or tests and mistakenly describes these as already implemented. FAX is an alternate evolving global sport, not 2026 PSA cloned with a larger population.
+
+----- BEGIN AVAILABLE SEARCHABLE RESEARCH TEXT -----
+
+<PARSED TEXT FOR PAGE: 1 / 13>
+Historický vývoj ekonomiky PSA (2018–2026)
+Profesní squash zaznamenal v uplynulých letech značný nárůst objemu
+vyplácených prize money, avšak většina hráčů pocítila spíše stagnaci či zhoršení
+svých ekonomických podmínek【8†L49-L54】. Například sezóna 2017/18 přinesla
+rekordních cca 6,4 mil. USD celkových odměn (o 11 % více než předchozí ročník)
+【57†L342-L350】. Mezitím PSA postupně zavedla nové hierarchické kategorie
+turnajů (Platinum, Gold, Silver, Bronze, Challenger) s růstem počtu soutěží: v
+sezoně 2017/18 se konalo 227 turnajů ve 47 zemích【57†L369-L372】, zatímco k
+roku 2026 figurují tisíce akcí (v sezóně 2025–26 bylo uvedeno rekordních 1 297
+turnajů ve 81 zemích【36†L40-L47】). První squashový šampionát s rozpočtem
+1 mil. USD (2019 v Chicagu) signalizoval ambice daleko zvýšit atraktivitu sportu
+【85†L13-L16】. V sezoně 2025–26 PSA oznámila rekordních 13,5 mil. USD v prize
+money (8 % meziroční nárůst, po pětiletém růstu od konce pandemie)【36†L40-
+L47】, přičemž muži i ženy se podílejí přibližně rovnoměrně (7,05 M
+vs. 6,49 M USD)【36†L40-L47】.
+
+Prize money v jednotlivých typech turnajů: PSA turnaje jsou rozděleny do
+kategorií podle výše cenového fondu. V sezóně 2018–19 nabízely nejvyšší
+„Platinum“ turnaje odměny v řádu ~164–181 tisíc USD (hrozí cenový rozsah
+různých eventů)【89†embed_image】【21†L45-L49】, Gold okolo 100–120 tisíc,
+Silver 75–88 tisíc a Bronze 47,5–55 tisíc. Turnajový model vyobrazený výše
+ukazuje, že největší prostředky jsou v menších počtech turnajů: typicky World
+Championship disponoval 500 tisíci (nejvyšší částkou) a Světový pohár družstev
+(World Tour Finals) kolem 160 tisíc【89†embed_image】【21†L45-L49】.
+
+【89†embed_image】 Schéma rozdělení prize money v sezóně 2018–19: Platinum
+$164.5–180.5k, Gold $100–120k, Silver $75–88k, Bronze $47.5–55k, Světový finálový
+turnaj (WTF) $160k, Mistrovství světa (WC) $500k【21†L45-L49】.
+
+Distribuce odměn mezi hráče: I v rámci jednoho turnaje je rozdělení extrémně
+nerovnoměrné. V běžném „Platinum“ turnaji o 48 účastnících vítěz bere ~16 % z
+celého fondu (drugi hráč 10 %, semifinalisté 6 % každý)【90†L0-L8】. U malých
+finálových událostí (8 hráčů) roste podíl vítěze až na 30 % a finalisty na
+<PARSED TEXT FOR PAGE: 2 / 13>
+20 %【90†L0-L8】. To znamená, že v typickém Platinum eventu s ~$180k fondu
+vítěz získá okolo 29 tisíc USD, zatímco výhra na Tour Finals (fond ~$355k v
+sez. 2025/26) obnáší přes 100 tisíc USD【90†L0-L8】. V důsledku toho spadne
+příjem prudce dolů se stoupajícím pořadím: analýza ukázala, že v tenisovém
+modelu profesionálů má většina nižších hráčů mizivé odměny – například
+koncové rozdělení těsně připomíná Lorenzovu křivku s vysokou koncentrací u
+špičky【70†L65-L73】【90†L0-L8】. Podobně Hassan Khalil (2026) potvrzuje, že v
+squashi je postavení v žebříčku téměř deterministickým ukazatelem schopnosti
+„vyživovat se“ pouze z turnajových odměn【8†L49-L54】.
+
+【90†embed_image】 Tabulkový přehled procentuálního rozdělení prize money
+podle výsledného umístění. Sloupce ukazují, jaký podíl fondu obdrží hráči podle
+pořadí v různých velikostech turnajů【90†L0-L8】. V turnaji o 48 hráčích vítěz bere
+16 %, finalista 10 %; v 8členném finále (Světový pohár) vítěz 30 %, finalista
+20 %【90†L0-L8】.
+
+Výdělky hráčů podle výkonnosti
+V praxi všechny tyto prize money hry silně prohlubují nerovnosti v příjmech
+hráčů. Elite čtyřka či pětka světa si díky turnajovým odměnám (a někdy
+lukrativním sponzorským smlouvám) přijdou na středně až vysoké statisíce USD
+ročně, ale většina hráčů je daleko níže. Například v sezóně 2017/18 nejbohatší
+hráč získal ~$278 tisíc a nejbohatší hráčka $218 tisíc (obě hodnoty prudce rostly
+za poslední tři roky)【57†L356-L364】. Nicméně i statistiky PSA naznačují, že
+mezi 25.–100. místem klesají roční turnajové výdělky řádově pod 30 tisíc, přičemž
+mnozí blízko 100. místa utržili jen několik tisíc dolarů【64†L89-L94】. Nechybějí
+proto další zdroje příjmů: hráči na nižších pozicích často doplňují příjem
+trénováním, hraním v klubových soutěžích nebo koučováním. Někteří dostávají
+menší granty od národních svazů či sponzory, případně podporu rodiny. Naopak
+elita mívá sponzory na výstroj či oděv (rakety, míčky aj.), čímž snižuje své
+náklady. Všechny tyto přídavné peníze ale ve většině případů nestačí
+vykompenzovat stále převládající deficit vznikající při cestování za turnaji.
+
+Náklady na kariéru profesionála
+Vedle příjmů je klíčové zohlednit i výdaje. Profesionální squashový hráč čelí řadě
+povinných nákladů: trenér (popř. tým trenér+asistent) běžně stojí stovky USD za
+den, fyzioterapie a regenerační služby (masáže, fyzioterapie, posilovna – i tisíce
+<PARSED TEXT FOR PAGE: 3 / 13>
+USD měsíčně), cestování a ubytování (letenky, hotely, strava; často cizí měna,
+stovky až tisíce USD na turnaj), výbava (rakety ~200–300 USD/kus, obuv, oblečení
+– byť často částečně sponzorováno), startovné (u menších turnajů), vízové a
+administrativní poplatky. Připočtěme daně z prize money (různé státy mají různé
+daňové režimy, ale hráči často odvádějí část výhry) a také obětované příležitosti –
+roky věnované tréninku místo studia nebo běžné práce. Celkové roční náklady
+aktivního hráče odhadované v literatuře a rozhovorech jsou řádově desítky tisíc
+dolarů. Pro hráče mimo top svět (kde prize money nepokryjí tyto náklady) to
+často znamená, že kariéra není udržitelná bez výrazné sponzorské či rodinné
+podpory【64†L79-L87】.
+
+Výsledné čisté peněžní toky jednotlivých hráčů jsou tak rozdílem hrubých výher
+a uvedených nákladů. I když se PSA někdy může pochlubit rostoucími součty
+prize money (což zdánlivě zvyšuje ekonomický potenciál), většina hráčů je ve
+skutečnosti pod tlakem vysokých výdajů. Proto nelze jednoduše nahradit
+skutečné náklady jedince pouhým sečtením jeho získaných odměn: například
+výhra v jedné menší akci v Asii pokryje sotva část výdajů na cestu a pobyt;
+celková udržitelnost kariéry závisí i na dlouhodobé síti podpory, nikoliv pouze na
+několika výsledcích.
+
+
+Ekonomická rozhodnutí sportovců
+Ekonomické podmínky silně ovlivňují celou řadu kariérních rozhodnutí hráčů:
+
+      Rozhodnutí stát se profesionálem. Mladý hráč zvažuje, zda věnovat život
+       squashu na plný úvazek. Pokud nevidí cestu k alespoň středním příjmům
+       (nebo má silnější nabídky v akademickém či pracovním světě), může místo
+       toho kariéru profesionála vůbec nevybírat. Finanční nejistota snižuje
+       motivaci přecházet od juniorských ke seniorským turnajům.
+      Přechod junior–senior. I úspěšní junioři se mohou rozmyslet, když si
+       uvědomí, že počáteční investice (cestování na kvalifikace, placené trenéry)
+       převyšují možné výdělky. Bez odpovídajících grantů či stipendií od svazu
+       mnoho talentů zřejmě kariéru nedokončí.
+      Výběr a počet turnajů. Hráč často volí, na které turnaje se přihlásí nejen
+       podle síly soutěže, ale i podle rozpočtu. Například ekonomicky slabší hráči
+       zřejmě vynechají turnaje na jiném kontinentu (např. v Asii či Austrálii),
+       kde by příjmy nevynahradily letenky a ubytování. Místo toho raději hrají
+       blíže domovu, i kdyby obvykle měly nižší prize pool. Elitní hráči s
+       robustním sponzoringem si to mohou dovolit.
+<PARSED TEXT FOR PAGE: 4 / 13>
+      Cestování a kontinenta. Cestovat za dalekými turnaji znamená velké
+       náklady. Například účast na americkém podniků může přijít na pár tisíc
+       dolarů za letenku i ubytování na týden. Řada hráčů tak preferuje
+       regionální okruhy nebo se soustředí na lokality, které spolufinancuje
+       národní svaz. Pokud by FAX předpokládal slabší globální síť, někteří by
+       hráči nemuseli za oceán vůbec cestovat.
+      Přístup k trenérům a regeneraci. Hráči s nízkým rozpočtem často nemají
+       vlastního trenéra a spoléhají na skupinový trénink nebo vzdálené metody.
+       Také nemohou platit luxusní fyzioterapeuty či sportovní vědce, což
+       ovlivňuje jejich sportovní výsledky a zdraví.
+      Změna tréninkového prostředí. Např. přesídlení do silného squashového
+       centra (Evropa, Británie, Katar) může vyžadovat finanční investici. Bez
+       podpory to málokdy zvládnou.
+      Přerušení kariéry. V dobách ekonomické krize, dlouhodobého zranění či
+       pandemie hráči bez rezerv často kariéru přeruší (nebo ukončí). Ti s
+       finančním polštářem mohou vyčkat delší dobu.
+      Předčasný odchod ze sportu. Pokud je perspektiva výdělků nízká, hráč
+       může raději jít pracovat či studovat dříve. Finanční rezervoár (nebo jeho
+       absence) tak přímo určuje hranici, dokdy se prolínání squashu a
+       práce/studia dá zvládat.
+      Návrat po zranění. Hráč, který nemá smlouvu ani podporu, si to těžko
+       dovede – návrat obvykle stojí peníze a v podstatě se sází na budoucí výhry.
+       Bez jistoty dlouhodobé podpory (např. federací či sponzora) je comeback
+       riskantní.
+      Rozdíl elita vs. druhý sled. Elita (top 10–20) má lepší přístup k
+       financování – lepší sponzoři, podíl na TV příjmech, často i příspěvky
+       národních federací. „Druhý sled“ (řekněme kolem 50.–200. místo) je z velké
+       části na vlastních zdrojích a za podpory rodiny nebo malých grantů.
+
+Při všech těchto rozhodnutích je třeba oddělit sportovní způsobilost (výkonnost,
+žebříček) od finanční způsobilosti (rozpočet na cestu, trénink aj.) i od
+administrativních pravidel (přihlašovací kritéria, kvóty) či psychologických
+motivací. Tzn. i když hráč splňuje sportovní podmínky (např. je v žebříčku
+dostatečně vysoko), může se záměrně nevzdat turnaje kvůli financím. Anebo
+naopak – motivace a vize kariéry („vyzkoušet pro sám sebe“) může hrát roli
+nezávisle na čistě ekonomických faktorech.
+<PARSED TEXT FOR PAGE: 5 / 13>
+Ekonomika alternativního světa FAX
+V projektu FAX předpokládáme alternativní realitu, kde squash je výrazně
+populárnější a ekonomicky silnější než v dnešku. Přesto i zde může vzniknout
+řada nerovností:
+
+      Dobře financovaný světo-okruh: Představme si svět, kde globální
+       korporace a masová média investují do squashu podobně jako do fotbalu
+       nebo tenisu. Turnaje mají vysoké prize money a robustní broadcast. V
+       takovém scénáři by i střední třídě hráčů mohly pokrývat náklady (vysoké
+       prize money na nižších úrovních, solidní sponzorské kontrakty). Avšak
+       můžou nastat i deformace: bohatí pořadatelé mohou upřednostnit akce v
+       ekonomicky silných regionech, čímž se regionální soutěže zaostávají, a
+       vzniká bohatá elita soustředěná kolem center hranic.
+      Nerovnoměrný okruh: I za vyšší popularity může peníze nerovnoměrně
+       proudit jen do vybraných událostí – např. obří korporátní turnaj ve
+       velkoměstě, zatímco na něm nejdou generovat příjmy. Nejvyšší prestiž,
+       ceny i mediální pozornost tak pohlcuje úzká skupina, zatímco ostatní hrají
+       v chudších regionech. I když celková alokovaná částka roste, příjmy
+       většiny se relativně nezvyšují.
+      Silné regionální soutěže: Například v Asii by mohl prosperovat
+       samostatný profesionální šampionát s vysokými odměnami pro místní
+       hvězdy, nezávisle na globální sadě. Někteří hráči by tak nemuseli cestovat
+       daleko, ale zároveň by se vytvořila rozštěpená struktura (dva paralelní
+       okruhy). Mohou vznítit propasti mezi regionálními hvězdami a globálními
+       hvězdami.
+      Extrémní elitní model: Většina sponsorů se soustředí jen na absolutní
+       špičku (např. 5–10 nejlepších hráčů), kteří sklízí astronomické odměny a
+       endorsementy. Zbytek hráčů možná ani nedostane normální odměny:
+       očekává se, že si najdou „normální práci“ a squash hrají jen z vášní. To by
+       dramaticky zvýšilo příjmové nerovnosti, přesto že sport obecně roste.
+      Institucionální podpora juniorských talentů: Řekněme, že všechny země
+       zřídily robustní mládežnické programy. Vzniká tedy široký základ, z něhož
+       vycházejí profesionálové. Ale i tak platí: pokud peníze jdou jen do náboru
+       talentů, a ne do finanční podpory během kariéry, mohou hrát pouze ti
+       nejlepších, zbytek se zasekne někde v nexus patřící akademii a nikdy
+       nedosáhne živobytí.
+<PARSED TEXT FOR PAGE: 6 / 13>
+V žádné z těchto verzí nelze předpokládat, že automaticky každý profesionál
+bude zajištěn. Vyšší popularita a příjmy většinou koncentrují bohatství a
+vytvářejí nerovnosti (Princův efekt): média a sponzoři nejraději financují favority
+a atraktivní lokality, což muže znevýhodnit hráče z méně rozvinutých zemí i
+druhou linii talentu. Důvody jsou strukturální – například existuje jen limitovaný
+počet zápasů na TV, menší turnaje přitahují pozornost jen omezeně, a federace či
+korporace mohou upřednostnit jistotu úspěchu (své domácí hvězdy) před rizikem
+investice do méně známých. Tento fenomén není „přímým talenty“ (neexistuje
+nějaký bonus za národní barvy), ale vzniká plynule z ekonomických
+mechanismů: geografická koncentrace turnajů, rozdíly v markeťácké atraktivitě,
+rozdílné dotační možnosti vlády/sponzorů apod.
+
+
+Matematické a rozhodovací modely
+Návrh modelů pro simulaci hráčského chování může postupovat od
+jednoduchých po složitější:
+
+      Model bez osobních financí (bazální): Všechny hráče považujeme za
+       finančně neomezené – učinnost modelu je určena jen sportovními
+       parametry (forma, zdraví, ambice). Takový model ignoruje finanční
+       bariéry; relativně lehce se implementuje (žádné účetnictví), ale nemůže
+       vysvětlit chování v případě hráčů na okraji žebříčku. Lze jej použít jako
+       nulovou hypotézu či zdroj porovnání.
+      Hráči v kategoriích (“chudý–bohatý”): Přiřadíme každému hráči
+       jednoduchý finanční profil: např. „vysoký rozpočet“ (hvězdy se sponzory),
+       „střední“ (hry si samofinancují) a „nízký“ (spíše nezajištěný). Podle této
+       kategorie ovlivňujeme výběr turnajů a šanci na pokračování v kariéře.
+       Model je jen o málo složitější než bez-financí model (pár dodatečných
+       proměnných), ale už může demonstrovat rozdíly mezi elitou a zbytkem.
+       Problém: jak tyto kategorie přiřadit a jaký mají vliv – může docházet k
+       dvojímu započítání efektů (např. hraní méně turnajů se pak promítá i do
+       žebříčku).
+      Dynamický rozpočet během kariéry: U každého hráče simulujeme osobní
+       „účet“, kam se sčítají výhry (cashflow = prize money + sponzoring + dotace)
+       a odečítají náklady (cestování, trenér, zdravotní péče). Na začátku je
+       rozpočet nízký, takže pokud hráč prohrává a částka klesne pod nulu, hrozí
+       mu přerušení či ukončení kariéry. Tato simulace umožní modelovat riziko
+       úpadku. Počítání může být relativně snadné (jednotlivé kategorie nákladů
+       mají průměrnou roční hodnotu), ale vyžaduje kvalifikované údaje. Riziko
+<PARSED TEXT FOR PAGE: 7 / 13>
+    dvojího započítání nastává, pokud část „výdajů“ už zohledníme jinými
+    mechanismy (např. nízká výkonnost je v modelu odměn zohledněna
+    dvakrát).
+   Model očekávaného užitku: Hráč při rozhodování uvažuje nejen reálné
+    platby, ale i své subjektivní preference (např. jak moc mu záleží na
+    vítězství vs. odpočinku). V ekon. literatuře se to řeší váženým očekávaným
+    uspokojením (užitkem). Pro squash bychom museli stanovit užitkové
+    funkce – to je velmi složité a datově náročné (musíme znát míru rizikové
+    averze, ztráty z neúčasti, apod.). Navíc je těžko empiricky ověřitelné. Spíše
+    než kompletní E(U) model je možné zavést heuristiku (např. vybere
+    nepříliš distantní turnaj, pokud očekávaná odměna překročí XY).
+   Model omezených prostředků: Zkombinujeme model rozpočtu s ohledem
+    na vstupy (kauzální finanční omezení). Např. hráč s nízkými prostředky
+    bude mít ve svém „DNA” nastavené pravděpodobnosti či filtry, že na určité
+    akce nepojede, nebo se automaticky nezapíše na domácí akce, které nemá
+    finančně pokryty. Tento přístup může být jednoduše empiricky nastaven
+    (např. víme-li, že X % hráčů mimo top 50 v reálném okruhu navštěvuje
+    méně než Y turnajů ročně), ale opět je problematická kalibrace a možné
+    zdvojení efektů (finanční omezení již reflektuje nižší výdělek, který by se
+    jinak modeloval přes nižší kvalitu).
+   Riziko předčasného ukončení: Formálně vložíme do modelu
+    „pravděpodobnost odchodu“ závislou na finanční situaci. Např. hráč, který
+    za rok vydělal méně než určitou částku X (či utratil více, než vydělal),
+    automaticky končí. Takový mechanismus lze přidat do téměř libovolného
+    modelu rozhodování. Datově se to ale jen těžko ověří (neexistují přesné
+    statistiky, kteří hráči končí hlavně z finančních důvodů). Zjednodušeně by
+    šlo nastavit pravidlo na přibližných expertních datech.
+   Podpora federací a sponzorů: Zavedením externích dotací/federálních
+    grantů do rozpočtu hráče lze simulovat vliv financí mimo PSA. Např. hráči
+    z bohatých squashových zemí (Egypt, Anglie) by dostali extra příspěvek. To
+    lze implementovat jako bonus k rozpočtu či snížení nákladů. Je třeba
+    opatrnosti – nesmí dojít k dvojímu započítání (např. lepší hráč má i lepší
+    federaci a lépe se mu daří, ačkoli by to mohlo být oboje důsledkem jedné
+    příčiny).
+   Ekonomicky podmíněná účast: Namísto „hloupého“ náhodného výběru
+    turnajů založíme model, kdy hráč explicitně porovnává očekávané zisky s
+    náklady. Podobné modely se v literatuře objevují u menších sportů či
+    podniků (podnik se rozhodne, zda investovat do turnaje na základě ROI).
+    Implementovat to lze v rámci rozhodovacího modulu – hráč vybere turnaj,
+<PARSED TEXT FOR PAGE: 8 / 13>
+       jen pokud „zájem“ (nějaká metrika šance x ceny) překročí prahovou
+       hodnotu. Testovat to lze buď diagnosticky (měnit vstupní podmínky a
+       sledovat, jak se mění účast), nebo přidáním váhových parametrů. Riziko –
+       případné přidání příliš mnoha finančních proměnných, pokud už máme
+       model konkurence na trhu.
+
+Empirická identifikovatelnost a složitost: Každý návrh by měl být ohodnocen:
+jak je reálně ověřitelný z dat (můžeme měřit přijaté dotace, porovnávat scénáře)?
+Jak moc zvýší výpočetní náročnost simulátoru? A zda nezdvojuje jiné
+mechanismy (např. investování federace vs vyšší úspěšnost, pokud by to byly dva
+oddělené efekty). V praxi je rozumné začít jednoduše a přidávat složitost až po
+prokázání nevyhovujícího chování stávajícího systému. Pokud aktuální simulace
+(bez financí) dokáže vysvětlit potřebné jevy, není nutné hned přidávat složité
+finanční účty.
+
+
+Audit současného Squash Engine
+Při posuzování aktuálního stavu engine („Masteru“ a kódu) musíme zjistit, jak
+jsou definovány finanční komponenty:
+
+      Finanční úroveň hráče (Financial Level): Z dokumentace (např. v
+       souborech AGENTS.md) vyplývá, jaký parametr hráči ukládají pro finanční
+       situaci. Je třeba ověřit, zda se tento parametr používá v rozhodovacích
+       modelech (Entry AI, plánování kalendáře) nebo je zatím jen „plánovaný
+       cíl“ (target). Zatímco v Master plánu „C“ jsou finance zmíněny, v kódu
+       možná zatím nejsou plně zapojeny.
+      Existující vlivy na hráče: Kde v současné implementaci už finance nějak
+       rolí hrají? Např. platí li se všechna startovné z hráčova rozpočtu? Nebo jsou
+       cestovní náklady implicitně ignorovány? Pokud engine zatím nepřipočítává
+       cestovní nebo trenérské výdaje, hráč se chová tak, jako by byl finančně
+       neomezený.
+      Target vs. Open: Ve specifikacích projektu se mohou nápady rozlišovat na
+       target (chtěné) versus open (aktuálně realizované). Měli bychom
+       zkontrolovat, které finanční mechanismy jsou jen cílem a které jsou reálně
+       hotové. Např. možná je plně definován prize pool u turnajů, ale není nijak
+       vynucen výdaj na hráče.
+      Vazby na rozhodování: Zda engine již přihlíží k financím při rozhodování:
+       kupříkladu zda má hráč automaticky jet na daný turnaj nebo ne, jestli
+       potřebuje poctivější trénink. Pokud v kódu není žádné propojení „pokud
+<PARSED TEXT FOR PAGE: 9 / 13>
+       nemá peníze, neobjednej letenku“, pak tvorba takového modelu by byla
+       nový vývoj. Současný stav engine tedy pravděpodobně implicitně
+       předpokládá, že prize money neomezují účast (není to release blocker, dle
+       zadání).
+      Sankce proti „dvojičce“: Je třeba ujistit se, že nepřidáváme finanční
+       prvky, které by dublovaly jiné mechanismy (např. alternativní počítání
+       priorit pro výběr turnajů a zároveň penalizace za nedostatek financí).
+      Boundary vývoje: Podle instrukcí není cílem ze hry udělat přesnou kopii
+       reality – engine by neměl být v prvních alfa verzích závislý na kompletním
+       finančním modelu. Proto respektujeme, že Prize Money nejsou
+       automaticky povinné (volem minimálních podmínek pro tuto fázi). Audit
+       by měl odhalit, které části skutečného systému je potřeba udržet, a kde
+       naopak řešit ekonomii až později (např. přes jednodušší heuristiky).
+
+
+Vědecké experimenty
+Navrhujeme patnáct experimentů, které lze realizovat v engine (či popsat jako
+diagnózu) zaměřených na ekonomickou rovnováhu a její dopady:
+
+   1. Vliv rozšíření turnajového kalendáře na příjmy hráčů. Hypotéza: Pokud
+      se počet turnajů zvýší bez adekvátního navyšování fondu, mediánové
+      příjmy hráčů klesnou. Data: Simulace dvou scénářů – existující kalendář
+      vs. rozšířený o X turnajů se stejným rozpočtem na události. Falsifikace:
+      Pokud median prize per hráče nevykáže statisticky významný pokles při
+      vyšším počtu turnajů. Provzální: Lze provést změnou parametrů rozšíření
+      kalendáře bez nutnosti zásahů do engine. Rozhodnutí: Pokud potvrdíme, že
+       turnajová expanze zvyšuje nerovnost (jak naznačil Khalil【8†L49-L54】),
+       mohlo by to vést ke zvažování omezujících opatření (např. hraničním
+       počtu hráčů nebo redistribuci prize money).
+
+   2. Efekt přidání fixního stipendu pro hráče mimo top10. Hypotéza:
+      Garance roční podpory (fiktivní federace) pro hráče za žebříčkovými
+      pozicemi 11–100 zvýší jejich účast v turnajích a zpomalí odchod. Data:
+      Potřeba simulovat rozpočty s přidanou konstantní částkou pro vybrané
+      hráče. Falsifikace: Pokud jejich počty účastí a délka kariéry zůstanou stejné.
+      Provzání: Lze implementovat jako „diagnostický“ přídavek do rozpočtů
+      hráčů (momentálně by to vyžadovalo pár kódových zásahů, ale lze
+      uvažovat i odhadem). Rozhodnutí: Jestliže stipendium výrazně prodlouží
+      kariéru a zamezí vypadávání (diagnostický) – naznačí to, že engine
+<PARSED TEXT FOR PAGE: 10 / 13>
+   potřebuje nástroj pro podporu „chudších“ hráčů (nové produktové
+   rozhodnutí: zavedení federálních dotací).
+
+3. Rozdíl regionálního vs. globálního rozpočtu. Hypotéza: Hráči z bohatších
+   zemí (s vyšší domácí ekonomikou) dosahují vyšších příjmů a déle
+   setrvávají ve hře. Data: K simulaci potřebujeme přiřadit různé
+   náklady/výhody na základě země (může vycházet z
+   COUNTRY_ATTRIBUTES). Falsifikace: Pokud simulace neprokáže žádný
+   rozdíl mezi regiony. Provzání: Současný engine pravděpodobně potřeba
+   rozšířit o parametr „regionální podpora“, takže lze zatím jen simulovat
+   externě. Rozhodnutí: Pokud by to pomohlo lépe vysvětlit rozdíly mezi zóny
+   (např. proč více Evropanů ve světové špičce), mohlo by vést k zavedení
+   parametrizovaného rozpočtu podle zemí.
+
+4. Nerovnost v odměnách při koncentrované akci. Hypotéza: Pokud
+   turnaje s nejvyššími odměnami sbírají malé množství hráčů (vysoká
+   koncentrace), medián příjmu zůstane nízký. Data: Porovnat scénář s
+   rozprostřenými odměnami (víc turnajů střední kategorie) vs. s
+   koncentrovanými odměnami v elitních turnajích. Falsifikace: Pokud změní-
+   li se počet turnajů, neroste-li příjmová nerovnost. Provzání: Lze snadno
+   provést jako změnu rozdělení prize money na různé úrovně v engine.
+   Rozhodnutí: Data by ukázala, zda je pro zdraví tour lepší větší počet
+   menších turnajů (nižší inequality) nebo pár velkých.
+
+5. Řízení účasti podle ekonomické rentability. Hypotéza: Pokud hráči
+   selektují turnaje podle maximální očekávané návratnosti (příjem minus
+   náklad), výrazně se mění jejich program a sníží se účast v vzdálených
+   událostech. Data: Modelování, kde hráč uvažuje geografickou vzdálenost a
+   hodnotu prize. Falsifikace: Pokud i s modelem „return-on-investment“
+   dojde ke stejnému výběru turnajů. Provzání: Toto vyžaduje přidat do
+   algoritmu účasti kalkulátor ROI – tedy nové programování. Rozhodnutí:
+   Výsledek rozhodne, zda by engine měl umět počítat náklady a příjmy pro
+   každé rozhodnutí účasti. Pokud ano, bude to výrazné rozšíření.
+
+6. Efekt zvýšených nákladů na cestování. Hypotéza: Uměle zdražíme
+   cestování mezi kontinenty, hráči ze vzdálených zemí zřídka navštěvují
+   turnaje; to prohloubí regionální bubly. Data: Simulace se zdvojnásobenými
+   cestovními náklady. Falsifikace: Pokud se celkové cestovní vzorce nemění.
+   Provzání: V engine by to vyžadovalo přidat parametr nákladu letu; data
+   (zajištěno modelově) by šlo testovat rychle. Rozhodnutí: Test by pomohl
+<PARSED TEXT FOR PAGE: 11 / 13>
+   pochopit, zda dnes engine podceňuje nákladovou bariéru; neměl by to být
+   v první fázi, spíše experimentální modul.
+
+7. Vliv trenérů a podpory (nákladu na tým). Hypotéza: Zavedení reálných
+   nákladů na trenéry a týmy sníží počet hracích turnajů v sezóně u hráčů s
+   průměrným rozpočtem. Data: Potřebujeme modelovat denní sazbu trenéra
+   a započítat do výdajů. Falsifikace: Pokud „nákladový“ hráč nebude turnaje
+   vynechávat. Provzání: Bude vyžadovat rozšíření kódu – doplnění
+   nákladových položek (tedy nové rozhodnutí, technicky náročnější).
+   Rozhodnutí: Pokud by se ukázalo, že model bez trenérů vytváří nereálný
+   počet aktivit, bude to silný argument pro zapracování trenérských nákladů
+   v budoucnu.
+
+8. Efekt institucionálních investic do juniorských programů. Hypotéza:
+   Placený juniorský rozvoj zvyšuje počet hráčů vstupujících do pro-tour, ale
+   sám o sobě nestabilizuje kariéry. Data: Modelováno jako větší „síto“ – vyšší
+   množství hráčů startuje kariéru. Falsifikace: Pokud se počet profesionálů
+   nezvýší. Provzání: Jde o organizační změnu (změna počtů agentů v code,
+   jednoduchý parametr). Rozhodnutí: Experiment by ukázal, zda větší
+   základní „síto“ vede ke skutečnému „glutováni“ trhu nebo jen krátkodobě
+   zvýšené konkurenci.
+
+9. Nerovnost odměňování elitních a nižších hráčů (Edu-Prize
+   skumulativní systém). Hypotéza: Zavedení extra prémií pro top hráče
+   (např. bonusy pro TOP5) výrazně rozšíří mezery v bohatství. Data: Přiřadit
+   dodatečné částky horní třídě a pozorovat rozdělení. Falsifikace: Pokud se
+   strukturálně nerozšíří příjmová rozptyl. Provzání: Jedná se o změnu
+   modelu rozdělení prize (simple implementace). Rozhodnutí: Pokud bonusy
+   nepotlačí celkové příjmy ostatních (což by měly), zvýší se disproporce.
+   Výsledek může rozhodnout, jestli je takový mechanismus v souladu s cíli
+   FAX (pravděpodobně ne).
+
+10. Vlna hromadných konců kariéry kvůli finančním krizím. Hypotéza:
+    Příchozí „šok“ (např. snížení prize money o 20 % náhle ve střed sezóny) by
+    způsobil, že většina slabších hráčů skončí. Data: Post-událostní rozdělení
+    kariér; pozorovat procento, kdo se vrátil. Falsifikace: Pokud se žádné
+    hromadné exity neprojeví. Provzání: Simulace snížení fondu – jednoduché
+    nastavení. Rozhodnutí: Jde o diagnostický test stability systému; pokud
+    jsme robustní i v krizi, model je silný.
+<PARSED TEXT FOR PAGE: 12 / 13>
+11. Model „dvou úrovní“ soutěže (elitní vs. oběžný“. Hypotéza: Pokud
+    engine vytvoří jasné oddělení mezi elitou (plnící entry limit kvóta živobytí)
+    a ostatními (žijícími na dně), odráží to reálnou strukturu. Data: V rámci
+    simulace sledujeme kolik hráčů vydělává pod hranicí subsistence.
+    Falsifikace: Pokud se liší od očekávané poměru (většina příjmů jde skupině
+   ~10 % hráčů【8†L49-L54】). Provzání: Součástí dat lze použít Khalilův EWS
+   model (9 indikátorů). Rozhodnutí: Pomůže ověřit, zda model (s aktuálními
+   parametry) už generuje sledovaný efekt, či zda je nutné přidat
+   heterogenitu ve financích do systému.
+
+12. Experiment s různou strukturou odměn (více menších vs. méně
+    velkých turnajů). Hypotéza: Více turnajů s nižšími fondy vytvoří menší
+    extrémy výdělků (nižší Gini) než málo turnajů s obrovskými fondy. Data:
+    Simulace v duálních scénářích při zachování celkového objemu.
+    Falsifikace: Pokud Gini (nebo jiné míry nerovnosti) nevykážou změnu.
+    Provzání: Stačí upravit nastavení plánovače turnajů (počet vs. velikost).
+    Rozhodnutí: Pokud by méně extrémní rozdělení vyústilo v udržitelnější
+    kariéry širší vrstvy, může se to stát jedním z ekonomických principů FAXu
+    (rozhodnutí pro politiku turnajů).
+
+13. Access to development opportunities (junioři vs. sami). Hypotéza:
+    Zvýšená podpora (akademie, stipendia) juniorům znevýhodňuje
+    svobodnější hráče (výsledky se polarizují). Data: Simulovat různé podíly
+    rosteru vybraných do „programu“. Falsifikace: Pokud se procento
+    úspěšných hráčů v dlouhodobém horizontu nezvýší. Provzání:
+    Konceptuálně by to bylo nové – v engine zatím není explicitní vývojový
+    program. Rozhodnutí: Pokud konzistentně vychází, že „talentované“ kanály
+    pomáhají jen pár vyvoleným, mohlo by to být argumentem proti orientaci
+    pouze na akademie.
+
+14. Dlouhodobý „kreditní rating“ hráče. Hypotéza: Zavedeme-li model, kde
+    hráč po ztrátě určité částky (dluhu) automaticky končí (simuluje bankrot),
+    zjistíme kritické body ceny kariéry. Data: Počet career breaks proti počtu
+    ztracených dolarů. Falsifikace: Pokud prakticky všichni stále pokračují, i
+    když jsou ve velkém mínusu. Provzání: Vyžaduje novou proměnnou „dluh“
+    a pravidlo jeho ukončení – středně náročné. Rozhodnutí: Tento
+    diagnostický model odhalí, zda současný engine umí přirozeně ukazovat
+    vypořádávání se s deficitem.
+<PARSED TEXT FOR PAGE: 13 / 13>
+   15. Stabilita kariéry se silnou podporou elit. Hypotéza: Pokud horní % hráčů
+       dostane výrazně navýšené příjmy (sponzoringem či bonusy) a dno zůstane
+       stejné, model zobrazí ještě větší rozdíly v délce kariéry. Data: Délky kariér
+       napříč simulací, porovnání normálu vs. „elitní podpora“. Falsifikace: Jestli
+       všechny skupiny odcházejí ve stejných poměrech. Provzání: Jedná se o
+       nastavování různých stupňů podpory v rozpočtu – v rámci stávajících dat
+       by šlo provést “manuálně” (změna parametrů). Rozhodnutí: Pokud to
+       prokáže, že „pumpování“ bohatého vrchu nezvyšuje dlouhodobě
+       udržitelnost soutěže, poučí nás to o rizicích nevyvážených investic a
+       potřebě produktových rozhodnutí pro restrikci.
+
+
+Závěr
+Vypracovaná zpráva shrnuje ekonomickou realitu profesionálního squashe a její
+dopad na kariéry hráčů, analyzuje strukturu prize money, příjmy a výdaje
+sportovců a porovnává altern. scénáře ve FAX. Dále nabízí modelové varianty
+ekonomického rozhodování sportovců a kriticky ověřuje aktuální implementaci
+ekonomických faktorů ve Squash Engine. Přiložená série experimentů má za cíl
+empiricky testovat, jak finance ovlivňují účast a udržitelnost kariéry, a navrhuje
+metody pro jejich simulaci. Všechny závěry jsou podloženy dostupnou literaturou
+a daty (viz citace), s důrazem na vyloučení zbytečných komplexit, dokud nejsou
+empiricky nutné.
+
+Zdroje: Rešerše zahrnuje akademické studie (např. Khalil 2026【8†L39-L47】),
+oficiální i mediální publikace PSA【36†L40-L47】【57†L342-L350】 a
+komparativní zdroje z ekonomiky tenisu【70†L65-L74】 a jiných sportů. Hlavní
+důraz je kladen na kvantifikaci a validaci tvrzení, nikoli jen opis statických údajů.
+
+----- END AVAILABLE SEARCHABLE RESEARCH TEXT -----

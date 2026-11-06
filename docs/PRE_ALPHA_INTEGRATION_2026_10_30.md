@@ -1,4 +1,24 @@
-# FAX source-sized player Draw candidate — 6 November 2026
+# Saved-bound FAX feeder kernel candidate — 6 November 2026
+
+Merged base `7620b89ab53b93780216955a72bd5e4c91f6d691` preserves #1745 exactly.
+This continues the same evidence map and adds no release requirements.
+
+| Boundary | Candidate implementation / proof | Still not established |
+| --- | --- | --- |
+| Source frozen before play | `SavedFaxKnockoutFeederService` authenticates an explicit current Saved head; reads its Calendar, Draw/Input and clock. Real explicit owner Save, connection reopen, stale/corrupt source rejection, original-source reload after a later Save and live-edit isolation tests | Materialized native-fork continuation and versioned native execution adoption |
+| Canonical node/feeder graph | `project_canonical_draw_nodes` reuses the legacy BYE/Q resolver without fabricating a MatchPackage. All 80 source topologies produce Gold35/Platinum51 real nodes and eight non-played BYE advances | Native slot/day/rest scheduling and complete source awards |
+| Actual Q/Main progression | Stateless existing-continuation projection checks owners, exact ordered feeder participants, stable seeds, chronology and the whole Qualification barrier. Actual MatchEngine component tests play both complete brackets and apply existing effects | No native v4 ledger persistence, public Next Match/Next Slot or ranking/season claim |
+| Historical determinism | New seed contract excludes technical revision/command labels and unrelated Calendar metadata. Four legacy Main/Q/BYE topology payloads match prechange fingerprints byte-for-byte | Full reference-season / 50-season replay remains a release gate |
+
+`feeder_dependencies_only` and `native_slot_execution_ready=false` are explicit.
+No second result ledger, new eligibility/award calibration, source Package change,
+implicit Save, old seed rewrite, widened legacy index or removed Main4/8 guard.
+Follow with the native versioned consumer and its real HTTP/SQLite/browser gate;
+final-head scoped checks and owner merge are required for this candidate.
+
+---
+
+# Historical source-sized player Draw — merged as #1745
 
 Base `buuk` `1800697b978a33f6895d2e6a3fa3e77bfb066954`; #1744 is owner-merged.
 This extends the existing requirement/evidence map, not the approved release scope.

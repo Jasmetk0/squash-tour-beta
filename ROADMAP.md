@@ -1,4 +1,27 @@
-# Current dependency checkpoint — 6 November 2026
+# Current dependency checkpoint after #1745 — 6 November 2026
+
+Base `buuk` `7620b89ab53b93780216955a72bd5e4c91f6d691` includes owner merge #1745.
+The next bounded candidate adds Saved-bound initial Draw feeder plans and a
+stateless existing-ledger projection. Actual MatchEngine component proofs cover
+Gold35/Platinum51; explicit Save/reopen/source-isolation has real SQLite evidence.
+This still does not enable the native public Q/Main execution path.
+
+1. Review the feeder kernel on its final head, keeping ATP package Drafts separate.
+2. Integrate with **versioned native Edition / frozen global-slot / terminal result**
+   contracts. Keep existing result ownership; preserve legacy schemas, seed paths,
+   shared snapshot inputs, partial Next Match handling and explicit Save/restart.
+   Consume real Q winners through the established node plan, not fake Main entries.
+3. Audit source-bound operational scheduling and existing Entry/complete award
+   prerequisites. Prove one actual public Gold/Platinum Run flow, then multiple
+   Editions/full season/Finals/transition and the required 50-season recovery and
+   performance gates. Feeder readiness is not sporting authorization or release.
+
+The complete Master scope remains. The single requirement/evidence map stays in
+[the integration checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
+
+---
+
+# Historical checkpoint before #1745 merge
 
 Base `buuk` `1800697b978a33f6895d2e6a3fa3e77bfb066954` includes the owner merge
 of #1744; frontend baseline repair is complete. The source-sized player Draw

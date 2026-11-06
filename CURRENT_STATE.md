@@ -1,4 +1,38 @@
-# Source-sized FAX player Draw candidate — 6 November 2026
+# Saved-bound FAX feeder kernel candidate — 6 November 2026
+
+Current merged base: `buuk` **`7620b89ab53b93780216955a72bd5e4c91f6d691`**
+(owner merge of #1745). Its tree exactly preserves the reviewed player Draw.
+The next candidate derives immutable initial feeder plans from an explicit,
+hash-verified Branch-owned Saved head, its copied Calendar and saved Draw/Input.
+Unsaved live Draws cannot supply that plan; later live edits do not reinterpret it.
+Reload authenticates the original reachable source after further explicit Saves,
+rejecting unreachable or altered serialized plans instead of rebinding to new data.
+
+The canonical node planner shares the existing legacy BYE/Q resolver. It emits
+35 actual Gold match nodes or 51 Platinum nodes; eight BYE nodes are advances,
+not MatchResults. A stateless projection consumes existing continuation records,
+requires the complete Qualification before Main, resolves exact Q1–Q4 opponents,
+and rejects foreign, duplicate, premature, stale-source and wrongly seeded records.
+It does not own a second ledger. New seed v1 uses the saved draw seed, Edition,
+season and canonical node; old native seeds and old topology bytes are unchanged.
+
+Kernel tests play actual MatchEngine Gold35/Platinum51, preserve frozen wave
+inputs, apply existing player effects, and check opposite acceptance order.
+Real SQLite tests explicitly Save/reopen, reject stale heads/corruption and prove
+isolation from changed live data. This is component/kernel + Saved-source evidence,
+**not a native Next Slot/Next Match, season or ranking release pass**. Readiness is
+explicitly `feeder_dependencies_only`, with native execution still false.
+
+Next: bind this plan to versioned native Edition/global-slot/result models and
+existing v13 result ownership, then prove real public Save/resume/restart and
+existing Entry/award/schedule prerequisites. Do not widen legacy match indexes or
+remove the Main4/8 guard. No sporting canon, calibration, Package or Master change.
+ATP package Drafts #1731 → #1741 → #1742 remain separate and untouched. Final-head
+hosted gates and owner merge remain required. See the existing evidence checkpoint.
+
+---
+
+# Historical source-sized player Draw — merged as #1745
 
 Current merged base: `buuk` **`1800697b978a33f6895d2e6a3fa3e77bfb066954`**
 (owner merge of #1744). The complete frontend regression repair is merged; the

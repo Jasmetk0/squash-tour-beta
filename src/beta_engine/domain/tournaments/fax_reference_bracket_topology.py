@@ -120,6 +120,16 @@ class FaxReferenceBracketTopology(BaseModel):
         links = self.main.qualifier_placeholder_ids
         if tuple(x.section_id for x in self.qualification_sections) != links:
             raise ValueError("Qualification bracket winners must bind exact Main Q links")
+        if self.main.nodes != _build_nodes(self.source_event_id, "main", self.main.bracket_capacity):
+            raise ValueError("Main feeder graph differs from its canonical source nodes")
+        for ordinal, section in enumerate(self.qualification_sections):
+            expected = _build_nodes(
+                self.source_event_id, "qualification", section.bracket_capacity,
+                section_id=section.section_id, section_ordinal=ordinal,
+                section_count=len(self.qualification_sections),
+            )
+            if section.nodes != expected:
+                raise ValueError("Qualification feeder graph differs from its canonical source nodes")
         all_nodes = (*self.main.nodes, *(
             node for section in self.qualification_sections for node in section.nodes
         ))

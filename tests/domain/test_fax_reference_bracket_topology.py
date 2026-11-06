@@ -224,3 +224,16 @@ def test_capacity_preserves_real_entrants(actual,expected):
 def test_capacity_rejects_invalid_inputs(bad):
     with pytest.raises(ValueError, match="2..128"):
         bracket_capacity(bad)
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize('scope', ['main', 'qualification'])
+def test_deserialized_topology_rejects_foreign_feeders_even_with_original_node_ids(fax_calendar, scope):
+    gold = next(e for e in fax_calendar.events if e.main_draw_size == 24)
+    shape = build_fax_reference_bracket_topology(gold)
+    payload = shape.model_dump(mode='json')
+    graph = payload['main'] if scope == 'main' else payload['qualification_sections'][0]
+    # Valid counts/IDs do not authenticate a feeder outside the source graph.
+    graph['nodes'][0]['source_top'] = 'winner:foreign-edition:unreachable'
+    with pytest.raises(ValueError, match='canonical source nodes'):
+        FaxReferenceBracketTopology.model_validate(payload)

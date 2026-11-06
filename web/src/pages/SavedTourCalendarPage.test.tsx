@@ -92,6 +92,17 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(screen.queryByRole('link',{name:'View results'})).not.toBeInTheDocument()
     expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
   })
+  it('rejects a forged published result with no actual champion or finalist identity',async()=>{
+    const inconsistent=fixture()
+    inconsistent.editions[0].result_published=true
+    api.getSavedTourCalendar.mockResolvedValue(inconsistent)
+    mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list')
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Calendar response does not match the selected Run/Branch/revision/season.')
+    expect(screen.queryByRole('link',{name:'Brno Open'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Download JSON with source and filters'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('link',{name:'View results'})).not.toBeInTheDocument()
+  })
   it('rejects stale response revisions without displaying any edition',async()=>{
     const f=fixture();f.saved_revision_id='some-other-revision'
     api.getSavedTourCalendar.mockResolvedValue(f)
@@ -150,7 +161,8 @@ describe('Run Saved Tour 61-week calendar',()=>{
 
 
   it('searches by accent-insensitive title and filters published results without another Saved read',async()=>{
-    const f=fixture()
+    // A published result requires exact distinct champion/finalist IDs.
+    const f=fixture([[0,'P-ALPHA','P-BETA']])
     f.editions[0].event_name='Brněnský Open'
     f.editions[0].host_city='Brno'
     f.editions[0].result_published=true
@@ -243,8 +255,7 @@ describe('Run Saved Tour 61-week calendar',()=>{
     expect(api.getSavedTourCalendar).toHaveBeenCalledTimes(1)
   })
   it('links only actually published saved Editions directly to Results while preserving scoped filters',async()=>{
-    const data=fixture()
-    data.editions[0].result_published=true
+    const data=fixture([[0,'P-ALPHA','P-BETA']])
     api.getSavedTourCalendar.mockResolvedValue(data)
     mount('/admin/runs/run-a/tour/calendar?branch=branch-a&revision=rev-old&season=2&view=list&week=5&country=CZE&q=keep')
     expect(await screen.findByRole('link',{name:'Brno Open'})).toBeInTheDocument()

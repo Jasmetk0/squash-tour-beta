@@ -1,0 +1,70 @@
+name: Pre-alpha FAX Native 80-Edition Playability Gap Audit
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'tools/audit_fax_native_playability.py'
+      - 'tests/tools/test_fax_native_playability.py'
+      - 'docs/FAX_80_NATIVE_PLAYABILITY_GAP_2026_11_01.md'
+      - '.github/workflows/prealpha-fax-native-playability-audit.yml'
+      - 'src/beta_engine/application/pre_alpha_fax_acceptance_calendar_source.py'
+      - 'src/beta_engine/domain/tournaments/calendar_tour.py'
+      - 'src/beta_engine/application/season_category_points_service.py'
+      - 'config/tournament_templates/**'
+      - 'config/points/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fax-native-source-audit-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  full-source-read-only-audit:
+    name: All 80 original FAX source Editions against production native executor
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: python -m pip install -e . pytest
+      - name: Adversarial and actual 80-source contracts
+        run: python -m pytest tests/tools/test_fax_native_playability.py -vv --maxfail=1
+      - name: Produce truthful incomplete-release JSON without changing authority
+        shell: bash
+        run: |
+          set +e
+          python -m tools.audit_fax_native_playability --output "$RUNNER_TEMP/fax-native-playability.json"
+          code=$?
+          set -e
+          if [ "$code" -ne 2 ]; then
+            echo "Expected unresolved structural FAX/native gate code 2, got $code"
+            exit 1
+          fi
+          python - "$RUNNER_TEMP/fax-native-playability.json" <<'PY'
+          import json,sys
+          data=json.load(open(sys.argv[1],encoding="utf-8"))
+          assert data["schema_version"]=="fax_native_playability_gap_audit.v1"
+          assert data["source_edition_count"]==80
+          assert data["structurally_blocked_edition_count"]>0
+          assert data["playability_certified"] is False
+          assert data["actually_played_edition_count_proven"]==0
+          assert data["blocker_counts"]["main_field_not_supported_by_native_v2_executor"]>0
+          assert data["blocker_counts"]["qualification_structure_not_modelled_by_native_v2"]>0
+          print("PASS: exact source contains 80 Editions, release gap remains honestly BLOCKED.")
+          PY
+      - name: Preserve original-source blocker matrix
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fax-native-playability-gap-${{ github.run_id }}
+          path: ${{ runner.temp }}/fax-native-playability.json
+          if-no-files-found: warn
+          retention-days: 14

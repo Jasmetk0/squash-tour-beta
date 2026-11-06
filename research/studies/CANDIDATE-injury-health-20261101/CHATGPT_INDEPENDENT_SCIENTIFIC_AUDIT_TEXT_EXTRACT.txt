@@ -1,0 +1,1730 @@
+# ChatGPT Deep Research R005 — independent scientific audit of Gemini injury/health study
+
+Source: original user-supplied DOCX "SQUASH ENGINE — Nezávislý vědecký audit R005_ epidemiologie zranění, Health a Return to Play.docx" (44 pages, received 2026-11-01).
+
+Status: INDEPENDENT AI RESEARCH AUDIT, source-cited but NOT a product rule, clinical calibration or exhaustive external peer review.
+Fidelity warning: searchable text extraction only. The original Word file is NOT committed; embedded formulas, figures, page layout, footnotes, and complex tables may be degraded. The report itself disclosed that the reviewer saw a text-only extract of the original Gemini DOCX, not the original Gemini file. Thus its equation-layout checks are limited. Consult both original user-supplied DOCX files before any formula or quantitative policy adoption.
+Authority: Master/current owner decisions always take precedence. Preserve historical FAX rules, Health V1 and owner-only merge workflow.
+
+----- BEGIN FULL AVAILABLE TEXT EXTRACTION -----
+
+<PARSED TEXT FOR PAGE: 1 / 44>
+SQUASH ENGINE — Nezávislý vědecký audit
+R005: epidemiologie zranění, Health a Return to
+Play
+Executive Summary a rámec auditu
+Závěr auditu
+Původní Gemini výzkum obsahuje několik správných a užitečných stavebních
+prvků, ale v současné podobě není dostatečně spolehlivým podkladem pro
+numerickou kalibraci zdravotního systému profesionálních mužských
+squashistů. Největší problém není v tom, že by navržená matematika byla
+obecně chybná. Problém je, že řada parametrů je navázána na data, která
+pocházejí z jiných populací, používají nekompatibilní jmenovatele nebo vůbec
+neposkytují potřebný čas v riziku. To platí zejména pro převod McCartney et al.
+na roční hazard, pro odhad 1,2–1,8 zranění za rok, pro použití Rejebových
+severity kategorií jako squashového modelu rekonvalescence a pro několik
+benchmarků v EXP-01 až EXP-16. [1]
+
+Nejsilnější nezávislý závěr z epidemiologie je negativní, ale pro projekt velmi
+důležitý: z dnes dohledaných publikovaných dat nelze věrohodně odhadnout
+absolutní roční incidenci zranění dospělého profesionálního mužského
+squashisty. Horsley et al. mají nejrelevantnější elitní populaci, ale neposkytují
+spolehlivý počet hráčských let ani celkové tréninkové a soutěžní hodiny; Rejeb et
+al. mají skutečný exposure denominator, ale pouze u adolescentních mužů ve
+věku 12–18 let; McCartney et al. sdružují navzájem velmi odlišné populace a typy
+studií a sami konstatují extrémní heterogenitu a nemožnost určit definitivní
+incidenci pro konkrétní populaci. [1]
+
+Pro pre-alphu proto doporučuji nezavádět nový kalibrovaný náhodný injury
+generator pouze na základě těchto studií. Současný Health V1 už má podstatnou
+část potřebné doménové struktury: Injury/Illness, životní cyklus záznamů,
+recurrence vazby, recovery windows, permanent consequences, historickou
+identitu podle run/branch/week a health projekci do zápasu. Match projection
+přitom výslovně deklaruje numeric_effect_applied = False a označuje numerické
+limitation effects, health checks a rozhodování o start/WO/RET za nepodporované
+komponenty. Jinými slovy: současný engine správně uchovává zdravotní fakta,
+<PARSED TEXT FOR PAGE: 2 / 44>
+ale zatím z nich nevymýšlí neověřenou numerickou výkonnostní penalizaci.
+[2]
+
+Největší vědeckou hodnotu Gemini návrhu mají principy, nikoli jeho čísla:
+exposure-aware uvažování, oddělení akutní únavy od zdravotních stavů, důraz
+na recidivy, explicitní návratovou posloupnost a izolaci RNG. Naopak frailty,
+tissue-specific latent vulnerability, semi-Markovská rekonvalescence a složité
+competing-risk hazardy jsou nyní předčasně parametrizované koncepty. Jsou
+matematicky legitimní, ale dostupná squashová data neumožňují jejich
+identifikaci. Přidání takové komplexity by zvýšilo počet skrytých parametrů a
+riziko dvojího započítání účinků, aniž by prokazatelně zvýšilo realismus. [3]
+
+Důležitá je také oprava fyziologické části. Studie Girard et al. skutečně naměřila v
+elitním squashi průměrně přibližně 86 % VO₂max a 92 % HRmax. Číslo 86 % se
+však vztahuje k VO₂max, nikoli k „86 % kritické maximální teploty tělesného
+jádra“. Taková interpretace je věcně chybná. Starší squashové studie naměřily
+rektální teploty kolem 39 °C, ale nic z toho neopravňuje převádět procenta
+VO₂max, HRmax ani teplotu na pravděpodobnost zranění. [4]
+
+Bernský konsenzus z roku 2016 je správně použitelný k definování tří různých
+fází návratu — Return to Participation, Return to Sport a Return to Performance.
+Není však empirickou tabulkou rekonvalescence a neprokazuje, že squashista
+potřebuje určitý počet týdnů nebo turnajů k obnovení Form. Return to
+Performance je definovaný stav, nikoli záruka, že každý sportovec předchozí
+úrovně skutečně znovu dosáhne. [5]
+
+Zdrojově-kritické omezení
+Primárním předmětem požadavku je původní 59stránkový DOCX. V aktuálně
+dostupném repozitáři však PR #1709 obsahuje textovou extrakci a předběžný
+audit, nikoli samotný originální DOCX; archiv sám upozorňuje, že rovnice,
+tabulky a grafy mohou být při extrakci poškozeny. Proto lze nezávisle auditovat
+vědecké výroky, citace, čísla, logiku modelů a implementační stav, ale nelze s
+plnou jistotou potvrdit každý typografický detail rovnic, tabulkových záhlaví a
+grafů oproti originálnímu DOCX. To je skutečné omezení tohoto auditu, ne důvod
+k přebírání textové extrakce jako autority. [6]
+
+Předběžný audit z PR #1709 byl použit pouze jako seznam tvrzení k prověření.
+Jeho hlavní kritické body — chybná interpretace „86 %“, smíšená populace
+Horsley, mládežnická populace Rejeb, extrémní heterogenita McCartney a
+existence Health V1 bez numerické kalibrace — se při nezávislém ověření
+ukázaly jako substantivně správné. [7]
+<PARSED TEXT FOR PAGE: 3 / 44>
+Celkové hodnocení hlavních tvrzení Gemini
+Tvrzení Gemini         Nezávislý verdikt   Důvod
+Squash je vysoce       OVĚŘENO, ale z      Girard et al.: 7
+intenzivní sport s     malé studie         elitních hráčů; 86 ± 9
+hodnotami kolem 86                         % VO₂max, 92 ± 3 %
+% VO₂max a 92 %                            HRmax. [8]
+HRmax
+„86 % kritické         CHYBNÉ              86 % se vztahuje k
+maximální teploty                          VO₂max, nikoli k
+tělesného jádra“                           teplotě. Squashové
+                                           studie uvádějí
+                                           rektální teploty
+                                           přibližně kolem 39
+                                           °C, nikoli procento
+                                           „kritického
+                                           maxima“. [4]
+McCartney: 12 studií   OVĚŘENO             Autoři explicitně
+celkem, 8 v meta-                          uvádějí 12
+analýze                                    zahrnutých studií a
+                                           k=8 v random-effects
+                                           analýze. [9]
+McCartney: 0,74        ARITMETICKY         2,01 × 365 / 1000 =
+zranění / 365 athlete- OVĚŘENO             0,734; CI se převádí
+days = 2,01 / 1000                         analogicky.
+athlete-days                               Epidemiologická
+                                           interpretace je však
+                                           problematická. [9]
+Pooled McCartney       NEPROKÁZÁNO /       Populace sahají od
+rate lze použít jako   NEDOPORUČENO        adolescentů po
+hazard                                     obecnou populaci,
+profesionálního                            retrospektivní
+muže                                       průzkumy a
+                                           nemocniční registry;
+                                           I²=99,65 %. [9]
+Horsley: 67            OVĚŘENO             45 mužů, 22 žen;
+profesionálů, 592                          2004–2015. [10]
+zranění
+<PARSED TEXT FOR PAGE: 4 / 44>
+Tvrzení Gemini           Nezávislý verdikt   Důvod
+Horsley podporuje        NEPROKÁZÁNO         Chybí person-years i
+1,2–1,8 zranění/rok                          celkové exposure
+pro aktivního                                hours; roster se v
+profesionála                                 čase měnil. Číslo
+                                             není
+                                             identifikovatelné z
+                                             publikovaných
+                                             agregátů. [11]
+Rejeb: squash 8,5        OVĚŘENO PRO         Squashová
+zranění / 1000 h         ADOLESCENTY         podskupina n=18,
+                                             muži 12–18 let. [12]
+Rejeb: 53 % / 34,4 % /   CHYBNÉ              Jde o celý
+13 % je severity mix                         multisportovní
+squashistů                                   soubor 166
+                                             adolescentů, nikoli
+                                             squashovou
+                                             podskupinu. [13]
+Rejeb: 87 % TL / 13 % NEPROKÁZÁNO            Poměr je za celou
+NTL lze použít pro                           mládežnickou
+profesionální squash                         multisportovní
+                                             kohortu. [14]
+Lower-limb               POMĚRNĚ SILNĚ       Horsley: 76,48 %
+dominance                PODPOŘENO           všech evidovaných
+profesionálního                              zranění dolní
+squashe                                      končetiny. [10]
+Akutní                   OVĚŘENO             U 10 trénovaných
+neuromuskulární                              hráčů po 1h zápase
+únava po                                     pokles MVC o 16 % a
+squashovém zápase                            známky centrální i
+                                             periferní únavy. [15]
+Přesná multi-day         NEPROKÁZÁNO         Akutní fatigue studie
+recovery window po                           nedává obecný
+profesionálním                               profesionální
+utkání                                       recovery
+                                             distribution. [15]
+Bern consensus           OVĚŘENO             Jde o explicitní
+<PARSED TEXT FOR PAGE: 5 / 44>
+Tvrzení Gemini         Nezávislý verdikt     Důvod
+podporuje                                    continuum návratu.
+RTP/RTS/RTPf                                 [5]
+rozlišení
+Bern consensus         NEPODPORUJE           Konsenzus definuje
+podporuje „2–4                               rozhodovací rámec,
+turnaje do obnovení                          nikoli squashový
+Form“                                        počet turnajů ani
+                                             Form model. [5]
+Sophistikovaný         NEPROKÁZÁNO           Matematicky možný,
+semi-Markov/frailty                          empiricky
+model je nutný pro                           neidentifikovatelný
+pre-alphu                                    z dostupných
+                                             squashových dat;
+                                             Health V1 již řeší
+                                             základní stavovou
+                                             historii. [16]
+
+Epidemiologie a numerické přepočty
+McCartney, Fallon & Heron: co studie skutečně ukazuje
+McCartney et al. provedli systematický přehled zahrnující 12 studií, přičemž do
+vlastní random-effects meta-analýzy vstoupilo 8 studií, které podle autorů
+současně poskytovaly počet squashistů, počet squashových zranění a délku studie
+ve dnech. Použili Sidik–Jonkman odhad mezi-studijní variance a Hartung–Knapp
+úpravu. Pooled estimate byl 0,74 zranění na 365 athlete-days, 95% CI 0,26–2,07,
+ekvivalentně 2,01 na 1000 athlete-days, 95% CI 0,72–5,67. Heterogenita byla
+I²=99,65 %, Q(7)=1892,2864, p<0,0001 a τ²=1,5149. [9]
+
+Převod jednotek je interně konzistentní:
+
+
+
+a interval
+
+
+
+Zaokrouhlením tedy přesně vzniká 0,74 (0,26–2,07) na 365 athlete-days. Toto je
+ale pouze převod jednotek event rate, nikoli důkaz, že 0,74 je roční riziko
+jednoho profesionálního squashisty. [9]
+<PARSED TEXT FOR PAGE: 6 / 44>
+Klasický vztah dává ze zveřejněného a přibližně 99,63 %. To je substantivně
+totožné s publikovanými 99,65 %; drobný rozdíl může vzniknout z
+nezaokrouhlených interních hodnot nebo konkrétní implementace. Bez
+původního modelového výstupu či skriptu však nelze z publikované tabulky
+přesně reprodukovat každý interní krok odhadu τ² a Hartung–Knapp intervalu.
+[9]
+
+Interpretace I² vyžaduje opatrnost. Hodnota kolem 99,65 % neříká, že „99,65 %
+zranění je vysvětleno rozdíly mezi populacemi“ ani že biologická variabilita
+hráčů je 99,65 %. Znamená, že mezi-studijní variabilita odhadů je vzhledem k
+očekávané sampling error extrémně vysoká. Sami autoři uvádějí jako příčiny
+rozdílné populace, designy, definice zranění a regionální kontexty a uzavírají, že
+definitivní injury rate pro konkrétní populaci z dostupných dat nelze stanovit. [9]
+
+Ještě zásadnější je otázka konstrukce „athlete-days“. Podmínkou zařazení do
+meta-analýzy byl počet sportovců, počet zranění a kalendářní délka studie. To
+neznamená, že výsledný součin počet osob × kalendářní dny je skutečný
+sledovaný čas v riziku. U kohort s měnícím se členstvím, retrospektivních survey
+a zejména klinických nebo nemocničních registrů je tento předpoklad
+epidemiologicky problematický. [9]
+
+To je obzvlášť důležité u studií Eime a Chard. Pokud studie pracuje s pacienty či
+evidovanými případy, počet zaznamenaných zraněných osob není automaticky
+počtem všech squashistů, kteří byli v daném období v riziku. Vynásobit počet
+případů délkou klinického registru proto nevytváří validní person-time
+denominator. McCartney sami rozlišují mezi prospektivními kohortami,
+retrospektivními surveys, klinickými záznamy a hospital data, což potvrzuje, že
+základní designy nejsou ekvivalentní. [9]
+
+Osm meta-analyzovaných studií zahrnovalo studie Sankaravel, Horsley,
+Okhovatian, Eime, Rejeb, Meyer, Parkkari a Chard. Celý soubor 12 studií navíc
+zahrnoval další rekreační, klubové či specificky zaměřené práce. McCartney
+výslovně shrnují populace jako elitní profesionály, elitní adolescenty, indické
+klubové hráče, mladé malajsijské hráče a obecnou finskou populaci. Taková směs
+nemá jeden přirozený cílový estimand odpovídající dospělému profesionálnímu
+muži ve FAX. [9]
+
+Nezávislý přepočet athlete-days
+Z hodnot uvedených v McCartneyho tabulce lze reprodukovat jednotlivé
+konstruované rates. Výsledek ale musí být čten jako kontrola jejich aritmetiky,
+nikoli jako validace jmenovatele.
+<PARSED TEXT FOR PAGE: 7 / 44>
+                                                       Epidem
+                         Konstr              Přepoč    iologick
+               Kalend   uované              et /1000   ý
+                 ářní   athlete-            athlete-   problé
+Studie    N       dny      days Zranění         days   m
+Horsley   67     4015   269 005      592      2,201 Ne
+                                                    všichni
+                                                    hráči
+                                                    byli
+                                                    sledová
+                                                    ni po
+                                                    všech
+                                                    11 let;
+                                                    roster
+                                                    se
+                                                    měnil.
+                                                    [17]
+Rejeb     18     1610    28 980   ≈153 v     ≈5,28 Primár
+                                  sekund           ní
+                                     ární          studie
+                                  extrakc          měří
+                                        i          expozic
+                                                   iv
+                                                   hodiná
+                                                   ch a
+                                                   individ
+                                                   uální
+                                                   délky
+                                                   follow-
+                                                   up se
+                                                   liší; 18
+                                                   adolesc
+                                                   entních
+                                                   squashi
+                                                   stů. [18]
+Sankar    60      365    21 900       50      2,283 Retrosp
+avel                                                ektivní/
+                                                    roční
+<PARSED TEXT FOR PAGE: 8 / 44>
+                                                     Epidem
+                         Konstr            Přepoč    iologick
+               Kalend   uované            et /1000   ý
+                 ářní   athlete-          athlete-   problé
+Studie    N       dny      days Zranění       days   m
+                                                     rámec
+                                                     není
+                                                     totéž
+                                                     jako
+                                                     skutečn
+                                                     ý
+                                                     playing
+                                                     exposu
+                                                     re. [9]
+Okhova   52       730    37 960     91      2,397 Dvoulet
+tian                                              ý recall;
+                                                  kalendá
+                                                  řní dny
+                                                  nejsou
+                                                  herní
+                                                  hodiny.
+                                                  [9]
+Meyer    106       28     2 968     48     16,173 Krátké
+                                                  observa
+                                                  ční
+                                                  okno a
+                                                  jiná
+                                                  populac
+                                                  e. [9]
+Parkka   27       365     9 855     17      1,725 Populač
+ri                                                ní
+                                                  kontext
+                                                  není
+                                                  profesi
+                                                  onální
+                                                  tour.
+                                                  [9]
+Eime     389     2190   851 910    389      0,457 Klinick
+<PARSED TEXT FOR PAGE: 9 / 44>
+                                                             Epidem
+                               Konstr              Přepoč    iologick
+                     Kalend   uované              et /1000   ý
+                       ářní   athlete-            athlete-   problé
+Studie          N       dny      days Zranění         days   m
+                                                             é/
+                                                             hospita
+                                                             l cases
+                                                             nejsou
+                                                             denomi
+                                                             nator
+                                                             celé
+                                                             populac
+                                                             ev
+                                                             riziku.
+                                                             [9]
+Chard         372      2920      1 086      372      0,342 Klinick
+                                   240                     ý
+                                                           record
+                                                           sample
+                                                           není
+                                                           všechn
+                                                           a
+                                                           expose
+                                                           d
+                                                           populat
+                                                           ion. [9]
+
+Pro těchto osm řádků je prostý součet 1712 událostí / 2 308 818 konstruovaných
+athlete-days ≈ 0,742 události / 1000 athlete-days. To není random-effects pooled
+estimate McCartney 2,01 /1000 athlete-days; je to jen crude aggregate rate.
+Numerická podobnost hodnoty 0,742 s jejich 0,74 na 365 athlete-days je
+náhodná, protože jde o jiné jmenovatele. Random-effects model dává každé studii
+jinou efektivní váhu a výsledná 2,01/1000 je s 0,74/365 interně konzistentní. [9]
+
+Tato kontrola je důležitá i pro simulační návrh. Pooled event rate nelze vložit do
+Health enginu jako „pravděpodobnost zranění za rok“. K tomu by bylo potřeba
+vědět, jak je hazard svázán s aktivní herní/tréninkovou expozicí, jaké události se
+započítávají, zda se opakovaná zranění jednoho hráče berou jako nezávislá a jak
+<PARSED TEXT FOR PAGE: 10 / 44>
+se mění riziko s věkem, sexem, úrovní a historií zranění. V publikovaném
+datasetu tyto veličiny nejsou jednotně dostupné. [9]
+
+Horsley et al. — profesionální populace
+Horsley et al. analyzovali záznamy England Squash z let 2004–2015. Soubor
+obsahoval 67 elitních financovaných hráčů: 45 mužů a 22 žen, 18–35 let,
+průměr 25 let. To je z dostupných studií nejbližší profesionálnímu kontextu FAX,
+ale stále jde o smíšené pohlaví a reprezentaci financovaných anglických hráčů,
+nikoli globální mužský profesionální tour sample. [10]
+
+Celkem bylo evidováno 592 zranění, z toho podle publikovaných agregátů 363 u
+mužů a 229 u žen. Hlavní anatomický výsledek je robustní: 76,48 % zranění se
+týkalo dolní končetiny. Rozpad byl ankle/heel 20,81 %, thigh 12,69 %, knee 10,83
+%, hip/groin 9,48 %, buttock 7,45 %, lower leg 7,61 % a foot 7,61 %. Součet těchto
+podkategorií skutečně dává 76,48 %. [10]
+
+To poskytuje rozumný anatomický plausibility target, ale nikoliv přesný
+hazard. Publikované výsledky navíc ukazují převahu soft-tissue injuries;
+McCartney sekundárně uvádějí 71,11 % soft tissue a 22,64 % tendonitis, přičemž
+muscle-related categories tvořily 37,50 %. Tyto podíly lze použít jako orientační
+kontrolu distribuce typů událostí v elitním squashi, nikoli jako přesnou mužskou
+kalibraci, protože původní soubor je 45 mužů + 22 žen a není stratifikován všemi
+výsledky podle pohlaví. [17]
+
+Zásadní problém je follow-up. 11 let je délka registru, nikoli automaticky 11 let
+sledování každého z 67 hráčů. Studie sama popisuje období 2004–2015, ale
+populace se v průběhu času měnila. Bez vstupního a výstupního data každého
+hráče nelze získat skutečný počet person-years. McCartneyho konstrukce 67×4015
+dní proto není skutečný doložený čas v riziku. [17]
+
+Hrubý průměr je
+
+
+
+evidovaných událostí na osobu, která se někdy v registru objevila. Pokud by se —
+chybně — předpokládalo, že všichni byli v kohortě celých 11 let, dostali bychom
+
+
+
+události na hráčský rok. Tento výpočet není validní incidence, protože
+předpoklad plného jedenáctiletého sledování není splněn. [17]
+<PARSED TEXT FOR PAGE: 11 / 44>
+Geminiho rozpětí 1,2–1,8 zranění ročně je ještě problematičtější. Aby 592
+událostí odpovídalo 1,2–1,8 události na hráčský rok, musel by skutečný
+denominator činit přibližně 329–493 hráčských let, tedy v průměru asi 4,91–7,36
+roku na jednoho z 67 hráčů. Publikace ale tento denominator neposkytuje. Je
+tedy možné vytvořit hypotetické person-years, které dané rozpětí vyrobí, ale to je
+opačný směr inference: výsledek je předpokládán a denominator dopočítán. [10]
+
+Navíc číslo 592 zahrnuje obě pohlaví. Pokud chceme odhad dospělého
+profesionálního muže, relevantní agregát je 363 událostí u 45 mužů, ale ani zde
+neznáme mužské person-years. Aby 363 událostí znamenalo 1,2–1,8 za rok,
+potřebovali bychom 202–303 mužských hráčských let, tedy průměrně zhruba
+4,48–6,72 roku follow-up na muže. Takový údaj studie nepublikuje. Proto je
+Gemini hodnota matematicky odvozená z nepodloženého předpokladu, nikoli
+empiricky změřená incidence. [10]
+
+Také nelze z této studie spolehlivě odvodit počet zranění na 1000 hodin. Autoři
+neměli jednotný a dostatečně spolehlivý denominator celkové tréninkové a
+soutěžní expozice. Přesné kalibrační minimum pro engine by vyžadovalo alespoň
+individual-level entry/exit dates, exposure hours, event dates, sex, injury
+definition a opakované události na stejné osobě. [17]
+
+Rejeb et al. — správná čísla, nesprávná cílová populace
+Rejeb et al. je prospektivní studie 166 mužských adolescentů ve věku 12–18 let v
+multisportovní akademii: 84 athletics, 18 squash, 20 table tennis, 20 fencing, 13
+gymnastics, 4 swimming, 3 golf a 4 shooting. Průměrný věk v době zranění byl
+15,1 ± 1,9 roku. Je tedy metodologicky výrazně lepší pro exposure incidence než
+řada retrospektivních squashových studií, ale demograficky výrazně horší jako
+model dospělého profesionálního muže. [19]
+
+Celá kohorta nasbírala 116 473 tréninkových hodin a 643 zranění; 559, tedy 87
+%, bylo Time-Loss a 84, tedy 13 %, Non-Time-Loss. Celková incidence byla
+5,5/1000 h a TL incidence 4,8/1000 h. Tyto hodnoty jsou za všech 166 sportovců,
+nikoli za squashovou podskupinu. [14]
+
+Squashová podskupina skutečně vykázala nejvyšší sport-specifickou incidenci,
+8,5 zranění/1000 h, 95% CI 7,2–10,0. U squashistů byla uvedena overuse
+incidence 4,7/1000 h a acute incidence 3,3/1000 h. To je legitimní squash-
+specifický výsledek, ale vztahuje se na pouhých 18 vysoce trénovaných
+adolescentních mužů. [20]
+<PARSED TEXT FOR PAGE: 12 / 44>
+Veškeré důležité severity hodnoty, které Gemini používá pro dobu
+rekonvalescence, jsou ale prezentovány v Rejebovi za celou multisportovní
+kohortu: 53,0 % bylo „minor“, 34,4 % „moderately serious“ a 13,0 % „serious“.
+Nejsou prezentovány jako squash-only severity distribution. [21]
+
+
+Navíc původní definice kategorií je podrobnější: slight = 1 den, minimal = 2–3
+dny, mild = 4–7 dní, moderately serious = 8–28 dní, serious = >28 dní až 6 měsíců,
+long-term = >6 měsíců. Geminiho zjednodušení na například 2–7 / 8–28 / 29–240
+dní proto nejen přebírá multisportovní adolescentní distribuci do
+profesionálního squashe, ale zároveň mění původní hranice a zacházení s
+1denními a >6měsíčními případy. [14]
+
+Stejně tak nelze prezentovat 87 % TL / 13 % NTL jako inherentní vlastnost
+profesionálního squashe. To je celkový výsledek akademie, ve které byly vedle
+squashe například atletika, šerm, gymnastika a sporty se zcela jinými injury
+profiles. Významný je i fakt, že studie obsahuje growth conditions, které autoři
+sami popisují jako specifické pro mladé sportovce. Přenos do dospělé mužské
+profesionální populace by tedy byl nejen statisticky nepodložený, ale biologicky
+částečně neslučitelný. [22]
+
+Exposure měření je zároveň užitečné i omezené. Tréninkové deníky byly vedeny
+denně, typický program činil přibližně 16 hodin týdně po 46 týdnů, kolem 740
+hodin za sezónu. Autoři však jako vlastní limit uvádějí nepřesnost exposure
+records a nedostatek dat o organizované soutěži. Ani dobrý prospektivní design
+tedy nedává profesionální match-vs-training hazard, který Gemini potřebuje. [14]
+
+Co lze a nelze kalibrovat
+Z dostupné literatury lze s rozumnou jistotou zachovat několik strukturálních
+poznatků: u elitního squashe dominují zranění dolní končetiny; soft-tissue
+injuries jsou významnou kategorií; squash má reálnou kombinaci acute i overuse
+událostí; opakovaná expozice je vhodnější denominator než prostý počet sezon;
+zranění mají silně různorodou dobu absence. [1]
+
+Nelze však vědecky obhájit jedinou konkrétní roční hazardní konstantu
+profesionálního muže, přesné procento TL/NTL, přesnou severity směs pro
+profesionály, poměr match hazard/training hazard ani parametr recurrence
+amplification. Výsledky McCartneyho meta-analýzy jsou vhodné jako důkaz
+nedostatečnosti současné evidence, nikoli jako řešení této nedostatečnosti. [9]
+<PARSED TEXT FOR PAGE: 13 / 44>
+Fyziologie, návrat do sportu a kariérní důsledky
+Intenzita squashe
+Girard et al. studovali 7 elitních hráčů, včetně hráče světové úrovně. Průměrný
+VO₂ během simulované soutěže činil 54,4 ± 4,8 ml·min⁻¹·kg⁻¹, což odpovídalo 86 ±
+9 % VO₂max; srdeční frekvence byla 177 ± 10 bpm, tedy 92 ± 3 % HRmax. Nad 90
+% VO₂max hráči strávili 24 ± 29 % času a nad 90 % HRmax 69 ± 18 % času. Studie
+proto dobře podporuje tvrzení, že squash je fyziologicky velmi intenzivní
+intermittent sport. [8]
+
+Tato studie ale neměří pravděpodobnost zranění. Z jejího 86 % VO₂max ani 92
+% HRmax nelze vytvořit hazard multiplier. VO₂, HR, laktát a injury occurrence
+jsou jiné veličiny a k jejich spojení by byl nutný samostatný longitudinální model
+se zdravotními outcomes. [8]
+
+Geminiho „86 % critical maximal core body temperature“ je nesprávná
+interpretace proměnné. Starší studie Noakes et al. u šesti squashistů po
+90minutových zápasech uvádí průměrnou post-match rektální teplotu přibližně
+39 °C. To potvrzuje tepelnou zátěž, ale neposkytuje žádný „86% temperature
+threshold“ a už vůbec ne injury probability. [23]
+
+Neuromuskulární únava a následný výkon
+Experiment na deseti trénovaných hráčích zjistil bezprostředně po hodinovém
+squashovém zápase pokles maximální voluntary contraction extenzorů kolene
+přibližně o 16 %, voluntary activation přibližně o 7 % a evoked twitch peak
+torque přibližně o 20 %. Autoři interpretovali nález jako kombinaci periferní
+únavy a poruchy centrální aktivace. To je přímý důkaz akutní neuromuskulární
+únavy po squashovém zatížení. [15]
+
+Co tato studie neprokazuje, je přesná doba kompletní regenerace, zvýšení injury
+hazardu o konkrétní faktor nebo počet dnů, po které má být hráč v simulaci
+výkonnostně penalizován. Measurement „immediately after“ je časový bod,
+nikoli recovery curve. Proto je vědecky správné, aby existující fatigue/stamina
+systém reprezentoval akutní únavu; není správné z tohoto experimentu
+automaticky generovat nový zdravotní stav. [15]
+
+Stejným způsobem je biologicky rozumné předpokládat, že kumulovaná zátěž
+může být relevantní pro overuse injuries, ale Rejebova asociace mezi exposure
+volume a injury risk vznikla v adolescentní multisportovní akademii. Není to
+přímý odhad dose-response funkce profesionálního squashového tour. [24]
+<PARSED TEXT FOR PAGE: 14 / 44>
+Bernský konsenzus a Return to Play
+Bernský konsenzus z roku 2016 charakterizuje return-to-sport rozhodování jako
+komplexní, multifaktoriální proces risk managementu a definuje kontinuum
+Return to Participation → Return to Sport → Return to Performance. Return
+to Participation znamená účast na rehabilitaci/tréninku či sportu na nižší úrovni;
+Return to Sport znamená návrat do definovaného sportu bez nutnosti dosažení
+požadované výkonnosti; Return to Performance znamená postupný návrat k
+výkonu na nebo nad předúrazovou úroveň. [5]
+
+Je zásadní rozlišovat definici stavu od empirické pravděpodobnosti jeho
+dosažení. Konsenzus neříká, že každý zraněný profesionál dosáhne Return to
+Performance, ani že určitý typ zranění potřebuje přesně N týdnů či N turnajů. Jde
+o klinický rozhodovací rámec a terminologii, nikoli o squashovou survival
+analysis rekonvalescence. [5]
+
+Geminiho tvrzení typu „2–4 turnaje k obnovení Form“ proto nejsou důsledkem
+Bernského konsenzu. Takové číslo by vyžadovalo squashová longitudinální data:
+datum zranění, přesnou diagnózu, datum první účasti, datum plného návratu do
+soutěže a objektivní post-injury performance trajectory. Ve zdrojích použitých
+Gemini tento dataset chybí. [25]
+
+Recidiva a trvalé následky
+Je medicínsky legitimní modelovat historii recidiv a možnost permanent
+consequences jako možné doménové skutečnosti. Není však legitimní bez dat
+přiřadit všem dřívějším zraněním univerzální multiplikátor budoucího rizika
+nebo permanentní atributovou ztrátu. Současný Health V1 je v tomto ohledu
+konzervativnější: recurrence je explicitní vazba mezi records a permanent
+consequences jsou zaznamenatelná fakta, ale samotný match-health layer je
+nepřevádí na neověřenou numerickou výkonnostní změnu. [26]
+
+Stejně nelze z epidemiologických studií určit zdravotně podmíněný retirement
+rate. Horsley sleduje zranění, ne kauzální model důvodů ukončení profesionální
+kariéry; Rejeb je mládežnická kohorta. Automatické pravidlo „opakovaná zranění
+→ zdravotní retirement“ by proto bylo produktovým rozhodnutím, nikoli
+výsledkem těchto studií. [27]
+
+Ani dopad zranění na „potenciál“ není z těchto prací identifikovatelný. Zranění
+může vést k absenci a tím nepřímo změnit zápasy, ranking, příležitosti a
+realizovaný kariérní vývoj. To není totéž jako trvalé snížení latentního
+talentového potenciálu. Zavedení obou efektů současně by mohlo stejný výpadek
+<PARSED TEXT FOR PAGE: 15 / 44>
+penalizovat dvakrát. Tento problém musí být řešen na hranici R005 a
+talent/career modelu, nikoli odhadnut z Rejebovy adolescentní incidence. [28]
+
+Matematický audit zdravotního modelu
+Gemini navrhuje model, který je matematicky výrazně sofistikovanější než
+současný Health V1: exposure-dependent hazards, frailty, competing risks, semi-
+Markovské přechody, tissue-specific vulnerability, recurrence memory a
+izolované RNG streams. Samotná matematická sofistikovanost však neřeší
+identifikovatelnost. V řadě případů by model potřeboval více parametrů, než
+kolik jich lze z dostupných squashových dat nezávisle odhadnout. [3]
+
+                                Data
+       Matem                    nutná      Riziko     Náklad     Verdikt
+       atická        Vědeck     pro        double-    y/         pro
+Mechan správn        ý          identifi   countin    determi    pre-
+ismus  ost           základ     kaci       g          nismus     alphu
+Exposu    Vysoká     Struktu    Individ    Vysoké,    Nízké      DEFER
+re-       . Pro      rálně      uální      pokud      výpočet    numeri
+depend    hazard     rozumn     match/t    hazard     ně;        c
+ent       je event   ý;         raining    používá    determi    calibra
+hazard    probabi    exposu     hours a    fatigue    nismus     tion;
+          lity       re         event      a match    snadný     zachov
+          přes       denomi     times u    engine     s          at
+          interval   nator je   dospělý    ji už      kontrol    koncep
+          konzist    v          ch         zohled     ovaný      t.
+          entně      epidem     profesi    ňuje.      m RNG.
+          odvoze     iologii    onálů.
+          na z       správn
+          integro    ý
+          vaného     princip.
+          hazard     [29]
+          u.
+Individ   Statisti   Recurre    Individ    Vysoké     Nízké      DEFER.
+uální     cky        nt-        ual-       vůči       runtim
+frailty   legitim    event      level      attribut   e,
+          ní         heterog    person-    es,        vysoká
+                     enita je   time a     predisp    kalibra
+                     koncept    více       osition    ční
+                     uálně      událost    a          složitos
+<PARSED TEXT FOR PAGE: 16 / 44>
+                              Data
+       Matem                  nutná      Riziko     Náklad     Verdikt
+       atická      Vědeck     pro        double-    y/         pro
+Mechan správn      ý          identifi   countin    determi    pre-
+ismus  ost         základ     kaci       g          nismus     alphu
+                   možná,     í na       previou t.
+                   ale        hráče.     s
+                   squash                injury.
+                   ová
+                   varianc
+                   e není
+                   odhadn
+                   uta.
+Multi-   Vysoká    Klinick    Pro        Nízké,     Nízké.     UŽ
+state              yi         numeri     pokud                 EXISTU
+health             simulač    cké        stav                  JE —
+                   ně         přecho     nevytv                nerozb
+                   přiroze    dy         áří                   íjet
+                   né.        duratio    redund                Health
+                              n/state    antní                 V1. [30]
+                              data.      Form.
+Compet   Správn    Vhodné     Cause-     Střední    Nízké–     DEFER.
+ing      é jen     pro        specific   až         střední.
+risks    při       alternat   exposu     vysoké.
+         správn    ivní       re/even
+         é         první      t data.
+         definic   příčiny
+         i         událost
+         eventů    i.
+Tissue  Možná      Anatom     Segmen     Vysoké     Střední    DEFER.
+vulnera            ická       t-         s          stavová
+bility             distribu   specific   fatigue,   složitos
+                   ce         exposu     conditi    t.
+                   zranění    re,        oning,
+                   je         history    attribut
+                   doložen    a          es.
+                   a;         recurre
+                   dynami     nce
+<PARSED TEXT FOR PAGE: 17 / 44>
+                                Data
+       Matem                    nutná      Riziko    Náklad    Verdikt
+       atická        Vědeck     pro        double-   y/        pro
+Mechan správn        ý          identifi   countin   determi   pre-
+ismus  ost           základ     kaci       g         nismus    alphu
+                     cká        data.
+                     latentní
+                     „vulner
+                     ability“
+                     nikoli.
+                     [10]
+Recurre   Možná      Histori    Injury-    Střední. Nízké.     Zachov
+nce       a          e          specific                       at
+memor     klinick    recidiv    recurre                        factual
+y         y          má         nce                            recurr
+          logická    význam     follow-                        ence
+                     , ale      up.                            link;
+                     parame                                    nekali
+                     tr                                        brovat
+                     decay/                                    multipl
+                     multipli                                  ier.
+                     er není                                   [30]
+                     squash
+                     ově
+                     odhadn
+                     ut.
+Semi-     Matem      Klinick    Injury- Nízké        Střední   DEFER.
+Markov    aticky     y dává     type     až          kalibra
+recover   vhodné     větší      surviva střední.     ční
+y         pro        smysl      l curves             náklad
+          duratio    než        a                    y.
+          n-         memor      censori
+          depend     yless      ng.
+          ent        stav,
+          transiti   ale
+          ons        squash
+                     ová
+                     transiti
+<PARSED TEXT FOR PAGE: 18 / 44>
+                              Data
+       Matem                  nutná      Riziko     Náklad    Verdikt
+       atická      Vědeck     pro        double-    y/        pro
+Mechan správn      ý          identifi   countin    determi   pre-
+ismus  ost         základ     kaci       g          nismus    alphu
+                   on data
+                   chybí.
+Lognor    Obě      Žádný      Individ Nízké.        Nízké     Nevolit
+mal/      rodiny   použitý    ual                   runtim    bez
+Weibull   matem    squash     recover               e.        dat.
+recover   aticky   ový        y times
+y         možné    zdroj      podle
+duratio            nevybír    diagnóz
+ns                 á          y.
+                   správn
+                   ou
+                   rodinu
+                   pro
+                   profesi
+                   onály.
+Isolated Silně     Není       Empiric    Snižuje    Malý      ZACHO
+RNG      vhodné    medicí     ká data    vedlejší   runtim    VAT
+streams technic    nská       nejsou     couplin    e         jako
+         ky        hypotéz    potřeba    g.         overhe    engine
+                   a; jde o   .                     ad,       ering
+                   determi                          vysoká    invaria
+                   nisticko                         reprod    nt.
+                   u                                ukovat
+                   archite                          elnost.
+                   kturu.
+
+U exposure-dependent hazardu je klíčový rozdíl mezi správným matematickým
+tvarem a známou intenzitou. Vztah typu
+
+
+
+je korektní způsob, jak převést kontinuální hazard na event probability. Neříká
+však nic o tom, zda má být 0,001, 0,01 nebo jak má reagovat na match load. Tyto
+parametry musí pocházet z dat, nikoli z elegantního zápisu rovnice.
+<PARSED TEXT FOR PAGE: 19 / 44>
+Frailty je dobrý příklad overfitting risk. Jestliže má hráč latentní frailty , zároveň
+physical robustness attribute, age modifier, accumulated load modifier a
+previous-injury modifier, několik latentních veličin může vysvětlovat tentýž
+pattern opakovaných zranění. Bez dostatečných individual-level longitudinal
+data není možné určit, která složka je za pozorovanou heterogenitu odpovědná.
+Model je pak matematicky estimovatelný pouze díky předem zvoleným priorům
+nebo arbitrárním fixním parametrům, ne díky squashovým datům.
+
+Podobně competing risks vyžadují přesnou definici. Injury a illness mohou
+existovat paralelně jako více health records; nejsou nutně vzájemně výlučné
+stavy. Retirement je navíc kariérní endpoint odlišné časové i kauzální úrovně.
+Jediný multinomial draw „injury vs illness vs retirement“ by mohl být
+matematicky elegantní, ale doménově nesprávný, pokud jedna událost
+nevylučuje jinou. Současné Health V1 podporuje multiple records, což je v tomto
+ohledu flexibilnější. [30]
+
+Tissue-specific latent state může být někdy vědecky smysluplný, ale Horsley
+poskytuje distribuci výsledných zranění, nikoli dynamickou skrytou
+vulnerabilitu tkání. Z toho, že ankle/heel tvoří 20,81 % evidovaných událostí,
+nelze bez dalšího odvodit, že každý hráč má latentní „ankle tissue health“ s
+konkrétním decay/recovery coefficientem. [10]
+
+Semi-Markovský model je vhodnější než memoryless Markov chain tam, kde
+pravděpodobnost přechodu závisí na době strávené ve stavu. Pro projekt však
+nynější doménový model už umí recovery windows a explicitní lifecycle
+záznamů. Dokud není k dispozici empirická duration distribution podle injury
+class, zavedení semi-Markovského aparátu by primárně změnilo reprezentaci
+nejistoty, nikoli zvýšilo ověřenou realističnost. [30]
+
+Nejlepší část Gemini matematické architektury je izolace RNG. U
+deterministického simulátoru je žádoucí, aby přidání health draw nezměnilo
+nesouvisející random sequence například pro rally outcome jen proto, že došlo k
+posunu globálního RNG streamu. To je silný engineering požadavek, ale není
+důvod kvůli němu implementovat celý nový injury model před získáním
+parametrů.
+
+Audit Health V1 a vazby na ostatní subsystémy
+Co je skutečně implementováno
+Aktuální src/beta_engine/domain/players/health.py na větvi buuk výslovně uvádí, že
+vrstva reprezentuje historical health facts a deterministic carry-forward,
+<PARSED TEXT FOR PAGE: 20 / 44>
+nikoli pravděpodobnosti, healing curves nebo detection logic. Doménový model
+obsahuje Injury a Illness; lifecycle At Risk, Active, Recovering, Recovered; severity 0–
+100; affected domains; onset/recovery week; recovery window; recurrence
+reference; provenance a permanent consequences. [30]
+
+To odpovídá Master Vision, kde je minimální Health model již rozhodnutý:
+odlišné injury/illness records, více současných records, severity, limitation
+profile, lifecycle, recovery uncertainty a individual predisposition/recovery.
+Naproti tomu numeric curves a Health Check probabilities zůstávají
+samostatnou otevřenou kalibrační otázkou; Master zároveň varuje před
+násobením stejné predispozice jako několika nezávislých šancí v různých místech
+simulace. [31]
+
+domain/matches/health.py vytváří deterministickou projekci zdravotních faktů do
+match contextu. Klíčové je, že projection object explicitně nese
+numeric_effect_applied: False. Modul také označuje numerické limitation effects,
+Health Check, start/WO/RET rozhodování a efekt medical timeout jako
+unsupported components. To znamená, že health fakta jsou přenesena do
+zápasu, ale zatím sama o sobě nemění číselný výkon hráče. [32]
+
+CURRENT_STATE potvrzuje, že health-backed knockout flow umí zmrazit Health
+profiles účastníků a vytvořit EffectiveMatchHealthSnapshot; administrační vrstvy
+zobrazují warnings, ale systém záměrně nevymýšlí automatickou Health
+mutation ani numerickou injury penalty. Současně už Match Engine pracuje se
+skutečnou zápasovou únavou, sharpness, Form/long-term fatigue a přenosem
+post-semifinal stavu do finále. [33]
+
+To je pro R005 kritické: pokud by nový Health model zároveň snižoval výkon
+podle „fatigue-driven injury vulnerability“ a pak zranění znovu snižovalo
+stamina/Form, mohl by být stejný fyziologický efekt započten několikrát. Projekt
+už má vlastní mechanismy pro rally/timeline/stamina a následnou únavu; Health
+musí vlastnit pouze zdravotní důsledky, které nejsou reprezentovány jinde. [33]
+
+Stavová klasifikace
+Oblast                   Stav auditu              Zdůvodnění
+Injury a Illness jako    DECIDED +                Master i source
+odlišné typy             IMPLEMENTED              model. [34]
+At Risk / Active /       DECIDED +                Explicitní lifecycle
+Recovering /             IMPLEMENTED              type. [30]
+Recovered
+<PARSED TEXT FOR PAGE: 21 / 44>
+Oblast                  Stav auditu        Zdůvodnění
+Více zdravotních        DECIDED +          Profil je kolekce
+records                 IMPLEMENTED        records. [34]
+Recurrence evidence     DECIDED +          Record může
+                        IMPLEMENTED        odkazovat na
+                        jako historie      předchozí record;
+                                           validují se vazby.
+                                           [30]
+Permanent               IMPLEMENTED        Doména je umí
+consequences            jako data, OPEN    uložit, match
+                        jako sportovní     projection
+                        numerický efekt    neaplikuje
+                                           numerický účinek.
+                                           [26]
+Run/Branch/Week         IMPLEMENTED        State nese identitu
+Health state                               run/branch/week a
+                                           fingerprinty. [30]
+Match Health            IMPLEMENTED        Deterministický
+projection/snapshot                        projection layer
+                                           existuje. [35]
+Automatická         OPEN /         numeric_effect_applie
+performance penalty NEIMPLEMENTOVÁ d=False; unsupported
+                    NO             numeric limitation
+                                   effects. [32]
+Stochastic Health       OPEN               Master ponechává
+Check / injury                             pravděpodobnosti a
+generation                                 křivky v kalibraci.
+                                           [31]
+Automatické healing     OPEN               Player health
+curves                                     module výslovně
+                                           žádné curves
+                                           nevymýšlí. [30]
+Health-driven start /   OPEN / PARTIALLY   Snapshot je
+WO / RET                INTEGRATED         dostupný, ale
+                        DATOVĚ             rozhodnutí je
+                                           označeno jako
+                                           unsupported. [32]
+<PARSED TEXT FOR PAGE: 22 / 44>
+Oblast                 Stav auditu            Zdůvodnění
+Save/Load/replay       PARTIALLY              CURRENT_STATE
+konzistence Health     IMPLEMENTED až         popisuje
+                       IMPLEMENTED v          persistované Health
+                       již pokrytých flows    facts a bounded
+                                              restart/replay flows,
+                                              ale celý budoucí
+                                              lifecycle ještě není
+                                              numericky uzavřen.
+                                              [33]
+Sophisticated          DEFERRED z             Gemini návrh není
+frailty/semi-Markov    pohledu tohoto         automaticky
+system                 auditu; není           produkční
+                       DECIDED                rozhodnutí a
+                                              současný Master
+                                              vyžaduje kalibraci
+                                              zvlášť. [36]
+
+Vztah k R001–R004, Match Enginu a Gameplan AI
+Pro R001 je nejbezpečnější pravidlo nepřepisovat latentní talent/potential
+zdravotním eventem bez samostatného důkazu. Pokud zraněný hráč vynechá
+zápasy nebo tréninkové příležitosti a kariérní systém z toho přirozeně vytvoří
+méně úspěšnou trajektorii, je to již kauzální následek. Další permanentní snížení
+„potential“ by bylo samostatným mechanismem a vyžadovalo vlastní rozhodnutí.
+
+Pro R002 je nutné zabránit tomu, aby se acute fatigue, stamina depletion a Health
+překrývaly. CURRENT_STATE ukazuje, že Match Engine už přenáší skutečný
+zápasový stav, sharpness a long-term fatigue mezi koly. Health penalty proto
+nemá být druhá kopie běžné post-match únavy. [33]
+
+Pro R003 by rankingový dopad zdravotního výpadku měl, pokud možno,
+vzniknout endogenně: hráč nehraje nebo hraje méně → nezíská výsledky/body →
+ranking reaguje podle existujícího ranking systému. Přidat ještě samostatný
+„injury ranking penalty“ by efekt duplikovalo. Protected ranking by byl nové
+produktové/rule rozhodnutí, nikoli medicínský důsledek.
+
+Pro R004 musí být health informace dostupná Entry AI, ale zdravotní stav nesmí
+automaticky znamenat withdrawal, dokud nejsou explicitně rozhodnuta pravidla
+eligibility/start/WO/RET. Aktuální match-health kód právě tyto decision
+<PARSED TEXT FOR PAGE: 23 / 44>
+components označuje jako unsupported, takže Gemini by je neměl považovat za
+hotovou součást systému. [32]
+
+Pro taktický styl a Gameplan AI je zatím nedostatečný důkaz pro tvrzení, že
+určitý styl sám o sobě vytváří definovaný injury multiplier. Styl může měnit
+reálný movement/load generovaný Match Enginem; pokud se jednou injury
+
+hazard bude odvozovat z této expozice, není třeba přidávat druhý přímý „style
+injury factor“ bez empirického důvodu.
+
+Audit experimentů a opravený diagnostický plán
+EXP-01 až EXP-16
+                                      Měřiteln    Riziko
+                                      ost /       vymyšlen
+            Původní      Audit        data /      ého
+Experim     hypotéza     důkazů a     provedite   benchma
+ent         Gemini       výpočtu      lnost       rku      Verdikt
+EXP-01      Zranění      Exposure     Technick    Vysoké   OPRAVI
+Exposur     má růst s    princip je   y                    T:
+e-          expozicí     správný;     měřiteln             zachovat
+depende     a            1,2–1,8      é,                   test
+nt          dlouhodo     není         empirick             exposure
+incidenc    bě           doloženo.    á                    monoton
+e           odpovída     Horsley      kalibrace            icity,
+            t cca 1,2–   nemá         nyní                 odstranit
+            1,8/rok.     známé        chybí.               absolutní
+                         player-                           benchma
+                         years.                            rk.
+                         [10]
+EXP-02      53/34,4/1    Procenta     Lze         Velmi    ZAMÍTN
+Severity/   3%           jsou celá    technick    vysoké   OUT
+duration    mapovat      Rejeb        y                    jako
+distribut   na           multispo     simulova             kalibraci
+ion         recovery     rt youth     t, ale               .
+            duration     cohort,      chybí
+            s.           ne           správná
+                         squash;      cílová
+                         Gemini       data.
+                         mění
+<PARSED TEXT FOR PAGE: 24 / 44>
+                                    Měřiteln    Riziko
+                                    ost /       vymyšlen
+           Původní     Audit        data /      ého
+Experim    hypotéza    důkazů a     provedite   benchma
+ent        Gemini      výpočtu      lnost       rku      Verdikt
+                       původní
+                       bins. [13]
+EXP-03     Většina     Dobře        Snadno      Střední      ZACHOV
+Anatom     zranění     podpoře      měřiteln    při příliš   AT jako
+y/tissue   lower       no           é.          úzkých       široký
+mix        limb a      Horsley,                 tolerancí    plausibil
+           soft        ale                      ch.          ity
+           tissue.     mixed                                 check.
+                       sex. [11]
+EXP-04     NTL         Existence    Přechody Vysoké          ODLOŽI
+NTL vs     stavy       TL/NTL       nemají                   T.
+TL         mohou       doložena,    kalibračn
+progress   po zátěži   transitio    í data.
+ion        přejít do   n
+           TL.         probabili
+                       ty nikoli;
+                       Rejeb
+                       poměr je
+                       multispo
+                       rt youth.
+                       [14]
+EXP-05     Husté       Směr         Dobré      Vysoké u      OPRAVI
+Cumulat    turnajov    biologick    jako       číselných     TA
+ive load   é bloky     y            stress     limitů.       ZACHOV
+           zvýší       plausibil    test, ne                 AT BEZ
+           morbidit    ní;          jako                     VYMYŠL
+           y; systém   konkrétn     prevalen                 ENÝCH
+           nesmí       í            ce                       CAPŮ.
+           explodov    health/re    calibratio
+           at.         tirement     n.
+                       caps
+                       nejsou
+                       doloženy.
+<PARSED TEXT FOR PAGE: 25 / 44>
+                                     Měřiteln    Riziko
+                                     ost /       vymyšlen
+            Původní     Audit        data /      ého
+Experim     hypotéza    důkazů a     provedite   benchma
+ent         Gemini      výpočtu      lnost       rku      Verdikt
+EXP-06      Acute       Velmi        Výborně     Nízké     ZACHOV
+Orthogo     fatigue,    silný        testovate             AT —
+nality      Form a      koncept;     lné už                vysoká
+fatigue/F   Health      Match        nyní.                 priorita.
+orm/inju    musí        Engine
+ry          zůstat      už
+            odlišné.    fatigue/s
+                        harpness
+                        řeší. [33]
+EXP-07      Nedávné     Obecně       Historick   Vysoké    OPRAVI
+Early       zranění     plausibil    é           pro       T: nyní
+recurren    zvyšuje     ní, ale      recurren    numeric   testovat
+ce          recurren    squash-      ce linky    ký        integritu
+            ce          specific     lze         hazard.   recurren
+            hazard.     multiplie    testovat              ce
+                        r/decay      už nyní.              historie,
+                        chybí.       [30]                  numerik
+                                                           u odložit.
+EXP-08      Po          Bern toto    Form       Velmi      ZAMÍTN
+Return      dlouhém     číslo        trajector vysoké      OUT
+to          výpadku     nepodpo      y lze                 benchm
+perform     hráč        ruje. [5]    měřit, ale            ark;
+ance        potřebuj                 cílový                zachovat
+            e 2–4                    benchma               oddělení
+            turnaje k                rk chybí.             RTS a
+            Form                                           perform
+            recovery.                                      ance.
+EXP-09      Hráči       Modelov      Technick Vysoké       ODLOŽI
+Frailty     mají        ě možné;     y snadné,             T.
+vs          stabilní    frailty      empirick
+Poisson     latentní    variance     y slabé.
+            injury      z
+            pronenes    dostupný
+<PARSED TEXT FOR PAGE: 26 / 44>
+                                     Měřiteln     Riziko
+                                     ost /        vymyšlen
+            Původní      Audit       data /       ého
+Experim     hypotéza     důkazů a    provedite    benchma
+ent         Gemini       výpočtu     lnost        rku      Verdikt
+            s.           ch dat
+                         není
+                         identifik
+                         ovatelná.
+EXP-10      Zdravotn     Jde o       Technick     Velmi    ZAMÍTN
+Protecte    í absence    competiti   y možné,     vysoké   OUT v
+d           vyžaduje     on-rule/p   ale mimo              R005 bez
+ranking     ranking      roduct      R005                  nového
+            protectio    design,     kalibraci.            rule
+            n            ne závěr                          decision.
+            analogick    injury
+            ou PSA.      science.
+EXP-11      Zranění      Žádná       Měřiteln     Velmi    ODLOŽI
+Injury      ve 18–22     použitá     é jen v      vysoké   T; řešit
+delays      letech       studie      longitudi             společně
+peak        posune       neprokaz    nálních               s R001.
+            peak 6–      uje tento   kariérác
+            12           squashov    h.
+            měsíců       ý efekt
+            bez          ani čas.
+            změny
+            potential.
+EXP-12      Styl a věk   Obecně      Vysoké   Vysoké       ODLOŽI
+Age/style   mění         možné,      riziko                T.
+adaptati    tissue       ale         překryvu
+on          wear/inj     konkrétn    s
+            ury          í           Match/Ga
+            profile.     squashov    meplan
+                         á dose-     load.
+                         response
+                         data
+                         chybí.
+EXP-13      Opakova      Dostupné Technick        Velmi    ODLOŽI
+<PARSED TEXT FOR PAGE: 27 / 44>
+                                     Měřiteln    Riziko
+                                     ost /       vymyšlen
+            Původní      Audit       data /      ého
+Experim     hypotéza     důkazů a    provedite   benchma
+ent         Gemini       výpočtu     lnost       rku      Verdikt
+Medical     né health    studie      y možné,    vysoké     T / pro
+retireme    events       neposkyt    empirick               pre-
+nt          vytvářejí    ují         y                      alphu
+            odlišný      profesion   neidenti               zamítno
+            retireme     ální        fikované.              ut.
+            nt           causal
+            archetyp     retireme
+            e.           nt rates.
+EXP-14      Mnoho        Dobrá       Dobře       Nízké      ZACHOV
+Macro       seedů má     simulatio   provedite   bez        AT jako
+stability   vytvářet     n-          lné, ale    empirick   stability
+            stabilní     engineeri   výpočetn    ého        test.
+            prevalen     ng          ě dražší.   targetu.
+            ce a         kontrola;
+            career       „správný
+            distributi   “
+            on.          prevalen
+                         ce band
+                         nyní
+                         neznáme
+                         .
+EXP-15      Health       Silný       Velmi       Nízké      ZACHOV
+RNG         RNG          determin    dobře                  AT —
+isolation   nesmí        istický     testovate              vysoká
+            měnit        požadave    lné.                   priorita.
+            nesouvis     k;
+            ející        nepotřeb
+            výsledky.    uje
+                         medicíns
+                         ká data.
+EXP-16   Health          Přesně      Velmi       Nízké      ZACHOV
+Save/Loa historie        odpovídá    dobře                  AT —
+d/replay musí po         determin    testovate              vysoká
+<PARSED TEXT FOR PAGE: 28 / 44>
+                                    Měřiteln    Riziko
+                                    ost /       vymyšlen
+           Původní      Audit       data /      ého
+Experim    hypotéza     důkazů a    provedite   benchma
+ent        Gemini       výpočtu     lnost       rku      Verdikt
+identity   restartu/r   istické     lné.                  priorita.
+           eplay        architekt
+           zůstat       uře
+           bitově/se    projektu.
+           manticky     [37]
+           identická
+           .
+
+Výsledkem není, že Gemini experimenty jsou jako celek špatné. Z 16 experimentů
+je několik velmi hodnotných engineering diagnostics, zejména EXP-06, EXP-14,
+EXP-15 a EXP-16. Selhání vzniká tam, kde se dobrý experiment sváže s
+neexistujícím empirickým benchmarkem a následně se benchmark začne
+prezentovat jako očekávaná realita.
+
+Opravený diagnostický plán
+Pro současnou fázi doporučuji nejvýše těchto deset experimentů; jejich smyslem
+není „dokázat realismus“ pomocí vymyšlených procent, ale ověřit, že existující
+Health V1 je konzistentní a nevytváří vedlejší efekty:
+
+                                    Co musí         Potřebuje nový
+                                    experiment      empirický
+Priorita        Validace            prokázat        benchmark?
+A               Health              At              Ne. [30]
+                lifecycle           Risk/Active/Rec
+                invariants          overing/Recove
+                                    red přechody,
+                                    identita
+                                    records,
+                                    validní
+                                    recovery
+                                    timestamps.
+B               Recurrence          Recurrence      Ne. [30]
+                graph integrity     vždy odkazuje
+                                    na existující
+<PARSED TEXT FOR PAGE: 29 / 44>
+                             Co musí           Potřebuje nový
+                             experiment        empirický
+Priorita   Validace          prokázat          benchmark?
+                             kompatibilní
+                             předchozí
+                             record; žádné
+                             cykly či
+                             dangling refs.
+C          Healthy-       Stejný zápas se Ne. [32]
+           snapshot no-op zdravými/bez
+           equivalence    numerického
+                          Health efektu
+                          musí mít stejný
+                          outcome jako
+                          bez Health
+                          projection.
+D          Health ×          Zápasová          Ne. [33]
+           fatigue × Form    únava nesmí
+           orthogonality     automaticky
+                             vytvářet
+                             zdravotní
+                             penalizaci ani
+                             naopak, pokud
+                             to není
+                             explicitně
+                             rozhodnuto.
+E          Match             Health facts      Ne. [35]
+           snapshot          zmrazené pro
+           immutability      daný match
+                             nesmí být
+                             retroaktivně
+                             změněny
+                             pozdější
+                             událostí.
+F          Save/Load/        Health profile,   Ne. [37]
+           replay identity   recurrence,
+                             consequences
+                             a fingerprints
+<PARSED TEXT FOR PAGE: 30 / 44>
+                              Co musí           Potřebuje nový
+                              experiment        empirický
+Priorita   Validace           prokázat          benchmark?
+                              se po restartu
+                              reprodukují
+                              přesně.
+G          Branch             Změna Health      Ne. [30]
+           isolation          v jedné branch
+                              nesmí
+                              kontaminovat
+                              historický stav
+                              jiné
+                              branch/run.
+H          Consumer-          Entry, Match,     Ne. [38]
+           boundary           ranking a
+           audit              career nesmějí
+                              používat
+                              Health
+                              numerical
+                              effect, který
+                              není explicitně
+                              IMPLEMENTE
+                              D/DECIDED.
+I          Epidemiologica Každý budoucí         Ano, ale jde o
+           l denominator kalibrační údaj        data-quality
+           audit          musí nést             criterion, ne
+                          population,           číslo. [9]
+                          injury
+                          definition,
+                          exposure
+                          denominator a
+                          uncertainty;
+                          case registries
+                          nesmí být
+                          person-time.
+J          Future hazard      Teprve po         Ano; bez
+           sensitivity test   schválení         validních
+                              validního         adult-pro data
+<PARSED TEXT FOR PAGE: 31 / 44>
+                                   Co musí          Potřebuje nový
+                                   experiment       empirický
+Priorita         Validace          prokázat         benchmark?
+                                   datasetu       se nespouští
+                                   porovnat       jako kalibrace.
+                                   jednoduchý
+                                   constant/expos
+                                   ure hazard s
+                                   komplexnějším
+                                   modelem a
+                                   požadovat
+                                   prokazatelný
+                                   přínos.
+
+Tento plán je vědecky užitečnější než okamžitě testovat, zda simulace generuje
+„správných“ 1,5 zranění za rok. V současnosti totiž nevíme, že takový target je
+správný; zato už dnes lze přesně zjistit, zda health data narušují determinismus,
+historii nebo Form/fatigue separaci.
+
+Rozhodnutí pro pre-alphu, hlavního koordinátora, limity a
+bibliografie
+Co je použitelné nyní
+Pro pre-alphu je obhajitelné ponechat Health V1 jako explicitní historický a
+stavový model, nikoli jej nahrazovat Geminiho novým schématem.
+PlayerHealthRecord, lifecycle, recurrence evidence, recovery window, affected
+domains a permanent consequence evidence dávají enginu dostatečnou
+reprezentaci pro budoucí kalibraci, aniž by nyní vnucovaly nedoložené
+probability curves. [34]
+
+Stejně tak je vhodné zachovat match-level frozen Health projection. Je cenné, že
+je rozhraní připravené, ale numeric_effect_applied=False. To umožňuje vybudovat
+deterministickou infrastrukturu dříve, než bude schválena medicínská
+transformace health state → performance limitation. [32]
+
+Anatomické údaje Horsley mohou sloužit jako soft validation, že budoucí model
+nevytváří absurdní distribuci, například dominantně zranění horní končetiny v
+prostředí, kde publikovaná elitní data ukazují 76,48 % lower limb. Neměly by se
+však používat jako přesná mužská pravděpodobnost jednotlivých segmentů. [10]
+<PARSED TEXT FOR PAGE: 32 / 44>
+RTP/RTS/RTPf terminologie z Bernu je vhodná pro budoucí produktový design.
+Lze například rozlišovat „hráč opět trénuje“, „hráč může nastoupit“ a „hráč
+dosáhl předchozí výkonnostní úrovně“, aniž by tyto tři stavy byly sloučeny do
+jediného recovered=true. Konsenzus ale nedává čísla pro jejich timing. [5]
+
+Co patří do budoucích verzí
+Kalibrovaný stochastic injury onset, match-vs-training hazard, frailty, recurrence
+multiplier, tissue-specific vulnerability, semi-Markovské transition hazards,
+health-induced retirement a permanent attribute degradation by měly zůstat
+odložené do doby, kdy projekt získá data odpovídající cílové populaci nebo učiní
+explicitní produktové rozhodnutí, že jde o stylizovanou simulační mechaniku,
+nikoli empirickou kalibraci.
+
+Nejvyšší hodnotu by měl nový dataset profesionálních squashistů s individual-
+level person-time: datum vstupu/výstupu z profesionálního sledování, pohlaví a
+věk, tréninkové a match exposure hours, datum a diagnóza každé události,
+TL/NTL, počet dní do plné účasti, recurrence status a ideálně performance
+trajectory po návratu. Bez takového datasetu se s rostoucí komplexitou modelu
+hlavně zvyšuje počet parametrů, které musí být vymyšleny.
+
+Pro samotnou recovery calibration je potřeba zachovat cenzorování a skutečné
+duration data, nikoli vybrat lognormal nebo Weibull jen proto, že vytváří
+„realistický pravý ocas“. Rozdělení se má volit podle dat a diagnostiky fitu.
+
+Doporučení pro hlavního koordinátora ChatGPT Work
+Hlavní koordinátor by měl z tohoto výzkumu přijmout jako DECIDED evidence
+constraints, že McCartney pooled rate není kalibrace profesionálního muže;
+Horsley 592/67 není roční incidence; Gemini 1,2–1,8/year není empiricky
+identifikovaný odhad; Rejeb 53/34,4/13 a TL/NTL mix nejsou squash-specific; 86%
+core-temperature claim je chybný; a Bern consensus neposkytuje počet turnajů
+do obnovení Form. Tyto body lze považovat za dostatečně ověřené pro to, aby se
+v další produktové práci neopakovaly jako fakta. [39]
+
+Současně by koordinátor neměl interpretovat tento audit jako doporučení
+odstranit Health V1. Naopak implementace je nyní rozumně konzervativní:
+doménová fakta jsou modelována, ale nedoložené numerické křivky nejsou
+aktivní. Master už odděluje rozhodnuté Health minimum od otevřené numerické
+kalibrace, což je v souladu s vědeckou evidencí. [40]
+<PARSED TEXT FOR PAGE: 33 / 44>
+Produktové rozhodnutí je nutné vždy, když se má přidat efekt, který není přímo
+vědecky identifikovaný: protected ranking, automatický medical retirement,
+permanent potential loss, style-specific injury multiplier nebo konkrétní
+recovery/Form rule. To nejsou „doplnění chybějící vědy“; jsou to simulační design
+choices.
+
+První další fáze R005 by proto neměla hledat stále složitější matematiku. Měla by
+uzavřít data provenance matrix pro všechny kalibrační kandidáty a dokončit
+diagnostické testy Health V1. Teprve poté má smysl rozhodovat, zda validní data
+podporují jednoduchý exposure model, nebo zda existuje empirický důvod pro
+frailty/semi-Markovskou komplexitu.
+
+Limity důkazů
+Největším limitem squashové literatury je heterogenita definic a populací.
+McCartney tento problém kvantifikuje I² kolem 99,65 % a explicitně uvádí, že
+přesná incidence konkrétní populace je z aktuálních dat neurčitelná. [9]
+
+Horsley je nejbližší profesionální populaci, ale agregovaný dataset neobsahuje
+denominator potřebný pro roční či hodinovou incidenci. Rejeb má naopak
+kvalitnější exposure denominator, ale nesprávnou věkovou populaci a jen 18
+squashistů. Kombinovat jejich přednosti algebraicky — například „vezmeme
+frequency z Horsley a duration z Rejeb“ — nevytváří validní profesionální model,
+protože oba odhady reprezentují jiné populace a measurement systems. [27]
+
+Fyziologické studie jsou malé. Girardova intenzita je založena na 7 hráčích a
+neuromuskulární fatigue experiment na 10 trénovaných hráčích. Jsou vhodné
+pro prokázání jevu, nikoli pro přesnou populační kalibraci injury risk. [41]
+
+A konečně, originální Gemini DOCX nebyl v aktuálně dostupném PR přítomen
+jako přímo auditovatelný soubor. Textová extrakce sama varuje před poškozením
+rovnic, grafů a tabulek. Proto je tento audit silný pro obsahové a numerické
+výroky, ale u rovnic, které mohly být při extrakci deformovány, nelze tvrdit
+pixelově či typograficky přesnou reprodukci originálu. [6]
+
+Bibliografie
+McCartney R., Fallon T., Heron N. Squash Under Strain: A Systematic Review and
+Meta-Analysis of Injuries and Illnesses in Squash Players. Sports, 2026; 14(2):79.
+Studie zahrnula 12 prací, osm v random-effects meta-analýze; pooled estimate
+0,74/365 athlete-days a 2,01/1000 athlete-days, I² 99,65 %. [9]
+<PARSED TEXT FOR PAGE: 34 / 44>
+Horsley I., O’Donnell S., Leeder J. The epidemiology of injuries in English
+professional squash; A retrospective analysis between 2004 and 2015. 67 elitních
+England Squash hráčů, 45 mužů a 22 žen; dominantně lower-limb injuries. [10]
+
+Rejeb A., Johnson A., Vaeyens R., Horobeanu C., Farooq A., Witvrouw E.
+Compelling overuse injury incidence in youth multisport athletes. European Journal
+of Sport Science, 2017;17(4):495–502. Prospektivní kohorta 166 mužských
+adolescentů, z toho 18 squashistů; DOI 10.1080/17461391.2016.1275820. [22]
+
+Girard O., Chevalier R., Habrard M., Sciberras P., Hot P., Millet G.P. Game analysis
+and energy requirements of elite squash. Journal of Strength and Conditioning
+Research, 2007;21(3):909–914. DOI 10.1519/R-20306.1. [8]
+
+Girard a kol. Alteration of neuromuscular function in squash. Studie akutní
+centrální a periferní únavy po hodinovém squashovém zápase u 10 trénovaných
+
+hráčů. [15]
+
+Noakes a kol. The metabolic response to squash including the influence of pre-
+exercise carbohydrate ingestion. Experiment u šesti squashistů se střední post-
+match rektální teplotou kolem 39 °C. [23]
+
+Ardern C.L. a kol. 2016 Consensus statement on return to sport from the First
+World Congress in Sports Physical Therapy, Bern. British Journal of Sports
+Medicine. Konsenzus definuje Return to Participation, Return to Sport a Return to
+Performance jako kontinuum. [5]
+
+Projektové zdroje Squash Engine: SQUASH_ENGINE_MASTER_VISION.md,
+CURRENT_STATE.md, src/beta_engine/domain/players/health.py,
+src/beta_engine/domain/matches/health.py, větev buuk, stav auditovaný 1. listopadu
+2026. [2]
+
+Gemini Deep Research text extraction a archiv PR #1709 byly použity pouze k
+identifikaci auditovaných tvrzení a experimentů, nikoli jako nezávislá empirická
+autorita. [42]
+<PARSED TEXT FOR PAGE: 35 / 44>
+Rozhodovací tabulka
+                                                           Potřeba
+                              Součas                       nového
+           Síla     Matem     ná                Doporu     produk
+           vědeck   atická    podpor   Riziko   čený       tového
+Návrh      ých      správn    av       implem   další      rozhod
+Gemini     důkazů   ost       enginu   entace   krok       nutí
+Kalibro    Velmi    Převod Ne          Velmi    Neimpl     Ano,
+vat        nízká    jednote            vysoké   ement      pokud
+roční      pro      k                           ovat       se má
+inciden    adult    správn                      jako       použít
+ce z       male     ý,                          hazard     stylizov
+McCart     pro      estiman                     . Použít   aná
+ney                 d                           pouze      hodnot
+pooled              nevhod                      jako       a
+rate                ný                          důkaz
+                                                heterog
+                                                enity/e
+                                                vidence
+                                                gap. [9]
+Použít     Nedolo   Nelze     Ne       Velmi    Odmít      Ne pro
+Horsley    ženo     odvodit            vysoké   nout       odmítn
+jako                bez                         číslo.     utí; ano
+1,2–1,8             person-                     Získat     pro
+injuries            years                       individ    náhrad
+/year                                           ual        ní
+                                                follow-    stylizov
+                                                up         anou
+                                                nebo       kalibra
+                                                jiný       ci
+                                                dataset.
+                                                [10]
+Použít     Střední Ano        Records Střední   Používa    Ne,
+Horsley    až      jako       mají              t pouze    pokud
+anatom     dobrá   popisná    affected          jako       jde jen
+y mix              distribu   domain            široký     o
+                   ce         s                 plausib    validaci
+                                                ility
+<PARSED TEXT FOR PAGE: 36 / 44>
+                                                              Potřeba
+                              Součas                          nového
+           Síla     Matem     ná                  Doporu      produk
+           vědeck   atická    podpor     Riziko   čený        tového
+Návrh      ých      správn    av         implem   další       rozhod
+Gemini     důkazů   ost       enginu     entace   krok        nutí
+                                                  target, s
+                                                  mixed-
+                                                  sex
+                                                  caveate
+                                                  m. [10]
+Rejeb      Dobrá   Rate je    Ne         Vysoké   Nepřen      Ano,
+8,5/100    pro     legitim                        ášet        pokud
+0 h jako   adolesc ní                             numeri      by se
+pro        entní                                  cky.        přesto
+hazard     squash                                 Zachov      měla
+           , slabá                                at jako     použít
+           pro                                    externí
+           dospěl                                 youth
+           é                                      compar
+           profesi                                ator.
+           onály                                  [20]
+Rejeb    Nevho      Výpočet   Recove     Velmi    Zamítn      Ano
+53/34,4/ dná        lze       ry         vysoké   out         pro
+13                  provést   windo               jako        jakouk
+recover             ,         w                   profesi     oli
+y                   inferen   schema              onální      náhrad
+distribu            ce je     existuje            squash      ní
+tion                chybná                        calibra     distribu
+                                                  tion.       tion
+                                                  [21]
+Rejeb      Nevho    Popis     TL/NTL     Vysoké   Nepouž      Ano
+87/13      dná      cohorty   není                ívat
+TL/NTL     pro      správn    identic             jako
+split      pro      ý         ká s                profesi
+           squash             Health              onální
+                              lifecycl            target.
+                              e                   [14]
+<PARSED TEXT FOR PAGE: 37 / 44>
+                                                               Potřeba
+                              Součas                           nového
+          Síla       Matem    ná                    Doporu     produk
+          vědeck     atická   podpor     Riziko     čený       tového
+Návrh     ých        správn   av         implem     další      rozhod
+Gemini    důkazů     ost      enginu     entace     krok       nutí
+Exposu    Silný      Vysoká   Budouc     Střední    Zachov     Ano
+re-       koncep              í OPEN                at jako    pro
+depend    t, slabá            oblast                kandid     aktivaci
+ent       kalibra                                   át až po   numeri
+hazard    ce                                        validní    ky
+                                                    ch
+                                                    exposu
+                                                    re
+                                                    datech.
+Frailty   Slabá      Vysoká   Ne         Vysoké     DEFER. Ano
+          squash                         kvůli      Nejprve
+          -                              identifi   zjistit,
+          specifi                        kovatel    zda
+          c                              nosti      jednod
+          eviden                                    uchý
+          ce                                        model
+                                                    selhává
+                                                    .
+Compet    Obecně Podmín       Multipl    Střední Neimpl Ano
+ing       legitim ěně         e          –vysoké emento
+risks     ní      správn      records            vat jako
+                  é           už                 jeden
+                              existují           mutuall
+                                                 y-
+                                                 exclusi
+                                                 ve
+                                                 draw
+                                                 bez
+                                                 cause
+                                                 modelu
+                                                 .
+Tissue    Slabá      Možná    affected Vysoké       DEFER.     Ano
+<PARSED TEXT FOR PAGE: 38 / 44>
+                                                               Potřeba
+                            Součas                             nového
+          Síla     Matem    ná                      Doporu     produk
+          vědeck   atická   podpor      Riziko      čený       tového
+Návrh     ých      správn   av          implem      další      rozhod
+Gemini    důkazů   ost      enginu      entace      krok       nutí
+vulnera pro                 domain                  Anatom
+bility  dynam               s                       ii zatím
+        ický                existují,               evidova
+        latentn             latentní                t, ne
+        í stav              tissue                  modelo
+                            state ne                vat
+                                                    skrytý
+                                                    decay.
+Recurre   Střední Správn    Recurr      Nízké       Zachov     Ano
+nce       jako     á        ence        pro         at         pro
+memor     koncep            eviden      historii,   vazby;     numeri
+y         t, slabá          ce          vysoké      hazard     cký
+          numeri            IMPLE       pro         multipli   efekt
+          cky               MENTE       multipli    er
+                            D           er          odložit.
+                                                    [30]
+Semi-     Nedost Vysoká     Jednod      Střední     DEFER;     Ano
+Markov    atek              ušší                    součas
+recover   squash            recover                 né
+y         ových             y                       schem
+          duratio           windo                   a je
+          n data            w již                   dostač
+                            existuje                ující.
+                                                    [30]
+Lognor Neiden      Obě      Ne          Střední     Nevybí     Ano
+mal/    tifikov    možné                            rat
+Weibull áno                                         rodinu
+duratio                                             bez
+ns                                                  individ
+                                                    ual
+                                                    recover
+                                                    y dat.
+<PARSED TEXT FOR PAGE: 39 / 44>
+                                                            Potřeba
+                             Součas                         nového
+          Síla      Matem    ná                 Doporu      produk
+          vědeck    atická   podpor    Riziko   čený        tového
+Návrh     ých       správn   av        implem   další       rozhod
+Gemini    důkazů    ost      enginu    entace   krok        nutí
+Isolated Není       Silně    Archite   Nízké    ZACHO       Spíše
+Health   zdravot    správn   ktonick            VAT         technic
+RNG      ní         é pro    y                  jako        ké než
+         evidenc    determ   kompat             požada      produk
+         e          inismu   ibilní             vek         tové
+         potřeba    s                           pro
+                                                budouc
+                                                í
+                                                stochas
+                                                tic
+                                                Health.
+Health    Dobrá     Jednod   DECID     Nízké    PONEC       Ne
+V1        domén     uché a   ED +               HAT.
+multi-    ová       vhodné   IMPLE              Nenah
+state     opora              MENTE              razova
+records                      D                  t
+                                                novým
+                                                schém
+                                                atem.
+                                                [34]
+Numeri    Evidenc Nedefin OPEN;        Vysoké   Ponech      Ano
+cká       e pro   ováno   explici               at
+Health    přesno          tně no-               numeric
+perfor    u               op                    _effect_a
+mance     křivku                                pplied=
+penalty   chybí                                 False do
+                                                kalibra
+                                                ce. [32]
+Health    Nedost    Koncep   OPEN      Vysoké   Neaktiv     Ano
+Check /   atečná    t                           ovat na
+automa    pro       možný                       základě
+tic       absolut                               Gemini
+<PARSED TEXT FOR PAGE: 40 / 44>
+                                                               Potřeba
+                               Součas                          nového
+          Síla      Matem      ná                  Doporu      produk
+          vědeck    atická     podpor     Riziko   čený        tového
+Návrh     ých       správn     av         implem   další       rozhod
+Gemini    důkazů    ost        enginu     entace   krok        nutí
+injury    ní                                       čísel.
+onset     kalibra                                  [31]
+          ci
+Health-   Slabá     Domén      Unsupp     Vysoké   Vyžadu      Ano
+driven    data      ově        orted               je
+WO/RE               možné                          samost
+T                                                  atné
+                                                   eligibili
+                                                   ty/com
+                                                   petition
+                                                   rozhod
+                                                   nutí.
+                                                   [32]
+Bern      Silný     Není       Lze     Nízké       Zachov      Ne pro
+RTP →     konsen    probabi    mapov               at          termin
+RTS →     zuální    listický   at na               termin      ologii;
+Return    rámec     model      budouc              ologick     ano pro
+to                             í                   é           konkrét
+Perfor                         workflo             rozliše     ní
+mance                          w                   ní bez      gamepl
+                                                   fiktivní    ay rules
+                                                   ch časů.
+                                                   [5]
+„2–4      Nepodl    N/A        Form       Vysoké   Zamítn      Ano,
+turnaje   oženo                existuje            out         pokud
+do                             nezávis             jako        se má
+obnove                         le                  vědeck      stát
+ní                                                 ý           game-
+Form“                                              bench       design
+                                                   mark.       rule
+                                                   [5]
+Perman Nepodl       Lze        Perman Velmi        Neimpl      Ano
+<PARSED TEXT FOR PAGE: 41 / 44>
+                                                              Potřeba
+                             Součas                           nového
+          Síla     Matem     ná                    Doporu     produk
+          vědeck   atická    podpor      Riziko    čený       tového
+Návrh     ých      správn    av          implem    další      rozhod
+Gemini    důkazů   ost       enginu      entace    krok       nutí
+ent       oženo    implem    ent         vysoké    emento
+potenti   dostup   entovat   conseq      double-   vat
+al loss   nými     ,         uences      counti    automa
+po        squash   kauzáln   jsou        ng        ticky;
+zranění   daty     ě         data, ne              absenc
+                   neident   automa                e má
+                   ifiková   tic                   nejprve
+                   no        potenti               působit
+                             al effect             přes
+                                                   existují
+                                                   cí
+                                                   kariérn
+                                                   í
+                                                   systém
+                                                   y. [30]
+Medical Velmi      Možný     Ne jako Velmi         DEFER.     Ano
+retirem slabá      surviva   kalibro vysoké
+ent     data       l model   vaný
+hazard                       consum
+                             er
+Style-   Nedolo    Možný,    Match/      Vysoké    Nepřid Ano
+specific ženo      ale       Gamepl      double-   ávat
+injury             confou    an už       countin   samost
+multipli           nded      může        g         atný
+er                           vytváře               multipli
+                             t                     er bez
+                             rozdíln               dat.
+                             ý load
+EXP-06    Velmi    Ano       Releva      Nízké     Provés     Ne
+Health/   vysoká             ntní                  t jako
+Form/fa   hodnot             mecha                 priorit
+tigue     a jako             nismy                 u. [33]
+<PARSED TEXT FOR PAGE: 42 / 44>
+                                                           Potřeba
+                             Součas                        nového
+           Síla     Matem    ná                  Doporu    produk
+           vědeck   atická   podpor     Riziko   čený      tového
+Návrh      ých      správn   av         implem   další     rozhod
+Gemini     důkazů   ost      enginu     entace   krok      nutí
+orthogo engine               existují
+nality  ering
+        invaria
+        nt
+EXP-14     Vysoká   Ano      Možné      Nízké    Zachov Ne
+macro      diagno                                at jako
+stabilit   stická                                stress
+y bez      hodnot                                test,
+vymyšl     a                                     nikoli
+eného                                            epidem
+prevale                                          iologick
+nce                                              é
+targetu                                          „ověřen
+                                                 í“.
+EXP-15     Velmi   Ano       Releva     Nízké    Zachov    Ne
+RNG        vysoká            ntní                at.
+isolatio   technic           pro
+n          ká                budouc
+           hodnot            í
+           a                 stochas
+                             tic
+                             Health
+EXP-16     Velmi   Ano       Health     Nízké    Zachov    Ne
+Save/Lo    vysoká            state/fi            at a
+ad/repl    technic           ngerpri             naváza
+ay         ká                nts již             t na
+identity   hodnot            existují            aktuál
+           a                                     ní
+                                                 schem
+                                                 a. [37]
+<PARSED TEXT FOR PAGE: 43 / 44>
+[1] [9] [17] [39] Squash Under Strain: A Systematic Review and Meta-Analysis of
+Injuries and Illnesses in Squash Players
+
+https://www.mdpi.com/2075-4663/14/2/79?utm_source=chatgpt.com
+
+[2] [16] [26] [30] [34] [37] [40] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/src/
+beta_engine/domain/players/health.py
+
+[3] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/docs/injury-health-
+gemini-research-provisional-20261101/research/studies/CANDIDATE-injury-
+health-20261101/GEMINI_DEEP_RESEARCH_TEXT_EXTRACT.txt
+
+[4] [8] [41] Game analysis and energy requirements of elite squash - PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/17685699/
+
+[5] [25] 2016 Consensus statement on return to sport from the First World
+Congress in Sports Physical Therapy, Bern | British Journal of Sports Medicine
+
+https://bjsm.bmj.com/content/early/2016/05/25/bjsports-2016-096278?
+utm_source=chatgpt.com
+
+[6] [7] [42] docs(research): archive and critically audit Gemini injury/health study
+(provisional R005) by Jasmetk0 · Pull Request #1709 · Jasmetk0/squash-tour-beta ·
+GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta/pull/1709
+
+[10] [11] [27] The epidemiology of injuries in English professional squash; A
+retrospective analysis between 2004 and 2015 - PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/32823248/?utm_source=chatgpt.com
+
+[12] [13] [14] [18] [19] [20] [21] [22] [24] [28] [29] Please cite the Published Version
+
+https://e-space.mmu.ac.uk/631655/8/
+Compelling%20overuse%20injuryaccepted.pdf
+
+[15] Alteration of neuromuscular function in squash.
+
+https://pubmed.ncbi.nlm.nih.gov/19231287/?utm_source=chatgpt.com
+<PARSED TEXT FOR PAGE: 44 / 44>
+[23] The metabolic response to squash including the influence of pre-exercise
+carbohydrate ingestion - PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/6753184/?utm_source=chatgpt.com
+
+[31] [36] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/
+SQUASH_ENGINE_MASTER_VISION.md
+
+[32] [35] [38] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/src/
+beta_engine/domain/matches/health.py
+
+[33] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/
+CURRENT_STATE.md
+
+----- END FULL AVAILABLE TEXT EXTRACTION -----

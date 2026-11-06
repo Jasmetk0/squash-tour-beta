@@ -1,4 +1,96 @@
-# Post-merge pre-alpha evidence map — 30 October 2026
+# Current integrated evidence checkpoint — 6 November 2026
+
+## Audited source and method
+
+Actual merged `buuk`: **`b666c109b9dc596a6d226025500ceb462a4fff8b`**, tree
+`40a66e4b9f7146e015332f80ffe41dd4d2aaa65c`. This section updates the EXISTING
+evidence map; it creates neither another Master nor another PAQ registry.
+All prior dated checkpoints below remain historical evidence and do not override
+this section's present implementation status or next-work ordering.
+
+All 38 reviewed non-package PRs (#1700, #1702, #1703, #1705–#1730, #1732–#1740)
+are merged. Git ancestry includes every exact approved feature head, and every
+one of their 144 changed files equals its reviewed head's blob on this base.
+No merge content loss was found. Open ATP package Drafts #1731 → #1741 → #1742
+were inventoried, not reviewed or modified as part of this batch.
+
+Review read AGENTS, the active Master/constitution and relevant acceptance,
+Entry, geometry, storage, desktop and research contracts; inspected touched
+runtime/read models and source consumers; compared both full frontend suites;
+and executed the bounded backend/HTTP scenarios below on the actual merged base.
+This is not a line-by-line recertification of all historical code or scholarly
+sources, an exhaustive security audit, or a completed pre-alpha release gate.
+Product statuses, sporting rules, coefficients and approved scope are unchanged.
+
+## Newly executed evidence
+
+Local environment: Python **3.12.14**, Node **24.22.1**, Linux. These are local
+results, not a claim that the Windows executable or the CI Python 3.11/Node 20
+environment was freshly rerun for this checkpoint.
+
+| Check on actual merged base | Observed result | Meaning / limit |
+| --- | --- | --- |
+| `npm --prefix web run build` | TypeScript/Vite production build passed | Build is not browser or release acceptance |
+| Complete `npm --prefix web test` | **3,326 passed, 88 failed; 13 failed / 364 total files** | Full frontend gate is RED |
+| Same full suite at pre-batch `a07c51548ef3f398edba3e92551008ab2d61ec61` | **3,213 passed, 92 failed; 15 failed / 348 files** | Comparing exact failed test names finds **zero new failures**, four old failures now pass; this does not excuse the remaining 88 |
+| Selected backend/tools/domain/HTTP tests | **193 passed** | Includes atomic late-audit Save rollback, Branch archive boundaries, backup integrity, three production Labs and paired Match Lab; not the full backend suite |
+| `tests/api/test_native_one_edition_operator_journey.py` | **2 passed** | Actual MatchEngine, points, explicit Save, physical SQLite reopen and exact retries; one small Edition, not a reference FAX season |
+| `python -m tools.audit_fax_native_playability --output <new-file>` | Expected **exit 2; 80/80 structurally blocked** | Correct diagnostic execution; NOT sporting acceptance |
+| `python -m tools.preview_fax_reference_brackets --output <new-file>` | **80 source-bound topologies, 3,440 potential actual matches, 0 results generated** | Geometry only, not assigned draws or simulated Q/Main |
+| Current-base hosted CodeQL | Python, Actions, JavaScript/TypeScript success | Static evidence only; Sonar remains red/advisory and is not dismissed wholesale |
+
+The 193-test command selected `tests/tools`, `tools/tests/test_audit_earth_packages.py`,
+`tools/tests/test_desktop_backup.py`, the new FAX topology and paired-Lab
+domain/application/API modules, `test_labs_integration_production_labs.py`,
+`test_pre_alpha_fax_calendar_80_edition_audit.py`, `test_admin_player_health_api.py`,
+`test_run_working_draft_save.py`, `test_standalone_match_acceptance.py`,
+`test_match_reconstruction_run_save_restart.py`, and the domain/API/boundaries/native
+Branch archive modules. Local pytest had no PR changed-module filter. The desktop
+negative test intentionally created a duplicate ZIP manifest and emitted its
+expected standard-library warning. The complete backend, full sporting browser
+matrix, actual reference season and 50-season campaign were NOT rerun here.
+
+## Present engineering assessment and remaining path
+
+| Requirement / existing authority | Current evidence and concrete limitation | Next action |
+| --- | --- | --- |
+| Integrated correctness / test policy | Approved feature contents survive merge; scoped tests pass, but the full frontend still has 88 baseline failures | Triage all 13 modules. Repair real faults or demonstrably stale fixtures/guards; never weaken provenance, privacy or routing assertions just to turn green |
+| FAX full source Q/Main execution; §31.3/13/19/26 | Exact source fingerprint `e2150e66eef92943b56b2d22f3de26b8fe6c161669bd5d24c770c516f560e197`; 40 Gold Main24/Q16 and 40 Platinum Main32/Q24. Current `CalendarTourService` still rejects non-v3 Main counts outside 4/8. Pure geometry does not change the executor | Build exact player-/seed-aware Main/Q field/Draw and versioned global-slot/result execution; preserve real BYEs, original source IDs and legacy seeds |
+| Entry eligibility, timing, points and publication | Merged timing uses decided 2+1-week preparation/ranking binding; `automatic_eligibility_status` is still `not_implemented`. Exact-source diagnostic reports missing awards for all 80 and an early-announcement conflict for four | Audit the consuming native path. Resolve only genuinely open policy/content with the owner; do not invent zeros, redate the fixture or substitute small main-only events |
+| Real full season, Finals and 50 seasons | Small actual overlapping/two-signed-season gates are valuable bounded evidence. Neither W80 nor the evidence scanner supplies a completed full reference season | First actual Gold then Platinum, several authentic Editions/weeks, complete FAX season/Finals/rollover, then 50 seasons with restart/replay and resource history |
+| Performance/storage; §31.18 | Existing paired measurements show removed copy work but no stable overall elapsed-time speedup. Cold verification remains expensive. New storage comparator measures supplied samples; it does not supply a long Run | Attach time, RSS, DB/WAL/SHM and Saved payload/branch growth to the actual staged reference runs; profile measured dominant work before choosing optimizations or budgets |
+| Recovery/portable use; §31.5/6/18/25 | Portable Windows preview and offline verified backup are useful. ZIP verification is not actual restore; per-build data separation is not cross-version migration. `.sqbranch` 128 MiB remains an operation budget, not a Run quota | Demonstrate actual backup restoration and portable round-trip on sporting histories of measured size; use evidence before changing archive format/budget |
+| Remaining full Master scope | Historical initial-cohort development/survival, permanent health consequences, lower Tours/Finals, general Records/holder history, milestones/watchlists/notifications and complete CS/EN Admin still need the retained map's producer→persistence→consumer evidence | Preserve these requirements. Locate/reuse existing implementations before authoring more mechanisms or claiming absence. Unknown coverage is not an approved deferral |
+
+Specific frontend triage examples are already reproducible: the top-level source
+guard's `*.tsx` glob scans `ViewerH2HSubroutePage.test.tsx` as if it were a
+production deferred page; old planned-Edition test mounts omit the required
+Product Run route context; several source guards expect superseded component
+names. These observations justify individual test repairs, not treating all 88
+failures as false positives. The shared `ViewerProductRunRouteContext.tsx` also
+still renders literal **Official Branch** and English-only context/error text;
+align visible labels with Viewer Branch and the existing CS/EN contract without
+renaming historical stored fields or introducing privileged Branch semantics.
+
+The 14 research archival PRs are accepted as research records, not new sporting
+decisions or empirically validated model parameters. The paired Match Lab API is
+a sensible isolated diagnostic for later calibration; its same-seed comparisons
+do not themselves prove causal alignment, realistic distributions or source
+equivalence. Read-only queues, comparisons and export helpers are useful, but
+additional Viewer polish/research/tooling must not displace the real FAX path.
+Keep the existing modular monolith and integrity contracts; no broad architecture
+rewrite or speculative cache/schema migration follows from this audit.
+
+**Recommended order:** (1) bounded frontend regression triage/repair; (2) one
+source-bound Main/Q integration slice at a time, with concrete open product
+dependencies separated; (3) actual progressive FAX acceptance plus resource
+measurement; (4) reconcile retained side scope and perform the complete release
+gate on one candidate. No new product decision is needed to start technical
+triage. Only the owner merges. This checkpoint authorizes no release.
+
+---
+
+# Historical post-merge evidence map — 30 October 2026
 
 ## Audited baseline and authority
 

@@ -1,4 +1,48 @@
-# Portable Windows preview candidate — 31 October 2026
+# Current integrated audit — 6 November 2026
+
+Audited merged `buuk`: **`b666c109b9dc596a6d226025500ceb462a4fff8b`**.
+All 38 reviewed non-package PRs (#1700–#1740, excluding already merged #1701/#1704)
+are present with their exact reviewed heads. All 144 feature-changed files match
+their reviewed feature contents; no merge loss was found. Only ATP package
+Drafts #1731 → #1741 → #1742 remained open at audit time and were not modified.
+
+The single current requirement/evidence map remains
+[the existing integration checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
+Its 6 November section supersedes older implementation status and task ordering,
+not the complete Master v86 or newer explicit owner decisions. This audit is
+not an internal release declaration.
+
+- Production frontend build passed. The **complete** local frontend suite has
+  **3,326 passes / 88 failures in 13 files**. The pre-batch `a07c5154` suite has
+  3,213 passes / 92 failures; all 88 current failure identities already failed
+  there. No newly failing test was found in that comparison. Failures still
+  require triage and repair; unchanged failures are not release permission.
+- **193 selected backend/tool/domain/HTTP tests passed**, including atomic Save
+  rollback, archive boundaries, backup checks, the three production Labs and
+  paired Match Lab. The separate real one-Edition operator module passed its
+  **two tests**, including MatchEngine, points, manual Save, physical SQLite
+  reopen and exact command retries. This was not the complete backend suite.
+- Current-base Python/Actions/TypeScript CodeQL passed. Sonar remains advisory
+  and red; this audit is not a repository-wide security clearance.
+- The exact current FAX source audit still reports **80/80 Editions blocked**
+  for native execution. The separate topology builds all 80 source-bound graphs;
+  its **3,440 potential matches are a plan, not played matches**. Current native
+  knockout execution still accepts only full ranked Main 4/8; qualification,
+  Gold24/Platinum32, source points and early announcements need real integration.
+- Existing read-only Admin/Viewer helpers, isolated Labs and Windows preview
+  are useful bounded features, not proof of full-season or 50-season completion.
+
+**Next technical work:** triage the 13 failing frontend modules without weakening
+their actual safety contracts, refresh stale test fixtures/guards where proven,
+then prioritize the exact source-bound FAX Main/Qualification execution path.
+Locate genuinely unresolved automatic Entry policy/content decisions before
+their consumer; do not invent awards, silently reduce fields or waive Save/replay.
+No further Viewer expansion or speculative realism tuning outranks this path.
+Retain the rest of the decided pre-alpha scope and full release/recovery gates.
+
+---
+
+# Historical candidate — portable Windows preview, 31 October 2026
 
 Verified base `buuk`: `7a08ff441dd185189638c05dfc3bd33401407b7d`.
 This isolated delivery slice adds a bundled Windows runtime, compiled UI and

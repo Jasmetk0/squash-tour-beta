@@ -1,0 +1,38 @@
+name: Native two-Edition actual HTTP SQLite restart
+
+on:
+  pull_request:
+    paths:
+      - 'tests/api/test_native_two_editions_restart.py'
+      - '.github/workflows/prealpha-native-two-editions-restart.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-two-editions-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-two-editions:
+    name: Actual two Edition weeks / SQLite restart and replay
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install production dependencies and test runner
+        run: python -m pip install -e . pytest
+      - name: Real HTTP four-player multi-Edition acceptance on a disposable SQLite database
+        env:
+          # Explicit requested test must bypass PR-changed-path selection;
+          # the dedicated test runs on Draft, not a skipped Ready-only gate.
+          GITHUB_EVENT_NAME: workflow_dispatch
+        run: |
+          python -m pytest -q -x --durations=10 \
+            tests/api/test_native_two_editions_restart.py

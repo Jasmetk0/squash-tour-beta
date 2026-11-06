@@ -314,7 +314,7 @@ def get_source_atp_reference_calendar_year(year: int):
 def preview_atp_reference_against_saved_run_calendar(
     run_id: str,
     branch_id: str,
-    year: list[int] | None = Query(default=None, ge=1990, le=2026),
+    year: list[int] | None = Query(default=None),
     runtime: ApiRuntime = Depends(get_runtime),
 ):
     """Pure source-only ATP projection against a hash-checked Saved Run clock.
@@ -324,6 +324,8 @@ def preview_atp_reference_against_saved_run_calendar(
     Source ATP dates are *server reference data*, NOT a claim of a previously
     applied/saved ATP Package snapshot for this Run.
     """
+    if year is not None and any(not 1990 <= item <= 2026 for item in year):
+        raise HTTPException(422, "ATP source year must be in 1990–2026")
     try:
         # No source drift: validate the exact historical Calendar adapter's
         # stored generated document against the four canonical source files.

@@ -97,6 +97,48 @@ Simulation Slot simultaneity, rest, ranking closure semantics, and explicit
 snapshot/Preview/Confirm/Save ownership. This PR does not invent those
 mechanics from date metadata.
 
+## Saved Run / Branch HTTP read-only preview (real SQLite authority)
+
+The Admin Packages router now exposes:
+
+    GET /admin/runs/{run_id}/branches/{branch_id}/packages/source-atp-reference-calendar/run-week-preview?year=2025&year=2026
+
+This is **a non-mutating HTTP endpoint**, distinct from the hypothetical
+RunCalendar CLI. It verifies the source Calendar's generated fingerprint
+against the current server data, checks the actual Run and Branch identity and
+their immutable Saved Revision-backed calendar through the existing canonical
+run_calendar_read_authority resolver, then maps the requested original ATP
+source year(s) onto that exact clock. It runs in one SQLite read transaction.
+It does not select a different Branch or revision, touch a Working Draft, or
+issue Package confirm/Save.
+
+**Critical provenance limitation:** the endpoint reads the **current
+server-installed canonical ATP reference source**, not the Run's applied
+Package snapshot. It can run before the ATP source Package has been applied
+to that Run. It makes this explicit with
+uses_current_server_reference_not_run_snapshot=true. It must never be
+interpreted as the immutable historical content of a previously Saved Package
+revision. Implementing a snapshot-bound playable import requires a separate
+package-source/Saved Revision authority and a reviewable, explicitly
+confirmed target diff.
+
+The endpoint accepts repeated year= query parameters, e.g. year=2025&year=2026.
+If omitted it requests **all 37 years**, requiring a Run horizon covering all
+selected years. Requests for an out-of-range year, a W61/legacy Run, wrong
+Run/Branch, inconsistent Saved clock, or missing Run horizon **fail closed**.
+Results contain full source-versus-native positions, provenance, overlap
+summaries, fingerprints, and explicit no-write/no-sporting flags. They are
+not a Save draft, not a sporting execution proposal and not a source of
+ranked outcomes. Large 37-year previews are intentionally explicit.
+
+Real HTTP/SQLite/restart validation is covered by:
+
+    python -m pytest -q tests/api/test_atp_saved_run_week_preview_api.py
+
+The test creates a real W52 Run, reads a source-year slice, restarts the API
+against the same SQLite DB, checks stable deterministic projections and
+unchanged Run + Working Draft, and also rejects invalid clocks and horizons.
+
 ## Required independent follow-up before playable installation
 
 - Decide the actual **sporting occupancy** of the three 12-day, three-ISO-week cases. The reported three-week projection is not a source assertion that three full weeks of matches were played.

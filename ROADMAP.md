@@ -6,10 +6,12 @@ non-package PRs are merged with no feature-content loss. ATP package Drafts
 [the existing checkpoint, updated 6 November](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
 Its older dated rows are history; the complete Master still owns release scope.
 
-1. Triage/repair the **88 existing full-frontend failures in 13 modules**; the
-   pre-batch baseline has the same 88 plus four now-passing tests. Distinguish
-   actual regressions from stale Product Run fixtures, labels and source guards;
-   do not delete safety assertions merely to obtain green CI.
+1. Review/merge the isolated frontend regression repair after final-head gates:
+   **3,423/3,423 tests in 364 files and production build pass locally**. It
+   replaces retired legacy reader mocks/preview expectations, corrects malformed
+   positive fixtures and stabilizes inventory test ordering; production is
+   unchanged. The earlier 88 failures are historical, not current local results.
+   Do not infer a full release or sporting integration pass from these contracts.
 2. Build on the merged source-bound Gold24/Platinum32 + four Qualification-section
    geometry. Connect real player/seed-aware field/Draw and versioned execution,
    preserving BYEs, historical schemas, simultaneous slots and original sources.

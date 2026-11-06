@@ -11,7 +11,7 @@ import guardSource from './ViewerTopLevelRouteSourceGuard.test.ts?raw'
 import viewerHomePageSource from './ViewerHomePage.tsx?raw'
 import viewerRunBrowserPageSource from './ViewerRunBrowserPage.tsx?raw'
 
-const deferredViewerPageSources = import.meta.glob('./deferred/*.tsx', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
+const deferredViewerPageSources = import.meta.glob(['./deferred/*.tsx', '!./deferred/*.test.tsx'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 
 const linkBuilderSources: Record<string, string> = {
   'viewerRoutes.ts': viewerRoutesSource,

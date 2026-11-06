@@ -1,4 +1,29 @@
-# Current integrated audit — 6 November 2026
+# Full frontend regression repaired — 6 November 2026 candidate
+
+Base: merged `buuk` **`7e92ad5ee714092263335420e0f6e8ed0b79a045`**
+(owner merge of the integrated audit #1743). The isolated frontend test repair
+now passes **all 3,423 tests / 364 files**, with zero failures, plus the production
+TypeScript/Vite build. The prior 3,326-pass/88-failure result below is historical.
+These are mocked frontend/component contracts, not new sporting browser or
+HTTP/SQLite execution evidence. No production code, API, fixture source data,
+sporting rule, timeout, CI selector or test-policy gate is changed.
+
+Legacy read mocks, stale labels and removed preview expectations now follow the
+current canonical Saved readers. Ranking ordinals and Race fixture totals are
+internally consistent; exact-player comparisons use actual detail mocks rather
+than the first-50 discovery sample. Nine additional negative/boundary cases cover
+current source contracts. The historical Lab selector test awaits loaded options
+and resets one-shot mocks between cases instead of racing asynchronous inventory.
+
+The candidate still requires final-head hosted checks and owner merge. The next
+functional dependency remains the real source-bound FAX Main/Qualification path;
+the 80-Edition, full season, 50-season, recovery and full-backend release gates
+are not satisfied by this frontend result. Retain the rest of the Master scope.
+See the existing integration checkpoint for the preserved audit and correction.
+
+---
+
+# Historical integrated audit — 6 November 2026
 
 Audited merged `buuk`: **`b666c109b9dc596a6d226025500ceb462a4fff8b`**.
 All 38 reviewed non-package PRs (#1700–#1740, excluding already merged #1701/#1704)

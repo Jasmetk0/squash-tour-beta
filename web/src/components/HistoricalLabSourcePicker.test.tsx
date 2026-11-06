@@ -30,7 +30,7 @@ function mount(initial?:{run:string;branch:string;revision:string}): void {
 describe('historical Lab source inventory states', () => {
   beforeEach(() => {
     localStorage.setItem('squash-engine-language-v1', 'cs')
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     api.listRunContainers.mockResolvedValue({run_containers: []})
     api.listRunBranches.mockResolvedValue({run_branches: []})
     api.listSavedRevisionHistory.mockResolvedValue({saved_revisions: []})
@@ -75,10 +75,10 @@ describe('historical Lab source inventory states', () => {
       .mockResolvedValue({saved_revisions: [{revision_id: 'rev1', sequence: 1}]})
     mount()
     await userEvent.click(screen.getByText('Vybrat uložený historický zdroj'))
-    await userEvent.selectOptions(await screen.findByRole('combobox', {name: 'Match Lab source Run'}), 'season1')
+    await userEvent.selectOptions(screen.getByRole('combobox', {name: 'Match Lab source Run'}), await screen.findByRole('option', {name: 'Season 1'}))
     expect(await screen.findByRole('alert')).toHaveTextContent('transient Branch outage')
     await userEvent.click(screen.getByRole('button', {name: 'Znovu načíst větve'}))
-    await userEvent.selectOptions(await screen.findByRole('combobox', {name: 'Match Lab source Branch'}), 'main')
+    await userEvent.selectOptions(screen.getByRole('combobox', {name: 'Match Lab source Branch'}), await screen.findByRole('option', {name: 'Main'}))
     expect(await screen.findByRole('alert')).toHaveTextContent('transient Revision outage')
     await userEvent.click(screen.getByRole('button', {name: 'Znovu načíst revize'}))
     expect(await screen.findByRole('option', {name: '#1 · rev1'})).toHaveValue('rev1')

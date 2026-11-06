@@ -1,559 +1,126 @@
-import { screen, within } from "@testing-library/react";
-import { Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import { expectNoForbiddenViewerActions, renderWithViewerProviders } from "../../../test/viewerTestUtils";
-import { ViewerRunWeekPage } from "../../ViewerRunCalendarPage";
+import { screen, within } from '@testing-library/react'
+import { Route, Routes } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { expectNoForbiddenViewerActions, renderWithViewerProviders } from '../../../test/viewerTestUtils'
+import { calendarEvent, historyEvent, savedCalendar, savedHistory, savedRankings, savedRace, rankingPublication, racePublication } from '../../../test/viewerCalendarFixtures'
+import { ViewerRunWeekPage } from '../../ViewerRunCalendarPage'
 
 const api = vi.hoisted(() => ({
-  ApiError: class ApiError extends Error {
-    status: number;
-
-    constructor(message: string, status: number) {
-      super(message);
-      this.status = status;
-    }
-  },
-  getRun: vi.fn(),
-  listEvents: vi.fn(),
-  listRankingSnapshots: vi.fn(),
-  listRaceSnapshots: vi.fn(),
-}));
-
-vi.mock("../../../api/client", () => api);
-
-function renderWeek(route = "/viewer/runs/run%20alpha/weeks/5"): void {
-  renderWithViewerProviders(
-    <Routes>
-      <Route
-        path="/viewer/runs/:runId/weeks/:week"
-        element={<ViewerRunWeekPage />}
-      />
-      <Route path="/viewer/runs/:runId/week-missing" element={<ViewerRunWeekPage />} />
-    </Routes>,
-    { route },
-  );
+  ApiError: class ApiError extends Error { constructor(message: string, public status: number) { super(message) } },
+  getViewerRunCalendar: vi.fn(), getViewerTournamentHistory: vi.fn(),
+  listViewerOfficialRankingHistory: vi.fn(), getViewerFinalsRace: vi.fn(),
+  getRun: vi.fn(), listEvents: vi.fn(), listRankingSnapshots: vi.fn(), listRaceSnapshots: vi.fn(),
+}))
+vi.mock('../../../api/client', () => api)
+function renderWeek(route = '/viewer/runs/run%20alpha/weeks/5'): void {
+  renderWithViewerProviders(<Routes>
+    <Route path="/viewer/runs/:runId/weeks/:week" element={<ViewerRunWeekPage />} />
+    <Route path="/viewer/runs/:runId/week-missing" element={<ViewerRunWeekPage />} />
+  </Routes>, { route })
 }
+function eventList() { return within(screen.getByRole('list', { name: 'Viewer week Saved Calendar events' })) }
 
-function persistedSection(): HTMLElement {
-  const section = screen
-    .getByRole("heading", { name: "Persisted tournament records this week" })
-    .closest("article");
-  expect(section).not.toBeNull();
-  return section as HTMLElement;
-}
-
-function publicationsSection(): HTMLElement {
-  const section = screen
-    .getByRole("heading", { name: "Publications this week" })
-    .closest("article");
-  expect(section).not.toBeNull();
-  return section as HTMLElement;
-}
-
-describe("ViewerRunWeekPage read model", () => {
+describe('ViewerRunWeekPage canonical Saved sources', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    api.getRun.mockResolvedValue({
-      run: { run_id: "run alpha", season: 2028, seed: 42 },
-      season_state: {
-        season: 2028,
-        next_event_index: 1,
-        completed_event_ids: ["EVENT/1"],
-        ordered_events: [
-          {
-            event_id: "EVENT/1",
-            season: 2028,
-            week: 5,
-            tour: "World Tour",
-            category: "Platinum",
-            template_id: "WT-PLAT",
-          },
-          {
-            event_id: "EVENT/10",
-            season: 2028,
-            week: 6,
-            tour: "Elite Tour",
-            category: "Gold",
-            template_id: "ET-GOLD",
-          },
-        ],
-      },
-    });
-    api.listEvents.mockResolvedValue({ run_id: "run alpha", events: [] });
-    api.listRankingSnapshots.mockResolvedValue({
-      run_id: "run alpha",
-      snapshots: [],
-    });
-    api.listRaceSnapshots.mockResolvedValue({
-      run_id: "run alpha",
-      snapshots: [],
-    });
-  });
-
-  it("renders safe planned week metadata and planned event links only", async () => {
-    renderWeek();
-
-    expect(
-      await screen.findByRole("heading", { name: "Week Detail" }),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText("run alpha").length).toBeGreaterThan(0);
-    expect((await screen.findAllByText("EVENT/1")).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("W5").length).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText("Planned events this week").length,
-    ).toBeGreaterThan(0);
-    expect(screen.getAllByText("1").length).toBeGreaterThan(0);
-    expect(screen.getByText("World Tour")).toBeInTheDocument();
-    expect(screen.getByText("Platinum")).toBeInTheDocument();
-    expect(screen.getByText("WT-PLAT")).toBeInTheDocument();
-    expect(screen.getByText("Plan index")).toBeInTheDocument();
-    expect(screen.getByText("Plan position")).toBeInTheDocument();
-    expect(screen.getByText("Completed")).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Open planned event" }),
-    ).toHaveAttribute("href", "/viewer/runs/run%20alpha/calendar/EVENT%2F1");
-    expect(
-      screen.queryByRole("link", { name: "Open tournament detail" }),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText("EVENT/10")).not.toBeInTheDocument();
-    expect(screen.queryByText(/champion/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/winner/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/draw/i)).not.toBeInTheDocument();
-    expectNoForbiddenViewerActions();
-  });
-
-  it("shows the safe getRun error state without displaying unrelated fake read-model rows", async () => {
-    api.getRun.mockRejectedValue(new Error("season state outage"));
-    api.listEvents.mockResolvedValue({
-      run_id: "run alpha",
-      events: [
-        {
-          event_sequence: 700,
-          event_id: "FAKE-PERSISTED",
-          season: 2028,
-          week: 5,
-          template_id: "FAKE",
-          tournament_result: {},
-        },
-      ],
-    });
-    api.listRankingSnapshots.mockResolvedValue({
-      run_id: "run alpha",
-      snapshots: [
-        {
-          snapshot_sequence: 70,
-          snapshot_kind: "ranking",
-          source_event_id: "FAKE-PERSISTED",
-          payload: {},
-        },
-      ],
-    });
-
-    renderWeek();
-
-    expect(
-      await screen.findByRole("heading", { name: "Week Detail" }),
-    ).toBeInTheDocument();
-    expect(
-      await screen.findByText(
-        "Failed to load run season state: season state outage",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.queryByText("FAKE-PERSISTED")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /publication #70/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Open planned event" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Open tournament detail" })).not.toBeInTheDocument();
-    expectNoForbiddenViewerActions();
-  });
-
-  it("renders exact persisted tournament matches with encoded tournament links and event sequence", async () => {
-    api.listEvents.mockResolvedValue({
-      run_id: "run alpha",
-      events: [
-        {
-          event_sequence: 7,
-          event_id: "EVENT/1",
-          season: 2028,
-          week: 5,
-          template_id: "WT-PLAT",
-          tournament_result: {},
-        },
-      ],
-    });
-
-    renderWeek();
-
-    expect(
-      await screen.findByRole("heading", { name: "Week Detail" }),
-    ).toBeInTheDocument();
-    expect(await screen.findByText("Event sequence")).toBeInTheDocument();
-    expect(
-      screen.getAllByText("Persisted events this week").length,
-    ).toBeGreaterThan(0);
-    expect(within(persistedSection()).getByText("Event sequence")).toBeInTheDocument();
-    expect(within(persistedSection()).getByText("7")).toBeInTheDocument();
-    expect(within(persistedSection()).getByText("W5")).toBeInTheDocument();
-    expect(
-      within(persistedSection()).getByRole("link", {
-        name: "Open tournament detail",
-      }),
-    ).toHaveAttribute("href", "/viewer/runs/run%20alpha/tournaments/EVENT%2F1");
-    expectNoForbiddenViewerActions();
-  });
-
-  it("keeps planned events visible when persisted tournament records fail", async () => {
-    api.listEvents.mockRejectedValue(new Error("tournament record outage"));
-
-    renderWeek();
-
-    expect((await screen.findAllByText("EVENT/1")).length).toBeGreaterThan(0);
-    expect(
-      await screen.findByText(
-        "Failed to load tournament records: tournament record outage",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Open planned event" }),
-    ).toHaveAttribute("href", "/viewer/runs/run%20alpha/calendar/EVENT%2F1");
-    expect(
-      screen.queryByRole("link", { name: "Open tournament detail" }),
-    ).not.toBeInTheDocument();
-    expectNoForbiddenViewerActions();
-  });
-
-  it("renders a same-week persisted-only event without a planned-event link", async () => {
-    api.getRun.mockResolvedValue({
-      run: { run_id: "run alpha", season: 2028, seed: 42 },
-      season_state: {
-        season: 2028,
-        next_event_index: 0,
-        completed_event_ids: [],
-        ordered_events: [],
-      },
-    });
-    api.listEvents.mockResolvedValue({
-      run_id: "run alpha",
-      events: [
-        {
-          event_sequence: 11,
-          event_id: "PERSISTED-ONLY",
-          season: 2028,
-          week: 5,
-          template_id: "WT-ONLY",
-          tournament_result: {},
-        },
-      ],
-    });
-
-    renderWeek();
-
-    expect((await screen.findAllByText("PERSISTED-ONLY")).length).toBeGreaterThan(0);
-    expect(
-      screen.getByText("No planned tournaments are available for this week."),
-    ).toBeInTheDocument();
-    expect(
-      within(persistedSection()).getByRole("link", {
-        name: "Open tournament detail",
-      }),
-    ).toHaveAttribute("href", "/viewer/runs/run%20alpha/tournaments/PERSISTED-ONLY");
-    expect(
-      within(persistedSection()).queryByRole("link", { name: "Open planned event" }),
-    ).not.toBeInTheDocument();
-    expectNoForbiddenViewerActions();
-  });
-
-  it("renders an exact planned-id persisted record from a different persisted week without result previews", async () => {
-    api.listEvents.mockResolvedValue({
-      run_id: "run alpha",
-      events: [
-        {
-          event_sequence: 12,
-          event_id: "EVENT/1",
-          season: 2028,
-          week: 6,
-          template_id: "WT-PLAT",
-          tournament_result: {
-            champion: "Hidden Champion",
-            winner: "Hidden Winner",
-            draw: ["Hidden Draw"],
-          },
-        },
-      ],
-    });
-
-    renderWeek();
-
-    expect(
-      await screen.findByRole("heading", { name: "Week Detail" }),
-    ).toBeInTheDocument();
-    expect((await within(persistedSection()).findAllByText("EVENT/1")).length).toBeGreaterThan(0);
-    expect(await within(persistedSection()).findByText("W6")).toBeInTheDocument();
-    expect(screen.queryByText("Hidden Champion")).not.toBeInTheDocument();
-    expect(screen.queryByText("Hidden Winner")).not.toBeInTheDocument();
-    expect(screen.queryByText("Hidden Draw")).not.toBeInTheDocument();
-    expect(screen.queryByText(/champion/i)).not.toBeInTheDocument();
-    expectNoForbiddenViewerActions();
-  });
-
-  it("renders source-matched ranking and race publications without partial event id matches", async () => {
-    api.listRankingSnapshots.mockResolvedValue({
-      run_id: "run alpha",
-      snapshots: [
-        {
-          snapshot_sequence: 3,
-          snapshot_kind: "ranking",
-          source_event_id: "EVENT/1",
-          payload: {},
-        },
-        {
-          snapshot_sequence: 4,
-          snapshot_kind: "ranking",
-          source_event_id: "EVENT/10",
-          payload: {},
-        },
-        {
-          snapshot_sequence: 5,
-          snapshot_kind: "ranking",
-          source_event_id: "EVENT",
-          payload: {},
-        },
-      ],
-    });
-    api.listRaceSnapshots.mockResolvedValue({
-      run_id: "run alpha",
-      snapshots: [
-        {
-          snapshot_sequence: 9,
-          snapshot_kind: "race",
-          source_event_id: "EVENT/1",
-          payload: {},
-        },
-      ],
-    });
-
-    renderWeek();
-
-    expect(
-      await screen.findByRole("heading", { name: "Week Detail" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Ranking publications count")).toBeInTheDocument();
-    expect(screen.getByText("Race publications count")).toBeInTheDocument();
-    expect(
-      (await screen.findAllByRole("link", { name: "Ranking publication #3" }))
-        .length,
-    ).toBeGreaterThan(0);
-    expect(
-      (await screen.findAllByRole("link", { name: "Race publication #9" }))
-        .length,
-    ).toBeGreaterThan(0);
-    expect(
-      screen.queryByRole("link", { name: "Ranking publication #4" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Ranking publication #5" }),
-    ).not.toBeInTheDocument();
-    expectNoForbiddenViewerActions();
-  });
-
-  it("keeps race publication links visible when only ranking publications fail", async () => {
-    api.listEvents.mockResolvedValue({
-      run_id: "run alpha",
-      events: [
-        {
-          event_sequence: 7,
-          event_id: "EVENT/1",
-          season: 2028,
-          week: 5,
-          template_id: "WT-PLAT",
-          tournament_result: {},
-        },
-      ],
-    });
-    api.listRankingSnapshots.mockRejectedValue(new Error("ranking outage"));
-    api.listRaceSnapshots.mockResolvedValue({
-      run_id: "run alpha",
-      snapshots: [
-        {
-          snapshot_sequence: 9,
-          snapshot_kind: "race",
-          source_event_id: "EVENT/1",
-          payload: {},
-        },
-      ],
-    });
-
-    renderWeek();
-
-    expect((await screen.findAllByText("EVENT/1")).length).toBeGreaterThan(0);
-    expect(
-      await screen.findByText("Failed to load ranking publications: ranking outage"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByRole("link", { name: "Race publication #9" })[0],
-    ).toHaveAttribute("href", "/viewer/runs/run%20alpha/race/9");
-    expect(within(persistedSection()).getByText("Event sequence")).toBeInTheDocument();
-    expectNoForbiddenViewerActions();
-  });
-
-  it("keeps ranking publication links visible when only race publications fail", async () => {
-    api.listEvents.mockResolvedValue({
-      run_id: "run alpha",
-      events: [
-        {
-          event_sequence: 7,
-          event_id: "EVENT/1",
-          season: 2028,
-          week: 5,
-          template_id: "WT-PLAT",
-          tournament_result: {},
-        },
-      ],
-    });
-    api.listRankingSnapshots.mockResolvedValue({
-      run_id: "run alpha",
-      snapshots: [
-        {
-          snapshot_sequence: 3,
-          snapshot_kind: "ranking",
-          source_event_id: "EVENT/1",
-          payload: {},
-        },
-      ],
-    });
-    api.listRaceSnapshots.mockRejectedValue(new Error("race outage"));
-
-    renderWeek();
-
-    expect((await screen.findAllByText("EVENT/1")).length).toBeGreaterThan(0);
-    expect(
-      await screen.findByText("Failed to load race publications: race outage"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getAllByRole("link", { name: "Ranking publication #3" })[0],
-    ).toHaveAttribute("href", "/viewer/runs/run%20alpha/rankings/3");
-    expect(within(persistedSection()).getByText("Event sequence")).toBeInTheDocument();
-    expectNoForbiddenViewerActions();
-  });
-
-  it("does not render snapshot publication links for partial source_event_id matches", async () => {
-    api.listRankingSnapshots.mockResolvedValue({
-      run_id: "run alpha",
-      snapshots: [
-        {
-          snapshot_sequence: 4,
-          snapshot_kind: "ranking",
-          source_event_id: "EVENT/10",
-          payload: {},
-        },
-        {
-          snapshot_sequence: 5,
-          snapshot_kind: "ranking",
-          source_event_id: "EVENT",
-          payload: {},
-        },
-      ],
-    });
-    api.listRaceSnapshots.mockResolvedValue({
-      run_id: "run alpha",
-      snapshots: [
-        {
-          snapshot_sequence: 8,
-          snapshot_kind: "race",
-          source_event_id: "EVENT",
-          payload: {},
-        },
-      ],
-    });
-
-    renderWeek();
-
-    expect(
-      await within(publicationsSection()).findByText(
-        "No ranking or race publications are source-matched to this week.",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Ranking publication #4" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Ranking publication #5" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Race publication #8" })).not.toBeInTheDocument();
-    expectNoForbiddenViewerActions();
-  });
-
-  it("does not source-match snapshots through persisted-only event ids", async () => {
-    api.getRun.mockResolvedValue({
-      run: { run_id: "run alpha", season: 2028, seed: 42 },
-      season_state: {
-        season: 2028,
-        next_event_index: 0,
-        completed_event_ids: [],
-        ordered_events: [],
-      },
-    });
-    api.listEvents.mockResolvedValue({
-      run_id: "run alpha",
-      events: [
-        {
-          event_sequence: 11,
-          event_id: "PERSISTED-ONLY",
-          season: 2028,
-          week: 5,
-          template_id: "WT-ONLY",
-          tournament_result: {},
-        },
-      ],
-    });
-    api.listRankingSnapshots.mockResolvedValue({
-      run_id: "run alpha",
-      snapshots: [
-        {
-          snapshot_sequence: 13,
-          snapshot_kind: "ranking",
-          source_event_id: "PERSISTED-ONLY",
-          payload: {},
-        },
-      ],
-    });
-
-    renderWeek();
-
-    expect((await screen.findAllByText("PERSISTED-ONLY")).length).toBeGreaterThan(0);
-    expect(screen.queryByRole("link", { name: "Ranking publication #13" })).not.toBeInTheDocument();
-    expectNoForbiddenViewerActions();
-  });
-
-  it("keeps week detail visible when snapshot publications fail", async () => {
-    api.listRankingSnapshots.mockRejectedValue(new Error("ranking outage"));
-    api.listRaceSnapshots.mockRejectedValue(new Error("race outage"));
-
-    renderWeek();
-
-    expect((await screen.findAllByText("EVENT/1")).length).toBeGreaterThan(0);
-    expect(
-      await screen.findByText(
-        "Failed to load ranking publications: ranking outage",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      await screen.findByText("Failed to load race publications: race outage"),
-    ).toBeInTheDocument();
-    expectNoForbiddenViewerActions();
-  });
-
-  it("renders safe empty state and does not call APIs for invalid or missing week context", async () => {
-    renderWeek("/viewer/runs/run%20alpha/week-missing");
-
-    expect(
-      await screen.findByRole("heading", { name: "Week Detail" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Week must be a positive whole number in the URL (for example /weeks/12).",
-      ),
-    ).toBeInTheDocument();
-    expect(api.getRun).not.toHaveBeenCalled();
-    expect(api.listEvents).not.toHaveBeenCalled();
-    expect(api.listRankingSnapshots).not.toHaveBeenCalled();
-    expect(api.listRaceSnapshots).not.toHaveBeenCalled();
-    expectNoForbiddenViewerActions();
-  });
-});
+    vi.resetAllMocks()
+    api.getViewerRunCalendar.mockResolvedValue(savedCalendar())
+    api.getViewerTournamentHistory.mockResolvedValue(savedHistory())
+    api.listViewerOfficialRankingHistory.mockResolvedValue(savedRankings())
+    api.getViewerFinalsRace.mockResolvedValue(savedRace())
+  })
+  it('renders exact Saved week metadata and encoded occurrence links without fake results', async () => {
+    renderWeek()
+    expect(await screen.findByText('Source Open')).toBeInTheDocument()
+    expect(eventList().getByRole('link', { name: 'Open planned event' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/EVENT%2F1?season=2028%2F2029&week=5')
+    expect(eventList().getByRole('link', { name: 'Open tournament detail' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/tournaments/EVENT%2F1')
+    for (const legacy of [api.getRun, api.listEvents, api.listRankingSnapshots, api.listRaceSnapshots]) expect(legacy).not.toHaveBeenCalled()
+    expectNoForbiddenViewerActions()
+  })
+  it('reports Calendar errors without showing an unrelated Tournament History result', async () => {
+    api.getViewerRunCalendar.mockRejectedValue(new Error('calendar outage'))
+    api.getViewerTournamentHistory.mockResolvedValue(savedHistory([historyEvent(undefined, { result_published: true, champion_player_id: 'UNRELATED' })]))
+    renderWeek()
+    expect(await screen.findByText('Failed to load canonical Saved Calendar: calendar outage')).toBeInTheDocument()
+    expect(screen.queryByText('UNRELATED')).not.toBeInTheDocument()
+  })
+  it('shows the champion only for an exact published occurrence', async () => {
+    api.getViewerTournamentHistory.mockResolvedValue(savedHistory([historyEvent(undefined, { result_published: true, champion_player_id: 'REAL-CHAMPION', finalist_player_id: 'REAL-FINALIST' })]))
+    renderWeek()
+    expect(await screen.findByText('REAL-CHAMPION')).toBeInTheDocument()
+    expect(eventList().getByText('Completed · result published')).toBeInTheDocument()
+  })
+  it('keeps planned events usable when Tournament History fails', async () => {
+    api.getViewerTournamentHistory.mockRejectedValue(new Error('history outage'))
+    renderWeek()
+    expect(await screen.findByText('Source Open')).toBeInTheDocument()
+    expect(await screen.findByText('Failed to load Tournament History: history outage')).toBeInTheDocument()
+  })
+  it('never manufactures a Calendar event from history-only metadata', async () => {
+    api.getViewerTournamentHistory.mockResolvedValue(savedHistory([historyEvent(calendarEvent({ event_id: 'HISTORY-ONLY' }), { result_published: true, champion_player_id: 'UNRELATED' })]))
+    renderWeek()
+    expect(await screen.findByText('Source Open')).toBeInTheDocument()
+    expect(eventList().queryByText('HISTORY-ONLY')).not.toBeInTheDocument()
+    expect(screen.queryByText('UNRELATED')).not.toBeInTheDocument()
+  })
+  it('does not attach a same-ID result from a different week', async () => {
+    api.getViewerTournamentHistory.mockResolvedValue(savedHistory([historyEvent(calendarEvent({ season_week: 6 }), { result_published: true, champion_player_id: 'WRONG-WEEK' })]))
+    renderWeek()
+    expect(await screen.findByText('Source Open')).toBeInTheDocument()
+    expect(screen.queryByText('WRONG-WEEK')).not.toBeInTheDocument()
+  })
+  it('links only the exact ranking and Race publication week', async () => {
+    api.listViewerOfficialRankingHistory.mockResolvedValue(savedRankings([rankingPublication(), rankingPublication(6)]))
+    api.getViewerFinalsRace.mockResolvedValue(savedRace([racePublication()]))
+    renderWeek()
+    expect(await screen.findByRole('link', { name: 'Ranking publication #1712' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/rankings/1712')
+    expect(screen.queryByRole('link', { name: 'Ranking publication #1713' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open canonical Finals Race publication for this cutoff week' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/race')
+  })
+  it('keeps the valid Race link when Ranking history fails', async () => {
+    api.listViewerOfficialRankingHistory.mockRejectedValue(new Error('ranking outage'))
+    api.getViewerFinalsRace.mockResolvedValue(savedRace([racePublication()]))
+    renderWeek()
+    expect(await screen.findByRole('link', { name: 'Open canonical Finals Race publication for this cutoff week' })).toBeInTheDocument()
+    expect(await screen.findByText('Failed to load Official Ranking history: ranking outage')).toBeInTheDocument()
+  })
+  it('keeps valid Ranking links when Race history fails', async () => {
+    api.getViewerFinalsRace.mockRejectedValue(new Error('race outage'))
+    api.listViewerOfficialRankingHistory.mockResolvedValue(savedRankings([rankingPublication()]))
+    renderWeek()
+    expect(await screen.findByRole('link', { name: 'Ranking publication #1712' })).toBeInTheDocument()
+    expect(await screen.findByText('Failed to load Finals Race publications: race outage')).toBeInTheDocument()
+  })
+  it('does not expose a publication from another Viewer Branch', async () => {
+    api.getViewerFinalsRace.mockResolvedValue({ ...savedRace([racePublication()]), viewer_branch_id: 'foreign' })
+    renderWeek()
+    expect(await screen.findByText('Finals Race source does not match the Saved Calendar Viewer Branch.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open canonical Finals Race publication for this cutoff week' })).not.toBeInTheDocument()
+  })
+  it('does not accept a publication beyond its public head even when weeks match', async () => {
+    api.listViewerOfficialRankingHistory.mockResolvedValue({ ...savedRankings([rankingPublication()]), public_head_ordinal: 1711 })
+    renderWeek()
+    expect(await screen.findByText('Source Open')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Ranking publication #1712' })).not.toBeInTheDocument()
+  })
+  it('keeps the Saved week available when both publication readers fail', async () => {
+    api.listViewerOfficialRankingHistory.mockRejectedValue(new Error('ranking outage'))
+    api.getViewerFinalsRace.mockRejectedValue(new Error('race outage'))
+    renderWeek()
+    expect(await screen.findByText('Source Open')).toBeInTheDocument()
+    expect(eventList().getByRole('link', { name: 'Open planned event' })).toBeInTheDocument()
+    expect(await screen.findByText('Failed to load Official Ranking history: ranking outage')).toBeInTheDocument()
+    expect(await screen.findByText('Failed to load Finals Race publications: race outage')).toBeInTheDocument()
+  })
+  it.each(['0', '-1', '1.5', '5abc', '9007199254740992'])('does not call any reader for invalid week %s', week => {
+    renderWeek('/viewer/runs/run%20alpha/weeks/' + week)
+    for (const reader of [api.getViewerRunCalendar, api.getViewerTournamentHistory, api.listViewerOfficialRankingHistory, api.getViewerFinalsRace]) expect(reader).not.toHaveBeenCalled()
+    expect(screen.queryByRole('list', { name: 'Viewer week Saved Calendar events' })).not.toBeInTheDocument()
+  })
+  it('does not call readers for a missing week', () => {
+    renderWeek('/viewer/runs/run%20alpha/week-missing')
+    expect(api.getViewerRunCalendar).not.toHaveBeenCalled()
+    expect(api.getViewerTournamentHistory).not.toHaveBeenCalled()
+    expect(api.listViewerOfficialRankingHistory).not.toHaveBeenCalled()
+    expect(api.getViewerFinalsRace).not.toHaveBeenCalled()
+  })
+})

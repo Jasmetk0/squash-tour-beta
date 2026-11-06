@@ -8,9 +8,10 @@ describe('Viewer H2H canonical metadata source guard', () => {
     expect(source).toContain('useActiveViewerProductRunId')
   })
 
-  it('keeps listRunPlayers as the only explicit legacy reader', () => {
-    expect(source).toContain('listRunPlayers')
+  it('reads canonical Saved players without reverting to legacy readers', () => {
+    expect(source).toContain('getViewerPlayers')
     for (const forbiddenLegacyReader of [
+      'listRunPlayers',
       'getRunStatusSummary(',
       'listEvents(',
       'listRankingSnapshots(',

@@ -31,15 +31,14 @@ describe('Viewer snapshot module final source guard', () => {
     expect(detailSource).not.toContain('Standings preview')
   })
 
-  it('keeps only Race preview parser/table usage outside the conservative detail slice', () => {
+  it('never restores preview-table inference in the legacy snapshot module', () => {
     const detailSource = detailPageSource()
 
-    // Canonical Ranking uses dedicated Viewer components now. This compatibility module
-    // remains only for legacy Race history, whose list preview still uses the typed Race path.
+    // Both canonical publication lists live outside this compatibility module.
     expect(viewerRunSnapshotsPageSource).not.toContain('RankingPreviewTable')
     expect(viewerRunSnapshotsPageSource).not.toContain('parseRankingPreviewPayload')
-    expect(viewerRunSnapshotsPageSource).toContain('RacePreviewTable')
-    expect(viewerRunSnapshotsPageSource).toContain('parseRacePreviewPayload')
+    expect(viewerRunSnapshotsPageSource).not.toContain('RacePreviewTable')
+    expect(viewerRunSnapshotsPageSource).not.toContain('parseRacePreviewPayload')
 
     expect(detailSource).not.toContain('RankingPreviewTable')
     expect(detailSource).not.toContain('RacePreviewTable')
@@ -47,15 +46,9 @@ describe('Viewer snapshot module final source guard', () => {
     expect(detailSource).not.toContain('parseRacePreviewPayload')
   })
 
-  it('keeps list and detail snapshot sequence parsing strict', () => {
+  it('keeps the remaining legacy detail snapshot sequence parsing strict', () => {
     const detailSource = detailPageSource()
 
-    expect(viewerRunSnapshotsPageSource).toMatch(
-      /requestedSequenceParam\s*&&\s*\/\^\\d\+\$\/\.test\(requestedSequenceParam\)[\s\S]*Number\.parseInt\(requestedSequenceParam, 10\)/
-    )
-    expect(viewerRunSnapshotsPageSource).toMatch(
-      /hasRequestedSequence\s*=\s*Number\.isInteger\(requestedSequence\)\s*&&\s*requestedSequence\s*>\s*0/
-    )
     expect(detailSource).toMatch(/\/\^\\d\+\$\/\.test\(snapshotSequence\)[\s\S]*Number\.isSafeInteger\(parsedSequence\)[\s\S]*parsedSequence\s*>\s*0/)
     expect(detailSource).not.toContain('Number.parseInt(snapshotSequence')
     expect(detailSource).not.toContain('parseInt(snapshotSequence')

@@ -28,13 +28,13 @@ describe('Viewer snapshot payload list/detail boundary', () => {
     expect(detailSource).not.toContain('Standings preview')
   })
 
-  it('keeps the remaining Race list preview separate from conservative detail payload rendering', () => {
-    // Canonical Ranking has its own dedicated Viewer path and must not leak back into this
-    // compatibility module. The Race list preview remains typed; detail stays conservative.
+  it('keeps the compatibility module free of inferred Ranking or Race standings', () => {
+    // Canonical Ranking and Race have their own dedicated Saved publication paths.
+    // Legacy snapshot payloads remain conservative metadata, including plausible shapes.
     expect(viewerRunSnapshotsPageSource).not.toContain('RankingPreviewTable')
     expect(viewerRunSnapshotsPageSource).not.toContain('parseRankingPreviewPayload')
-    expect(viewerRunSnapshotsPageSource).toContain('RacePreviewTable')
-    expect(viewerRunSnapshotsPageSource).toContain('parseRacePreviewPayload')
+    expect(viewerRunSnapshotsPageSource).not.toContain('RacePreviewTable')
+    expect(viewerRunSnapshotsPageSource).not.toContain('parseRacePreviewPayload')
 
     expect(parseRacePreviewPayload({ race_to_finals: { rows: [{ position: 1, player_id: 'p2', player_name: 'Race Preview Player', race_points: 80 }] } }).rows).toHaveLength(1)
     expect(detailPageSource()).not.toContain('parseRankingPreviewPayload')

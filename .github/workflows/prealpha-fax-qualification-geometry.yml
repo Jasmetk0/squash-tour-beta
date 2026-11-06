@@ -6,6 +6,11 @@ on:
     paths:
       - 'src/beta_engine/domain/tournaments/fax_reference_bracket_topology.py'
       - 'tests/domain/test_fax_reference_bracket_topology.py'
+      - 'src/beta_engine/domain/tournaments/fax_reference_player_draw.py'
+      - 'src/beta_engine/application/fax_reference_player_draw.py'
+      - 'src/beta_engine/domain/tournaments/draw_input_authority.py'
+      - 'src/beta_engine/infrastructure/db/tournament_draw_input_authority.py'
+      - 'tests/infrastructure/test_fax_reference_player_draw.py'
       - 'tools/preview_fax_reference_brackets.py'
       - 'docs/FAX_REFERENCE_KNOCKOUT_GEOMETRY_V1.md'
       - '.github/workflows/prealpha-fax-qualification-geometry.yml'
@@ -36,7 +41,19 @@ jobs:
           cache-dependency-path: pyproject.toml
       - run: python -m pip install -e . pytest
       - name: Original 80 FAX Gold and Platinum canonical topology and adversarial tests
-        run: python -m pytest tests/domain/test_fax_reference_bracket_topology.py -vv --maxfail=1
+        run: GITHUB_EVENT_NAME=fax_qualification_geometry_acceptance python -m pytest tests/domain/test_fax_reference_bracket_topology.py -vv --maxfail=1
+      - name: Real player Draw, HTTP SQLite retry, Saved restore and historical compatibility
+        # A scoped acceptance job must execute its unchanged regression modules too.
+        # The ordinary PR changed-test selector is intentionally not this gate.
+        run: >-
+          GITHUB_EVENT_NAME=fax_qualification_geometry_acceptance python -m pytest
+          tests/infrastructure/test_fax_reference_player_draw.py
+          tests/infrastructure/test_tournament_draw_authority.py
+          tests/infrastructure/test_tournament_draw_input_authority.py
+          tests/domain/test_tournament_entry_field.py
+          tests/api/test_admin_tournament_draw_authority_api.py
+          tests/api/test_admin_tournament_wild_cards_api.py
+          -vv --maxfail=1
       - name: Produce actual deterministic non-playable source bracket report
         run: |
           python -m tools.preview_fax_reference_brackets --output "$RUNNER_TEMP/fax-80-qualification-geometry.json"

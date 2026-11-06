@@ -51,3 +51,48 @@ Use the canonical field/Draw/qualification authorities to perform an exact, sour
 ## Test evidence
 
 Dedicated Draft-inclusive workflow runs real 80-Edition source topology tests and produces an exact JSON artifact; Fast CI runs marked domain critical cases. **A green topology test does not establish any played tournament**. The user alone chooses merges.
+
+
+## Source-sized real-player initial Draw (6 November 2026 candidate)
+
+The topology-only report remains result-free. The next layer now reuses canonical
+`TournamentEntryFieldResolver`, WC authority, Draw Input and Draw stores/builders.
+`fax_reference_entry_capacity(event)` binds admission capacities to the source:
+Gold Main32 positions minus eight BYEs / Q16, Platinum Main32 / **Q24**, four Q
+spots and two WC places. It never widens the Platinum Entry cut to 32 applicants.
+
+Binary sections retain their historical input v2/v3 and Draw algorithms. Only
+uniform non-binary Q sections select Draw Input v12 and
+`padded_qualification_sections.v3`. Physical section capacity is the next power
+of two; seed pools, protected BYE placement, RNG sub-seeds and canonical nodes
+reuse the established Master helpers. The original Q admission count is retained
+in the immutable input and its fingerprint. Historical schemas still reject
+six-position brackets instead of acquiring a different meaning on replay.
+
+`FaxReferencePlayerDrawService.inspect` reads the copied Run Calendar plus normal
+authenticated initial Draw/Input stores. Its domain envelope validates full source
+counts, WC/Q partition, exact initial algorithm and replay, Main/Q node topology
+and section BYEs. This is a read-only projection, not another Saved component,
+Entry eligibility decision or implicit Save. Edited Global sources are not read.
+Edited Run Calendar entities are rejected against their applied source baseline.
+The explicit `source_binding_scope=current_copied_calendar_geometry` is a current
+source/Draw coherence check, not proof of a source fingerprint frozen at Draw
+commit time. A newly reapplied Calendar version still needs the future execution
+boundary's immutable source binding. `sporting_execution_ready` remains false.
+The existing Admin Draw commit/generate API produces the new version, and the
+frontend first-Draw reader recognizes its explicit algorithm.
+
+Focused tests use the actual 80-Edition source with named test players and explicit
+eligible applications/WC nominations. They cover source cut vs waiting list,
+Main/Q/WC disjointness, protected BYEs, deterministic seeds, JSON replay, actual
+HTTP/SQLite retry, stale command rejection, Saved component rollback/restore,
+connection reopen and adversarial payloads. All 40 Gold Draw payloads were compared
+byte-for-byte with the old builder at base `1800697b`; a fixed golden fingerprint
+is retained. These tests do not choose production eligibility or award policy.
+
+Next: version the native global-slot feeder/round/match-result contracts for real
+Main24/32 and Q winners, then prove results, points, explicit owner Save/restart,
+withdrawal/replacement and multiple Editions. Unsupported padded-Q repair paths
+remain fail-closed. Do not remove the native executor Main4/8 guard as a shortcut.
+The original incomplete awards and early announcement prerequisites still apply.
+Neither this Draw nor its restored component proves a played season/50-season Run.

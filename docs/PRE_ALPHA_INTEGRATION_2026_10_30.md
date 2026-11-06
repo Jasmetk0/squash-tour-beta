@@ -1,4 +1,25 @@
-# Frontend regression repair candidate — 6 November 2026
+# FAX source-sized player Draw candidate — 6 November 2026
+
+Base `buuk` `1800697b978a33f6895d2e6a3fa3e77bfb066954`; #1744 is owner-merged.
+This extends the existing requirement/evidence map, not the approved release scope.
+
+| Requirement | New implementation/evidence | Remaining boundary |
+| --- | --- | --- |
+| Original Gold24/Platinum32 + Q geometry | `fax_reference_entry_capacity` preserves source admission cut; v12 input / padded Q v3 Draw supports Q24 as four six-player/eight-position sections | No automatic Entry eligibility or WC choice is inferred |
+| Real-player/seed-aware initial Draw | Existing field, ranking and WC authorities feed canonical initial Draw; Main8 seeds, Q4/Q8 seeds, deterministic protected BYEs and unresolved Q1–Q4 | Match/round/global-slot execution and Q winner consumption remain separate |
+| Exact source/replay/storage | Source-bound reader consumes copied Run Calendar and authenticated stores. Tests cover all 80 source geometries, SQLite commit/retry, Saved component restore, connection reopen, actual HTTP commands and stale/corrupt source rejection | These use explicit named test players and reviewed fixture applications, not the actual full World/Entry chronology |
+| Historical compatibility | All 40 Gold Draw JSON payloads compared byte-for-byte against base `1800697b`; retained first-Gold golden fingerprint and existing v1/v2/storage/API regressions | New padded-Q withdrawal/replacement/result paths must be versioned and proven before use |
+| Admin consumption | Frontend accepts the new explicit algorithm and checks it against Draw state; focused contracts and production build | No new owner-level browser or complete Gold/Platinum tournament pass claimed |
+
+The existing source hash, incomplete awards and native executor Main4/8 limitation
+remain unchanged. **80/80 were blocked at the sporting execution audit; this Draw
+work does not turn that audit into 80 played Editions.** No Master, source Package,
+points/calibration, timeout or test policy is weakened. Final-head hosted evidence
+and owner merge remain required for this candidate; older entries below are history.
+
+---
+
+# Historical frontend repair — merged as #1744
 
 Merged base `7e92ad5ee714092263335420e0f6e8ed0b79a045` includes audit #1743.
 The isolated repair has **3,423 passing frontend tests in all 364 files, zero

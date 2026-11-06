@@ -1,4 +1,33 @@
-# Full frontend regression repaired — 6 November 2026 candidate
+# Source-sized FAX player Draw candidate — 6 November 2026
+
+Current merged base: `buuk` **`1800697b978a33f6895d2e6a3fa3e77bfb066954`**
+(owner merge of #1744). The complete frontend regression repair is merged; the
+candidate wording in its historical entry below is no longer current.
+
+This isolated candidate connects original Gold Main24/Q16 and Platinum Main32/Q24
+geometry to real-player canonical Entry Field, reviewed WC, Draw Input and Draw.
+Draw Input v12 / `padded_qualification_sections.v3` separates Q admission count
+from physical bracket positions: Platinum admits 24, distributes six per Q1–Q4,
+and places two BYEs per eight-position section. Gold keeps historical v3 input /
+v2 Draw bytes. Main remains 32 physical positions, eight Main BYEs only for Gold,
+and four unresolved Q placeholders. No Q winner or match result is invented.
+
+The source-bound reader loads the copied Run Calendar and authenticated stored
+input/Draw. Focused evidence covers all 80 original source geometries with named
+test players, real HTTP/SQLite commit/retry, Saved component restore, physical
+connection reopen and adversarial source/replay rejection. Test eligibility and
+WC nominations are explicit fixtures, not a new automatic selection policy.
+Candidate tests and exact-head hosted gates are recorded in its PR.
+
+The complete Gold/Platinum sporting path remains blocked on versioned global-slot
+match/result execution, source awards and existing Entry prerequisites. This is
+not a played 80-Edition season, owner-level Save/browser acceptance or a 50-season
+release pass. ATP package Drafts #1731 → #1741 → #1742 are untouched. The sole
+active evidence map remains the existing integration checkpoint below.
+
+---
+
+# Historical frontend regression repair — merged as #1744
 
 Base: merged `buuk` **`7e92ad5ee714092263335420e0f6e8ed0b79a045`**
 (owner merge of the integrated audit #1743). The isolated frontend test repair

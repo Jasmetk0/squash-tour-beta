@@ -33,6 +33,7 @@ DrawInputSchemaVersion = Literal[
     "tournament_draw_input_authority.v9",
     "tournament_draw_input_authority.v10",
     "tournament_draw_input_authority.v11",
+    "tournament_draw_input_authority.v12",
 ]
 
 
@@ -46,36 +47,54 @@ def canonical_classic_seed_count(*, bracket_capacity: int, actual_player_count: 
     return min(actual_player_count, max(1, bracket_capacity // 4))
 
 
+def qualification_section_capacity(
+    capacity: TournamentEntryFieldCapacity, *, pad_sections: bool = False,
+) -> int:
+    """Physical Q section capacity; v12 keeps admission size separate from BYEs.
+
+    Historical versions require already-binary sections. Padding is explicit so
+    old Saved inputs and their deterministic seeds never change interpretation.
+    """
+    if capacity.qualifier_spots < 1:
+        raise ValueError("Qualification draw requires at least one qualifier section")
+    if capacity.qualification_draw_size % capacity.qualifier_spots:
+        raise ValueError("Qualification capacity must divide evenly across qualifier sections")
+    size = capacity.qualification_draw_size // capacity.qualifier_spots
+    if size < 2:
+        raise ValueError("Qualification section requires at least two entrant places")
+    if pad_sections:
+        size = 1 << (size - 1).bit_length()
+        if size > 128:
+            raise ValueError("Padded Qualification section exceeds supported bracket capacity")
+    elif size & (size - 1):
+        raise ValueError("Each classic Qualification section must have power-of-two capacity")
+    return size
+
+
+def requires_padded_qualification_sections(capacity: TournamentEntryFieldCapacity) -> bool:
+    """Select the new contract only for evenly split non-binary Q sections."""
+    if not capacity.qualifier_spots or not capacity.qualification_draw_size:
+        return False
+    if capacity.qualification_draw_size % capacity.qualifier_spots:
+        return False
+    size = capacity.qualification_draw_size // capacity.qualifier_spots
+    return size >= 2 and bool(size & (size - 1))
+
+
 def canonical_qualification_seed_count(
-    *, capacity: TournamentEntryFieldCapacity, actual_player_count: int
+    *, capacity: TournamentEntryFieldCapacity, actual_player_count: int,
+    pad_sections: bool = False,
 ) -> int:
     """Total global seed pool across equal Master §15.6 Qualification sections."""
-
     if capacity.qualification_draw_size == 0:
         if capacity.qualifier_spots != 0:
-            raise ValueError(
-                "Qualification qualifier spots require Qualification draw capacity"
-            )
+            raise ValueError("Qualification qualifier spots require Qualification draw capacity")
         return 0
-    if capacity.qualifier_spots < 1:
-        raise ValueError(
-            "Qualification draw capacity requires at least one qualifier section"
-        )
     if actual_player_count < capacity.qualifier_spots:
-        raise ValueError(
-            "Qualification requires at least one real player per Q section"
-        )
-    if capacity.qualification_draw_size % capacity.qualifier_spots:
-        raise ValueError(
-            "Qualification capacity must divide evenly across qualifier sections"
-        )
-    section_capacity = (
-        capacity.qualification_draw_size // capacity.qualifier_spots
-    )
-    if section_capacity < 2 or section_capacity & (section_capacity - 1):
-        raise ValueError(
-            "Each classic Qualification section must have power-of-two capacity"
-        )
+        raise ValueError("Qualification requires at least one real player per Q section")
+    if pad_sections and actual_player_count > capacity.qualification_draw_size:
+        raise ValueError("Qualification player count exceeds the source admission capacity")
+    section_capacity = qualification_section_capacity(capacity, pad_sections=pad_sections)
     maximum_seed_pool = capacity.qualifier_spots * max(1, section_capacity // 4)
     return min(actual_player_count, maximum_seed_pool)
 
@@ -201,6 +220,11 @@ class TournamentDrawInputAuthority(FrozenInput):
 
     @model_validator(mode="after")
     def validate_structure(self) -> "TournamentDrawInputAuthority":
+        if self.schema_version == "tournament_draw_input_authority.v12":
+            if self.source_kind != "ranking_snapshot" or not requires_padded_qualification_sections(
+                self.capacity
+            ):
+                raise ValueError("Draw Input v12 requires ranking-sourced non-binary Qualification sections")
         if self.source_kind == "ranking_snapshot":
             if (
                 self.tournament_ranking_authority_fingerprint is None
@@ -513,6 +537,7 @@ class TournamentDrawInputAuthority(FrozenInput):
             "tournament_draw_input_authority.v8",
             "tournament_draw_input_authority.v9",
             "tournament_draw_input_authority.v10",
+            "tournament_draw_input_authority.v12",
         }:
             expected_main_seeds = canonical_classic_seed_count(
                 bracket_capacity=self.capacity.main_draw_size,
@@ -530,6 +555,7 @@ class TournamentDrawInputAuthority(FrozenInput):
             expected_q_seeds = canonical_qualification_seed_count(
                 capacity=self.capacity,
                 actual_player_count=len(self.qualification_player_ids),
+                pad_sections=self.schema_version == "tournament_draw_input_authority.v12",
             )
             if self.qualification_seed_count != expected_q_seeds:
                 raise ValueError(
@@ -537,6 +563,7 @@ class TournamentDrawInputAuthority(FrozenInput):
                 )
         if self.schema_version in {
             "tournament_draw_input_authority.v3",
+            "tournament_draw_input_authority.v12",
             "tournament_draw_input_authority.v4",
             "tournament_draw_input_authority.v5",
             "tournament_draw_input_authority.v6",
@@ -568,7 +595,10 @@ class TournamentDrawInputAuthority(FrozenInput):
                         "Post-draw WC Draw Input requires repair evidence"
                     )
             elif (
-                self.schema_version == "tournament_draw_input_authority.v3"
+                self.schema_version in {
+                    "tournament_draw_input_authority.v3",
+                    "tournament_draw_input_authority.v12",
+                }
                 and self.post_draw_wild_card_repair_fingerprints
             ):
                 raise ValueError(
@@ -1757,6 +1787,7 @@ class TournamentDrawInputAuthorityBuilder:
         if schema_version in {
             "tournament_draw_input_authority.v2",
             "tournament_draw_input_authority.v3",
+            "tournament_draw_input_authority.v12",
         }:
             canonical_main = canonical_classic_seed_count(
                 bracket_capacity=field.capacity.main_draw_size,
@@ -1765,6 +1796,7 @@ class TournamentDrawInputAuthorityBuilder:
             canonical_qualification = canonical_qualification_seed_count(
                 capacity=field.capacity,
                 actual_player_count=len(qualification_players),
+                pad_sections=schema_version == "tournament_draw_input_authority.v12",
             )
             if main_seed_count is not None and main_seed_count != canonical_main:
                 raise ValueError(

@@ -16,6 +16,7 @@ from beta_engine.domain.tournaments.bracket_diagnostics import (
 )
 from beta_engine.domain.tournaments.draw_input_authority import (
     TournamentDrawInputAuthority,
+    qualification_section_capacity,
 )
 
 
@@ -29,6 +30,7 @@ TournamentDrawEntrantKind = Literal[
 TournamentDrawAlgorithmVersion = Literal[
     "protected_seed_shuffle.v1",
     "idealized_seed_tiers.v2",
+    "padded_qualification_sections.v3",
 ]
 
 
@@ -285,9 +287,21 @@ class TournamentDrawAuthorityBuilder:
         *,
         draw_input: TournamentDrawInputAuthority,
         command_id: str,
-        algorithm_version: TournamentDrawAlgorithmVersion = "idealized_seed_tiers.v2",
+        algorithm_version: TournamentDrawAlgorithmVersion | None = None,
         draw_seed_override: int | None = None,
     ) -> TournamentDrawAuthority:
+        padded = draw_input.schema_version == "tournament_draw_input_authority.v12"
+        if algorithm_version is None:
+            algorithm_version = (
+                "padded_qualification_sections.v3" if padded else "idealized_seed_tiers.v2"
+            )
+        if algorithm_version not in {
+            "protected_seed_shuffle.v1", "idealized_seed_tiers.v2",
+            "padded_qualification_sections.v3",
+        }:
+            raise ValueError("Unsupported Tournament Draw algorithm")
+        if padded != (algorithm_version == "padded_qualification_sections.v3"):
+            raise ValueError("Padded Qualification algorithm requires Draw Input v12 exclusively")
         source_draw_input = draw_input
         effective_draw_input = (
             draw_input.model_copy(update={"draw_seed": draw_seed_override})
@@ -319,22 +333,13 @@ class TournamentDrawAuthorityBuilder:
             raise ValueError(
                 "One-position Qualification Draw requires an explicit auto-qualification policy"
             )
-        if capacity.qualifier_spots > 0:
-            if capacity.qualification_draw_size % capacity.qualifier_spots:
-                raise ValueError(
-                    "Qualification field must split evenly across equal Q sections"
-                )
-            qualification_section_size = (
-                capacity.qualification_draw_size // capacity.qualifier_spots
-            )
-            if qualification_section_size < 2 or not _is_power_of_two(
-                qualification_section_size
-            ):
-                raise ValueError(
-                    "Each canonical Qualification section must be a complete binary bracket"
-                )
+        section_size = (
+            qualification_section_capacity(capacity, pad_sections=padded)
+            if capacity.qualifier_spots
+            else 0
+        )
 
-        if algorithm_version == "idealized_seed_tiers.v2":
+        if algorithm_version != "protected_seed_shuffle.v1":
             expected_main_seed_count = _master_seed_count(
                 bracket_size=capacity.main_draw_size,
                 actual_player_count=(
@@ -348,7 +353,7 @@ class TournamentDrawAuthorityBuilder:
                 )
             if capacity.qualification_draw_size and capacity.qualifier_spots == 1:
                 expected_q_seed_count = _master_seed_count(
-                    bracket_size=capacity.qualification_draw_size,
+                    bracket_size=section_size,
                     actual_player_count=len(draw_input.qualification_player_ids),
                 )
                 if draw_input.qualification_seed_count != expected_q_seed_count:
@@ -371,7 +376,7 @@ class TournamentDrawAuthorityBuilder:
                 "Canonical Run-owned Qualification field exceeds configured capacity"
             )
         qualification_bye_count = (
-            capacity.qualification_draw_size
+            section_size * capacity.qualifier_spots
             - len(draw_input.qualification_player_ids)
         )
 
@@ -382,7 +387,7 @@ class TournamentDrawAuthorityBuilder:
                 qualification = cls._build_bracket(
                     draw_input=draw_input,
                     draw_type="qualification",
-                    bracket_size=capacity.qualification_draw_size,
+                    bracket_size=section_size,
                     player_ids=draw_input.qualification_player_ids,
                     seed_player_ids=draw_input.qualification_seed_player_ids,
                     placeholder_ids=(),
@@ -441,9 +446,12 @@ class TournamentDrawAuthorityBuilder:
     ) -> tuple[TournamentDrawBracket, ...]:
         capacity = draw_input.capacity
         section_count = capacity.qualifier_spots
-        section_size = capacity.qualification_draw_size // section_count
+        section_size = qualification_section_capacity(
+            capacity,
+            pad_sections=algorithm_version == "padded_qualification_sections.v3",
+        )
         total_byes = (
-            capacity.qualification_draw_size
+            section_size * section_count
             - len(draw_input.qualification_player_ids)
         )
         bye_counts = _qualification_byes_by_section(
@@ -589,7 +597,7 @@ class TournamentDrawAuthorityBuilder:
         draw_scope = draw_type if section_id is None else f"{draw_type}:{section_id}"
         idealized_by_position = (
             _idealized_slot_order(bracket_size)
-            if algorithm_version == "idealized_seed_tiers.v2"
+            if algorithm_version != "protected_seed_shuffle.v1"
             else ()
         )
         local_seed_positions = (
@@ -600,7 +608,7 @@ class TournamentDrawAuthorityBuilder:
                 event_id=draw_input.event_id,
                 draw_scope=draw_scope,
             )
-            if algorithm_version == "idealized_seed_tiers.v2"
+            if algorithm_version != "protected_seed_shuffle.v1"
             else _seed_positions(bracket_size, len(seed_player_ids))
         )
 
@@ -638,7 +646,7 @@ class TournamentDrawAuthorityBuilder:
                     index for index, slot in slots.items() if slot is not None
                 },
             )
-            if algorithm_version == "idealized_seed_tiers.v2"
+            if algorithm_version != "protected_seed_shuffle.v1"
             else _choose_bye_positions(
                 bracket_size=bracket_size,
                 explicit_byes=explicit_byes,

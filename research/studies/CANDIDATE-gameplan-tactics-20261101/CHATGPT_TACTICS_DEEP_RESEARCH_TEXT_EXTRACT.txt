@@ -1,0 +1,899 @@
+# ChatGPT Deep Research — Player Styles, Tactical Intelligence and Gameplan Adaptation
+
+Original source: user-provided DOCX "Hloubkový výzkum_ herní styly, taktická inteligence a adaptace gameplanu v Squash Engine.docx" (23 pages; received 2026-11-01).
+
+**Status:** Independent AI research / analysis of current Gameplan, not a validated empirical calibration or new Master requirement. **Candidate R006** only, pending Work/owner decision.
+**Fidelity warning:** this is the available searchable text extracted from original DOCX. Exact Word equations, figures and table layouts may be altered or missing. Original binary DOCX is not committed.
+**Scope warning:** This report evaluates older live match paths; verify current HEAD and overlap before drawing implementation conclusions. No tests claimed to have been executed by archiving it.
+
+----- BEGIN FULL TEXT EXTRACTION -----
+
+<PARSED TEXT FOR PAGE: 1 / 23>
+Hloubkový výzkum: herní styly, taktická
+inteligence a adaptace gameplanu v Squash
+Engine
+Executive Summary
+Tento výzkum se řídí zadáním pro Squash Engine, jehož cílem je ověřit, zda
+současný rally-by-rally model dokáže vytvářet věrohodné individuální styly a
+taktické interakce bez umělého přidělování výsledkových bonusů. Zadání
+výslovně požaduje oddělit dlouhodobou herní identitu od krátkodobého
+rozhodování, nepřevádět korelace přímo na pravděpodobnost vítězství a
+nepovažovat složitější matematický model automaticky za realističtější.
+fileciteturn0file0
+
+Hlavní závěr je příznivý pro současnou architekturu, nikoli však pro
+všechny její kalibrační detaily. Literatura poměrně dobře podporuje myšlenku,
+že squash lze realisticky aproximovat pomocí skrytého stavu „kontroly/tlaku“ a
+že taktika má působit přes získávání času, prostoru, dostupnost úderů, pozici
+soupeře, tempo a fyzické náklady, nikoli přímým „style bonus → bod“. Vučković
+et al. ukázali, že obsazování oblasti T souvisí s úrovní hráče a s dominancí ve
+výměně, ale sami varují před jednoduchou interpretací mezi vítězem a
+poraženým; Murray et al. později ukázali, že tlak vzniká vzájemným spojením
+pozice, času, kvality úderu a reakce soupeře. [1]
+
+Empirická literatura zároveň nepodporuje pevnou univerzální matici
+stylových counterů. Studie elitního squashe opakovaně ukazují směs
+invariantních tendencí a silné závislosti na situaci. U elitních hráčů se výběr
+úderu mění podle prostoru a zejména podle dostupného času; Murray et al.
+dokonce dospěli k závěru, že konzistentní profil nezávislý na soupeři je u světové
+elity nepravděpodobný. [2] Proto je vhodnější chápat „agresivní“, „retrieving“ či
+„tempo-controller“ jako stabilní prior či dlouhodobou tendenci, nikoli jako
+deterministický vztah typu rock-paper-scissors.
+
+Současný Squash Engine již v tomto směru udělal podstatný krok. Aktivní
+Gameplan V1 má čtyři spojité osy Risk, Tempo, Court Positioning a Variation,
+vytváří nedokonalý odhad soupeře, pracuje s familiaritou a provedením a
+dovoluje START/STICK/ADAPT. Gameplan nepřidává bod přímo; ovlivňuje
+kontrolu, tempo, uzavírání fáze a workload. Starý kategorický
+<PARSED TEXT FOR PAGE: 2 / 23>
+STYLE_MATCHUP_EDGES je při aktivním gameplanu vypnut, což je správná
+ochrana proti dvojímu započítání. [3]
+
+Audit ale identifikoval dvě významné legacy výjimky. Za prvé zůstává aktivní
+ARCHETYPE_MATCHUP_EDGES, tedy pevný přímý výsledkový posun mezi
+archetypy i při aktivním Gameplan V1. Za druhé engine stále přidává vítězi
+předchozího gamu momentum_adjustment = 0.035 do základní síly v následujícím
+gamu. Tyto mechanismy jsou odlišné od nového kauzálního gameplanu a
+zaslouží si samostatnou diagnostiku, protože mohou imitovat „taktický matchup“
+či „adaptaci“ i tam, kde skutečný efekt nevzniká z kontroly, workloadu nebo
+rozhodování. [4]
+
+Největší současné riziko není, že by engine byl příliš jednoduchý; rizikem je
+identifikovatelnost efektů. Výsledek jednoho zápasu současně ovlivňují
+atributy, Form, fatigue/health/travel, archetype edge, předchozí vyhraný game,
+upset variance, stamina, effort, hidden control a gameplan. Bez systematických
+ablačních experimentů nelze bezpečně určit, zda pozorovaná taktická
+rozmanitost skutečně vzniká z gameplanu, nebo je pouze produktem jiných
+vrstev. [5]
+
+Pro současnou pre-alphu proto nedoporučuji přidávat nový
+Markovský/POMDP systém ani shot-by-shot simulaci. Nejvyšší prioritu má
+experimentálně změřit to, co už existuje: zda čtyři osy vytvářejí odlišné distribuce
+kontroly, tempa, délky a workloadu; zda adaptace zlepšuje situaci jen statisticky,
+nikoli téměř dokonale; zda chybné odhady skutečně mohou škodit; a zda
+archetype/momentum legacy vrstvy neprodukují efekt stejného typu dvakrát.
+Současná architektura hidden-control modelu je pro pre-alphu sportovně
+obhajitelná. [6]
+
+Vědecké poznání stylů, kontroly a taktické interakce
+Co je empiricky skutečný „herní styl“
+Nejstarší z požadovaných studií, Hong et al. (1996), analyzovala deset zápasů
+Hong Kong Open 1993. Přibližně 61 % úderů tvořily drivy/length, necelých 18 %
+dropy a přibližně 12 % volleye; autoři popsali dominantní model světové špičky
+jako „pressure and attack game“. Studie je důležitá jako historická notational-
+analysis reference, ale zápasy používaly starší North American scoring a výsledky
+nelze přímo přenášet na dnešní PAR-11. [7]
+
+Modernější data ukazují, že „styl“ nelze dobře redukovat na oblíbený úder. V
+elitních zápasech je volba úderu významně podmíněna místem na kurtu a časem
+<PARSED TEXT FOR PAGE: 3 / 23>
+dostupným k reakci; při krátkém čase se repertoár silně zužuje, zatímco s větším
+časem roste prostor pro taktickou volbu. [8] To podporuje model, v němž taktické
+preference ovlivňují co hráč zkusí dělat, ale aktuální stav výměny omezuje, co
+vůbec může dělat.
+
+Studie situation awareness poskytují ještě silnější argument. Analýza 41 elitních
+zápasů identifikovala šest stavů od obranného úderu pod tlakem až po pokus o
+winner při absenci tlaku a soupeři mimo pozici. Stejný typ úderu ze stejné části
+kurtu proto může mít různý taktický význam podle pozice a časového kontextu.
+[9]
+
+Murray et al. následně analyzovali zápasy dvou nejlepších hráčů světa a zjistili
+rozdílné „performance profiles“ mezi jednotlivými zápasy; jejich hlavní
+interpretace je, že taktické chování vzniká z couplingu obou hráčů, takže
+stabilní profil zcela nezávislý na soupeři je málo pravděpodobný. [10] To je
+zásadní pro Squash Engine: dlouhodobý styl má existovat, ale pozorované
+zápasové chování musí být jeho interakcí se soupeřem a situací.
+
+Kontrola T, čas a tlak
+Vučković et al. sledovali hráče na World Team Championships, slovinském
+národním mistrovství a lokálním turnaji. Četnost obsazení T v okamžiku
+soupeřova zásahu dobře odlišovala výkonnostní úroveň a vítězové obecně trávili
+větší podíl času v oblasti T než poražení; efekt však nebyl univerzální v těsných
+gamech. Autoři proto interpretovali T jako indikátor dominance, nikoli jako
+jednoduchý kauzální „bonus“. [11]
+
+Pro simulaci je vhodnější kauzální řetězec:
+
+lepší předchozí úder → horší pozice / méně času soupeře → omezené
+možnosti → vyšší pravděpodobnost udržení kontroly → další tlak → případná
+vynucená chyba nebo winner.
+
+Tento směr odpovídá SA studiím, kde tlak není vlastností jediného hráče, ale
+výsledkem vztahu mezi jeho úderem a schopností soupeře situaci řešit. [12]
+
+To je významná podpora pro pětistavový hidden-control model Squash Engine
+(STRONG_CONTROL_A, SLIGHT_CONTROL_A, NEUTRAL, SLIGHT_CONTROL_B,
+STRONG_CONTROL_B). Engine explicitně modeluje lokální setrvačnost, menší
+přechody, výrazné zlomy a vzácné přímé reverzace, což je rozumná abstrakce
+kontinuálního pozičního boje bez potřeby shot-by-shot simulace. [13]
+<PARSED TEXT FOR PAGE: 4 / 23>
+Stylové matchupy
+Důkazy pro univerzální „aggressive beats retriever“ typ vztahu jsou slabé.
+Dostupné studie většinou analyzují taktické frekvence, polohu, čas, tlak či
+expertizu, nikoli dostatečně velké panelové soubory hráč × soupeř × situace
+potřebné k odhadu stabilních nelineárních interaction terms. Murray et al.
+naopak zdůrazňují nestabilitu profilu napříč soupeři. [10]
+
+To neznamená, že matchup efekty neexistují. Je realistické očekávat například to,
+že vysoké tempo může měnit časové okno pro soupeřovu reakci nebo že hlubší
+retrieving může prodlužovat rally a měnit workload. Co však literatura
+momentálně dostatečně nepodporuje, je pevná výsledková amplituda těchto
+interakcí. Proto mají být v enginu výsledkem mechanistické interakce atributů a
+gameplanu, nikoli ručně zadané vítězné výhody.
+
+                                            Vhodná
+Empirická vlastnost             Síla důkazů reprezentace
+kontrola T / prostoru     střední až vysoká latentní control state
+souvisí s dominancí
+omezený čas mění                     vysoká tempo/control →
+volbu úderu                                 dostupnost kvalitní
+                                            reakce
+elitní hráči se lépe                 střední kvalitnější, nikoli
+orientují v taktickém                        dokonalé odhady
+kontextu
+individuální profily                 střední dlouhodobý prior /
+existují                                     spojité osy
+profil je silně           střední až vysoká interaction během
+soupeřově                                   rally
+podmíněný
+stabilní univerzální                  slabá nedoporučeno
+style-counter matice
+adaptace                       neprokázáno nedoporučeno
+automaticky zvyšuje
+win probability
+
+Expertiza navíc není prosté „IQ“. Studie 80 hráčů zjistila, že vyšší úroveň byla
+spojena s lepším čtením herního kontextu a vazbou rozhodnutí na provedení, ale
+u dropu nebyl jednoduchý monotónní vztah mezi expertizou a počtem
+<PARSED TEXT FOR PAGE: 5 / 23>
+„správných rozhodnutí“; elitní hráči někdy volili komplexnější dlouhodobé
+taktické účely. [14]
+
+Taktická adaptace a nedokonalé rozhodování
+Vědecké důkazy dobře podporují, že expertní hráč používá několik typů
+informací: předchozí zkušenost, současnou pozici soupeře, dostupný čas,
+pohybové informace a pravděpodobnostní očekávání. Situation-awareness studie
+přímo pracují s historickými a aktuálními informacemi, pohybovými cues a
+pravděpodobnostním úsudkem. [15]
+
+Naopak neexistují přesvědčivé squashové údaje, které by dovolovaly říci
+například „po šesti prohraných rallies musí elitní hráč s Adaptability 80 změnit
+taktiku s pravděpodobností 63 %“. Současná čísla engine proto musí zůstat
+kalibračními hypotézami, ne sportovními konstantami.
+
+Gameplan V1 tento epistemický problém řeší koncepčně správně:
+OpponentStyleEstimate obsahuje odhadované osy, confidence a chybu; hráčova
+rozhodovací vrstva nemá číst „engine truth“. [16] Počáteční strategie může být
+OWN_STRENGTH, COUNTER_ESTIMATE nebo DELAYED_PAYOFF, přičemž
+pravděpodobnost výběru využívá proxy adaptability, mental atribut a některé
+stylové tendence. [17]
+
+Reassessment je také proveden před rally a vychází jen z již odehraných rallies.
+Engine počítá bodový diferenciál od předchozího reassessmentu, přidá percepční
+chybu a při negativním signálu může hráč přepnout plán; systém současně
+dovoluje úmyslně STICK kvůli pozdějšímu očekávanému payoffu, vysoké
+confidence, nízké adaptability či chybné interpretaci. [18]
+
+Zde však existuje důležitá modelová slabina. Aktuální evidence pro adaptaci je
+převážně score-based: raw_signal = point_differential / observed_rallies. [19]
+Skutečný hráč může rozpoznat nefunkční taktiku i při vyrovnaném skóre —
+například proto, že je permanentně pod tlakem, běhá výrazně více, ztrácí T nebo
+soupeři poskytuje příliš mnoho času. V budoucnu by proto měla být
+prozkoumána diagnostika založená na již existujících interních signálech
+control/workload; není však nutné ji okamžitě přidávat do pre-alpha.
+
+Současně je třeba důsledně odlišovat:
+
+      adaptaci — změna strategie na základě informace;
+      regresi k průměru — výsledky se po špatké sérii zlepší samy;
+      fyzický efekt — soupeř zpomalil kvůli únavě;
+<PARSED TEXT FOR PAGE: 6 / 23>
+        interactive effect — soupeř změnil svůj plán;
+        náhodu — stejný plán začne vyhrávat;
+        legacy momentum — engine zvýšil sílu vítězi předchozího gamu.
+
+Poslední bod je v současném kódu skutečný: po skončení gamu je
+momentum_owner nastaven na jeho vítěze a příští game dostává tento hráč +0.035
+do strength. [20] Tento efekt není totéž jako rally streak momentum, ale přesto
+vytváří přímou následnou výsledkovou výhodu po vyhraném gamu. Vzhledem k
+zadání projektu je to vysokoprioritní předmět diagnostiky, nikoli automaticky
+důvod k odstranění.
+
+Matematická reprezentace a audit současného Squash
+Engine
+Repozitář v současnosti explicitně deklaruje rally-by-rally první verzi se hidden
+control/pressure phases a s gameplanem působícím kauzálně přes kontrolu, pace,
+closure pressure a workload. [21] Stav kódu byl pro tento výzkum ověřen proti
+veřejné větvi buuk; aktuální Master je v86 a CURRENT_STATE odděluje kanonický
+cíl od skutečně ověřeného runtime stavu. [22]
+
+Srovnání modelových variant
+                                    Doubl
+           Sporto                   e-
+Přístu     vní      Param Kalibr    counti   Výpoč    Repla   Přínos
+p          opora      etry ace      ng       et       y       nyní
+A. 4       dobrá     nízký středn   středn   velmi    výbor   vysok
+osy        jako            í        í        nízký    ný      ý
+Risk/T     komp
+empo/      aktní
+Positi     proxy
+on/Va
+riatio
+n
+B.         slabá     nízký obtížn   vysok    zaned    výbor   nízký
+pevné                      ě        ý        bateln   ný
+style                      identi            ý
+intera                     fikova
+ctions                     telná
+C.         dobrá    nízký– středn   nízký–   nízký    výbor   velmi
+<PARSED TEXT FOR PAGE: 7 / 23>
+                                    Doubl
+          Sporto                    e-
+Přístu    vní       Param Kalibr    counti   Výpoč    Repla     Přínos
+p         opora       etry ace      ng       et       y         nyní
+latent              středn í        středn            ný        vysok
+ní                        í         í                           ý
+contr
+ol
+states
+D.        středn    středn obtížn   středn   nízký    výbor     vysok
+pravd     í               í á       í                 ný se     ý
+ěpodo                                                 seed
+bnost                                                 loggin
+ní                                                    gem
+adapt
+ace
+E.     středn       vysok vysok     vysok    středn   dobrý     nízký
+plný   í                ý á         ý        í                  nyní
+Mark
+ovský
+taktic
+ký
+model
+F.        teoreti   velmi velmi     velmi    vysok    možn      nízký
+POMD      cky       vysok vysok     vysok    ý        ý, ale    pro
+P/        výbor         ý á         ý                 složitý   pre-
+belief-   ná                                                    alpha
+state
+model
+
+Současný engine odpovídá kombinaci A+C+D. To je pravděpodobně nejlepší
+poměr realismu, auditovatelnosti a kalibrovatelnosti pro současnou fázi.
+
+Co aktuální implementace skutečně dělá
+Dlouhodobý styl zatím není trvale authored spojitý profil. Legacy play_style se
+deterministicky převede na čtyři osy a přidá se stabilní player-specific odchylka.
+Dokumentace to sama označuje za migration debt. [23]
+<PARSED TEXT FOR PAGE: 8 / 23>
+Gameplan potom produkuje base_execution_factor z technique, movement,
+consistency, mental a familiarity. Plán vzdálenější od přirozeného stylu má horší
+familiarity, takže takticky chytrá změna nemusí být dobře provedena. [17] Toto je
+sportovně smysluplný mechanismus a zároveň řeší požadavek, že adaptace může
+mít execution cost.
+
+Rally effect používá execution a tactical fit k vytvoření control signal; risk a
+tempo ovlivňují pace a closure signal; tempo, court positioning, neznámost plánu
+a slabší execution zvyšují workload. [24]
+
+Hidden rally poté skutečně spotřebovává tyto veličiny: gameplan upravuje
+opening control, workload, control transitions, pace a closure. Výsledný winner
+vzniká až z kontrolní trajektorie a terminální pravděpodobnosti. [25] To je v
+souladu s hlavním principem projektu, že styl má měnit příčiny výsledků.
+
+Zjištěné auditní riziko
+Pevný kategorický style edge je správně vypnut, pokud je Gameplan V1
+aktivní. [26] To je silná ochrana proti dvojímu započítání stejného stylu.
+
+Archetype edge vypnut není. ARCHETYPE_MATCHUP_EDGES obsahuje například
+explosive shotmaker vs. durable grinder a další asymetrické dvojice; jeho hodnota se
+vždy připočte ke strength. [27] Pokud archetyp současně koreluje s
+Risk/Tempo/Position/Variation nebo atributy, může jít o duplicitní účinek.
+
+Momentum mezi gamy je rovněž přímý strength modifier. Vítěz předchozího
+gamu dostává v následujícím gamu 0.035. [28] Z hlediska tohoto výzkumu to není
+potvrzený taktický mechanismus a mělo by se experimentálně oddělit od efektu
+adaptace.
+
+Form, sharpness, fatigue, health a travel vstupují přímo do base_strength. [29]
+To není samo o sobě problém; problém vzniká, pokud některý z nich už vyjadřuje
+totéž, co později vyjadřuje stamina/control.
+
+Replay architektura je naopak silná. Gameplan snapshot i přesné
+decision/effect údaje jsou hashově chráněny a Stored Replay čte uložené eventy
+místo opětovného spuštění dnešní AI nebo RNG. [30] To je správný základ pro
+reprodukovatelné historické výsledky.
+
+Diagnostické experimenty a falsifikace
+Níže uvedené experimenty jsou určeny primárně pro existující systém; žádný
+nevyžaduje novou herní mechaniku.
+<PARSED TEXT FOR PAGE: 9 / 23>
+                             Hlavní
+           Hypotéza a        výstupy /
+Experiment vstupy            kontrola       Omezení        Pre-alpha
+E1 Equal-     identické      win rate,      neinterpret    ano
+strength      atributy,      control        ovat win-
+styles        různé          share,         rate jako
+              natural        duration,      historický
+              styles         workload;      benchmark
+                             kontrola =
+                             identický
+                             styl
+E2 Axis       měnit          closure,       engine         ano
+isolation –   pouze Risk     winners/err    nemá
+Risk                         ors proxy,     skutečný
+                             rally length   shot
+                                            outcome
+                                            dataset
+E3 Axis       měnit          shots/sec,     tempo je       ano
+isolation –   pouze          duration,      abstraktní
+Tempo         Tempo          workload,
+                             control
+                             shifts
+E4 Axis       měnit          control        není        ano
+isolation –   pouze          occupancy,     explicitní
+Position      positioning    workload       geometrie T
+E5 Axis       měnit          rozhodovac     pokud          ano
+isolation –   pouze          í změny a      effect malý,
+Variation     Variation      control        osa může
+                             variance       být
+                                            kosmetická
+E6 Natural    stejný hráč,   control,       nutné držet    ano
+vs            OWN_STRE       workload,      opponent
+legitimate    NGTH vs        outcomes       truth stejné
+alternative   counter/del
+plan          ayed
+E7 Counter    A proti B a    zda A→B ≠      pořadí/        ano
+symmetry      role/style     −B→A jen z     seeding
+<PARSED TEXT FOR PAGE: 10 / 23>
+                            Hlavní
+           Hypotéza a       výstupy /
+Experiment vstupy           kontrola        Omezení       Pre-alpha
+             inversion      kauzálních
+                            cest
+E8 Counter   stejný hráč,   tactical fit,   nesmí         ano
+estimate     správný vs     adaptation,     měnit
+accuracy     chybný         result          hidden
+             estimate       distribution    truth
+E9         stejný pre-      post-review     counterfact   ano
+Adaptation match            control,        ual RNG
+on/off     state,           workload,       musí být
+           povolit vs       outcomes        strukturáln
+           zmrazit                          ě párován
+           STICK
+E10 False-   špatná         zda AI          stávající     ano
+negative     score série    zbytečně        score-only
+adaptation   při dobré      adaptuje        signal
+             control
+             trajectory
+E11 False-   dobré skóre    zda AI          totéž         ano
+positive     při            ignoruje
+STICK        zhoršené       latentní
+             control        problém
+             trajectory
+E12          stejná         execution,      familiarity   ano
+Familiarit   taktická       workload,       je
+y cost       změna,         control         kalibrační
+             rozdílná                       hypotéza
+             familiarity
+E13 Legacy   archetype      výsledkový      diagnostick   kritické
+archetype    edges          a control       á větev, ne
+ablation     ON/OFF         rozdíl          product
+                                            change
+E14          0.035          P(win next      bez           kritické
+Momentu      ON/OFF         game |          reálného
+m ablation                  won prior),     benchmark
+<PARSED TEXT FOR PAGE: 11 / 23>
+                            Hlavní
+           Hypotéza a       výstupy /
+Experiment vstupy           kontrola       Omezení        Pre-alpha
+                            comeback       u pouze
+                            rate           effect-size
+                                           audit
+E15          Form ×         ANOVA/         velký počet    ano
+Double-      stamina ×      GLM            běhů
+counting     gameplan ×     interaction
+factorial    archetype      decomposit
+                            ion
+E16          hledat         zda jediný     multiple-  kritické
+Tactical     nejlepší       plan           comparison
+optimizati   legitimní      dominuje       bias
+on stress    axes přes
+test         mnoho
+             soupeřů
+E17          měnit jen      adaptation „více“             ano
+Adaptabili   adaptabilit    frequency a nesmí
+ty           y proxy        benefit     znamenat
+monotonic                               perfektní
+ity
+E18          jeden hráč     variance       důležitější    ano
+Opponent     proti          aktivních      než čistý
+diversity    širokému       plans vs       win rate
+stability    spektru        natural
+             soupeřů        profile
+E19 Seed     stejný input byte/event       musí           kritické
+replay       + seed       hash             pokrýt
+identity     opakovaně identity            ADAPT
+E20          uložit         identický      test version   kritické
+Historical   match,         výsledek a     boundaries
+stored       změnit live    tactical log
+replay       calibration,
+             replay
+E21 CRN      alternativní rozdíl           stejný         ano
+robustness   plány s      výsledků         global seed
+<PARSED TEXT FOR PAGE: 12 / 23>
+                             Hlavní
+           Hypotéza a        výstupy /
+Experiment vstupy            kontrola       Omezení       Pre-alpha
+              oddělenými mezi        není
+              substreams kontrafaktu dostatečný
+                         ály
+E22 Style     hledat         duration/      potřebuje     ano
+impact        plans s        control/       velký N
+without       podobnou       workload
+outcome       win rate,      separation
+impact        rozdílným
+              workloade
+              m
+E23           randomize      apparent       regrese k     kritické
+Adaptation    review         post-          průměru
+false         triggers při   adaptation
+
+discovery     nulovém        improveme
+              tactical       nt
+              effect
+E24 Broad-    několik        zda            nekalibrov    později
+world         tisíc          variability    at style
+distributio   různých        neruší         podle
+n             stylových      celkové        3:0/3:1/3:2
+              párů           match
+                             distribution
+                             s
+
+U kontrafaktuálů je nutné používat více než „stejný seed“. Pokud změna plánu
+způsobí jiný počet eventů či RNG draws, následné draw pořadí se rozejde a
+párování přestává být férové. Aktuální engine má hierarchické větvení RNG
+podle scope/rally a gameplan decision používá rally-indexované branche, což je
+dobrý základ, ale experimenty musí ověřovat lokální substream invarianci. [31]
+
+Falsifikační kritéria
+Styl je sportovně významný, pokud při kontrolované celkové kvalitě opakovaně
+mění mezivýsledky, které jeho definice předpovídá — například pace, control
+trajectory, workload nebo délku rally — a tyto změny nejsou pouze kosmetickým
+textem.
+<PARSED TEXT FOR PAGE: 13 / 23>
+Styl je příliš silný, pokud malá změna osy vytvoří velkou stabilní výsledkovou
+výhodu napříč širokým spektrem soupeřů bez odpovídající změny
+kontrolních/mechanistických proměnných.
+
+Adaptace je příliš dokonalá, pokud téměř vždy zlepší outcome po změně,
+zejména při chybném opponent estimate. Skutečná decision-making literatura
+podporuje lepší kontextové rozhodování expertů, nikoli neomylnost. [32]
+
+Adaptace je kosmetická, pokud STICK/ADAPT mění log, ale nezpůsobuje
+měřitelný rozdíl v control, pace, workload ani distribuci výsledků.
+
+„Momentum“ je falešné vysvětlení, pokud engine po negativní sérii generuje
+zlepšení pouze kvůli regresi k průměru nebo legacy strength modifieru a
+reporting následně tento efekt označí jako taktické přizpůsobení.
+
+Doporučení pro pre-alphu, budoucí verze a otevřené otázky
+Současná pre-alpha
+Nejdůležitější je ponechat současné 4 osy + hidden control + probabilistic
+adaptation jako výchozí architekturu. Empirická literatura neposkytuje důvod
+přecházet na shot-by-shot model, aby bylo možné modelovat taktickou
+rozmanitost. Čas, pozice, tlak a kvalita reakce lze rozumně agregovat do
+latentních stavů. [33]
+
+Není vhodné přidávat další pevnou matchup matici. Současné
+STYLE_MATCHUP_EDGES by při aktivním Gameplan V1 měly zůstat vypnuté. [26]
+
+Nejdříve diagnostikovat ARCHETYPE_MATCHUP_EDGES. Protože jde o přímý
+strength efekt, je v přímém napětí s novější filozofií causal gameplanu. [34]
+Produktové rozhodnutí o odstranění však nemá předcházet měření.
+
+Nejdříve diagnostikovat game-to-game momentum. Jeho existence je v kódu
+jednoznačná, ale squashová literatura použitá v tomto výzkumu neposkytuje
+základ pro přesnou konstantu 0.035. [35]
+
+Ověřit Variation. Z dostupného auditu je Risk/Tempo/Position dobře čitelný v
+outcome pipeline; Variation se objevuje v rozhodovacích/effort souvislostech, ale
+její samostatná sportovní identita musí být empiricky prokázána v
+experimentech, jinak hrozí, že bude méně významná než ostatní tři osy.
+
+Neodvozovat kalibrační procenta z Hong et al. 1996. Studie používala jiný
+scoring systém a historický kontext. [36] Moderní studie navíc ukázaly, že změny
+<PARSED TEXT FOR PAGE: 14 / 23>
+pravidel změnily dostupný čas a útočný charakter rally, přestože některé
+prostorové distribuce úderů zůstaly podobné. [37]
+
+Budoucí verze
+Nejlogičtější budoucí rozšíření není POMDP, ale lepší observace pro stávající
+decision layer: vedle bodového diferenciálu lze případně zvažovat vlastní
+historii control state, relativní workload nebo trend tlaku. Takové informace jsou
+sportovně bližší situation awareness než čistý score signal. [12]
+
+Persistent authored continuous style profiles dávají smysl, pokud engine později
+disponuje dostatečně bohatými dlouhodobými atributy. Repozitář tuto část sám
+označuje za deferred; současná deterministická materializace legacy stylu je
+proto přijatelná jako přechodná vrstva. [38]
+
+Explicitní Adaptability atribut lze přidat až tehdy, když jeho význam bude úzce
+definován. Neměl by znamenat „tactical IQ“, ale například schopnost aktualizovat
+belief, tolerovat změnu herního patternu nebo rychle realizovat odlišný plán.
+Výzkum expertizy podporuje kvalitnější kontextové čtení, nikoli jedinou obecnou
+lineární kognitivní škálu. [39]
+
+Plný POMDP je vhodný až tehdy, kdy existuje dostatek dat pro oddělené
+kalibrování hidden state, observation modelu a decision policy. V současnosti by
+převážně přidal neidentifikovatelné parametry.
+
+Neověřené hypotézy
+Za hypotézy, nikoli etablovaná fakta, je třeba považovat: stabilní superiority
+konkrétního stylu nad jiným; optimální numerickou sílu
+Risk/Tempo/Position/Variation; přesnou dobu reassessmentu; existenci
+univerzálního pozitivního efektu změny taktiky; přesnou cenu unfamiliar
+gameplanu; kauzální efekt předchozího vyhraného gamu; a stabilní individuální
+„tactical identity“ nezávislou na soupeři. Poslední hypotéza je dokonce v napětí s
+výsledky Murray et al., kteří zjistili významnou zápasovou variabilitu profilů. [10]
+
+Kritické hodnocení zdrojů a bibliografie
+Evidence base pro squashovou taktiku je podstatně menší než například pro tenis
+a fotbal. Výhodou hlavních squashových studií je skutečná match-play observace,
+sledování pozic a úderů a v některých případech světová elita. Nevýhodou jsou
+malé počty zápasů, opakované používání stejných turnajů/datových souborů a
+obtížná identifikace kauzality. [40]
+<PARSED TEXT FOR PAGE: 15 / 23>
+Zvláštní opatrnost je nutná u výsledků z roku 1993, protože analyzovaný Hong
+Kong Open používal North American scoring. [36] Modernější PAR-11 prostředí
+má jiné časové a herní charakteristiky; analýza zápasů z let 2010–2011 uvádí
+kratší dostupný čas k reakcím a útočnější charakter moderní elitní hry. [37]
+
+Výzkum z jiných raketových sportů může být užitečný pro obecnou teorii
+rozhodování, ale neměl by být použit k přímému odhadu squashových
+koeficientů. Specifická squashová evidence ukazuje, že prostor, stěny, omezený
+čas a sdílený kurt vytvářejí vlastní interakční strukturu. [33]
+
+Klíčová bibliografie:
+
+Hong, Y., Robinson, P. D., Chan, W. K., Clark, C. R., & Choi, T. (1996). Notational
+analysis on game strategy used by the world's top male squash players in
+international competition. Australian Journal of Science and Medicine in Sport,
+28(1), 18–23. PMID 8742862. [41]
+
+Vučković, G. et al. (2009). Tactical use of the T area in squash by players of differing
+standard. Journal of Sports Sciences. PMID 19551552. Studie analyzovala World
+Team Championships, slovinský šampionát a lokální úroveň a zjistila vztah mezi
+T occupancy, úrovní a dominancí rally. [11]
+
+Murray, S. et al. (2018). Using a situation awareness approach to determine
+decision-making behaviour in squash. Journal of Sports Sciences. PMID 28990852.
+Studie identifikovala šest situation-awareness clusterů z elitních zápasů 2010–
+2011. [42]
+
+Murray, S., James, N., Perš, J., Mandeljc, R., & Vučković, G. (2019). Using a Situation
+Awareness Approach to Identify Differences in the Performance Profiles of the
+World's Top Two Squash Players and Their Opponents. Frontiers in Psychology.
+PMID 31139113. [43]
+
+García-González et al. (2018). Analysis of Tactical, Decisional and Executional
+Behaviour according to the Level of Expertise in Squash. Studie 80 hráčů napříč
+čtyřmi úrovněmi expertizy; zásadní je vazba mezi čtením kontextu,
+rozhodováním a provedením. [14]
+
+James et al. (2013). The effect of court location and available time on the tactical
+shot selection of elite squash players. Studie deseti elitních zápasů a patnácti
+světových hráčů ukázala silnou podmíněnost výběru úderu polohou a časem.
+PMID 24149727. [44]
+<PARSED TEXT FOR PAGE: 16 / 23>
+Studie Effects of rule changes on physical demands and shot characteristics of elite-
+standard men's squash and implications for training analyzovala zápasy Rowe
+British Grand Prix 2010 a 2011 a ukázala, že v moderním pravidlovém prostředí
+je hráčům k dispozici méně času k reakci, což podporuje útočnější charakter
+elitní hry. PMID 27494689. [45]
+
+Repozitář Squash Engine, ACTIVE_GAMEPLAN_V1.md, aktuální větev buuk: čtyři
+osy, imperfect opponent estimate, START/STICK/ADAPT, kauzální vazba
+gameplanu na control/pace/closure/workload a explicitní vypnutí legacy
+categorical style modifieru při aktivním Gameplan V1. [46]
+
+Repozitář Squash Engine, match_engine.py, aktuální větev buuk: současná
+implementace latentních control states, gameplan effects, archetype matchup
+edges, game-to-game momentum a deterministické RNG branchování. [47]
+
+Souhrnná tabulka výzkumných zjištění
+                    Existují
+                    cí         Riziko                         Nové
+           Síla     podpor     nesprá    Doporu               produk
+           vědeck   av         vné       čená                 tové
+           ých      Squash     implem    diagnos              rozhod
+Zjištění   důkazů   Engine     entace    tika      Priorita   nutí
+kontrol vysoká      ano, 5-    nízké–    E1–E4     vysoká     ne
+a                   state      střední
+prostor             control
+u je
+klíčová
+latentní
+veličina
+T          vysoká   současn nízké        causal-   vysoká     ne
+occupa              ý model              path
+ncy                 to                   audit
+není                respekt
+přímý               uje
+point
+bonus
+časový     vysoká   tempo/     střední   E3, E22   vysoká     ne
+tlak                control
+mění                proxy
+<PARSED TEXT FOR PAGE: 17 / 23>
+                    Existují
+                    cí         Riziko                          Nové
+           Síla     podpor     nesprá    Doporu                produk
+           vědeck   av         vné       čená                  tové
+           ých      Squash     implem    diagnos               rozhod
+Zjištění   důkazů   Engine     entace    tika       Priorita   nutí
+taktické
+možnos
+ti
+stabilní střední    natural    střední   E18        vysoká     ne
+hráčské             style
+tenden              profile
+ce
+existují
+match      vysoká   counter    střední   E7–E8      vysoká     ne
+behavi              fit +
+or je               oppone
+silně               nt
+oppone              estimat
+nt-                 e
+depend
+ent
+4        střední    ano        střední   axis       vysoká     ne
+spojité                                  isolatio
+osy                                      n
+jsou
+rozumn
+ější než
+čisté
+labels
+univerz slabá/      legacy     vysoké E7, E16       vysoká     ne
+ální    negativ     style      při
+style-  ní          edges      návratu
+counter             vypnut
+matice              y
+není
+podlože
+na
+<PARSED TEXT FOR PAGE: 18 / 23>
+                      Existují
+                      cí         Riziko                         Nové
+           Síla       podpor     nesprá    Doporu               produk
+           vědeck     av         vné       čená                 tové
+           ých        Squash     implem    diagnos              rozhod
+Zjištění   důkazů     Engine     entace    tika      Priorita   nutí
+archety    implem     ano        vysoké    E13,      kritick    případ
+pe edge    entační                         E15       á          ně
+stále      fakt                                                 později
+dává
+přímý
+strengt
+h
+bonus
+gamepl     střední    ano        střední   E2–E6     vysoká     ne
+an má      až
+působit    vysoká
+přes
+control/
+pace/w
+orkload
+chybné     střední    ano        nízké     E8        vysoká     ne
+oppone
+nt
+estimat
+es jsou
+realisti
+cké
+adaptac střední       stochas    střední   E17,      vysoká     ne
+e nemá                tic                  E23
+být                   STICK/
+perfekt               ADAPT
+ní
+score-     inferen    ano        střední   E10–      střední    až
+only       ce z                            E11                  později
+reasses    literatu
+sment      ry a
+je         kódu
+<PARSED TEXT FOR PAGE: 19 / 23>
+                      Existují
+                      cí         Riziko                         Nové
+           Síla       podpor     nesprá    Doporu               produk
+           vědeck     av         vné       čená                 tové
+           ých        Squash     implem    diagnos              rozhod
+Zjištění   důkazů     Engine     entace    tika      Priorita   nutí
+zjednod
+ušení
+unfamil    sportov    ano        střední   E12       střední    ne
+iar plan   ně
+má         plausib
+executi    ilní,
+on/wor     slabší
+kload      kvantifi
+cost       kace
+game-      implem     ano        vysoké    E14,      kritick    případ
+to-        entační                         E23       á          ně
+game       fakt;
+momen      empiric
+tum        ká
++0.035     opora
+existuje   neurče
+           na
+Variati    zatím      ano        střední   E5        vysoká     ne
+on         neprok
+může       ázáno
+být
+nejslab
+ěji
+identifi
+kovaná
+osa
+hidden-    střední    ano        nízké     E1–E24    velmi      ne
+state                                                vysoká
+rally
+model
+je
+dostaču
+<PARSED TEXT FOR PAGE: 20 / 23>
+                     Existují
+                     cí         Riziko                        Nové
+           Síla      podpor     nesprá   Doporu               produk
+           vědeck    av         vné      čená                 tové
+           ých       Squash     implem   diagnos              rozhod
+Zjištění   důkazů    Engine     entace   tika      Priorita   nutí
+jící pro
+pre-
+alpha
+shot-      nepřím    engine     nízké    výsledk   vysoká     ne
+by-shot    á, ale    zůstává             ová
+není       přesvěd   rally-              validac
+nutná      čivá      by-rally            e
+podmín
+ka
+realism
+u
+Form/      technic   více       vysoké   E15       kritick    ne
+stamin     ky        vrstev                        á
+a/         možné     existuje
+gamepl
+an/
+archety
+pe
+mohou
+double-
+counto
+vat
+Stored     implem    ano        nízké    E19–      kritick    ne
+Replay     entační                       E20       á
+zachov     fakt
+ává
+tactical
+truth
+nejsloži   metodo    současn nízké       až po   vysoká       ne
+tější      logický   ý                   selhání
+model      závěr     design              současn
+není                 odpoví              ých
+<PARSED TEXT FOR PAGE: 21 / 23>
+                      Existují
+                      cí         Riziko                           Nové
+           Síla       podpor     nesprá     Doporu                produk
+           vědeck     av         vné        čená                  tové
+           ých        Squash     implem     diagnos               rozhod
+Zjištění   důkazů     Engine     entace     tika       Priorita   nutí
+nyní                  dá                    testů
+nejlepší
+volba
+
+Celkově tedy současný Squash Engine již obsahuje většinu strukturálních
+prvků, které jsou potřebné pro věrohodnou taktiku: spojitý styl, imperfect
+knowledge, latentní kontrolu, execution cost, fyzickou návaznost a adaptaci.
+[48] Největším úkolem není přidat další systém, ale prokázat, že existující vrstvy
+vytvářejí správné mezivýsledky a že legacy ARCHETYPE_MATCHUP_EDGES a game-
+to-game momentum neobcházejí novější kauzální architekturu. [49]
+
+
+
+[1] [11] [40] Tactical use of the T area in squash by players of differing standard.
+
+https://pubmed.ncbi.nlm.nih.gov/19551552/?utm_source=chatgpt.com
+
+[2] [8] [33] [44] The effect of court location and available time on the tactical shot
+selection of elite squash players.
+
+https://pubmed.ncbi.nlm.nih.gov/24149727/?utm_source=chatgpt.com
+
+[3] [30] [38] [46] [48] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/docs/
+ACTIVE_GAMEPLAN_V1.md
+
+[4] [5] [18] [19] [20] [24] [25] [26] [27] [28] [29] [31] [34] [35] [47] [49] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/src/
+beta_engine/domain/matches/match_engine.py
+
+[6] [21] GitHub - Jasmetk0/squash-tour-beta · GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta
+
+[7] [36] Notational analysis on game strategy used by the world's top male squash
+players in international competition.
+<PARSED TEXT FOR PAGE: 22 / 23>
+https://pubmed.ncbi.nlm.nih.gov/8742862/?utm_source=chatgpt.com
+
+[9] [12] [42] Using a situation awareness approach to determine decision-making
+behaviour in squash.
+
+https://pubmed.ncbi.nlm.nih.gov/28990852/?utm_source=chatgpt.com
+
+[10] Using a Situation Awareness Approach to Identify Differences in the
+Performance Profiles of the World's Top Two Squash Players and Their
+Opponents.
+
+https://pubmed.ncbi.nlm.nih.gov/31139113/?utm_source=chatgpt.com
+
+[13] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/src/
+beta_engine/domain/matches/control.py
+
+[14] [32] [39] Analysis of Tactical, Decisional and Executional Behaviour
+according to the Level of Expertise in Squash.
+
+https://pubmed.ncbi.nlm.nih.gov/29599875/?utm_source=chatgpt.com
+
+[15] [43] Using a Situation Awareness Approach to Identify Differences in the
+Performance Profiles of the World’s Top Two Squash Players and Their
+Opponents - PMC
+
+https://pmc.ncbi.nlm.nih.gov/articles/PMC6527813/?utm_source=chatgpt.com
+
+[16] [17] [23] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/src/
+beta_engine/domain/matches/gameplans.py
+
+[22] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/
+CURRENT_STATE.md
+
+[37] [45] Effects of rule changes on physical demands and shot characteristics of
+elite-standard men's squash and implications for training - PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/27494689/?utm_source=chatgpt.com
+
+[41] Notational analysis on game strategy used by the world's top male squash
+players in international competition - PubMed
+<PARSED TEXT FOR PAGE: 23 / 23>
+https://pubmed.ncbi.nlm.nih.gov/8742862/
+
+----- END FULL TEXT EXTRACTION -----

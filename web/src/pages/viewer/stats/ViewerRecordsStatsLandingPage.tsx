@@ -13,6 +13,7 @@ import {
   renderSourceMetadataList,
   useViewerDeferredSourceQueries
 } from '../deferred'
+import { ViewerSignedTourRecords } from './ViewerSignedTourRecords'
 import {
   buildStatsRecordsSourceLinks,
   getStatsRecordsDeferredGroups,
@@ -63,6 +64,7 @@ export function ViewerRecordsStatsLandingPage({ kind }: { kind: ViewerRecordsLan
             <ViewerEmptyState>No canonical source data is available for this Product Run yet.</ViewerEmptyState>
           ) : null}
         </section>
+        {kind === 'records' ? <ViewerSignedTourRecords runId={productRunId} /> : null}
         <section aria-label={config.title + ' deferred groups'}>
           <ViewerDeferredFeatureList
             title={config.deferredGroupsTitle}

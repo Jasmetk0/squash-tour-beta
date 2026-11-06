@@ -1,19 +1,27 @@
-# Current pre-alpha dependency path — 30 October 2026
+# Current pre-alpha dependency path — 6 November 2026
 
-Baseline: `buuk` `d45b7d3b3aa7e585e3c777cb166c6c5f2bb2f81d`; #1661–#1672
-merged, no open PRs at audit start. The single active requirement/evidence matrix
-is [the post-merge checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md), including
-all original PAQ ranges and later scope. This short list is not another registry.
+Baseline: `buuk` `b666c109b9dc596a6d226025500ceb462a4fff8b`; all 38 reviewed
+non-package PRs are merged with no feature-content loss. ATP package Drafts
+#1731 → #1741 → #1742 remain separate. The single active evidence matrix is
+[the existing checkpoint, updated 6 November](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
+Its older dated rows are history; the complete Master still owns release scope.
 
-1. Finish this evidence checkpoint, then repair the confirmed stale Edition fixture
-   (4 failed/2 passed in the summary unit module), preserving negative assertions.
-   The two actual Run/Save/restart spot checks passed. Do not claim release.
-2. Implement the selected Saved Edition Entry timing/preflight/ranking-source slice
-   using already decided 2+1-week defaults and explicit Edition inputs/overrides.
-3. Resolve only concrete remaining policy/data prerequisites, then use existing
-   validation → field → draw → matches → points → manual Save/reopen boundaries.
-4. Progress §36.5: complete week, N/N+1, multiple weeks without repairs, complete
-   reference season/Finals/Season Transition, multiple seasons, required 50 seasons.
+1. Triage/repair the **88 existing full-frontend failures in 13 modules**; the
+   pre-batch baseline has the same 88 plus four now-passing tests. Distinguish
+   actual regressions from stale Product Run fixtures, labels and source guards;
+   do not delete safety assertions merely to obtain green CI.
+2. Build on the merged source-bound Gold24/Platinum32 + four Qualification-section
+   geometry. Connect real player/seed-aware field/Draw and versioned execution,
+   preserving BYEs, historical schemas, simultaneous slots and original sources.
+   The current exact-source audit finds **80/80 blocked**, not a played season.
+3. Audit the existing automatic Entry eligibility policy and original Category
+   points/preannouncement prerequisites at the consuming boundary. Present only
+   genuinely unresolved PRODUCT decisions; the already implemented 2+1-week
+   timing/ranking preparation is not itself automatic eligibility or live Q play.
+4. Prove an actual Gold and Platinum flow through Entry/Q/Main/points/manual
+   Save/reopen, then multiple Editions/weeks, the complete reference season and
+   Finals/Season Transition, then the required 50 seasons with performance,
+   RSS and physical/history growth observations from those same actual Runs.
 5. Close all retained side requirements (historical initial cohort/intake, portable
    archives/recovery, minimum Reconstruction/three Labs, Records/notifications,
    CS/EN Admin, Earth Package scope) and run the complete assigned release gate.
@@ -22,6 +30,9 @@ Do not substitute W80 for 80 Editions or 1,000 players for initial historical-co
 behavior. Unknown coverage is not an approved deferral. Team/doping/extraordinary
 Edition lifecycle, complete Viewer and other explicit exclusions remain excluded.
 Detailed tuning and new Viewer work do not outrank the supported Admin flow.
+Existing stale Viewer "Official Branch" labels and English-only context copy
+need alignment with the canonical Viewer Branch/CS-EN contract during frontend
+repair; internal legacy field names do not create a privileged sporting Branch.
 
 ---
 

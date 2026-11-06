@@ -3,6 +3,7 @@ import { screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders } from '../../../test/viewerTestUtils'
+import { calendarEvent, historyEvent, savedCalendar, savedHistory } from '../../../test/viewerCalendarFixtures'
 import { ViewerRaceSnapshotDetailPage } from './ViewerRaceSnapshotDetailPage'
 
 const api = vi.hoisted(() => ({
@@ -14,6 +15,8 @@ const api = vi.hoisted(() => ({
       this.status = status
     }
   },
+  getViewerRunCalendar: vi.fn(),
+  getViewerTournamentHistory: vi.fn(),
   getRankingSnapshot: vi.fn(),
   getRaceSnapshot: vi.fn(),
   getRun: vi.fn(),
@@ -49,6 +52,8 @@ describe('ViewerRaceSnapshotDetailPage', () => {
         { snapshot_sequence: 12, snapshot_kind: 'race', source_event_id: 'EVT ALPHA', payload: {} }
       ]
     })
+    api.getViewerRunCalendar.mockResolvedValue(savedCalendar([calendarEvent({ event_id: 'EVT ALPHA', season_week: 8 })]))
+    api.getViewerTournamentHistory.mockResolvedValue(savedHistory([historyEvent(calendarEvent({ event_id: 'EVT ALPHA', season_week: 8 }))]))
     api.getRun.mockResolvedValue({
       season_state: {
         ordered_events: [
@@ -66,6 +71,8 @@ describe('ViewerRaceSnapshotDetailPage', () => {
     expect(await screen.findByText('EVT ALPHA')).toBeInTheDocument()
     expect(api.getRaceSnapshot).toHaveBeenCalledWith('run alpha', 12)
     expect(api.getRankingSnapshot).not.toHaveBeenCalled()
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(api.listEvents).not.toHaveBeenCalled()
     expect(screen.getByRole('heading', { level: 2, name: 'Race to Finals' })).toBeInTheDocument()
     expect(screen.getByText('run alpha')).toBeInTheDocument()
     expect(screen.getAllByText('12').length).toBeGreaterThan(0)
@@ -116,6 +123,8 @@ describe('ViewerRaceSnapshotDetailPage', () => {
     expect(screen.getByText('Snapshot sequence "not-a-sequence" is invalid. Use a positive integer sequence.')).toBeInTheDocument()
     expect(api.getRaceSnapshot).not.toHaveBeenCalled()
     expect(api.getRankingSnapshot).not.toHaveBeenCalled()
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(api.listEvents).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 
@@ -127,6 +136,8 @@ describe('ViewerRaceSnapshotDetailPage', () => {
     expect(await screen.findByText('Failed to load publication: network down')).toBeInTheDocument()
     expect(api.getRaceSnapshot).toHaveBeenCalledWith('run alpha', 12)
     expect(api.getRankingSnapshot).not.toHaveBeenCalled()
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(api.listEvents).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 
@@ -138,6 +149,8 @@ describe('ViewerRaceSnapshotDetailPage', () => {
     expect(await screen.findByText('Snapshot sequence 12 was not found for this run.')).toBeInTheDocument()
     expect(api.getRaceSnapshot).toHaveBeenCalledWith('run alpha', 12)
     expect(api.getRankingSnapshot).not.toHaveBeenCalled()
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(api.listEvents).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 })

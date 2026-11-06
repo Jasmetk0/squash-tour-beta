@@ -10,6 +10,9 @@ import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import App from './App'
+import type { ViewerPlayers, ViewerPlayer, ViewerCountries, ViewerCountry } from './api/types'
+import { calendarEvent, historyEvent, savedCalendar, savedHistory, savedRankings, savedRace, rankingPublication, racePublication } from './test/viewerCalendarFixtures'
+import { getModeSwitcherTarget } from './viewer/modeSwitcherRoutes'
 import { viewerDropdowns } from './viewer/viewerNavigation'
 import {
   viewerCountriesPath,
@@ -54,6 +57,9 @@ const api = vi.hoisted(() => ({
   listRuns: vi.fn(),
   listRunContainers: vi.fn(),
   getViewerOfficialRunContext: vi.fn(),
+  getViewerRunCalendar: vi.fn(),
+  getViewerPlayers: vi.fn(),
+  getViewerCountries: vi.fn(),
   getViewerVisibleProspects: vi.fn(),
   getViewerRankingTable: vi.fn(),
   getViewerOfficialRanking: vi.fn(),
@@ -134,6 +140,12 @@ function resetApiMocks(): void {
     current_event_sequence: null,
     resolution_version: 'viewer_official_branch_v1'
   }))
+  api.getViewerRunCalendar.mockImplementation(async (run: string) => ({
+    ...savedCalendar([calendarEvent({ event_id: 'E1', event_name: 'Canonical Event E1', season: '2029/30', season_week: 2 })], run),
+    viewer_branch_id: `${run}-official`,
+  }))
+  api.getViewerPlayers.mockImplementation(async (run: string) => publicRoster(run))
+  api.getViewerCountries.mockImplementation(async (run: string) => publicCountries(run))
   api.getViewerVisibleProspects.mockResolvedValue({
     schema_version: 'visible_pre_tour_prospects.v1',
     run_id: 'run-a',
@@ -261,6 +273,49 @@ function resetApiMocks(): void {
 }
 
 
+// Explicit canonical component fixtures, never a compatibility adapter to legacy reads.
+function publicPlayer(id = 'P1', name = 'Player One', country = 'EGY', age = 24, ovr: number | null = 120): ViewerPlayer {
+  return { player_id: id, name, country_code: country, age, current_ovr: ovr,
+    status: 'active', identity_source: 'initial_world', tour_entry_season_index: null,
+    tour_entry_week: null, potential_ovr: null, current_form: null,
+    match_sharpness: null, long_term_fatigue: null }
+}
+function publicRoster(run: string, players: ViewerPlayer[] = []): ViewerPlayers {
+  return { schema_version: 'viewer_players.v1', product_run_id: run, viewer_branch_id: `${run}-official`,
+    season_index: 29, week: 1, player_count: players.length,
+    active_player_count: players.filter(p => p.status === 'active').length,
+    retired_player_count: players.filter(p => p.status === 'retired').length, players }
+}
+function publicCountries(run: string, countries: ViewerCountry[] = []): ViewerCountries {
+  return { schema_version: 'viewer_countries.v1', product_run_id: run, viewer_branch_id: `${run}-official`,
+    season_index: 29, week: 1, country_count: countries.length, countries }
+}
+function publicCountry(): ViewerCountry {
+  return { country_code: 'EGY', player_count: 1, active_player_count: 1, retired_player_count: 0,
+    average_current_ovr: 120, top_player_id: 'P1', top_player_name: 'Player One', top_player_current_ovr: 120 }
+}
+function mockCanonicalMetadata(run: string): void {
+  const event = calendarEvent({ event_id: 'EVENT-LATEST', event_name: 'Published Open', season: '2029/2030', season_week: 1, status: 'completed' })
+  api.getViewerRunCalendar.mockResolvedValue({ ...savedCalendar([event], run), viewer_branch_id: `${run}-official` })
+  api.getViewerTournamentHistory.mockResolvedValue({ ...savedHistory([historyEvent(event, { result_published: true, champion_player_id: 'P1', finalist_player_id: 'P2' })], run), viewer_branch_id: `${run}-official` })
+  const ranking = { ...rankingPublication(1), season_index: 29, week_ordinal: 1769 }
+  api.listViewerOfficialRankingHistory.mockResolvedValue({ ...savedRankings([ranking]), product_run_id: run, viewer_branch_id: `${run}-official`, public_head_ordinal: 1769 })
+  const race = { ...racePublication(1), product_run_id: run, viewer_branch_id: `${run}-official`, target_season_index: 29, cutoff_season_index: 29 }
+  api.getViewerFinalsRace.mockResolvedValue({ ...savedRace([race]), product_run_id: run, viewer_branch_id: `${run}-official`, latest_target_season_index: 29 })
+}
+async function expectNoSelectedRunNotice(): Promise<void> {
+  expect((await screen.findAllByText(/^(?:No Product Run is selected(?: yet)?\.|Select a Product Run first\.|No data is available for this run yet\.|Select a Product Run and enter a search query\.|No Product Run search context is available yet\.)$/)).length).toBeGreaterThan(0)
+}
+async function chooseViewerWeek(user: ReturnType<typeof userEvent.setup>, week: number): Promise<void> {
+  await user.click(await screen.findByRole('button', { name: 'Season 2004/05 · W10' }))
+  const input = screen.getByLabelText('Selected week')
+  await user.clear(input); await user.type(input, String(week))
+  await user.click(screen.getByRole('button', { name: 'Set Viewer Week' }))
+}
+function expectNoLegacyMetadataReads(): void {
+  for (const reader of [api.getRunStatusSummary, api.listEvents, api.listRankingSnapshots, api.listRaceSnapshots, api.getRunActivity, api.getFinalsSummary]) expect(reader).not.toHaveBeenCalled()
+}
+
 function topRankingRows(count: number): Array<Record<string, unknown>> {
   return Array.from({ length: count }, (_, index) => ({
     position: index + 1,
@@ -307,6 +362,7 @@ afterEach(() => {
 })
 
 beforeEach(() => {
+  localStorage.setItem('squash-engine-language-v1', 'en')
   clearTestActiveRun()
   localStorage.removeItem('beta_engine:viewer_context')
   resetApiMocks()
@@ -679,21 +735,21 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     expect(screen.getByRole('button', { name: 'Season 2004/05 · W24' })).toBeInTheDocument()
     expect(localStorage.getItem('beta_engine:viewer_context')).toContain('24')
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    await expectNoSelectedRunNotice()
 
     cleanup()
     renderAppAt('/viewer/tour/current-week')
     expect(await screen.findByRole('button', { name: 'Season 2004/05 · W24' })).toBeInTheDocument()
   })
 
-  it('updates local Viewer context with Jump to Week and stores the shared context', async () => {
+  it('updates local Viewer week through the real calendar context selector', async () => {
     const user = userEvent.setup()
     renderAppAt('/viewer/tour/calendar')
-
-    expect(await screen.findByRole('button', { name: 'Season 2004/05 · W10' })).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Jump to W24' }))
+    await chooseViewerWeek(user, 24)
     expect(screen.getByRole('button', { name: 'Season 2004/05 · W24' })).toBeInTheDocument()
     expect(localStorage.getItem('beta_engine:viewer_context')).toContain('24')
+    expectNoLegacyMetadataReads()
+    expectNoForbiddenViewerActions()
   })
 
   it('navigates the topbar search input to canonical q search results without fake results', async () => {
@@ -706,7 +762,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(await screen.findByRole('heading', { name: 'Search', level: 2 })).toBeInTheDocument()
     expect(screen.getByText('Search: Paris')).toBeInTheDocument()
     expect(screen.getAllByLabelText('Read-only Viewer search shell')[0]).toHaveValue('Paris')
-    expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+    await expectNoSelectedRunNotice()
     expect(screen.queryByText(/Paris can reclaim/i)).not.toBeInTheDocument()
   })
 
@@ -721,44 +777,18 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(await screen.findByRole('heading', { name: 'Search', level: 2 })).toBeInTheDocument()
     expect(screen.getAllByLabelText('Read-only Viewer search shell')[0]).toHaveValue('')
     expect(screen.queryByText(/Search query:/)).not.toBeInTheDocument()
-    expect(screen.getAllByText('No data is available for this run yet.').length).toBeGreaterThan(0)
+    await expectNoSelectedRunNotice()
   })
 
   it('shows sports-facing empty states on top-level Viewer pages when no active run is selected', async () => {
-    clearTestActiveRun()
-    const emptyStateRoutes = [
-      ['/viewer/rankings', 'No data is available for this run yet.'],
-      ['/viewer/rankings/race', 'Select a Product Run before opening Race to Finals.'],
-      ['/viewer/tour', 'No data is available for this run yet.'],
-      ['/viewer/tour/current-week', 'No data is available for this run yet.'],
-      ['/viewer/tour/tournaments', 'No data is available for this run yet.'],
-      ['/viewer/tour/matches', 'No data is available for this run yet.'],
-      ['/viewer/tour/categories', 'No data is available for this run yet.'],
-      ['/viewer/tour/champions', 'No data is available for this run yet.'],
-      ['/viewer/tournaments', 'No data is available for this run yet.'],
-      ['/viewer/players', 'No data is available for this run yet.'],
-      ['/viewer/countries', 'No data is available for this run yet.'],
-      ['/viewer/history', 'No data is available for this run yet.'],
-      ['/viewer/records', 'No data is available for this run yet.'],
-      ['/viewer/stats', 'No data is available for this run yet.'],
-      ['/viewer/h2h', 'No data is available for this run yet.'],
-      ['/viewer/predictions', 'No data is available for this run yet.'],
-      ['/viewer/predictions/match-predictor', 'No data is available for this run yet.'],
-      ['/viewer/search', 'No data is available for this run yet.']
-    ] as const
-
-    for (const [route, message] of emptyStateRoutes) {
-      cleanup()
-      renderAppAt(route)
-      expect(await screen.findByText(message)).toBeInTheDocument()
-      expect(screen.queryByText(/debug/i)).not.toBeInTheDocument()
+    for (const route of ['/viewer/rankings', '/viewer/rankings/race', '/viewer/tour', '/viewer/tour/current-week', '/viewer/tour/tournaments', '/viewer/tour/matches', '/viewer/tour/categories', '/viewer/tour/champions', '/viewer/tournaments', '/viewer/players', '/viewer/countries', '/viewer/history', '/viewer/records', '/viewer/stats']) {
+      cleanup(); clearTestActiveRun(); renderAppAt(route)
+      await expectNoSelectedRunNotice()
+      expect(api.getViewerRunCalendar).not.toHaveBeenCalled()
+      expect(api.getViewerPlayers).not.toHaveBeenCalled()
+      expect(api.getViewerCountries).not.toHaveBeenCalled()
+      expectNoForbiddenViewerActions()
     }
-
-    cleanup()
-    renderAppAt('/viewer/tour/calendar')
-    expect(await screen.findByRole('button', { name: 'Jump to W24' })).toBeInTheDocument()
-    expect(screen.getAllByText('No data is available for this run yet.').length).toBeGreaterThan(0)
-    expect(screen.queryByRole('link', { name: 'Open active run schedule' })).not.toBeInTheDocument()
   })
 
   it('shows no-data state on H2H when no active run is selected', async () => {
@@ -809,6 +839,16 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       ]
     })
 
+    api.listRunPlayers.mockResolvedValue({ run_id: 'phase-3ab-run', players: [], total: 0, limit: 50, offset: 0 })
+    api.getRunPlayerDetail.mockImplementation(async (_run: string, id: string) => ({
+      player_id: id, name: id === 'P1' ? 'Player One' : 'Player Two',
+      country_code: id === 'P1' ? 'AAA' : 'BBB', age: id === 'P1' ? 24 : 26,
+      overall: id === 'P1' ? 84 : 74, technique: id === 'P1' ? 80 : 70,
+      movement: id === 'P1' ? 81 : 71, physical: id === 'P1' ? 82 : 72,
+      mental: id === 'P1' ? 83 : 73, source_type: 'planner_generated',
+      quality_band: id === 'P1' ? 'A' : 'B', is_top_band: id === 'P1',
+    }))
+
     renderAppAt('/viewer/h2h?playerA=P1&playerB=P2')
 
     expect(await screen.findByRole('heading', { name: 'Player Comparison', level: 2 })).toBeInTheDocument()
@@ -836,6 +876,8 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(summary).toHaveTextContent('Age difference-2')
     expect(screen.queryByText(/3-1 H2H|win probability|predicted winner|betting odds|rivalry history|match result/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/source_type|origin_source_type|override_id/i)).not.toBeInTheDocument()
+    expect(api.getRunPlayerDetail).toHaveBeenCalledWith('phase-3ab-run', 'P1')
+    expect(api.getRunPlayerDetail).toHaveBeenCalledWith('phase-3ab-run', 'P2')
     expectNoForbiddenViewerActions()
   })
 
@@ -872,6 +914,16 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       ]
     })
 
+    api.listRunPlayers.mockResolvedValue({ run_id: 'phase-3ab-run', players: [], total: 0, limit: 50, offset: 0 })
+    api.getRunPlayerDetail.mockImplementation(async (_run: string, id: string) => ({
+      player_id: id, name: id === 'P1' ? 'Player One' : 'Player Two',
+      country_code: id === 'P1' ? 'AAA' : 'BBB', age: id === 'P1' ? 24 : 26,
+      overall: id === 'P1' ? 84 : 74, technique: id === 'P1' ? 80 : 70,
+      movement: id === 'P1' ? 81 : 71, physical: id === 'P1' ? 82 : 72,
+      mental: id === 'P1' ? 83 : 73, source_type: 'planner_generated',
+      quality_band: id === 'P1' ? 'A' : 'B', is_top_band: id === 'P1',
+    }))
+
     renderAppAt('/viewer/players/compare?playerA=P1&playerB=P2')
 
     expect(await screen.findByRole('heading', { name: 'Player Comparison', level: 2 })).toBeInTheDocument()
@@ -879,96 +931,21 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(screen.getByRole('heading', { name: 'Player B' }).closest('article')).toHaveTextContent('Player Two')
     expect(screen.getByRole('heading', { name: 'Comparison Summary' }).closest('article')).toHaveTextContent('Power Rating difference+10')
     expect(screen.queryByText(/3-1 H2H|win probability|predicted winner|betting odds|rivalry history|match result/i)).not.toBeInTheDocument()
+    expect(api.getRunPlayerDetail).toHaveBeenCalledWith('phase-3ab-run', 'P1')
+    expect(api.getRunPlayerDetail).toHaveBeenCalledWith('phase-3ab-run', 'P2')
     expectNoForbiddenViewerActions()
   })
 
   it('keeps H2H subroutes as conservative active-run metadata pages', async () => {
-    const routes = [
-      ['/viewer/h2h/rivalries', 'Rivalries', 'No rivalry list is shown until direct match records are available.'],
-      ['/viewer/h2h/most-played', 'Most Played Matchups', 'No matchup list is shown until completed match counts are available.'],
-      ['/viewer/h2h/finals-rivalries', 'Finals Rivalries', 'No finals rivalry list is shown until final-round match records are available.']
-    ] as const
-
-    for (const [route, title, deferredCopy] of routes) {
-      cleanup()
-      resetApiMocks()
-      vi.clearAllMocks()
-      clearTestActiveRun()
-
+    for (const [route, title] of [['/viewer/h2h/rivalries', 'Rivalries'], ['/viewer/h2h/most-played', 'Most Played Matchups'], ['/viewer/h2h/finals-rivalries', 'Finals Rivalries']]) {
+      cleanup(); resetApiMocks(); setTestActiveRun('h2h run'); mockCanonicalMetadata('h2h run')
+      api.getViewerPlayers.mockResolvedValue(publicRoster('h2h run', [publicPlayer()]))
       renderAppAt(route)
-
       expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
-      expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
-      expect(api.getRunStatusSummary).not.toHaveBeenCalled()
-      expect(api.listRunPlayers).not.toHaveBeenCalled()
-      expectNoForbiddenViewerActions()
-
-      cleanup()
-      resetApiMocks()
-      vi.clearAllMocks()
-      setTestActiveRun('phase-3am-run')
-      api.getRunStatusSummary.mockResolvedValue({
-        run_id: 'phase-3am-run',
-        season: 2034,
-        seed: 44,
-        progress: { next_event_index: 2, total_events: 9, completed_event_count: 2 },
-        finals: { qualification_available: true, result_available: false },
-        rollover: null,
-        source: { source_type: 'fresh_seed', parent_run_id: null },
-        lineage: { child_run_count: 0 },
-        history_counts: { events: 2, ranking_snapshots: 3, race_snapshots: 1 }
-      })
-      api.listRunPlayers.mockResolvedValue({
-        run_id: 'phase-3am-run',
-        total: 2,
-        limit: 50,
-        offset: 0,
-        players: [
-          { player_id: 'P1', name: 'Player One', country_code: 'AAA', age: 24, source_type: 'planner_generated', override_id: null, quality_band: 'A', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'A', origin_override_id: null, origin_season: 2034, technique: 80, movement: 81, physical: 82, mental: 83, overall: 84 },
-          { player_id: 'P2', name: 'Player Two', country_code: 'BBB', age: 26, source_type: 'planner_generated', override_id: null, quality_band: 'B', is_top_band: false, origin_source_type: 'planner_generated', origin_quality_band: 'B', origin_override_id: null, origin_season: 2034, technique: 70, movement: 71, physical: 72, mental: 73, overall: 74 }
-        ]
-      })
-      api.listEvents.mockResolvedValue({
-        run_id: 'phase-3am-run',
-        events: [
-          { event_sequence: 1, event_id: 'E1', season: 2034, week: 4, template_id: 'T1', tournament_result: { raw_secret: 'fake finals score payload' } },
-          { event_sequence: 2, event_id: 'E2', season: 2034, week: 7, template_id: 'T2', tournament_result: { raw_secret: 'fake winner payload' } }
-        ]
-      })
-      api.listRankingSnapshots.mockResolvedValue({ run_id: 'phase-3am-run', snapshots: [
-        { snapshot_sequence: 1, snapshot_kind: 'ranking', source_event_id: 'E1', payload: { raw_secret: 'fake H2H table payload' } },
-        { snapshot_sequence: 2, snapshot_kind: 'ranking', source_event_id: 'E2', payload: { raw_secret: 'fake rivalry record payload' } },
-        { snapshot_sequence: 3, snapshot_kind: 'ranking', source_event_id: 'E2', payload: { raw_secret: 'fake storyline payload' } }
-      ] })
-      api.listRaceSnapshots.mockResolvedValue({ run_id: 'phase-3am-run', snapshots: [
-        { snapshot_sequence: 4, snapshot_kind: 'race', source_event_id: 'E2', payload: { raw_secret: 'fake matchup count payload' } }
-      ] })
-      api.getFinalsSummary.mockResolvedValue({ run_id: 'phase-3am-run', season: 2034, qualification: { run_id: 'phase-3am-run', season: 2034, source_as_of_season: 2034, source_as_of_week: 40, qualification: { raw_secret: 'fake finals rivalry payload' } }, result: null })
-
-      renderAppAt(route)
-
-      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
-      expect(screen.getByText(deferredCopy)).toBeInTheDocument()
-      const metadata = await screen.findByLabelText(`${title} source metadata`)
-      await waitFor(() => expect(metadata).toHaveTextContent('Active run IDphase-3am-run'))
-      expect(metadata).toHaveTextContent('Total player count2')
-      expect(metadata).toHaveTextContent('Returned/sample player count2')
-      expect(metadata).toHaveTextContent('Completed/persisted event count2')
-      expect(metadata).toHaveTextContent('Ranking snapshot count3')
-      expect(metadata).toHaveTextContent('Race snapshot count1')
-      expect(within(metadata).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/finals')
-      expect(within(metadata).getByRole('link', { name: 'Player One' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/players/P1/career')
-      expect(within(metadata).getByRole('link', { name: 'P1' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/players/P1/career')
-      expect(within(metadata).getByRole('link', { name: 'AAA' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/countries/AAA')
-      expect(screen.getByRole('link', { name: 'Open H2H comparison' })).toHaveAttribute('href', '/viewer/h2h')
-      expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/players')
-      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/tournaments')
-      expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/rankings')
-      expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/phase-3am-run/race')
-      expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
-      expect(api.listRunPlayers).toHaveBeenCalledWith('phase-3am-run', { limit: 50, offset: 0 })
-      expect(document.body).not.toHaveTextContent(/raw_secret|source_type|origin_source_type|override_id|planner_generated|payload/i)
-      expect(document.body).not.toHaveTextContent(/Top rivalry|3-1 H2H|fake H2H|fake rivalry|fake matchup|fake finals|fake winner|fake storyline|matchup count payload|winner payload|score payload|storyline payload/i)
+      expect(await screen.findByRole('link', { name: 'Published Open' })).toHaveAttribute('href', '/viewer/runs/h2h%20run/tournaments/EVENT-LATEST')
+      expect(screen.getByRole('link', { name: 'Player One' })).toHaveAttribute('href', '/viewer/runs/h2h%20run/players/P1/career')
+      expectNoLegacyMetadataReads(); expect(api.listRunPlayers).not.toHaveBeenCalled()
+      expect(document.body).not.toHaveTextContent(/3-1 H2H|win probability|predicted winner|raw_secret/)
       expectNoForbiddenViewerActions()
     }
   })
@@ -1087,165 +1064,74 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       clearTestActiveRun()
       renderAppAt(route)
       expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
-      expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+      await expectNoSelectedRunNotice()
       expect(api.getRunStatusSummary).not.toHaveBeenCalled()
       expectNoForbiddenViewerActions()
     }
   })
 
   it('shows conservative active-run metadata and links on deferred prediction subpages', async () => {
-    const routes = [
-      ['/viewer/predictions/match-odds', 'Match Odds', 'No odds are shown until a real odds read model exists.'],
-      ['/viewer/predictions/tournament-odds', 'Tournament Odds', 'No tournament odds are shown until a real tournament odds read model exists.'],
-      ['/viewer/predictions/finals-qualification', 'Finals Qualification', 'No finals qualification probability is shown until a real qualification probability read model exists.'],
-      ['/viewer/predictions/season-end-no1', 'Season-End No.1', 'No season-end No.1 probability is shown until a real season projection read model exists.'],
-      ['/viewer/predictions/upset-watch', 'Upset Watch', 'No upset chance is shown until a real upset model exists.'],
-      ['/viewer/predictions/futures', 'Futures', 'No futures markets are shown until a real futures read model exists.']
-    ] as const
-
-    for (const [route, title, deferredCopy] of routes) {
-      cleanup()
-      resetApiMocks()
-      setTestActiveRun('phase-3ag-run')
-      api.getRunStatusSummary.mockResolvedValue({
-        run_id: 'phase-3ag-run',
-        season: 2031,
-        seed: 13,
-        progress: { next_event_index: 3, total_events: 6, completed_event_count: 2 },
-        finals: { qualification_available: true, result_available: false },
-        rollover: null,
-        source: { source_type: 'fresh_seed', parent_run_id: null },
-        lineage: { child_run_count: 0 },
-        history_counts: { events: 2, ranking_snapshots: 1, race_snapshots: 1 }
-      })
-      api.listEvents.mockResolvedValue({
-        run_id: 'phase-3ag-run',
-        events: [
-          { event_sequence: 1, event_id: 'EVENT-OLD', season: 2031, week: 2, template_id: 'TEMP-OLD', tournament_result: { raw_secret: 'Fake Final winner payload' } },
-          { event_sequence: 2, event_id: 'EVENT-LATEST', season: 2031, week: 4, template_id: 'TEMP-LATEST', tournament_result: { raw_secret: 'Projected No.1 payload' } }
-        ]
-      })
-      api.listRankingSnapshots.mockResolvedValue({ run_id: 'phase-3ag-run', snapshots: [{ snapshot_sequence: 7, snapshot_kind: 'ranking', source_event_id: 'EVENT-LATEST', payload: { raw_secret: 'favorite payload' } }] })
-      api.listRaceSnapshots.mockResolvedValue({ run_id: 'phase-3ag-run', snapshots: [{ snapshot_sequence: 8, snapshot_kind: 'race', source_event_id: 'EVENT-LATEST', payload: { raw_secret: 'underdog payload' } }] })
-      api.getFinalsSummary.mockResolvedValue({ run_id: 'phase-3ag-run', season: 2031, qualification: { run_id: 'phase-3ag-run', season: 2031, source_as_of_season: 2031, source_as_of_week: 4, qualification: { raw_secret: 'betting line payload' } }, result: null })
-
+    for (const route of ['/viewer/predictions/match-odds', '/viewer/predictions/tournament-odds', '/viewer/predictions/finals-qualification', '/viewer/predictions/season-end-no1', '/viewer/predictions/upset-watch', '/viewer/predictions/futures']) {
+      cleanup(); resetApiMocks(); setTestActiveRun('prediction run'); mockCanonicalMetadata('prediction run')
       renderAppAt(route)
-
-      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
-      expect(screen.getByText(deferredCopy)).toBeInTheDocument()
-      const metadata = await screen.findByLabelText(`${title} source metadata`)
-      expect(metadata).toHaveTextContent('Active run IDphase-3ag-run')
-      expect(metadata).toHaveTextContent('Completed/persisted event count2')
-      expect(metadata).toHaveTextContent('Ranking snapshot count1')
-      expect(metadata).toHaveTextContent('Race snapshot count1')
-      expect(within(metadata).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/finals')
-      expect(within(metadata).getByRole('link', { name: 'EVENT-LATEST' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/tournaments/EVENT-LATEST')
-      expect(within(metadata).getByRole('link', { name: '#7' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/rankings/7')
-      expect(within(metadata).getByRole('link', { name: '#8' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/race/8')
-      expect(screen.getByRole('link', { name: 'Open match predictor' })).toHaveAttribute('href', '/viewer/predictions/match-predictor')
-      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/tournaments')
-      expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/rankings')
-      expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/phase-3ag-run/race')
-      expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
-      expect(document.body).not.toHaveTextContent(/raw_secret|Fake Final winner payload|Projected No\.1 payload|favorite payload|underdog payload|betting line payload|predicted winner|favorites|underdogs|betting lines|fake result|\{|\"/i)
-      expect(document.body).not.toHaveTextContent(/\d+%/)
+      expect(await screen.findByRole('link', { name: 'Published Open' })).toHaveAttribute('href', '/viewer/runs/prediction%20run/tournaments/EVENT-LATEST')
+      expect(screen.getByRole('link', { name: 'Season 29 W1 · #1769' })).toHaveAttribute('href', '/viewer/runs/prediction%20run/rankings/1769')
+      expectNoLegacyMetadataReads()
+      expect(document.body).not.toHaveTextContent(/predicted winner|win probability|raw_secret|invented odds/)
       expectNoForbiddenViewerActions()
     }
   })
 
   it('shows active-run Search player results with profile and country links', async () => {
-    setTestActiveRun('phase-3aa-run')
-    api.listRunPlayers.mockResolvedValue({
-      run_id: 'phase-3aa-run',
-      total: 1,
-      limit: 50,
-      offset: 0,
-      players: [
-        { player_id: 'ALI-1', name: 'Ali Farag', country_code: 'EGY', age: 34, source_type: 'planner_generated', override_id: null, quality_band: 'Elite', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'Elite', origin_override_id: null, origin_season: 2030, technique: 90, movement: 91, physical: 88, mental: 92, overall: 95 }
-      ]
-    })
-    api.listRunNations.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, nations: [] })
-    api.getRun.mockResolvedValue({ run: { run_id: 'phase-3aa-run', season: 2030, seed: 7, next_event_index: 0, total_events: 0, completed_event_ids: [] }, season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [] } })
-    api.listEvents.mockResolvedValue({ run_id: 'phase-3aa-run', events: [] })
-
+    setTestActiveRun('search run')
+    api.getViewerPlayers.mockResolvedValue(publicRoster('search run', [publicPlayer('ALI-1', 'Ali Farag', 'EGY', 34, 190)]))
     renderAppAt('/viewer/search?q=ali')
-    expect(await screen.findByRole('heading', { name: 'Search', level: 2 })).toBeInTheDocument()
-    expect(screen.getByText('Search: ali')).toBeInTheDocument()
-    await screen.findByRole('link', { name: 'Ali Farag' })
-    const players = screen.getByLabelText('Players')
-    expect(within(players).getByText('Ali Farag')).toBeInTheDocument()
-    expect(within(players).getByText('95')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ali Farag' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/players/ALI-1/career')
-    expect(screen.getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/countries/EGY')
-    expect(screen.queryByText(/planner_generated/)).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
+    expect(await screen.findByRole('link', { name: 'Ali Farag' })).toHaveAttribute('href', '/viewer/runs/search%20run/players/ALI-1/career')
+    expect(screen.getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/search%20run/countries/EGY')
+    expect(api.getViewerPlayers).toHaveBeenCalledWith('search run')
+    expect(api.listRunPlayers).not.toHaveBeenCalled()
+    expect(document.body).not.toHaveTextContent(/potential_ovr|planner_generated|raw_secret/)
     expectNoForbiddenViewerActions()
   })
 
   it('shows active-run Search country results with country and top-player links', async () => {
-    setTestActiveRun('phase-3aa-run')
-    api.listRunPlayers.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, players: [] })
-    api.listRunNations.mockResolvedValue({
-      run_id: 'phase-3aa-run',
-      total: 1,
-      limit: 50,
-      offset: 0,
-      nations: [{ country_code: 'EGY', country_name: 'Egypt', total_players: 12, average_overall: 82, average_age: 27, top_band_count: 3, manual_override_count: 0, planner_generated_count: 12, rollover_carried_count: 0, top_player_id: 'ALI-1', top_player_name: 'Ali Farag', top_player_overall: 95 }]
-    })
-    api.getRun.mockResolvedValue({ run: { run_id: 'phase-3aa-run', season: 2030, seed: 7, next_event_index: 0, total_events: 0, completed_event_ids: [] }, season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [] } })
-    api.listEvents.mockResolvedValue({ run_id: 'phase-3aa-run', events: [] })
-
+    setTestActiveRun('search run')
+    api.getViewerCountries.mockResolvedValue(publicCountries('search run', [publicCountry()]))
     renderAppAt('/viewer/search?q=egy')
-    await screen.findByRole('link', { name: 'Egypt' })
-    const countries = screen.getByLabelText('Countries')
-    expect(countries).toHaveTextContent('Egypt')
-    expect(countries).toHaveTextContent('Player count')
-    expect(countries).toHaveTextContent('Average Power Rating')
-    expect(screen.getByRole('link', { name: 'Egypt' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/countries/EGY')
-    expect(screen.getByRole('link', { name: 'Ali Farag' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/players/ALI-1/career')
+    const countries = within(await screen.findByLabelText('Countries'))
+    expect((await countries.findAllByRole('link', { name: 'EGY' }))[0]).toHaveAttribute('href', '/viewer/runs/search%20run/countries/EGY')
+    expect(countries.getByRole('link', { name: 'Player One' })).toHaveAttribute('href', '/viewer/runs/search%20run/players/P1/career')
+    expect(api.getViewerCountries).toHaveBeenCalledWith('search run')
+    expect(api.listRunNations).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 
   it('shows active-run Search tournament results with planned, week, and detail links', async () => {
-    setTestActiveRun('phase-3aa-run')
-    api.listRunPlayers.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, players: [] })
-    api.listRunNations.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, nations: [] })
-    api.getRun.mockResolvedValue({
-      run: { run_id: 'phase-3aa-run', season: 2030, seed: 7, next_event_index: 0, total_events: 1, completed_event_ids: [] },
-      season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [{ event_id: 'GOLD-1', season: 2030, week: 12, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-GOLD' }] }
-    })
-    api.listEvents.mockResolvedValue({ run_id: 'phase-3aa-run', events: [{ event_sequence: 1, event_id: 'GOLD-1', season: 2030, week: 12, template_id: 'TEMP-GOLD', tournament_result: {} }] })
-
+    setTestActiveRun('search run')
+    const event = calendarEvent({ event_id: 'GOLD-1', event_name: 'Gold Open', template_id: 'TEMP-GOLD', category: 'GOLD', season_week: 12 })
+    api.getViewerRunCalendar.mockResolvedValue({ ...savedCalendar([event], 'search run'), viewer_branch_id: 'search run-official' })
+    api.getViewerTournamentHistory.mockResolvedValue({ ...savedHistory([historyEvent(event, { result_published: true, champion_player_id: 'P1', finalist_player_id: 'P2' })], 'search run'), viewer_branch_id: 'search run-official' })
     renderAppAt('/viewer/search?q=gold')
-    await screen.findByRole('link', { name: 'Planned Event: GOLD-1' })
-    const tournaments = screen.getByLabelText('Tournaments')
-    expect(tournaments).toHaveTextContent('WORLD')
-    expect(tournaments).toHaveTextContent('GOLD')
-    expect(tournaments).toHaveTextContent('TEMP-GOLD')
-    expect(tournaments).toHaveTextContent('Available')
-    expect(screen.getByRole('link', { name: 'Planned Event: GOLD-1' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/calendar/GOLD-1')
-    expect(screen.getByRole('link', { name: 'Week Detail: W12' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/weeks/12')
-    expect(screen.getByRole('link', { name: 'Tournament Detail: GOLD-1' })).toHaveAttribute('href', '/viewer/runs/phase-3aa-run/tournaments/GOLD-1')
+    expect(await screen.findByRole('link', { name: 'Planned Event: GOLD-1' })).toHaveAttribute('href', '/viewer/runs/search%20run/calendar/GOLD-1')
+    expect(screen.getByRole('link', { name: 'Week Detail: W12' })).toHaveAttribute('href', '/viewer/runs/search%20run/weeks/12')
+    expect(screen.getByRole('link', { name: 'Tournament Detail: GOLD-1' })).toHaveAttribute('href', '/viewer/runs/search%20run/tournaments/GOLD-1')
+    expect(api.getRun).not.toHaveBeenCalled(); expect(api.listEvents).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 
   it('shows safe active-run Search empty and no-match states without raw payloads', async () => {
-    setTestActiveRun('phase-3aa-run')
-    renderAppAt('/viewer/search')
+    setTestActiveRun('search run'); renderAppAt('/viewer/search')
     expect(await screen.findByRole('heading', { name: 'Search', level: 2 })).toBeInTheDocument()
-    expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
-    expect(screen.getByLabelText('Read-only Viewer search shell')).toHaveValue('')
-    expectNoForbiddenViewerActions()
-
+    expect(screen.getByText('No Product Run search context is available yet.')).toBeInTheDocument()
+    expect(api.getViewerPlayers).not.toHaveBeenCalled()
     cleanup()
-    api.listRunPlayers.mockResolvedValue({ run_id: 'phase-3aa-run', total: 1, limit: 50, offset: 0, players: [{ player_id: 'ALI-1', name: 'Ali Farag', country_code: 'EGY', age: 34, source_type: 'planner_generated', override_id: null, quality_band: 'Elite', is_top_band: true, origin_source_type: 'planner_generated', origin_quality_band: 'Elite', origin_override_id: null, origin_season: 2030, technique: 90, movement: 91, physical: 88, mental: 92, overall: 95 }] })
-    api.listRunNations.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, nations: [] })
-    api.getRun.mockResolvedValue({ run: { run_id: 'phase-3aa-run', season: 2030, seed: 7, next_event_index: 0, total_events: 0, completed_event_ids: [] }, season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [] } })
-    api.listEvents.mockResolvedValue({ run_id: 'phase-3aa-run', events: [] })
+    api.getViewerPlayers.mockResolvedValue(publicRoster('search run', [publicPlayer()]))
+    api.getViewerRunCalendar.mockResolvedValue(savedCalendar([], 'search run'))
+    api.getViewerTournamentHistory.mockResolvedValue(savedHistory([], 'search run'))
     renderAppAt('/viewer/search?q=nomatch')
     expect(await screen.findByText('No matching Viewer results found.')).toBeInTheDocument()
-    expect(screen.queryByText(/planner_generated/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/\{/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Player One' })).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent(/raw_secret|potential_ovr|planner_generated/)
     expectNoForbiddenViewerActions()
   })
 
@@ -1359,7 +1245,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     api.getViewerOfficialRanking.mockResolvedValue({
       schema_version: 'viewer_official_ranking.v1',
       product_run_id: 'run-a',
-      viewer_branch_id: 'branch-viewer',
+      viewer_branch_id: 'run-a-official',
       season_index: 29,
       week: 6,
       week_ordinal: 1774,
@@ -1376,18 +1262,18 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/rankings')
 
     expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
-    const panel = await screen.findByLabelText('MSA Rankings current Official Ranking')
-    expect(panel).toHaveTextContent('run-a')
-    expect(panel).toHaveTextContent('branch-viewer')
+    const panel = await screen.findByRole('article', { name: 'Currently published ranking' })
+    await waitFor(() => expect(panel).toHaveTextContent('run-a'))
+    expect(panel).toHaveTextContent('run-a-official')
     expect(panel).toHaveTextContent('2029')
     expect(panel).toHaveTextContent('6')
     expect(panel).toHaveTextContent('2')
     expect(panel).toHaveTextContent('15')
     expect(api.getViewerOfficialRanking).toHaveBeenCalledWith('run-a')
-    const table = screen.getByRole('table', { name: 'Current Top 10 Official Ranking table' })
+    const table = screen.getByRole('table', { name: 'Current Official Ranking Top 10' })
     expect(within(table).getByText('P1')).toBeInTheDocument()
     expect(within(table).getByText('1000')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Open full publication history' })).toHaveAttribute(
       'href',
       '/viewer/runs/run-a/rankings'
     )
@@ -1415,8 +1301,8 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
         rows: [{
           rank: 1,
           player_id: 'R1',
-          race_points: 7000,
-          tournaments_counted: 8,
+          race_points: 1200,
+          tournaments_counted: 1,
           finals_selected: true,
           finals_seed: 1,
           qualification_source: 'race',
@@ -1430,14 +1316,14 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/rankings/race')
 
     expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
-    const table = await screen.findByRole('table', { name: 'Canonical Finals Race standings' })
+    const table = await screen.findByRole('table', { name: 'Saved Race standings' })
     expect(api.getViewerFinalsRace).toHaveBeenCalledWith('run-a')
     expect(within(table).getByRole('link', { name: 'R1' })).toHaveAttribute(
       'href',
       '/viewer/runs/run-a/players/R1/career'
     )
-    expect(within(table).getByText('7000')).toBeInTheDocument()
-    expect(within(table).getByText('8')).toBeInTheDocument()
+    expect(within(table).getByText('1200')).toBeInTheDocument()
+    expect(within(within(table).getAllByRole('row')[1]).getAllByRole('cell')[3]).toHaveTextContent(/^1$/)
     expect(within(table).getByText('Race qualified · seed 1')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open run-scoped Race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
     expect(screen.queryByText(/snapshot sequence/i)).not.toBeInTheDocument()
@@ -1461,94 +1347,46 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     })
 
     renderAppAt('/viewer/rankings')
-    expect(await screen.findByText('The published Official Ranking contains no players.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
+    expect(await screen.findByText('The published ranking contains exactly 0 players.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open full publication history' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
     expect(screen.queryByRole('link', { name: /View latest ranking snapshot/i })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
 
     cleanup()
     renderAppAt('/viewer/rankings/race')
-    expect(await screen.findByText('No canonical Finals Race has been published for this Viewer Branch yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No Race publication has been saved in this Viewer Branch yet.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open run-scoped Race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
     expect(screen.queryByText(/snapshot sequence/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
   it('shows top-level Season Hub metadata when an active Viewer run exists', async () => {
-    setTestActiveRun('run-a')
-    renderAppAt('/viewer/tour')
-
-    expect(await screen.findByRole('heading', { name: 'Season Hub' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
-    expect(screen.getByRole('link', { name: 'Open active run schedule' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
-    expectNoForbiddenViewerActions()
+    setTestActiveRun('run-a'); mockCanonicalMetadata('run-a'); renderAppAt('/viewer/tour')
+    expect(await screen.findByRole('heading', { name: 'Season Hub', level: 2 })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Open Product Run tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
+    expect(screen.getByRole('link', { name: 'Open Product Run schedule' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+    expectNoLegacyMetadataReads(); expectNoForbiddenViewerActions()
   })
   it('shows active-run Current Week events matching the selected Viewer week', async () => {
-    setTestActiveRun('run-a')
-    localStorage.setItem('beta_engine:viewer_context', JSON.stringify({ selectedSeason: '2004/05', selectedWeek: 24 }))
-    api.getRun.mockResolvedValue({
-      run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 3, completed_event_ids: [] },
-      season_state: {
-        season: 2030,
-        next_event_index: 1,
-        completed_event_ids: [],
-        ordered_events: [
-          { event_id: 'E9', season: 2030, week: 9, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-9' },
-          { event_id: 'E10', season: 2030, week: 10, tour: 'ELITE', category: 'BRONZE', template_id: 'TEMP-10' },
-          { event_id: 'E24', season: 2030, week: 24, tour: 'ELITE', category: 'BRONZE', template_id: 'TEMP-24' }
-        ]
-      }
-    })
-
+    setTestActiveRun('week run')
+    const events = [calendarEvent({ event_id: 'MATCHING', event_name: 'Exact selected week', season: '2004/05', season_week: 10 }), calendarEvent({ event_id: 'OTHER-WEEK', event_name: 'Wrong week', season: '2004/05', season_week: 11 }), calendarEvent({ event_id: 'OTHER-SEASON', event_name: 'Wrong season', season: '2005/06', season_week: 10 })]
+    api.getViewerRunCalendar.mockResolvedValue(savedCalendar(events, 'week run'))
     renderAppAt('/viewer/tour/current-week')
-
-    expect(await screen.findByRole('heading', { name: 'Current Week' })).toBeInTheDocument()
-    const panel = await screen.findByLabelText('Current Week active run summary')
-    expect(panel).toHaveTextContent('Season 2004/05 · W24')
-    expect(panel).toHaveTextContent('run-a')
-    expect(panel).toHaveTextContent('E24')
-    expect(panel).toHaveTextContent('BRONZE')
-    expect(panel).toHaveTextContent('ELITE')
-    expect(panel).toHaveTextContent('TEMP-24')
-    expect(panel).not.toHaveTextContent('E9')
-    expect(panel).not.toHaveTextContent('E10')
-    expect(screen.getByRole('link', { name: 'Open active run schedule' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
-    expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
-    expectNoForbiddenViewerActions()
+    expect(await screen.findByRole('link', { name: 'Exact selected week' })).toHaveAttribute('href', '/viewer/runs/week%20run/calendar/MATCHING')
+    expect(screen.queryByRole('link', { name: 'Wrong week' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Wrong season' })).not.toBeInTheDocument()
+    expect(api.getRun).not.toHaveBeenCalled(); expectNoForbiddenViewerActions()
   })
 
-  it.each(['/viewer/tour/tournaments', '/viewer/tournaments'] as const)('shows top-level All Tournaments metadata on %s', async (route) => {
-    setTestActiveRun('run-a')
-    api.getRun.mockResolvedValue({
-      run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 6, completed_event_ids: ['E1'] },
-      season_state: {
-        season: 2030,
-        next_event_index: 1,
-        completed_event_ids: ['E1'],
-        ordered_events: [
-          { event_id: 'E1', season: 2030, week: 2, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-A' },
-          { event_id: 'E2', season: 2030, week: 10, tour: 'WORLD', category: 'DIAMOND', template_id: 'TEMP-B' },
-          { event_id: 'E3', season: 2030, week: 11, tour: 'ELITE', category: 'BRONZE', template_id: 'TEMP-C' }
-        ]
-      }
-    })
-    api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [{ event_sequence: 1, event_id: 'E1', season: 2030, week: 2, template_id: 'TEMP-A', tournament_result: {} }] })
-
-    renderAppAt(route)
-
-    expect(await screen.findByRole('heading', { name: 'All Tournaments' })).toBeInTheDocument()
-    const panel = await screen.findByLabelText('All Tournaments active run summary')
-    await waitFor(() => expect(panel).toHaveTextContent('run-a'))
-    expect(panel).toHaveTextContent('Total ordered calendar events')
-    expect(panel).toHaveTextContent('3')
-    expect(panel).toHaveTextContent('Persisted event count')
-    expect(panel).toHaveTextContent('1')
-    expect(panel).toHaveTextContent('E2 · W10 · DIAMOND · WORLD · TEMP-B')
-    expect(panel).toHaveTextContent('E1 · W2 · GOLD · WORLD · TEMP-A')
-    expect(panel).toHaveTextContent('E3')
-    expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
-    expect(screen.getByRole('link', { name: 'Open active run schedule' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
-    expectNoForbiddenViewerActions()
+  it.each(['/viewer/tour/tournaments', '/viewer/tournaments'] as const)('shows canonical tournament catalog metadata on %s', async (route) => {
+    setTestActiveRun('run-a'); mockCanonicalMetadata('run-a'); renderAppAt(route)
+    expect(await screen.findByRole('heading', { name: 'All Tournaments', level: 2 })).toBeInTheDocument()
+    const table = await screen.findByRole('table', { name: 'Saved tournaments' })
+    expect(within(table).getByRole('link', { name: 'Published Open' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar/EVENT-LATEST')
+    expect(within(table).getByRole('link', { name: 'P1' })).toHaveAttribute('href', '/viewer/runs/run-a/players/P1/career')
+    expect(api.getViewerRunCalendar).toHaveBeenCalledWith('run-a')
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('run-a')
+    expectNoLegacyMetadataReads(); expectNoForbiddenViewerActions()
   })
 
   it('shows conservative active-run Tour deferred subpages with safe source links only', async () => {
@@ -1569,21 +1407,13 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
   it('shows active-run top-level tournament and current-week empty states without event metadata', async () => {
     setTestActiveRun('run-a')
-    api.getRun.mockResolvedValue({
-      run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 0, total_events: 0, completed_event_ids: [] },
-      season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [] }
-    })
-    api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [] })
-
+    api.getViewerRunCalendar.mockResolvedValue({ ...savedCalendar([], 'run-a'), viewer_branch_id: 'run-a-official' })
+    api.getViewerTournamentHistory.mockResolvedValue({ ...savedHistory([], 'run-a'), viewer_branch_id: 'run-a-official' })
     renderAppAt('/viewer/tour/tournaments')
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-
-    cleanup()
-    setTestActiveRun('run-a')
-    renderAppAt('/viewer/tour/current-week')
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
-    expectNoForbiddenViewerActions()
+    expect(await screen.findByText('The saved calendar has no tournaments.')).toBeInTheDocument()
+    cleanup(); renderAppAt('/viewer/tour/current-week')
+    expect(await screen.findByText('No canonical events are scheduled for this selected week.')).toBeInTheDocument()
+    expectNoLegacyMetadataReads(); expectNoForbiddenViewerActions()
   })
 
   it('links top-level History activity, week, tournament, and snapshot metadata safely', async () => {
@@ -1593,101 +1423,31 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(await screen.findByRole('heading', { name: 'History' })).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
-  it('keeps unmatched History activity event IDs as plain text without broken detail links', async () => {
+  it('does not invent History links from unverified legacy activity records', async () => {
     setTestActiveRun('run-a')
-    api.getRunActivity.mockResolvedValue({
-      run_id: 'run-a',
-      items: [{ kind: 'event', sequence: 1, label: 'Missing event noted', season: 2030, week: 7, event_id: 'MISSING-EVENT', snapshot_sequence: null, source_event_id: null, related_run_id: null }]
-    })
-
+    api.getRunActivity.mockResolvedValue({ run_id: 'run-a', items: [{ event_id: 'UNVERIFIED-ACTIVITY', payload: { raw_secret: 'secret' } }] })
     renderAppAt('/viewer/history')
-
-    const panel = await screen.findByLabelText('History active run metadata summary')
-    await waitFor(() => expect(panel).toHaveTextContent('Missing event noted · Season 2030 · W7 · MISSING-EVENT'))
-    expect(within(panel).queryByRole('link', { name: 'MISSING-EVENT' })).not.toBeInTheDocument()
-    expect(within(panel).queryByRole('link', { name: 'W7' })).not.toBeInTheDocument()
-    expect(within(panel).queryByRole('link', { name: 'Tournament detail MISSING-EVENT' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'History', level: 2 })).toBeInTheDocument()
+    expect(await screen.findByText('Published history')).toBeInTheDocument()
+    expect(api.getRunActivity).not.toHaveBeenCalled()
+    expect(screen.queryByText('UNVERIFIED-ACTIVITY')).not.toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent(/raw_secret|UNVERIFIED-ACTIVITY/)
     expectNoForbiddenViewerActions()
   })
 
   it('shows active-run Records and Stats source metadata with deferred groups and safe links', async () => {
-    setTestActiveRun('run-a')
-    api.getRunStatusSummary.mockResolvedValue({
-      run_id: 'run-a',
-      season: 2030,
-      seed: 99,
-      progress: { next_event_index: 2, total_events: 4, completed_event_count: 2 },
-      finals: { qualification_available: true, result_available: false },
-      rollover: null,
-      source: null,
-      lineage: { child_run_count: 0 },
-      history_counts: { events: 2, ranking_snapshots: 3, race_snapshots: 2 }
-    })
-    api.listEvents.mockResolvedValue({ run_id: 'run-a', events: [
-      { event_sequence: 1, event_id: 'E1', season: 2030, week: 2, template_id: 'TEMP-A', tournament_result: {} },
-      { event_sequence: 2, event_id: 'E2', season: 2030, week: 5, template_id: 'TEMP-B', tournament_result: {} }
-    ] })
-    api.listRankingSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [
-      { snapshot_sequence: 1, snapshot_kind: 'ranking', source_event_id: 'E1', payload: {} },
-      { snapshot_sequence: 2, snapshot_kind: 'ranking', source_event_id: 'E2', payload: {} },
-      { snapshot_sequence: 3, snapshot_kind: 'ranking', source_event_id: 'E2', payload: {} }
-    ] })
-    api.listRaceSnapshots.mockResolvedValue({ run_id: 'run-a', snapshots: [
-      { snapshot_sequence: 4, snapshot_kind: 'race', source_event_id: 'E1', payload: {} },
-      { snapshot_sequence: 5, snapshot_kind: 'race', source_event_id: 'E2', payload: {} }
-    ] })
-    api.getFinalsSummary.mockResolvedValue({ run_id: 'run-a', season: 2030, qualification: { run_id: 'run-a', season: 2030, source_as_of_season: 2030, source_as_of_week: 40, qualification: {} }, result: null })
-
-    renderAppAt('/viewer/records')
-    expect(await screen.findByRole('heading', { name: 'Records' })).toBeInTheDocument()
-    let panel = await screen.findByLabelText('Records active run metadata summary')
-    expect(within(panel).getByRole('heading', { name: 'Records Overview' })).toBeInTheDocument()
-    expect(within(panel).getByRole('heading', { name: 'Available source metadata' })).toBeInTheDocument()
-    expect(panel).toHaveTextContent('run-a')
-    expect(panel).toHaveTextContent('Completed/persisted event count')
-    expect(panel).toHaveTextContent('2')
-    expect(panel).toHaveTextContent('Ranking snapshot count')
-    expect(panel).toHaveTextContent('3')
-    expect(panel).toHaveTextContent('Race snapshot count')
-    expect(within(panel).getByRole('link', { name: 'E2' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments/E2')
-    expect(within(panel).getByRole('link', { name: '#3' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/3')
-    expect(within(panel).getByRole('link', { name: '#5' })).toHaveAttribute('href', '/viewer/runs/run-a/race/5')
-    expect(within(panel).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/run-a/finals')
-    expect(panel).toHaveTextContent('Title Leaders: needs dedicated records read model.')
-    expect(panel).toHaveTextContent('Weeks at No.1: needs dedicated records read model.')
-    expect(panel).toHaveTextContent('Biggest Upsets: needs match/prediction read model.')
-    expect(within(panel).queryByText('Most titles')).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments')
-    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
-    expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
-    expect(screen.getByRole('link', { name: 'Open active run finals' })).toHaveAttribute('href', '/viewer/runs/run-a/finals')
-    expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
-    expect(panel).not.toHaveTextContent('source_event_id')
-    expect(panel).not.toHaveTextContent('payload')
-    expectNoForbiddenViewerActions()
-
-    cleanup()
-    setTestActiveRun('run-a')
-    renderAppAt('/viewer/stats')
-    expect(await screen.findByRole('heading', { name: 'Stats' })).toBeInTheDocument()
-    panel = await screen.findByLabelText('Stats active run metadata summary')
-    expect(within(panel).getByRole('heading', { name: 'Stats Overview' })).toBeInTheDocument()
-    expect(within(panel).getByRole('heading', { name: 'Available source metadata' })).toBeInTheDocument()
-    expect(panel).toHaveTextContent('run-a')
-    expect(panel).toHaveTextContent('Completed/persisted event count')
-    expect(panel).toHaveTextContent('2')
-    expect(within(panel).getByRole('link', { name: 'E2' })).toHaveAttribute('href', '/viewer/runs/run-a/tournaments/E2')
-    expect(within(panel).getByRole('link', { name: '#3' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/3')
-    expect(within(panel).getByRole('link', { name: '#5' })).toHaveAttribute('href', '/viewer/runs/run-a/race/5')
-    expect(within(panel).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/run-a/finals')
-    expect(panel).toHaveTextContent('Player Stats: needs dedicated player statistics read model.')
-    expect(panel).toHaveTextContent('Tournament Stats: needs dedicated tournament statistics read model.')
-    expect(panel).toHaveTextContent('Era Rankings: needs dedicated era comparison read model.')
-    expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
-    expect(within(panel).queryByText('GOAT')).not.toBeInTheDocument()
-    expect(panel).not.toHaveTextContent('source_event_id')
-    expect(panel).not.toHaveTextContent('payload')
-    expectNoForbiddenViewerActions()
+    for (const [route, title] of [['/viewer/records', 'Records'], ['/viewer/stats', 'Stats']]) {
+      cleanup(); resetApiMocks(); setTestActiveRun('record run'); mockCanonicalMetadata('record run')
+      renderAppAt(route)
+      expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
+      const metadata = await screen.findByLabelText(title + ' canonical Product Run metadata summary')
+      expect(await within(metadata).findByRole('link', { name: 'Published Open' })).toHaveAttribute('href', '/viewer/runs/record%20run/tournaments/EVENT-LATEST')
+      expect(metadata).toHaveTextContent('Completed tournaments1')
+      expect(metadata).toHaveTextContent('Official Ranking publications1')
+      expect(metadata).toHaveTextContent('Finals Race publications1')
+      expect(within(metadata).getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/record%20run/race')
+      expectNoLegacyMetadataReads(); expectNoForbiddenViewerActions()
+    }
   })
 
 
@@ -1712,7 +1472,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       clearTestActiveRun()
       renderAppAt(route)
       expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
-      expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+      await expectNoSelectedRunNotice()
       expect(api.getRunStatusSummary).not.toHaveBeenCalled()
       expectNoForbiddenViewerActions()
     }
@@ -1734,270 +1494,83 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     ] as const
 
     for (const [route, title, deferredCopy] of routes) {
-      cleanup()
-      resetApiMocks()
-      setTestActiveRun('phase-3ah-run')
-      api.getRunStatusSummary.mockResolvedValue({
-        run_id: 'phase-3ah-run',
-        season: 2032,
-        seed: 21,
-        progress: { next_event_index: 3, total_events: 6, completed_event_count: 2 },
-        finals: { qualification_available: true, result_available: false },
-        rollover: null,
-        source: { source_type: 'fresh_seed', parent_run_id: null },
-        lineage: { child_run_count: 0 },
-        history_counts: { events: 2, ranking_snapshots: 1, race_snapshots: 1 }
-      })
-      api.listEvents.mockResolvedValue({
-        run_id: 'phase-3ah-run',
-        events: [
-          { event_sequence: 1, event_id: 'EVENT-OLD', season: 2032, week: 2, template_id: 'TEMP-OLD', tournament_result: { raw_secret: 'Fake record holder payload' } },
-          { event_sequence: 2, event_id: 'EVENT-LATEST', season: 2032, week: 4, template_id: 'TEMP-LATEST', tournament_result: { raw_secret: 'GOAT ranking payload' } }
-        ]
-      })
-      api.listRankingSnapshots.mockResolvedValue({ run_id: 'phase-3ah-run', snapshots: [{ snapshot_sequence: 7, snapshot_kind: 'ranking', source_event_id: 'EVENT-LATEST', payload: { raw_secret: 'fake weeks at No.1 payload' } }] })
-      api.listRaceSnapshots.mockResolvedValue({ run_id: 'phase-3ah-run', snapshots: [{ snapshot_sequence: 8, snapshot_kind: 'race', source_event_id: 'EVENT-LATEST', payload: { raw_secret: 'fake leader payload' } }] })
-      api.getFinalsSummary.mockResolvedValue({ run_id: 'phase-3ah-run', season: 2032, qualification: { run_id: 'phase-3ah-run', season: 2032, source_as_of_season: 2032, source_as_of_week: 4, qualification: { raw_secret: 'award payload' } }, result: null })
-
+      cleanup(); resetApiMocks(); setTestActiveRun('metadata run'); mockCanonicalMetadata('metadata run')
       renderAppAt(route)
-
       expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
       expect(screen.getByText(deferredCopy)).toBeInTheDocument()
-      const metadata = await screen.findByLabelText(`${title} source metadata`)
-      expect(metadata).toHaveTextContent('Active run IDphase-3ah-run')
-      expect(metadata).toHaveTextContent('Completed/persisted event count2')
-      expect(metadata).toHaveTextContent('Ranking snapshot count1')
-      expect(metadata).toHaveTextContent('Race snapshot count1')
-      expect(within(metadata).getByRole('link', { name: 'EVENT-LATEST' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/tournaments/EVENT-LATEST')
-      expect(within(metadata).getByRole('link', { name: '#7' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/rankings/7')
-      expect(within(metadata).getByRole('link', { name: '#8' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/race/8')
-      expect(within(metadata).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/finals')
-      expect(screen.getByRole('link', { name: 'Open records' })).toHaveAttribute('href', '/viewer/records')
-      expect(screen.getByRole('link', { name: 'Open stats' })).toHaveAttribute('href', '/viewer/stats')
-      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/tournaments')
-      expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/rankings')
-      expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/phase-3ah-run/race')
-      expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
-      expect(document.body).not.toHaveTextContent(/Fake record holder|GOAT ranking payload|fake weeks at No\.1 payload|fake leader payload|award payload|raw_secret|source_event_id|payload/i)
-      expect(document.body).not.toHaveTextContent(/Most titles|Title count|Weeks at No\.1\s*\d|Winning streak|Upset list|Player of the Year|Hall of Fame inductee|GOAT rankings/i)
+      const metadata = await screen.findByLabelText(title + ' source metadata')
+      expect(await within(metadata).findByRole('link', { name: 'Published Open' })).toHaveAttribute('href', '/viewer/runs/metadata%20run/tournaments/EVENT-LATEST')
+      expect(metadata).toHaveTextContent('Product Runmetadata run')
+      expect(metadata).toHaveTextContent('Completed tournaments1')
+      expect(metadata).toHaveTextContent('Official Ranking publications1')
+      expect(metadata).toHaveTextContent('Finals Race publications1')
+      expect(within(metadata).getByRole('link', { name: 'Season 29 W1 · #1769' })).toHaveAttribute('href', '/viewer/runs/metadata%20run/rankings/1769')
+      expectNoLegacyMetadataReads()
+      expect(document.body).not.toHaveTextContent(/raw_secret|Fake record holder|GOAT ranking payload|invented winner|award payload/)
       expectNoForbiddenViewerActions()
     }
   })
 
   it('shows active-run History Records and Stats empty metadata states without fake leaders', async () => {
     setTestActiveRun('run-a')
-
-    renderAppAt('/viewer/history')
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
-    expect(within(screen.getByRole('main')).queryByText(/Most title leader/i)).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-
-    cleanup()
-    setTestActiveRun('run-a')
-    renderAppAt('/viewer/records')
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
-    expect(screen.getByRole('main')).toHaveTextContent('Title Leaders: needs dedicated records read model.')
-    expect(within(screen.getByRole('main')).queryByText('Most titles')).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-
-    cleanup()
-    setTestActiveRun('run-a')
-    renderAppAt('/viewer/stats')
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
-    expect(screen.getByRole('main')).toHaveTextContent('Player Stats: needs dedicated player statistics read model.')
-    expect(within(screen.getByRole('main')).queryByText('GOAT')).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
+    api.getViewerRunCalendar.mockResolvedValue({ ...savedCalendar([], 'run-a'), viewer_branch_id: 'run-a-official' })
+    api.getViewerTournamentHistory.mockResolvedValue({ ...savedHistory([], 'run-a'), viewer_branch_id: 'run-a-official' })
+    api.listViewerOfficialRankingHistory.mockResolvedValue({ ...savedRankings(), product_run_id: 'run-a', viewer_branch_id: 'run-a-official', public_head_ordinal: 1768 })
+    for (const route of ['/viewer/history', '/viewer/records', '/viewer/stats']) {
+      cleanup(); renderAppAt(route)
+      expect(await screen.findByRole('heading', { level: 2, name: route === '/viewer/history' ? 'History' : route === '/viewer/records' ? 'Records' : 'Stats' })).toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: 'Published Open' })).not.toBeInTheDocument()
+      expect(document.body).not.toHaveTextContent(/Fake record holder|invented winner|fake leader|raw_secret/)
+      expectNoLegacyMetadataReads(); expectNoForbiddenViewerActions()
+    }
   })
 
   it('shows active-run top-level Players metadata without redirecting to the run-scoped page', async () => {
-    setTestActiveRun('run-a')
-    api.listRunPlayers.mockResolvedValue({
-      run_id: 'run-a',
-      total: 8,
-      limit: 5,
-      offset: 0,
-      players: [
-        {
-          player_id: 'EGY-0001',
-          name: 'Ali Farag',
-          country_code: 'EGY',
-          age: 30,
-          source_type: 'planner_generated',
-          override_id: null,
-          quality_band: 'elite_talent',
-          is_top_band: true,
-          origin_source_type: 'planner_generated',
-          origin_quality_band: 'elite_talent',
-          origin_override_id: null,
-          origin_season: 2030,
-          technique: 92,
-          movement: 91,
-          physical: 88,
-          mental: 90,
-          overall: 91
-        }
-      ]
-    })
-
+    setTestActiveRun('people run')
+    api.getViewerPlayers.mockResolvedValue(publicRoster('people run', [publicPlayer()]))
     renderAppAt('/viewer/players')
-
-    expect(await screen.findByRole('heading', { name: 'Players' })).toBeInTheDocument()
-    expect(screen.queryByText('Player filters')).not.toBeInTheDocument()
-    const panel = await screen.findByLabelText('Players active run summary')
-    expect(panel).toHaveTextContent('run-a')
-    expect(panel).toHaveTextContent('Total player count')
-    expect(panel).toHaveTextContent('8')
-    expect(panel).toHaveTextContent('Returned player count')
-    expect(panel).toHaveTextContent('1')
-    expect(panel).toHaveTextContent('Ali Farag')
-    expect(panel).toHaveTextContent('EGY-0001')
-    expect(panel).toHaveTextContent('EGY')
-    expect(panel).toHaveTextContent('30')
-    expect(panel).toHaveTextContent('Power Rating')
-    expect(panel).toHaveTextContent('91')
-    expect(within(panel).getByRole('link', { name: 'Ali Farag' })).toHaveAttribute('href', '/viewer/runs/run-a/players/EGY-0001/career')
-    expect(within(panel).getByRole('link', { name: 'EGY-0001' })).toHaveAttribute('href', '/viewer/runs/run-a/players/EGY-0001/career')
-    expect(within(panel).getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/run-a/countries/EGY')
-    expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/run-a/players')
-    expect(api.listRunPlayers).toHaveBeenCalledWith('run-a', { limit: 5, offset: 0 })
+    const table = await screen.findByRole('table', { name: 'Saved player directory' })
+    expect(within(table).getByRole('link', { name: 'Player One' })).toHaveAttribute('href', '/viewer/runs/people%20run/players/P1/career')
+    expect(within(table).getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/people%20run/countries/EGY')
+    expect(api.getViewerPlayers).toHaveBeenCalledWith('people run')
+    expect(api.listRunPlayers).not.toHaveBeenCalled()
+    expect(screen.getByRole('link', { name: 'Open Product Run players' })).toHaveAttribute('href', '/viewer/runs/people%20run/players')
     expectNoForbiddenViewerActions()
   })
 
   it('shows active-run top-level Countries metadata without redirecting to the run-scoped page', async () => {
-    setTestActiveRun('run-a')
-    api.listRunNations.mockResolvedValue({
-      run_id: 'run-a',
-      total: 4,
-      limit: 5,
-      offset: 0,
-      nations: [
-        {
-          country_code: 'EGY',
-          country_name: 'Egypt',
-          total_players: 12,
-          average_overall: 78.4,
-          average_age: 25.2,
-          top_band_count: 3,
-          manual_override_count: 1,
-          planner_generated_count: 10,
-          rollover_carried_count: 1,
-          top_player_id: 'EGY-0001',
-          top_player_name: 'Ali Farag',
-          top_player_overall: 91
-        }
-      ]
-    })
-
+    setTestActiveRun('people run'); api.getViewerCountries.mockResolvedValue(publicCountries('people run', [publicCountry()]))
     renderAppAt('/viewer/countries')
-
-    expect(await screen.findByRole('heading', { name: 'Countries' })).toBeInTheDocument()
-    expect(screen.queryByText('Country filters')).not.toBeInTheDocument()
-    const panel = await screen.findByLabelText('Countries active run summary')
-    expect(panel).toHaveTextContent('run-a')
-    expect(panel).toHaveTextContent('Total country count')
-    expect(panel).toHaveTextContent('4')
-    expect(panel).toHaveTextContent('Returned country count')
-    expect(panel).toHaveTextContent('1')
-    expect(panel).toHaveTextContent('EGY')
-    expect(panel).toHaveTextContent('Egypt')
-    expect(panel).toHaveTextContent('12')
-    expect(panel).toHaveTextContent('78.4')
-    expect(panel).toHaveTextContent('Ali Farag')
-    expect(panel).toHaveTextContent('91')
-    expect(within(panel).getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/run-a/countries/EGY')
-    expect(within(panel).getByRole('link', { name: 'Egypt' })).toHaveAttribute('href', '/viewer/runs/run-a/countries/EGY')
-    expect(within(panel).getByRole('link', { name: 'Ali Farag' })).toHaveAttribute('href', '/viewer/runs/run-a/players/EGY-0001/career')
-    expect(screen.getByRole('link', { name: 'Open active run countries' })).toHaveAttribute('href', '/viewer/runs/run-a/countries')
-    expect(api.listRunNations).toHaveBeenCalledWith('run-a', { limit: 5, offset: 0 })
+    const panel = await screen.findByLabelText('Countries canonical Product Run summary')
+    expect(await within(panel).findByRole('link', { name: 'Player One' })).toHaveAttribute('href', '/viewer/runs/people%20run/players/P1/career')
+    expect(within(panel).getAllByRole('link', { name: 'EGY' })[0]).toHaveAttribute('href', '/viewer/runs/people%20run/countries/EGY')
+    expect(api.getViewerCountries).toHaveBeenCalledWith('people run'); expect(api.listRunNations).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 
 
-  it('keeps top-level sample player and country fields as plain text when IDs are missing', async () => {
-    setTestActiveRun('run-a')
-    api.listRunPlayers.mockResolvedValue({
-      run_id: 'run-a',
-      total: 1,
-      limit: 5,
-      offset: 0,
-      players: [
-        {
-          player_id: '',
-          name: 'Mystery Player',
-          country_code: '',
-          age: 22,
-          source_type: 'planner_generated',
-          override_id: null,
-          quality_band: 'prospect',
-          is_top_band: false,
-          origin_source_type: 'planner_generated',
-          origin_quality_band: 'prospect',
-          origin_override_id: null,
-          origin_season: 2030,
-          technique: 70,
-          movement: 71,
-          physical: 72,
-          mental: 73,
-          overall: 74
-        }
-      ]
-    })
-
+  it('rejects malformed public player identities and never links country fields without IDs', async () => {
+    setTestActiveRun('people run')
+    api.getViewerPlayers.mockResolvedValue(publicRoster('people run', [publicPlayer('', 'Unknown Player')]))
     renderAppAt('/viewer/players')
-
-    const playersPanel = await screen.findByLabelText('Players active run summary')
-    await waitFor(() => expect(playersPanel).toHaveTextContent('Mystery Player'))
-    expect(within(playersPanel).queryByRole('link', { name: 'Mystery Player' })).not.toBeInTheDocument()
-    expect(within(playersPanel).queryByRole('link', { name: '—' })).not.toBeInTheDocument()
-
+    expect(await screen.findByRole('alert')).toHaveTextContent('invalid or foreign source data')
+    expect(screen.queryByRole('link', { name: 'Unknown Player' })).not.toBeInTheDocument()
     cleanup()
-    setTestActiveRun('run-a')
-    api.listRunNations.mockResolvedValue({
-      run_id: 'run-a',
-      total: 1,
-      limit: 5,
-      offset: 0,
-      nations: [
-        {
-          country_code: '',
-          country_name: 'Unknown Country',
-          total_players: 1,
-          average_overall: 74,
-          average_age: 22,
-          top_band_count: 0,
-          manual_override_count: 0,
-          planner_generated_count: 1,
-          rollover_carried_count: 0,
-          top_player_id: null,
-          top_player_name: 'Mystery Player',
-          top_player_overall: 74
-        }
-      ]
-    })
-
+    api.getViewerCountries.mockResolvedValue(publicCountries('people run', [{ ...publicCountry(), country_code: '', top_player_id: null, top_player_name: 'Unknown Top Player' }]))
     renderAppAt('/viewer/countries')
-
-    const countriesPanel = await screen.findByLabelText('Countries active run summary')
-    await waitFor(() => expect(countriesPanel).toHaveTextContent('Unknown Country'))
-    expect(countriesPanel).toHaveTextContent('Mystery Player')
-    expect(within(countriesPanel).queryByRole('link', { name: 'Unknown Country' })).not.toBeInTheDocument()
-    expect(within(countriesPanel).queryByRole('link', { name: 'Mystery Player' })).not.toBeInTheDocument()
+    expect(await screen.findByText('Unknown Top Player')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Unknown Top Player' })).not.toBeInTheDocument()
+    expect(document.querySelector('a[href$="/countries/"]')).toBeNull()
     expectNoForbiddenViewerActions()
   })
 
   it('shows empty states on active-run top-level Players and Countries hubs without metadata', async () => {
-    setTestActiveRun('run-a')
-
-    renderAppAt('/viewer/players')
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open active run players' })).toHaveAttribute('href', '/viewer/runs/run-a/players')
-    expectNoForbiddenViewerActions()
-
-    cleanup()
-    setTestActiveRun('run-a')
-    renderAppAt('/viewer/countries')
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open active run countries' })).toHaveAttribute('href', '/viewer/runs/run-a/countries')
+    setTestActiveRun('run-a'); renderAppAt('/viewer/players')
+    expect(await screen.findByText('No Saved players exist in this Run.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Product Run players' })).toHaveAttribute('href', '/viewer/runs/run-a/players')
+    cleanup(); renderAppAt('/viewer/countries')
+    expect(await screen.findByText('No canonical countries are available for this Product Run yet.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Product Run countries' })).toHaveAttribute('href', '/viewer/runs/run-a/countries')
     expectNoForbiddenViewerActions()
   })
 
@@ -2014,12 +1587,13 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('offers the active run calendar link while preserving the top-level calendar Jump to Week primitive', async () => {
-    setTestActiveRun('run-a')
-    renderAppAt('/viewer/tour/calendar')
-
-    expect(await screen.findByRole('button', { name: 'Jump to W24' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open active run schedule' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+  it('offers the real Saved Calendar link without changing source data when the Viewer week changes', async () => {
+    setTestActiveRun('run-a'); const user = userEvent.setup(); renderAppAt('/viewer/tour/calendar')
+    expect(await screen.findByRole('link', { name: 'Open active run schedule' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar')
+    await chooseViewerWeek(user, 24)
+    expect(screen.getByRole('button', { name: 'Season 2004/05 · W24' })).toBeInTheDocument()
+    expect(localStorage.getItem('beta_engine:viewer_context')).toContain('24')
+    expectNoLegacyMetadataReads(); expectNoForbiddenViewerActions()
   })
 
   it('does not render forbidden mutating Viewer buttons or links on top-level shell pages', async () => {
@@ -2054,12 +1628,10 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
   it('preserves the real run-scoped Viewer season calendar page', async () => {
     renderAppAt('/viewer/runs/run-a/calendar')
-
-    expect(await screen.findByRole('heading', { name: 'Season Calendar' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Canonical season timeline' })).toBeInTheDocument()
-    expect(await screen.findByRole('list', { name: 'Viewer canonical season calendar events' })).toHaveTextContent('E1')
-    expect(screen.queryByText('This section uses existing read-only run data only.')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Jump to W24' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Season Calendar', level: 2 })).toBeInTheDocument()
+    const list = await screen.findByRole('list', { name: 'Viewer season calendar events 2029/30' })
+    expect(within(list).getByRole('link', { name: 'Open planned event' })).toHaveAttribute('href', '/viewer/runs/run-a/calendar/E1?season=2029%2F30&week=2')
+    expect(api.getViewerRunCalendar).toHaveBeenCalledWith('run-a'); expectNoForbiddenViewerActions()
   })
 
   it('preserves the real run-scoped Viewer tournaments/events page', async () => {
@@ -2072,18 +1644,18 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
   it('preserves the real run-scoped Viewer players page', async () => {
     renderAppAt('/viewer/runs/run-a/players')
-
     expect(await screen.findByRole('heading', { name: 'Players', level: 2 })).toBeInTheDocument()
-    expect(screen.getByText('Read-only player profiles for the selected run.')).toBeInTheDocument()
-    expectNoForbiddenViewerActions()
+    expect(api.getViewerPlayers).toHaveBeenCalledWith('run-a')
+    expect(screen.getByLabelText('Viewer Product Run context')).toHaveTextContent('run-a')
+    expect(api.listRunPlayers).not.toHaveBeenCalled(); expectNoForbiddenViewerActions()
   })
 
   it('preserves the real run-scoped Viewer countries/nations page', async () => {
     renderAppAt('/viewer/runs/run-a/countries')
-
     expect(await screen.findByRole('heading', { name: 'Countries', level: 2 })).toBeInTheDocument()
-    expect(screen.getByText('Read-only country strength overview for the selected run.')).toBeInTheDocument()
-    expectNoForbiddenViewerActions()
+    expect(api.getViewerCountries).toHaveBeenCalledWith('run-a')
+    expect(screen.getByLabelText('Viewer Product Run context')).toHaveTextContent('run-a')
+    expect(api.listRunNations).not.toHaveBeenCalled(); expectNoForbiddenViewerActions()
   })
 
   it('preserves the real run-scoped Viewer history/activity page', async () => {
@@ -2308,26 +1880,17 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   }, 20000)
 
   it('keeps context-aware mode switcher mappings identity-safe across Viewer and Admin routes', async () => {
-    const mappings = [
-      ['/viewer/players', '/admin/players'],
-      ['/admin/players', '/viewer/players'],
-      ['/viewer/countries', '/admin/world/countries'],
-      ['/admin/world/countries', '/viewer/countries'],
-      ['/viewer/tour', '/admin/tour-seasons'],
-      ['/admin/tour-seasons', '/viewer/tour'],
-      ['/viewer/runs/run-a/calendar', '/admin/runs/run-a/branches'],
-      ['/admin/runs/run-a/calendar', '/viewer/runs'],
-      ['/viewer/runs/run-a/players', '/admin/runs/run-a/branches'],
-      ['/admin/runs/run-a/players', '/viewer/runs']
-    ]
-
-    for (const [route, expectedHref] of mappings) {
-      cleanup()
-      renderAppAt(route)
-      const switcher = await screen.findByLabelText('Mode switcher')
-      const targetName = expectedHref.startsWith('/admin') ? 'Admin / Engine' : 'Viewer / MSA'
-      expect(within(switcher).getByRole('link', { name: targetName })).toHaveAttribute('href', expectedHref)
+    const context = { activeProductRunId: 'product A', activeLegacySimulationRunId: 'legacy A' }
+    expect(getModeSwitcherTarget('/viewer/runs/product%20A/calendar', context).adminTarget).toBe('/admin/runs/product%20A/branches')
+    expect(getModeSwitcherTarget('/admin/runs/legacy%20A/calendar', context).viewerTarget).toBe('/viewer/runs/product%20A/rankings')
+    expect(getModeSwitcherTarget('/admin/runs/foreign/calendar', context).viewerTarget).toBe('/viewer/runs')
+    for (const [route, target] of [['/viewer/players', '/admin/players'], ['/viewer/countries', '/admin/world/countries'], ['/viewer/tour', '/admin/tour-seasons']]) {
+      expect(getModeSwitcherTarget(route, context).adminTarget).toBe(target)
     }
+    renderAppAt('/viewer')
+    expect(await screen.findByTestId('viewer-primary-nav')).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Mode switcher')).getByRole('link', { name: 'Admin / Engine' })).toHaveAttribute('href', '/admin')
+    expectNoForbiddenViewerActions()
   })
 
 
@@ -2347,7 +1910,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       renderAppAt(route)
 
       expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
-      expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+      await expectNoSelectedRunNotice()
       expect(api.getRunStatusSummary).not.toHaveBeenCalled()
       expect(api.listRankingSnapshots).not.toHaveBeenCalled()
       expectNoForbiddenViewerActions()
@@ -2364,71 +1927,19 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     ] as const
 
     for (const [route, title, deferredCopy] of routes) {
-      cleanup()
-      resetApiMocks()
-      setTestActiveRun('phase-3aj-run')
-      api.getRun.mockResolvedValue({
-        run: { run_id: 'phase-3aj-run', season: 2033, seed: 22, next_event_index: 1, total_events: 3, completed_event_ids: ['EVENT-DONE'] },
-        season_state: {
-          season: 2033,
-          next_event_index: 1,
-          completed_event_ids: ['EVENT-DONE'],
-          ordered_events: [
-            { event_id: 'EVENT-DONE', season: 2033, week: 2, tour: 'WORLD', category: 'GOLD', template_id: 'TEMP-DONE' },
-            { event_id: 'EVENT-NEXT', season: 2033, week: 4, tour: 'WORLD', category: 'PLATINUM', template_id: 'TEMP-NEXT' },
-            { event_id: 'EVENT-LATER', season: 2033, week: 6, tour: 'ELITE', category: 'BRONZE', template_id: 'TEMP-LATER' }
-          ]
-        }
-      })
-      api.getRunStatusSummary.mockResolvedValue({
-        run_id: 'phase-3aj-run',
-        season: 2033,
-        seed: 22,
-        progress: { next_event_index: 1, total_events: 3, completed_event_count: 1 },
-        finals: { qualification_available: true, result_available: false },
-        rollover: null,
-        source: { source_type: 'fresh_seed', parent_run_id: null },
-        lineage: { child_run_count: 0 },
-        history_counts: { events: 1, ranking_snapshots: 2, race_snapshots: 1 }
-      })
-      api.listEvents.mockResolvedValue({
-        run_id: 'phase-3aj-run',
-        events: [
-          { event_sequence: 1, event_id: 'EVENT-DONE', season: 2033, week: 2, template_id: 'TEMP-DONE', tournament_result: { raw_secret: 'fake ranking table payload' } }
-        ]
-      })
-      api.listRankingSnapshots.mockResolvedValue({ run_id: 'phase-3aj-run', snapshots: [
-        { snapshot_sequence: 10, snapshot_kind: 'ranking', source_event_id: 'EVENT-OLD', payload: { raw_secret: 'fake player ranks payload' } },
-        { snapshot_sequence: 11, snapshot_kind: 'ranking', source_event_id: 'EVENT-DONE', payload: { raw_secret: 'fake Elo ratings payload' } }
-      ] })
-      api.listRaceSnapshots.mockResolvedValue({ run_id: 'phase-3aj-run', snapshots: [
-        { snapshot_sequence: 12, snapshot_kind: 'race', source_event_id: 'EVENT-DONE', payload: { raw_secret: 'fake Next Gen standings payload' } }
-      ] })
-      api.getFinalsSummary.mockResolvedValue({ run_id: 'phase-3aj-run', season: 2033, qualification: { run_id: 'phase-3aj-run', season: 2033, source_as_of_season: 2033, source_as_of_week: 5, qualification: { raw_secret: 'fake leader payload' } }, result: null })
-
+      cleanup(); resetApiMocks(); setTestActiveRun('metadata run'); mockCanonicalMetadata('metadata run')
       renderAppAt(route)
-
       expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
       expect(screen.getByText(deferredCopy)).toBeInTheDocument()
-      const metadata = await screen.findByLabelText(`${title} source metadata`)
-      expect(metadata).toHaveTextContent('Active run IDphase-3aj-run')
-      expect(metadata).toHaveTextContent('Season2033')
-      expect(metadata).toHaveTextContent('Ranking snapshot count2')
-      expect(metadata).toHaveTextContent('Race snapshot count1')
-      expect(metadata).toHaveTextContent('Completed/persisted event count1')
-      expect(metadata).toHaveTextContent('Ordered calendar event count3')
-      expect(within(metadata).getByRole('link', { name: '#11' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/rankings/11')
-      expect(within(metadata).getByRole('link', { name: '#12' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/race/12')
-      expect(within(metadata).getByRole('link', { name: 'EVENT-DONE' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/tournaments/EVENT-DONE')
-      expect(within(metadata).getByRole('link', { name: 'EVENT-NEXT' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/calendar/EVENT-NEXT')
-      expect(within(metadata).getByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/finals')
-      expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/rankings')
-      expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/race')
-      expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/tournaments')
-      expect(screen.getByRole('link', { name: 'Open active run calendar' })).toHaveAttribute('href', '/viewer/runs/phase-3aj-run/calendar')
-      expect(screen.getByRole('link', { name: 'Open run browser' })).toHaveAttribute('href', '/viewer/runs')
-      expect(document.body).not.toHaveTextContent(/raw_secret|source_event_id|payload|fake player ranks payload|fake Elo ratings payload|fake Next Gen standings payload|fake leader payload/i)
-      expect(document.body).not.toHaveTextContent(/Top 10 Ranking Preview|Top 10 Race Preview|Player rank #|Elo rating value|Power Rating score|Form score value|Next Gen standings table|No\.1 history row|Leader table|Storyline card/i)
+      const metadata = await screen.findByLabelText(title + ' source metadata')
+      expect(await within(metadata).findByRole('link', { name: 'Published Open' })).toHaveAttribute('href', '/viewer/runs/metadata%20run/tournaments/EVENT-LATEST')
+      expect(metadata).toHaveTextContent('Product Runmetadata run')
+      expect(metadata).toHaveTextContent('Completed tournaments1')
+      expect(metadata).toHaveTextContent('Official Ranking publications1')
+      expect(metadata).toHaveTextContent('Finals Race publications1')
+      expect(within(metadata).getByRole('link', { name: 'Season 29 W1 · #1769' })).toHaveAttribute('href', '/viewer/runs/metadata%20run/rankings/1769')
+      expectNoLegacyMetadataReads()
+      expect(document.body).not.toHaveTextContent(/raw_secret|Fake record holder|GOAT ranking payload|invented winner|award payload/)
       expectNoForbiddenViewerActions()
     }
   })
@@ -2828,10 +2339,9 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
   it('Admin routes still render', async () => {
     renderAppAt('/admin')
-
-    expect(await screen.findByRole('heading', { name: 'Admin Engine Dashboard' })).toBeInTheDocument()
-    const adminNav = screen.getByRole('navigation', { name: 'Global Admin navigation' })
-    expect(within(adminNav).getByRole('link', { name: 'World' })).toHaveAttribute('href', '/admin/world')
-    expect(within(adminNav).getByRole('link', { name: 'Simulate' })).toHaveAttribute('href', '/admin/simulate')
+    expect(await screen.findByRole('heading', { name: 'Squash Engine Home' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Global Admin navigation' })).toBeInTheDocument()
+    expect(within(screen.getByRole('navigation', { name: 'Global Admin navigation' })).getByRole('link', { name: 'Packages' })).toHaveAttribute('href', '/admin/packages')
+    expect(screen.queryByTestId('viewer-primary-nav')).not.toBeInTheDocument()
   })
 })

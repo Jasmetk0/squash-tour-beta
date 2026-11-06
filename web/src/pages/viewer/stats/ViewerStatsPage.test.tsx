@@ -2,9 +2,14 @@ import { screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveRunId } from '../../../test/viewerTestUtils'
+import { calendarEvent, historyEvent, savedCalendar, savedHistory, savedRankings, savedRace } from '../../../test/viewerCalendarFixtures'
 import { ViewerStatsPage } from './ViewerStatsPage'
 
 const api = vi.hoisted(() => ({
+  getViewerRunCalendar: vi.fn(),
+  getViewerTournamentHistory: vi.fn(),
+  listViewerOfficialRankingHistory: vi.fn(),
+  getViewerFinalsRace: vi.fn(),
   getFinalsSummary: vi.fn(),
   getRunStatusSummary: vi.fn(),
   listEvents: vi.fn(),
@@ -20,21 +25,11 @@ function renderStats(): void {
 }
 
 function resetApiMocks(): void {
-  api.getRunStatusSummary.mockResolvedValue({
-    run_id: 'stats run',
-    season: 2032,
-    seed: 7,
-    progress: { next_event_index: 2, total_events: 4, completed_event_count: 2 },
-    finals: { qualification_available: true, result_available: false },
-    rollover: null,
-    source: { source_type: 'fresh_seed', parent_run_id: null },
-    lineage: { child_run_count: 0 },
-    history_counts: { events: 2, ranking_snapshots: 2, race_snapshots: 1 }
-  })
-  api.listEvents.mockResolvedValue({ run_id: 'stats run', events: [{ event_id: 'EVT-3', event_sequence: 3, template_id: 'TPL-3', week: 13 }] })
-  api.listRankingSnapshots.mockResolvedValue({ snapshots: [{ snapshot_sequence: 12, snapshot_kind: 'ranking', source_event_id: 'EVT-3', payload: {} }] })
-  api.listRaceSnapshots.mockResolvedValue({ snapshots: [{ snapshot_sequence: 6, snapshot_kind: 'race', source_event_id: 'EVT-3', payload: {} }] })
-  api.getFinalsSummary.mockResolvedValue({ qualification: { qualifiers: [] }, result: null })
+  const event = calendarEvent({ event_id: 'EVT-3', event_name: 'Stats Open' })
+  api.getViewerRunCalendar.mockResolvedValue(savedCalendar([event], 'stats run'))
+  api.getViewerTournamentHistory.mockResolvedValue(savedHistory([historyEvent(event, { result_published: true, champion_player_id: 'CHAMPION', finalist_player_id: 'FINALIST' })], 'stats run'))
+  api.listViewerOfficialRankingHistory.mockResolvedValue({ ...savedRankings(), product_run_id: 'stats run' })
+  api.getViewerFinalsRace.mockResolvedValue({ ...savedRace(), product_run_id: 'stats run' })
 }
 
 describe('ViewerStatsPage', () => {
@@ -49,7 +44,7 @@ describe('ViewerStatsPage', () => {
 
     expect(screen.getByRole('heading', { level: 2, name: 'Stats' })).toBeInTheDocument()
     expect(screen.getByText('Stats library destination prepared for connected run-scoped statistical read models.')).toBeInTheDocument()
-    expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(screen.getByText('No Product Run is selected yet.')).toBeInTheDocument()
 
     expectNoForbiddenViewerActions()
   })
@@ -61,8 +56,9 @@ describe('ViewerStatsPage', () => {
 
     expect(await screen.findByText('Stats Overview')).toBeInTheDocument()
     expect(screen.getByText('stats run')).toBeInTheDocument()
-    expect(screen.getByText('Completed/persisted event count')).toBeInTheDocument()
-    expect(await screen.findByRole('link', { name: 'Finals qualification available' })).toHaveAttribute('href', '/viewer/runs/stats%20run/finals')
+    expect(screen.getByText('Completed tournaments')).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Stats Open' })).toHaveAttribute('href', '/viewer/runs/stats%20run/tournaments/EVT-3')
+    for (const legacy of [api.getFinalsSummary, api.getRunStatusSummary, api.listEvents, api.listRankingSnapshots, api.listRaceSnapshots]) expect(legacy).not.toHaveBeenCalled()
 
     const deferredText = screen.getByRole('list', { name: 'Deferred stat groups' }).textContent ?? ''
     expect(deferredText.indexOf('Player Stats')).toBeGreaterThanOrEqual(0)

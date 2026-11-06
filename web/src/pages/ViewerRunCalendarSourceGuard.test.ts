@@ -15,8 +15,10 @@ describe('ViewerRunCalendarPage canonical source guard', () => {
     expect(calendarSource).not.toContain('listRankingSnapshots(')
   })
 
-  it('keeps legacy compatibility explicit only for Race snapshots', () => {
-    expect(calendarSource).toContain('listRaceSnapshots')
-    expect(calendarSource).toContain('viewerRaceSnapshotPath')
+  it('uses canonical Finals Race publications without legacy snapshot inference', () => {
+    expect(calendarSource).toContain('getViewerFinalsRace')
+    expect(calendarSource).toContain('viewerRacePath')
+    expect(calendarSource).not.toContain('listRaceSnapshots')
+    expect(calendarSource).not.toContain('viewerRaceSnapshotPath')
   })
 })

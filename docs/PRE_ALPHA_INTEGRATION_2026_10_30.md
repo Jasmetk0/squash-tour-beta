@@ -1,4 +1,34 @@
-# Current integrated evidence checkpoint — 6 November 2026
+# Frontend regression repair candidate — 6 November 2026
+
+Merged base `7e92ad5ee714092263335420e0f6e8ed0b79a045` includes audit #1743.
+The isolated repair has **3,423 passing frontend tests in all 364 files, zero
+failures**, plus TypeScript/Vite production build. Local Python/backend, sporting
+browser and long-Run gates were not rerun for these test/documentation changes.
+There is no production code, Package data, API, calibration, workflow, timeout,
+test selection or Master change. Final-head hosted checks and owner merge remain
+required. This is still the same evidence index, not a new release declaration.
+
+The repair preserves navigation, read-only, exact identity/source, conservative
+legacy payload and private-data assertions using current canonical Saved DTOs.
+It replaces obsolete legacy `getRun/listEvents` fixtures and old UI scaffolds;
+sets English explicitly in English route tests; repairs inconsistent ordinal,
+Race count/point and source-Branch positive fixtures; and reads exact comparison
+players independently of the discovery sample. The source scanner excludes test
+files from production-only rules, and Race guards now forbid reinstating preview
+inference. Nine additional boundary/adversarial cases cover publication ownership,
+metadata mismatch, public-head limits and unsafe week coordinates. A subsequent
+full run exposed an inventory test race: the Lab picker test now awaits the
+actual option and resets one-shot mocks, retaining every retry/selection assertion.
+
+**Correction to the earlier audit:** planned-Edition mounts already receive a
+Product Run context through `renderWithViewerProviders`; their principal error
+was mocking retired readers, not omitting that provider. The historical 88-failure
+result below is superseded by this scoped frontend result. The FAX execution,
+automatic Entry, performance, recovery and retained full-scope gaps remain open.
+
+---
+
+# Historical integrated evidence checkpoint — 6 November 2026
 
 ## Audited source and method
 

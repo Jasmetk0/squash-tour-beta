@@ -1,0 +1,352 @@
+# SQUASH ENGINE R010 — ChatGPT pressure/mental traits research (owner-provided)
+
+Original owner-uploaded DOCX: "Psychika elitního squashisty – vlastnosti a momentální stavy.docx", 9 pages, received 2026-11-01.
+**Research-only, NOT validated scientific calibration, approved game mechanics or a complete code audit.**
+Searchable text-only extraction. Original Word binary is NOT committed. The original DOCX contains 58 paragraphs, zero tables and **no live external hyperlinks**; scholarly references appear only as unresolved snippet markers (e.g. [15:L317-L323]) without full paper bibliography, preventing independent retrieval of each cited claim from this report alone.
+The author expressly states it did not conduct an in-depth Match Engine code review. No simulations or experiments were executed. The source includes proposed experimental expectations that wrongly presume score-related performance differences must exist, and recommendations to add pressure modifiers before identifying current coverage. Consult INDEPENDENT_CRITICAL_REVIEW_AND_HANDOFF.md before any use.
+
+----- BEGIN AVAILABLE SEARCHABLE SOURCE TEXT -----
+
+<PARSED TEXT FOR PAGE: 1 / 9>
+Psychika elitního squashisty – vlastnosti a
+momentální stavy
+Psychická výbava vrcholových hráčů zahrnuje stabilní osobnostní rysy i
+proměnlivé stavové faktory. Mezi základní trvalé atributy patří mentální odolnost
+(tzv. „mental toughness“), míra sebepoznání a základní úroveň sebevědomí.
+Dynamická složka se pak projevuje přes aktuální stav úzkosti, napětí nebo
+naopak motivace během zápasu. Podle odborné literatury tlak může mít jak
+usnadňující, tak i paralyzující účinek na výkon【15†L317-L323】 – při
+optimální míře vzruchu a sebevědomí výkon stoupá, zatímco příliš vysoká úzkost
+vede ke snížení výkonnosti (tzv. „choking“).
+
+Klíčovými faktory jsou zde vnímání nároků a víra ve vlastní schopnosti
+(self‑efficacy)【42†L1515-L1524】. Hráči s vysokou sebedůvěrou a pozitivním
+hodnocením tlaku dokáží zlepšit pozornost směrem k úkolu, řídit emoce a
+alokovat zdroje efektivněji. Naopak sebedůvěra kolísavá, strach ze selhání či
+vnitřní tlak (tzv. „výklad vlastní prezentace“) může vyvolat situační úzkost a
+odtržení pozornosti od hry【36†L264-L273】. Koncentrace je kritickým prvkem;
+známé strategie (předzápasové rutiny, pozitivní self‑talk či vizualizace) zvyšují
+schopnost udržet úroveň koncentrace i v klíčových chvílích【42†L1515-L1524】
+【43†L49-L52】.
+
+Zkušenosti a věk obvykle přispívají k lepší psychické stabilitě: zkušení hráči mají
+více propracované copingové mechanismy a rutiny pro stresové situace, takže
+spíše nezpanikaří při státní těžkostech (např. při důležitých bodech). Současně
+však trénovaná adaptace na soupeře (pozorování návyků, přizpůsobení taktiky)
+je spíše taktická než psychická vlastnost. Důležité je přísně rozlišovat mezi
+dlouhodobým temperamentem a aktuálním stavem: například vysoká sebejistota
+(trait) nemusí vždy zabránit jednorázovému stresovému výpadku v rozhodujícím
+bodě. Vpřednostňovat nelze domněnku vrozené psychické nadřazenosti
+šampionů; rozdíly pramení spíše z tréninkových zkušeností a naučených
+strategií.
+
+Průlomové body: clutch vs. choking
+V literatuře se popisují dva protichůdné jevy: choking (vyhození) a clutch
+(výjimečný výkon pod tlakem). Choking je definováno jako úzkostný propad
+<PARSED TEXT FOR PAGE: 2 / 9>
+výkonu v rozhodující situaci – neuspokojení vlastních očekávání v okamžicích
+„když to nejvíc záleží“【36†L264-L273】【43†L67-L70】. Naopak clutch
+performance představuje zlepšení nebo zvládnutí výkonu právě pod tlakem.
+Empirické důkazy jsou smíšené: někteří hráči skutečně pod tlakem náhle hrají
+hůře (kulhají drille), jiní vyrostou a zlepšují koncentraci. Celkově ale neexistuje
+jednotné pravidlo, že by všichni hráči buď chokerům či clutchovali – odpověď
+je velmi individuální a kontextová.
+
+Studie z různých sportů ukazují, že vyhodnotit skutečný účinek tlaku je obtížné.
+Ovlivnit výsledky může náhoda, duševní či fyzická únava nebo kvalita soupeře.
+Například při rozhodujících bodech (gameball, matchball) či v pěti-setu bývají
+hráči u úzkosti vyšší, ale zda systematicky chybuje více než jindy, závisejí na
+hráči. Analýzy indikovaly, že statistické anomálie (náhodné série prohraných
+výměn) mohou připomínat choking, ale nemusí být způsobeny psychikou.
+Metody prokazování genuine clutch efektu studují rozdíly hráčů se stejnou
+výkonností za běžných podmínek – pokud ten samý hráč výrazně překonává
+konkurenci jen v klíčových momentech, naznačuje to „clutchiness“. Analogicky,
+pokud favorit výrazněji ztrácí vedoucí pozici jen v jednom setu či při
+setballech, mohl by to být projev tlaku, nikoli pouhá náhoda. Proti tomu musí
+být vyrovnaný soupeř a stejné fyzické podmínky. Bez těchto kontrol však obtížně
+odlišíme tlak od jiných faktorů.
+
+Literatura shrnuje, že pozitivní individuální rysy (vysoké sebevědomí, mentální
+odolnost) podporují odolnost vůči vyhození a spíše umožňují excelling i při
+tlaku【42†L1515-L1524】. Naopak hráči s chronicky nízkou úrovní mentální
+odolnosti či s přehnanou obavou z vlastního hodnocení jsou náchylnější ke
+kolapsům výkonu. Klíčovým poznatkem však je, že chování pod tlakem nelze
+určovat pouze podle celkových úspěchů v grandslamech či finálových zápasech.
+Historická bilance nemusí spolehlivě indikovat momentální mentality hráče.
+
+Psychologické momentum versus technicko-taktické faktory
+V kontextu zápasu se mluví o psychologickém momentu – krátkodobém vlivu
+předchozí výhry na následující výkony. Je třeba rozlišit skutečný psychologický
+moment od jiných efektů: změny taktiky (např. soupeřův herní plán) či
+skórovací výhody (např. když hráč vede set, má větší motivaci). Výzkum v tenise
+ukázal, že po významných průlomových momentech dochází ke zvýšení šance
+vyhrát následující hermu – i když formálně se tím změnila jen pozice na hřišti
+【33†L48-L56】. Studie Meier et al. (2020) analyzovaly 4 930 her z grandslamů a
+demonstrovaly, že hráč, jenž prolomil servis soupeře (break), měl vyšší
+<PARSED TEXT FOR PAGE: 3 / 9>
+pravděpodobnost vyhrát další hru, s efektem, který ustal po plánované
+přestávce (timeoutu)【33†L48-L56】. To naznačuje, že psychologický moment
+(růst sebevědomí či tlak na soupeře) přispíval ke zlepšenému výkonu vedle
+tradiční pozice (strategický moment).
+
+Přesto je efekt momenta obecně malý a proměnlivý. Tréninková únava, náhoda či
+hru ovlivňující faktor (jako rychlejší soupeř) mohou často vysvětlit krátké série
+výher či proher bez psychického momenta. Metody odečítají tzv. autokorelaci
+skóre – jinými slovy se zkoumá, zda se dlouhý vítězný streak vyskytuje častěji než
+náhodou. Zatímco statistiky potvrzují, že faktograficky vyhrát předchozí set zvýší
+pravděpodobnost vyhrát další (vzhledem k vyšší kvalitě hráče či psychologii)
+【33†L48-L56】, není jasné, jak toto přeložit do herního modelu bez dvojího
+započítání. Engine Squash má momentální bonus (momentum_adjustment = 0.035),
+ale je třeba ověřit, zda tuto konstantu nevytváří klamné efekty související se
+skóre či únavou soupeře. Z dosavadních poznatků nedoporučujeme bez další
+analýzy přidávat ani rušit bonus automaticky – hodnoty je nutno kalibrovat vůči
+reálným datům (viz experimenty níže).
+
+Shrnutí poznatků z literatury a studií
+Klíčové přehledové práce zdůrazňují, že pro podporu výkonu pod tlakem jsou
+významné psychologické faktory i naučené strategie. Postojová studie ESSA
+konstatuje, že tlak může hráčům pomáhat nebo škodit【15†L317-L323】. Mezi
+identifikované prospěšné atributy patří vysoké sebevědomí, pozitivní vnímání
+požadavků a míra sebeovládání【42†L1515-L1524】. Doporučené intervence
+(např. trénink v simulovaných tlakových situacích, rutiny před výkonem, práce s
+vizualizacemi a sebekoučink) mohou zlepšit konzistenci pod tlakem【42†L1515-
+L1524】.
+
+Nutno ověřit, do jaké míry lze poznatky ze snadněji měřitelných (uzavřených)
+motorických úloh přenést na rychlý otevřený sport. Například meta‑analýzy z
+motivačních úloh ukazují jen obecné trendy, kdežto squashový zápas má
+proměnlivou dynamiku. Přesto závěry ukazují, že trénink v podmínkách tlaku
+skutečně pomáhá, a že naprosté tajemství neexistuje – zvládání tlaku se dá naučit
+【42†L1515-L1524】【15†L317-L323】. Vegukativní studie pod tlakem navíc
+varují před domnělkami o vrozených rozdílech mezi šampiony a ostatními.
+<PARSED TEXT FOR PAGE: 4 / 9>
+Audit existujícího Match Enginu
+Současný simulátor Squash Engine pracuje na úrovni jednotlivých výměn a
+obsahuje atributy mental, clutch, consistency, dále formu, fyzickou únavu a
+herní plán (gameplan). Podrobné posouzení kódu není v tomto reportu, ale nutno
+vyjasnit následující:
+
+      „Mental“ pravděpodobně představuje obecnou mentální odolnost či
+       aktuální psychický stav. Musíme se ujistit, že se používá konzistentně –
+       například zda není počítán jak do základní herní síly, tak zvlášť v
+       emocionálních situacích.
+      „Clutch“ bývá v simulátorech chápán jako speciální faktor v rozhodujících
+       bodech. Zda to má fyzikální ekvivalent, je otázka: logickým řešením je, že
+       clutch modifikuje výkon právě u „gameballů“ či „matchballů“. Je třeba
+       definovat, kdy přesně se spouští (při jaké margině skóre) a jaký je jeho
+       efekt.
+      „Consistency“ – konzistence výkonu – by měla modelovat vnitřní
+       proměnlivost výkonu od výměny k výměně. To by se mělo lišit od
+       vychýlení clutch, které má působit jen v klíčových momentech.
+      Forma obvykle znamená krátkodobé změny výkonnosti (dobrá/špatná
+       série). To může být implicitně zajištěno momentum či tréninkem. Je třeba
+       zkontrolovat, že „forma“ nekopíruje to, co již zpracovávají mental nebo
+       consistency.
+      Momentum – předchozí bonus – by měl být nezávislý na fyzické únavě.
+       Nepozornost hráče po ztraceném setu by snadno mohla být dvojím
+       započítáním. Engine musí jasně rozlišit, zda se bodový obrat odráží v
+       dynamických parametrech hry, nebo zda jde jen o změnu skóre.
+
+Obecně je třeba v implementaci ohlídat, aby žádný psychologický mechanismus
+nebyl „přelitý“ jinam (např. sebedůvěra, která je již do jisté míry zahrnuta v
+hodnocení hráče, se nepočítala znovu přes mental). Doporučujeme zmapovat
+stávající kód: kde se atribut Mental vynásobí, kde Clutch zapnut, jak se počítá
+momentum_adjustment atd., a zjistit, zda v modelu není dvakrát stejná příčina.
+
+Modely psychického vlivu
+V rámci teoretických přístupů lze zvážit různé modely:
+
+      Statický mentální atribut: jednoduchý parametr (např. „coolness under
+       fire“). Je nenáročný na výpočet i kalibraci, ale nemění se s okolnostmi.
+<PARSED TEXT FOR PAGE: 5 / 9>
+       Nelze v něm odlišit, zda hráč reaguje na aktuální tlak nebo je obecně
+       nervózní.
+      Situační reakční model: výkon v klíčovém bodě se modifikuje jako funkce
+       tlaku (např. lineární nebo logistická křivka vs. skóre). Identifikovatelnost
+       závisí na dostatku dat z „high-pressure“ situací; výpočetně stále nenáročné.
+       Mělo by se zkoušet, zda data naznačují vysoký nárůst chybovosti při
+       zvyšujícím se skóre.
+      Individuální odlišnosti v odolnosti: každý hráč má kromě obecné kvality
+       i parametr pro psychickou stabilitu (nebo volativitu). Horší hráči by pak
+       vysazovali pod tlakem více. Model by mohl kombinovat s prvky baggingu –
+       například distribuce kvality a rozptylu. Vyžaduje robustní data o chování
+       jednotlivců pod tlakem.
+      Temporální latentní stav: například modelování aktuální úrovně
+       motivace nebo napětí jako skrytý stav, který ovlivňuje pravděpodobnost
+       úspěchu. Tento stav se může měnit v průběhu setu (drobný pokles
+       sebejistoty) a resetovat po konci setu. Má poměrně velkou složitost a riziko
+       přetížení modelu.
+      Model rozhodování pod nejistotou: místo úprav výkonnosti by se
+       simuloval agresivnější/konzervativní způsob hry při různém skóre (např.
+       riskantnější údery versus jisté výměny). To by reflektovalo taktické změny
+       pod tlakem. Je to sofistikovanější, ale identifikace strategie soupeře by byla
+       obtížná.
+      Současný Gameplan model: pokud engine již má herní plány, mohl by se
+       psychologický stav integrovat do volby plánu – např. při ztrátě se zvýší
+       defenzivní přístup. Tím se některé efekty právě stávají součástí taktiky.
+      Baseline bez psychiky: model bez speciálních psychických vlivů jako
+       kontrafaktuální. Slouží jako kontrola. Pokud by výsledky bez jakéhokoliv
+       modifikátoru pod tlakem odpovídaly reálným datům, není třeba přidávat
+       nic navíc.
+
+Každý model má své výhody a nevýhody. Komplikovanější model (latentní stavy,
+decision-tree) nemusí být nutně realističtější, pokud ho nelze spolehlivě
+nakalibrovat. Riziko „dvojího započítání“ nastává, pokud se stejný jev objeví ve
+více parametrech (např. psychika i zkušenost společně). Optimálně by model měl
+být identifikovatelný z dostupných dat (skóre, hráčské hodnocení, statistiky z
+utkání), jinak zůstane tunelovým parametrem.
+<PARSED TEXT FOR PAGE: 6 / 9>
+Navrhované validační experimenty
+Návrhy experimentů slouží k testování hypotéz o vlivu psychiky. U každého je
+popsáno, jaký výsledek vyvrací předpokládanou hypotézu:
+
+      Stejní hráči, odlišné skóre – Vezměme dva zcela identické tréninkové
+       profily (stejné fyzické i mentální atributy) a simulujme 1000 utkání s
+       rozdílným stavem v rozhodující chvíli (např. 9:9 vs. 5:5 v závěru setu).
+       Pokud engine nemá žádný psychologický efekt, výsledek (rozdíl ve skóre)
+       by měl být statisticky stejný v obou scénářích. Pokud by se ukázalo, že
+       skóre ovlivňuje výsledek (např. Identical-trait hráči výrazněji chybují při
+       vysokém skóre), potvrdí to tlakový efekt. Naopak žádná změna výkonu by
+       vyvracela existenci takového mechanismu.
+      Stejná kvalita, různé mentální profily – Simulujme dvojici hráčů se
+       stejným ratingem a fyzickými atributy, ale různé mentální parametry
+       (např. vysoké vs. nízké sebevědomí). Utkání za běžných podmínek mají
+       podobný výsledek (např. 50:50). Za tlakových podmínek (např. při
+       gameballu) by měl kvalitnější mentální profil vést k vyšší šanci bodu.
+       Pokud ne, značí to, že engine mentalitu fakticky neaplikuje. Pokud rozdíl je,
+       určíme jeho velikost.
+      Clutch vs. Mental atribut – Otestujme hranici mezi „clutch“ a obecným
+       mentálním parametrem. Např. nastavme jednoho hráče s vysokým
+       parametrem Clutch a normálním Mental, druhého naopak. Pak simulujme
+       opět klíčové bodové situace. Pokud „Clutch“ funguje jako zvláštní spike,
+       měl by vyhrát hráč s Clutchem. Pokud nikoliv (není rozdíl oproti běžné
+       situaci), buď Clutch není implementován či je redundantní vůči Mental.
+      Gameball a matchball – Vygenerujme řadu scénářů s různými skóry pro
+       game- či matchball (např. 9:10 proti 9:9). Zkontrolujme, zda engine
+       vyhodnotí bod odlišně. Například u stavu 9:10 by měl projev pressure být
+       vyšší. Pokud engine pomáhá hráči se skóre více vlevo vyhrát (nebo naopak
+       hůře) a odlišuje situace, je tam psychologický modul aktivní. Pokud systém
+       bod přiděluje čistě na základě statistického potenciálu obou, pak ne.
+      Momentum versus náhodné série – Simulujme dlouhou sérii výměn bez
+       změny základních parametrů (oba hráči stejní) a sledujme, zda se vyskytují
+       dlouhé série výher jednoho z nich. Pak zkusme stejnou hru s „resetem
+       skóre“ (imunitou proti momentu) – pokud rozdělení sérií zůstane stejné,
+       moment není v síle; výrazně delší série by signalizovaly pozitivní
+       momentum. Vyvrácení: pokud se engine chová jako náhodný generátor bez
+       delších výkyvů, naznačuje to, že moment není implementován.
+<PARSED TEXT FOR PAGE: 7 / 9>
+   Dlouhý set a únava – Nastavme dlouhé rally (řada her) a sledujme, zda
+    engine simuluje růst psychické únavy (např. pokles koncentrace nebo více
+    chyb po intenzivním setu). Pokud po vyčerpávajícím setu výkon obou
+    klesá, pak je mentální únava modelována. Pokud naopak po hodině hry
+    zůstanou výkony stále stejné bez ohledu na statistickou únavu, žádný
+    psychologický útlum fungovat nebude.
+   Mentální versus fyzická únava – Vytvořme dva scénáře: v prvním obou
+    hráčů klesne fyzická kondice (opravdová únava z předchozího setu), v
+    druhém je fyzicky svěží, ale mírně oslaben mentálně. Pokud engine
+    rozlišuje fyzickou od mentální únavu, ve druhém případě by klesl výkon
+    především v momentálních aspektech (více chyb v chybování či taktické
+    nejistotě), v prvním spíše běžně podle fyzických charakteristik. Pokud
+    nenastane rozdíl, pak není rozlišena mentální únava.
+   Reakce na obrat zápasu – Představme si scénář, kdy výrazný favorit ztrácí
+    set přes „come back“ soupeře (např. průběh 9:0 ve vedení se zlomí).
+    Zobrazme, zda engine propisuje na favorita zvýšenou sebedůvěru (za
+    odvrácená nebezpečí) nebo naopak větší stres. Pokud po obratu engine
+    vyrovná síly (favorit poleví), je tam prvek psychologického momentu;
+    vyvrácení: pokud favorit stejně v dalších setech hladce vyhrává jako kdyby
+    k žádnému obratu nedošlo, mentální faktor se nezapočítává.
+   Choking u favorita – Simulujme zápas, kde lépe hodnocený hráč (favorit)
+    velmi rozhodně prohrává první dva sety (např. 11:2, 11:3). Otestujme, zda
+    engine umí „upgradovat nervozitu“ favorita v třetím setu. Pokud by favorit
+    překvapivě nezměnil svůj výkon navzdory tlaku (pokud náhle nestabilizuje
+    hru či nezačne chybovat), pak chybí model obav z fiaska. Pokud engine
+    automaticky zhoršuje výkon favorita kvůli skonu (či naopak, pokud favorit
+    jako „unseeded“ začne dramaticky lepší hru), je třeba to zkoumat.
+   Zkušenost vs. čistá kvalita – Vytvořme dvojice hráčů s porovnatelným
+    umístěním (stejná skill hodnota) a žádnými rozdíly v tréninku, ale s lišícími
+    se atributy “xleté zkušenosti”. Pak simulujme tlakovou situaci. Hypotézou
+    je, že zkušenější hráč by měl lépe udržet koncentraci. Vyvrácení nastane,
+    pokud engine neprojeví žádný benefit pro hráče se zkušenostmi.
+   Ablace jednotlivých mechanismů – U každého klíčového mechanismu
+    (např. mental, clutch, momentum) vypneme jeho účinek a porovnáme
+    výsledky se základním módem. Tím zjistíme, jak moc který faktor ovlivňuje
+    výsledek. Disproof: pokud vypnutí například „mental“ nemění simulace
+    téměř vůbec, pak tento parametr ve skutečnosti nic nepřidává. Naopak,
+    výrazné odlišnosti by naznačovaly jeho sílu.
+<PARSED TEXT FOR PAGE: 8 / 9>
+      Deterministický replay – Zkontrolujme opakovatelnost deterministického
+       engine: při stejné náhodě počátečních podmínek a vygenerovaném „seed“
+       by simulace měla být konzistentní. Pokud při iteracích s fixním „seedem“
+       dojde k náhodným fluktuacím, pak engine má interní ne-deterministické
+       prvky (což je nežádoucí pro validitu psych. efektů).
+      Kalibrace na empirických datech – Srovnejme simulovaný výstup s
+       reálnou statistikou profesionálního squashe (pokud je dostupná). Např.
+       procento úspěšnosti gameballů, četnost comebacků atd. Pokud simulátor
+       bez psychiky významně liší od empirie, bude to argument pro přidání
+       psych. modifikátorů. Naopak pokud se chová realisticky i bez nich, pak
+       jakýkoli nový mechanizmus musí být nasazen opatrně.
+
+Pro každé takové experimentální nastavení uveďme kritérium „falsifikace“:
+žádný viditelný efekt znamená, že testovaný psychologický mechanismus ve
+skutečnosti v modelu neexistuje.
+
+Doporučení a další kroky
+Na základě přezkoumání důkazů a možností modelu navrhujeme následující
+priority:
+
+      Potvrdit stávající mechanismy: Zatímco engine má atributy mental,
+       clutch a momentum, je třeba ověřit jejich implementaci. Pokud mental
+       představuje celoživotní psychický profil, zkontrolovat, zda neinterferuje s
+       reálnou skórovou silou hráče. Stávající momentum_adjustment by měl být
+       kalibrován – meta‑analytické studie naznačují, že prostor pro malý „boost“
+       existuje【33†L48-L56】, ale jeho velikost nemusí být stálá 0.035.
+       Experimentálně by se to mělo ověřit (viz body výše).
+      Pre-alfa verze (či blízká budoucnost): Doporučujeme nejdříve zavést
+       jednoduchý situační model. Například u core mechaniky mental navýšit
+       chyby/výkonnost hráče v klíčových bodech podle lineární závislosti na
+       rozdílu skóre, a ověřit, zda to vede ke zlepšení statistik (experiment „stejní
+       hráči, různé skóre“). Případně nastavit faktor clutch aktivní pouze v
+       hermách (9:10 atd.) a testovat. Nevytvářejme doplňky pro tzv.
+       „fanouškovské drama“ – progresivní bonus pro dosahování comebacků bez
+       empirické podpory je nevhodný.
+      Budoucí verze: Pokročilejší modely (latentní stavy, rozhodovací strategie)
+       ponechejme pro pozdější stádia. Uvažujeme-li je, musí existovat detailní
+       data a způsoby, jak latentní stav odhadnout. Doporučujeme nejprve použít
+       jednoduché parametry (sebevědomí, konsistence) a až později
+<PARSED TEXT FOR PAGE: 9 / 9>
+       experimentálně přecházet na komplexnější modely, pokud bude
+       detekována podstatná potřeba.
+      Mechanismy bez opory: Nedoporučujeme zakomponovat jakékoli „skryté
+       bonusy“ šampionů nebo automatické zvyšování výkonu ze
+       storytellingových důvodů. Často diskutovaný „winning momentum“ bez
+       empirického podkladu by byl spekulací. Pokud by se prokázalo, že dobrý
+       hráč prostě často vyhrává, vysvětlení nesmí vycházet z neověřené
+       psychiky, ale spíše z technické kvality.
+      Rozhodnutí hlavního koordinátora: Závažným prvkem je definice, kdy
+       přesně se clutch či choking uplatní v rámci engine. Potřebujeme jasně
+       stanovit prahové podmínky (např. “19-19 set ball” versus “10-10 má cenu
+       extra bod” atd.). Také je třeba rozhodnout, jaké psychologické faktory
+       zahrnout do základní síly hráče (např. pevnost v nervách v dlouhodobém
+       měřítku) a které jen do modulátorů během zápasu. Doporučujeme, aby
+       koordinátor určil, zda se například „sebepresentační obavy“ zahrnou do
+       atributu Mental, nebo budou řešeny čistě intervencemi v tréninkovém
+       módu, jelikož z praxe je jasné, že efekty obav lze částečně odstranit
+       procedurami (viz ESSA 2026【15†L317-L323】).
+
+Závěr: Naším cílem je vytvořit takový psychologický modul, který bude
+realistický a deterministický – konkrétní, ne náhodný. Shrnutím: základní
+existující prvky stability osobnosti a momentární reakce na tlak ponechme, ale
+pečlivě je zkontrolujme a otestujme. Vyřadit náhodné přírůstky (např. „bonus pro
+comeback“) až do empirického zdůvodnění. Celkově se zaměřit na vědeckou
+konzistenci: v modelu by měl každý prvek mít jasnou podstatu a být
+kalibrovatelný na základě dat. Pokud budou předložená validační měření
+pozitivní (potvrdí rozdíly podle mentálních parametrů), lze psychiku v engine
+ponechat; v opačném případě zachovat maximální jednoduchost.
+
+Použitá literatura: Na podrobný přehled vlivu tlaku a momenta ve sportu
+odkazuje literatura【15†L317-L323】【42†L1515-L1524】【33†L48-L56】
+【36†L264-L273】. Důraz je na proměnlivost efektů: neexistuje univerzální
+„mágický“ clutch faktor, nýbrž kombinace individuálních rysů a naučených
+dovedností.
+
+----- END AVAILABLE SEARCHABLE SOURCE TEXT -----

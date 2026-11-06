@@ -224,13 +224,15 @@ class NativeCanonicalTournamentResult(FrozenInput):
 
 def completed_canonical_result(authority, slots, *, owner=None):
     plan = authority.canonical_binding.plan(authority.draw)
-    records = {
-        m.match_id: m
+    selected = tuple(
+        m
         for s in slots
         for m in s.accepted
         if m.match_id.startswith(authority.edition.edition_id + ":")
-    }
-    progress = native_progress(plan, tuple(records.values()))
+    )
+    # Never hide a duplicated ledger record by collapsing it to a dictionary.
+    progress = native_progress(plan, selected)
+    records = {m.match_id: m for m in selected}
     if not progress.champion_player_id:
         return None
     first = next(

@@ -386,10 +386,14 @@ class GlobalSlot(FrozenInput):
         ):
             raise ValueError("Historical Global Slot cannot acquire canonical v4 match inputs")
         for item in self.scheduled:
-            if isinstance(item, FrozenCanonicalSlotMatch):
-                authority = next((a for a in self.authorities if a.edition.edition_id == item.edition_id), None)
-                if authority is None or not is_canonical_edition(authority) or slot_match_id(authority, item.index) != item.match_id or item.seed != match_seed(authority, item.match_id):
-                    raise ValueError("Canonical frozen match differs from its exact source node/seed")
+            authority = next((a for a in self.authorities if a.edition.edition_id == item.edition_id), None)
+            canonical = authority is not None and is_canonical_edition(authority)
+            if canonical != isinstance(item, FrozenCanonicalSlotMatch):
+                raise ValueError("Canonical Edition requires its explicitly versioned frozen match type")
+            if canonical:
+                plan = authority.canonical_binding.plan(authority.draw)
+                if item.index >= len(plan.topology.plans) or slot_match_id(authority, item.index) != item.match_id or item.seed != match_seed(authority, item.match_id) or item.source_saved_head != authority.canonical_binding.saved_revision_id:
+                    raise ValueError("Canonical frozen match differs from its exact source node/seed/Saved head")
         if self.schema_version not in {'calendar_global_slot.v3', 'calendar_global_slot.v4'} and (self.group_withdrawals or self.walkovers):
             raise ValueError('Historical slot cannot acquire withdrawal or walkover evidence')
         if self.schema_version == "calendar_global_slot.v1" and (self.group_tie_decisions or any(isinstance(m, FrozenGroupSlotMatch) for m in self.scheduled) or any(is_group_edition(a) for a in self.authorities)):

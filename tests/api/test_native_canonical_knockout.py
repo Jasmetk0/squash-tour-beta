@@ -246,6 +246,10 @@ def test_actual_q_main_partial_save_restart_and_terminal(
             == 409
         )
         save_tour(server)
+        status, public = _request(
+            "GET", server.base_url + "/viewer/runs/run/calendar-tour"
+        )
+        assert status == 200 and not public["editions"], public
         # Only the normal public Week Transition publishes the explicit source date.
         for _ in range(2):
             execute(
@@ -257,6 +261,14 @@ def test_actual_q_main_partial_save_restart_and_terminal(
                 ),
             )
             save_tour(server)
+            status, public = _request(
+                "GET", server.base_url + "/viewer/runs/run/calendar-tour"
+            )
+            assert status == 200, public
+            assert [e["edition_id"] for e in public["editions"]] == [
+                plan.source.draw.event_id
+            ]
+            assert public["editions"][0]["completed"] is False
         assert inspect(server)["state"]["week"]["week"] == 4
         assert (
             plan.source.draw.event_id
@@ -346,3 +358,11 @@ def test_actual_q_main_partial_save_restart_and_terminal(
         execute(server, command(inspect(server), "transition"))
         save_tour(server)
         assert inspect(server)["state"]["week"]["week"] == 5
+        final_view = inspect(server)
+        assert all(
+            row["points"] == 0 for row in final_view["state"]["rankings"][-1]["rows"]
+        )
+        status, public = _request(
+            "GET", server.base_url + "/viewer/runs/run/calendar-tour"
+        )
+        assert status == 200 and public["editions"][0]["completed"] is True, public

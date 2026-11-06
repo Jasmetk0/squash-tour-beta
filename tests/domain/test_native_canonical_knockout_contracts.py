@@ -283,3 +283,46 @@ def test_adoption_is_explicit_prospective_and_operation_scoped(authority, damage
         assert (
             adopt_saved_draw(None, context, state, cmd, replay_plan=plan) == authority
         )
+
+
+def test_canonical_slot_cannot_downgrade_to_an_untagged_legacy_match(authority):
+    from beta_engine.domain.tournaments.calendar_global_slots import GlobalSlot
+
+    # Deliberately isolate the slot tag guard; this is not sporting evidence.
+    plan = authority.canonical_binding.plan(authority.draw)
+    item = FrozenSlotMatch.model_construct(
+        edition_id=authority.edition.edition_id,
+        index=0,
+        match_id=plan.topology.plans[0].match_id,
+        seed=plan.match_seed(plan.topology.plans[0].match_id),
+        source_saved_head="saved",
+        sequence=1,
+    )
+    slot = GlobalSlot.model_construct(
+        schema_version="calendar_global_slot.v4",
+        run_id="run",
+        branch_id="branch",
+        week=authority.edition.week,
+        number=1,
+        players=(),
+        authorities=(authority,),
+        scheduled=(item,),
+    )
+    with pytest.raises(ValueError, match="explicitly versioned frozen match"):
+        slot.canonical_evidence()
+
+
+def test_derived_terminal_does_not_silently_collapse_duplicate_ledger_records(
+    authority,
+):
+    from types import SimpleNamespace
+
+    plan = authority.canonical_binding.plan(authority.draw)
+    record = SimpleNamespace(
+        match_id=plan.topology.plans[0].match_id,
+        week=SimpleNamespace(calendar=plan.calendar),
+    )
+    with pytest.raises(ValueError, match="Duplicate"):
+        completed_canonical_result(
+            authority, (SimpleNamespace(accepted=(record, record)),)
+        )

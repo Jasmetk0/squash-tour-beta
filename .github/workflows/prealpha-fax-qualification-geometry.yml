@@ -41,10 +41,12 @@ jobs:
           cache-dependency-path: pyproject.toml
       - run: python -m pip install -e . pytest
       - name: Original 80 FAX Gold and Platinum canonical topology and adversarial tests
-        run: python -m pytest tests/domain/test_fax_reference_bracket_topology.py -vv --maxfail=1
+        run: GITHUB_EVENT_NAME=fax_qualification_geometry_acceptance python -m pytest tests/domain/test_fax_reference_bracket_topology.py -vv --maxfail=1
       - name: Real player Draw, HTTP SQLite retry, Saved restore and historical compatibility
+        # A scoped acceptance job must execute its unchanged regression modules too.
+        # The ordinary PR changed-test selector is intentionally not this gate.
         run: >-
-          python -m pytest
+          GITHUB_EVENT_NAME=fax_qualification_geometry_acceptance python -m pytest
           tests/infrastructure/test_fax_reference_player_draw.py
           tests/infrastructure/test_tournament_draw_authority.py
           tests/infrastructure/test_tournament_draw_input_authority.py

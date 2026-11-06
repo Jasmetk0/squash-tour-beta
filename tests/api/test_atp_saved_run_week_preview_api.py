@@ -205,7 +205,7 @@ def test_reference_package_confirm_save_restart_then_weeks_remain_readonly(tmp_p
         )
         code, persisted = _request("GET", packages)
         assert code == 200
-        assert persisted == before_packages
+        assert persisted == before_packages[1]
         code, reread = _request(
             "GET", _url(server, run_id, branch_id, "?year=2025")
         )

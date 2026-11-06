@@ -177,6 +177,35 @@ def test_actual_q_main_partial_save_restart_and_terminal(
             server, RunCalendar(61, 37, 2000, 3), count=40 if size == 24 else 56
         )
         plan = authored_source(server, repo, fax_source, size)
+        if size == 24:
+            from tests.api.test_calendar_sporting_horizon_extension import (
+                extend,
+                extension,
+            )
+
+            original_announcement = plan.source.source_event.event_level_overrides[
+                "native_announcement_week"
+            ]
+            status, review = extension(server, 4)
+            assert status == 200 and review["can_save"], review
+            status, receipt = extend(server, review, "extend-before-canonical-adoption")
+            assert status == 200, receipt
+            plan = SavedFaxKnockoutFeederService(repo).prepare(
+                run_id="run",
+                branch_id="branch",
+                season="2000/2001",
+                event_id=plan.source.draw.event_id,
+                expected_saved_revision_id=inspect(server)["saved_head_revision_id"],
+            )
+            assert plan.calendar.season_count == 4
+            assert (
+                plan.source.source_event.event_level_overrides[
+                    "native_announcement_week"
+                ]
+                == original_announcement
+            )
+            assert original_announcement["calendar"]["season_count"] == 3
+
         schedule = {
             "qualification": [1, 2] if size == 24 else [1, 2, 3],
             "main": [4, 5, 6, 7, 8],
@@ -315,12 +344,12 @@ def test_actual_q_main_partial_save_restart_and_terminal(
                 extension,
             )
 
-            status, review = extension(server, 4)
+            status, review = extension(server, 5)
             assert status == 200 and review["can_save"], review
             status, receipt = extend(server, review, "extend-partial-canonical")
             assert status == 200, receipt
             assert receipt["simulation_started"] is False
-            assert inspect(server)["run_calendar"]["season_count"] == 4
+            assert inspect(server)["run_calendar"]["season_count"] == 5
 
         for i in range(12):
             view = inspect(server)

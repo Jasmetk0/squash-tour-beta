@@ -326,3 +326,47 @@ def test_derived_terminal_does_not_silently_collapse_duplicate_ledger_records(
         completed_canonical_result(
             authority, (SimpleNamespace(accepted=(record, record)),)
         )
+
+
+def test_future_adoption_retains_source_announcement_across_strict_horizon_extension(
+    authority,
+):
+    binding = authority.canonical_binding
+    original = binding.source_event.model_dump_json()
+    clock = binding.calendar.extend_to(4)
+    plan = freeze_knockout_feeder_plan(
+        source=binding.plan(authority.draw).source,
+        source_saved_revision_id="saved",
+        source_saved_content_hash="a" * 64,
+        calendar=clock,
+    )
+    extended = NativeCanonicalDrawBinding.from_plan(plan, binding.schedule)
+    projected = canonical_announcement_week(extended)
+    assert projected.calendar == clock
+    assert projected.ordinal == authority.edition.announcement_week.ordinal
+    assert extended.source_event.model_dump_json() == original
+    assert (
+        extended.source_event.event_level_overrides["native_announcement_week"][
+            "calendar"
+        ]["season_count"]
+        == 3
+    )
+    assert extended.plan(authority.draw) == plan
+
+
+@pytest.mark.parametrize(
+    "clock",
+    [
+        RunCalendar(52, 37, 2000, 4),
+        RunCalendar(61, 38, 2000, 4),
+        RunCalendar(61, 37, 2001, 4),
+        RunCalendar(61, 37, 2000, 2),
+    ],
+)
+def test_source_announcement_never_reinterprets_a_foreign_or_shorter_clock(
+    authority, clock
+):
+    with pytest.raises(ValueError, match="different or later Run calendar"):
+        canonical_announcement_week(
+            authority.canonical_binding.model_copy(update={"calendar": clock})
+        )

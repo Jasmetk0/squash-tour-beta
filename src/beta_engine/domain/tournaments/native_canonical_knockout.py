@@ -279,9 +279,25 @@ def canonical_announcement_week(binding):
             "Saved source requires an explicit historical native_announcement_week; no date is inferred"
         )
     week = RunWeekPosition.model_validate_json(json.dumps(raw))
-    if week.calendar != binding.calendar:
-        raise ValueError("Saved announcement uses a different Run calendar")
-    return week
+    source_clock, current = week.calendar, binding.calendar
+    if (
+        source_clock.weeks_per_year,
+        source_clock.season_start_year_week,
+        source_clock.start_year,
+        source_clock.schema_version,
+    ) != (
+        current.weeks_per_year,
+        current.season_start_year_week,
+        current.start_year,
+        current.schema_version,
+    ) or source_clock.season_count > current.season_count:
+        raise ValueError("Saved announcement uses a different or later Run calendar")
+    # This is a NEW operational Edition under the actual Saved clock. Preserve
+    # the source's original date bytes; only project its identical ordinal into
+    # a compatible extended horizon, never clamp or reinterpret its time basis.
+    return RunWeekPosition(
+        calendar=current, season_index=week.season_index, week=week.week
+    )
 
 
 def native_progress(plan, matches):

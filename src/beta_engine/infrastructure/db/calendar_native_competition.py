@@ -244,6 +244,16 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
         clock = cp.week.calendar
         if command.action == "create-edition":
             clock = RunCalendar.from_metadata(command.data["week"]["calendar"])
+        replay_adoption_plan = None
+        if command.action == "adopt-saved-draw":
+            adopted = next((a for a in state.editions if a.edition.edition_id == command.data["event_id"]), None)
+            if adopted is None or adopted.canonical_binding is None:
+                raise ValueError("Native adoption lacks its immutable canonical source")
+            replay_adoption_plan = adopted.canonical_binding.plan(adopted.draw)
+            # A strict extension may precede adoption while the sporting root
+            # retains its original smaller clock. Replay this NEW authority on
+            # its exact Saved source clock, separately authenticated physically.
+            clock = replay_adoption_plan.calendar
         if command.action in {"transition", "season-transition", "play"}:
             if event_index >= len(checkpoint.events):
                 raise ValueError("Native competition lacks actual sporting event")
@@ -324,10 +334,7 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
                 raise ValueError("Native command precedes unresolved Simulation Slot")
         native_inputs = (life[cp.week.ordinal], source)
         if command.action == "adopt-saved-draw":
-            adopted = next((a for a in state.editions if a.edition.edition_id == command.data["event_id"]), None)
-            if adopted is None or adopted.canonical_binding is None:
-                raise ValueError("Native adoption lacks its immutable canonical source")
-            native_inputs = (*native_inputs, adopted.canonical_binding.plan(adopted.draw))
+            native_inputs = (*native_inputs, replay_adoption_plan)
         if command.action == "play":
             from beta_engine.domain.players.calendar_native_competition import (
                 play_native_tournament,

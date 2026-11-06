@@ -3,6 +3,11 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 
 from beta_engine.api.deps import get_match_test_lab_service
+from beta_engine.application.match_lab_paired_comparison import (
+    MatchLabComparisonRequest,
+    MatchLabComparisonResult,
+    compare_match_lab_scenarios,
+)
 from beta_engine.application.match_test_lab_service import (
     BuiltInMatchLabScenario,
     MatchLabRequest,
@@ -105,6 +110,20 @@ def import_match_lab_saved_revision_player(
 ) -> MatchLabSession:
     try:
         return service.import_saved_revision_player(session_id, request)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/compare", response_model=MatchLabComparisonResult)
+def compare_match_lab(
+    request: MatchLabComparisonRequest,
+    service: MatchTestLabService = Depends(get_match_test_lab_service),
+) -> MatchLabComparisonResult:
+    """Read-only paired Match Lab; exact Session fingerprints are required."""
+    try:
+        return compare_match_lab_scenarios(service, request)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:

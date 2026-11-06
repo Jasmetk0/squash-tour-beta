@@ -141,3 +141,75 @@ def test_api_never_treats_uninstalled_source_as_mutated_run_package(tmp_path):
         assert code == 200
         assert after == state
         assert all("source_start_date" in item for item in preview["events"])
+
+
+def test_reference_package_confirm_save_restart_then_weeks_remain_readonly(tmp_path):
+    """Full real source Package CAS/Save must not accidentally gain sports authority."""
+    db = f"sqlite:///{tmp_path / 'atp-w52-saved-package.db'}"
+    with ApiServer(database_url=db) as server:
+        run_id, branch_id = _make_run(
+            server, name="ATP Saved Package in Earth W52", start=2025, count=2
+        )
+        packages = (
+            f"{server.base_url}/admin/runs/{quote(run_id, safe='')}"
+            f"/branches/{quote(branch_id, safe='')}/packages"
+        )
+        code, source_preview = _request(
+            "POST", packages + "/source-atp-reference-calendar/preview", {}
+        )
+        assert code == 200, source_preview
+        assert not source_preview["invalid"]
+        assert not source_preview["conflicts"]
+        assert source_preview["document_identity"]["package_id"] == (
+            "atp_tour_1990_2026_calendar_reference_setup"
+        )
+        confirm = {
+            "command_id": "save-atp-reference-w52",
+            "expected_head_revision_id": source_preview["saved_head_revision_id"],
+            "expected_draft_version": source_preview["draft_version"],
+            "expected_state_fingerprint": source_preview["current_state_fingerprint"],
+            "expected_preview_fingerprint": source_preview["preview_fingerprint"],
+            "conflict_resolutions": {},
+        }
+        code, applied = _request(
+            "POST", packages + "/source-atp-reference-calendar/confirm", confirm
+        )
+        assert code == 200, applied
+        assert applied["draft_version"] == 1
+        assert all(
+            e["entity_kind"] not in ("calendar.event.v1", "calendar.metadata.v1")
+            for e in applied["state"]["entities"]
+        )
+        code, saved = _request(
+            "POST",
+            f"{server.base_url}/run-containers/{quote(run_id, safe='')}"
+            f"/branches/{quote(branch_id, safe='')}/working-draft/save",
+            {"expected_draft_version": applied["draft_version"]},
+        )
+        assert code == 201, saved
+        before_packages = _request("GET", packages)
+        assert before_packages[0] == 200
+        assert len(before_packages[1]["state"]["entities"]) == 2619
+        code, projected = _request(
+            "GET", _url(server, run_id, branch_id, "?year=2025")
+        )
+        assert code == 200, projected
+        assert projected["calendar"]["weeks_per_year"] == 52
+        assert projected["no_sporting_install"] is True
+        assert projected["run_mutated"] is False
+        assert _request("GET", packages) == before_packages
+    with ApiServer(database_url=db) as server:
+        packages = (
+            f"{server.base_url}/admin/runs/{quote(run_id, safe='')}"
+            f"/branches/{quote(branch_id, safe='')}/packages"
+        )
+        code, persisted = _request("GET", packages)
+        assert code == 200
+        assert persisted == before_packages
+        code, reread = _request(
+            "GET", _url(server, run_id, branch_id, "?year=2025")
+        )
+        assert code == 200
+        assert reread == projected
+        assert reread["uses_current_server_reference_not_run_snapshot"] is True
+        assert _request("GET", packages) == before_packages

@@ -1,4 +1,23 @@
-# Current dependency checkpoint after #1745 — 6 November 2026
+# Native Q/Main dependency checkpoint after #1746 — 6 November 2026
+
+Base `buuk` `c7bb53eb893dceb2cb603bc0d312b71070489a0e` contains owner merge #1746.
+The bounded native consumer keeps results in the existing v13 shared slot ledger.
+
+1. Complete/review actual Unranked source-sized HTTP/SQLite Q/Main acceptance,
+   public announcement, partial Save/restart/retry, real feeder winners and
+   independent terminal confirmation. Final-head applicable gates must run green.
+2. Complete original Entry/complete Ranked awards/operational chronology and
+   owner-level adoption. Do not infer readiness from an explicitly authored
+   disposable fixture. Fork/revised Draw/multi-week consumers remain versioned work.
+3. Prove multiple Editions, original full season/Finals/transition, then existing
+   50-season/recovery/performance gates and complete Master release requirements.
+
+Use the single [integration evidence map](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
+ATP package PRs #1731 → #1741 → #1742 remain separate and untouched.
+
+---
+
+# Historical checkpoint before #1746 merge
 
 Base `buuk` `7620b89ab53b93780216955a72bd5e4c91f6d691` includes owner merge #1745.
 The next bounded candidate adds Saved-bound initial Draw feeder plans and a

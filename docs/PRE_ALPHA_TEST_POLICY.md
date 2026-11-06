@@ -216,3 +216,15 @@ Concretely:
 
 The assistant may continue repairing the PR privately while checks are red. The user
 should only receive the PR as a mergeable handoff after this green-only gate is met.
+
+
+## Canonical source-sized Q/Main acceptance — 6 November 2026
+
+Native Tour Ready/manual acceptance adds parallel Gold24/Q16 and Platinum32/Q24
+real HTTP/SQLite cases. They explicitly author a disposable Unranked single-week
+source/future announcement, retaining source geometry. Require normal publication,
+partial Next Match Save/restart, actual remaining slots, confirmation and transition.
+They do not replace original Ranked/source/50-season gates. Small source/version
+contracts stay in Fast CI; the long new cases are smoke/full-suite tests in their
+dedicated matrix, avoiding duplicate execution in Fast CI. Existing relevant native
+Tour, Full Simulation and fork gates remain required.

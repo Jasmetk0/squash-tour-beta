@@ -1,4 +1,23 @@
-# Saved-bound FAX feeder kernel candidate — 6 November 2026
+# Native canonical consumer candidate after #1746 — 6 November 2026
+
+Merged base `c7bb53eb893dceb2cb603bc0d312b71070489a0e` preserves #1746 exactly.
+This extends the existing evidence map, not product release requirements.
+
+| Boundary | Candidate implementation / verification scope | Remaining boundary |
+| --- | --- | --- |
+| Saved source → native | Explicit exact source adoption; separate physical reachable Saved-envelope/hash/Draw verification and mathematical replay | Original complete Ranked/Entry integration; inherited fork and revised Draw remapping |
+| Publication / scheduling | Explicit source announcement, prospective adoption, normal Week Transition public event and whole-week delay; explicit increasing Q/Main Simulation Slots | No inferred dates, day/rest calibration or multi-week execution |
+| Actual matches | Edition/slot v4, source IDs/seeds, same pre-slot inputs; existing v13 records/effects; derived terminal only | Original 80 Editions/full season/50-season proof remains separate |
+| Honest acceptance | Dedicated actual HTTP/SQLite Gold35/Platinum51, partial Save/restart/retry/confirmation/transition on explicitly authored disposable Unranked source; negative contracts and old goldens | Final-head local/hosted results recorded in PR; no Draft skip or mocked boundary substitutes for acceptance |
+
+Original FAX source, sporting rules and Master are unchanged. No zero-point fallback,
+second result store, fabricated Q winner, widened old match index or arbitrary Run
+cap. Admin consumption keeps null/BYE/Q positions and blocks mutations of adopted
+Draws. No UI adoption wizard or owner Chromium acceptance is claimed here.
+
+---
+
+# Historical Saved-bound feeder kernel — owner-merged as #1746
 
 Merged base `7620b89ab53b93780216955a72bd5e4c91f6d691` preserves #1745 exactly.
 This continues the same evidence map and adds no release requirements.

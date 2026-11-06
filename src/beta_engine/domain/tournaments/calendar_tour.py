@@ -48,7 +48,7 @@ from beta_engine.domain.tournaments.ranking_snapshot_authority import (
 
 
 from beta_engine.domain.tournaments.native_canonical_knockout import (
-    NativeCanonicalDrawBinding, is_canonical_edition,
+    NativeCanonicalDrawBinding, is_canonical_edition, canonical_announcement_week,
 )
 
 def ranking_week(week):
@@ -87,7 +87,7 @@ class CalendarTourEdition(FrozenInput):
 
     @property
     def capacity(self):
-        if self.schema_version == "calendar_tournament_edition.v3":
+        if self.schema_version in {"calendar_tournament_edition.v3", "calendar_tournament_edition.v4"}:
             return TournamentEntryFieldCapacity(geometry_kind="fixed_participant_field", main_draw_size=self.main_entrant_count)
         return TournamentEntryFieldCapacity.for_main_entrant_count(
             main_entrant_count=self.main_entrant_count
@@ -187,12 +187,16 @@ class CalendarEditionAuthority(FrozenInput):
             binding = self.canonical_binding
             if binding is None or self.draw is None or self.submissions or self.field is not None or self.ranking_authority is not None:
                 raise ValueError("Canonical Edition requires its sole exact Saved Draw binding")
-            plan = binding.plan(self.draw)
+            binding.plan(self.draw)
             event = binding.source_event
+            if self.edition.announcement_week != canonical_announcement_week(binding):
+                raise ValueError("Canonical announcement differs from its Saved source")
             if self.edition.ranked or event.ranking_status != "unranked" or self.edition.point_table:
                 raise ValueError("Canonical native Ranked awards need their explicit versioned consumer; no zero-point fallback")
-            if event.duration_in_season_weeks != 1:
+            if event.duration_in_season_weeks != 1 or event.start_season_week != event.season_week or event.end_season_week != event.season_week:
                 raise ValueError("Canonical native v4 requires an explicit same-week source; multi-week execution is not yet supported")
+            if (self.edition.name, self.edition.start_slot, self.edition.simulation_seed, self.edition.validity_weeks) != (event.event_name, binding.schedule.qualification[0], binding.draw_input.draw_seed, binding.calendar.weeks_per_year):
+                raise ValueError("Canonical Edition changes its frozen name/schedule/seed/validity")
             if (self.edition.edition_id, self.edition.main_entrant_count, self.edition.week.calendar,
                 self.edition.week.week, self.created_saved_head, self.played_saved_head,
                 self.draw_seed, self.draw_command_id) != (

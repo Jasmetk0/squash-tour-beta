@@ -72,7 +72,7 @@ def apply_group_withdrawal(session, ctx, state, authority, command, *, persist,
         source_checkpoint_fingerprint=cp.fingerprint, command_id=command.command_id,
         operator_label=command.operator_label, audit_reason=command.audit_reason,
         reason_category=command.data['reason_category'], note=command.data.get('note', ''))
-    updated = slot.model_copy(update={'schema_version': 'calendar_global_slot.v3',
+    updated = slot.model_copy(update={'schema_version': 'calendar_global_slot.v4' if slot.schema_version == 'calendar_global_slot.v4' else 'calendar_global_slot.v3',
         'group_withdrawals': (*slot.group_withdrawals, record)})
     if getattr(cp, 'schema_version', None) == 'native_fork_competition.v1':
         successor = cp.with_group_withdrawal(index, updated) if index is not None else cp.with_global_slot(updated)

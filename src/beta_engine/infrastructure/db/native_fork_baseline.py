@@ -42,6 +42,8 @@ def _project(
             raise ValueError(
                 "Native fork baseline requires the complete initialized Saved Tour"
             )
+        if any(a.canonical_binding is not None for a in inputs.tour.editions):
+            raise ValueError("Canonical Q/Main native fork remapping is not yet supported")
         calendar = RunCalendar.from_metadata(source.payload["run"]["run_calendar"])
         p = calendar.position_at_ordinal(inputs.tour.week.ordinal)
         week = RunWeekPosition(
@@ -82,6 +84,8 @@ def _project(
         raise ValueError(
             "Native fork baseline requires the complete initialized Saved Tour"
         )
+    if any(a.canonical_binding is not None for a in tour.editions):
+        raise ValueError("Canonical Q/Main native fork remapping is not yet supported")
     calendar = RunCalendar.from_metadata(source.payload["run"]["run_calendar"])
     position = calendar.position_at_ordinal(tour.week.ordinal)
     week = RunWeekPosition(

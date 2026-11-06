@@ -303,7 +303,7 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
             cp,
             evidence,
         )
-        if command.action not in {"create-edition", "transition", "season-transition", "next-slot", "next-match"}:
+        if command.action not in {"create-edition", "adopt-saved-draw", "transition", "season-transition", "next-slot", "next-match"}:
             if authority is None:
                 raise ValueError("Native command lacks Edition")
             offsets = {
@@ -323,6 +323,11 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
             )):
                 raise ValueError("Native command precedes unresolved Simulation Slot")
         native_inputs = (life[cp.week.ordinal], source)
+        if command.action == "adopt-saved-draw":
+            adopted = next((a for a in state.editions if a.edition.edition_id == command.data["event_id"]), None)
+            if adopted is None or adopted.canonical_binding is None:
+                raise ValueError("Native adoption lacks its immutable canonical source")
+            native_inputs = (*native_inputs, adopted.canonical_binding.plan(adopted.draw))
         if command.action == "play":
             from beta_engine.domain.players.calendar_native_competition import (
                 play_native_tournament,

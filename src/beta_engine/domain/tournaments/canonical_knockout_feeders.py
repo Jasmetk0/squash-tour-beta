@@ -124,6 +124,7 @@ def project_knockout_progress(
     *,
     plan: CanonicalKnockoutFeederPlan,
     matches: tuple[CalendarContinuationMatch, ...],
+    runtime_calendar: RunCalendar | None = None,
 ) -> CanonicalKnockoutProgress:
     """Validate event-only records; input order never determines feeder winners.
 
@@ -132,6 +133,26 @@ def project_knockout_progress(
     owner, source, seed, players and chronological dependencies, not calibration.
     """
     plan.validate_frozen_draw()
+
+    # The new native consumer may continue under a strict horizon extension.
+    # Historical callers omit this argument and retain exact-calendar semantics.
+    def compatible(clock):
+        return (
+            clock.weeks_per_year,
+            clock.season_start_year_week,
+            clock.start_year,
+            clock.schema_version,
+        ) == (
+            plan.calendar.weeks_per_year,
+            plan.calendar.season_start_year_week,
+            plan.calendar.start_year,
+            plan.calendar.schema_version,
+        ) and clock.season_count >= plan.calendar.season_count
+
+    if runtime_calendar is not None and not compatible(runtime_calendar):
+        raise ValueError(
+            "Canonical runtime calendar may only extend the source horizon"
+        )
     topology = plan.topology
     source = plan.source
     draw = source.draw
@@ -196,7 +217,12 @@ def project_knockout_progress(
             draw.run_id,
             draw.branch_id,
             plan.source_saved_revision_id,
-        ) or record.week.calendar != plan.calendar:
+        ) or (
+            record.week.calendar != plan.calendar
+            if runtime_calendar is None
+            else not compatible(record.week.calendar)
+            or record.week.calendar.season_count > runtime_calendar.season_count
+        ):
             raise ValueError(
                 "Canonical match differs from frozen Run/Branch/Calendar/Saved source"
             )

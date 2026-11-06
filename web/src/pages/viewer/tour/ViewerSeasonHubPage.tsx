@@ -5,6 +5,7 @@ import { getViewerFinalsRace, getViewerRunCalendar, getViewerTournamentHistory }
 import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
+import { ViewerSignedSeasonComparison } from './ViewerSignedSeasonComparison'
 import {
   viewerFinalsPath,
   viewerPlannedEventPath,
@@ -85,6 +86,7 @@ export function ViewerSeasonHubPage(): JSX.Element {
           <Link className="viewer-active-run-link" to={viewerRunsPath()}>Open run browser</Link>
         </p>
       </article>
+      <ViewerSignedSeasonComparison runId={productRunId} />
     </ViewerShellPage>
   )
 }
